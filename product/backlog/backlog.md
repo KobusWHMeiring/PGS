@@ -1,12 +1,12 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-18 18:39
+> Generated: 2026-10-18 19:07
 
 ## Ready (up next)
 
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
-- **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D33)
+- **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite:** MVP 0 sub-plan A is not yet built — see `MVP1A_PLAN.md` §0.2.
 
 ## In Progress
 

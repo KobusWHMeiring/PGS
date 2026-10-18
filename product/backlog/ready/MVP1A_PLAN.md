@@ -30,12 +30,26 @@
 | D31 | Pledge recorded as written, `land_history_conflict` flagged, no seal inference |
 | D32 | Assessment fee gated before the visit |
 | D33 | 1a stops at `UNDER_REVIEW`; ships connected capture; no decision, no certificate |
+| D34 | GPS as two decimals — **no PostGIS, no GDAL** |
+| D35 | `Farm.current_status` deferred to MVP 2 |
+| D36 | `FarmCategory.status ∈ APPLIED | FOR_ASSESSMENT | ASSESSED | INACTIVE` |
+| D37 | `catchment` is a deployment setting; no `Member.catchment`, no `Farm.catchment` |
+| D38 | `Member.probation_until` added |
+| D39 | `membership_no` = `OUT-<year>-<seq>`; `nearest_town` plain text; `is_paid_up` row-period definition |
 
-### 0.2 What already exists (MVP 0)
+### 0.2 Hard prerequisite — MVP 0 sub-plan A does not exist yet
 
-`User`, `UserRole`, `Category`, `Seal`, `PublicDocument`; the `knowledge` app and retrieval; the public
-site and chatbot; `/health/`; CI; backup/restore; the import-linter contract. **Do not rebuild these.**
-`Seal` matters here only as a foreign key target for MVP 2.
+**There is no application code in this repository.** No `manage.py`, no `core/`, no `knowledge/`.
+MVP 0 is *specified*, not built.
+
+Tasks A1–A10 of `../Refinement/MVP0_PLAN_V2.md` are therefore **a prerequisite for every task below**,
+not a description of the current state. They deliver: the Django project scaffold and Compose services,
+environment-driven settings, the **custom `User` model** (which must be the first migration — it cannot
+be swapped later), `Category` and `Seal` as data with `seed_deployment`, `/health/`, Celery with retry
+policies, the `knowledge` ↛ `core` import contract, CI, and backup/restore with a rehearsed restore.
+
+Do not start sub-plan A below until MVP 0 Tasks A1–A5 have landed and migrated. Nothing else from
+MVP 0 (the corpus, the public site, the chatbot) is a prerequisite for 1a.
 
 ---
 
@@ -78,6 +92,25 @@ def test_member_is_paid_up_is_derived_not_stored(member):
                                  period_start=date(2026, 1, 1), period_end=date(2026, 12, 31))
     assert Member.objects.get(pk=member.pk).is_paid_up is True
 
+def test_is_paid_up_uses_the_row_period_not_the_calendar_year(member):
+    # D39: periods are explicit on the row, so "payable by end of February" is never hardcoded
+    MembershipFee.objects.create(member=member, amount_cents=10000, paid_on=date(2025, 3, 1),
+                                 period_start=date(2025, 3, 1), period_end=date(2026, 2, 28))
+    assert member.is_paid_up is True        # covers today, despite a 2025 payment
+
+def test_probation_has_an_end_date(member):
+    # D38: OPP §4.6 — one calendar year. A status you cannot exit is a data trap.
+    member.status = "PROBATION"
+    member.probation_until = date(2027, 3, 1)
+    member.save()
+    assert Member.objects.get(pk=member.pk).probation_until == date(2027, 3, 1)
+
+def test_farm_has_no_catchment_and_no_postgis_field(farm):
+    # D37, D34
+    assert not hasattr(farm, "catchment")
+    assert farm.latitude is None and farm.longitude is None
+    assert "location" not in {f.name for f in Farm._meta.get_fields()}
+
 def test_farm_aliases_resolve_to_one_canonical_farm(farm):
     # §4.1: "Chillin Out Farm" / "CHILLOUT FARM" must never fork a farm
     FarmAlias.objects.create(farm=farm, name="CHILLOUT FARM", source="live site")
@@ -89,8 +122,13 @@ def test_farm_public_uuid_is_not_sequential(farm):
 ```
 
 **Then** implement `Member` (`status ∈ APPLICANT | ACTIVE | PROBATION | LAPSED | TERMINATED`,
-`is_paid_up` property over `MembershipFee`), `Farm` (`public_uuid`, `publish_consent`,
-`nearest_town`, optional `location`), `FarmAlias`, `FarmCategory` (FK to `Category`), `FarmContact`.
+`probation_until` nullable — D38, `membership_no` formatted `OUT-<year>-<seq:04d>` — D39,
+and `is_paid_up` **defined as** `MembershipFee(paid_on not null, period_start <= today <= period_end).exists()`
+— D39), `Farm` (`public_uuid`, `publish_consent`, `nearest_town` **plain text** — D39,
+optional `latitude`/`longitude` **decimals, not a geometry column** — D34; **no `current_status`**,
+which is MVP 2 — D35), `FarmAlias`, `FarmCategory` (FK to `Category`, `status ∈ APPLIED |
+FOR_ASSESSMENT | ASSESSED | INACTIVE` — D36), `FarmContact`. **No `catchment` field** on either
+`Member` or `Farm` — it is a deployment setting (D37).
 Census fields (`census_gender`, `census_age_band`, `census_demographic_group`) are `sensitive` and
 **excluded from every serializer** — add a test asserting they never appear in public output.
 

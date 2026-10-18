@@ -127,6 +127,8 @@ The published 2026 roster (OPP §VII) seeds these records — Chairperson, Vice-
 
 - `Member.status`: `APPLICANT`, `ACTIVE`, `PROBATION`, `LAPSED`, `TERMINATED`.
 - Eligibility gate (OPP §2.3): *"Only fully paid-up members will be eligible for farm assessments and receive certificates."* `Member.is_paid_up` is a derived property over `MembershipFee` records, and is asserted in `certification_service` before any certificate is issued.
+
+  **Precise definition (D39):** `is_paid_up = MembershipFee.objects.filter(member=m, paid_on__isnull=False, period_start__lte=today, period_end__gte=today).exists()`. Explicit `period_start`/`period_end` on the row, so the OPP's *"payable by end of February"* rule never hardcodes a calendar-year boundary in code.
 - Pledge (OPP §I.1–I.2). The OPP contains **two distinct pledges**, so `Pledge.kind` ∈ `FARMER` | `CONSUMER`.
   - `method` ∈ `SIGNATURE` | `DISTINCTIVE_MARK` | `VERBAL_WITNESSED`. The farmer pledge is signed with a *"Signature(s)/distinctive marks"* line — the OPP §I.2 path for members who cannot sign — and it carries a witness block requiring **name, designation and signature**.
   - The farmer pledge also carries a **land-history attestation** (12 months before sowing/planting for annuals, 12 months before grazing/harvest for pasture, 18 months before harvest for other perennials) **or** an explicit **in-conversion declaration** with a 12-or-18-month selection. Both are recorded, because they are the basis of the In-Conversion seal decision.
@@ -149,8 +151,11 @@ Category            code, label, display_order, is_active, standard_ref   # data
 User                phone, email, email_verified_at, popia_consent_at, preferred_language,
                     graduated_from_public_at          # public visitor -> member (§3.1)
 UserRole            user, role                     # zero or more per user (§3, axis 1)
-Member              user(1:1), membership_no, joined_on, status, catchment, is_paid_up(derived),
-                    expertise(M2M -> Category)        # drives peer-assessor assignment (§3.1)
+Member              user(1:1), membership_no, joined_on, status, probation_until(nullable),
+                    is_paid_up(derived), expertise(M2M -> Category)
+                    # drives peer-assessor assignment (§3.1). membership_no is human-facing
+                    # and printed on certificates, so it is PUBLIC: "OUT-<year>-<seq:04d>",
+                    # never a bare autoincrement (D39).
 CommitteeTerm       user, position, agm_year, elected_on, vacated_on    # OPP §3.1, §VII
 Pledge              member, kind, method, signed_on, place, declared_land_history_ok,
                     in_conversion_declared, in_conversion_months, recorded_by,
@@ -169,11 +174,23 @@ PriorCertification  farm, kind(PGS|THIRD_PARTY), body_name, certificate_ref,
                     # prior DENIAL of certification with reasons. A denial is materially
                     # relevant to a certification decision; OPP §4.5 also makes misuse of
                     # a third-party logo serious misconduct.
-Farm                member, name, slug, physical_address, nearest_town, location(Point),
+Farm                member, name, slug, physical_address, nearest_town, latitude, longitude,
                     total_hectares, public_uuid, publish_consent, publish_consent_at,
-                    first_certified_on, current_status(derived)
+                    first_certified_on
+                    # D34: NO PostGIS. GPS is optional, never published and never spatially
+                    # queried, so it is DecimalField(max_digits=9, decimal_places=6) x2 — not a
+                    # geometry column, which would drag in django.contrib.gis + GDAL (and the
+                    # pgvector image has no PostGIS). Migrate to PostGIS only if a real spatial
+                    # query ever needs it.
+                    # D35: current_status is deferred to MVP 2 — it derives from Certificate,
+                    # which does not exist in 1a. A stub that always answers "no certificate"
+                    # would be a lie-shaped value someone will trust.
+                    # D39: nearest_town is plain text, not an enum — towns are group data (§4.8).
 FarmAlias           farm, name, source                        # historical/external name variants
 FarmCategory        farm, category(FK), status, first_assessed_on   # 1..n per farm
+                    # D36: status ∈ APPLIED | FOR_ASSESSMENT | ASSESSED | INACTIVE — an
+                    # application lifecycle for 1a. Certification state per category is
+                    # ProductOutcome.status (MVP 2), which supersedes this for that purpose.
 FarmContact         farm, name, role, phone, email                    # incl. hosting contact
 ```
 
@@ -181,7 +198,9 @@ FarmContact         farm, name, role, phone, email                    # incl. ho
 
 Census fields (FORM A: gender, age group, demographic group) live on `Member` as `census_gender`, `census_age_band`, `census_demographic_group`, flagged `sensitive=True` and excluded from every public serializer.
 
-**Farm identity.** The existing public records spell the same farm several ways — "Chillin Out Farm" / "CHILLOUT FARM", "Diepflook Farm" / "DIEPKLOOF FARM", "Hamel en Harden" / "HAMEL & AARDEN BOERDERY", "Well I Am" / "WELL-I-AM". `FarmAlias` exists so the migration and every future spelling resolves to one canonical farm, and so a verification lookup by an old name still lands. Public location is `nearest_town` only (Elandskraal, Homtini Pass, Groot Brak, Rheenendal, Hoekwill); precise GPS is optional and never published. `Farm.catchment` records the group's geographic range (“roughly from Mossel Bay to the Crags”).
+**Farm identity.** The existing public records spell the same farm several ways — "Chillin Out Farm" / "CHILLOUT FARM", "Diepflook Farm" / "DIEPKLOOF FARM", "Hamel en Harden" / "HAMEL & AARDEN BOERDERY", "Well I Am" / "WELL-I-AM". `FarmAlias` exists so the migration and every future spelling resolves to one canonical farm, and so a verification lookup by an old name still lands. Public location is `nearest_town` only (Elandskraal, Homtini Pass, Groot Brak, Rheenendal, Hoekwill); precise GPS is optional and never published.
+
+**Catchment is a deployment setting, not a field (D37).** The group's range — *"roughly from Mossel Bay to the Crags"* — is one string for the whole deployment, and belongs with group identity in seed/settings (§4.8). Earlier drafts put `catchment` on `Member` and, separately, on `Farm`; both are withdrawn. A member's locality is already `Farm.nearest_town`.
 
 ### 4.2 Assessment & Evidence — `core/models/_assessment.py`
 
@@ -863,6 +882,12 @@ These may later be split across subdomains (`app.` vs `www.`) via `ALLOWED_HOSTS
 | D31 | The pledge's land-history periods contradict OPP §V. | **Record as written; flag; do not infer a seal.** The pledge says 12 months (annuals) / 12 / 18 (other perennials); OPP §V says 18 / 12 / 12. The platform stores what the pledge actually attests and marks the declaration `land_history_conflict=True` rather than resolving it in code. Seals are MVP 2, so nothing is issued on the wrong basis in the meantime. **Awaiting a group decision.** |
 | D32 | Assessment fee gate (OPP §2.3: "Fees are payable prior to the farm assessment visit"). | **Gated before the visit**, in addition to the existing paid-up gate at certification. A `FarmVisit` cannot leave `DRAFT` while the assessment fee for that visit is unpaid. |
 | D33 | Where does `1a` stop? | **Before the certification decision.** `1a` records answers, verdicts, findings, corrective actions and signatures, and advances the visit to `UNDER_REVIEW`. The four outcomes, seals, certificates and the registry are MVP 2. `1a` also ships the **connected capture form** — the same templates rendered server-side — which makes the slice usable where there is signal and doubles as the R7 degrade path that `1b` falls back to. |
+| D34 | How is farm GPS stored? | **Two decimal fields, not a geometry column.** `latitude` / `longitude` as `DecimalField(max_digits=9, decimal_places=6)`, nullable. `django.contrib.gis` would require GDAL/GEOS (an OSGeo4W install on Windows) and a PostGIS-enabled database — which the `pgvector/pgvector` image is not — to store a coordinate that the spec itself calls optional, never published and never spatially queried. Migrate to PostGIS only if a real spatial query needs it. |
+| D35 | `Farm.current_status` in 1a? | **No — MVP 2.** It derives from `Certificate` (§11.9), which does not exist in 1a. A stub returning "no certificate" for every farm is a value someone will eventually trust. `first_certified_on` stays (a plain nullable date, no derivation). |
+| D36 | What is `FarmCategory.status`? | **An application lifecycle:** `APPLIED` | `FOR_ASSESSMENT` | `ASSESSED` | `INACTIVE`. It is not the certification state — that is `ProductOutcome.status ∈ ORGANIC \| IN_CONVERSION \| NOT_ENDORSED` in MVP 2, which supersedes this for that purpose. |
+| D37 | Where does "catchment" live? | **A deployment setting, not a field.** §4.1 previously carried `Member.catchment` while the prose referred to a non-existent `Farm.catchment`, and §4.8's retarget checklist correctly treated catchment as per-deployment configuration. The group's range is one string for the whole deployment; both field references are withdrawn. A member's locality is `Farm.nearest_town`. |
+| D38 | `Member.status.PROBATION` has no end date. | **Add `probation_until` (nullable date).** OPP §4.6 makes probation *one calendar year*; the discipline workflow is out of scope (§17.1) so nothing else sets or clears the state, and a status that can be entered but never exited is a data trap. The warnings record itself stays out of scope. |
+| D39 | Identifier and derivation conventions for `1a`. | `membership_no` is **human-facing and public** — `OUT-<year>-<seq:04d>`, never a bare autoincrement. `nearest_town` is **plain text, not an enum** (towns are group data, §4.8 — an enum would need a migration to add a town). `is_paid_up` is **defined as** `MembershipFee(paid_on not null, period_start <= today <= period_end).exists()`, with explicit periods on the row so the OPP's "payable by end of February" never becomes a hardcoded calendar boundary. |
 
 ---
 
