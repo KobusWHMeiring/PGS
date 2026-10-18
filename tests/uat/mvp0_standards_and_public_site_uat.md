@@ -41,7 +41,8 @@ Recorded here so the manual list is not padded with machine-provable work.
 | No answer can cite a chunk outside the session's `StandardSet` | `core/tests/test_retrieval_scope.py` |
 | The public surface contains no claim outside the four outcomes and the active seals — forbidding `pasture-raised`, `pasture raised`, `GMO free`, `biodynamic`, `chemical-free`, `spray-free` | `core/tests/test_claim_discipline.py` (grep-style assertion over rendered public HTML) |
 | Rate limiting returns 429 past the per-IP budget | `core/tests/test_chatbot_guardrails.py` |
-| Section-reference parsers extract `B-20.1.1` (SAOSO) and `§4.2` (OPP) correctly | `knowledge/tests/test_section_parsers.py` |
+| Section-reference parsers extract `S20.1.1` (SAOSO) and `§V` / `§4.2(5)` (OPP) correctly, from **verbatim extracts of the shipped PDFs** | `knowledge/tests/test_section_parsers.py` |
+| Ingesting each real document yields more than zero sections **with a non-empty `section_ref`**, and `sub_refs` offsets are non-overlapping and within bounds | `knowledge/tests/test_ingest.py` |
 | Ingestion is idempotent on `sha256` — a second run adds zero chunks | `knowledge/tests/test_ingest.py` |
 | Retrieval returns the SAOSO clause for a known query (recall floor) | `knowledge/tests/test_retrieval.py` |
 | `knowledge` never imports `core` | `import-linter` contract, run in CI |
@@ -68,7 +69,7 @@ Recorded here so the manual list is not padded with machine-provable work.
 **Category:** citations
 **Setup:** As Scenario 1, with `pgs_docs/saoso-version-2.1-2026.pdf` open beside you.
 
-1. Take the section reference from the answer (e.g. `B-5.4`) and find it in the PDF.
+1. Take the section reference from the answer (e.g. `S20.1.1`) and find it in the PDF.
 
 **Expected:** The cited clause exists, and its text supports the claim made.
 

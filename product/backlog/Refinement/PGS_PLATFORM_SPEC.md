@@ -64,10 +64,10 @@ These terms are load-bearing. Code, templates, URLs and admin copy must use them
 | **Minor** | *"The farmer is to address the issue for continual improvement of organic practices."* | FORM Sheet I (verbatim) |
 | **Major** | *"The committee would like focused attention on the issue with report back in a defined time period."* | FORM Sheet I (verbatim) |
 | **Critical** | *"The concern will have an impact on certification if not corrected within a defined time period."* | FORM Sheet I (verbatim) |
-| **Notifiable Exception** | A deviation that must be reported to PGS SA. | FORM Sheet I, OPP §4.5 |
+| **Notifiable Exception** | An exemption the group **grants** against a specific requirement of the standard, which must be documented and reported to PGS-SA. It is *not* a non-conformity — a Finding is. | FORM Sheet I §3 (*"notifiable exception as allowed in the organic standards **granted**"*); OPP §V (*"the authority to **grant** notifiable exemptions"*); BPP Introduction |
 | **Outcome** | One of four decisions: `Certified Organic`, `Organic - pending corrective action`, `Organic In-conversion`, `Not endorsed/reschedule`. | FORM Sheet I/J |
 | **In-Conversion** | Production follows organic principles but the land has been under organic management for less than 18 months (annual), 12 months (pasture/meadow), or 12 months (other perennials). | OPP §V |
-| **Seal** | One of two issuable marks: **"PGS Organic Certified"** or **"PGS Organic In-Conversion"**. | OPP §V |
+| **Seal** | One of the marks OPP §V authorises: **"PGS Organic Certified"**, **"PGS Organic In-Conversion"** (both active), and **"PGS pasture-raised"** (inactive — see §4.3). | OPP §V |
 | **Endorsed Product** | A product affirmed as grown according to organic principles for the next 12 months, per category. | FORM Sheet J |
 | **Voice Note** | An audio recording captured in the field in place of typing — a dictated finding, risk assessment or note. Transcribed server-side into a reviewable draft. *Designed now, built post-MVP (§17.2).* | (new — D6) |
 | **Value chain actor** | The group's own term for a market, distributor or retailer member (Wild Oats Farmers' Market, Farm Fresh Direct). Preferred over "retailer". | OPP §3.3; live site `/members-2/` |
@@ -184,8 +184,11 @@ Assessment              farm_visit, category, template, template_schema(JSON sna
 AssessmentAnswer        assessment, question_key, value(JSON), notes
 AssessmentVerdict       assessment, question_key, verdict_key, is_compliant(bool),
                         standard_ref, notes
-Finding                 farm_visit, assessment, question_key, severity, description,
-                        is_notifiable_exception, raised_by
+Finding                 farm_visit, assessment, question_key, severity, description, raised_by
+NotifiableExemption     farm_visit, standard_ref, requirement_exempted, rationale,
+                        granted_by, granted_on, reported_to_pgs_sa_on, evidence_doc
+                        # An exemption GRANTED under the standard and reported to
+                        # PGS-SA. Not a non-conformity — see §2, FORM Sheet I §3.
 CorrectiveAction        finding, recommended_action, due_on, status, submitted_on,
                         verified_by, verified_on, closed_on
 EvidencePhoto           farm_visit, answer(nullable), photo, caption, captured_at,
@@ -211,8 +214,8 @@ SyncReceipt             client_uuid(unique), device_id, farm_visit, payload_sha2
 ### 4.3 Certification & Registry — `core/models/_certification.py`
 
 ```
-CertificationDecision   farm_visit, outcome, rationale, notifiable_exceptions, decided_by,
-                        decided_at
+CertificationDecision   farm_visit, outcome, rationale, decided_by, decided_at
+                        # exemptions are NotifiableExemption rows, not a field
 ProductOutcome          decision, category, product_name, status, reason
                         # ORGANIC | IN_CONVERSION | NOT_ENDORSED
                         # NOT_ENDORSED carries a reason: not proposed for certification,
@@ -232,6 +235,8 @@ Seal                code, label, standard_ref, is_active, criteria_defined, disp
 Seeded for Outeniqua from OPP §V: `PGS_ORGANIC_CERTIFIED` and `PGS_ORGANIC_IN_CONVERSION` **active**; `PGS_PASTURE_RAISED` **inactive**.
 
 **Deferred: the pasture-raised seal.** OPP §V lists a third mark — *"PGS pasture-raised"*, for *"farmers who are fully compliant with pasture raised as defined by the national working group"* — while stating in the same table that *"pasture raised is not defined by the SAOSO standard – details on this forthcoming"*. It is a real seal with undefined criteria, and **it is not being shipped**. Because seals are data, it exists as an **inactive row**: when the national working group publishes criteria, enabling it is a seed change, not a migration or a code release. `criteria_defined` stays on `Seal` for the general case in which a deployment activates a seal whose criteria cannot be machine-checked; while it is `False`, issuance requires an administrator override with a recorded rationale and the public page renders a *"criteria forthcoming"* note rather than an unqualified claim.
+
+**Two rules keep the deferred seal out of the public surface (D11, F3).** (1) `is_active=False` blocks issuance **unconditionally** — no administrator override — because a seal with no published criteria is a claim that cannot be substantiated. (2) An inactive seal is **never rendered** on a public page. It is a dormant row awaiting the national working group, not content.
 `Certificate.status` ∈ `ACTIVE`, `EXPIRED`, `SUSPENDED`, `REVOKED`. Suspension is reachable from the discipline workflow (OPP §4.6: termination forfeits the right to market under the logo).
 Endorsement is *"for the next 12 months"* (FORM Sheet J) — `expires_on = issued_on + 1 year`.
 
@@ -259,8 +264,11 @@ Two consequences: aggregation is approved **case by case**, and only for an aggr
 StandardSet         code, label, description, is_default
 StandardDocument    standard_set, kind, issuing_body, title, version, effective_from,
                     superseded_by, source_file, sha256, chunk_count, section_scheme
-DocumentChunk       document, section_ref, heading_path, page, text, token_count,
-                    embedding(VectorField), search_vector(GeneratedField tsvector)
+DocumentChunk       document, section_ref, sub_refs(JSONB), anchor, heading_path, page,
+                    text, token_count, embedding(VectorField),
+                    search_vector(GeneratedField tsvector)
+                    # sub_refs: [{ref, start, end}] character offsets into text, so an
+                    # enumerated clause can be quoted without splitting the chunk.
 ```
 
 This is the whole of `knowledge/`: a **library over documents**. No users, no sessions, no views — which is what makes it independently testable and extractable.
@@ -269,9 +277,30 @@ Three things make it standard-agnostic rather than SAOSO-shaped:
 
 - **`StandardSet` groups a corpus.** Outeniqua's set is SAOSO v2.1 + the OPP + the Basic Production Principles + the certification landscape. **Retrieval is always scoped to a set**, so a chatbot answering about SAOSO can never cite EU text, and two corpora can coexist — which is also how a version transition (SAOSO 2.1 → 2.2) is handled without deleting history.
 - **`kind`** distinguishes `STANDARD` | `SOP` | `PRINCIPLES` | `GUIDANCE` | `LANDSCAPE`, because a citation must name what it came from.
-- **`section_scheme` selects a pluggable section-reference parser.** SAOSO numbers clauses `B-20.1.1`, the OPP numbers `§4.2`, and the EU regulation says `Article 9`. Extracting citations is the one genuinely standard-specific step in ingestion, so it is a strategy selected by data rather than hard-coded: adding a standard means adding a parser, not rewriting the pipeline.
+- **`section_scheme` selects a pluggable section-reference parser.** The three source formats are genuinely different, and each must be read as it is printed — never as one wishes it were:
 
-`DocumentChunk.section_ref` is mandatory and human-meaningful because it is the citation shown to the user — a chunk the user cannot locate in the standard is not a citation.
+  | Document | As printed | Cited as | Notes |
+  |---|---|---|---|
+  | SAOSO | `20.1.1.` under a separate `SECTION B` part heading | `S20.1.1` | The FORM's convention, so every verdict reference is locatable on paper. The section letter is kept separately: `1.1.1` occurs in both Section A and Section B. |
+  | OPP | `V. Seals…`, `4.2 Assessment:`, `1)` … `12)` | `§V`, `§4.2`, `§4.2(5)` | Roman-numeral top level; three different item markers (`1.`, `1)`, `a.`). |
+  | LANDSCAPE / BPP | headings only | page + heading | No clause numbering. |
+
+  **Verified against the shipped PDFs, 2026-10-18.** A throwaway parser was run over both documents before any code was written; it invalidated several assumptions that read plausibly in review. These are the realities Sub-plan B must be written against:
+
+  1. **SAOSO part letters are running page headers, not body headings.** `SECTION A` and `SECTION C` never appear as body headings — only in the table of contents. `SECTION B` appears as a body heading three times, all of them incidental. The letter must be read from the page header (indented ~30–63 columns) and **carried forward**, because only 22 of 98 body pages carry one: the letter is printed on one side of each spread only.
+  2. **The TOC matches the clause pattern** (`1.         Introduction - …    4`). Page-aware extraction must exclude the TOC pages explicitly, or the TOC is ingested as 60+ duplicate clauses.
+  3. **The part letter is mandatory, not decorative.** 30 distinct clause numbers occur in more than one part — `1.1`, `1.1.1`, `2`, `3`, `4` among them. A bare `1.1.1` is ambiguous between Section A and Section B. This is why `S20.1.1` carries the part and a bare `20.1.1` cannot.
+  4. **Appendix headings do not exist in the body.** `Appendix 1`, `Appendix 4. Table 2`, `Appendix 6a` appear only in the TOC and in the equivalence matrix. Appendix boundaries must be driven by the **TOC page map**, not by heading detection — otherwise appendix content is silently absorbed into the preceding clause.
+  5. **OPP headings are indented 0–7 spaces** (`VI.` at 6, `4.5` at 4). A column-0 regex misses §VI and §4.5 — the two sections the review added. Item markers also vary: `1.` in §4.1, `1)` in §4.2, `a.` in §4.5(2).
+  6. **Depth 3 is achievable and depth 4 is not.** `§4.5(2)(c)` parses correctly. Nothing deeper exists to parse (see the bound above).
+
+  Every one of these was found by running the parser, not by reading the documents — which is the argument for building the 20-minute verification script before Task B2 rather than after it.
+
+  Extracting citations is the one genuinely standard-specific step in ingestion, so it is a strategy selected by data rather than hard-coded: adding a standard means adding a parser, not rewriting the pipeline.
+
+  **Reference depth is bounded at three levels.** `section_ref` is always present and always reliable. `sub_ref` is emitted **only where the source actually enumerates a clause** — `§4.1(1)` (5 days' notice), `§4.1(2)` (questionnaire 3 days ahead), `§4.2(5)` (conclusion within 5 days), `§4.2(12)` (traceability), `§4.5(2)(c)` (the minuted meeting). It is never inferred. **Depth four does not exist in the source documents and must never be synthesised:** OPP §4.5 has no item 3 (numbering runs 1, 2, 4, 5), the §4.5(2)(c) attendee list is half-numbered and split by a page footer, and the warnings regime and serious-misconduct examples carry no numbers at all. Those unnumbered blocks get a content-derived `anchor` (`4.5#action-first-warning`) instead of a fabricated reference.
+
+`DocumentChunk.section_ref` is mandatory and human-meaningful because it is the citation shown to the user — a chunk the user cannot locate in the standard is not a citation. `sub_refs` holds character offsets rather than separate chunks: splitting at every enumerated item would fragment the OPP into several hundred context-poor chunks and degrade retrieval, so the chunk stays section-level and a citation slices the text it needs. A citation whose `sub_ref` is absent from the chunk's `sub_refs` is invalid, which makes "the bot cited something that does not exist" a test failure rather than a production surprise.
 
 ### 4.6 Chat — `core/models/_chat.py`
 
@@ -540,7 +569,7 @@ Supersedes `prd.md` §4's "Split-Sync Protocol", adding the idempotency and part
    - Any certificate issuance is blocked unless `Member.is_paid_up` (OPP §2.3).
    - A Critical action that lapses → `ESCALATED`, surfaced to the discipline workflow (OPP §4.5), which can reach `REVOKED` certificate status and `TERMINATED` membership (OPP §4.6).
 6. On `CERTIFIED`, a `Certificate` is issued with `seal=PGS_ORGANIC_CERTIFIED`, `expires_on = +12 months`, a `public_uuid`, and a PDF bearing the QR code. `IN_CONVERSION` issues the other seal. `NOT_ENDORSED_RESCHEDULE` issues nothing and sets `next_visit_due`.
-7. Notifiable exceptions are flagged on the decision and surfaced in the committee reporting export for PGS-SA.
+7. Any granted notifiable exemption is recorded as a `NotifiableExemption` against its `standard_ref`, with rationale, grantor and date, and appears in the committee reporting export **with a `reported_to_pgs_sa_on` field that must be filled before the visit can be `CLOSED`** — the OPP requires the grant to be documented *and* reported, and an unrecorded notification is the failure mode.
 8. Products are recorded as `ProductOutcome` rows per category, **including products that were not endorsed** with a reason. The live records already carry exclusions — *"Excluded: pork production (reschedule farm visit), chicken production (not proposed for certification), chard (treated seed)"* — so "not endorsed" is a first-class state with a reason, not an absence of a row. A single visit may also produce different product sets across two visits in one year (The Red Barn was visited twice in October 2025, once for macadamia and once for vegetables and fruit), so outcomes belong to the visit, not the farm.
 9. `Farm.current_status` and `next_visit_due` update; annual reassessment is scheduled (OPP §4.3: *"All producers will be assessed annually"*).
 
@@ -550,7 +579,7 @@ Supersedes `prd.md` §4's "Split-Sync Protocol", adding the idempotency and part
 
 **Verification page** — `GET /verify/<certificate.public_uuid>/`. This is the trust surface. It shows: farm name and nearest town; the seal (exact OPP §V wording); validity window; the four-outcome decision with date; products endorsed per category with `ORGANIC` / `IN_CONVERSION` status; the last assessment date; and an explicit statement of what the certificate does **not** claim. **`NOT_ENDORSED` products are never shown publicly.** Every scan writes a `PublicVerificationEvent` so the group can see whether the QR is actually being used.
 
-**Claim discipline.** The public surface may only reproduce language the standard actually supports: the four outcomes from FORM Sheet I/J, and the seals from OPP §V — of which there are **three**, not two. It must not invent claims. The live site describes Favour Farm's chickens as *"certified pasture raised on certified organic pasture, GMO free"*: "pasture raised" is the third OPP seal, whose criteria the standard itself says are *"forthcoming"*, and "GMO free" is not a PGS certification outcome at all. The platform renders the pasture-raised seal **with its undefined-criteria caveat** (§4.3) and treats "GMO free" as a producer statement rather than an endorsement. This is the difference between a verification page and a marketing page.
+**Claim discipline.** The public surface may only reproduce language the standard actually supports: the four outcomes from FORM Sheet I/J, and the seals from OPP §V — of which there are **three**, not two. It must not invent claims. The live site describes Favour Farm's chickens as *"certified pasture raised on certified organic pasture, GMO free"*: "pasture raised" is the third OPP seal, whose criteria the standard itself says are *"forthcoming"*, and "GMO free" is not a PGS certification outcome at all. The platform **does not render it at all**: the seal ships inactive (§4.3, D11) and is never published, because a mark whose criteria the standard itself calls *"forthcoming"* cannot be substantiated to a consumer. "GMO free" is treated as a producer statement, never as a PGS endorsement. This is the difference between a verification page and a marketing page.
 
 A verification page must never expose: cell numbers, email addresses, GPS, census data, findings detail, or corrective actions. It is a status surface, not a case file.
 
@@ -583,7 +612,7 @@ Three consequences for the migration:
 
 Replaces `prd.md` §4's substring-detection contract with a structured one. The chatbot is a surface *within* the main public site (§12), sharing its session, styling and navigation — it is not a separate deployment or a separate property.
 
-**Ingestion.** `python manage.py ingest_standard --doc saoso --version 2.1 --file <pdf>` → Celery `ingest_standard`: page-aware text extraction, section-reference detection from the SAOSO table of contents (`B-20.1.1`, `Appendix 2`, …), chunking on heading boundaries with ~800-token targets and overlap, `tsvector` population, and embedding via Gemini. Re-ingestion is versioned and idempotent on `sha256`; `superseded_by` links v2.1 → v2.2 without deleting history, because assessments cite the version in force at the time.
+**Ingestion.** `python manage.py ingest_standard --doc saoso --version 2.1 --file <pdf>` → Celery `ingest_standard`: page-aware text extraction, section-reference detection per the scheme in §4.5 (`S20.1.1` for SAOSO, `§V` / `§4.2(5)` for the OPP, `Appendix 1` / `Appendix 4. Table 2` / `Appendix 6a` for appendices, segmented from the TOC page map because the body carries no appendix headings), `sub_refs` offset mapping, chunking on heading boundaries with ~800-token targets and overlap, `tsvector` population, and embedding via Gemini. Re-ingestion is versioned and idempotent on `sha256`; `superseded_by` links v2.1 → v2.2 without deleting history, because assessments cite the version in force at the time.
 
 **Retrieval — hybrid, fused.** Postgres full-text (`websearch_to_tsquery` over `search_vector`, ranked with `ts_rank_cd`) and `pgvector` cosine similarity run independently; results are fused with Reciprocal Rank Fusion (k=60) so neither lexical nor semantic recall dominates. Optional Gemini rerank over the fused top-20 → top-5. Retrieval is **scoped to the session's `StandardSet`** (§4.5), and the scope is applied *before* ranking — so the corpus boundary is not a rule the model has to remember, it is a filter it cannot escape.
 
@@ -706,7 +735,11 @@ The first draft claimed "zero foreign keys in either direction". That was strong
 
 `_assessment` was rejected as a separate app in every option: certification is a single aggregate rooted at `FarmVisit`, so splitting assessment from certification is a *subdomain* boundary, not a *context* boundary.
 
-**Honest note on the trade-off.** Option B's case is now **narrower than the first draft implied**. `knowledge` is about four files, so the ceremony of a second app (`AppConfig`, its own migrations folder, settings registration, lint configuration) is a real cost against a modest benefit. It is still the recommendation, because the retrieval engine is the component most likely to be swapped or tuned independently, and because a one-way rule is worth enforcing with tooling rather than hoping for. But **Option A is now clearly defensible**, and choosing it would cost only the enforced boundary — not the design, the schema, or a single URL.
+**Honest note on the trade-off (revised — D24).** The two reasons given above are weak, and this revision withdraws them. *"The retrieval engine may be swapped"* does not require a separate app — a model change is a model change wherever it lives. *"A one-way rule is worth enforcing with tooling"* does not either, because `import-linter` contracts operate on **module paths**, so `core/knowledge/` plus an `independence` contract would enforce exactly the same rule with the same tool.
+
+The reason that does justify the split is mechanical and was missing from the first draft: **a Django app is a migration namespace.** The corpus has a lifecycle independent of every certification table — re-ingestion, `sha256` idempotency, `superseded_by` version chains, and the embedding dimension frozen by D3 (*"changing it later requires re-embedding the whole corpus"*). Those migrations have nothing to do with farm visits, and entangling them means a re-ingest requires reasoning about assessment history, while a certification hotfix rides on a corpus migration.
+
+So Option B stands, on that ground rather than the original two. It is also cheapest **now**: MVP 0 is the knowledge app plus a site, so the boundary costs nothing today and would cost a refactor later. The residual argument for Option A is real but narrower than stated — it saves an `AppConfig` and a migration tree, at the price of the seam. **Option A remains defensible**; it is no longer the default.
 
 Whichever is chosen, **app boundaries are Python module boundaries and do not constrain URLs.** The public site, farmer portal, assessor PWA, verification pages and JSON API are separate URL prefixes routed from the root URLconf:
 
@@ -738,6 +771,17 @@ These may later be split across subdomains (`app.` vs `www.`) via `ALLOWED_HOSTS
 | D11 | The "PGS pasture-raised" seal. | **Deferred.** Modelled as a `Seal` row seeded **inactive**; enabling it later is a data change, not a migration. See §4.3. |
 | D12 | Retargetability to another standard or PGS group. | **Required.** Code encodes the PGS process; data encodes the standard and the group (§4.8). Seals, categories, corpora and questionnaires are all data. **Acceptance test: a retarget must not require a migration.** |
 | D13 | Aggregation (OPP §VI) — when? | **Data from MVP 1, workflow post-MVP.** The pre-visit questionnaire already asks every applicant whether they buy in produce and how they label it, so the fields must exist or the form cannot store its own answers. The case-by-case approval workflow — supplying-farm declarations, 6-month self-claim expiry, physical-separation checks — is deferred. |
+| D14 | Canonical SAOSO citation format. | **`S20.1.1`** — the FORM's own convention, so a committee member can locate every verdict reference on paper. The section letter is stored separately to disambiguate (`1.1.1` occurs in both Section A and Section B). SAOSO's body prints `20.1.1.`; the earlier `B-20.1.1` was invented and is withdrawn. |
+| D15 | OPP citation depth. | **`section_ref` + `sub_ref`, bounded at depth 3**, plus a content-derived `anchor` for unnumbered blocks. `sub_ref` is emitted only where the source actually enumerates: `§4.1(1)`, `§4.2(5)`, `§4.5(2)(c)`. §4.5 has **no item 3**, the `(c)` attendee list is half-numbered, and the warnings regime is unnumbered — so depth 4 does not exist and must never be synthesised. Chunks stay section-level with a `sub_refs` offset map (§4.5), so quoting never fragments retrieval. |
+| D16 | Chatbot corpus. | **Four documents** — SAOSO v2.1, OPP, BPP, LANDSCAPE — in one `StandardSet`. The FORM workbook and the three participant checklists are `/documents/` downloads only, not corpus: the workbook is a questionnaire, and ingesting it would let the chatbot cite its own form. New documents are a `StandardDocument` row plus a re-ingest (D12), so the set may grow without a code change. |
+| D17 | Chatbot scope and refusal wording. | **Wide corpus, group-naming refusal.** The bot answers from all four documents — the OPP answers questions SAOSO does not (fees, joining) — so the refusal becomes *"I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents."* The original SAOSO-only string reflected a PRD scope that no longer holds. |
+| D18 | Afrikaans in MVP 0. | **Mechanism and shell, not content.** `preferred_language`, the catalogue plumbing and a human-translated app shell ship; page content and chatbot answers stay English until a named Afrikaans-speaking member reviews them. UAT Scenario 5 is judged against that human translation, never against a machine one. |
+| D19 | Hosting for MVP 0. | **Local.** MVP 0 is a preview (D21) and needs no public host. Postgres+pgvector and Redis run under Docker Compose locally for parity; the application runs natively. Media backups go to an attached external drive — exactly R11's assumption — and the restore is rehearsed there. `docker-compose.yml` and the nginx config are written as the **reference deployment** and carried to a VPS at MVP 2. §15's "Docker volume" describes that reference deployment, not a commitment about any particular host. |
+| D20 | Gemini account for MVP 0. | **Developer key via `.env`.** `.env` is git-ignored and remains the sole config source. The embedding model and dimension are frozen in the migration (D3), so the model is chosen deliberately now, not by default. A group-owned account with a hard cap and 50% alerting is a MVP 2 item, before the chatbot takes public traffic. |
+| D21 | WordPress: preview or replacement. | **Preview at MVP 0; cut over at MVP 2.** D8 still holds — this application *is* the website — but retiring WordPress before the registry exists would remove the farm-status pages the group publishes today. MVP 0 ships on a staging surface; the redirect map becomes a MVP 2 launch-checklist item. |
+| D22 | Public hosting of documents. | **Split.** The standard, BPP, OPP, landscape, prep list and the three blank checklists are published on `/documents/`. Historical application dossiers and farm visit reports stay permission-gated behind the farmer account (MVP 1), never on a public URL — they contain farmer personal data. |
+| D23 | UAT sign-off for MVP 0. | **Product signs; three scenarios provisional.** Scenarios 1, 3 and 8 (does the bot quote, does the refusal convince, does the site overclaim) are judgements about the group's trust and must be signed by the PGS administrator and the consumer representative. Absent that availability they are recorded **provisional** and re-run at MVP 1 kickoff. Signing them on the product owner's word alone would make the UAT self-certification. |
+| D24 | `knowledge/` as a separate app. | **Kept, for a different reason than §18.2 originally gave.** A Django app is a *migration namespace*: the corpus has an independent lifecycle (re-ingestion, `sha256` idempotency, version chains, a frozen embedding dimension) that must never entangle with certification migrations. The original reasons — swappability and tooling — do not require an app, because `import-linter` works on module paths. |
 
 ---
 
