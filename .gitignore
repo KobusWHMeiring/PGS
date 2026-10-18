@@ -1,0 +1,34 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local config and secrets — .env is the sole config source (build_principles §VII)
+.env
+.env.local
+
+# Runtime artefacts
+*.log
+db.sqlite3
+media/
+private_media/
+staticfiles/
+backups/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# NOTE: pgs_docs/ is intentionally NOT ignored. The governing documents
+# (OPP, SAOSO v2.1, FORM workbook, checklists) are the source of truth for
+# domain language and must be versioned alongside the code that cites them.

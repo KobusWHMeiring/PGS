@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<!-- REVIEW ARTIFACT (not a production template) | Outeniqua PGS — Open Decisions | 2026-10-18
+     Companion to product/backlog/Refinement/PGS_PLATFORM_SPEC.md §18 and the six overrides.
+     Self-contained: no CDN, no build step. Answers autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — Decisions Review</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 160px; }
+
+  /* ---------- header ---------- */
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff;
+    padding: 44px 20px 38px;
+    margin-bottom: 28px;
+  }
+  header.hero .inner { max-width: 940px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 10px; font-size: 30px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero p { margin: 0; max-width: 62ch; opacity: .9; font-size: 15px; }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .8;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* ---------- intro ---------- */
+  .intro {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 32px;
+  }
+  .intro h2 { margin: 0 0 8px; font-size: 17px; }
+  .intro p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); }
+  .intro ol { margin: 10px 0 0; padding-left: 20px; font-size: 14.5px; color: var(--muted); }
+  .intro li { margin-bottom: 5px; }
+
+  /* ---------- section ---------- */
+  .section-head {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    margin: 38px 0 14px;
+  }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -6px 0 16px; max-width: 68ch; }
+
+  /* ---------- card ---------- */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 20px 22px 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  .card.answered { box-shadow: var(--shadow), inset 3px 0 0 0 var(--accent); }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .tag {
+    flex: none; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 9px; border-radius: 8px; letter-spacing: .02em; margin-top: 2px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 16.5px; line-height: 1.35; letter-spacing: -.005em; }
+  .ctx { margin: 0; font-size: 14.5px; color: var(--muted); }
+
+  .rec {
+    margin: 14px 0 0;
+    background: var(--surface-low);
+    border-radius: var(--radius-lg);
+    padding: 13px 15px;
+  }
+  .rec .label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--accent); display: block; margin-bottom: 5px;
+  }
+  .rec p { margin: 0; font-size: 14.5px; }
+  .rec strong { font-weight: 650; }
+
+  textarea {
+    width: 100%; margin-top: 14px; min-height: 88px; resize: vertical;
+    font-family: var(--font); font-size: 15px; line-height: 1.5;
+    color: var(--text); background: var(--surface-low);
+    border: 1px solid transparent; border-radius: var(--radius-lg);
+    padding: 12px 14px;
+  }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  .card-foot { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+
+  /* ---------- perspective control ---------- */
+  .opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .opt {
+    cursor: pointer; font-size: 13.5px; font-weight: 550;
+    padding: 8px 15px; border-radius: 999px;
+    background: var(--surface-low); color: var(--muted);
+    border: 1px solid transparent; user-select: none;
+    transition: background .12s, color .12s;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt:has(input:checked) { background: var(--accent); color: #fff; }
+  .opt.neg:has(input:checked) { background: var(--warn); color: #fff; }
+
+  /* ---------- buttons ---------- */
+  button {
+    font-family: var(--font); font-size: 13.5px; font-weight: 600;
+    cursor: pointer; border-radius: 10px; padding: 8px 14px;
+    border: 1px solid transparent; background: var(--surface-low); color: var(--text);
+    transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+  button.tiny { font-size: 12.5px; padding: 6px 11px; }
+
+  /* ---------- sticky toolbar ---------- */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.93);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky);
+    padding: 11px 20px;
+  }
+  .bar .inner {
+    max-width: 940px; margin: 0 auto;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .progress { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .bar .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .bar .saved.show { opacity: 1; }
+
+  /* ---------- output ---------- */
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0;
+    width: min(820px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 340px; max-height: 52vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high);
+  }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, .card-foot, dialog, .intro { display: none; }
+    .card, .intro { box-shadow: none; break-inside: avoid; }
+    .wrap { padding-bottom: 0; }
+    textarea { background: #fff; min-height: 60px; }
+  }
+  @media (max-width: 560px) {
+    header.hero h1 { font-size: 23px; }
+    .card { padding: 17px 16px 18px; }
+    .wrap { padding: 0 14px 170px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS Digital Platform</p>
+    <h1>Decisions Review</h1>
+    <p>Ten open decisions plus six architectural overrides I made while writing the target-state spec. Answer in your own words — a one-word "yes" is fine, and "no, because…" is better.</p>
+    <div class="meta">
+      <span>Companion to <code>PGS_PLATFORM_SPEC.md §18</code></span>
+      <span>2026-10-18</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>How to use this</h2>
+    <p>Every answer autosaves in this browser as you type, so you can close the tab and come back. Nothing is sent anywhere.</p>
+    <ol>
+      <li>Use <b>Accept recommendation</b> where you agree, or type your own answer.</li>
+      <li>For the overrides, pick <b>Agree</b>, <b>Disagree</b> or <b>Change</b>, then add a note if it needs one.</li>
+      <li>When done, hit <b>Copy answers</b> or <b>Download</b> and paste the result back to me.</li>
+    </ol>
+  </div>
+
+  <div class="section-head">
+    <h2>Part 1 — Overrides I made</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">These are places I deliberately changed or extended your original PRD. Each one is reversible now and expensive later, which is why they are in front of you.</p>
+  <div id="overrides"></div>
+
+  <div class="section-head">
+    <h2>Part 2 — Open decisions</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">D1, D2 and D3 are the expensive-to-reverse ones. D6–D10 are cheap now and annoying later.</p>
+  <div id="decisions"></div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress" id="progress"></span>
+    <span class="saved" id="saved">Saved</span>
+    <span class="spacer"></span>
+    <button class="ghost tiny" id="clearBtn">Clear all</button>
+    <button class="tiny" id="printBtn">Print</button>
+    <button class="primary" id="copyBtn">Copy answers</button>
+    <button class="primary" id="dlBtn">Download</button>
+  </div>
+</div>
+
+<dialog id="outDlg">
+  <div class="dlg-head">
+    <h3>Your answers</h3>
+    <p>Paste this back to me, or download it and attach the file.</p>
+  </div>
+  <textarea id="outText" spellcheck="false"></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="dlgCopy">Copy to clipboard</button>
+    <button id="dlgDl">Download .md</button>
+    <span class="spacer" style="flex:1"></span>
+    <button class="ghost" id="dlgClose">Close</button>
+  </div>
+</dialog>
+
+<script>
+/* ------------------------------------------------------------------ data */
+const OVERRIDES = [
+  {
+    id: 'O1',
+    title: 'Normalised answers instead of a single JSON blob',
+    ctx: 'Your PRD specified AssessmentResponse.answers as one JSONField. I kept a raw payload for audit and replay, but added normalised AssessmentAnswer / AssessmentVerdict rows alongside it.',
+    rec: 'Without normalised rows, "every Critical finding this quarter", "every farm non-compliant on V4", and gap analysis against SAOSO clauses are not queryable. This is the biggest schema change from your PRD.'
+  },
+  {
+    id: 'O2',
+    title: 'Photos stored as Blobs, not Base64',
+    ctx: 'Your PRD stores "full-resolution Base64 photos" in IndexedDB.',
+    rec: 'Base64 inflates storage roughly 33 percent, spikes phone memory, and forces a decode step server-side. Blobs in IndexedDB and multipart uploads cost nothing extra to do correctly.'
+  },
+  {
+    id: 'O3',
+    title: 'Structured insufficiency flag instead of substring detection',
+    ctx: 'Your PRD detects the exact string "I cannot find a definitive answer in the SAOSO standards." in the LLM reply to trigger the escalation action.',
+    rec: 'Keep the string as the user-visible text, but trigger escalation on a structured insufficient_context flag or empty citations. Prompt-scraping breaks silently on any wording change.'
+  },
+  {
+    id: 'O4',
+    title: 'One core app and a models package, not three apps',
+    ctx: 'Your PRD proposed _core, _assessment and _chatbot as separate Django apps. Harvester mandates a Monolithic Core. Harvester also mandates a single models.py, which collides with the 30 KB file cap.',
+    rec: 'Single core/ app with domain-sliced modules, and core/models/ as a package. Farm and User are referenced by every context, so separate apps mean circular imports and cross-app FK sprawl for no benefit.'
+  },
+  {
+    id: 'O5',
+    title: 'Roles split into two axes',
+    ctx: 'Your PRD defined User as (Admin, Peer Assessor, Consumer).',
+    rec: 'A peer member is also a farmer, so role is contextual. Account type (User.role) and role-in-visit (VisitParticipant.role) are separate. Your single Consumer role was doing three jobs: consumer, retailer and academic.'
+  },
+  {
+    id: 'O6',
+    title: 'Added missing models and sign-off gates',
+    ctx: 'The PRD had no home for pre-visit questionnaire answers, pledges, certificates, sync idempotency, or fee eligibility.',
+    rec: 'Added Pledge (including the verbal-pledge path for non-literate members, OPP I.2), Certificate and EndorsedProduct, SyncReceipt for idempotency, EscalatedQuery reasons, fee tracking, and the gates that CERTIFIED is blocked while a Critical action is open, and certificates are blocked unless the member is paid up (OPP 2.3, 4.5).'
+  }
+];
+
+const DECISIONS = [
+  {
+    id: 'D1',
+    title: 'Is HTMX permitted?',
+    ctx: 'Harvester says "Vanilla First"; Homtini explicitly uses HTMX. It affects the public site, farmer portal and registry filters. The offline assessor PWA would not use it either way.',
+    rec: 'Allow HTMX. It is a single vendored file with no build step, so it does not violate the zero-build rule, and it removes a lot of hand-rolled fetch and DOM code from exactly the surfaces that need it most.'
+  },
+  {
+    id: 'D2',
+    title: 'Storage backend: S3 or filesystem media?',
+    ctx: 'Your PRD says AWS S3. Harvester mandates filesystem media/ plus Docker volumes.',
+    rec: 'django-storages with filesystem in dev and S3-compatible in production. Evidence photos and PDFs need durability and off-box backup. Document it as a deliberate divergence from Harvester.'
+  },
+  {
+    id: 'D3',
+    title: 'LLM and embedding provider',
+    ctx: 'The PRD never names a provider or an embedding dimension. Harvester already runs google-generativeai (Gemini Flash).',
+    rec: 'Use Gemini, matching Harvester. Confirm and freeze the embedding model and its dimension in the migration, because changing it later means re-embedding the whole 101-page corpus.'
+  },
+  {
+    id: 'D4',
+    title: 'Real-time or quarterly committee review?',
+    ctx: 'OPP mandates quarterly meetings but also permits provisional acceptance on the day and a 5-day window to conclude.',
+    rec: 'Support both, defaulting to per-visit review with a quarterly roll-up. The data model must not assume batch.'
+  },
+  {
+    id: 'D5',
+    title: 'Farmer auth: password accounts or magic links?',
+    ctx: 'You chose farmer accounts. Harvester uses UUID magic links for public access.',
+    rec: 'Password accounts with email verification and self-service reset, since farmers return annually. Add magic-link login later if password friction proves real.'
+  },
+  {
+    id: 'D6',
+    title: 'Risk assessment per visit: free text or structured?',
+    ctx: 'PREP lists a risk assessment in the committee log, but the form does not define its shape.',
+    rec: 'Structured low / medium / high plus notes, so it is reportable across visits.'
+  },
+  {
+    id: 'D7',
+    title: 'Afrikaans and English bilingual UI?',
+    ctx: 'The Outeniqua catchment is bilingual. Retrofitting i18n later is expensive.',
+    rec: 'Model preferred_language now. Ship English first. The field costs nothing today.'
+  },
+  {
+    id: 'D8',
+    title: 'WordPress migration scope and domain',
+    ctx: 'The PRD says "ideally replacing the website at pgsouteniqua.wordpress.com, all relevant info".',
+    rec: 'Treat it as a separate workstream with its own content inventory and redirect map. Do not let it gate the platform build.'
+  },
+  {
+    id: 'D9',
+    title: 'Retain full-resolution photo originals?',
+    ctx: 'Your PRD says full-resolution evidence photos. Roughly 4 MB each, roughly 30 per visit.',
+    rec: 'Yes, retain originals. It is around 120 MB per visit, which is unremarkable for S3, and evidence integrity matters. Serve a 2048px derivative publicly.'
+  },
+  {
+    id: 'D10',
+    title: 'Notification channel: email only, or WhatsApp and SMS?',
+    ctx: 'Assessors and farmers are often on poor rural connections where WhatsApp beats email.',
+    rec: 'Email first, via Django SMTP. It is simple and auditable. WhatsApp is a second integration and a second failure mode; add it if the group actually needs it.'
+  }
+];
+
+/* ------------------------------------------------------------------ state */
+const KEY = 'pgs-decisions-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+const save = () => {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+    const s = document.getElementById('saved');
+    s.classList.add('show');
+    clearTimeout(save._t);
+    save._t = setTimeout(() => s.classList.remove('show'), 1200);
+  } catch (e) { /* storage full or blocked: typing still works */ }
+};
+
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ------------------------------------------------------------------ render */
+function overrideCard(o) {
+  const st = state[o.id] || {};
+  const opts = [
+    ['agree',    'Agree',    ''],
+    ['disagree', 'Disagree', 'neg'],
+    ['change',   'Change',   'neg']
+  ].map(([v, label, cls]) =>
+    `<label class="opt ${cls}"><input type="radio" name="g_${o.id}" value="${v}" ${st.verdict === v ? 'checked' : ''} data-id="${o.id}">${label}</label>`
+  ).join('');
+  return `
+  <div class="card ${st.verdict || st.note ? 'answered' : ''}" id="card_${o.id}">
+    <div class="card-head">
+      <span class="tag">${o.id}</span>
+      <div>
+        <h3>${esc(o.title)}</h3>
+        <p class="ctx">${esc(o.ctx)}</p>
+      </div>
+    </div>
+    <div class="rec"><span class="label">My call</span><p>${esc(o.rec)}</p></div>
+    <div class="opts">${opts}</div>
+    <textarea data-note="${o.id}" placeholder="Optional note — what would you change, and why?">${esc(st.note || '')}</textarea>
+  </div>`;
+}
+
+function decisionCard(d) {
+  const st = state[d.id] || {};
+  return `
+  <div class="card ${st.answer ? 'answered' : ''}" id="card_${d.id}">
+    <div class="card-head">
+      <span class="tag">${d.id}</span>
+      <div>
+        <h3>${esc(d.title)}</h3>
+        <p class="ctx">${esc(d.ctx)}</p>
+      </div>
+    </div>
+    <div class="rec"><span class="label">Recommended</span><p>${esc(d.rec)}</p></div>
+    <textarea data-answer="${d.id}" placeholder="Your answer…">${esc(st.answer || '')}</textarea>
+    <div class="card-foot">
+      <button class="tiny" data-accept="${d.id}">Accept recommendation</button>
+    </div>
+  </div>`;
+}
+
+document.getElementById('overrides').innerHTML = OVERRIDES.map(overrideCard).join('');
+document.getElementById('decisions').innerHTML = DECISIONS.map(decisionCard).join('');
+
+/* ------------------------------------------------------------------ events */
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.note) { state[t.dataset.note] = state[t.dataset.note] || {}; state[t.dataset.note].note = t.value; refresh(t.dataset.note); save(); }
+  if (t.dataset.answer) { state[t.dataset.answer] = state[t.dataset.answer] || {}; state[t.dataset.answer].answer = t.value; refresh(t.dataset.answer); save(); }
+});
+
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.type === 'radio' && t.dataset.id) { state[t.dataset.id] = state[t.dataset.id] || {}; state[t.dataset.id].verdict = t.value; refresh(t.dataset.id); save(); }
+});
+
+document.addEventListener('click', (e) => {
+  const id = e.target.dataset && e.target.dataset.accept;
+  if (!id) return;
+  const d = DECISIONS.find(x => x.id === id);
+  const ta = document.querySelector(`textarea[data-answer="${id}"]`);
+  ta.value = d.rec;
+  state[id] = state[id] || {};
+  state[id].answer = d.rec;
+  refresh(id); save();
+});
+
+function refresh(id) {
+  const card = document.getElementById('card_' + id);
+  const st = state[id] || {};
+  const has = st.answer || st.note || st.verdict;
+  card.classList.toggle('answered', !!has);
+  updateProgress();
+}
+
+function answeredCount() {
+  let n = 0;
+  OVERRIDES.forEach(o => { const s = state[o.id] || {}; if (s.verdict || (s.note && s.note.trim())) n++; });
+  DECISIONS.forEach(d => { const s = state[d.id] || {}; if (s.answer && s.answer.trim()) n++; });
+  return n;
+}
+function updateProgress() {
+  const total = OVERRIDES.length + DECISIONS.length;
+  document.getElementById('progress').innerHTML = `<b>${answeredCount()}</b> of ${total} answered`;
+}
+updateProgress();
+
+/* ------------------------------------------------------------------ output */
+function buildMarkdown() {
+  const L = [];
+  L.push('# Outeniqua PGS — Decisions Review');
+  L.push('');
+  L.push('_Answers to PGS_PLATFORM_SPEC.md §18 and the six architectural overrides._');
+  L.push('');
+  L.push('## Part 1 — Overrides');
+  L.push('');
+  OVERRIDES.forEach(o => {
+    const s = state[o.id] || {};
+    L.push(`### ${o.id} — ${o.title}`);
+    L.push(`**Verdict:** ${s.verdict ? s.verdict.charAt(0).toUpperCase() + s.verdict.slice(1) : '(no answer)'}`);
+    L.push(`**Note:** ${s.note && s.note.trim() ? s.note.trim() : '—'}`);
+    L.push('');
+  });
+  L.push('## Part 2 — Open decisions');
+  L.push('');
+  DECISIONS.forEach(d => {
+    const s = state[d.id] || {};
+    L.push(`### ${d.id} — ${d.title}`);
+    L.push(`**Answer:** ${s.answer && s.answer.trim() ? s.answer.trim() : '(no answer)'}`);
+    L.push('');
+  });
+  const total = OVERRIDES.length + DECISIONS.length;
+  const unanswered = [];
+  OVERRIDES.forEach(o => { const s = state[o.id] || {}; if (!s.verdict && !(s.note && s.note.trim())) unanswered.push(o.id); });
+  DECISIONS.forEach(d => { const s = state[d.id] || {}; if (!(s.answer && s.answer.trim())) unanswered.push(d.id); });
+  L.push('---');
+  L.push(`_${answeredCount()} of ${total} answered.${unanswered.length ? ' Outstanding: ' + unanswered.join(', ') + '.' : ''}_`);
+  return L.join('\n');
+}
+
+const dlg = document.getElementById('outDlg');
+const out = document.getElementById('outText');
+document.getElementById('copyBtn').onclick = () => { out.value = buildMarkdown(); dlg.showModal(); };
+document.getElementById('dlBtn').onclick = () => { out.value = buildMarkdown(); dlg.showModal(); };
+
+document.getElementById('dlgCopy').onclick = async () => {
+  const b = document.getElementById('dlgCopy');
+  try { await navigator.clipboard.writeText(out.value); b.textContent = 'Copied'; }
+  catch (e) { out.select(); document.execCommand('copy'); b.textContent = 'Copied'; }
+  setTimeout(() => b.textContent = 'Copy to clipboard', 1500);
+};
+document.getElementById('dlgDl').onclick = () => {
+  const blob = new Blob([out.value], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pgs-decisions-review.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('dlgClose').onclick = () => dlg.close();
+document.getElementById('printBtn').onclick = () => window.print();
+
+document.getElementById('clearBtn').onclick = () => {
+  if (!confirm('Clear every answer? This cannot be undone.')) return;
+  state = {};
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  document.querySelectorAll('textarea').forEach(t => t.value = '');
+  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('answered'));
+  updateProgress();
+};
+</script>
+</body>
+</html>

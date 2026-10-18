@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<!-- REVIEW ARTIFACT (not a production template) | Outeniqua PGS — MVP 0 Scope & Open Questions | 2026-10-18
+     Companion to product/backlog/Refinement/PGS_PLATFORM_SPEC.md §19, MVP0_PLAN.md, and the
+     review findings of 2026-10-18. Self-contained: no CDN, no build step.
+     Decisions autosave to localStorage. Export produces a markdown decision log. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — MVP 0 Scope &amp; Open Questions</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --warn-line:       #e2cba6;
+    --danger:          #8c2f2a;
+    --danger-soft:     #f9ecea;
+    --danger-line:     #e3bcb8;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px 170px; }
+
+  /* ---------- header ---------- */
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff;
+    padding: 44px 20px 38px;
+    margin-bottom: 28px;
+  }
+  header.hero .inner { max-width: 960px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 10px; font-size: 30px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero p { margin: 0; max-width: 64ch; opacity: .92; font-size: 15px; }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .82;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* ---------- intro ---------- */
+  .intro {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 32px;
+  }
+  .intro h2 { margin: 0 0 8px; font-size: 17px; }
+  .intro p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); }
+  .intro p:last-child { margin-bottom: 0; }
+  .intro ol, .intro ul { margin: 10px 0 0; padding-left: 20px; font-size: 14.5px; color: var(--muted); }
+  .intro li { margin-bottom: 5px; }
+  .intro strong { color: var(--text); font-weight: 650; }
+
+  /* ---------- section ---------- */
+  .section-head {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    margin: 40px 0 14px;
+  }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -6px 0 16px; max-width: 70ch; }
+
+  /* ---------- card ---------- */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 20px 22px 22px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+  .card.headline { box-shadow: var(--shadow), inset 0 3px 0 0 var(--accent); }
+  .card.fix      { box-shadow: var(--shadow), inset 3px 0 0 0 var(--danger); }
+  .card.answered { box-shadow: var(--shadow), inset 3px 0 0 0 var(--accent); }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .tag {
+    flex: none; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 9px; border-radius: 8px; letter-spacing: .02em; margin-top: 2px;
+  }
+  .tag.red { background: var(--danger-soft); color: var(--danger); }
+  .card h3 { margin: 0 0 6px; font-size: 16.5px; line-height: 1.35; letter-spacing: -.005em; }
+  .ctx { margin: 0; font-size: 14.5px; color: var(--muted); }
+  .ctx strong { color: var(--text); font-weight: 650; }
+
+  .rec {
+    margin: 14px 0 0;
+    background: var(--surface-low);
+    border-radius: var(--radius-lg);
+    padding: 13px 15px;
+  }
+  .rec .label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--accent); display: block; margin-bottom: 5px;
+  }
+  .rec p { margin: 0; font-size: 14.5px; }
+  .rec p + p { margin-top: 8px; }
+  .rec strong { font-weight: 650; }
+
+  .evidence {
+    margin: 14px 0 0; background: #1e2a23; color: #dbe6df;
+    border-radius: var(--radius-lg); padding: 13px 15px; overflow-x: auto;
+  }
+  .evidence .label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: #9dbfa9; display: block; margin-bottom: 8px;
+  }
+  .evidence pre {
+    margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    white-space: pre; color: #dbe6df;
+  }
+  .evidence .hit { color: #ffd7a8; font-weight: 600; }
+  .evidence .miss { color: #f5a9a2; font-weight: 600; }
+  .evidence .zero { color: #f5a9a2; font-weight: 700; }
+
+  /* ---------- scope table ---------- */
+  .scope { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 4px; }
+  .scope th {
+    text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; padding: 0 10px 7px 0; border-bottom: 1px solid var(--surface-high);
+  }
+  .scope td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--surface-low); vertical-align: top; }
+  .scope tr:last-child td { border-bottom: none; }
+  .scope td:first-child { width: 46%; }
+  .yes { color: var(--accent); font-weight: 650; }
+  .no  { color: var(--muted); }
+  .no b { font-weight: 650; color: var(--text); }
+
+  /* ---------- options ---------- */
+  .opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .opt {
+    cursor: pointer; font-size: 13.5px; font-weight: 550;
+    padding: 8px 15px; border-radius: 999px;
+    background: var(--surface-low); color: var(--muted);
+    border: 1px solid transparent; user-select: none; position: relative;
+    transition: background .12s, color .12s;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt:has(input:checked) { background: var(--accent); color: #fff; }
+  .opt.neg:has(input:checked) { background: var(--warn); color: #fff; }
+
+  textarea {
+    width: 100%; margin-top: 14px; min-height: 80px; resize: vertical;
+    font-family: var(--font); font-size: 15px; line-height: 1.5;
+    color: var(--text); background: var(--surface-low);
+    border: 1px solid transparent; border-radius: var(--radius-lg);
+    padding: 12px 14px;
+  }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  /* ---------- buttons ---------- */
+  button {
+    font-family: var(--font); font-size: 13.5px; font-weight: 600;
+    cursor: pointer; border-radius: 10px; padding: 8px 14px;
+    border: 1px solid transparent; background: var(--surface-low); color: var(--text);
+    transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+  button.tiny { font-size: 12.5px; padding: 6px 11px; }
+
+  /* ---------- blocked banner ---------- */
+  .banner {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--warn-soft); border: 1px solid var(--warn-line);
+    border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 14px;
+  }
+  .banner .ico { font-size: 17px; line-height: 1.3; flex: none; color: var(--warn); }
+  .banner p { margin: 0; font-size: 14.5px; }
+  .banner strong { font-weight: 650; }
+
+  /* ---------- footer ---------- */
+  footer.end {
+    margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--surface-high);
+    font-size: 13px; color: var(--muted);
+  }
+  footer.end code { font-family: var(--mono); font-size: 12px; }
+
+  /* ---------- sticky toolbar ---------- */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.93);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky);
+    padding: 11px 20px;
+  }
+  .bar .inner {
+    max-width: 960px; margin: 0 auto;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .progress { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .bar .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .bar .saved.show { opacity: 1; }
+
+  /* ---------- dialog ---------- */
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0;
+    width: min(840px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 360px; max-height: 54vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high);
+  }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, dialog { display: none; }
+    .card, .intro { box-shadow: none; border: 1px solid var(--surface-high); break-inside: avoid; }
+    .wrap { padding-bottom: 0; }
+    textarea { background: #fff; min-height: 60px; }
+    .evidence { background: #f2f2f2; color: #111; }
+    .evidence pre { color: #111; }
+  }
+  @media (max-width: 560px) {
+    header.hero h1 { font-size: 23px; }
+    .card { padding: 17px 16px 18px; }
+    .wrap { padding: 0 14px 180px; }
+    .scope td:first-child { width: 50%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS Digital Platform</p>
+    <h1>MVP 0 — Scope &amp; Open Questions</h1>
+    <p>What the first slice actually ships, what it deliberately does not, and the eleven decisions that
+       must be closed before a plan can be written or a line of code committed.</p>
+    <div class="meta">
+      <span>Slice <code>0</code> of <code>0 · 1 · 2 · 3</code></span>
+      <span>Plan <code>MVP0_PLAN.md</code></span>
+      <span>UAT <code>tests/uat/mvp0_standards_and_public_site_uat.md</code></span>
+      <span>2026-10-18</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>How to use this</h2>
+    <p><strong>Part 1</strong> and <strong>Part 2</strong> are the answer to <em>“what will MVP 0 be”</em>.
+       <strong>Part 3</strong> records five defects found while checking the plan against the source documents —
+       these are fixes, not choices. <strong>Part 4</strong> holds the open questions; each needs a decision from
+       you (or the group) before the plan is rewritten.</p>
+    <p>Pick an option on each question card and add notes. Everything autosaves in this browser. The
+       <em>Export decisions</em> button produces a markdown decision log you can paste into the spec’s §18
+       decision table or attach to the plan.</p>
+    <p><strong>Nothing here is a certification claim.</strong> MVP 0 ships a public site and a standards
+       chatbot. It publishes no farm status, no certificate, no seal and no QR code — by design.</p>
+  </div>
+
+  <!-- ============================ PART 1 ============================ -->
+  <div class="section-head">
+    <h2>Part 1 — What MVP 0 is</h2>
+    <div class="rule"></div>
+  </div>
+  <p class="section-note">One sentence, then the reasoning, then the fence.</p>
+
+  <div class="card headline">
+    <div class="card-head">
+      <span class="tag">In one line</span>
+      <div>
+        <h3>A public website for the group, and a grounded chatbot that answers only from the four
+            governing documents — citing them, and refusing when they don’t cover the question.</h3>
+        <p class="ctx">No accounts. No farm records. No certificates. No assessor app. No claim of any kind
+           about any farm.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Why this slice goes first</h3>
+    <p class="ctx">Three reasons, in order of weight.</p>
+    <table class="scope">
+      <tr>
+        <th>Reason</th>
+        <th>What it retires</th>
+      </tr>
+      <tr>
+        <td><b>It proves the clause model the assessment templates depend on.</b></td>
+        <td class="no">The FORM’s verdicts are derived from SAOSO clauses (<code>V1a (S20.1.1)</code>).
+            If ingestion cannot produce reliable clause references from the real PDFs, MVP 1’s frozen
+            template snapshots and MVP 3’s gap analysis are both built on sand. Better to find that out
+            in week two than week twenty.</td>
+      </tr>
+      <tr>
+        <td><b>It proves the chatbot can say “I don’t know”.</b></td>
+        <td class="no">The group’s trust in the whole platform is staked on the bot not inventing
+            standards. That is a judgement no test can make — it needs a real user reading a real answer
+            (UAT Scenario 1).</td>
+      </tr>
+      <tr>
+        <td><b>It is the feedback surface the group needs before it hands over certification records.</b></td>
+        <td class="no">They can see and use a marketing site and a chatbot immediately. They cannot
+            evaluate a sync protocol until it has carried a real visit.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="banner">
+    <span class="ico">⚑</span>
+    <p><strong>Why it is emphatically <em>not</em> the registry.</strong> Publishing certification status
+       before the machinery that substantiates it exists is the one move that could damage the group’s
+       credibility — precisely the problem a PGS exists to solve. The registry lands in MVP 2, behind real
+       certificate data. MVP 0 makes no claim, so it cannot make a false one.</p>
+  </div>
+
+  <div class="card">
+    <h3>The fence</h3>
+    <p class="ctx">Written out so the boundary is reviewable rather than assumed.</p>
+    <table class="scope">
+      <tr>
+        <th>In MVP 0</th>
+        <th>Not in MVP 0 — and when</th>
+      </tr>
+      <tr>
+        <td class="yes">Public marketing site: home, about the PGS and its six basic elements, Basic
+            Production Principles, how to join, fee schedule, members, contact</td>
+        <td class="no"><b>Farm registry and verification pages</b> → MVP 2</td>
+      </tr>
+      <tr>
+        <td class="yes">Grounded chatbot on the same site, with citations and a structured refusal</td>
+        <td class="no"><b>Certificates, seals, QR</b> → MVP 2</td>
+      </tr>
+      <tr>
+        <td class="yes"><code>/documents/</code> — self-hosted governing documents, retiring the Google
+            Drive dependency</td>
+        <td class="no"><b>Farmer accounts, application, pre-visit questionnaire</b> → MVP 1</td>
+      </tr>
+      <tr>
+        <td class="yes">Standards corpus: ingest, chunk, embed, retrieve, scoped to a <code>StandardSet</code></td>
+        <td class="no"><b>Offline assessor PWA, split-sync, Sheet J PDF</b> → MVP 1</td>
+      </tr>
+      <tr>
+        <td class="yes">Bilingual <em>mechanism</em>: <code>preferred_language</code>, translated shell,
+            catalogue in the cached shell</td>
+        <td class="no"><b>Translated <em>content</em></b> → needs a named Afrikaans reviewer (Q5)</td>
+      </tr>
+      <tr>
+        <td class="yes">Foundation: customs <code>User</code> with plural roles, <code>Category</code> and
+            <code>Seal</code> as data, <code>/health/</code>, CI, backup + rehearsed restore,
+            <code>knowledge</code> ↛ <code>core</code> lint rule</td>
+        <td class="no"><b>Reporting, gap analysis, census exports</b> → MVP 3 · <b>Aggregation workflow,
+            voice notes</b> → post-MVP</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ============================ PART 2 ============================ -->
+  <div class="section-head">
+    <h2>Part 2 — What gets built</h2>
+    <div class="rule"></div>
+  </div>
+  <p class="section-note">Four sub-plans from <code>MVP0_PLAN.md</code>, each with the one thing it must prove.</p>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag">A</span>
+      <div>
+        <h3>Foundation</h3>
+        <p class="ctx">A deployable, empty, health-checked Django 5.2 monolith with CI, off-box backup and
+           the one-way import rule enforced by tooling.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Deliverables</span>
+      <p>Repo scaffold + <code>requirements.txt</code> · env-driven settings (<code>.env</code> only) ·
+         custom <code>User</code> with plural <code>UserRole</code> · <code>Category</code> and
+         <code>Seal</code> tables + <code>seed_deployment</code> · <code>/health/</code> checking DB,
+         Redis, broker, worker · Celery with retry policies · <code>.importlinter</code> contract ·
+         pytest + Playwright + <code>git</code> CI · <code>backup.sh</code> / <code>restore.sh</code> +
+         <code>docs/RUNBOOK.md</code>.</p>
+      <p><strong>Proves:</strong> the deploy target exists and a restore has actually been rehearsed —
+         not assumed.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag">B</span>
+      <div>
+        <h3>Standards corpus &amp; retrieval</h3>
+        <p class="ctx"><code>ingest_standard</code> loads the real PDFs; retrieval returns citable chunks,
+           scoped before ranking.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Deliverables</span>
+      <p><code>StandardSet</code> / <code>StandardDocument</code> / <code>DocumentChunk</code> with
+         <code>pgvector</code> + generated <code>tsvector</code> · pluggable section parsers selected by
+         data · heading-boundary chunker (~800 tokens, overlap) · Gemini embeddings with an explicit
+         timeout · idempotent re-ingest on <code>sha256</code> · hybrid FTS + vector fused by RRF,
+         optionally reranked.</p>
+      <p><strong>Proves:</strong> the clause model works on the documents that exist — see Part 3,
+         which is where this sub-plan currently fails.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag">C</span>
+      <div>
+        <h3>Public site &amp; documents</h3>
+        <p class="ctx">The group’s public surface, hosted by the platform, making no claim.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Deliverables</span>
+      <p>Marketing pages in the group’s own voice · six basic elements from LANDSCAPE · fee schedule from
+         OPP §II · member list carrying the “membership is not certification” disclaimer (an OPP
+         requirement, not a nicety) · <code>/documents/</code> with stable URLs · bilingual scaffolding ·
+         vendored HTMX only where it earns its place.</p>
+      <p><strong>Proves:</strong> the WordPress site can be retired, and the Drive dependency with it.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag">D</span>
+      <div>
+        <h3>Grounded chatbot</h3>
+        <p class="ctx"><code>answer_question()</code> with a strict JSON contract, mandatory citations and
+           a structured escalation.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Deliverables</span>
+      <p>Gemini with <code>response_mime_type="application/json"</code> and a fixed schema
+         (<code>answer</code>, <code>citations[]</code>, <code>insufficient_context</code>) · refusal
+         triggered on the <em>flag</em>, not on prose · citation validity check against the retrieved set ·
+         <code>EscalatedQuery</code> for administrative follow-up · per-IP rate limiting, 500-char cap,
+         answer cache, token accounting.</p>
+      <p><strong>Proves:</strong> the bot answers from the standard, cites something findable, and refuses
+         convincingly — the three judgements in UAT Scenarios 1–3.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 3 ============================ -->
+  <div class="section-head">
+    <h2>Part 3 — What must be fixed first</h2>
+    <div class="rule"></div>
+  </div>
+  <p class="section-note">Five defects found by extracting text from the actual PDFs and workbook and
+     checking the plan against it. These are not open questions — the fix is clear. They are listed because
+     two of them make MVP 0 silently ship a broken corpus.</p>
+
+  <div class="banner">
+    <span class="ico">⛔</span>
+    <p><strong>F1 and F2 are P0.</strong> As written, ingestion produces zero section references from
+       SAOSO and cannot cite the OPP’s seals or aggregation sections at all. The plan’s own tests pass
+       against hand-written fixtures in the invented format, so CI stays green while the chatbot has
+       nothing to cite.</p>
+  </div>
+
+  <div class="card fix">
+    <div class="card-head">
+      <span class="tag red">F1</span>
+      <div>
+        <h3>The SAOSO parser matches nothing</h3>
+        <p class="ctx">Spec §4.5 and §13, <code>MVP0_PLAN.md</code> Task B2 and the UAT all assert SAOSO
+           cites clauses as <code>B-20.1.1</code>. SAOSO does not.</p>
+      </div>
+    </div>
+    <div class="evidence">
+      <span class="label">Actual text, saoso-version-2.1-2026.pdf</span>
+<pre>SECTION B
+20.1. General
+20.1.1. Handlers and processors shall not co-mingle organic
+         products with non-organic products.
+20.1.2. Handlers and processers shall ensure traceability in
+         the organic processing and handling chain.
+
+grep -cE '^[A-Z]-[0-9]' saoso-version-2.1-2026.txt   →  <span class="zero">0</span></pre>
+    </div>
+    <div class="rec">
+      <span class="label">Fix</span>
+      <p>Rewrite <code>_CLAUSE</code> for <code>^\s*(\d{1,2}(?:\.\d{1,2})*)\.\s</code> and capture the
+         enclosing <code>SECTION A/B/C</code> for disambiguation — <code>1.1.1</code> exists in both
+         Section A and Section B, so a bare reference is ambiguous. Fix <code>_APPENDIX</code> for the
+         real forms: <code>Appendix 1.</code>, <code>Appendix 4. Table 1</code>, <code>Appendix 6a</code>.</p>
+      <p><strong>Then add the test that was missing:</strong> assert ingestion of each real PDF yields
+         more than zero sections with a non-empty <code>section_ref</code>. Fixtures must be verbatim
+         extracts of the shipped PDFs, never hand-written strings.</p>
+    </div>
+  </div>
+
+  <div class="card fix">
+    <div class="card-head">
+      <span class="tag red">F2</span>
+      <div>
+        <h3>The OPP parser cannot cite the seals or the aggregation sections</h3>
+        <p class="ctx">The spec cites <code>OPP §I</code>, <code>§II</code>, <code>§V</code>,
+           <code>§VI</code>, <code>§VII</code> throughout — including the whole traceability appendix.
+           The parser’s heading regex requires digits, so Roman-numeral sections never match.</p>
+      </div>
+    </div>
+    <div class="evidence">
+      <span class="label">Unreachable by the plan's parser</span>
+<pre>I.   Membership procedure
+II.  Membership fees, farm assessment fees, licensing fees
+V.   Seals and certificates issued by the PGS committee     <span class="miss">← the seals</span>
+VI.  Aggregation of produce within the PGS                  <span class="miss">← the aggregation</span>
+VIII. PGS bank account and signatories</pre>
+    </div>
+    <div class="rec">
+      <span class="label">Fix</span>
+      <p>Add a Roman-numeral top-level rule and nest the numbered subsections under it. Both domain areas
+         the review <em>added</em> live in sections the parser cannot reach — so the chatbot cannot cite the
+         OPP for exactly the claims most worth citing. Related: <code>§4.2(5)</code> and <code>§4.1.2</code>
+         are numbered <em>list items</em>, not headings, and need a <code>sub_ref</code> field (Q2).</p>
+    </div>
+  </div>
+
+  <div class="card fix">
+    <div class="card-head">
+      <span class="tag red">F3</span>
+      <div>
+        <h3>§12 contradicts the decision log and the UAT on the pasture-raised seal</h3>
+        <p class="ctx">§4.3 and D11 say the seal is <strong>not shipped</strong>, seeded
+           <code>is_active=False</code>. §12 says the platform <em>“renders the pasture-raised seal with its
+           undefined-criteria caveat”</em>. The UAT’s automated suite is specified to fail if rendered public
+           HTML contains the string <code>pasture raised</code>.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Fix</span>
+      <p>Delete the §12 sentence. The seal stays inactive and is never rendered; issuance is hard-blocked
+         when <code>is_active=False</code> (the spec currently leaves that ambiguous). “GMO free” stays
+         treated as a producer statement, never an endorsement.</p>
+    </div>
+  </div>
+
+  <div class="card fix">
+    <div class="card-head">
+      <span class="tag red">F4</span>
+      <div>
+        <h3>“Notifiable exception” is defined backwards</h3>
+        <p class="ctx">Spec §2: <em>“A deviation that must be reported to PGS SA.”</em> Three source
+           documents say the opposite — it is an exemption <em>granted</em>, documented and reported.</p>
+      </div>
+    </div>
+    <div class="evidence">
+      <span class="label">Source text</span>
+<pre>FORM Sheet I §3   "Indicate any notifiable exception as allowed in the
+                  organic standards <span class="hit">granted</span> and notify PGS SA"
+OPP §V            "The PGS has the authority to <span class="hit">grant</span> notifiable
+                  exemptions to the standards, which must be well documented."
+BPP, Intro        "The Standard describes ... various technical
+                  specifications and notifiable exceptions."</pre>
+    </div>
+    <div class="rec">
+      <span class="label">Fix</span>
+      <p>Not an MVP 0 model, but it changes §2 and §4.2. Drop <code>Finding.is_notifiable_exception</code>;
+         add a <code>NotifiableExemption</code> record with clause, rationale, <code>granted_by</code>,
+         <code>granted_on</code>, <code>reported_on</code>, document reference. Do it before the question
+         templates encode the wrong definition.</p>
+    </div>
+  </div>
+
+  <div class="card fix">
+    <div class="card-head">
+      <span class="tag red">F5</span>
+      <div>
+        <h3>The repo is untracked inside another git repository</h3>
+        <p class="ctx">Task A1 begins with <code>git init</code>. That creates a nested repository — but
+           <code>pgs/</code> currently sits untracked inside a repo rooted at
+           <code>~/Documents/Dev</code>, which holds ~30 unrelated projects and has no
+           <code>.gitignore</code>.</p>
+      </div>
+    </div>
+    <div class="evidence">
+      <span class="label">Current state</span>
+<pre>git rev-parse --show-toplevel  →  C:/Users/…/Documents/Dev
+git ls-files .                 →  <span class="zero">(empty)</span>
+cat ../.gitignore               →  <span class="zero">(absent)</span></pre>
+    </div>
+    <div class="rec">
+      <span class="label">Fix</span>
+      <p>Before any spec edit is committed: <code>git init</code> inside <code>pgs/</code>, make the first
+         commit, and add <code>pgs/</code> to <code>Dev/.gitignore</code> so a stray
+         <code>git add -A</code> from the parent cannot swallow this project along with twenty-nine others.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 4 ============================ -->
+  <div class="section-head">
+    <h2>Part 4 — Open questions</h2>
+    <div class="rule"></div>
+  </div>
+  <p class="section-note">Q1–Q8 block the plan. Q9–Q11 block launch but can be settled in parallel.
+     Each card carries a recommendation; anything you pick is recorded.</p>
+
+  <!-- Q1 -->
+  <div class="card" data-q="q1">
+    <div class="card-head">
+      <span class="tag">Q1</span>
+      <div>
+        <h3>What is the canonical citation format for SAOSO clauses?</h3>
+        <p class="ctx">Three conventions are in play. SAOSO’s body prints <code>20.1.1.</code>; the FORM
+           cites <code>S20.1.1</code>; the spec invented <code>B-20.1.1</code>. The choice decides the
+           parser, the <code>section_ref</code> contract, and what a citation looks like to a farmer.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Match the FORM: <code>S20.1.1</code>.</strong> The group already reads and writes this on
+         paper, and every verdict in the workbook will carry a reference a committee member can find. Store
+         the section letter separately for disambiguation. Render as <em>“SAOSO §20.1.1 – Processing
+         Handling”</em>.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q1" value="S20.1.1 (match the FORM)">S20.1.1 — match the FORM</label>
+      <label class="opt"><input type="radio" name="q1" value="20.1.1 as printed (part stored separately)">20.1.1 — as printed</label>
+      <label class="opt"><input type="radio" name="q1" value="B-20.1.1 (keep the spec's format)">B-20.1.1 — keep the spec’s</label>
+      <label class="opt neg"><input type="radio" name="q1" value="Something else (see notes)">Something else</label>
+    </div>
+    <textarea data-note="q1" placeholder="Notes, or a reason to depart from the recommendation…"></textarea>
+  </div>
+
+  <!-- Q2 -->
+  <div class="card" data-q="q2">
+    <div class="card-head">
+      <span class="tag">Q2</span>
+      <div>
+        <h3>How deep must citations go for the OPP?</h3>
+        <p class="ctx">The spec cites <code>§V</code> (seals) and <code>§4.2(5)</code> (the five-day
+           conclusion window). The second is a numbered list item inside a subsection — it needs structured
+           parsing, not a heading regex, and it is the granularity the load-bearing rules actually use.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Two-level: section reference plus optional <code>sub_ref</code>.</strong> Guarantee
+         <code>§V</code> and <code>§4.2</code> everywhere; populate <code>sub_ref</code> for the
+         enumerated rules the spec depends on (5-day notice, 3-day questionnaire, 5-day conclusion,
+         paid-up gate, Critical-action escalation). Do not attempt every list item — capture the six that
+         carry rules.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q2" value="Section + sub_ref for the six rule-bearing items">Section + sub_ref</label>
+      <label class="opt"><input type="radio" name="q2" value="Section level only (§V, §4.2)">Section only</label>
+      <label class="opt"><input type="radio" name="q2" value="Attempt every enumerated list item">Everything</label>
+      <label class="opt neg"><input type="radio" name="q2" value="Fall back to page references">Page refs</label>
+    </div>
+    <textarea data-note="q2" placeholder="Notes…"></textarea>
+  </div>
+
+  <!-- Q3 -->
+  <div class="card" data-q="q3">
+    <div class="card-head">
+      <span class="tag">Q3</span>
+      <div>
+        <h3>Which documents are in the chatbot’s corpus?</h3>
+        <p class="ctx">Sub-plan B says “the four real PDFs”. §13 says <em>“SAOSO … and the Outeniqua SOPs
+           / OPP / BPP”</em> — which reads as three or four depending on whether “SOPs” is a separate
+           document. <code>/documents/</code> hosts eight. These are different numbers for different jobs.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Corpus = four: SAOSO, OPP, BPP, LANDSCAPE.</strong> One <code>StandardSet</code>.
+         The assessment workbook and the three participant checklists are <code>/documents/</code>
+         downloads only — the workbook is a form, not a standard, and ingesting it would let the bot cite
+         its own questionnaire. Note the OPP contains the SOPs, so “OPP” and “SOPs” are one document.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q3" value="Four: SAOSO, OPP, BPP, LANDSCAPE">Four documents</label>
+      <label class="opt"><input type="radio" name="q3" value="Three: SAOSO, OPP, BPP">Three documents</label>
+      <label class="opt"><input type="radio" name="q3" value="All eight, including the workbook and checklists">All eight</label>
+      <label class="opt neg"><input type="radio" name="q3" value="Something else (see notes)">Something else</label>
+    </div>
+    <textarea data-note="q3" placeholder="Notes…"></textarea>
+  </div>
+
+  <!-- Q4 -->
+  <div class="card" data-q="q4">
+    <div class="card-head">
+      <span class="tag">Q4</span>
+      <div>
+        <h3>Does the chatbot answer about the SAOSO standard only, or about the group’s own rules too?</h3>
+        <p class="ctx">The refusal string is fixed as <em>“I cannot find a definitive answer in the SAOSO
+           standards.”</em> But the corpus includes the OPP — which answers questions the SAOSO standard
+           does not, like “how much is membership?” and “how do I join?”. The fixed wording may misdescribe
+           what the bot actually does.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Keep the corpus wide, fix the wording.</strong> Answer from all four documents, and change
+         the refusal to name the group: <em>“I cannot find a definitive answer in the SAOSO standard or the
+         Outeniqua PGS documents.”</em> The old string was preserved for UX stability out of the original
+         PRD, which had only SAOSO in scope.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q4" value="Wide corpus, reword the refusal">Wide corpus, reword refusal</label>
+      <label class="opt"><input type="radio" name="q4" value="Wide corpus, keep the exact SAOSO string">Wide corpus, keep string</label>
+      <label class="opt neg"><input type="radio" name="q4" value="Narrow to SAOSO only">SAOSO only</label>
+    </div>
+    <textarea data-note="q4" placeholder="Notes…"></textarea>
+  </div>
+
+  <!-- Q5 -->
+  <div class="card" data-q="q5">
+    <div class="card-head">
+      <span class="tag">Q5</span>
+      <div>
+        <h3>How much Afrikaans does MVP 0 actually ship?</h3>
+        <p class="ctx">D7 makes English and Afrikaans both first-class. UAT Scenario 5 says machine-translated
+           Afrikaans <em>“would undercut the site’s credibility more than leaving it in English would”</em>.
+           Those two statements cannot both be satisfied without a human translator — and nobody is named.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Ship the mechanism, not the translation.</strong> <code>preferred_language</code>, the
+         catalogue plumbing, and one small human-translated shell (navigation, form labels, the chatbot
+         frame). Page content and chatbot answers stay English until a named Afrikaans-speaking member
+         reviews them. Then Scenario 5 is judged against a real translation, not a machine one.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q5" value="Mechanism + shell now, content when a reviewer is named">Mechanism + shell</label>
+      <label class="opt"><input type="radio" name="q5" value="Full translation in MVP 0, reviewer named">Full translation now</label>
+      <label class="opt neg"><input type="radio" name="q5" value="Defer Afrikaans entirely to post-MVP">Defer entirely</label>
+    </div>
+    <textarea data-note="q5" placeholder="Who is the Afrikaans reviewer? Name them here…"></textarea>
+  </div>
+
+  <!-- Q6 -->
+  <div class="card" data-q="q6">
+    <div class="card-head">
+      <span class="tag">Q6</span>
+      <div>
+        <h3>Where does MVP 0 run?</h3>
+        <p class="ctx">The handover records hosting as <em>“not decided anywhere”</em>. Sub-plan A ends with
+           a backup script that assumes an attached drive, and there is no <code>docker-compose.yml</code>.
+           Two constraints narrow the field: <code>pgvector</code> must be installed, and the media volume
+           needs an attached backup target.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>A single small VPS with Docker Compose; backups to a drive held by the group.</strong>
+         <code>pgvector</code> rules out shared hosting. The backup target must be <em>off the box</em> and
+         its failure must be alertable — R11 is the spec’s highest-severity risk, and it is only accepted
+         because someone knows about it.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q6" value="Single VPS + Docker Compose, drive held by the group">VPS + group-held drive</label>
+      <label class="opt"><input type="radio" name="q6" value="Managed Postgres with pgvector + separate app host">Managed Postgres</label>
+      <label class="opt"><input type="radio" name="q6" value="Local machine for MVP 0, host decided at MVP 2">Local for now</label>
+      <label class="opt neg"><input type="radio" name="q6" value="Undecided (see notes)">Undecided</label>
+    </div>
+    <textarea data-note="q6" placeholder="Provider, domain, and where the backup drive physically lives…"></textarea>
+  </div>
+
+  <!-- Q7 -->
+  <div class="card" data-q="q7">
+    <div class="card-head">
+      <span class="tag">Q7</span>
+      <div>
+        <h3>Whose Gemini key, and what is the monthly ceiling?</h3>
+        <p class="ctx">D3 chose Gemini. The spec requires per-IP rate limiting, a question cap, answer
+           caching and <em>“spend alerting”</em> (R9) — but no budget or owner is recorded, and embeddings for
+           the whole corpus are one-off spend that must happen before Scenario 1 can be tested at all.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Group-owned account, hard monthly cap, alerting at 50%.</strong> Note D3’s consequence: the
+         embedding dimension is frozen in the migration, so changing the model later means re-embedding the
+         entire corpus. Pick the model deliberately now, not by default.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q7" value="Group-owned key, hard cap, alert at 50%">Group key + cap</label>
+      <label class="opt"><input type="radio" name="q7" value="Developer key for MVP 0, transfer later">Developer key for now</label>
+      <label class="opt neg"><input type="radio" name="q7" value="Undecided (see notes)">Undecided</label>
+    </div>
+    <textarea data-note="q7" placeholder="Budget figure, account owner, embedding model choice…"></textarea>
+  </div>
+
+  <!-- Q8 -->
+  <div class="card" data-q="q8">
+    <div class="card-head">
+      <span class="tag">Q8</span>
+      <div>
+        <h3>Does MVP 0 replace the live WordPress site, or ship as a preview?</h3>
+        <p class="ctx">D8 says <em>“this application is the PGS Outeniqua website; the WordPress site is
+           retired, not run alongside it.”</em> But MVP 0 has no registry, so retiring WordPress at MVP 0
+           would drop the group’s existing farm-status pages — the ones that currently carry their
+           certification claims.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Preview at MVP 0; cut over at MVP 2.</strong> Ship on a staging domain the group can browse
+         and critique. Retire WordPress only once the registry can carry the farm-status pages it is
+         replacing — otherwise MVP 0 removes information the group currently publishes, which is a
+         regression, not a launch. The redirect map becomes a MVP 2 checklist item.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q8" value="Preview at MVP 0, cut over at MVP 2">Preview now, cut over at MVP 2</label>
+      <label class="opt"><input type="radio" name="q8" value="Full replacement at MVP 0">Replace at MVP 0</label>
+      <label class="opt neg"><input type="radio" name="q8" value="Run both alongside indefinitely">Run both</label>
+    </div>
+    <textarea data-note="q8" placeholder="Staging domain, who has the WordPress admin, redirect map owner…"></textarea>
+  </div>
+
+  <!-- Q9 -->
+  <div class="card" data-q="q9">
+    <div class="card-head">
+      <span class="tag">Q9</span>
+      <div>
+        <h3>May the platform host the workbook and the historical dossiers publicly?</h3>
+        <p class="ctx"><code>/documents/</code> retires the Google Drive dependency. But the live site gates
+           some files behind Drive permissions, and historical application dossiers and visit reports are
+           <em>“granted on request”</em> — a permission model, not a public one. Dossiers contain farmer
+           personal data.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Split the list.</strong> Publish the standard, BPP, OPP, landscape, prep list and the three
+         blank checklists — those are already effectively public. Keep dossiers permission-gated behind the
+         farmer account (MVP 1), not on a public URL. Get an explicit yes from the committee for the workbook.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q9" value="Public: standards + blank forms. Gated: dossiers.">Split public / gated</label>
+      <label class="opt"><input type="radio" name="q9" value="Everything public">Everything public</label>
+      <label class="opt neg"><input type="radio" name="q9" value="Keep Drive for dossiers for now">Keep Drive for dossiers</label>
+    </div>
+    <textarea data-note="q9" placeholder="Notes…"></textarea>
+  </div>
+
+  <!-- Q10 -->
+  <div class="card" data-q="q10">
+    <div class="card-head">
+      <span class="tag">Q10</span>
+      <div>
+        <h3>Who signs MVP 0 off?</h3>
+        <p class="ctx">The UAT’s release gate needs four named humans — Product, PGS administrator,
+           committee reviewer, consumer member. Scenarios 1, 3, 4 and 8 are judgements only those people can
+           make. Three of the four seats are currently blank.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Name them now.</strong> If the administrator who will actually use the chatbot is not
+         available to judge Scenarios 1–3, MVP 0 has no meaningful acceptance test and the UAT is theatre.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q10" value="All four seats named before build starts">Named before build</label>
+      <label class="opt"><input type="radio" name="q10" value="Product + administrator only for MVP 0">Two seats</label>
+      <label class="opt neg"><input type="radio" name="q10" value="Undecided (see notes)">Undecided</label>
+    </div>
+    <textarea data-note="q10" placeholder="Names for the four sign-off seats…"></textarea>
+  </div>
+
+  <!-- Q11 -->
+  <div class="card" data-q="q11">
+    <div class="card-head">
+      <span class="tag">Q11</span>
+      <div>
+        <h3>Does <code>knowledge/</code> stay a separate app?</h3>
+        <p class="ctx">§18.2’s own honest note says the case is narrow and Option A is defensible. Its two
+           stated reasons — “the engine may be swapped” and “enforce with tooling” — do not actually require
+           a separate app, because <code>import-linter</code> works on module paths.</p>
+      </div>
+    </div>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Keep the split, but restate the reason.</strong> An app is a <em>migration namespace</em>,
+         and the corpus has an independent lifecycle: re-ingestion, <code>sha256</code> idempotency,
+         version chains, and a frozen embedding dimension. Corpus migrations should never be entangled with
+         certification migrations. MVP 0 is also where the boundary is free, since the slice <em>is</em> the
+         knowledge app plus a site.</p>
+    </div>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="q11" value="Keep two apps, restate the migration-lifecycle reason">Keep two apps</label>
+      <label class="opt neg"><input type="radio" name="q11" value="Collapse to one app, keep the module + lint rule">Collapse to one app</label>
+    </div>
+    <textarea data-note="q11" placeholder="Notes…"></textarea>
+  </div>
+
+  <!-- ============================ PART 5 ============================ -->
+  <div class="section-head">
+    <h2>Part 5 — Definition of done</h2>
+    <div class="rule"></div>
+  </div>
+  <p class="section-note">MVP 0 is done when all five hold. Two are machine-checkable, three are not.</p>
+
+  <div class="card">
+    <table class="scope">
+      <tr>
+        <th>Gate</th>
+        <th>Type</th>
+      </tr>
+      <tr>
+        <td><b>Every document ingests with non-empty section references</b>, and a test proves it against
+            the shipped PDFs — not fixtures.</td>
+        <td class="no">Automated · <em>currently missing</em></td>
+      </tr>
+      <tr>
+        <td><b>The automated suite is green</b>, including claim discipline, retrieval scope, grounding,
+            idempotent re-ingest and the <code>knowledge</code> ↛ <code>core</code> contract.</td>
+        <td class="no">Automated</td>
+      </tr>
+      <tr>
+        <td><b>A restore has been rehearsed</b> from the backup drive onto a clean machine — not assumed.</td>
+        <td class="no">Human · Sub-plan A</td>
+      </tr>
+      <tr>
+        <td><b>All eight UAT scenarios judged acceptable</b>, signed by the four named seats.</td>
+        <td class="no">Human · UAT</td>
+      </tr>
+      <tr>
+        <td><b>No certification claim appears anywhere on the public surface</b> — including tone, headings
+            and the member list — confirmed by the committee, not just by the grep.</td>
+        <td class="no">Human · Scenario 8</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ============================ PART 6 ============================ -->
+  <div class="section-head">
+    <h2>Part 6 — What happens after the decisions</h2>
+    <div class="rule"></div>
+  </div>
+
+  <div class="card">
+    <ol style="margin:0; padding-left:20px; font-size:14.5px; line-height:1.7;">
+      <li><strong>Apply F1–F5 to the spec and the plan.</strong> Roughly half a day. F1 and F2 change
+          Task B2 and the UAT’s automated row.</li>
+      <li><strong>Fold Q1–Q8 into <code>PGS_PLATFORM_SPEC.md §18.3</code></strong> as D14–D21, so the
+          decision log stays the single record. Export this page and attach it.</li>
+      <li><strong>Re-verify the parsers against the real PDFs in a throwaway script</strong>, before the
+          plan is rewritten — twenty minutes that de-risks the whole sub-plan.</li>
+      <li><strong>Then, and only then, rewrite <code>MVP0_PLAN.md</code>.</strong> The sub-plan structure
+          survives; tasks B2, B5 and the settings/backup tasks change.</li>
+      <li><strong>Move the plan to <code>ready/</code></strong> with <code>Status: Ready</code>, and
+          <code>git init</code> the repo as step zero of Task A1.</li>
+      <li><strong>Run the two-day offline spike in parallel</strong> with MVP 0’s first week. It is not
+          MVP 0 work, but if it fails, MVP 1 is a rewrite — and you want that answer before six weeks of
+          chatbot work, not after.</li>
+    </ol>
+  </div>
+
+  <footer class="end">
+    <p>Review artifact — not a production template. Companion to
+       <code>product/backlog/Refinement/PGS_PLATFORM_SPEC.md</code>,
+       <code>product/backlog/Refinement/MVP0_PLAN.md</code> and
+       <code>tests/uat/mvp0_standards_and_public_site_uat.md</code>.
+       Source checks were run against <code>pgs_docs/</code> as shipped on 2026-10-18.</p>
+  </footer>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress" id="progress">0 of 11 decided</span>
+    <span class="saved" id="saved">Saved</span>
+    <span class="spacer"></span>
+    <button class="ghost tiny" id="reset">Reset</button>
+    <button class="primary" id="export">Export decisions</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>Decision log</h3>
+    <p>Paste into the spec’s §18.3 decision table, or attach to the plan.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copy">Copy to clipboard</button>
+    <button class="ghost" id="close">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "pgs-mvp0-decisions-v1";
+  var QUICK = {
+    q1: "Canonical SAOSO citation format",
+    q2: "OPP citation depth",
+    q3: "Chatbot corpus documents",
+    q4: "Chatbot scope & refusal wording",
+    q5: "Afrikaans scope in MVP 0",
+    q6: "Hosting & backup target",
+    q7: "Gemini account & spend ceiling",
+    q8: "WordPress: preview vs replacement",
+    q9: "Public hosting of workbook & dossiers",
+    q10: "UAT sign-off seats",
+    q11: "knowledge/ as a separate app"
+  };
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".card[data-q]"));
+  var state = load();
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      var s = document.getElementById("saved");
+      s.classList.add("show");
+      clearTimeout(save._t);
+      save._t = setTimeout(function () { s.classList.remove("show"); }, 1400);
+    } catch (e) { /* private mode — silently skip persistence */ }
+  }
+
+  function countDecided() {
+    var n = 0;
+    for (var k in QUICK) {
+      if (state[k] && state[k].choice) n++;
+    }
+    return n;
+  }
+
+  function refresh() {
+    document.getElementById("progress").innerHTML =
+      "<b>" + countDecided() + "</b> of " + cards.length + " decided";
+    cards.forEach(function (card) {
+      var id = card.getAttribute("data-q");
+      card.classList.toggle("answered", !!(state[id] && state[id].choice));
+    });
+  }
+
+  // restore
+  cards.forEach(function (card) {
+    var id = card.getAttribute("data-q");
+    var saved = state[id] || {};
+
+    var radios = card.querySelectorAll('input[type="radio"]');
+    Array.prototype.forEach.call(radios, function (r) {
+      if (saved.choice && r.value === saved.choice) r.checked = true;
+      r.addEventListener("change", function () {
+        state[id] = state[id] || {};
+        state[id].choice = r.value;
+        save();
+        refresh();
+      });
+    });
+
+    var ta = card.querySelector("textarea[data-note]");
+    if (ta) {
+      if (saved.note) ta.value = saved.note;
+      ta.addEventListener("input", function () {
+        state[id] = state[id] || {};
+        state[id].note = ta.value;
+        save();
+      });
+    }
+  });
+
+  refresh();
+
+  // ---------- export ----------
+  var dlg = document.getElementById("dlg");
+  var out = document.getElementById("out");
+
+  document.getElementById("export").addEventListener("click", function () {
+    var lines = [];
+    lines.push("# MVP 0 — open question decisions");
+    lines.push("");
+    lines.push("Recorded " + new Date().toISOString().slice(0, 10) +
+               " via product/design/mvp0_scope_and_open_questions.html");
+    lines.push("Destination: PGS_PLATFORM_SPEC.md §18.3 as D14–D24, plus the plan rewrite.");
+    lines.push("");
+    lines.push("| # | Question | Decision | Notes |");
+    lines.push("|---|----------|----------|-------|");
+    Object.keys(QUICK).forEach(function (id) {
+      var s = state[id] || {};
+      var num = id.replace("q", "Q");
+      var note = (s.note || "").replace(/\s*\n\s*/g, " ").trim();
+      lines.push("| " + num + " | " + QUICK[id] + " | " +
+                 (s.choice || "—undecided—") + " | " + (note || "") + " |");
+    });
+    lines.push("");
+    lines.push("## Fixes carried into the plan");
+    lines.push("");
+    lines.push("- F1 SAOSO section parser rewritten for the real `20.1.1.` format + ingestion-yield test");
+    lines.push("- F2 OPP parser handles Roman-numeral sections I–VIII; `sub_ref` for rule-bearing list items");
+    lines.push("- F3 pasture-raised seal: inactive, never rendered, issuance hard-blocked");
+    lines.push("- F4 notifiable exception redefined as a granted, documented, reported exemption");
+    lines.push("- F5 `git init` inside `pgs/` + `pgs/` added to `Dev/.gitignore`");
+    out.value = lines.join("\n");
+    dlg.showModal();
+  });
+
+  document.getElementById("copy").addEventListener("click", function () {
+    out.select();
+    var btn = this;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(out.value).then(function () {
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = "Copy to clipboard"; }, 1400);
+      });
+    } else {
+      document.execCommand("copy");
+      btn.textContent = "Copied";
+      setTimeout(function () { btn.textContent = "Copy to clipboard"; }, 1400);
+    }
+  });
+
+  document.getElementById("close").addEventListener("click", function () { dlg.close(); });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Clear all decisions and notes in this browser?")) return;
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll('input[type="radio"]'), function (r) {
+      r.checked = false;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("textarea[data-note]"), function (t) {
+      t.value = "";
+    });
+    refresh();
+  });
+})();
+</script>
+</body>
+</html>

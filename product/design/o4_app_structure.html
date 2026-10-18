@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<!-- EXPLAINER (not a production template) | O4 — App structure, RESOLVED | Outeniqua PGS | 2026-10-18
+     Companion to product/backlog/Refinement/PGS_PLATFORM_SPEC.md §18.2, §4.5–4.6, §5.
+     Self-contained: no CDN, no build step. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O4 — How the code is organised (resolved)</title>
+<style>
+  :root {
+    --bg:            #f4f6f2;
+    --surface:       #ffffff;
+    --surface-low:   #eaeee6;
+    --surface-high:  #dfe5da;
+    --accent:        #35604a;
+    --accent-soft:   #e4efe7;
+    --accent-line:   #b9cfc0;
+    --text:          #1c2620;
+    --muted:         #66756b;
+    --warn:          #8a5a1c;
+    --warn-soft:     #f7efe1;
+    --code-bg:       #26312a;
+    --code-text:     #dfe8e0;
+    --radius-lg:     14px;
+    --radius-xl:     20px;
+    --shadow:        0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 22px 120px; }
+
+  header.hero { background: linear-gradient(160deg, var(--accent) 0%, #274936 100%); color:#fff; padding: 46px 22px 40px; }
+  header.hero .inner { max-width: 1000px; margin: 0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 12px; font-size:32px; line-height:1.18; letter-spacing:-.015em; }
+  header.hero p { margin:0; max-width:66ch; opacity:.92; font-size:15.5px; }
+  header.hero .meta { margin-top:18px; font-size:13px; opacity:.8; display:flex; flex-wrap:wrap; gap:8px 20px; }
+  header.hero .meta code { font-family:var(--mono); font-size:12px; background:rgba(255,255,255,.14); padding:2px 7px; border-radius:6px; }
+
+  h2.sec { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin:44px 0 6px; }
+  h3 { font-size:18px; margin:0 0 8px; letter-spacing:-.005em; }
+  p { margin:0 0 12px; }
+  .lead { font-size:15.5px; color:var(--muted); max-width:74ch; }
+  .card { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:16px; }
+  .card.tight { padding:18px 20px; }
+  .muted { color:var(--muted); }
+  code { font-family:var(--mono); font-size:.92em; background:var(--surface-low); padding:1px 5px; border-radius:5px; }
+  strong { font-weight:650; }
+
+  .answer { background:var(--accent-soft); border-radius:var(--radius-xl); padding:22px 24px; margin-bottom:8px; }
+  .answer .k { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--accent); display:block; margin-bottom:7px; }
+  .answer p { margin:0; font-size:16.5px; }
+
+  .note { background:var(--warn-soft); border-radius:var(--radius-lg); padding:16px 18px; margin:14px 0; }
+  .note .k { font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--warn); display:block; margin-bottom:6px; }
+  .note p:last-child { margin-bottom:0; }
+
+  pre.map { background:var(--code-bg); color:var(--code-text); border-radius:var(--radius-lg); padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.72; margin:14px 0; }
+  pre.map b { color:#9ed3ae; font-weight:600; }
+  pre.map i { color:#8fa796; font-style:normal; }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  .col { background:var(--surface); border-radius:var(--radius-xl); padding:20px 20px 18px; box-shadow:var(--shadow); }
+  .col.reco { box-shadow: var(--shadow), inset 0 0 0 2px var(--accent-line); }
+  .col h3 { display:flex; align-items:center; gap:9px; font-size:16px; }
+  .badge { font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.02em; padding:3px 8px; border-radius:7px; background:var(--surface-low); color:var(--muted); }
+  .badge.win { background:var(--accent); color:#fff; }
+  .col .sub { font-size:13px; color:var(--muted); margin:2px 0 12px; }
+  pre.tree { background:var(--surface-low); border-radius:var(--radius-lg); padding:14px 15px; overflow-x:auto; font-family:var(--mono); font-size:11.5px; line-height:1.68; margin:0; white-space:pre; }
+  pre.tree .know { color:var(--accent); font-weight:650; }
+  pre.tree .dim { color:#93a196; }
+
+  .diagram { display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; margin:16px 0 4px; }
+  .box { border-radius:var(--radius-lg); padding:14px 18px; min-width:180px; text-align:center; background:var(--surface-low); }
+  .box .t { font-weight:650; font-size:14.5px; display:block; margin-bottom:3px; }
+  .box .d { font-size:12px; color:var(--muted); }
+  .box.k { background:var(--accent-soft); }
+  .arrow { text-align:center; font-family:var(--mono); font-size:11px; color:var(--accent); line-height:1.4; }
+  .arrow .line { display:block; font-size:20px; line-height:1; margin-bottom:2px; }
+
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .two ul { margin:8px 0 0; padding-left:20px; }
+  .two li { margin-bottom:9px; font-size:14.5px; }
+  .two .h { font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; }
+  .h.good { color:var(--accent); } .h.bad { color:var(--warn); }
+
+  ul.check { list-style:none; margin:6px 0 0; padding:0; }
+  ul.check li { padding-left:28px; position:relative; margin-bottom:9px; font-size:14.5px; }
+  ul.check li::before { content:"→"; position:absolute; left:6px; color:var(--accent); font-weight:700; }
+
+  ol.steps { margin:8px 0 0; padding-left:22px; }
+  ol.steps li { margin-bottom:10px; font-size:14.5px; }
+
+  .confirm { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); }
+  .pills { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 0; }
+  .pill { cursor:pointer; user-select:none; font-size:14px; font-weight:600; padding:10px 18px; border-radius:999px; background:var(--surface-low); color:var(--muted); border:1px solid transparent; }
+  .pill:hover { background:var(--surface-high); }
+  .pill input { position:absolute; opacity:0; pointer-events:none; }
+  .pill:has(input:checked) { background:var(--accent); color:#fff; }
+  textarea { width:100%; margin-top:14px; min-height:74px; resize:vertical; font-family:var(--font); font-size:15px; line-height:1.5;
+    color:var(--text); background:var(--surface-low); border:1px solid transparent; border-radius:var(--radius-lg); padding:12px 14px; }
+  textarea:focus { outline:none; border-color:var(--accent-line); background:var(--surface); }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  button { font-family:var(--font); font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:9px 16px; border:1px solid transparent; background:var(--surface-low); color:var(--text); }
+  button:hover { background:var(--surface-high); }
+  button.primary { background:var(--accent); color:#fff; }
+  button.primary:hover { background:#2b5039; }
+  .ok { font-size:13px; color:var(--accent); opacity:0; transition:opacity .25s; }
+  .ok.show { opacity:1; }
+  pre.out { background:var(--code-bg); color:var(--code-text); border-radius:var(--radius-lg); padding:14px 16px; overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.7; margin:12px 0 0; display:none; }
+  pre.out.show { display:block; }
+
+  footer { margin-top:44px; padding-top:18px; border-top:1px solid var(--surface-high); font-size:13px; color:var(--muted); }
+  footer code { font-size:12px; }
+
+  @media (max-width: 760px) {
+    .cols, .two { grid-template-columns:1fr; }
+    header.hero h1 { font-size:25px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS Digital Platform &nbsp;·&nbsp; Decision O4 &nbsp;·&nbsp; Resolved</p>
+    <h1>How the code is organised — and why the line moved</h1>
+    <p>Originally the question was "one app or two". Your point about public users graduating into farmers and assessors changed <em>where the line goes</em>, so this page explains both the split and the reasoning behind it.</p>
+    <div class="meta">
+      <span>Companion to <code>PGS_PLATFORM_SPEC.md §18.2</code></span>
+      <span>2026-10-18</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <h2 class="sec">The answer in one sentence</h2>
+  <div class="answer">
+    <span class="k">Resolved</span>
+    <p><code>knowledge/</code> holds <strong>the standards corpus as a library</strong> — the SAOSO text, its chunks, its embeddings, and the retrieval engine. <code>core/</code> holds <strong>everything a person touches</strong>: accounts, roles, farms, visits, assessments, certificates, the public site, and the chatbot itself. <code>core</code> may import <code>knowledge</code>; <code>knowledge</code> must never import <code>core</code>.</p>
+  </div>
+  <p class="lead">That is a different line from the one I first proposed. The first version put the chatbot in <code>knowledge/</code>. Your question about graduation showed why that was wrong.</p>
+
+  <h2 class="sec">Why the line moved: graduation</h2>
+  <div class="card">
+    <p>You said users on the knowledge site might graduate into farmers or assessors. That single requirement settles where identity has to live, and it cascades:</p>
+    <ol class="steps">
+      <li><strong>Identity is one thing, so it lives in one place.</strong> A visitor who later becomes a consumer member, then a farmer, then a peer assessor, is <em>the same person</em> with roles added — not three accounts. That means one <code>User</code> in <code>core</code>, with multiple roles attached to it.</li>
+      <li><strong>Chat history is personal data.</strong> If a person can sign in and see what they asked last month, then a chat session belongs to that person — which makes it user-owned, which puts it in <code>core</code>.</li>
+      <li><strong>So the chatbot is an application feature, not a library.</strong> Chat, chat history and escalations move to <code>core</code>.</li>
+      <li><strong>What is left is genuinely independent:</strong> the corpus itself. A chunk of the SAOSO standard references no farm, no member and no user. It is a document library, and that is what <code>knowledge/</code> becomes.</li>
+    </ol>
+    <div class="note">
+      <span class="k">Correction to earlier framing</span>
+      <p>I previously said the two sides would share "<strong>zero</strong> foreign keys, in either direction". That was stronger than the design needs, and I'm withdrawing it. The right rule is a <strong>one-way</strong> dependency — <code>core</code> depends on <code>knowledge</code>, never the reverse. A layered dependency is normal and healthy; mutual isolation was me over-selling the idea.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">What it looks like now</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Option A <span class="badge">one app</span></h3>
+      <p class="sub">Harvester's baseline, taken literally. Still perfectly workable.</p>
+<pre class="tree">pgs/
+├── core/
+│   ├── models/
+│   │   ├── _core.py
+│   │   ├── _assessment.py
+│   │   ├── _certification.py
+│   │   ├── _aggregation.py
+│   │   ├── _chat.py
+│   │   └── <span class="know">_corpus.py</span>       <span class="dim">← standards</span>
+│   ├── services/
+│   │   ├── _assessment.py
+│   │   ├── _sync.py
+│   │   ├── _chatbot.py
+│   │   └── <span class="know">_retrieval.py</span>    <span class="dim">← the library</span>
+│   ├── views/
+│   ├── tasks/
+│   └── migrations/        <span class="dim">← one graph</span>
+└── pgs/                   <span class="dim">← settings</span></pre>
+    </div>
+    <div class="col reco">
+      <h3>Option B <span class="badge win">resolved</span></h3>
+      <p class="sub">One wall, drawn around the one thing that has no users.</p>
+<pre class="tree">pgs/
+├── core/                  <span class="dim">← the application</span>
+│   ├── models/
+│   │   ├── _core.py
+│   │   ├── _assessment.py
+│   │   ├── _certification.py
+│   │   ├── _aggregation.py
+│   │   └── <span class="know">_chat.py</span>         <span class="dim">← chat lives here</span>
+│   ├── services/
+│   │   ├── _assessment.py
+│   │   ├── _sync.py
+│   │   └── <span class="know">_chatbot.py</span>      <span class="dim">← calls the library</span>
+│   ├── views/
+│   ├── tasks/
+│   └── migrations/
+├── <span class="know">knowledge/</span>              <span class="dim">← the library</span>
+│   ├── <span class="know">models.py</span>         <span class="dim">← corpus only</span>
+│   ├── <span class="know">services.py</span>       <span class="dim">← retrieval, chunking</span>
+│   ├── <span class="know">tasks.py</span>          <span class="dim">← ingest_standard</span>
+│   ├── <span class="know">migrations/</span>
+│   └── <span class="know">tests.py</span>
+└── pgs/</pre>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>The dependency, drawn</h3>
+    <div class="diagram">
+      <div class="box k"><span class="t">core</span><span class="d">accounts · roles · farms · visits<br>assessments · certificates · chat · site</span></div>
+      <div class="arrow"><span class="line">──▶</span>imports only</div>
+      <div class="box k"><span class="t">knowledge</span><span class="d">StandardDocument · DocumentChunk<br>retrieval · chunking · embedding</span></div>
+    </div>
+    <p class="muted" style="text-align:center; margin:14px 0 0; font-size:13.5px">One direction, enforceable by an <code>import-linter</code> rule in CI: <code>core</code> may import <code>knowledge</code>; <code>knowledge</code> importing <code>core</code> fails the build.</p>
+  </div>
+
+  <h2 class="sec">What this means for assessors</h2>
+  <div class="card">
+    <p>You also asked <strong>how assessors get appointed</strong>. Worth stating plainly, because it changes the model: <strong>there is no assessor qualification or accreditation process anywhere in the governing documents.</strong> The OPP never appoints assessors — it assembles a committee per visit, and a peer member is defined by <em>knowledge of the production being assessed</em>.</p>
+    <p>So the mechanism is:</p>
+    <ul class="check">
+      <li><strong>Steering committee</strong> — elected by members at the AGM, renewed annually, farmers holding at least 50% of seats.</li>
+      <li><strong>Farm visit committee</strong> — assembled for each visit by the administrator, and valid only if it has: one administrator, <strong>at least two peer members</strong> with knowledge of that production type, <strong>at least one public member</strong> who consumes or buys from that farm, and <strong>four people minimum</strong>. A technical expert is added if nobody in the group has the required knowledge.</li>
+      <li><strong>Observers</strong> are allowed, up to a cap set by the host farm, and must not disrupt the assessment. Visits are open to members and non-members alike.</li>
+    </ul>
+    <p>Two consequences for the build: <strong>eligibility is competence plus standing, not a credential</strong> — active, paid-up membership, attendance obligations met, and expertise in the relevant production type; and <strong>team composition is a server-side validation</strong>, so a visit cannot be confirmed if the participant set breaks any of those rules. A farmer's expertise is therefore stored on their membership, and the <code>ASSESSOR</code> role means "eligible to be assigned", not "qualified".</p>
+    <p class="muted" style="margin-bottom:0">This is also why identity had to be one entity in <code>core</code>: a farmer who becomes an assessor, and a consumer who later becomes a farmer, are role changes on one person — not new records.</p>
+  </div>
+
+  <h2 class="sec">Being honest about the trade-off</h2>
+  <div class="card">
+    <p><strong>Option B's case is now narrower than I first claimed.</strong> After moving chat into <code>core</code>, <code>knowledge/</code> is roughly four files. Against that modest size, a second app costs an <code>AppConfig</code>, its own migrations folder, registration in settings, and lint configuration.</p>
+    <p>I still recommend it, for two reasons: the retrieval engine is the component most likely to be swapped or tuned independently — embedding model, chunking strategy, reranking — and a one-way rule enforced by tooling is worth more than a boundary everybody agrees to respect. And it is genuinely reusable: a chatbot over the SAOSO standard is useful to any PGS group with zero farm data.</p>
+    <p style="margin-bottom:0">But <strong>Option A is now clearly defensible</strong>, and choosing it would cost you only the enforced boundary — not the design, not the schema, not a single URL. If you would rather have fewer moving parts, that is a legitimate call and it is a small edit to flip.</p>
+  </div>
+
+  <h2 class="sec">What it does not affect</h2>
+  <div class="card">
+    <ul class="check">
+      <li><strong>URLs</strong> — identical either way. One root URL configuration serves the whole site:</li>
+    </ul>
+<pre class="map"><b>/</b>                    public site and chatbot
+<b>/portal/</b>             farmer account and questionnaire
+<b>/assess/</b>             offline assessor PWA
+<b>/verify/&lt;uuid&gt;/</b>      certificate verification page
+<b>/documents/</b>          the standards, SOPs and forms
+<b>/api/v1/</b>             sync and media upload API
+<b>/admin/</b>              staff</pre>
+    <ul class="check">
+      <li><strong>What users see</strong> — no page, screen or feature changes. The chatbot and the public site still share one domain, one stylesheet and one navigation bar.</li>
+      <li><strong>Deployment</strong> — still one service, one database, one static bundle.</li>
+      <li><strong>The database schema</strong> — the same tables with the same columns. Only the file the model is written in changes.</li>
+      <li><strong>Everything already agreed</strong> — D1–D10, the delivery sequence, the offline design, the registry migration.</li>
+    </ul>
+    <p style="margin:14px 0 0" class="muted">Living together on one website does not mean living in one Python module. That is the whole distinction.</p>
+  </div>
+
+  <h2 class="sec">Your call</h2>
+  <div class="confirm">
+    <h3>Accept the resolved split, or overrule it</h3>
+    <p class="muted" style="margin-bottom:0">It is recorded as resolved, so this is only needed if you disagree or want to add a note.</p>
+    <div class="pills">
+      <label class="pill"><input type="radio" name="o4" value="Accepted — knowledge as a one-way standards library" checked>Accept (as resolved)</label>
+      <label class="pill"><input type="radio" name="o4" value="Overrule — put the corpus in core too (Option A)">Overrule — one app</label>
+      <label class="pill"><input type="radio" name="o4" value="Need more discussion">Let's discuss</label>
+    </div>
+    <textarea id="note" placeholder="Optional note — e.g. 'one app, we want as few moving parts as possible'"></textarea>
+    <div class="row">
+      <button class="primary" id="copy">Copy answer</button>
+      <button id="reset">Reset</button>
+      <span class="ok" id="ok">Copied</span>
+    </div>
+    <pre class="out" id="out"></pre>
+  </div>
+
+  <footer>
+    Resolved in <code>product/backlog/Refinement/PGS_PLATFORM_SPEC.md</code> §18.2, with the domain model in §4.5–4.6, the file map in §5, and the governing rules in <code>product/docs/context/build_principles.md</code> §I.
+  </footer>
+</div>
+
+<script>
+  const KEY = 'pgs-o4';
+  const note = document.getElementById('note');
+  const out  = document.getElementById('out');
+  const ok   = document.getElementById('ok');
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (saved.note) note.value = saved.note;
+    if (saved.verdict) {
+      let hit = false;
+      document.querySelectorAll('input[name=o4]').forEach(r => {
+        if (r.value === saved.verdict) { r.checked = true; hit = true; }
+      });
+      if (!hit) document.querySelector('input[name=o4]').checked = true;
+    }
+  } catch (e) { /* ignore */ }
+
+  const verdict = () => (document.querySelector('input[name=o4]:checked') || {}).value || '';
+  const text = () =>
+    'O4 — App structure\n' +
+    'Verdict: ' + verdict() + '\n' +
+    'Note: ' + (note.value.trim() || '—');
+
+  const save = () => {
+    try { localStorage.setItem(KEY, JSON.stringify({ verdict: verdict(), note: note.value })); } catch (e) {}
+  };
+
+  document.addEventListener('change', (e) => { if (e.target.name === 'o4') save(); });
+  note.addEventListener('input', save);
+
+  document.getElementById('copy').onclick = async () => {
+    out.textContent = text();
+    out.classList.add('show');
+    try { await navigator.clipboard.writeText(text()); }
+    catch (e) { const r = document.createRange(); r.selectNodeContents(out); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); }
+    ok.classList.add('show');
+    setTimeout(() => ok.classList.remove('show'), 1600);
+  };
+
+  document.getElementById('reset').onclick = () => {
+    note.value = '';
+    document.querySelectorAll('input[name=o4]').forEach(r => { r.checked = (r.value.indexOf('Accepted') === 0); });
+    out.classList.remove('show');
+    save();
+  };
+</script>
+</body>
+</html>
