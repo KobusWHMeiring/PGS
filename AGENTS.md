@@ -15,6 +15,9 @@ the SAOSO standard.
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
 | MVP 0 PRD | `product/backlog/Refinement/MVP0_PRD.md` |
 | MVP 0 implementation plan | `product/backlog/Refinement/MVP0_PLAN_V2.md` |
+| **MVP 1a PRD — up next** | `product/backlog/ready/MVP1A_PRD.md` |
+| **MVP 1a implementation plan** | `product/backlog/ready/MVP1A_PLAN.md` |
+| MVP 1a UAT | `tests/uat/mvp1a_in_office_visit_uat.md` |
 | MVP 0 UAT checklist | `tests/uat/mvp0_standards_and_public_site_uat.md` |
 | Source documents (authoritative) | `pgs_docs/*.pdf`, `pgs_docs/*.xlsx` |
 

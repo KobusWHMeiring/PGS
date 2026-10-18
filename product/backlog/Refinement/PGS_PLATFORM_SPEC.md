@@ -156,6 +156,19 @@ Pledge              member, kind, method, signed_on, place, declared_land_histor
                     in_conversion_declared, in_conversion_months, recorded_by,
                     witness_name, witness_designation, witness_signature, evidence_photo
 MembershipFee       member, kind, period_start, period_end, amount_cents, paid_on, receipt_no
+AssessmentFee       member, farm_visit(nullable), kind(INITIAL|RENEWAL), turnover_band,
+                    band_label, amount_cents, due_on, paid_on, receipt_no,
+                    is_significant_change(bool)
+                    # D29. OPP §2.3 six-band sliding scale. Turnover is DECLARED by the
+                    # farmer and peer-reviewed — never inferred from sales records.
+                    # Payable BEFORE the visit (D32). Major changes to land, production
+                    # system or inputs => initial rate, not renewal.
+PriorCertification  farm, kind(PGS|THIRD_PARTY), body_name, certificate_ref,
+                    outcome(GRANTED|DENIED), expires_on, denial_reason
+                    # D30. FORM Sheet A: prior PGS and third-party certification, and
+                    # prior DENIAL of certification with reasons. A denial is materially
+                    # relevant to a certification decision; OPP §4.5 also makes misuse of
+                    # a third-party logo serious misconduct.
 Farm                member, name, slug, physical_address, nearest_town, location(Point),
                     total_hectares, public_uuid, publish_consent, publish_consent_at,
                     first_certified_on, current_status(derived)
@@ -182,8 +195,20 @@ VisitParticipant        farm_visit, user(nullable), guest_name, role, is_member,
 Assessment              farm_visit, category, template, template_schema(JSON snapshot),
                         standard_version, status
 AssessmentAnswer        assessment, question_key, value(JSON), notes
-AssessmentVerdict       assessment, question_key, verdict_key, is_compliant(bool),
-                        standard_ref, notes
+AssessmentVerdict       assessment, question_key, ref, value(YES|NO|NA|NULL), polarity,
+                        is_compliant(bool|null), standard_ref, notes, sub_answers(JSON)
+                        # D27. polarity is snapshotted from the frozen template at capture
+                        # time; is_compliant is DERIVED from (value, polarity) and materialised
+                        # for querying. Neither is ever authored by a user. See §4.2.1.
+InputSupply             farm, farm_visit(nullable, first recorded), product_name,
+                        manufacturer, is_organic_certified(bool|null), certifier_name,
+                        ingredients, purchased_on, amount, use_of_product,
+                        act36_registered(bool|null)
+                        # D30. FORM Sheet B.2 — the farm's INPUT register (compost, seed,
+                        # amendments, feed), a required part of the Crops category. B.1 Q4.3
+                        # directs the farmer to it. Act 36 of 1947 registration is the
+                        # primary evidence that an input is not a prohibited substance.
+                        # NOT the same thing as aggregation produce (OPP §VI, §4.4).
 Finding                 farm_visit, assessment, question_key, severity, description, raised_by
 NotifiableExemption     farm_visit, standard_ref, requirement_exempted, rationale,
                         granted_by, granted_on, reported_to_pgs_sa_on, evidence_doc
@@ -191,6 +216,11 @@ NotifiableExemption     farm_visit, standard_ref, requirement_exempted, rational
                         # PGS-SA. Not a non-conformity — see §2, FORM Sheet I §3.
 CorrectiveAction        finding, recommended_action, due_on, status, submitted_on,
                         verified_by, verified_on, closed_on
+EvidenceDocument        farm_visit(nullable), assessment(nullable), member(nullable),
+                        kind, title, file, sha256, uploaded_by, uploaded_at, is_private
+                        # D29. D29 defines what was previously a dangling reference (§8, §12).
+                        # Questionnaire attachments (soil tests, farm sketch, agro-processing
+                        # flow diagrams — FORM Sheet I §2) and, later, historical dossiers.
 EvidencePhoto           farm_visit, answer(nullable), photo, caption, captured_at,
                         exif_gps, consent_given, client_media_uuid(unique), sha256,
                         derivative_url, uploaded_at
@@ -208,6 +238,48 @@ SyncReceipt             client_uuid(unique), device_id, farm_visit, payload_sha2
 **`FarmVisit.status`**: `DRAFT` → `SCHEDULED` → `IN_FIELD` → `SYNCING` → `SYNCED` → `UNDER_REVIEW` → `DECIDED` → `CLOSED`, plus `ABANDONED`.
 **`Assessment.status`**: `PENDING`, `QUESTIONNAIRE_SUBMITTED`, `IN_FIELD`, `SYNCED`, `REVIEWED`.
 **`CorrectiveAction.status`**: `OPEN`, `SUBMITTED`, `VERIFIED`, `OVERDUE`, `ESCALATED`, `CLOSED`. `ESCALATED` is reached when a **Critical** action lapses; per OPP §4.5 that is grounds for membership termination, so the state machine must be able to represent it and hand off to the discipline workflow.
+
+### 4.2.1 Verdict polarity and key namespacing (D27)
+
+Every `V#` in the FORM is a Yes/No question, but **the meaning of "Yes" is not uniform**, and a single
+`is_compliant: bool` records the wrong answer for several of them:
+
+| Ref | Question (verbatim, FORM) | "Yes" means | Polarity |
+|---|---|---|---|
+| Crops V1 | "Are you satisfied that the farmer is/can produce the listed crops?" | compliant | `POSITIVE` |
+| Crops V3 | "Is there need for a transition period?" | **needs In-Conversion** — a legitimate state, not a failure | `INFORMATIONAL` |
+| Crops V16 | "Are there any risks of contamination of the water source?" | **non-compliant** | `NEGATIVE` |
+| Crops V23 | "Do you see evidence of pests or pest damage?" | **non-compliant** | `NEGATIVE` |
+| Animal V14 | "Does the transport method raise any concerns?" | **non-compliant** | `NEGATIVE` |
+| Crops V29 | "Are containment methods acceptable? *(if applicable)*" | third state: not applicable | `POSITIVE` |
+
+**Model.** Polarity lives in the **template** (`AssessmentTemplate.schema`), never in code, because it is a
+property of the standard's question wording — which is data (§4.8). `AssessmentVerdict.polarity` is
+snapshotted onto the row at capture time so a historical assessment remains self-contained after a
+template edit, exactly like `template_schema`.
+
+`value` is tri-state — `YES` | `NO` | `NA` | `NULL` — and `is_compliant` is **derived**:
+
+```
+is_compliant =
+    NULL            if value is NULL or NA
+    value == YES    if polarity == POSITIVE
+    value == NO     if polarity == NEGATIVE
+    NULL            if polarity == INFORMATIONAL   # carries meaning, not compliance
+```
+
+It is materialised as a nullable column at write time rather than computed on read, because §14's
+cross-farm queries (`every farm non-compliant on …`) must not join the template. A test asserts the
+stored value always equals a fresh recomputation.
+
+**Key namespacing.** `V#` alone is unusable as a query key: it is category-scoped (Crops `V4` is
+on-farm composting, Seed Production `V4` is compost quality, Animal Husbandry `V4` is animal living
+conditions), and the source numbering is defective — **Crops contains two rows both printed `V32`**, and
+has **no `V15` and no `V31`**. Keys are therefore `question_key = "<category>.<ref>"`, lowercase
+category and zero-padded two-digit ref, e.g. `crops.V04`. Where the paper form repeats a ref, the second
+occurrence takes a letter suffix (`crops.V32a`, `crops.V32b`) and the printed `ref` is preserved on both
+rows. Gaps are **declared in the template file** (`allowed_ref_gaps: ["V15", "V31"]`) so validation warns
+on a new gap without failing on a known one.
 
 > Note on immutable history: `Assessment.template_schema` stores a *full copy* of the template JSON at visit creation. Editing `AssessmentTemplate` must never alter a historical assessment. This is the single most important data-integrity rule in the system.
 
@@ -784,6 +856,13 @@ These may later be split across subdomains (`app.` vs `www.`) via `ALLOWED_HOSTS
 | D24 | `knowledge/` as a separate app. | **Kept, for a different reason than §18.2 originally gave.** A Django app is a *migration namespace*: the corpus has an independent lifecycle (re-ingestion, `sha256` idempotency, version chains, a frozen embedding dimension) that must never entangle with certification migrations. The original reasons — swappability and tooling — do not require an app, because `import-linter` works on module paths. |
 | D25 | Shape of MVP 1 — one slice or two? | **Two increments, one ship gate.** `1a` is the in-office visit flow (breadth: 16 tables, flows A/B/part-E, Sheet J PDF, the `visitPack` producer, the sync API). `1b` is the in-field offline walkabout (depth: zero new tables, service worker, IndexedDB, three-phase sync, the `visitPack` consumer). They are built separately with a frozen seam contract (`1∥`) and a single MVP 1 claim that attaches to **1b**. Rationale in `product/design/d1_mvp1_shape_exploration.html`: all irreversible risk (the template schema) sits in 1a while all unknowable risk (browser storage on real devices) sits in 1b, and a bundled slice has no cut line for the half nobody can estimate. Rejected: **A** (one slice) loses on thickness — a walking skeleton must be thin, and this one is not; **B** (two releases) makes a claim that is not yet true and needs a degraded-capture scope it does not budget. |
 | D26 | Does the offline spike gate the seam contract? | **Yes.** The spike's outcome determines what `VisitSyncEnvelope` must carry: if persisted storage holds, the design stands; if eviction or quota kills long sessions, the envelope needs checkpointing or a file-export fallback (envelope v2); if offline is not viable on the target devices at all, `1b` is re-planned and only `1a` ships. Freezing a contract before that answer is known is the most expensive sequencing error available in this slice. |
+| D27 | Verdict polarity and key namespacing. | **Polarity is template data** (`POSITIVE` \| `NEGATIVE` \| `INFORMATIONAL`), `value` is tri-state (`YES`/`NO`/`NA`/`NULL`), and `is_compliant` is **derived and materialised**, never authored. Keys are namespaced `crops.V04`. Rationale and the six inspected counter-examples are in §4.2.1. Required because `is_compliant(bool)` would record "yes, there are contamination risks" (V16) as *compliant*, and because `V4` means three different questions across three categories. |
+| D28 | Are the assessment templates extracted from the FORM workbook, or hand-authored? | **Hand-authored**, Crops only, in `1a`. The workbook is merged-cell, two-role, 38-question material; an extractor is a form-parsing project in its own right, and only one category is needed to prove the schema. An extractor becomes worth building when a second category is required. |
+| D29 | `AssessmentFee` and `EvidenceDocument` were referenced but undefined. | **Both defined** in §4.1 and §4.2. `AssessmentFee.turnover_band` is a declared field (OPP §2.3). `EvidenceDocument` carries questionnaire attachments (FORM Sheet I §2) and later historical dossiers. |
+| D30 | Input register and prior certification history — in `1a` or later? | **Both in `1a`.** They are *on the forms `1a` digitises*: Sheet B.1 Q4.3 routes the farmer to the B.2 input list, and Sheet A asks about prior PGS/third-party certification and prior **denial** with reasons. Omitting them means the questionnaire cannot store what the paper form asks for. `InputSupply` and `PriorCertification` are modelled in §4.2/§4.1. |
+| D31 | The pledge's land-history periods contradict OPP §V. | **Record as written; flag; do not infer a seal.** The pledge says 12 months (annuals) / 12 / 18 (other perennials); OPP §V says 18 / 12 / 12. The platform stores what the pledge actually attests and marks the declaration `land_history_conflict=True` rather than resolving it in code. Seals are MVP 2, so nothing is issued on the wrong basis in the meantime. **Awaiting a group decision.** |
+| D32 | Assessment fee gate (OPP §2.3: "Fees are payable prior to the farm assessment visit"). | **Gated before the visit**, in addition to the existing paid-up gate at certification. A `FarmVisit` cannot leave `DRAFT` while the assessment fee for that visit is unpaid. |
+| D33 | Where does `1a` stop? | **Before the certification decision.** `1a` records answers, verdicts, findings, corrective actions and signatures, and advances the visit to `UNDER_REVIEW`. The four outcomes, seals, certificates and the registry are MVP 2. `1a` also ships the **connected capture form** — the same templates rendered server-side — which makes the slice usable where there is signal and doubles as the R7 degrade path that `1b` falls back to. |
 
 ---
 
