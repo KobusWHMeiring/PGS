@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<!-- REVIEW ARTIFACT (not a production template) | Outeniqua PGS — D1: What shape is MVP 1? | 2026-10-18
+     Companion to MVP0_PRD.md §9 (theme D), PGS_PLATFORM_SPEC.md §19 and §9–§10.
+     Self-contained: no CDN, no build step, no external fonts. Decision autosaves to localStorage.
+     Prints cleanly to A4/Letter (diagrams included). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — D1: What shape is MVP 1?</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --warn-line:       #e2cba6;
+    --danger:          #8c2f2a;
+    --danger-soft:     #f9ecea;
+    --danger-line:     #e3bcb8;
+    --server:          #35604a;
+    --server-soft:     #e4efe7;
+    --client:          #4a5f8a;
+    --client-soft:     #e6eaf3;
+    --offline:         #8a5a1c;
+    --offline-soft:    #f7efe1;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 170px; }
+
+  /* ---------- header ---------- */
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff; padding: 44px 20px 38px; margin-bottom: 28px;
+  }
+  header.hero .inner { max-width: 1000px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 10px; font-size: 30px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero .q {
+    margin: 16px 0 0; padding: 14px 16px; border-left: 3px solid rgba(255,255,255,.5);
+    background: rgba(255,255,255,.08); border-radius: 0 12px 12px 0;
+    font-size: 16px; max-width: 68ch;
+  }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .82;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px;
+  }
+
+  /* ---------- intro ---------- */
+  .intro {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 32px;
+  }
+  .intro h2 { margin: 0 0 8px; font-size: 17px; }
+  .intro p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); }
+  .intro p:last-child { margin-bottom: 0; }
+  .intro strong { color: var(--text); font-weight: 650; }
+
+  /* ---------- section ---------- */
+  .section-head {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 42px 0 14px;
+  }
+  .section-head h2 {
+    margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+  }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -6px 0 16px; max-width: 74ch; }
+
+  /* ---------- card ---------- */
+  .card {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 20px 22px 22px; box-shadow: var(--shadow); margin-bottom: 14px;
+  }
+  .card.opt-a { box-shadow: var(--shadow), inset 0 3px 0 0 var(--muted); }
+  .card.opt-b { box-shadow: var(--shadow), inset 0 3px 0 0 var(--warn); }
+  .card.opt-c { box-shadow: var(--shadow), inset 0 3px 0 0 var(--accent); }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .tag {
+    flex: none; font-family: var(--mono); font-size: 12px; font-weight: 600;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 9px; border-radius: 8px; letter-spacing: .02em; margin-top: 2px;
+  }
+  .tag.grey { background: var(--surface-high); color: var(--muted); }
+  .tag.amber { background: var(--warn-soft); color: var(--warn); }
+  .card h3 { margin: 0 0 6px; font-size: 16.5px; line-height: 1.35; letter-spacing: -.005em; }
+  .ctx { margin: 0; font-size: 14.5px; color: var(--muted); }
+  .ctx strong { color: var(--text); font-weight: 650; }
+
+  h4 { margin: 22px 0 8px; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+
+  .rec {
+    margin: 14px 0 0; background: var(--surface-low);
+    border-radius: var(--radius-lg); padding: 13px 15px;
+  }
+  .rec .label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--accent); display: block; margin-bottom: 5px;
+  }
+  .rec p { margin: 0; font-size: 14.5px; }
+  .rec p + p { margin-top: 8px; }
+  .rec strong { font-weight: 650; }
+
+  .evidence {
+    margin: 14px 0 0; background: #1e2a23; color: #dbe6df;
+    border-radius: var(--radius-lg); padding: 13px 15px; overflow-x: auto;
+  }
+  .evidence .label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: #9dbfa9; display: block; margin-bottom: 8px;
+  }
+  .evidence pre {
+    margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    white-space: pre; color: #dbe6df;
+  }
+  .evidence .hit { color: #ffd7a8; font-weight: 600; }
+
+  /* ---------- tables ---------- */
+  table.t { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
+  table.t th {
+    text-align: left; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; padding: 0 10px 7px 0;
+    border-bottom: 1px solid var(--surface-high);
+  }
+  table.t td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--surface-low); vertical-align: top; }
+  table.t tr:last-child td { border-bottom: none; }
+  table.t code { font-family: var(--mono); font-size: 12.5px; background: var(--surface-low); padding: 1px 5px; border-radius: 5px; }
+  table.t td.y { color: var(--accent); font-weight: 700; text-align: center; }
+  table.t td.n { color: var(--danger); font-weight: 700; text-align: center; }
+  table.t td.m { color: var(--warn); font-weight: 700; text-align: center; }
+
+  /* ---------- pipeline diagram ---------- */
+  .diagram {
+    background: var(--surface-low); border-radius: var(--radius-xl);
+    padding: 20px 18px 16px; margin: 16px 0 6px;
+  }
+  .diagram .cap {
+    font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; margin: 0 0 14px;
+  }
+  .diagram .legend {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px;
+    font-size: 12px; color: var(--muted);
+  }
+  .diagram .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .sw.s { background: var(--server); }
+  .sw.c { background: var(--client); }
+  .sw.o { background: var(--offline); }
+
+  .pipe { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+  .pipe .step {
+    flex: 1 1 118px; min-width: 104px; background: var(--surface);
+    border-radius: 12px; padding: 10px 11px; position: relative;
+    border-top: 3px solid var(--server);
+  }
+  .pipe .step.off { border-top-color: var(--offline); background: var(--offline-soft); }
+  .pipe .step.cli { border-top-color: var(--client); }
+  .pipe .step .n {
+    font-family: var(--mono); font-size: 10px; color: var(--muted); font-weight: 700;
+  }
+  .pipe .step .nm { font-size: 13px; font-weight: 650; line-height: 1.25; margin: 2px 0 4px; }
+  .pipe .step .tier { font-size: 10.5px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+  .pipe .step.off .tier { color: var(--offline); font-weight: 700; }
+
+  /* ---------- seam diagram ---------- */
+  .seam { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .seam .col {
+    background: var(--surface); border-radius: 14px; padding: 14px 15px;
+    border-left: 4px solid var(--server);
+  }
+  .seam .col.b { border-left-color: var(--client); }
+  .seam .col h5 { margin: 0 0 6px; font-size: 14px; }
+  .seam .col ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .seam .contract {
+    background: var(--accent); color: #fff; border-radius: 14px;
+    padding: 13px 15px; text-align: center;
+  }
+  .seam .contract .h {
+    font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+    opacity: .8; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .seam .contract code {
+    font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,.16);
+    padding: 2px 7px; border-radius: 6px; margin: 2px;
+  }
+  @media (min-width: 720px) {
+    .seam { grid-template-columns: 1fr 1.1fr 1fr; align-items: stretch; }
+  }
+
+  /* ---------- for / against ---------- */
+  .ba { display: grid; gap: 14px; margin-top: 14px; }
+  @media (min-width: 700px) { .ba { grid-template-columns: 1fr 1fr; } }
+  .ba .box { border-radius: var(--radius-lg); padding: 13px 15px; }
+  .ba .box.pro { background: var(--accent-soft); }
+  .ba .box.con { background: var(--danger-soft); }
+  .ba .box .h {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 7px; display: block;
+  }
+  .ba .box.pro .h { color: var(--accent); }
+  .ba .box.con .h { color: var(--danger); }
+  .ba .box ol { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.55; }
+  .ba .box li { margin-bottom: 7px; }
+  .ba .box li:last-child { margin-bottom: 0; }
+  .ba .box em { color: var(--muted); font-style: normal; font-size: 13.5px; }
+
+  /* ---------- options ---------- */
+  .opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .opt {
+    cursor: pointer; font-size: 13.5px; font-weight: 550; padding: 9px 16px;
+    border-radius: 999px; background: var(--surface-low); color: var(--muted);
+    border: 1px solid transparent; user-select: none; position: relative;
+    transition: background .12s, color .12s;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt:has(input:checked) { background: var(--accent); color: #fff; }
+
+  textarea {
+    width: 100%; margin-top: 14px; min-height: 84px; resize: vertical;
+    font-family: var(--font); font-size: 15px; line-height: 1.5; color: var(--text);
+    background: var(--surface-low); border: 1px solid transparent;
+    border-radius: var(--radius-lg); padding: 12px 14px;
+  }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  button {
+    font-family: var(--font); font-size: 13.5px; font-weight: 600; cursor: pointer;
+    border-radius: 10px; padding: 8px 14px; border: 1px solid transparent;
+    background: var(--surface-low); color: var(--text); transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+  button.tiny { font-size: 12.5px; padding: 6px 11px; }
+
+  .banner {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--warn-soft); border: 1px solid var(--warn-line);
+    border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 14px;
+  }
+  .banner .ico { font-size: 17px; line-height: 1.3; flex: none; color: var(--warn); }
+  .banner p { margin: 0; font-size: 14.5px; }
+  .banner strong { font-weight: 650; }
+
+  footer.end {
+    margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--surface-high);
+    font-size: 13px; color: var(--muted);
+  }
+  footer.end code { font-family: var(--mono); font-size: 12px; }
+
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.93); backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky); padding: 11px 20px;
+  }
+  .bar .inner {
+    max-width: 1000px; margin: 0 auto; display: flex;
+    align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .bar .state { font-size: 13.5px; color: var(--muted); }
+  .bar .state b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .bar .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .bar .saved.show { opacity: 1; }
+
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0;
+    width: min(840px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 340px; max-height: 54vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high);
+  }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .q { background: none; border-left-color: #999; color: #000; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, dialog { display: none; }
+    .card, .intro, .diagram { box-shadow: none; border: 1px solid var(--surface-high); break-inside: avoid; }
+    .wrap { padding-bottom: 0; }
+    textarea { background: #fff; min-height: 60px; }
+    .evidence { background: #f2f2f2; color: #111; }
+    .evidence pre { color: #111; }
+  }
+  @media (max-width: 560px) {
+    header.hero h1 { font-size: 23px; }
+    .card { padding: 17px 16px 18px; }
+    .wrap { padding: 0 14px 180px; }
+    .pipe .step { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS · System brainstorm · Theme D</p>
+    <h1>D1 — What shape is MVP 1?</h1>
+    <p>The delivery sequence bundles a whole category of work into a single slice. Two days of
+       planning follow from how that slice is cut.</p>
+    <div class="q">
+      <strong>§19, slice 1:</strong> “Offline visit. Application → pre-visit questionnaire → offline
+      walkabout → split-sync → Sheet J PDF.”<br><br>
+      Is that <strong>one deliverable</strong>, or <strong>two</strong> that happen to be shipped together?
+    </div>
+    <div class="meta">
+      <span>Spec <code>§19</code>, <code>§7–§11</code></span>
+      <span>PRD <code>§9 theme D</code></span>
+      <span>Depends on <code>D2 — the spike</code></span>
+      <span>2026-10-18</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>How to read this</h2>
+    <p>This is a <strong>decision document</strong>, not a proposal deck. It sets out what is
+       actually inside slice 1, why the two halves fail differently, three ways to cut it, the
+       evidence for and against each, and the architecture principles that bear on it — including
+       the ones that argue <em>against</em> the recommendation.</p>
+    <p>The recommendation is in <strong>Part 7</strong>. The reason it matters is at the top of
+       <strong>Part 2</strong>, and it is not what §19 assumes. If you only read one section, read
+       that one.</p>
+    <p>Part 5 deliberately shows the software literature <em>disagreeing with itself</em>. If a
+       document of this kind resolves a genuinely close call by citing principles that all point
+       one way, it is not analysing — it is rationalising.</p>
+    <p><strong>Nothing here is decided.</strong> Part 8 records your call and exports it for the
+       spec’s decision log.</p>
+  </div>
+
+  <!-- ========================= PART 1 ========================= -->
+  <div class="section-head"><h2>Part 1 — What is actually inside slice 1</h2><div class="rule"></div></div>
+  <p class="section-note">Enumerated from the spec’s own flows and model list, so the inventory is
+     not a guess.</p>
+
+  <div class="card">
+    <h3>The seven steps, and which tier each needs</h3>
+    <div class="diagram">
+      <p class="cap">Slice 1 as §19 writes it</p>
+      <div class="pipe">
+        <div class="step">
+          <div class="n">1</div><div class="nm">Application &amp; membership</div>
+          <div class="tier">Needs signal</div>
+        </div>
+        <div class="step">
+          <div class="n">2</div><div class="nm">Pre-visit questionnaire</div>
+          <div class="tier">Needs signal</div>
+        </div>
+        <div class="step">
+          <div class="n">3</div><div class="nm">Schedule + visit pack</div>
+          <div class="tier">Needs signal</div>
+        </div>
+        <div class="step off">
+          <div class="n">4</div><div class="nm">Farm walkabout</div>
+          <div class="tier">No signal</div>
+        </div>
+        <div class="step cli">
+          <div class="n">5</div><div class="nm">Split-sync (text)</div>
+          <div class="tier">Device → server</div>
+        </div>
+        <div class="step cli">
+          <div class="n">6</div><div class="nm">Split-sync (media)</div>
+          <div class="tier">Device → server</div>
+        </div>
+        <div class="step">
+          <div class="n">7</div><div class="nm">Finalise + Sheet J PDF</div>
+          <div class="tier">Needs signal</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="sw s"></i> server-side, online</span>
+        <span><i class="sw c"></i> protocol spanning both tiers</span>
+        <span><i class="sw o"></i> the only step that must work with no signal</span>
+      </div>
+    </div>
+    <p class="ctx" style="margin-top:14px">Only <strong>step 4</strong> is offline. Steps 5 and 6 are
+       <em>server</em> endpoints plus client orchestration. So “the offline slice” is not the
+       offline half — the offline requirement touches one step, and that one step needs
+       infrastructure on both sides.</p>
+  </div>
+
+  <div class="card">
+    <h3>The inventory, by surface area</h3>
+    <table class="t">
+      <tr><th>Surface</th><th>What it contains</th><th>Novelty</th></tr>
+      <tr>
+        <td><b>Domain models</b><br><span style="color:var(--muted);font-size:13px">≈16 tables</span></td>
+        <td>Member, Farm, FarmAlias, FarmCategory, FarmContact, Pledge, MembershipFee,
+            Category, AssessmentTemplate, FarmVisit, VisitParticipant, Assessment,
+            AssessmentAnswer, AssessmentVerdict, Finding, CorrectiveAction,
+            Signature, SyncReceipt, EvidencePhoto</td>
+        <td>Mostly conventional Django. The hard part is whether the <b>FORM survives contact
+            with a schema</b> — verdict polarity, sub-questions, the grey/white two-role split.</td>
+      </tr>
+      <tr>
+        <td><b>Flows</b><br><span style="color:var(--muted);font-size:13px">A, B, part of E</span></td>
+        <td>Application + pledge + fee eligibility · pre-visit questionnaire with autosave ·
+            scheduling with <code>validate_assessment_team()</code> composition rules ·
+            review and decision surface</td>
+        <td>Conventional forms and services, with real business rules from OPP §3.3 and §4.1.</td>
+      </tr>
+      <tr>
+        <td><b>Document rendering</b><br><span style="color:var(--muted);font-size:13px">1 renderer</span></td>
+        <td>Sheet J PDF via WeasyPrint, compiling frozen visit data</td>
+        <td>A known quantity, but a dependency with system-library weight.</td>
+      </tr>
+      <tr>
+        <td><b>Field client</b><br><span style="color:var(--muted);font-size:13px">0 new tables</span></td>
+        <td>Service worker + versioned cache · IndexedDB stores (visitPacks, visitDrafts,
+            photoQueue, mediaQueue, signatureQueue, outbox) · offline question rendering ·
+            verdict and finding capture · Blob photo capture + quota · signature pad ·
+            three-phase sync orchestration with backoff</td>
+        <td><b>Genuinely novel for this codebase.</b> Browser storage durability, iOS eviction,
+            MIME differences, resumability. No emulator can answer it.</td>
+      </tr>
+      <tr>
+        <td><b>Sync API</b><br><span style="color:var(--muted);font-size:13px">3 endpoints</span></td>
+        <td><code>POST /api/v1/visits/sync/</code> · <code>/&lt;id&gt;/media/</code> ·
+            <code>/&lt;id&gt;/finalise/</code>, with <code>client_uuid</code> and
+            <code>client_media_uuid</code> idempotency keys</td>
+        <td>Conventional HTTP, but the <b>idempotency contract is a correctness requirement</b>,
+            not a nicety — duplicate audits on a flaky network.</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ========================= PART 2 ========================= -->
+  <div class="section-head"><h2>Part 2 — The shape of the risk</h2><div class="rule"></div></div>
+  <p class="section-note">This is the observation that should drive the decision, and it is not
+     stated in §19.</p>
+
+  <div class="card">
+    <h3>The two halves fail for unrelated reasons</h3>
+    <table class="t">
+      <tr><th></th><th>Breadth half — the visit flow</th><th>Depth half — the field client</th></tr>
+      <tr><td><b>Fails when…</b></td>
+          <td>the FORM’s 91 verdicts don’t fit one schema: inverted polarities, duplicate
+              <code>V32</code>, a legitimate “needs In-Conversion” answer that looks like a failure</td>
+          <td>iOS evicts IndexedDB mid-visit, quota is exhausted by photos, or a replay creates a
+              second audit</td></tr>
+      <tr><td><b>Discovered by</b></td>
+          <td>reading the workbook and writing tests</td>
+          <td><b>a real phone in a real dead zone</b> — nothing else</td></tr>
+      <tr><td><b>Feedback loop</b></td>
+          <td>seconds (pytest)</td><td>days (device, travel, signal)</td></tr>
+      <tr><td><b>Schema impact</b></td>
+          <td><b>all of it</b> — 16 tables, and <code>Assessment.template_schema</code> is frozen
+              as evidentiary history</td>
+          <td><b>none</b> — <code>SyncReceipt</code> and <code>EvidencePhoto</code> belong to the
+              breadth half and are already specified</td></tr>
+      <tr><td><b>Cut line if it overruns</b></td>
+          <td>drop categories (Ship Crops only)</td>
+          <td>no natural cut — the feature is binary: it works in the field or it does not</td></tr>
+    </table>
+    <div class="rec">
+      <span class="label">The consequence</span>
+      <p>All of the <em>irreversible</em> risk sits in the breadth half, and all of the
+         <em>unknowable</em> risk sits in the depth half. That is an argument for sequencing them
+         deliberately rather than for either bundling or fully separating them — see Part 7.</p>
+    </div>
+  </div>
+
+  <div class="banner">
+    <span class="ico">⚑</span>
+    <p><strong>An internal inconsistency in §19.</strong> §19 says the order is “by
+       <em>risk retired per unit of effort</em>, not by ease of building.” Slice 1 then sequences
+       application, questionnaire, scheduling and PDF <em>before</em> the offline walkabout — which
+       is breadth-first, not risk-first. The hardest thing is last inside the hardest slice.
+       Either the principle or the ordering needs to change; they cannot both stand.</p>
+  </div>
+
+  <div class="card">
+    <h3>One more thing §19 does not mention</h3>
+    <p class="ctx">Flow B — the pre-visit questionnaire — is specified as <strong>deliberately
+       online-only</strong>: <em>“This is an online-first form — it is not part of the offline
+       PWA.”</em> So slice 1 already contains a substantial component that is explicitly excluded
+       from the offline requirement. The slice is composite by its own definition; nothing about
+       it is uniformly “offline”.</p>
+  </div>
+
+  <!-- ========================= PART 3 ========================= -->
+  <div class="section-head"><h2>Part 3 — Three ways to cut it</h2><div class="rule"></div></div>
+  <p class="section-note">Not two options. The interesting distinction is between splitting the
+     <em>build</em> and splitting the <em>claim</em>.</p>
+
+  <div class="card opt-a">
+    <div class="card-head">
+      <span class="tag grey">A</span>
+      <div>
+        <h3>One slice — build and ship together</h3>
+        <p class="ctx">Exactly as §19 writes it. Breadth and depth built in one effort; one gate:
+           an assessor completes a visit with no signal.</p>
+      </div>
+    </div>
+    <div class="diagram">
+      <p class="cap">One work package, one ship gate</p>
+      <div class="pipe">
+        <div class="step"><div class="nm">Domain + flows</div><div class="tier">breadth</div></div>
+        <div class="step cli"><div class="nm">Sync API</div><div class="tier">contract</div></div>
+        <div class="step off"><div class="nm">Field client</div><div class="tier">depth</div></div>
+        <div class="step"><div class="nm">Sheet J PDF</div><div class="tier">breadth</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card opt-b">
+    <div class="card-head">
+      <span class="tag amber">B</span>
+      <div>
+        <h3>Two slices, two ship gates</h3>
+        <p class="ctx">MVP 1 = the online visit flow with a <em>degraded</em> capture form usable
+           where there is signal. MVP 1b = the offline client. Two independent claims.</p>
+      </div>
+    </div>
+    <div class="diagram">
+      <p class="cap">Two work packages, two ship gates</p>
+      <div class="pipe">
+        <div class="step"><div class="nm">Domain + flows + PDF</div><div class="tier">MVP 1 ships</div></div>
+        <div class="step cli"><div class="nm">Sync API + field client</div><div class="tier">MVP 1b ships</div></div>
+      </div>
+    </div>
+    <p class="ctx" style="margin-top:12px"><strong>Requires extra scope to be honest:</strong> the
+       degraded capture form is not free. Without it, 1a means paper in the field plus digital
+       re-entry afterwards — <em>more</em> work than today, and precisely the “paper reconciliation
+       step” §1 exists to remove.</p>
+  </div>
+
+  <div class="card opt-c">
+    <div class="card-head">
+      <span class="tag">C</span>
+      <div>
+        <h3>Two increments, one ship gate — the seam is a contract</h3>
+        <p class="ctx">Split the <em>building</em>, not the <em>claim</em>. A versioned seam
+           contract is written and tested before either half starts. 1a is demonstrable
+           internally; the MVP 1 statement — “a visit can be run paperlessly” — is only made when
+           1b passes a field test.</p>
+      </div>
+    </div>
+    <div class="diagram">
+      <p class="cap">Two increments, a frozen contract at the seam</p>
+      <div class="seam">
+        <div class="col">
+          <h5>1a — breadth</h5>
+          <ul>
+            <li>16 models · flows A, B, E</li>
+            <li>questionnaire + scheduling</li>
+            <li>Sheet J PDF</li>
+            <li>pack <b>producer</b></li>
+            <li>sync API + idempotency</li>
+          </ul>
+        </div>
+        <div class="contract">
+          <span class="h">Seam contract v1 — frozen before either half starts</span>
+          <code>visitPack.schema.json</code>
+          <code>VisitSyncEnvelope v1</code>
+          <code>client_uuid</code>
+          <code>client_media_uuid</code>
+          <div style="font-size:12px;opacity:.85;margin-top:8px">
+            contract tests run against both sides
+          </div>
+        </div>
+        <div class="col b">
+          <h5>1b — depth</h5>
+          <ul>
+            <li>0 new tables</li>
+            <li>service worker + cache</li>
+            <li>IndexedDB stores</li>
+            <li>offline capture + quota</li>
+            <li>pack <b>consumer</b> · 3-phase sync</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h4>What the seam actually carries</h4>
+    <p class="ctx">The three-phase protocol is why the contract must be written down rather than
+       assumed. Text always precedes media; finalisation always follows both; and a replay must
+       create <em>zero</em> additional rows. Those are properties of the envelope, not of either
+       tier — so they belong to the seam.</p>
+
+    <div class="diagram" style="padding-bottom:8px">
+      <p class="cap">Split-sync, three phases — idempotency is the load-bearing property</p>
+      <svg viewBox="0 0 760 372" width="100%" style="max-width:760px;height:auto;display:block;margin:0 auto"
+           role="img" aria-label="Sequence diagram: device sends text payload, server writes in one transaction and returns ids; a replay returns the original result and writes nothing; then media items upload individually with their own idempotency keys; then finalisation enqueues the PDF compilation.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#35604a"/>
+          </marker>
+          <marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4a5f8a"/>
+          </marker>
+        </defs>
+
+        <!-- lifelines -->
+        <g stroke="#b9cfc0" stroke-width="1" stroke-dasharray="4 4">
+          <line x1="100" y1="52" x2="100" y2="360"/>
+          <line x1="380" y1="52" x2="380" y2="360"/>
+          <line x1="660" y1="52" x2="660" y2="360"/>
+        </g>
+
+        <!-- actor headers -->
+        <g font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="12" font-weight="700" text-anchor="middle">
+          <rect x="46" y="14" width="108" height="34" rx="9" fill="#e6eaf3" stroke="#4a5f8a" stroke-width="1.2"/>
+          <text x="100" y="36" fill="#33415e">Assessor device</text>
+          <rect x="318" y="14" width="124" height="34" rx="9" fill="#e4efe7" stroke="#35604a" stroke-width="1.2"/>
+          <text x="380" y="36" fill="#274936">Sync API</text>
+          <rect x="592" y="14" width="136" height="34" rx="9" fill="#e4efe7" stroke="#35604a" stroke-width="1.2"/>
+          <text x="660" y="36" fill="#274936">Postgres · storage</text>
+        </g>
+
+        <!-- phase 1 -->
+        <text x="60" y="72" font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#8a5a1c">PHASE 1 — TEXT</text>
+        <line x1="100" y1="88" x2="374" y2="88" stroke="#4a5f8a" stroke-width="1.6" marker-end="url(#ahc)"/>
+        <text x="106" y="82" font-family="ui-monospace, monospace" font-size="10.5" fill="#33415e">POST /api/v1/visits/sync/  ·  client_uuid</text>
+
+        <line x1="380" y1="118" x2="654" y2="118" stroke="#35604a" stroke-width="1.6" marker-end="url(#ah)"/>
+        <text x="386" y="112" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="11" fill="#35604a">transaction.atomic() — SyncReceipt · FarmVisit · Assessment* · Signature</text>
+
+        <line x1="660" y1="148" x2="386" y2="148" stroke="#35604a" stroke-width="1.6" marker-end="url(#ah)"/>
+        <text x="394" y="142" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="11" fill="#66756b">ids</text>
+
+        <line x1="380" y1="176" x2="106" y2="176" stroke="#4a5f8a" stroke-width="1.6" marker-end="url(#ahc)"/>
+        <text x="114" y="170" font-family="ui-monospace, monospace" font-size="10.5" fill="#33415e">200 {farm_visit_id, assessment_ids}</text>
+
+        <!-- replay note -->
+        <rect x="118" y="192" width="560" height="30" rx="8" fill="#f7efe1" stroke="#e2cba6" stroke-dasharray="3 3"/>
+        <text x="132" y="211" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="11" fill="#8a5a1c"><tspan font-weight="700">Replay of the same client_uuid</tspan> returns the original result and writes nothing — this is what prevents duplicate audits on a flaky rural network.</text>
+
+        <!-- phase 2 -->
+        <text x="60" y="248" font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#8a5a1c">PHASE 2 — MEDIA</text>
+        <line x1="100" y1="264" x2="374" y2="264" stroke="#4a5f8a" stroke-width="1.6" marker-end="url(#ahc)"/>
+        <text x="106" y="258" font-family="ui-monospace, monospace" font-size="10.5" fill="#33415e">POST /{id}/media/  ·  one item per request · client_media_uuid</text>
+
+        <line x1="380" y1="292" x2="654" y2="292" stroke="#35604a" stroke-width="1.6" marker-end="url(#ah)"/>
+        <text x="386" y="286" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="11" fill="#35604a">EvidencePhoto · sha256 · private media root</text>
+
+        <!-- phase 3 -->
+        <text x="60" y="322" font-family="ui-monospace, monospace" font-size="10" font-weight="700" fill="#8a5a1c">PHASE 3 — FINALISE</text>
+        <line x1="100" y1="338" x2="374" y2="338" stroke="#4a5f8a" stroke-width="1.6" marker-end="url(#ahc)"/>
+        <text x="106" y="332" font-family="ui-monospace, monospace" font-size="10.5" fill="#33415e">POST /{id}/finalise/  →  enqueue finalise_visit</text>
+
+        <line x1="380" y1="356" x2="654" y2="356" stroke="#35604a" stroke-width="1.6" marker-end="url(#ah)"/>
+        <text x="386" y="350" font-family="-apple-system, Segoe UI, Roboto, sans-serif" font-size="11" fill="#35604a">Sheet J PDF → status UNDER_REVIEW</text>
+      </svg>
+      <div class="legend">
+        <span>Ordering is enforced by <b>both</b> sides: text before media, finalisation after both.
+              A server that trusts the client's ordering is not enforcing it.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= PART 4 ========================= -->
+  <div class="section-head"><h2>Part 4 — Evidence for and against</h2><div class="rule"></div></div>
+  <p class="section-note">Each option gets the strongest case that can be made for it. Where an
+     argument survives only on an assumption, the assumption is named.</p>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag grey">A</span>
+      <div><h3>One slice</h3>
+        <p class="ctx">The case §19 implicitly makes, assembled properly.</p></div>
+    </div>
+    <div class="ba">
+      <div class="box pro">
+        <span class="h">For</span>
+        <ol>
+          <li><b>The end-to-end claim is the product.</b> §1’s success statement is
+              “<em>zero retyping by the administrator</em>”. That only becomes true when both
+              halves land, so a half-built slice delivers no part of the promise.</li>
+          <li><b>The contract is discovered, not designed.</b> The pack format is the real risk.
+              Designed without its consumer, it will suit server-side rendering and fail offline —
+              per-question photo association, verdict polarity, resumable drafts.</li>
+          <li><b>One freeze of the most sensitive table.</b> <code>Assessment.template_schema</code>
+              is evidentiary and immutable. Every schema migration before it settles is churn in
+              the one place you least want it.</li>
+          <li><b>A forcing function against drift.</b> Bundled, the risky half cannot be quietly
+              deferred once the safe half is “done”.</li>
+          <li><b>A half-visit is not usable by the group.</b> They cannot run a single real visit
+              on the breadth half alone.</li>
+        </ol>
+      </div>
+      <div class="box con">
+        <span class="h">Against</span>
+        <ol>
+          <li><b>No cut line.</b> If the field client overruns — and it is the part nobody can
+              estimate — there is no natural point to descope; you are simply late.</li>
+          <li><b>Interleaved debugging.</b> A failure could be domain modelling, browser storage,
+              or the contract between them. Separating builds separates the search space.</li>
+          <li><b>It contradicts §19’s own ordering principle</b> (Part 2).</li>
+          <li><em>Its strongest argument rests on an assumption:</em> that the contract cannot be
+              discovered early. It can — by defining it explicitly and testing both sides against
+              it, which is what Option C does.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag amber">B</span>
+      <div><h3>Two slices, two claims</h3>
+        <p class="ctx">The argument from delivery and risk isolation.</p></div>
+    </div>
+    <div class="ba">
+      <div class="box pro">
+        <span class="h">For</span>
+        <ol>
+          <li><b>Risk isolation and a real cut line.</b> The novel engineering gets its own budget
+              and its own overrun.</li>
+          <li><b>Asymmetric automated confidence.</b> The field client can only be trusted after
+              real-device testing; isolating what you cannot test keeps the fast feedback loop
+              fast for everything else.</li>
+          <li><b>Risk-first, properly.</b> Puts the unknowable before the merely laborious — which
+              is what §19 claims to do.</li>
+          <li><b>Learning before freezing.</b> You find out whether the FORM survives a schema
+              <em>before</em> the schema is frozen by offline constraints too.</li>
+          <li><em>“Working, simple, then evolved”</em> — a working online capture form is a
+              simple system that works.</li>
+        </ol>
+      </div>
+      <div class="box con">
+        <span class="h">Against</span>
+        <ol>
+          <li><b>It needs scope it does not admit to.</b> Without a degraded capture form, MVP 1
+              makes the group’s work <em>worse</em>: paper in the field, then digital re-entry.
+              That is extra scope, not a free win.</li>
+          <li><b>It makes a claim that is not true yet.</b> Declaring “MVP 1 shipped — visits are
+              digital” when the dead-zone case is unbuilt is the kind of half-truth this project
+              exists to avoid; the same discipline that keeps MVP 0 claim-free applies here.</li>
+          <li><b>The seam still has to be designed.</b> B does not remove the contract problem, it
+              just discovers it later — with 1a already built against a guess.</li>
+          <li><b>Two release cycles</b> for a group that has not yet run one.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="tag">C</span>
+      <div><h3>Two increments, one claim</h3>
+        <p class="ctx">The synthetic option: take A’s contract argument and B’s risk isolation,
+           refuse B’s claim.</p></div>
+    </div>
+    <div class="ba">
+      <div class="box pro">
+        <span class="h">For</span>
+        <ol>
+          <li><b>Keeps A’s best argument</b> — the contract is discovered with both consumers in
+              view — by making it explicit and testing both sides against it.</li>
+          <li><b>Keeps B’s risk isolation</b>, with a work-package boundary and separate
+              estimates rather than separate announcements.</li>
+          <li><b>Honest inventory:</b> 1b needs <b>zero new tables</b> (Part 1). The irreversible
+              risk really is in 1a, so the seam is a genuine module boundary rather than a
+              bookkeeping device.</li>
+          <li><b>Preserves optionality:</b> if the spike fails, only 1b’s approach changes; the
+              contract absorbs it (a file-export variant is a v2 envelope, not a rewrite of the
+              domain).</li>
+          <li><b>No false claim and no wasted work</b> — 1a is genuinely required by 1b, so
+              neither increment can be descoped into uselessness.</li>
+        </ol>
+      </div>
+      <div class="box con">
+        <span class="h">Against</span>
+        <ol>
+          <li><b>More planning ceremony</b> — a written schema, contract tests, versioning
+              discipline, before any user-visible progress.</li>
+          <li><b>If the seam contract is wrong you pay twice</b> — though in that case A pays the
+              same price with less warning.</li>
+          <li><b>Still one long gate.</b> The group still waits for the whole thing, so C is
+              strictly slower to first value than B.</li>
+          <li><b>It is a middle position</b>, and middle positions can be the sum of both
+              options’ costs rather than their intersection.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= PART 5 ========================= -->
+  <div class="section-head"><h2>Part 5 — What the architecture literature says</h2><div class="rule"></div></div>
+  <p class="section-note">The principles do not agree. That is the honest finding, and it is why
+     this needs a judgement rather than a lookup.</p>
+
+  <div class="card">
+    <table class="t">
+      <tr><th>Principle</th><th>What it says</th><th>Favours</th></tr>
+      <tr>
+        <td><b>Walking skeleton</b><br><span style="color:var(--muted);font-size:13px">Cockburn</span></td>
+        <td>Build the thinnest implementation that runs end-to-end through every layer, early. It
+            is the cheapest way to validate that the architecture holds together.</td>
+        <td class="y">A</td>
+      </tr>
+      <tr>
+        <td><b>Gall’s law</b></td>
+        <td>A complex system that works evolves from a simple system that works. You cannot build
+            a working complex system in one pass.</td>
+        <td class="y">B / C</td>
+      </tr>
+      <tr>
+        <td><b>Spiral / risk-driven order</b><br><span style="color:var(--muted);font-size:13px">Boehm</span></td>
+        <td>Attack the highest-risk item first, because it is the one that can invalidate the plan.</td>
+        <td class="y">C</td>
+      </tr>
+      <tr>
+        <td><b>Last responsible moment</b><br><span style="color:var(--muted);font-size:13px">Lean / Poppendieck</span></td>
+        <td>Defer irreversible commitments until you have the most information you can cheaply get.
+            The template schema freeze is exactly such a commitment.</td>
+        <td class="y">C</td>
+      </tr>
+      <tr>
+        <td><b>Information hiding</b><br><span style="color:var(--muted);font-size:13px">Parnas</span></td>
+        <td>Module boundaries should hide the decisions most likely to change. The sync envelope
+            hides the storage strategy — so it should be an explicit interface, not an implicit
+            one.</td>
+        <td class="y">C</td>
+      </tr>
+      <tr>
+        <td><b>Integration risk</b><br><span style="color:var(--muted);font-size:13px">incremental delivery</span></td>
+        <td>Big-bang integration of two large halves late is where projects fail. Integrate
+            continuously against a contract.</td>
+        <td class="y">B / C</td>
+      </tr>
+      <tr>
+        <td><b>Optimise for cost of change</b></td>
+        <td>Put the effort where change is expensive. Table stakes: the schema. Field client: cheap
+            to change, expensive to <em>verify</em>.</td>
+        <td class="m">A / C</td>
+      </tr>
+      <tr>
+        <td><b>Testability / feedback loop</b></td>
+        <td>Systems you cannot test quickly should be isolated so their slow loop does not slow
+            everything else.</td>
+        <td class="y">B / C</td>
+      </tr>
+      <tr>
+        <td><b>Conway’s law</b><br><span style="color:var(--muted);font-size:13px">weakened here</span></td>
+        <td>Architecture mirrors communication structure. With one developer there is no team
+            boundary — but the <em>cognitive</em> version survives: you can hold one hard problem at
+            a time.</td>
+        <td class="y">B</td>
+      </tr>
+      <tr>
+        <td><b>YAGNI</b></td>
+        <td>Do not build the contract and its harness before you need them.</td>
+        <td class="n">A</td>
+      </tr>
+    </table>
+    <div class="rec">
+      <span class="label">Reading the disagreement</span>
+      <p><b>Walking skeleton</b> and <b>YAGNI</b> point to A. <b>Six principles point to C.</b> The
+         tie-break is a fact about <em>this</em> system rather than a principle: the walking
+         skeleton argument assumes the skeleton is <em>thin</em>, and MVP 1 is not — it is 16
+         tables, four flows, a PDF renderer and a novel browser client. A skeleton that thick is
+         not a skeleton.</p>
+    </div>
+  </div>
+
+  <!-- ========================= PART 6 ========================= -->
+  <div class="section-head"><h2>Part 6 — Comparison</h2><div class="rule"></div></div>
+  <p class="section-note">Deliberately unweighted. A weighted score would need invented numbers for
+     criteria that cannot be measured yet, which is the main way documents like this mislead.</p>
+
+  <div class="card">
+    <table class="t">
+      <tr>
+        <th>Criterion</th>
+        <th style="text-align:center">A</th>
+        <th style="text-align:center">B</th>
+        <th style="text-align:center">C</th>
+        <th>Note</th>
+      </tr>
+      <tr><td>Contract discovered before it freezes</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td>
+          <td>C does it explicitly; A does it implicitly.</td></tr>
+      <tr><td>Risk isolated with a cut line</td><td class="n">✗</td><td class="y">✓</td><td class="y">✓</td>
+          <td>Only C keeps both.</td></tr>
+      <tr><td>Time to first usable increment</td><td class="n">✗</td><td class="y">✓</td><td class="m">~</td>
+          <td>C’s increment is internal; B’s is facing the group.</td></tr>
+      <tr><td>Honest MVP claim</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td>
+          <td>B claims paperless before the dead-zone case exists.</td></tr>
+      <tr><td>Schema churn risk</td><td class="m">~</td><td class="m">~</td><td class="y">✓</td>
+          <td>C freezes the schema with both consumers’ needs known.</td></tr>
+      <tr><td>Extra scope needed to be honest</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td>
+          <td>B needs a degraded capture form it does not budget.</td></tr>
+      <tr><td>Planning overhead before code</td><td class="y">✓</td><td class="y">✓</td><td class="m">~</td>
+          <td>C’s one real cost.</td></tr>
+      <tr><td>Survives the spike failing</td><td class="n">✗</td><td class="y">✓</td><td class="y">✓</td>
+          <td>See Part 7.</td></tr>
+      <tr><td>Consistent with §19’s stated ordering</td><td class="n">✗</td><td class="y">✓</td><td class="y">✓</td>
+          <td>Part 2.</td></tr>
+    </table>
+    <p class="ctx" style="margin-top:12px">A never loses on principle — it loses on
+      <b>thickness</b>. It would be the right call for a thin end-to-end slice. This is not one.</p>
+  </div>
+
+  <!-- ========================= PART 7 ========================= -->
+  <div class="section-head"><h2>Part 7 — Recommendation</h2><div class="rule"></div></div>
+
+  <div class="card opt-c">
+    <div class="card-head">
+      <span class="tag">C</span>
+      <div>
+        <h3>Two increments, one ship gate, a contract at the seam</h3>
+        <p class="ctx">And — the part that is genuinely new information — <strong>the spike is a
+           precondition, not a parallel task.</strong></p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <p class="cap">Recommended order</p>
+      <div class="pipe">
+        <div class="step off"><div class="n">0</div><div class="nm">Spike, real device, dead zone</div><div class="tier">2 days · go / no-go</div></div>
+        <div class="step cli"><div class="n">1</div><div class="nm">Freeze seam contract v1</div><div class="tier">schema + contract tests</div></div>
+        <div class="step"><div class="n">2</div><div class="nm">1a breadth</div><div class="tier">models, flows, PDF, sync API</div></div>
+        <div class="step cli"><div class="n">3</div><div class="nm">1b depth</div><div class="tier">SW, IndexedDB, capture</div></div>
+        <div class="step"><div class="n">4</div><div class="nm">Field test</div><div class="tier">MVP 1 claim</div></div>
+      </div>
+    </div>
+
+    <h4>Why the spike gates the decision</h4>
+    <p class="ctx">D1 and D2 are not independent. The spike’s outcome changes what 1b <em>is</em>,
+       and therefore what the seam contract must carry:</p>
+    <table class="t" style="margin-top:8px">
+      <tr><th>Spike result</th><th>What it means for the seam</th><th>Effect on this decision</th></tr>
+      <tr>
+        <td>Persisted storage holds; drafts survive a kill</td>
+        <td>Envelope carries text + media as designed</td>
+        <td><b>C as written.</b> Option A becomes defensible too, since its main risk is retired.</td>
+      </tr>
+      <tr>
+        <td>Eviction or quota kills long sessions</td>
+        <td>Envelope needs checkpointing, or a file-export fallback (envelope v2)</td>
+        <td><b>C is now clearly right</b> — the contract absorbs a design change that would
+            otherwise land after 1a was built against a guess.</td>
+      </tr>
+      <tr>
+        <td>Offline is not viable on the target devices at all</td>
+        <td>No envelope; a different capture strategy entirely</td>
+        <td><b>B becomes correct</b> — ship the online flow, re-plan the field story.</td>
+      </tr>
+    </table>
+
+    <div class="rec">
+      <span class="label">What this changes in practice</span>
+      <p><strong>§19 currently lists the spike as “0∥ — parallel”.</strong> That is too weak. Running
+         it in parallel with MVP 0 is fine as scheduling, but the <em>seam contract</em> must not be
+         frozen before its result is known. Two days of spike protects the single most
+         expensive-to-change artefact in the slice.</p>
+      <p><strong>And §19’s “risk retired per unit of effort” ordering should be re-stated
+         honestly:</strong> either the slice becomes depth-first (spike → field client → breadth),
+         or the principle is replaced with “user-visible value first”. Keeping both is a small
+         inconsistency that will be used later to justify either choice.</p>
+    </div>
+
+    <h4>What would change my mind</h4>
+    <table class="t" style="margin-top:4px">
+      <tr><th style="width:52%">If…</th><th>Then</th></tr>
+      <tr><td>The spike says offline is straightforward on the target devices</td>
+          <td>A is cheaper and C’s ceremony is not worth it — build one slice, keep the contract informal.</td></tr>
+      <tr><td>The group needs something running within two months</td>
+          <td>B, but only with the degraded capture form explicitly budgeted — otherwise you ship extra work, not less.</td></tr>
+      <tr><td>Authoring the templates from the FORM turns out to be trivial</td>
+          <td>The irreversible risk shifts entirely to the field client and C collapses toward B.</td></tr>
+      <tr><td>There will be a second developer</td>
+          <td>C becomes mandatory: two people on one bundle without a contract is a merge conflict with a deadline.</td></tr>
+    </table>
+  </div>
+
+  <!-- ========================= PART 8 ========================= -->
+  <div class="section-head"><h2>Part 8 — Your decision</h2><div class="rule"></div></div>
+
+  <div class="card" id="decision">
+    <h3>D1 — how is MVP 1 cut?</h3>
+    <p class="ctx">Recorded into <code>PGS_PLATFORM_SPEC.md</code> §18.3 as <code>D25</code> on export.</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="d1" value="A — one slice, build and ship together">A — one slice</label>
+      <label class="opt"><input type="radio" name="d1" value="B — two slices, two ship gates">B — two slices, two claims</label>
+      <label class="opt"><input type="radio" name="d1" value="C — two increments, one ship gate, contract at the seam">C — two increments, one claim</label>
+    </div>
+
+    <h4 style="margin-top:22px">Secondary: is the spike a precondition?</h4>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="d1s" value="Spike gates the seam contract (recommended)">Gates the contract</label>
+      <label class="opt"><input type="radio" name="d1s" value="Spike stays parallel with MVP 0 as §19 says">Stays parallel</label>
+      <label class="opt"><input type="radio" name="d1s" value="Spike first, before any MVP 1 planning">Spike first, full stop</label>
+    </div>
+
+    <textarea id="d1note" placeholder="Reasoning, dissent, or conditions…"></textarea>
+  </div>
+
+  <footer class="end">
+    <p>Review artifact — not a production template. Companion to
+       <code>product/backlog/Refinement/MVP0_PRD.md</code> §9 and
+       <code>PGS_PLATFORM_SPEC.md</code> §19, §7–§11. Model counts and flow inventory are taken
+       from the spec’s own §4.2 and §7–§10. No certification claim is made or implied anywhere in
+       this document.</p>
+  </footer>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="state" id="state">No decision recorded</span>
+    <span class="saved" id="saved">Saved</span>
+    <span class="spacer"></span>
+    <button class="ghost tiny" id="reset">Reset</button>
+    <button class="primary" id="export">Export decision</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>Decision log entry</h3>
+    <p>Paste into <code>PGS_PLATFORM_SPEC.md</code> §18.3.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copy">Copy to clipboard</button>
+    <button class="ghost" id="close">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "pgs-d1-mvp1-shape-v1";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      var s = document.getElementById("saved");
+      s.classList.add("show");
+      clearTimeout(save._t);
+      save._t = setTimeout(function () { s.classList.remove("show"); }, 1300);
+    } catch (e) { /* private mode */ }
+  }
+
+  function refresh() {
+    var bits = [];
+    if (state.d1) bits.push("D1: " + state.d1.split(" — ")[0]);
+    if (state.d1s) bits.push("spike: " + state.d1s.split(" ").slice(0, 3).join(" "));
+    document.getElementById("state").innerHTML = bits.length
+      ? "<b>" + bits.join(" · ") + "</b>"
+      : "No decision recorded";
+  }
+
+  ["d1", "d1s"].forEach(function (name) {
+    var saved = state[name];
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="' + name + '"]'), function (r) {
+      if (saved && r.value === saved) r.checked = true;
+      r.addEventListener("change", function () {
+        state[name] = r.value; save(); refresh();
+      });
+    });
+  });
+
+  var note = document.getElementById("d1note");
+  if (state.note) note.value = state.note;
+  note.addEventListener("input", function () { state.note = note.value; save(); });
+
+  refresh();
+
+  var dlg = document.getElementById("dlg");
+  var out = document.getElementById("out");
+
+  document.getElementById("export").addEventListener("click", function () {
+    var L = [];
+    L.push("| D25 | Shape of MVP 1 (one slice or two?) | " +
+           (state.d1 || "—undecided—") + " |");
+    L.push("| D26 | Does the offline spike gate the seam contract? | " +
+           (state.d1s || "—undecided—") + " |");
+    L.push("");
+    L.push("D1 exploration — " + new Date().toISOString().slice(0, 10));
+    L.push("Source: product/design/d1_mvp1_shape_exploration.html");
+    L.push("");
+    if (state.note) {
+      L.push("Notes:");
+      L.push(state.note);
+      L.push("");
+    }
+    L.push("Follow-on changes if C is chosen:");
+    L.push("- MVP 1 becomes two increments (1a breadth, 1b depth) with one ship gate.");
+    L.push("- A versioned seam contract (visitPack + VisitSyncEnvelope) is written and tested");
+    L.push("  against both sides before either increment starts.");
+    L.push("- §19 re-ordered: spike -> contract -> 1a -> 1b -> field test.");
+    L.push("- §19's stated ordering principle reworded, or the ordering corrected.");
+    L.push("- B2's 'workbook as template source' question (§9 A3) becomes blocking for 1a.");
+    out.value = L.join("\n");
+    dlg.showModal();
+  });
+
+  document.getElementById("copy").addEventListener("click", function () {
+    var b = this; out.select();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(out.value).then(function () {
+        b.textContent = "Copied";
+        setTimeout(function () { b.textContent = "Copy to clipboard"; }, 1300);
+      });
+    } else {
+      document.execCommand("copy");
+      b.textContent = "Copied";
+      setTimeout(function () { b.textContent = "Copy to clipboard"; }, 1300);
+    }
+  });
+
+  document.getElementById("close").addEventListener("click", function () { dlg.close(); });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Clear the recorded decision?")) return;
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    Array.prototype.forEach.call(document.querySelectorAll('input[type="radio"]'), function (r) { r.checked = false; });
+    note.value = "";
+    refresh();
+  });
+})();
+</script>
+</body>
+</html>

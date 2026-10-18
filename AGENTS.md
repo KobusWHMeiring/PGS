@@ -52,6 +52,9 @@ This repo uses the **Harvester backlog convention** (see `product/backlog/CONVEN
   - `python product/backlog.py --apply` — move files to match `Status:` + regenerate
 - The directory a PRD lives in is the **source of truth**; its `Status:` line is advisory.
 - HTML mockups and review artifacts live in `product/design/`, not in the backlog.
+- To explore or explain a decision as a shareable HTML page, use the **local** skill
+  `pgs-writing-explorations` under `.agents/skills/`. Do **not** use `designing-in-html` for
+  this — that one prototypes production UI with CDNs and a different token set.
 
 ## Conventions that bite people
 
