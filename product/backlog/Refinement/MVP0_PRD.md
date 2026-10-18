@@ -347,16 +347,24 @@ outcomes are missing and only one certificate is current. *Do migrated records c
 
 ### D. The offline slice — *the hardest part, untouched by MVP 0*
 
-**D1. Does MVP 1 include the PWA?** §19 bundles "offline visit" as one slice: application →
-questionnaire → offline walkabout → split-sync → Sheet J. That is two different projects — a
-conventional Django form flow and a service-worker/IndexedDB client — sharing a template schema.
-*One slice or two?*
+> **D1 and D2 are resolved** — spec §18.3 D25/D26, exploration in
+> `product/design/d1_mvp1_shape_exploration.html`. MVP 1 is two increments with one ship gate
+> (`1a` in-office breadth, `1b` in-field depth); the spike gates the seam contract rather than
+> running merely parallel. Retained below for context.
 
-**D2. The two-day spike.** Unbuilt and unproven. *When does it run, on whose device, and in which
-dead zone?* Not "which emulator" — the risk is real iOS IndexedDB eviction, not a desktop test.
+**D1. ~~Does MVP 1 include the PWA?~~ → resolved as `1a` + `1b`.** §19 bundled “offline visit”
+into one slice: application → questionnaire → offline walkabout → split-sync → Sheet J. That is
+two different projects — a conventional Django form flow and a service-worker/IndexedDB client —
+sharing a template schema. Split into two increments with a frozen seam contract at `1∥`, and a
+single MVP 1 claim attaching to `1b`.
+
+**D2. ~~The two-day spike.~~ → resolved: it gates the contract.** Runs on a real iPhone in a real
+low-signal location. Its outcome decides what `VisitSyncEnvelope` must carry, so it must finish
+before `1∥` freezes — not before `1a` merely starts.
 
 **D3. Afrikaans in the offline shell.** D7 requires both languages first-class and the PWA caches
-its catalogues. *Does MVP 1 need translated PWA strings before the assessor ever uses it offline?*
+its catalogues. *Does `1b` need translated PWA strings before the assessor ever uses it offline?*
+Now a `1b` question rather than a `1` question.
 
 ### E. Operations
 
