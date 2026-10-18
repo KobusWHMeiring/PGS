@@ -1,6 +1,15 @@
 # MVP 0 Implementation Plan — Standards Foundation & Public Shop Window
 
-**Status:** Refinement — awaiting final PRD review before execution
+> **SUPERSEDED 2026-10-18 by `MVP0_PLAN_V2.md`. Kept for provenance only — do not execute.**
+>
+> Three of this plan's core assumptions were falsified by running a parser over the shipped
+> PDFs: the SAOSO section parser matches **nothing** in the real file (`B-20.1.1` is invented;
+> the source prints `20.1.1.`), the OPP parser cannot reach `§V` (seals) or `§VI` (aggregation),
+> and the appendix parser fails on `Appendix 1.` / `Appendix 6a`. Its tests would have passed
+> against hand-written fixtures while ingestion produced zero citable sections.
+> See `MVP0_PRD.md` appendix (F1–F5) and `PGS_PLATFORM_SPEC.md` §4.5.
+
+**Status:** Superseded — do not execute; see `MVP0_PLAN_V2.md`
 
 **Goal:** Ship the SAOSO/OPP corpus as a queryable, citable library, and the PGS Outeniqua public website with a strictly grounded chatbot on it — making **no certification claim** of any kind.
 

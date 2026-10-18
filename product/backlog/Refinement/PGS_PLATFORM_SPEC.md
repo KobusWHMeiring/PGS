@@ -1,6 +1,6 @@
 # Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)
 
-**Status:** Refinement — target state, delivery sequenced in §19, MVP 0 planned. Awaiting final PRD review.
+**Status:** Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-18
 **Supersedes:** `prd.md` (2026-10-18, "Outeniqua PGS Digital Platform — Design")

@@ -13,7 +13,8 @@ the SAOSO standard.
 | **Handover — start here** | `HANDOVER.md` |
 | **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
-| MVP 0 implementation plan | `product/backlog/Refinement/MVP0_PLAN.md` |
+| MVP 0 PRD | `product/backlog/Refinement/MVP0_PRD.md` |
+| MVP 0 implementation plan | `product/backlog/Refinement/MVP0_PLAN_V2.md` |
 | MVP 0 UAT checklist | `tests/uat/mvp0_standards_and_public_site_uat.md` |
 | Source documents (authoritative) | `pgs_docs/*.pdf`, `pgs_docs/*.xlsx` |
 

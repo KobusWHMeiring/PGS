@@ -80,8 +80,9 @@ completion for a feature a human must judge.
 - **A retarget must not require a migration** (§4.8 / D12). If a change added a
   migration to add a seal, a category or a document, that is a regression against the
   spec, not just a design choice.
-- **The MVP 0 plan is sub-plan structured.** `MVP0_PLAN.md` holds sub-plans A–D;
-  "MVP 0 done" means all four plus the completion-criteria checklist.
+- **The MVP 0 plan is sub-plan structured.** `MVP0_PLAN_V2.md` (current) holds sub-plans A–D;
+  "MVP 0 done" means all four plus the completion-criteria checklist. `MVP0_PLAN.md` is
+  superseded — kept for provenance only.
 
 ## Common Mistakes
 

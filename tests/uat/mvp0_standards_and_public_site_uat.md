@@ -1,7 +1,8 @@
 # MVP 0 UAT — Standards Foundation & Public Shop Window
 
 **Feature slug:** `mvp0_standards_and_public_site`
-**Plan:** `product/backlog/Refinement/MVP0_PLAN.md`
+**Plan:** `product/backlog/Refinement/MVP0_PLAN_V2.md`
+**PRD:** `product/backlog/Refinement/MVP0_PRD.md`
 **Status:** Drafted **before** implementation (shift-left validation)
 **Date:** 2026-10-18
 

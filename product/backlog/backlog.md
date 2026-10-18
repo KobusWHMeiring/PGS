@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-18 15:12
+> Generated: 2026-10-18 16:28
 
 ## Ready (up next)
 
@@ -13,8 +13,9 @@ _none_
 
 ## Refinement
 
-- **MVP 0 Implementation Plan — Standards Foundation & Public Shop Window** - `Refinement\MVP0_PLAN.md` - Status: Refinement — awaiting final PRD review before execution
-- **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — target state, delivery sequenced in §19, MVP 0 planned. Awaiting final PRD review.
+- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `Refinement\MVP0_PLAN_V2.md` - Status: Refinement — awaiting one system brainstorm (MVP0_PRD.md §9) before Ready
+- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `Refinement\MVP0_PRD.md` - Status: Refinement — awaiting one system brainstorm (see §9) before promotion to Ready
+- **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
 
 ## On Hold
 
@@ -30,7 +31,7 @@ _none_
 
 ## Done
 
-_none_
+- **MVP 0 Implementation Plan — Standards Foundation & Public Shop Window** - `Done\MVP0_PLAN.md` - Status: Superseded — do not execute; see `MVP0_PLAN_V2.md`
 
 ## To Do (ideas without a PRD yet)
 
