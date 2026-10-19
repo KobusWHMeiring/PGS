@@ -197,7 +197,16 @@ CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 #
 # Read by B5 (embedding) and B1 (the column width). Nothing else.
 
-EMBEDDING_MODEL = env("EMBEDDING_MODEL", "text-embedding-004")
+# D20: a developer key via `.env`, never a production key in the repo. Blank is a
+# supported state (B5 raises `EmbeddingUnavailable`), because FTS-only retrieval and
+# a full ingest must both work without embeddings.
+GEMINI_API_KEY = env("GEMINI_API_KEY")
+
+# The model is `gemini-embedding-001`, not the `text-embedding-004` that `.env.example`
+# originally named: Google has retired the latter. The *dimension* is what D3/D20
+# freeze (`DocumentChunk.embedding` is `vector(768)`), and B5 requests 768 explicitly
+# via `output_dimensionality`, so the frozen column survives a model change.
+EMBEDDING_MODEL = env("EMBEDDING_MODEL", "gemini-embedding-001")
 EMBEDDING_DIM = int(env("EMBEDDING_DIM", "768"))
 
 
