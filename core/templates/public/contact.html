@@ -1,5 +1,170 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+`/contact/` — same URL as the live page.
+
+The live page publishes three named people with an email address and two cell numbers,
+and names the executive committee elected at the AGM of 16 August 2025. Two different
+decisions apply:
+
+  * **Contact details:** withheld pending the group's confirmation (build plan §6 #1).
+    A personal cell number is a decision about a named person; a visible chip is the
+    honest placeholder (DESIGN rule 8), and the administrator's address can be added in
+    one line when it is confirmed.
+  * **Committee structure:** published. The *roles* are in OPP §3.1 and are part of how
+    the group is governed — "horizontality" is a claim the site makes, and this is the
+    evidence for it. Names are not attached to roles here, because the OPP renews the
+    committee at each AGM and a stale name is a wrong fact.
+{% endcomment %}
 
 {% block content %}
-{% include "public/_page_head.html" %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section">
+    <div class="container">
+      <div class="element-grid element-grid--pair">
+
+        <div class="callout">
+          <h2 class="callout__title">The administrator</h2>
+          <p class="callout__text">
+            Coordinates farm visits, keeps the records and answers questions about fees,
+            forms and the assessment process.
+          </p>
+          <p class="callout__text">
+            <span class="chip">email</span>
+            <span class="chip">phone</span>
+          </p>
+          <p class="callout__text">
+            <span class="chip">contact details to confirm</span>
+          </p>
+        </div>
+
+        <div class="callout">
+          <h2 class="callout__title">Follow the group</h2>
+          <p class="callout__text">
+            Visits, events and seed swaps are announced on the group's own accounts.
+          </p>
+          <p class="callout__text footer__social">
+            <a class="footer__social-link" href="https://www.instagram.com/pgs_outeniqua/"
+               rel="noopener noreferrer" target="_blank" aria-label="Instagram">
+              <img class="footer__social-mark" src="{% static 'img/social_instagram.png' %}"
+                   alt="" aria-hidden="true" width="28" height="28" loading="lazy">
+            </a>
+            <a class="footer__social-link" href="https://www.facebook.com/profile.php?id=61579994608416"
+               rel="noopener noreferrer" target="_blank" aria-label="Facebook">
+              <img class="footer__social-mark" src="{% static 'img/social_facebook.png' %}"
+                   alt="" aria-hidden="true" width="28" height="28" loading="lazy">
+            </a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--warm">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">How the group is governed</h2>
+        <p class="section__lede">
+          The committee plans and implements the group's work and reviews every farm
+          assessment. Its composition is renewed at each annual general meeting, and farmers
+          must make up no less than half of it.
+        </p>
+      </div>
+
+      <ul class="role-list">
+        <li>
+          <span class="role-list__role">Chairperson</span>
+          <span class="role-list__duty">Overall vision and leadership; coordination and the
+            effective functioning of the PGS; chairs meetings and represents the PGS
+            externally.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Vice-chairperson</span>
+          <span class="role-list__duty">Supports the chairperson, acts in their place when
+            required and ensures continuity of leadership.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Secretary</span>
+          <span class="role-list__duty">Organises meetings, prepares agendas, records and
+            circulates minutes, manages day-to-day administration and record
+            keeping.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Treasurer</span>
+          <span class="role-list__duty">Maintains financial records, manages income and
+            expenditure, follows up on membership fees and ensures financial
+            accountability.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Farm visit administration and reporting</span>
+          <span class="role-list__duty">Coordinates and schedules farm visits, compiles and
+            reviews reports, handles certification documentation and follows up on
+            corrective actions.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Technical farming support</span>
+          <span class="role-list__duty">Guidance on organic farming practice, on applying
+            the SAOSO standard, and on technical compliance.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Communications and events</span>
+          <span class="role-list__duty">Written and video content, media channels, the
+            website, quarterly newsletters, and talks, workshops and market events.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Consumer representatives</span>
+          <span class="role-list__duty">Represent consumer interests, take part in farm
+            visits, and ensure a minimum of two consumer representatives attend each visit
+            where feasible.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Retail and market representatives</span>
+          <span class="role-list__duty">Support visibility and sales of organic produce,
+            take part in visits, and strengthen the link between producers and
+            markets.</span>
+        </li>
+        <li>
+          <span class="role-list__role">Academic representatives</span>
+          <span class="role-list__duty">Technical and scientific knowledge, and learning and
+            research that links agriculture, biodiversity and sustainability.</span>
+        </li>
+      </ul>
+
+      <p class="element-grid__source"><span class="cite cite--light">OPP §3.1</span></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">Meetings and visits</h2>
+      </div>
+
+      <ul class="outcome-list">
+        <li class="outcome-list__item">
+          <span>Members are invited to <span class="outcome-list__name">quarterly
+          meetings</span> to discuss the group's work, share knowledge, assist one another
+          with production problems and exchange seeds.</span>
+        </li>
+        <li class="outcome-list__item">
+          <span>Members are required to attend the <span class="outcome-list__name">annual
+          group meeting</span>.</span>
+        </li>
+        <li class="outcome-list__item">
+          <span>All farmers attend <span class="outcome-list__name">at least two other farm
+          visits</span> a year.</span>
+        </li>
+        <li class="outcome-list__item">
+          <span>Farm visits are <span class="outcome-list__name">open to all members and
+          non-members</span>.</span>
+        </li>
+      </ul>
+
+      <p class="element-grid__source"><span class="cite cite--light">OPP §3.2, §3.3</span></p>
+    </div>
+  </section>
+
 {% endblock %}

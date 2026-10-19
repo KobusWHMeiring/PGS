@@ -40,7 +40,7 @@ CSS_DIR = STATIC / "css"
 #: page's own `h1`, so a copy-paste between pages cannot pass.
 PAGES: list[tuple[str, str, str]] = [
     ("home", "/", "Organic assurance built by"),
-    ("organics", "/organics/", "Guided by six basic elements"),
+    ("organics", "/organics/", "Organic agriculture, and what a PGS adds"),
     ("how-it-works", "/how-it-works/", "How it works"),
     ("members", "/members/", "Who is in the group"),
     ("become-a-member", "/become-a-member/", "What membership and assessment cost"),
@@ -322,3 +322,20 @@ def test_every_static_asset_exists(client: Client, name: str, url: str, heading:
     for asset in re.findall(r'(?:src|href)="(/static/[^"]+)"', html):
         relative = asset[len(settings.STATIC_URL) :]
         assert (Path("core/static") / relative).is_file(), f"{url} -> missing {asset}"
+
+
+def test_no_template_uses_a_multiline_hash_comment():
+    """`{# ... #}` is single-line only in Django; a multi-line one is renderable text.
+
+    Checked at the source rather than in the output, because the output test only sees
+    a page that already rendered — and the failure mode (a `<details>` in prose becoming
+    a real element) is silent. There is no multi-line form other than
+    `{% comment %}`, so any newline inside `{#...#}` is a defect by construction.
+    """
+    offenders = []
+    for path in sorted(Path("core/templates").rglob("*.html")):
+        source = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"\{#(.*?)#\}", source, re.S):
+            if "\n" in match.group(1):
+                offenders.append(f"{path.name}: {match.group(1).strip()[:60]}…")
+    assert not offenders, "multi-line {# #} comments (use {% comment %}):\n" + "\n".join(offenders)

@@ -1,5 +1,98 @@
 {% extends "base.html" %}
 
+{% comment %}
+`/become-a-member/` — same URL as the live page (`content_inventory.md` §4).
+
+DESIGN §7.7 fixes the order: **the "Which band are you in?" panel comes first**, then
+the tables. The figures come from `core/services/_public.py` (OPP §2.1, §2.3).
+
+Two decisions surface here, both deliberate:
+
+  * **Bank details are not published** (P/§6 #2 in the build plan). `NU HORUS NPO` and
+    the ABSA account are on the live site today; republishing them, or retiring them,
+    is the group's call, not a design default. Until then the page says to ask the
+    administrator, which is true and needs no placeholder.
+  * **"Payable by end of February" is published** and flagged in the build plan: it is
+    the group's own annual rule from the live site, and it is *not* in the OPP. If it
+    should not be published, remove the callout below — nothing else depends on it.
+{% endcomment %}
+
 {% block content %}
-{% include "public/_page_head.html" %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section">
+    <div class="container">
+      {% include "public/sections/_fee_panel.html" %}
+      {% include "public/sections/_fee_tables.html" %}
+    </div>
+  </section>
+
+  <section class="section section--warm">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">What the fees cover</h2>
+        <p class="section__lede">
+          Fees are set on a cost-recovery basis. They pay for the work of running a peer
+          assessment group, not for a certificate.
+        </p>
+      </div>
+
+      <div class="callout">
+        <h3 class="callout__title">The assessment fee covers</h3>
+        <p class="callout__text">
+          Administrative coordination, preparation, facilitation of the farm visit,
+          reporting, the peer review process, and certification decision-making carried out
+          by the PGS administrator.
+        </p>
+        <p class="callout__text"><span class="cite cite--light">OPP §2.2</span></p>
+      </div>
+
+      <div class="callout">
+        <h3 class="callout__title">When it is due</h3>
+        <p class="callout__text">
+          Membership fees are payable <strong>by the end of February</strong> each year, and
+          the assessment fee is payable <strong>before</strong> the farm assessment visit.
+        </p>
+        <p class="callout__text">
+          The group pays the annual PGS South Africa membership fee out of the membership
+          fees it collects.
+        </p>
+      </div>
+
+      <div class="callout">
+        <h3 class="callout__title">Paying</h3>
+        <p class="callout__text">
+          Ask the administrator for the group's banking details and the payment reference to
+          use. <span class="chip">bank details to confirm</span>
+        </p>
+        <p class="callout__text">
+          <a class="link-more" href="{% url 'core:contact' %}">Contact the administrator →</a>
+        </p>
+      </div>
+
+      <div class="callout">
+        <h3 class="callout__title">Before you pay, ask a question</h3>
+        <p class="callout__text">
+          If you are not sure which band you are in, or whether a renewal applies, ask
+          before paying. Renewal rates apply only where no significant changes to land,
+          production system or inputs have occurred; where major changes are identified the
+          group may require a full assessment at the initial rate.
+        </p>
+        <p class="callout__text"><span class="cite cite--light">OPP §2.3</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">How to join</h2>
+      </div>
+      {% include "public/sections/_steps.html" %}
+      <p class="section__more">
+        <a class="link-more" href="{% url 'core:how_it_works' %}">How a visit works →</a>
+      </p>
+    </div>
+  </section>
+
 {% endblock %}

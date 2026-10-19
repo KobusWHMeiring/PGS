@@ -127,12 +127,13 @@ PAGES: dict[str, Page] = {
             "Participatory Guarantee System, and how first-, second- and third-party "
             "assurance differ."
         ),
-        eyebrow="The PGS",
-        heading="Guided by six basic elements",
+        eyebrow="Organics",
+        heading="Organic agriculture, and what a PGS adds",
         lede=(
-            "A Participatory Guarantee System is not an inspection regime. It is a group of "
-            "peers who hold each other to a shared standard. These six elements are what make "
-            "it a PGS rather than a certificate bought from an agency."
+            "“Organic agriculture is a production system that sustains the health of soils, "
+            "ecosystems and people. It relies on ecological processes, biodiversity and cycles "
+            "adapted to local conditions, rather than the use of inputs with adverse effects.” "
+            "— the IFOAM–Organics International definition, which SAOSO adopts in full."
         ),
     ),
     "how_it_works": Page(

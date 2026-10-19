@@ -23,9 +23,19 @@ different eyebrow from the page (Fees / Join), the literal is used.
   <section class="section" id="organics">
     <div class="container">
       <div class="section__head">
-        <p class="eyebrow">{{ pages.organics.eyebrow }}</p>
-        <h2 class="serif-title section__title">{{ pages.organics.h1 }}</h2>
-        <p class="section__lede">{{ pages.organics.lede }}</p>
+        {% comment %}
+        Literal, not `pages.organics.*`: the band summarises what the standard is, while
+        /organics/ leads with the four principles of organic agriculture. Reusing the
+        page metadata here made the band's heading wrong the moment the page grew a
+        broader scope.
+        {% endcomment %}
+        <p class="eyebrow">The PGS</p>
+        <h2 class="serif-title section__title">Guided by six basic elements</h2>
+        <p class="section__lede">
+          A Participatory Guarantee System is not an inspection regime. It is a group of
+          peers who hold each other to a shared standard. These six elements are what make
+          it a PGS rather than a certificate bought from an agency.
+        </p>
       </div>
 
       {% include "public/sections/_element_cards.html" %}

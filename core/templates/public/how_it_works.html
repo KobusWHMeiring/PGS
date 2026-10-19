@@ -1,5 +1,102 @@
 {% extends "base.html" %}
 
+{% comment %}
+`/how-it-works/` — the live site's `/about-2/`, whose slug is an accident and whose page
+title was already "How it works" (`content_inventory.md` §4).
+
+Three things the live page has that a summary would silently drop, all restored here
+from the OPP rather than from the live site's own prose:
+
+  * the visit committee's composition (OPP §3.3);
+  * that visits are open to members and non-members alike;
+  * the four outcomes a visit can produce, which is the only certification language
+    the public surface is allowed to carry (SPEC §12, claim discipline).
+
+The four outcomes are named as the standard names them. Naming a *category* is not a
+claim about any farm — no farm, product or status is published in MVP 0.
+{% endcomment %}
+
 {% block content %}
-{% include "public/_page_head.html" %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section">
+    <div class="container">
+      {% include "public/sections/_steps.html" %}
+    </div>
+  </section>
+
+  <section class="section section--warm">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">Who comes to a farm visit</h2>
+        <p class="section__lede">
+          A visit is made by peers, not by a hired inspector — and the person whose farm is
+          being visited can see exactly who is coming.
+        </p>
+      </div>
+
+      <div class="callout">
+        <h3 class="callout__title">A farm visit committee</h3>
+        <p class="callout__text">
+          A minimum of four people: the administrator, one consumer and two farmers. The
+          visited farm may also set a maximum number of additional participants who attend
+          as observers without disrupting the assessment.
+        </p>
+        <p class="callout__text">
+          <strong>Farm visits are open to all members and non-members.</strong> Independent
+          retailer and market members, or their representatives, are expected to attend all
+          farm visits from where they source organic produce.
+        </p>
+        <p class="callout__text">
+          <span class="cite cite--light">OPP §3.3</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">What a visit produces</h2>
+        <p class="section__lede">
+          The committee reviews the findings and records one of four decisions against the
+          standard.
+        </p>
+      </div>
+
+      <ul class="outcome-list">
+        <li class="outcome-list__item">
+          <span><span class="outcome-list__name">Certified organic</span> — the operation and
+          its listed products meet the standard for the next 12 months.</span>
+        </li>
+        <li class="outcome-list__item">
+          <span><span class="outcome-list__name">Organic — pending corrective action</span> —
+          findings are recorded and the decision follows their being addressed.</span>
+        </li>
+        <li class="outcome-list__item">
+          <span><span class="outcome-list__name">Organic in-conversion</span> — the land or
+          system is in transition, and the produce is recorded as in conversion rather than
+          as organic.</span>
+        </li>
+        <li class="outcome-list__item">
+          <span><span class="outcome-list__name">Not endorsed / rescheduled</span> — the
+          assessment did not support endorsement, and the reason is recorded.</span>
+        </li>
+      </ul>
+
+      <div class="callout">
+        <h3 class="callout__title">No farm status is published here</h3>
+        <p class="callout__text">
+          This release does not publish certificates, farm status or seals. A member list,
+          when it is published, will say what membership is and is not — and it is not
+          certification.
+        </p>
+      </div>
+
+      <p class="section__more">
+        <a class="link-more" href="{% url 'core:become_a_member' %}">What it costs →</a>
+      </p>
+    </div>
+  </section>
+
 {% endblock %}

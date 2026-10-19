@@ -1,5 +1,149 @@
 {% extends "base.html" %}
 
+{% comment %}
+`/organics/` — the page the live site calls "Certification" (`content_inventory.md`
+§4 keeps the URL and changes the content).
+
+Two taxonomies live here and must never be merged: the **four principles of organic
+agriculture** (SAOSO §2) and the **six basic elements of a PGS** (LANDSCAPE). They
+answer different questions — what organic farming is, and how a peer group guarantees
+it. `content_inventory.md` §3 #1 is the gap this page closes.
+
+Everything on it is quoted from a governed document. Nothing is a paraphrase of a
+paraphrase.
+{% endcomment %}
+
 {% block content %}
-{% include "public/_page_head.html" %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section">
+    <div class="container">
+
+      <div class="section__head">
+        <h2 class="serif-title section__title">The four principles of organic agriculture</h2>
+        <p class="section__lede">
+          SAOSO's standard opens with the IFOAM–Organics International principles, and
+          says they "are to be used as a whole". Each is quoted here from the standard
+          itself.
+        </p>
+      </div>
+
+      <div class="element-grid element-grid--pair">
+
+        <article class="element-card">
+          <h3 class="element-card__title">Health</h3>
+          <p class="element-card__body">
+            Organic agriculture should sustain and enhance the health of soil, plant,
+            animal, human and planet as one and indivisible.
+          </p>
+          <p class="cite-row"><span class="cite cite--light">SAOSO S2.1</span></p>
+        </article>
+
+        <article class="element-card">
+          <h3 class="element-card__title">Ecology</h3>
+          <p class="element-card__body">
+            Organic agriculture should be based on living ecological systems and cycles,
+            work with them, emulate them and help sustain them.
+          </p>
+          <p class="cite-row"><span class="cite cite--light">SAOSO S2.2</span></p>
+        </article>
+
+        <article class="element-card">
+          <h3 class="element-card__title">Fairness</h3>
+          <p class="element-card__body">
+            Organic agriculture should build on relationships that ensure fairness with
+            regard to the common environment and life opportunities.
+          </p>
+          <p class="cite-row"><span class="cite cite--light">SAOSO S2.3</span></p>
+        </article>
+
+        <article class="element-card">
+          <h3 class="element-card__title">Care</h3>
+          <p class="element-card__body">
+            Organic agriculture should be managed in a precautionary and responsible
+            manner to protect the health and well-being of current and future generations
+            and the environment.
+          </p>
+          <p class="cite-row"><span class="cite cite--light">SAOSO S2.4</span></p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--warm">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">
+          The six basic elements of a Participatory Guarantee System
+        </h2>
+        <p class="section__lede">
+          What makes a group a PGS rather than a certificate bought from an agency.
+        </p>
+      </div>
+
+      {% include "public/sections/_element_cards.html" %}
+
+      <blockquote class="quote">
+        <p class="quote__text">
+          “Participatory Guarantee Systems are locally focused quality assurance systems.
+          They certify producers based on active participation of stakeholders and are
+          built on a foundation of trust, social networks and knowledge exchange.”
+        </p>
+        <footer class="quote__source">
+          — IFOAM–Organics International, quoted in the SA Organic Certification Landscape
+        </footer>
+      </blockquote>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">Three ways trust is established</h2>
+        <p class="section__lede">
+          A PGS is a <strong>second-party</strong> system. It exists because a
+          first-party claim cannot travel and a third-party certificate does not fit a
+          short supply chain.
+        </p>
+      </div>
+
+      <div class="element-grid">
+        <article class="element-card">
+          <h3 class="element-card__title">First-party</h3>
+          <p class="element-card__body">
+            A verbal declaration is made by a farmer or producer directly to the consumer,
+            that their produce is produced in alignment with organic principles. There is
+            no verification of the claim; it is a trust-based acknowledgment between the
+            farmer and the consumer, based on direct contact and the relationship.
+          </p>
+        </article>
+
+        <article class="element-card">
+          <h3 class="element-card__title">Second-party — a PGS</h3>
+          <p class="element-card__body">
+            Stakeholders in the supply chain — other farmers, consumers and local markets
+            — meet regularly, visit farms and assess the farmer's production methods
+            against the group's chosen organic standard. This is the model Outeniqua PGS
+            uses.
+          </p>
+        </article>
+
+        <article class="element-card">
+          <h3 class="element-card__title">Third-party</h3>
+          <p class="element-card__body">
+            An independent certification body assesses the operation. Third-party
+            certification to the SAOSO standard provides alignment to global standards
+            and is suitable for long supply chains nationally, and export.
+          </p>
+        </article>
+      </div>
+
+      <p class="element-grid__source">
+        Descriptions condensed from the South African Organic Certification Landscape
+        (PGS SA), pp. 2–3.
+      </p>
+    </div>
+  </section>
+
 {% endblock %}

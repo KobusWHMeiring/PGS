@@ -14,7 +14,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .element-card {
@@ -63,8 +63,15 @@
   line-height: var(--leading-body);
 }
 
+.element-card__body + .element-card__body {
+  margin-top: 0.5rem;
+}
+
 .element-grid__source {
-  margin-top: -0.5rem;
+  /* No negative margin: this line follows an element grid on some pages and a role
+     list on others, and pulling it up overlapped the last row's text. The grid's own
+     bottom margin is trimmed to compensate. */
+  margin-top: 0.75rem;
   margin-bottom: 1.5rem;
   color: var(--brand-muted);
   font-size: var(--text-micro);
@@ -118,6 +125,14 @@
 
 .steps {
   position: relative;
+  /* The ring around a step number is the surrounding ground showing through, so the
+     connecting track appears to pass behind the number. It has to match the band it
+     sits on: warm on the home page, cream on /become-a-member/. */
+  --step-ring: var(--brand-cream);
+}
+
+.section--warm .steps {
+  --step-ring: var(--brand-creamWarm);
 }
 
 .steps__track {
@@ -153,9 +168,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: var(--radius-pill);
-  /* The ring is the warm band showing through, so the track passes behind the
-     number rather than under it. */
-  box-shadow: 0 0 0 4px var(--brand-creamWarm);
+  box-shadow: 0 0 0 4px var(--step-ring);
   background-color: var(--brand-ochre);
   color: #fff;
   font-family: var(--font-serif);
@@ -706,6 +719,7 @@ a.doc-row__action:hover {
 }
 
 .disclaimer__text {
+  max-width: 80ch;
   color: var(--brand-muted);
   font-size: var(--text-xs);
   line-height: var(--leading-body);
@@ -725,4 +739,163 @@ a.doc-row__action:hover {
   .disclaimer__text {
     font-size: var(--text-sm);
   }
+}
+
+/* --- Callout, prose, role list (sub-pages) ------------------------------- */
+/* The deep pages need three shapes the home page never uses: a bordered note
+   (committee composition, payment terms, a pending decision), a short prose block,
+   and a role list. They are here rather than in site.css because they are content
+   blocks, not chrome. */
+
+.callout {
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--brand-sand);
+  border-left: 4px solid var(--brand-ochre);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background-color: var(--brand-sageLight);
+}
+
+.callout + .callout,
+.callout + .role-list,
+.prose + .callout {
+  margin-top: 1.5rem;
+}
+
+/* …but not side by side in a grid: a top margin there is honoured *inside* the
+   stretched track, so the second card sat 24px lower and 24px shorter than the
+   first. Found by measuring two boxes that looked "slightly off" in a screenshot. */
+.element-grid > .callout {
+  margin-top: 0;
+}
+
+.callout__title {
+  margin-bottom: 0.5rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.callout__text {
+  /* The card spans the container; its text does not. A 1280px line is unreadable
+     however well the palette is chosen. */
+  max-width: 62ch;
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.callout__text + .callout__text {
+  margin-top: 0.5rem;
+}
+
+.callout__text strong {
+  color: var(--brand-charcoal);
+  font-weight: 600;
+}
+
+.prose {
+  max-width: var(--container-narrow);
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.prose p + p {
+  margin-top: 0.75rem;
+}
+
+.prose strong {
+  color: var(--brand-charcoal);
+  font-weight: 600;
+}
+
+.prose a {
+  color: var(--brand-ochreDark);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.role-list {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role-list__role {
+  display: block;
+  color: var(--brand-charcoal);
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.role-list__duty {
+  display: block;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.outcome-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.outcome-list__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+}
+
+.outcome-list__item::before {
+  content: "";
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-ochre);
+}
+
+.outcome-list__name {
+  color: var(--brand-charcoal);
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .element-grid--pair {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .role-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 2rem;
+  }
+}
+
+/* A citation chip on a light ground. The default `.cite` treatment is built for the
+   dark chat band (chat.css) and reads as a heavy black tag on a white card. Same
+   content, same meaning, different ground. */
+/* Two classes, not one: `.cite` lives in chat.css, which base.html loads last, so a
+   single-class `.cite--light` would lose to it on source order. */
+.cite.cite--light {
+  border-color: var(--brand-sand);
+  background-color: var(--brand-sageLight);
+  color: var(--brand-ochreInk);
+}
+
+/* Content blocks that can follow one another on a deep page. Each needs separation
+   when it does; without this the "No farm status is published here" callout overlapped
+   the last outcome bullet. */
+.outcome-list + .callout,
+.outcome-list + .element-grid__source,
+.role-list + .callout,
+.element-grid + .callout,
+.steps + .callout {
+  margin-top: 1.5rem;
 }
