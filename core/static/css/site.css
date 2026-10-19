@@ -432,7 +432,10 @@
 .footer__list a {
   display: inline-flex;
   align-items: center;
+  /* Both dimensions, not just height: "Fees" is 26px wide, which is a hard target to
+     hit with a thumb even though the row is 44px tall. */
   min-height: 44px;
+  min-width: 44px;
   transition: color 150ms ease;
 }
 

@@ -622,6 +622,12 @@
   font-weight: 600;
 }
 
+a.doc-row__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 a.doc-row__action:hover {
   text-decoration: underline;
 }
