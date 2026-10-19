@@ -483,14 +483,30 @@ handles BPP/LANDSCAPE: `section_ref = None`, `anchor` from the heading slug, and
 
 **Files:** `knowledge/sections/toc.py`, `knowledge/tests/test_toc_map.py`
 
-The SAOSO body carries **no appendix headings** — they exist only in the TOC and the equivalence
-matrix. So appendix boundaries are derived from the TOC's page numbers.
+**Corrected 2026-10-19 by measurement.** This task originally read "the SAOSO body carries no
+appendix headings — they exist only in the TOC". They do exist: all twelve, in UPPERCASE, at
+indentation 0–62 (SPEC §4.5 reality 4). So boundaries come from the **body** (B2 already finds
+them) and the TOC supplies what the body cannot:
+
+- the **canonical label** (`Appendix 4. Table 2`, where the body prints `APPENDIX 4 TABLE 2:`),
+- the **page ranges**, which is what attributes a *continuation* page — one with no heading of its
+  own — to its appendix instead of to the preceding clause,
+- an independent check that no heading was missed.
+
+**Coordinates (D42).** TOC page numbers are the *reader's* page; SAOSO's PDF index is one higher
+(`Appendix 1` is printed 70 / PDF 71, cross-checked against A10's `MANIFEST.json`). The plan's
+original `segment_appendix(page=71)` is the PDF coordinate; say which you mean —
+`appendix_for_page(71, coordinate="pdf")` — because an implicit offset is the silent error D42
+exists to prevent.
 
 **Test first:** parse `saoso_toc.txt`, assert the map contains
 `{"Appendix 1": 70, "Appendix 4. Table 2": 83, "Appendix 6a": 85}` (from the TOC as shipped),
-and that `segment_appendix(page=71)` returns `"Appendix 1"`.
+and that `appendix_for_page(71, coordinate="pdf") == "Appendix 1"`. Assert it on a **span
+boundary** too (printed 75 is Appendix 1, printed 76 is Appendix 2): the plan's page 71 sits inside
+a span, so a version of the test using only that page stays green even when the offset is ignored.
 
-**Acceptance:** appendix content is attributed to its appendix, not to the preceding clause.
+**Acceptance:** appendix content is attributed to its appendix, not to the preceding clause —
+proved on `saoso_appendices.txt`, whose three pages are all Appendix 1's.
 
 ---
 
