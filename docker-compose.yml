@@ -1,0 +1,44 @@
+# Infrastructure only — the Django app runs natively in a venv (D19).
+#
+# Do not add an `app` or `web` service to this file. MVP 0 targets a shared VPS
+# with a native gunicorn process; containerising the app now would hide the
+# Windows/Postgres differences that A2's settings have to get right, and D19
+# deliberately defers the hosting cutover to MVP 2.
+#
+# Start with:  docker compose up -d
+# Verify with: docker compose ps   (both services healthy)
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: pgs
+      POSTGRES_USER: pgs
+      POSTGRES_PASSWORD: pgs
+    # Host port 5433, NOT 5432. On this Windows dev box a native PostgreSQL 17
+    # service (postgresql-x64-17) already owns 0.0.0.0:5432, and Docker's backend
+    # binds 5432 alongside it rather than failing. A native `localhost:5432`
+    # connection therefore reaches the *native* server, which rejects the `pgs`
+    # role with "password authentication failed" — a confusing error that points
+    # nowhere near the cause. 5433 keeps the container unambiguous.
+    # CI is unaffected: the runner has no competing service (A8).
+    ports: ["5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pgs -d pgs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: ["redisdata:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
