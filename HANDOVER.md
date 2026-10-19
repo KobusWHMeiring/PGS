@@ -1,25 +1,34 @@
-# Handover — MVP 0, sub-plan A complete
+# Handover — MVP 0, sub-plans A and B complete
 
 **For:** the next agent.
-**From:** the foundation build session, 2026-10-19.
-**Repo state:** `main`, **23 commits**. Sub-plan **A (A1–A10) is complete**: 50 Python
-files, **74 tests passing**, `manage.py check` clean, `lint-imports` KEPT.
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but never
-pushed.** No CI.
-**Supersedes:** the 2026-10-19 design-session handover (`a245fb7`), which said
-"10 commits, no application code yet". That is no longer true.
+**From:** the corpus-and-retrieval session, 2026-10-19.
+**Repo state:** `main`, **39 commits**. Sub-plan **A (A1–A10)** and sub-plan **B
+(B1–B7)** are complete: 245 tests passing, `manage.py check` clean, `lint-imports`
+KEPT. The standards corpus ingests all four governed documents (**345 chunks**) with
+**zero duplicate section references**, and hybrid retrieval answers from it, scoped to
+a `StandardSet`.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
+never pushed.** No CI (see §3).
 
 ---
 
 ## 0. The one thing to know first
 
-**There is now code, and the foundation is done.** The custom `User` model is migrated
-and is the first migration; `core_user` exists and `auth_user` was never created.
+**The corpus is done; the surface is not.** `knowledge/` is complete and tested:
+parsers for three document formats, a TOC page map, a chunker, ingestion, and hybrid
+retrieval. **What does not exist is any way for a person to see it** — there are still
+zero HTML templates in the repo. `pgs/urls.py` routes `/health/` and `/admin/` and
+nothing else.
 
-**Your next task is B1** (`knowledge/models.py` — corpus models). Sub-plan A is
-complete and gates nothing further. B is where HANDOVER's original §2 says the real
-technical risk lives, and **A10's fixtures are the ground you build it on** — read
-§4 below before writing a single regex.
+**Your next task is C1** (`MVP0_PLAN_V2.md`, sub-plan C): implement the approved public
+site from `product/design/final_home.html` per `product/design/DESIGN.md`. D (the
+chatbot) then sits inside that surface. C1 is a design-implementation task, not a
+backend one — read `product/design/DESIGN.md` and the `implementing-redesigns` skill
+before touching a template, and note D40: **Tailwind is out**, the design is a visual
+specification, not a code asset.
+
+The dev database is already seeded and ingested (§7), so retrieval can be exercised
+the moment there is a page to exercise it from.
 
 **Before your first commit, run the gate:**
 
@@ -35,149 +44,129 @@ DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify \
 
 | # | Artifact | Why | Time |
 |---|---|---|---|
-| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` Tasks **B1–B7** | **Your actual first work.** | 30 min |
-| 2 | `product/docs/context/testing_hazards.md` | **Read before writing any test.** Every silent failure found so far, with evidence. | 15 min |
-| 3 | `PGS_PLATFORM_SPEC.md` **§4.5** (corpus + the six verified realities) | The parser realities. **Read this before B2.** | 25 min |
-| 4 | `PGS_PLATFORM_SPEC.md` §18.3 | 40 decisions (D1–D40). Most "obvious improvements" were considered and rejected. | 30 min |
-| 5 | `product/docs/context/build_principles.md` | Non-negotiable: thin views, service ownership, 30 KB cap, integer cents. | 10 min |
-| 6 | `docs/RUNBOOK.md` | Backups, restore rehearsal, the client-version trap. | 10 min |
-| 7 | `pgs_docs/` | The authoritative source documents. **Spot-check domain claims here, never against a plan.** | as needed |
+| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` Tasks **C1–C4**, then D1–D5 | **Your actual first work.** B's tasks are historical now. | 30 min |
+| 2 | `product/docs/context/testing_hazards.md` | **Read before writing any test.** Every silent failure so far, with evidence. §1.8 is new and cost this session an hour. | 15 min |
+| 3 | `product/design/DESIGN.md` + `final_home.html` | The only permitted source of tokens. Four palettes exist in `product/design/`; only one is the design system. | 20 min |
+| 4 | `product/design/content_inventory.md` §3 | The 16 items the live site has that a rebuild would silently drop. | 10 min |
+| 5 | `PGS_PLATFORM_SPEC.md` §4.5 and §18.3 | §4.5 now carries **corrected** parser realities; D41–D43 are new and load-bearing. | 30 min |
+| 6 | `product/docs/context/build_principles.md` | Thin views, service ownership, 30 KB cap, integer cents. | 10 min |
+| 7 | `pgs_docs/` | The authoritative source documents. Spot-check claims here, never against a plan. | as needed |
 
 Do **not** read `prd.md` as the spec (superseded provenance). Do **not** execute
-`product/backlog/Done/MVP0_PLAN.md` (superseded — its SAOSO parser matched nothing).
+`product/backlog/Done/MVP0_PLAN.md` (v1 — its SAOSO parser matched nothing).
 
 ---
 
-## 2. What exists, and what it proved
+## 2. What exists, and what this session proved
+
+Sub-plan A (A1–A10) is unchanged — see git history and the previous handover in that
+range. Sub-plan B, built this session:
 
 | Task | Delivered | The finding that mattered |
 |---|---|---|
-| **A1** | Scaffold, `requirements.txt`, Compose (pgvector+redis) | Host port is **5433**, not 5432 — a native PG17 service owns 5432 and Docker binds alongside it, so `localhost:5432` silently reached the *wrong* server |
-| **A2** | Env-driven settings, `pytest.ini` | Django injects `testserver` into `ALLOWED_HOSTS` under test; pytest renames the DB to `test_pgs`. Two plan assertions **could never pass** |
-| **A3** | Custom `User`, `UserRole`, `Role`, `Language`; `AUTH_USER_MODEL` | `AUTH_USER_MODEL` cannot be set before the model exists; `blank=False` is validation, not a DB constraint |
-| **A4** | `Seal`, `Category` as **data**; `seed_deployment`; issuance guard | `is_active=False` blocks issuance **unconditionally**; the seed does not resurrect a retired seal |
-| **A5** | `/health/` — db, redis, broker, **worker** | Broker up + worker down is invisible to a broker-only check |
-| **A6** | `pgs/celery.py`, `heartbeat`, retry-policy rule | A real worker had an **empty task registry** and would discard every queued task; the test was masking it |
-| **A7** | `.importlinter` + 5 architecture tests | The plan's config was **INI-vs-TOML wrong and enforced nothing while exiting 0** |
-| **A8** | `scripts/verify.sh` gate; `deploy.sh` staged | No CI, by decision — see §3 |
-| **A9** | `backup.sh`, `restore.sh`, `docs/RUNBOOK.md` | Five bugs, each producing a backup that looked perfect; media restored as **zero files** |
-| **A10** | `extract_fixtures.py` + 7 verbatim fixtures + `MANIFEST.json` | **The plan's page numbers were all wrong** — see §4 |
+| **B1** | `StandardSet`, `StandardDocument`, `DocumentChunk`; `vector(768)` + generated `tsvector` | `GeneratedField(SearchVector(...))` **works** on PG 16.15 — HANDOVER §6's warned fallback is not needed. A `section_ref` CHECK forbids `""` but permits NULL, so heading-only documents are storable and a parser bug is not |
+| **B2** | `sections/` — `saoso`, `opp`, `heading`, `registry`; 2 new fixtures (`bpp_intro`, `landscape_seals`) | The plan's own OPP item regex **drops §4.5's items 4 and 5** and **invents `4.5(3)`**; its appendix regex is title-case and matches nothing real |
+| **B3** | `sections/toc.py` — page map, appendix spans, printed↔PDF coordinates | The plan's `segment_appendix(page=71)` is the PDF index; D42 stores the printed page (70). A test on page 71 alone is insensitive to that offset — it sits inside a span |
+| **B4** | `chunking.py` — section-level chunks, paragraph splitting, overlap, re-based `sub_refs` | "sub_refs never overlap" cannot hold literally; nested refs nest by design. Measured: OPP 13 sections → 14 chunks |
+| **B5** | `embedding.py` — batched, explicit timeout, retries, no zeros | `text-embedding-004` is **retired**; the default is now `gemini-embedding-001` with `output_dimensionality=768`, so B1's frozen column survives (**ratify this — §8**) |
+| **B6** | `extraction.py`, `ingest.py`, `ingest_standard` command | **Appendix 1 contains two independently numbered criteria lists** (printed pp. 71–72 and 73–75), both running `1.`–`6.`. Splitting on those lines emitted `S1.2` twice. An appendix is now one section, and the duplicate-ref ratchet is **0**, not "~50" |
+| **B7** | `services.py` — FTS + pgvector, RRF k=60, scoped before ranking | RRF is not a mean: 1st+3rd beats 2nd+2nd. Two vector-space scores are not comparable, which is why fusion is on ranks |
+
+**Measured corpus** (dev DB, ingested): SAOSO 298 chunks, OPP 30, BPP 9, landscape 8 —
+345 in total, from 30 sections (SAOSO 271 sections, OPP 28, BPP 4, landscape 6).
+
+**Retrieval, as a developer sees it today** (lexical only — no embeddings ingested):
+
+```
+Q: traceability of organic processing
+   S20.1.2   p60  '20.1.2. Handlers and processers shall ensure traceability…'
+Q: labelling of organic products
+   S22.1.3   p65  '22.1.3. Processed products shall be labelled according to…'
+   S1        p22  'Nanomaterials …'        ← the glossary, a topical-but-wrong neighbour
+Q: poultry manure
+   (nothing)
+```
+
+That last pair is the honest state of the world: FTS finds the right clause and also
+the glossary, and misses paraphrases entirely. **That is what the vector arm is for, and
+what UAT Scenario 2 exists to judge** — the automated suite pins structure, not
+usefulness.
 
 ---
 
 ## 3. Decisions taken this session
 
-**No CI. Use `scripts/verify.sh`.** GitHub Actions was assessed and rejected: every
-check already runs locally, so CI's only real contribution is a different environment —
-and that is obtained more strongly on the actual VPS. Evidence: `harvester`, `river`,
-`elands`, `plot` and `homtini_store` all have `deploy.sh`, and **none of them run
-tests**; harvester's workflow was never fully set up. The gap CI would close is "a
-broken commit sits on `main` until the next deploy" — accepted, revisitable at the VPS
-cutover as a 10-line wrapper around `verify.sh`.
+Recorded in `PGS_PLATFORM_SPEC.md` §18.3 — read them there, not here:
 
-**`deploy.sh` is staged and guarded** (refuses to run off-server). It verifies **before**
-touching the live tree, unlike the established `git pull → migrate → restart` pattern,
-which has no position where a test could gate anything.
+- **D41 — corpus scope: SAOSO Section B and its appendices only.** Section A collides
+  with *itself* (`1.` is both PREAMBLE p5 and BASIS p8), and Section C restarts at `1.`.
+  A globally unique `section_ref` for the whole PDF does not exist.
+- **D42 — `page` is the printed number in the document's footer**, not the PDF index.
+  They differ by one (SAOSO prints `P a g e | 60` on PDF p61); the OPP and the
+  landscape stamp numbers equal to their PDF index; the BPP stamps none.
+- **D43 — `section_ref` stores the citation a human reads**: `S20.1.1`, `§V`,
+  `§4.2(5)`; `sub_refs` stay plain. `B.20.1.1` is withdrawn — it appears nowhere.
+- **No CI. Use `scripts/verify.sh`.** Unchanged from the previous session, and it
+  remains the single source of truth for "shippable".
+- **`google-genai`, `text-embedding-004` → `gemini-embedding-001`** (see §8).
 
-**`google-generativeai` → `google-genai`** (`970a0b0`). The former is end-of-life and
-says so on import. 67 pins.
-
-**MVP 0 before MVP 1a** — decided by the product owner (the previous handover left this
-open).
-
-**Sub-plan A's `deviation` from the plan's compose snippet**: host port 5433. Recorded
-in `docker-compose.yml` and `MVP0_PLAN_V2.md` A1. **Do not "correct" it.**
+Two parser realities in SPEC §4.5 were **wrong** and are corrected there with
+measurements: `SECTION C` does appear in the body (p94/95/97, above its appendices), and
+all twelve appendix headings *do* exist in the body in UPPERCASE — across four separator
+shapes and indentation 0–62.
 
 ---
 
-## 4. Read this before writing any parser (B2) — A10's findings
-
-A10's whole purpose is the guard against v1's failure: a parser written against an
-*assumed* format that matched zero lines of the real document, **and whose tests passed
-because the fixtures were hand-written.**
-
-**The plan's own page numbers were wrong.** `saoso_part_b` "pp. 60–62" starts one page
-early, in the tail of §9.6 (*aquaculture*) — extracting on trust would have grafted
-unrelated text onto a processing fixture, reproducing v1 exactly. `saoso_toc` is p2 (p1
-is the cover), `APPENDIX 1` is p71. The extractor now verifies an **anchor** on each
-start page and fails if it is absent.
-
-**Fixtures are verbatim and must never be hand-edited.** Re-run
-`python scripts/extract_fixtures.py`; it is deterministic and its `MANIFEST.json` records
-each PDF's `sha256`.
-
-**Two traps already measured, both recorded in `MANIFEST.json`:**
-
-1. **The body prints `APPENDIX 1` in UPPERCASE at ~62 columns; the TOC uses title case.**
-   B2's title-case `APPX` regex matches **nothing** in the body (SPEC §4.5 reality 4 is
-   correct) but **false-positives on p63**, where `Appendix 4.` begins a mid-sentence
-   line. Both cases are in the fixtures.
-2. **Some glyphs do not map to Unicode** (byte `0xFF`; `-enc Latin1` yields `0xFF`,
-   `-enc ASCII7` yields `-`). So fixtures contain **U+FFFD**. The OPP's pasture-raised
-   line carries an en-dash in SPEC §4.3 that **no extractor produces**. Do not "fix" it
-   by editing — a hand-corrected fixture stops being evidence.
-
-Confirmed against the fixtures: 28 clauses match `CLAUSE`; the `SECTION B` running header
-matches `HDR`; `V`/`VI` match an indent-tolerant `ROMAN`; §4.5's heading sits at **indent
-4** and matches `SUB`; and all three item markers (`1.`, `1)`, `a.`) appear across
-`opp_4_1`/`4_2`/`4_5`. The outer §4.5 sequence really is **1, 2, 4, 5** — item 3 is
-absent, as SPEC §4.5 claims.
-
----
-
-## 5. Gates
+## 4. Gates
 
 | Gate | Meaning |
 |---|---|
-| **A1–A5 migrated** | ✅ **Passed.** Custom `User` is the first migration; `auth_user` never created |
-| **`verify.sh` green** | Before any commit. It is the single source of truth for "shippable" |
-| **B3 needs a second reader** | The Crops template is 38 questions and 37 verdicts by hand. **A template that is 80% complete looks complete** — have someone read the JSON against printed FORM Sheet B.1 |
-| **0∥ spike complete** | Before `1∥` freezes `visitPack`/`VisitSyncEnvelope`. **MVP 1a sub-plan G does not start first** |
-| **A9's restore rehearsal, on the server** | ⚠️ **Not done.** The logged rehearsal was on the dev box and proves the *scripts*, not the VPS's drive or permissions. R11 requires it before launch |
-| **C1's design approved** | `product/design/final_home.html` is approved as *design*. It has never been built, so nothing about it is verified in code |
+| **A1–A5 migrated** | ✅ Passed. Custom `User` is the first migration |
+| **`verify.sh` green** | ✅ 245 tests at HEAD. Before any commit |
+| **B3 needs a second reader** | ⚠️ **Not done.** The Crops template is 38 questions and 37 verdicts by hand. A template that is 80% complete looks complete |
+| **0∥ spike complete** | ⚠️ **Not done.** Before `1∥` freezes `visitPack`/`VisitSyncEnvelope`. MVP 1a sub-plan G does not start first |
+| **A9's restore rehearsal, on the server** | ⚠️ **Not done.** The logged rehearsal was on the dev box; R11 requires it on the VPS |
+| **C1's design approved** | ✅ As *design*. Nothing about it is verified in code |
+| **UAT sign-off** | ⚠️ **Nothing** in `tests/uat/` is signed. Sub-plan B has no human-judgement items (the parser/retrieval rows are automated), so B is complete without one; C and D are not |
 
 ---
 
-## 6. Traps that will bite
+## 5. Traps that will bite
 
-> **Extended, not duplicated:** the traps found while *building* A1–A10 (Django mutating
-> settings under test, Celery's absent `autoretry_for`, an import-linter config that
-> enforces nothing, the Docker/native-Postgres port collision, five backup bugs, stale
-> fixture page numbers) are recorded with evidence in
-> **`product/docs/context/testing_hazards.md`**. **Read that before writing tests.** The
-> list below is the pre-code, design-and-spec set.
+> **Extended, not duplicated:** every trap found while building A and B — Django
+> mutating settings under test, Celery's absent `autoretry_for`, an import-linter config
+> that enforces nothing, the Docker/native-Postgres port collision, five backup bugs,
+> stale fixture page numbers, a `GeneratedField` that had to be proven, and (new, §1.8)
+> a one-letter fixture-name typo that pytest reports as an impossible-looking error —
+> are recorded with evidence in **`product/docs/context/testing_hazards.md`**. **Read it
+> before writing tests.**
 
-1. **The polarity trap (R1a-2).** Mis-assigning polarity does not crash — it produces
-   plausible, wrong data. `V16` "Are there any risks of contamination of the water
-   source?" answered *Yes* means **non-compliant**; with the naive
-   `is_compliant = (value == YES)` it stores as compliant and looks fine until someone
-   queries it in MVP 3. `V3` is `INFORMATIONAL`; `V23` and Animal `V14` are `NEGATIVE`.
-2. **Section formats are not what they look like.** Read SPEC §4.5's six verified
-   realities before touching ingestion: SAOSO prints `20.1.1.` (**never** `B-20.1.1`),
-   part letters are running page headers present on only 22 of 98 pages, the TOC matches
-   the clause pattern, and appendix headings do not exist in the body.
-3. **`GeneratedField(SearchVector(...))`** may not cooperate with the Postgres version in
-   Compose. Fall back to a trigger and say so in the module docstring.
-4. **`OVERDUE` is derived from `due_on`, never stored.** Otherwise a nightly job becomes
-   load-bearing for correctness, and it will eventually not run.
+1. **The polarity trap (R1a-2).** Mis-assigning polarity produces plausible, wrong data.
+   `V16` "risks of contamination of the water source?" answered *Yes* is
+   **non-compliant**. `V3` is `INFORMATIONAL`; `V23` and Animal `V14` are `NEGATIVE`.
+2. **An appendix is one section, deliberately.** Appendix 1 holds two lists that both
+   start at `1.`. Do not "improve" this into `Appendix 1(1.2)` — it resolves to two
+   different paragraphs. The evidence is in `knowledge/sections/saoso.py`.
+3. **`page` is not the PDF index.** If a new document prints no page number (the BPP
+   does not), `page` is NULL and the `anchor` is the only locator. Do not invent one.
+4. **`OVERDUE` is derived from `due_on`, never stored.**
 5. **Never `except: pass`.** Sentry on every exception path, explicit `timeout=` on every
-   external call.
-6. **Run the thing before you believe it.** See §4. Fixtures come from `pgs_docs/`, and
-   **prove a guard can fail** (break it, watch it go red, restore) before trusting green.
-7. **Delivered HTML may be markdown-escaped — and that silently breaks it.** Both design
-   source files arrived with `\&`, `\[`, `\*` and `&#x20;` escaping. `fontFamily: \['Lora'…\]`
-   is a JS `SyntaxError` that killed the whole `tailwind.config` (so *no* colour
-   resolved). **A token can be silently absent rather than visibly wrong.**
-8. **A Tailwind class may do nothing.** `shadow-xs`/`shadow-2xs` are **v4** names; the CDN
-   serves **v3**. 36 of 48 shadow usages are dead, silently.
-9. **The WordPress media API is not public** — `/wp/v2/.../media` returns **401**. Asset
-   inventory must come from `sitemap.xml`, which means it is **incomplete**.
-10. **Never pipe a schema-changing command into `head`.** It sends SIGPIPE, killing the
-    migration midway and leaving a partial database.
+   external call. `EmbeddingError` on a batch is raised, not smoothed over.
+6. **Fixtures are evidence.** Nine of them, extracted by `scripts/extract_fixtures.py`,
+   hashed in `MANIFEST.json`, anchors verified. Re-run the script rather than editing
+   them. `knowledge/extraction.py` is now the *only* `pdftotext` call, shared with that
+   script, so ingest and fixtures cannot drift.
+7. **A Tailwind class may do nothing**, and delivered HTML may be markdown-escaped.
+   Both cost the design session hours. A token can be silently absent.
+8. **The WordPress media API is not public** — asset inventory from `sitemap.xml` is
+   incomplete.
+9. **Never pipe a schema-changing command into `head`** (SIGPIPE mid-migration).
+10. **Write-then-run in one shell call can read a stale file.** There is a documented
+    instance in `testing_hazards.md` §3.3. Separate the write from the run.
 
 ---
 
-## 7. Commands
+## 6. Commands
 
 ```bash
 # The gate. Run before every commit.
@@ -190,9 +179,18 @@ python manage.py check
 
 docker compose up -d            # Postgres+pgvector (host port 5433) and Redis. App runs natively (D19)
 python manage.py migrate
-python manage.py seed_deployment           # idempotent; data, not migrations (A4)
+python manage.py seed_deployment           # idempotent; now also creates the StandardSet (B6 needs it)
 
-python scripts/extract_fixtures.py         # regenerate A10 fixtures (deterministic)
+# Corpus (the four governed documents, D16)
+python manage.py ingest_standard --doc saoso     --file pgs_docs/saoso-version-2.1-2026.pdf --no-embed
+python manage.py ingest_standard --doc opp       --file "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf" --no-embed
+python manage.py ingest_standard --doc bpp       --file "pgs_docs/Basic Production Principles_ENG_PRINT.pdf" --no-embed
+python manage.py ingest_standard --doc landscape --file "pgs_docs/PGS Certification landscape_Final.pdf" --no-embed
+# Drop --no-embed (with GEMINI_API_KEY in .env) to populate the vector arm.
+# NOTE: the version flag is --doc-version, not --version: Django reserves --version.
+# Re-running any of these is a no-op — ingestion is idempotent on sha256.
+
+python scripts/extract_fixtures.py         # regenerate the 9 fixtures (deterministic)
 BACKUP_DIR=/tmp/drive scripts/backup.sh    # then:
 scripts/restore.sh /tmp/drive/db-<stamp>
 
@@ -200,50 +198,62 @@ python product/backlog.py                  # dry-run: drift + suggested moves
 python product/backlog.py --apply          # move files to match Status: + regenerate index
 ```
 
-Use the **local** skills `.agents/skills/pgs-reading-the-backlog`,
-`pgs-maintaining-the-backlog`, `pgs-writing-explorations` — not their generically-named
-counterparts, which assume other layouts.
+**Dev database state:** seeded and ingested — 1 `StandardSet`, 4 documents, 345 chunks,
+**no embeddings**. Retrieval therefore reports `lexical_only=True`. To exercise the
+vector arm, re-ingest one document without `--no-embed` and with a key.
 
-**Windows specifics:** `bash` is git bash; `rsync` is **absent** (backup falls back to
-`tar` and says so); `lint-imports` is **not on `PATH`** under `python -m pytest`, so it is
-located next to `sys.executable`. Run throwaway scripts from a clean directory — a stray
-`inspect.py` in `%TEMP%` shadows the stdlib.
+**Windows specifics:** `bash` is git bash; `rsync` is absent (backup falls back to
+`tar`); `lint-imports` is not on `PATH` under `python -m pytest`. Run throwaway scripts
+from `_scratch/` (now git-ignored) — a stray `inspect.py` in `%TEMP%` shadows the stdlib.
 
 ---
 
-## 8. Open — not yours to resolve
+## 7. Open — not yours to resolve
 
 | Item | Blocked on | Affects |
 |---|---|---|
-| **D31 — which land-history periods govern** (pledge 12/12/18 vs OPP §V 18/12/12) | **The group** | MVP 2 seal issuance. A certification-integrity question, not a software one |
-| **POPIA consent** for the ~31 published consumer names, 13 farmer members, and the photographs | **The group** | MVP 2 registry |
-| **The 16 content gaps** in `product/design/content_inventory.md` §3 | A design/writing task | C1 |
-| **`/endorsed-farms/`** — 2026/2025 outcomes are live; MVP 0 publishes none | **The group** | The redirect map. Correct for MVP 0, but a visible content loss |
+| **Ratify the embedding model default** — `gemini-embedding-001` at 768 dims replaced the retired `text-embedding-004`; the *dimension* did not move | The product owner | First real embedding run. One line in settings if wrong |
+| **D31 — which land-history periods govern** (12/12/18 vs OPP §V 18/12/12) | **The group** | MVP 2 seal issuance |
+| **POPIA consent** for the ~31 consumer names, 13 farmer members and photographs | **The group** | MVP 2 registry |
+| **The 16 content gaps** in `content_inventory.md` §3 | A design/writing task | C1 |
+| **`/endorsed-farms/`** — 2026/2025 outcomes are live; MVP 0 publishes none | **The group** | The redirect map |
 | **Bank details** (`NU HORUS NPO`, ABSA) published today, absent from the design | Someone who knows the intent | C1 |
 | **News** in the nav or not; the live site has two News pages | Product decision | C1 scope |
 | **Seal cardinality**; which seal applies to "Organic - pending corrective action" | MVP 2 modelling | MVP 2 |
 | **`standard_ref` coverage** — clause mappings for the ~91 non-agro-processing verdicts | Authoring effort | MVP 3 gap analysis |
-| **Hosting cutover to the VPS** | MVP 2 | D19 still records MVP 0 as a local preview |
-| **A9's restore rehearsal on the server** | Whoever has the VPS and the external drive | R11. `docs/RUNBOOK.md` §2.1 has the row waiting |
+| **Hosting cutover to the VPS** | MVP 2 | D19 records MVP 0 as a local preview |
+| **A9's restore rehearsal on the server** | Whoever has the VPS and drive | R11 |
 | **UAT sign-off seats** (administrator, committee reviewer, consumer member) | **The human** | 1a acceptance |
 | **A reversed logo lockup and an SVG of the mark** | The designer | C1 |
-| **Push to `origin`?** | The product owner | `origin` is configured; nothing has been pushed |
+| **Push to `origin`?** | The product owner | 39 commits exist only on this machine |
+| `knowledge/views.py` is an empty Django scaffold stub, in an app that must never have views | Anyone, in passing | A misleading file, not a bug |
 
 ---
 
-## 9. What happened in the earlier sessions
+## 8. What happened this session
 
-1. **Full review of the target-state spec against the source PDFs** (`F1`–`F5`, `D14`–`D24`).
-   Found the MVP 0 SAOSO parser matched **nothing** in the real document (`B-20.1.1` was
-   invented), and that "notifiable exception" was defined backwards.
-2. **A parser was run over the shipped PDFs** before any plan was rewritten — six
-   realities now in SPEC §4.5.
-3. **MVP 0 re-planned**; v1 retired to `Done/`.
-4. **MVP 1's shape decided** (`D25`/`D26`).
-5. **MVP 1a specified** (`D27`–`D33`).
-6. **`D34`–`D39`** — 1a field decisions.
-7. **The public-site design session** — `product/design/final_home.html`,
-   `DESIGN.md`, `content_inventory.md`, `D40` (Tailwind is out).
-8. **This session** — **sub-plan A built end to end (A1–A10)**, `testing_hazards.md`
-   created, `verify.sh`/`deploy.sh`/`backup.sh`/`restore.sh` delivered, and A10's
-   fixtures extracted with the plan's page numbers corrected by measurement.
+1. **B1** — corpus models, with the `section_ref` NULL-vs-`""` decision and a proven
+   `GeneratedField`.
+2. **A conversation with the product owner** that resolved the `S20.1.1` vs `B.20.1.1`
+   contradiction from the FORM workbook, and produced **D41–D43** plus two corrected
+   SPEC §4.5 realities.
+3. **B2** — three parsers written against verbatim fixtures, with two new fixtures for
+   the heading-only documents. Mutation-tested: every guard was broken and restored.
+4. **B3** — the TOC page map, where a test that passed while ignoring the page offset
+   was caught by mutation and rewritten to sit on a span boundary.
+5. **B4** — the chunker, where "sub_refs never overlap" had to be interpreted rather
+   than obeyed, and recorded as such.
+6. **B5** — embeddings; the retired model found and replaced while keeping the frozen
+   dimension; the switch to a lazily-constructed client so importing `knowledge` never
+   needs a key.
+7. **B6** — ingestion, which found the appendix double-numbering defect that made the
+   plan's "~50 duplicate refs" a parser artefact, and reduced the ratchet to zero.
+8. **B7** — retrieval; scope-before-ranking proven on both arms, RRF arithmetic pinned,
+   and the lexical floor kept independent of any API key.
+9. **Close-out** — `seed_deployment` now creates the `StandardSet` (without it the first
+   ingest was a dead end), the dev database seeded and ingested, the backlog index
+   regenerated, and this document rewritten against git rather than its predecessor.
+
+**The one thing to carry forward:** every defect found this session was found by
+*running the thing* — the real PDFs, a mutation, a query — and none of them was visible
+in review. The plan's own code snippets were wrong four times.
