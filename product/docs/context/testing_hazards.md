@@ -182,6 +182,83 @@ undone, and one of them left the file in a state where the typo existed in a *se
 place — which is why the failure count grew from one to two and looked like progress
 being undone.
 
+### 1.9 A template comment that is not a comment rewrites the page
+
+Django's `{# ... #}` comment is **single-line only**. A multi-line one is not a syntax
+error: the whole block is emitted as ordinary text. That alone would be embarrassing —
+but the real damage is that its contents are then parsed as HTML. One of C1's comments
+contained the word `<details>` in prose, to explain why a `<details>` element was used.
+The browser read that word as a start tag, nested everything after it inside a stray
+disclosure widget, and swallowed the header's navigation and its call-to-action button.
+
+The page still returned **200**, the tests still passed, and the first screenshot looked
+*almost* right. Nothing anywhere reported a problem.
+
+```html
+<!-- rendered output, before the fix -->
+{# Phones: the prototype simply hid the nav below `md` … A <details> element is …
+   what the zero-build-pipeline rule requires. #}
+<details class="site-menu"> …          <!-- this one got a stray parent -->
+```
+
+**Rule:** use `{% comment %}…{% endcomment %}` for anything longer than one line, and
+assert on the **source**, not only the output:
+
+```python
+for match in re.finditer(r"\{#(.*?)#\}", source, re.S):
+    assert "
+" not in match.group(1), "multi-line {# #} — use {% comment %}"
+```
+
+C1 now has both guards (`test_no_template_uses_a_multiline_hash_comment` and
+`test_no_unrendered_template_syntax_reaches_the_browser`), and the second one also counts
+`<main>` and `<details>` in the output so a structural mutation fails loudly.
+
+### 1.10 A media query placed above the rule it refines loses
+
+The hero's two call-to-action buttons rendered **stacked and full-width on desktop**,
+while the CSS read exactly as intended:
+
+```css
+@media (min-width: 640px) { .hero__cta { width: auto; } }
+
+.hero__cta { width: 100%; }        /* later in the file — and therefore the winner */
+```
+
+A media query adds **no specificity**. Both selectors are one class, so the later
+declaration wins and the breakpoint is dead. Nothing warns; the desktop screenshot simply
+shows the mobile layout stretched.
+
+**Rule:** in a component block, write base rules first and breakpoints after, in one
+place. (`core/static/css/site.css` says so in a comment at the sites where it bit.)
+Mutation-test a breakpoint the same way as a Python guard: change the base value and
+confirm the wide viewport changes.
+
+### 1.11 A sibling margin inside a grid track shrinks the card
+
+Two cards side by side in a grid looked "slightly off": the second sat 24px lower and was
+24px shorter than the first. The cause was a **stacking** rule that the side-by-side case
+inherited:
+
+```css
+.callout + .callout { margin-top: 1.5rem; }   /* for stacked callouts */
+```
+
+In CSS Grid, an item's margins are honoured *inside* its stretched track: 24px of top
+margin pushed the box down 24px and reduced its height by 24px. The two boxes were still
+"the same size" as far as the grid was concerned.
+
+**Evidence, in one measurement** (the reason this was diagnosed in minutes rather than by
+eye):
+
+```python
+[{top: 446.5, height: 206.25}, {top: 470.5, height: 182.25}]   # before
+[{top: 446.5, height: 206.25}, {top: 446.5, height: 206.25}]   # after `.element-grid > .callout { margin-top: 0 }`
+```
+
+**Rule:** when two boxes in a grid disagree about size, measure their boxes before reading
+the CSS. A stacking sibling rule is the usual suspect, and it never looks like one.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML
@@ -361,6 +438,48 @@ otherwise translates `
 VPS — the determinism check passes locally and fails in CI.
 
 ---
+
+### 3.8 A long-lived dev server serves stale code, and the screenshot proves nothing
+
+`manage.py runserver --noreload` (which `_scratch` scripts use to avoid the autoreloader
+forking twice) keeps **Python modules** in memory forever. With `DEBUG=False` — this
+project's default — Django also uses the **cached template loader**, so template changes
+are invisible too. `--noreload` means "do not restart when files change", not "reload
+templates anyway".
+
+Three rounds of screenshots showed the old page while `pytest` showed the new one,
+because the test client starts a fresh process per run. The page looked broken; it was
+merely old.
+
+**Rule:** when a browser and the test client disagree, believe the test client and
+restart the server. For visual work, run the dev server with both:
+
+```bash
+DJANGO_DEBUG=1 python manage.py runserver 127.0.0.1:8931 --noreload
+```
+
+and confirm what you are looking at before judging it:
+
+```bash
+curl -s http://127.0.0.1:8931/ | grep -c "key-facts"    # 0 means: not your code
+```
+
+### 3.9 The port you chose may already belong to another project
+
+Port 8123 answered `200 OK` immediately, so the screenshot step "worked" — and produced a
+dashboard for **Tenderly**, a different repository whose dev server was still running.
+Playwright reported a clean load, `document.fonts` listed Inter and Playfair Display, and
+the only clue was that the fonts were two families this project never declares.
+
+**Rule:** start the server on a port you own, bind it explicitly (`127.0.0.1:PORT`), and
+assert one string from *your* page before trusting a screenshot:
+
+```python
+page.goto(BASE + path)
+assert "Outeniqua" in page.title()
+```
+
+Better still, let Playwright use `live_server`, whose URL it cannot confuse.
 
 ## 4. Domain hazards already in `HANDOVER.md` §6
 

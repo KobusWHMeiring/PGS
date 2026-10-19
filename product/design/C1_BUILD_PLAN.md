@@ -1,5 +1,13 @@
 # C1 — Public site: build plan
 
+> **Status 2026-10-19 — C1a, C1b, C1c, C4 and C1e landed.** Six routes render, 336 tests
+> pass in the gate, 25 Playwright tests pass. What is *not* done: **C2** (`/documents/` —
+> the document band carries `Publishing soon` chips until it exists), **C3** (the AF pill
+> is a disabled control, not a link), and sub-plan **D**. The nine open questions in §6
+> are still open; the defaults in that table are what shipped. **§2** below was resolved
+> differently from the plan as written: all six routes exist from C1a, each page owns its
+> own headings, and the section partials carry only bodies — see the note under §2.
+
 **Goal:** implement the approved public site (`final_home.html`) as Django templates and semantic
 CSS, with the five public routes the redirect map requires, no build step, no CDN, and no claim
 the group cannot support.
@@ -39,6 +47,11 @@ they replace must resolve. Both are binding, so:
 - **A sub-page renders the same section partials as the home page, plus the detail that has nowhere
   to live on a single page** (the four IFOAM principles, the committee composition, the member
   categories). The markup is not duplicated; the partial is included by both.
+- **Superseded in implementation:** the six routes were built in C1a rather than C1c
+  (a link to a route that does not exist raises `NoReverseMatch`, so routes had to exist
+  before the header could link to them), and the shared partials carry *bodies* while each
+  page owns its own heading — a sub-page's `h1` and the home page's summary of it must not
+  share a tag level.
 - **`/documents/` does not exist yet.** It is C2. So in C1 the nav carries **4 links + the CTA**,
   the documents rows render a visible `Publishing soon` chip instead of a `Download` link, and the
   footer's Documents column points at `/#documents`. C2 adds the route and wires all three in one

@@ -12,6 +12,31 @@ never pushed.** No CI (see §3).
 
 ---
 
+## 0. Update — C1 session (2026-10-19, later the same day)
+
+**The public site exists.** Sub-plan C1 landed in five commits: `root.css` + `site.css` +
+`components.css` + `chat.css` as semantic CSS (Tailwind is out, D40), self-hosted Lora and
+Mulish, all ten designed bands on `/`, and five real routes — `/organics/`,
+`/how-it-works/`, `/members/`, `/become-a-member/`, `/contact/`. Claim discipline (C4)
+landed early because C1 wrote the copy it guards.
+
+- **Next: C2** (`/documents/`). The home page's document rows are chips reading
+  `Publishing soon` — `core/tests/test_claim_discipline.py` fails the build if one becomes
+  a link before the route exists. Then C3 (the EN/AF pill is a disabled control, not a
+  link) and sub-plan D.
+- **Read `product/design/C1_BUILD_PLAN.md`** — its §3 is a copy-provenance table (every
+  published string names its source document) and its §6 lists the nine decisions still
+  with the product owner: contact details, bank details, News, pledge downloads, the
+  February fee deadline, photography consent, and the six-elements wording.
+- **The gate is green at 336 tests**, and `python -m pytest tests/e2e -q` adds 25 browser
+  tests (needs `playwright install chromium`; deliberately outside `testpaths`).
+- **Four new entries in `testing_hazards.md`** — §1.9 (a multi-line `{# #}` is emitted as
+  text *and* parsed as HTML: it restructured the header), §1.10 (a media query above the
+  rule it refines loses), §1.11 (a sibling margin inside a grid track shrinks the card),
+  §3.8 (a `--noreload` server with `DEBUG=False` serves stale templates *and* modules).
+
+---
+
 ## 0. The one thing to know first
 
 **The corpus is done; the surface is not.** `knowledge/` is complete and tested:
