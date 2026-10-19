@@ -1,0 +1,35 @@
+# Line endings and binary handling.
+#
+# This repository is edited on Windows. Without the rule below, every file that
+# Git touches has its line endings rewritten and every diff churns — which is why
+# MVP0_PLAN_V2.md Task A1 calls for this file explicitly.
+#
+# Normalise text to LF in the repository and check it out as LF everywhere.
+* text=auto eol=lf
+
+# Never normalise, never attempt a text diff. The `pgs_docs/` originals and the
+# design assets are the group's evidence and artwork; corrupting either by
+# treating them as text is not recoverable from the repository.
+*.pdf   binary
+*.xlsx  binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.gif   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+
+# Keep diffs reviewable.
+*.po    text eol=lf
+*.pot   text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
