@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)** and **C4 (claim discipline)** landed 2026-10-19; **C3 (bilingual shell)** and **D (chatbot)** remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **379 tests**, plus **30 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
+**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)** and **C4 (claim discipline)** landed 2026-10-19; **C3 (bilingual shell)** is deferred to a later slice (D44, no Afrikaans translator) and **D (chatbot)** remains. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **387 tests**, plus **30 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-19
 **MVP:** 0 (spec §19)
@@ -693,7 +693,26 @@ test.
 
 ---
 
-### Task C3: Bilingual scaffolding
+### Task C3: Bilingual scaffolding — **DEFERRED (D44, 2026-10-19)**
+
+**Not built in MVP 0.** The product owner deferred it on 2026-10-19: no human Afrikaans
+translator is available, and shipping a machine translation would satisfy every assertion
+below except the one that matters (a `.po` file with zero `#, fuzzy` entries is evidence of
+review, not a substitute for it). Decision recorded as **D44** in
+`PGS_PLATFORM_SPEC.md` §18.3.
+
+**What stays in place, deliberately:** `LANGUAGES`, `LOCALE_PATHS` and
+`User.preferred_language`, so this remains a catalogue-and-middleware job rather than a
+schema change. **What does not happen:** the AF control stays `aria-disabled` — it must not
+become a link that silently reloads the same English page. UAT Scenario 5 is *not
+applicable*, not failed.
+
+**The cost, recorded rather than absorbed:** `build_principles.md` §IV says strings are
+translated *from the start rather than retrofitted*. Every page and string added between now
+and C3 is a retrofit. Whoever picks this up should expect a full re-read of the templates,
+not a diff.
+
+<details><summary>Original task, for when C3 is picked up</summary>
 
 **Files:** `pgs/settings.py` (i18n), `locale/af/LC_MESSAGES/`, `core/tests/test_i18n.py`
 
@@ -704,6 +723,8 @@ navigation, form labels, chatbot frame, footer — and nothing else (D18).
 **Tests first:** `preferred_language="af"` renders the Afrikaans shell; `{% translate %}` keys
 exist in both catalogues; **no page content string is machine-translated** (assert the `.po`
 files' `#, fuzzy` count is zero — a fuzzy entry is an unreviewed translation).
+
+</details>
 
 ---
 
@@ -829,6 +850,7 @@ not loaded on any other page that does not use it.
 | 4 | B1 → B2 → B3 → B4 | Parser + chunker tests green; OPP chunk count in the low tens |
 | 5 | B5 → B6 → B7 | Four documents ingest; ratchet holds; retrieval recall floor met |
 | 6 | C1 → C4 (parallel with 5 once B7 lands) | Public routes 200; claim discipline green |
+| 6b | ~~C3~~ | **Deferred (D44).** Skipped between C2 and D at the product owner's direction. |
 | 7 | D1 → D5 | Grounding and guardrail tests green; refusal exact |
 | 8 | UAT | Eight scenarios judged; 1, 3, 8 provisional if D23 applies |
 

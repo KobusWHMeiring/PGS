@@ -4,7 +4,7 @@
 **From:** the corpus-and-retrieval session, the public-site session, and the
 documents session — 2026-10-19.
 **Repo state:** `main`, **50 commits**, clean tree except two untracked files (§7).
-`verify.sh` green at **379 tests**; `python -m pytest tests/e2e -q` green at **30** more.
+`verify.sh` green at **387 tests**; `python -m pytest tests/e2e -q` green at **30** more.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
 never pushed.** No CI (see §3).
 
@@ -12,13 +12,14 @@ never pushed.** No CI (see §3).
 
 ## 0. The one thing to know first
 
-**The standards corpus and the public site both exist; the chatbot and the bilingual
-shell do not.** `knowledge/` is complete (four formats, TOC map, chunker, ingestion, hybrid
-retrieval scoped to a `StandardSet`). The public site is built: **seven** routes at 379
-tests, semantic CSS, self-hosted type, the claim discipline that keeps it honest, and the
-eight published documents behind `/documents/<code>/`. What is missing is narrow and
-known: **C3** (the EN/AF pill is still a disabled control, not a link) and **D** (the
-chatbot).
+**The standards corpus and the public site both exist; the chatbot does not.** `knowledge/`
+is complete (four formats, TOC map, chunker, ingestion, hybrid retrieval scoped to a
+`StandardSet`). The public site is built: **seven** routes at 387 tests, semantic CSS,
+self-hosted type, the claim discipline that keeps it honest, and the eight published
+documents behind `/documents/<code>/`. What is missing is narrow and known: **D** (the
+chatbot). **C3 was deferred out of MVP 0 by the product owner (D44)** — no Afrikaans
+translator exists, so the AF pill stays a disabled control and that is deliberate, not a
+regression.
 
 **Read `product/design/C1_BUILD_PLAN.md` before touching the site.** Its §3 is a
 copy-provenance table — every published string names the OPP, SAOSO or LANDSCAPE passage
@@ -38,7 +39,7 @@ DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify ./scripts/verify.sh
 
 | # | Artifact | Why | Time |
 |---|---|---|---|
-| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` Task **C3**, then D1–D5 | Your actual first work. | 20 min |
+| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` **Sub-plan D (D1–D5)** | Your actual first work. Skim C3's struck-out task so you do not reopen it. | 20 min |
 | 2 | `product/design/C1_BUILD_PLAN.md` | What C1 built, where every string came from, and the nine open decisions. | 20 min |
 | 3 | `product/docs/context/testing_hazards.md` | **Read before writing any test.** Fifteen entries now; §1.13–§1.15 are from the C2 session — a data-driven route the sweeps silently skipped, a `logging` `extra=` collision, and a URL segment that is not a slug. | 20 min |
 | 4 | `product/design/DESIGN.md` + `product/design/content_inventory.md` | The design of record, and the 16 live-site items a rebuild silently drops. | 25 min |
@@ -60,7 +61,7 @@ Do **not** read `prd.md` as the spec (superseded provenance). Do **not** execute
 | **C1 — public site** | Complete | six routes, `root.css`/`site.css`/`components.css`/`chat.css`, self-hosted Lora + Mulish (C2 added the seventh route and 37 tests) |
 | **C4 — claim discipline** | Complete | six forbidden terms, no seal rendered, no dead certificate link, no `Publishing soon` left anywhere; `test_nothing_is_pending_on_a_public_route` runs over all seven routes |
 | **C2 — `/documents/`** | Complete | `PublicDocument` + `publish_documents` (idempotent on sha256), eight documents at `/documents/<code>/`, streamed through a view so `is_published` is per request; 379 + 30 tests |
-| **C3 — bilingual shell** | **Not started** | `LANGUAGES`/`LOCALE_PATHS` set; no `LocaleMiddleware`, no catalogue; AF pill is `aria-disabled` |
+| **C3 — bilingual shell** | **Deferred (D44)** | No Afrikaans translator. `LANGUAGES`/`LOCALE_PATHS`/`User.preferred_language` stay in place; no `LocaleMiddleware`, no catalogue; AF pill is `aria-disabled` — honest, and it must not become a link |
 | **D — chatbot** | **Not started** | no `_chatbot.py`/`_chat.py` exists at all (verified 2026-10-19 — an earlier handover said "scaffold stubs") |
 
 **The site's architecture, in one paragraph.** `core/services/_public.py` holds every
@@ -79,7 +80,7 @@ home page's summary of the same content must not share a tag level.
 | Gate | Meaning |
 |---|---|
 | **A1–A5 migrated** | ✅ Passed. Custom `User` is the first migration |
-| **`verify.sh` green** | ✅ 379 tests at HEAD. Before any commit |
+| **`verify.sh` green** | ✅ 387 tests at HEAD. Before any commit |
 | **Playwright green** | ✅ 30 tests: seven routes, 390px, measured 44px targets, clean console, and a real download click. Outside the gate by design |
 | **B3 needs a second reader** | ⚠️ **Not done.** The Crops template is 38 questions and 37 verdicts by hand |
 | **0∥ spike complete** | ⚠️ **Not done.** Before `1∥` freezes `visitPack`/`VisitSyncEnvelope` |
@@ -91,13 +92,31 @@ home page's summary of the same content must not share a tag level.
 
 ## 4. Next steps, in order
 
-1. **C3 — bilingual shell.** `LocaleMiddleware`, `af` catalogue, session-persisted
-   switcher, `User.preferred_language` default. Translate the *shell* only (D18); assert
-   the `.po` files carry **zero** `#, fuzzy` entries.
-2. **D — the chatbot.** Models → `answer_question()` → citation validity → guardrails →
-   the surface, which already has its two showcase windows waiting in
-   `sections/_chat_windows.html` and `.cite` styling in `chat.css`.
-3. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
+1. **D1–D5 — the chatbot.** The only thing left in MVP 0. Order matters: D1 (models) →
+   **D3's tests before D2 exists** → D2 (`answer_question()`) → D4 (guardrails) → D5 (the
+   surface, which already has its two showcase windows waiting in
+   `sections/_chat_windows.html` and `.cite` styling in `chat.css`).
+   Write D3 first because the product argument *is* the refusal: the only thing that proves
+   the bot declines rather than guesses is a hallucinated citation failing the suite.
+2. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
+
+**Two blockers D must be built around, both external:**
+
+* **No `GEMINI_API_KEY`, and the embedding default is unratified.** Retrieval reports
+  `lexical_only=True` — there are no embeddings at all. D3's "no citation outside the
+  session's `StandardSet`" works on the lexical arm, but the recall floor does not. Build
+  D2 against fakes (that is what its tests are for); the first *real* answer needs the key
+  and one line of settings ratification (`gemini-embedding-001` @ 768 dims — the dimension
+  did not move when `text-embedding-004` was retired).
+* **The refusal string is fixed by D17** — *"I cannot find a definitive answer in the SAOSO
+  standard or the Outeniqua PGS documents."* Not SAOSO-only: the OPP answers questions the
+  standard does not (fees, joining).
+
+**Deferred, do not reopen without the product owner: C3.** The product owner deferred the
+bilingual shell on 2026-10-19 (decision **D44**). The AF control stays `aria-disabled` and
+must not become a link that reloads the same English page; UAT Scenario 5 is *not
+applicable*, not failed. `build_principles.md` §IV is therefore unmet for MVP 0 — every
+string added in D is a retrofit when C3 is eventually picked up.
 
 **Done since the last handover (C2, 2026-10-19).** `PublicDocument` +
 `publish_documents` (idempotent on sha256, wired into `deploy.sh`), eight documents at
@@ -179,6 +198,7 @@ detail):**
 
 | Item | Blocked on | Affects |
 |---|---|---|
+| **An Afrikaans translator** (C3, deferred as D44) | The group | MVP 0 ships English-only. Every string added from here is a retrofit |
 | **Ratify the embedding default** — `gemini-embedding-001` at 768 dims replaced the retired `text-embedding-004`; the *dimension* did not move | The product owner | First real embedding run. One line in settings if wrong |
 | **D31 — which land-history periods govern** (12/12/18 vs OPP §V 18/12/12) | **The group** | MVP 2 seal issuance |
 | **POPIA consent** for ~31 consumer names, 13 farmer members and four photographs | **The group** | MVP 2 registry; blocks publishing any member list |
@@ -298,6 +318,24 @@ snippets were wrong four times, and the design prototype's own rules were wrong 
    "seven" (D22's enumeration was miscounted in three documents), and `PublicDocument`
    belongs in `_public.py`, not `_core.py` as the plan said.
 
-**What the tests could not see, again:** the `logging` `extra={"created": …}` collision,
-both `config_type` mutations, and the empty-rows sweep would all have shipped green. Two
-of the five document guards passed their first mutation and had to be re-broken properly.
+**What the tests could not see, again:** the `logging` `extra={"created": …}` collision, the
+octet-stream and rewrite-every-deploy mutations on their first attempt, and the empty-rows
+sweep would all have shipped green. Two of the document guards had to be re-broken properly
+before their mutation failed.
+
+---
+
+## 11. Session close — the deferral (2026-10-19)
+
+Two product-owner decisions were taken and recorded, not absorbed:
+
+1. **`"Fees payable by end of February"` withheld** — commit `edda927`. The live site's
+   claim, absent from the OPP; `test_no_unsourced_claim` refuses it on every route.
+2. **C3 deferred out of MVP 0** — `PGS_PLATFORM_SPEC.md` **D44**, `MVP0_PLAN_V2.md` C3
+   struck with the reason, UAT Scenario 5 marked *not applicable*, the AF control left
+   `aria-disabled`. No Afrikaans translator; a machine translation would pass every test
+   except the one about honesty.
+
+**State at close:** 50 commits (plus this one), tree clean apart from the two untracked
+files in §7, `verify.sh` green at **387**, Playwright **30**. **MVP 0 is one sub-plan from
+done: D.** Everything D needs to know is in §4 above; nothing in D depends on C3.

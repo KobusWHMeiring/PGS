@@ -105,7 +105,14 @@ Recorded here so the manual list is not padded with machine-provable work.
 
 ---
 
-## Scenario 5 — Afrikaans quality
+## Scenario 5 — Afrikaans quality — **NOT APPLICABLE (C3 deferred, D44)**
+
+**Status:** ⏭️ **Not applicable to MVP 0.** The product owner deferred the bilingual shell on
+2026-10-19 (decision **D44**): no human Afrikaans translator is available, and a machine
+translation would undercut the site's credibility here more than English-only does. The AF
+control in the header is `aria-disabled` by design and must stay that way.
+
+**When C3 is picked up, this scenario applies unchanged:**
 
 **Category:** language
 **Setup:** Set `preferred_language` to Afrikaans; browse the public site and ask the chatbot one question in Afrikaans.

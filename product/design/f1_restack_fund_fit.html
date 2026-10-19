@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<!-- EXPLAINER (not a production template, not a proposal) | F1 — NLnet ReStack fit | Outeniqua PGS | 2026-10-19
+     Decision document. Self-contained: no CDN, no build step, no network, no external fonts.
+     Companion to AGENTS.md, HANDOVER.md, PGS_PLATFORM_SPEC.md §18.2, knowledge/services.py, knowledge/embedding.py -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F1 — Should this go to NLnet ReStack, and as what?</title>
+<style>
+  :root {
+    --bg:            #f4f6f2;
+    --surface:       #ffffff;
+    --surface-low:   #eaeee6;
+    --surface-high:  #dfe5da;
+    --accent:        #35604a;
+    --accent-soft:   #e4efe7;
+    --accent-line:   #b9cfc0;
+    --text:          #1c2620;
+    --muted:         #66756b;
+    --warn:          #8a5a1c;
+    --warn-soft:     #f7efe1;
+    --danger:        #8f3a34;
+    --danger-soft:   #f8ecea;
+    --code-bg:       #26312a;
+    --code-text:     #dfe8e0;
+    --radius-lg:     14px;
+    --radius-xl:     20px;
+    --shadow:        0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 22px 140px; }
+
+  header.hero { background: linear-gradient(160deg, var(--accent) 0%, #274936 100%); color:#fff; padding: 46px 22px 40px; }
+  header.hero .inner { max-width: 1020px; margin: 0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 14px; font-size:33px; line-height:1.16; letter-spacing:-.015em; max-width:34ch; }
+  header.hero .q { margin:0; max-width:68ch; opacity:.94; font-size:16px; border-left:3px solid rgba(255,255,255,.35); padding-left:14px; }
+  header.hero .meta { margin-top:20px; font-size:13px; opacity:.82; display:flex; flex-wrap:wrap; gap:8px 20px; }
+  header.hero .meta code { font-family:var(--mono); font-size:12px; background:rgba(255,255,255,.14); padding:2px 7px; border-radius:6px; }
+
+  h2.sec { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin:46px 0 6px; }
+  h3 { font-size:18px; margin:0 0 8px; letter-spacing:-.005em; }
+  h4 { font-size:14px; margin:0 0 6px; }
+  p { margin:0 0 12px; }
+  .lead { font-size:15.5px; color:var(--muted); max-width:76ch; }
+  .card { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:16px; }
+  .muted { color:var(--muted); }
+  code { font-family:var(--mono); font-size:.9em; background:var(--surface-low); padding:1px 5px; border-radius:5px; }
+  strong { font-weight:650; }
+
+  .answer { background:var(--accent-soft); border-radius:var(--radius-xl); padding:22px 24px; margin-bottom:14px; }
+  .answer .k { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--accent); display:block; margin-bottom:7px; }
+  .answer p { margin:0; font-size:16.5px; }
+  .answer p + p { margin-top:10px; font-size:15px; }
+
+  .note { background:var(--warn-soft); border-radius:var(--radius-lg); padding:16px 18px; margin:14px 0; }
+  .note .k { font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--warn); display:block; margin-bottom:6px; }
+  .note p:last-child { margin-bottom:0; }
+  .note.bad { background:var(--danger-soft); }
+  .note.bad .k { color:var(--danger); }
+
+  /* evidence tags — never colour alone */
+  .tag { font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:.04em; padding:2px 7px; border-radius:6px;
+         white-space:nowrap; border:1px solid transparent; }
+  .tag.v { background:var(--accent); color:#fff; }
+  .tag.v::before { content:"OK "; }
+  .tag.i { background:var(--surface-low); color:var(--warn); border-color:#e0cdac; }
+  .tag.i::before { content:"? "; }
+  .tag.x { background:var(--danger); color:#fff; }
+  .tag.x::before { content:"! "; }
+
+  .tscroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:12px 0 4px; }
+  th { text-align:left; font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:700;
+       padding:0 12px 8px 0; border-bottom:1px solid var(--surface-high); vertical-align:bottom; }
+  td { padding:10px 12px 10px 0; border-bottom:1px solid var(--surface-low); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  td.q { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  table code { font-size:11.5px; }
+
+  .pipe { display:flex; align-items:stretch; gap:0; flex-wrap:wrap; margin:16px 0 6px; }
+  .node { background:var(--surface-low); border-radius:var(--radius-lg); padding:11px 14px; min-width:132px; flex:1 1 132px; }
+  .node .t { font-weight:650; font-size:13.5px; display:block; line-height:1.3; }
+  .node .d { font-size:11.5px; color:var(--muted); display:block; margin-top:2px; line-height:1.35; }
+  .node.k { background:var(--accent-soft); box-shadow:inset 0 0 0 1.5px var(--accent-line); }
+  .node.w { background:var(--warn-soft); }
+  .node.d { background:var(--danger-soft); }
+  .edge { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 9px; min-width:64px; }
+  .edge .lbl { font-family:var(--mono); font-size:10px; color:var(--accent); text-align:center; line-height:1.25; margin-bottom:2px; max-width:92px; }
+  .edge .arw { font-family:var(--mono); font-size:15px; color:var(--accent); line-height:1; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:11.5px; color:var(--muted); margin:6px 0 0; }
+  .legend span { display:flex; align-items:center; gap:6px; }
+  .sw { width:11px; height:11px; border-radius:3px; display:inline-block; background:var(--surface-low); border:1px solid #ccd4c8; }
+  .sw.k { background:var(--accent-soft); border-color:var(--accent-line); }
+  .sw.w { background:var(--warn-soft); border-color:#e0cdac; }
+  .sw.d { background:var(--danger-soft); border-color:#e0c4bf; }
+
+  .opt { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px 18px; box-shadow:var(--shadow); margin-bottom:18px; }
+  .opt .id { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--accent); letter-spacing:.04em; }
+  .opt h3 { margin-top:2px; }
+  .opt .one { font-size:14.5px; color:var(--muted); margin-bottom:0; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:16px; }
+  .two ul { margin:6px 0 0; padding-left:19px; }
+  .two li { margin-bottom:8px; font-size:14px; }
+  .h { font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; }
+  .h.good { color:var(--accent); }
+  .h.bad { color:var(--danger); }
+
+  ul.check { list-style:none; margin:10px 0 0; padding:0; }
+  ul.check li { padding-left:28px; position:relative; margin-bottom:11px; font-size:14.5px; }
+  ul.check li::before { content:"->"; position:absolute; left:0; color:var(--accent); font-weight:700; font-family:var(--mono); font-size:12px; }
+  ol.steps { margin:8px 0 0; padding-left:22px; }
+  ol.steps li { margin-bottom:10px; font-size:14.5px; }
+
+  .confirm { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); }
+  .pills { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 0; }
+  .pill { cursor:pointer; user-select:none; font-size:13.5px; font-weight:600; padding:10px 16px; border-radius:999px;
+          background:var(--surface-low); color:var(--muted); border:1px solid transparent; position:relative; }
+  .pill:hover { background:var(--surface-high); }
+  .pill input { position:absolute; opacity:0; pointer-events:none; }
+  .pill:has(input:checked) { background:var(--accent); color:#fff; }
+  .pill:has(input:checked)::before { content:"OK "; font-family:var(--mono); font-size:11px; }
+  textarea { width:100%; margin-top:14px; min-height:78px; resize:vertical; font-family:var(--font); font-size:15px; line-height:1.5;
+    color:var(--text); background:var(--surface-low); border:1px solid transparent; border-radius:var(--radius-lg); padding:12px 14px; }
+  textarea:focus { outline:none; border-color:var(--accent-line); background:var(--surface); }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  button { font-family:var(--font); font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:9px 16px;
+           border:1px solid transparent; background:var(--surface-low); color:var(--text); }
+  button:hover { background:var(--surface-high); }
+  button.primary { background:var(--accent); color:#fff; }
+  button.primary:hover { background:#2b5039; }
+  .okmsg { font-size:13px; color:var(--accent); font-weight:600; opacity:0; transition:opacity .25s; }
+  .okmsg.show { opacity:1; }
+  pre.out { background:var(--code-bg); color:var(--code-text); border-radius:var(--radius-lg); padding:14px 16px; overflow-x:auto;
+            font-family:var(--mono); font-size:12.5px; line-height:1.7; margin:12px 0 0; display:none; white-space:pre-wrap; }
+  pre.out.show { display:block; }
+  pre.q { background:var(--code-bg); color:var(--code-text); border-radius:var(--radius-lg); padding:14px 16px; overflow-x:auto;
+          font-family:var(--mono); font-size:12.5px; line-height:1.7; margin:12px 0; }
+
+  footer { margin-top:46px; padding-top:18px; border-top:1px solid var(--surface-high); font-size:13px; color:var(--muted); }
+
+  @media (max-width: 820px) {
+    .two { grid-template-columns:1fr; }
+    header.hero h1 { font-size:25px; }
+    .pipe { flex-direction:column; }
+    .edge { padding:4px 0; }
+    .edge .arw { transform:rotate(90deg); }
+    table { font-size:13px; min-width:560px; }
+    .tscroll { border-radius:10px; }
+    td, th { padding-right:8px; }
+  }
+
+  @media print {
+    body { background:#fff; }
+    header.hero { background:#fff !important; color:#000; border-bottom:2px solid #000; padding:0 0 14px; }
+    header.hero .q { border-left:2px solid #000; }
+    .wrap { padding-bottom:0; max-width:none; }
+    .card, .opt, .confirm, .answer, .note { box-shadow:none; border:1px solid #bbb; break-inside:avoid; }
+    .node, .sw { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .confirm, #out, .row { display:none !important; }
+    h2.sec { break-after:avoid; }
+    table, .pipe, .two { break-inside:avoid; }
+    .tscroll { overflow:visible; }
+    table { min-width:0; }
+    a { color:#000; text-decoration:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS Digital Platform &nbsp;·&nbsp; Funding decision F1 &nbsp;·&nbsp; Exploration</p>
+    <h1>Should this go to NLnet ReStack — and as what?</h1>
+    <p class="q">ReStack has a hard deadline of <strong>3 November 2026, 12:00 CET</strong> — 15 days out. This page decides whether to submit, and which part of this codebase the grant would actually be paying for.</p>
+    <div class="meta">
+      <span>Written 2026-10-19</span>
+      <span>Repo state <code>a64a091</code> · 43 commits · 336 tests</span>
+      <span>Not a proposal — a decision about one</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ HOW TO READ ============ -->
+  <div class="card" style="margin-top:22px">
+    <h3>How to read this</h3>
+    <p class="muted" style="margin-bottom:10px">This is a decision document, not a grant application and not a status report. It exists to get one answer out of you in the next few days. Three rules apply to everything below:</p>
+    <ul class="check">
+      <li><span class="tag v">checked</span> means I ran the command or read the quoted file, and the quote is reproduced here. You can re-run it.</li>
+      <li><span class="tag i">judgement</span> means it is my reading of the call's text or of how a reviewer will see us. It is arguable, and I say so where it matters.</li>
+      <li><span class="tag x">blocker</span> means the call's own text fails this today. Those are listed before any of the merits, because <strong>they are checked before any of the merits</strong>.</li>
+    </ul>
+  </div>
+
+  <!-- ============ PART 1 ============ -->
+  <h2 class="sec">Part 1 — What is actually true</h2>
+  <p class="lead">Two inventories. First the repo as it is now — enumerated, not characterised. Then the fund's own gates, quoted verbatim from the call page, the guide for applicants, the eligibility page and the FAQ.</p>
+
+  <div class="card">
+    <h3>The repo, counted</h3>
+    <div class="tscroll">
+<table>
+      <thead><tr><th style="width:26%">Claim</th><th style="width:12%">Basis</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>The code is not public</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td class="q">git branch -r  ->  (empty)<br>git log origin/main  ->  fatal: unknown revision</td>
+        </tr>
+        <tr>
+          <td><strong>There is no licence</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td class="q">ls LICENSE* COPYING*  ->  No such file or directory</td>
+        </tr>
+        <tr>
+          <td><strong>There is no CI</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td class="q">ls .github  ->  No such file or directory</td>
+        </tr>
+        <tr>
+          <td><strong>It is a real, tested system</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td class="q">pytest --collect-only -q  ->  336 tests collected<br>17 test files, 4 migrations, 43 commits</td>
+        </tr>
+        <tr>
+          <td><strong>The public site exists now</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td>19 templates under <code>core/templates/</code>; 7 public routes in <code>core/urls.py</code> (<code>/health/</code>, <code>/</code>, <code>/organics/</code>, <code>/how-it-works/</code>, <code>/members/</code>, <code>/become-a-member/</code>, <code>/contact/</code>). <em>HANDOVER.md still says "zero HTML templates" — it is stale by three commits.</em></td>
+        </tr>
+        <tr>
+          <td><strong>The certification domain is not built</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td><code>core/models/</code> holds <code>_core.py</code> and <code>_certification.py</code>; the latter defines only <code>Seal</code> and <code>Category</code>. No <code>FarmVisit</code>, no <code>Assessment</code>, no <code>Certificate</code> anywhere in <code>core/</code> or <code>knowledge/</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Nothing offline exists</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td class="q">find core/static -name "*.js"  ->  (zero files)<br>no sw.js, no *.webmanifest</td>
+        </tr>
+        <tr>
+          <td><strong>Retrieval is genuinely hybrid and scoped</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td><code>knowledge/services.py</code>: scope applied <em>before</em> ranking; Reciprocal Rank Fusion at <code>k = 60</code>; <code>lexical_only=True</code> flagged rather than hidden.</td>
+        </tr>
+        <tr>
+          <td><strong>Retrieval works with no API key at all</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td><code>knowledge/services.py</code>, verbatim: <em>"The lexical arm never depends on an API key. FTS is the floor: with no key, or with a corpus ingested <code>--no-embed</code>, results still come back and <code>lexical_only=True</code> says so."</em></td>
+        </tr>
+        <tr>
+          <td><strong>But embeddings are Google Gemini</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td><code>knowledge/embedding.py</code> + <code>requirements.txt</code>: <code>google-genai==2.31.0</code>, model <code>gemini-embedding-001</code>, <code>vector(768)</code> frozen as the contract.</td>
+        </tr>
+        <tr>
+          <td><strong>Standards are data, not code</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td><code>AGENTS.md</code>: <em>"Code encodes the PGS process; data encodes the standard and the group… A retarget to another standard or PGS group <strong>must not require a migration</strong>."</em> Enforced in structure by <code>knowledge/</code> as its own migration namespace (spec §18.3 D24).</td>
+        </tr>
+        <tr>
+          <td><strong>Claim discipline is a test, not a policy</strong></td>
+          <td><span class="tag v">checked</span></td>
+          <td><code>core/tests/test_claim_discipline.py</code>: only the four FORM outcomes and the <em>active</em> seals may appear publicly; "membership is not certification" is asserted.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="muted" style="margin:14px 0 0; font-size:13.5px">Note what this table says as a whole: <strong>the engineering is real and the vertical product is not built.</strong> Both halves of that sentence matter for the decision, in opposite directions.</p>
+  </div>
+
+  <div class="card">
+    <h3>The fund's gates, quoted</h3>
+    <div class="tscroll">
+<table>
+      <thead><tr><th style="width:20%">Gate</th><th style="width:9%">Kind</th><th>Text</th></tr></thead>
+      <tbody>
+        <tr><td>Primary objective</td><td><span class="tag x">blocker</span></td>
+          <td><em>"should have <strong>research and development</strong> as their <strong>primary</strong> objective"</em> — knock-out, checked in stage 1.</td></tr>
+        <tr><td>European dimension</td><td><span class="tag x">blocker</span></td>
+          <td><em>"It is a <strong>knock-out criterion</strong> for each project to have a 'European dimension'… having people on the team… from Horizon Europe-eligible countries, <strong>who receive at least 60% of the funds</strong>."</em> Escape hatch: <em>"if the project is of exceptional quality and the proposer holds unique technical expertise proposals from outside of those geographic areas can be taken into consideration."</em></td></tr>
+        <tr><td>FOSS in entirety</td><td><span class="tag x">blocker</span></td>
+          <td><em>"any software and hardware <strong>must</strong> be published under a recognised open source license <strong>in its entirety</strong>."</em></td></tr>
+        <tr><td>AI scope</td><td><span class="tag x">blocker</span></td>
+          <td><em>"<strong>AI-related projects are not within scope</strong> — unless they are already widely used throughout society (&gt; 1 million active human users) and directly relevant to the stack."</em></td></tr>
+        <tr><td>Stack relevance</td><td><span class="tag i">judgement</span></td>
+          <td><em>"The focus of Restack is on securing the <strong>core infrastructure and foundational technologies</strong> on which global society critically depends."</em> Weighted <strong>40%</strong> of the score (30% technical, 30% value for money; need &gt;5.0 of 7 to advance).</td></tr>
+        <tr><td>Money</td><td><span class="tag v">checked</span></td>
+          <td>First proposal <strong>5k–50k EUR</strong>; up to 150k per proposal and 500k lifetime only <em>after</em> a successfully completed smaller grant; milestone-gated payments; 3–5 months to assess; new call every two months.</td></tr>
+        <tr><td>What is named in scope</td><td><span class="tag v">checked</span></td>
+          <td><em>"'local-first' infrastructure"</em> · <em>"full stack security, software supply chain management, reproducibility and <strong>trust enhancing technologies</strong>"</em> · <em>"We stimulate the creation and use of <strong>norms and standards</strong>"</em> · <em>"understanding user requirements and improving usability/inclusive design"</em>.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="note bad">
+    <span class="k">Two things I could not verify, and they matter</span>
+    <p><span class="tag i">judgement</span> <strong>Whether the SAOSO v2.1 text and the OPP may be redistributed</strong> alongside any published engine. I did not check either document for a rights notice. This changes the deliverable's shape: if they may not be redistributed, the engine ships with a small synthetic reference standard and users bring their own corpus — which is a better design anyway, but it is not a free assumption.</p>
+    <p><span class="tag i">judgement</span> <strong>Whether South Africa satisfies the European-dimension test.</strong> The call's words are "Horizon Europe-eligible countries"; South Africa has appeared on Horizon Europe's third-country funding lists, but the operational test NLnet applies is the <em>60% of funds</em> share, and the plain intent is European participation. Do not plan around the escape hatch. Plan around an EU co-applicant.</p>
+  </div>
+
+  <!-- ============ PART 2 ============ -->
+  <h2 class="sec">Part 2 — The shape of the problem</h2>
+  <div class="card">
+    <h3>The asymmetry: eligibility precedes merit</h3>
+    <p>The review runs in a fixed order, and this is the single fact that drives the whole decision. <strong>Three of the four blockers in Part 1 are answered before a single point is scored.</strong> A project that fails them is marked ineligible and never read — the call says so plainly: <em>"All projects that fail on any of these knock-out criteria, will not be further reviewed and will be marked ineligible."</em></p>
+
+    <div class="pipe">
+      <div class="node d"><span class="t">Stage 1a — knock-out</span><span class="d">scope · R&amp;D primary · European dimension · FOSS</span></div>
+      <div class="edge"><span class="lbl">pass? no = fini</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Stage 1b — score</span><span class="d">30 / 40 / 30, need &gt;5.0 of 7</span></div>
+      <div class="edge"><span class="lbl">publishable</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Stage 2 — strategic</span><span class="d">"lasting impact", upstream, sustainability</span></div>
+      <div class="edge"><span class="lbl">rank vs round</span><span class="arw">-&gt;</span></div>
+      <div class="node k"><span class="t">Review committee + MoU</span><span class="d">milestones, then payment</span></div>
+    </div>
+    <div class="legend">
+      <span><span class="sw d"></span>Can end the application outright</span>
+      <span><span class="sw"></span>Scored</span>
+      <span><span class="sw k"></span>Money moves</span>
+    </div>
+
+    <p style="margin-top:16px">Three consequences follow, and they are the whole argument:</p>
+    <ul class="check">
+      <li><strong>The best engineering in this repo buys almost nothing.</strong> Technical excellence is 30% of the score. The repo's strength — 336 tests, an enforced import boundary, integer cents, explicit timeouts, a retrieval scope applied before ranking — is exactly the 30%, and a reviewer who cannot place the project on the stack never reaches it.</li>
+      <li><strong>The call kills our headline.</strong> The grounded chatbot over the SAOSO standard is the most novel thing in the spec, and it is the one thing the call cannot fund. Whatever is proposed must be worth funding <em>with the chatbot removed</em>. The retrieval layer can stay — but as machinery, not as an "AI project".</li>
+      <li><strong>The money pays for commons, not for finishing our product.</strong> Milestone payments arrive on delivery of work that is then published. "Fund the remaining MVP" is not a shape this fund accepts, however honest it is.</li>
+    </ul>
+  </div>
+
+  <!-- ============ PART 3 ============ -->
+  <h2 class="sec">Part 3 — The options</h2>
+  <p class="lead">Four shapes, each drawn as what a reviewer would actually see. The question is not "which is best for Outeniqua PGS" — it is "which of these is a building block someone else can pick up". Each option carries its own strongest case and its own weaknesses — they are the evidence section, deliberately side by side so no option gets a soft reading. In every diagram below, the <strong>outlined green box is the artifact the grant would pay for</strong>; every other box already exists or already happens. O1 has no outlined box, and that is the finding.</p>
+
+  <div class="opt">
+    <span class="id">O1</span>
+    <h3>Submit as-is: a digital platform for PGS organic certification</h3>
+    <p class="one">The whole monolith, framed as the project's own goal. No re-scoping; the proposal is the spec.</p>
+    <div class="pipe">
+      <div class="node"><span class="t">Outeniqua PGS</span><span class="d">one group, one standard</span></div>
+      <div class="edge"><span class="lbl">digitises</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">core/ + knowledge/</span><span class="d">assessment · cert · public site</span></div>
+      <div class="edge"><span class="lbl">serves</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">The group's own committees</span><span class="d">Garden Route, ZA</span></div>
+    </div>
+    <div class="two">
+      <div><span class="h good">Strongest case for it</span>
+        <ul>
+          <li>It is the truth. No re-framing to defend later, and nothing in the proposal that has to be delivered by someone else.</li>
+          <li>The call does invite it: <em>"don't be afraid to send something completely different."</em></li>
+          <li>336 tests and a documented architecture are more evidence of execution than most proposals carry — under-claiming with proof beats over-claiming without.</li>
+        </ul>
+      </div>
+      <div><span class="h bad">Its weaknesses</span>
+        <ul>
+          <li>Fails "R&amp;D as primary objective": the repo holds an implementation plan with numbered decisions, which reads as delivery.</li>
+          <li>Fails the 40% relevance axis. A certification system for one producer group is a vertical application; a reviewer placing it on a stack diagram puts it in "end user application for a niche", or nowhere.</li>
+          <li>Leaves the AI clause unaddressed while shipping <code>gemini-embedding-001</code> in the retrieval path.</li>
+          <li>European dimension still fails. Re-scoping does not fix that one; only a partner does.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <span class="id">O2</span>
+    <h3>The conformity engine: standards as data, not code</h3>
+    <p class="one">Fund the <em>generalisation</em>, not the group: an open engine where a certification scheme is a corpus plus a declarative schema, so a second standard, a second country or a second PGS group is data — never a migration.</p>
+    <div class="pipe">
+      <div class="node"><span class="t">SAOSO v2.1</span><span class="d">corpus</span></div>
+      <div class="edge"><span class="lbl">ingest</span><span class="arw">-&gt;</span></div>
+      <div class="node k"><span class="t">Standard as data</span><span class="d">sections · refs · versions</span></div>
+      <div class="edge"><span class="lbl">binds to</span><span class="arw">-&gt;</span></div>
+      <div class="node k"><span class="t">Template as data</span><span class="d">FORM A-J as open schema</span></div>
+      <div class="edge"><span class="lbl">yields</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Outcome as data</span><span class="d">4 outcomes · seals · findings</span></div>
+    </div>
+    <p class="muted" style="font-size:13px; margin:10px 0 0">Proven by a test, not a promise: a <em>second</em> standard is ingested with <strong>zero migrations</strong>, and the suite fails if a code change was needed.</p>
+    <div class="two">
+      <div><span class="h good">Strongest case for it</span>
+        <ul>
+          <li><strong>The architecture already claims this.</strong> <code>AGENTS.md</code> makes "retarget without a migration" a rule, and spec D24 gave the corpus its own migration namespace on exactly this ground. We are not inventing a story; we are extracting the one we built.</li>
+          <li>It is a commons with a real proprietary counterweight: certification-management is sold as closed, per-seat SaaS. The alternative for a small producer group is paper.</li>
+          <li>Directly on two named axes: <em>"creation and use of norms and standards"</em> and <em>"trust enhancing technologies"</em>.</li>
+          <li>Retargetability is <strong>demonstrable</strong>. A reviewer can run it. That is rare and it converts the 40% axis.</li>
+        </ul>
+      </div>
+      <div><span class="h bad">Its weaknesses</span>
+        <ul>
+          <li>A reviewer may still file it as "an app for certifying farms", because the first instance is a farm-certification scheme and the pitch will keep saying so.</li>
+          <li>The R&amp;D content is largely <strong>extraction and generalisation</strong> — which reads as refactoring unless the deliverables are new artifacts: a published schema, a format spec, and a second-standard proof.</li>
+          <li>No adopter yet. Stage 2 will ask who else uses it, and "the group we built it for" is the same answer as O1.</li>
+          <li>Redistribution rights on the corpus are unverified (Part 1).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <span class="id">O3</span>
+    <h3>Local-first field capture</h3>
+    <p class="one">Fund the part that does not exist yet: offline capture, merge on reconnect, evidence reconciliation — as a reusable client-side library and a documented sync protocol, not as one PWA.</p>
+    <div class="pipe">
+      <div class="node"><span class="t">Phone, no signal</span><span class="d">2-hour walkabout</span></div>
+      <div class="edge"><span class="lbl">writes</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Local store</span><span class="d">photos · verdicts · signatures</span></div>
+      <div class="edge"><span class="lbl">reconnect</span><span class="arw">-&gt;</span></div>
+      <div class="node k"><span class="t">Sync protocol</span><span class="d">idempotent, conflict-resolved</span></div>
+      <div class="edge"><span class="lbl">lands</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Server of record</span><span class="d">no retyping</span></div>
+    </div>
+    <div class="two">
+      <div><span class="h good">Strongest case for it</span>
+        <ul>
+          <li>The call names it: <em>"'local-first' infrastructure"</em>. No interpretation needed, which is worth a lot when 40% is relevance.</li>
+          <li>Genuinely hard, genuinely reusable: conflict resolution over evidentiary records, partial sync, media on a flaky link. Every field-inspection regime has this problem and none of them solved it well.</li>
+          <li>Naturally FOSS-complete — a JS library plus a protocol spec has no proprietary dependency to explain away.</li>
+          <li>It has a concrete adversary: the alternative in the field is paper, and paper does not lose data.</li>
+        </ul>
+      </div>
+      <div><span class="h bad">Its weaknesses</span>
+        <ul>
+          <li><strong>Nothing of it exists.</strong> Zero <code>.js</code> files, no service worker, no manifest. The 43 commits and 336 tests are Django and buy no credibility here; the proposal would carry no evidence of execution in the proposed language.</li>
+          <li>You would be entering a field with incumbents (Automerge/Yjs/CRDT toolkits, existing offline-first sync stacks). Stage 2 always asks <em>"what is the difference in approach to existing projects U, V and W"</em> — and the answer would have to be written from scratch, by 3 November.</li>
+          <li>Loses the one thing this repo has proven, which is governance-grade domain modelling.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <span class="id">O4</span>
+    <h3>Verifiable attestations for certification claims</h3>
+    <p class="one">Fund the trust layer: a signed, scannable attestation of a certification outcome, plus the publication rule that only currently-true claims can resolve — as an open profile others can implement.</p>
+    <div class="pipe">
+      <div class="node"><span class="t">Committee decision</span><span class="d">1 of 4 FORM outcomes</span></div>
+      <div class="edge"><span class="lbl">signs</span><span class="arw">-&gt;</span></div>
+      <div class="node k"><span class="t">Attestation</span><span class="d">subject · outcome · seal · validity</span></div>
+      <div class="edge"><span class="lbl">publishes</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Verify endpoint</span><span class="d">stable, cache-safe</span></div>
+      <div class="edge"><span class="lbl">scans</span><span class="arw">-&gt;</span></div>
+      <div class="node"><span class="t">Consumer</span><span class="d">"is this claim true today?"</span></div>
+    </div>
+    <div class="two">
+      <div><span class="h good">Strongest case for it</span>
+        <ul>
+          <li>The best story in the repo: the group's own rules already forbid over-claiming, and <code>test_claim_discipline.py</code> enforces it in code. "Only currently-true claims can resolve" is a verifiable-claims problem with a working precedent behind it.</li>
+          <li>Cross-domain by construction. Any inspection regime, any certification body, any attestation has the same shape.</li>
+          <li>Squarely inside "trust enhancing technologies" + "norms and standards".</li>
+        </ul>
+      </div>
+      <div><span class="h bad">Its weaknesses</span>
+        <ul>
+          <li><strong>Nothing to attest yet.</strong> No <code>FarmVisit</code>, no <code>Assessment</code>, no <code>Certificate</code> model exists. The layer would be specified against an object that has not been built.</li>
+          <li>Crowded: W3C Verifiable Credentials, SD-JWT VC, Open Badges 3.0 and the EU Digital Identity Wallet all occupy this ground. A new format is not fundable; an implementation proving the format works for a sector nobody serves is.</li>
+          <li>Best used as a <em>milestone inside O2</em>, where the outcome model is being built anyway. Alone, it is a smaller, weaker O2.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PART 4 ============ -->
+  <h2 class="sec">Part 4 — What the call says, and where it disagrees with itself</h2>
+  <div class="card">
+    <h3>Read it as an argument, not a rulebook</h3>
+    <p>The call page contains real tensions. Naming them is the difference between a proposal that anticipates the objection and one that walks into it.</p>
+    <div class="tscroll">
+<table>
+      <thead><tr><th style="width:44%">What it says</th><th style="width:26%">What it pulls toward</th><th>Where it rubs</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><em>"We are open to new ideas… don't be afraid to send something completely different."</em></td>
+          <td>Novel, unexpected contributions</td>
+          <td><em>"The focus of Restack is on securing the core infrastructure and foundational technologies on which global society critically depends."</em> Novelty is welcome; <strong>category</strong> is not negotiable. This is the tension O1 walks into.</td>
+        </tr>
+        <tr>
+          <td><em>"There are no categorical exclusions of persons who may not receive support."</em></td>
+          <td>Open to anyone, anywhere</td>
+          <td><em>"It is a knock-out criterion… 'European dimension'… at least 60% of the funds."</em> Who may apply is open; <strong>where the money lands</strong> is not. Solve it with a partner, not with an argument.</td>
+        </tr>
+        <tr>
+          <td><em>"This is really an open call."</em></td>
+          <td>Anything that helps the stack</td>
+          <td><em>"AI-related projects are not within scope — unless… &gt;1 million active human users."</em> Our retrieval and chatbot sit inside the excluded category, and we cannot claim a million users. Remove it from the headline.</td>
+        </tr>
+        <tr>
+          <td><em>"between 5.000 and 50.000 EUR"</em></td>
+          <td>Small, self-contained first grant</td>
+          <td><em>"with the possibility to scale them up significantly if there is proven potential"</em> — 150k per proposal, 500k lifetime, but scale-up needs a <strong>successfully concluded</strong> smaller grant first. This supports a two-grant strategy rather than one ambitious ask.</td>
+        </tr>
+        <tr>
+          <td><em>"research and development as their primary objective"</em></td>
+          <td>R&amp;D, not maintenance</td>
+          <td>The eligible-activities list includes <em>packaging</em>, <em>documentation</em>, <em>WCAG compliance</em> and <em>security audits</em>. Maintenance work is fundable <em>inside</em> an R&amp;D project — which is where our accessibility and packaging gaps belong.</td>
+        </tr>
+        <tr>
+          <td><em>"The Open Internet Stack needs to be inclusive… taking care of accessibility is, as far as we are concerned, the 'new normal'."</em></td>
+          <td>WCAG as a deliverable</td>
+          <td>They fund a <strong>HAN accessibility audit</strong> and will condition payment on audit outcomes above 50k. <code>DESIGN.md</code> already mandates ≥44 px targets — but no audit exists, so this is a genuine, low-cost deliverable we can promise with a straight face.</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin:16px 0 0"><strong>How the tie breaks.</strong> This is a fund for infrastructure, assessed by infrastructure people, with knock-outs they cannot waive. So: <em>eligibility beats relevance beats quality</em>. Any option that needs the reviewer to accept a redefinition of "infrastructure" is starting from behind, however good the code is.</p>
+  </div>
+
+  <!-- ============ PART 5 ============ -->
+  <h2 class="sec">Part 5 — Comparison</h2>
+  <div class="card">
+    <h3>Unweighted, with reasons — you do the weighting</h3>
+    <p class="muted" style="font-size:13.5px">Deliberately no scores: invented numbers would manufacture precision. <span class="tag v">ok</span> = survives, <span class="tag i">judgement</span> = arguable or needs work, <span class="tag x">blocker</span> = fails the call's own text as things stand.</p>
+    <div class="tscroll">
+<table>
+      <thead><tr><th style="width:22%">Criterion</th><th style="width:19.5%">O1 as-is</th><th style="width:19.5%">O2 engine</th><th style="width:19.5%">O3 local-first</th><th style="width:19.5%">O4 attestations</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Passes stage-1 knock-outs <em>as written</em></td>
+          <td><span class="tag x">blocker</span> delivery, not R&amp;D; AI dependency</td>
+          <td><span class="tag i">judgement</span> R&amp;D if framed as schema + spec + proof</td>
+          <td><span class="tag i">judgement</span> cleanest R&amp;D of the four, no AI, no vertical</td>
+          <td><span class="tag i">judgement</span> clean, but small and derivative</td>
+        </tr>
+        <tr>
+          <td>European dimension</td>
+          <td><span class="tag x">blocker</span> as-is</td>
+          <td><span class="tag i">judgement</span> fixed by an EU co-applicant taking ≥60%</td>
+          <td><span class="tag i">judgement</span> same fix</td>
+          <td><span class="tag i">judgement</span> same fix</td>
+        </tr>
+        <tr>
+          <td>Reads as a stack building block</td>
+          <td><span class="tag x">blocker</span> vertical app</td>
+          <td><span class="tag i">judgement</span> if a second standard and a second adopter exist</td>
+          <td><span class="tag v">ok</span> "local-first" is named in the call</td>
+          <td><span class="tag v">ok</span> trust layer generalises cleanly</td>
+        </tr>
+        <tr>
+          <td>FOSS-complete, no closed dependency</td>
+          <td><span class="tag x">blocker</span> no licence, never pushed, Gemini in path</td>
+          <td><span class="tag i">judgement</span> lexical-only mode already works without a key</td>
+          <td><span class="tag v">ok</span> by construction</td>
+          <td><span class="tag v">ok</span> by construction</td>
+        </tr>
+        <tr>
+          <td>Builds on what is already proven</td>
+          <td><span class="tag v">ok</span> all of it</td>
+          <td><span class="tag v">ok</span> corpus, scoping, D24, standards-as-data</td>
+          <td><span class="tag x">blocker</span> zero JS exists; nothing to show</td>
+          <td><span class="tag i">judgement</span> claim discipline is real, the attested object is not</td>
+        </tr>
+        <tr>
+          <td>Writable by 3 November</td>
+          <td><span class="tag v">ok</span> hours</td>
+          <td><span class="tag i">judgement</span> days — schema sketch + second-standard plan</td>
+          <td><span class="tag i">judgement</span> days more; no evidence to cite</td>
+          <td><span class="tag i">judgement</span> days; needs the standard survey</td>
+        </tr>
+        <tr>
+          <td>Reusable outside Outeniqua PGS</td>
+          <td><span class="tag x">blocker</span> no</td>
+          <td><span class="tag v">ok</span> any standard, any group</td>
+          <td><span class="tag v">ok</span> any field capture</td>
+          <td><span class="tag v">ok</span> any attestation</td>
+        </tr>
+        <tr>
+          <td>Sustainability story after the grant</td>
+          <td><span class="tag i">judgement</span> one group's budget</td>
+          <td><span class="tag v">ok</span> hosted instances, sector body, consultancy</td>
+          <td><span class="tag v">ok</span> library adoption; maintainers exist</td>
+          <td><span class="tag i">judgement</span> needs a standards-body home</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin:16px 0 0"><strong>What the matrix says.</strong> No option clears every row today. O3 is the cleanest on paper and the emptiest in evidence. O2 is the only one where the existing proofs (corpus lifecycle, scoped retrieval, standards-as-data) convert directly into the 40% relevance axis — and its rows are all "arguable", not "failed". O4 is the best milestone, not the best project.</p>
+  </div>
+
+  <!-- ============ PART 6 ============ -->
+  <h2 class="sec">Part 6 — Recommendation</h2>
+
+  <div class="answer">
+    <span class="k">The recommendation</span>
+    <p><strong>Submit O2 — the standard-agnostic conformity engine — for 5–50k EUR, with verifiable attestations as one of its milestones and the offline layer explicitly deferred to a second, later proposal.</strong></p>
+    <p>Do <em>not</em> submit O1. It is honest and it fails three knock-outs before anyone reads it.</p>
+  </div>
+
+  <div class="card">
+    <h3>Why O2 and not O3</h3>
+    <p>O3 is the more elegant project and, if it already existed, the better one. It does not exist — and a proposal written in the next fortnight would ask a reviewer to fund 100% of an unproven codebase, in a language this repo contains none of, against incumbents. O2 asks them to fund the part where we can already show our work: 336 tests, a corpus with its own migration namespace, a scope applied before ranking, and a written rule that retargeting must not require a migration.</p>
+    <p><strong>The one thing that makes O2 fundable rather than refactoring</strong> is a second standard and a second adopter. Everything else is secondary.</p>
+  </div>
+
+  <div class="card">
+    <h3>What the grant would actually buy — four milestones</h3>
+    <p class="muted" style="font-size:13.5px">Amounts are <span class="tag i">judgement</span> — illustrative shapes, not a costed budget. NLnet pays on completed milestones and will question any rate it thinks high.</p>
+    <div class="tscroll">
+<table>
+      <thead><tr><th style="width:8%">#</th><th style="width:37%">Milestone</th><th style="width:32%">Proof of completion</th><th style="width:12%">EUR</th></tr></thead>
+      <tbody>
+        <tr><td>M1</td><td><strong>Scheme as data</strong> — extract standard, template and outcome into a published declarative schema; `StandardSet` becomes portable.</td><td>Schema published; the existing SAOSO + OPP corpus ingests through it unchanged.</td><td>12–15k</td></tr>
+        <tr><td>M2</td><td><strong>Second-standard proof</strong> — ingest a materially different standard (different structure, different outcome vocabulary) with <strong>zero migrations</strong>.</td><td>A test that fails if any code change was required. This is the artifact the pitch rests on.</td><td>10–12k</td></tr>
+        <tr><td>M3</td><td><strong>Attestation profile</strong> — outcome → signed, scannable, revocable attestation; the "only currently-true claims resolve" rule made mechanical.</td><td>Published profile document; a cache-safe verify endpoint; claim-discipline suite still green.</td><td>10–12k</td></tr>
+        <tr><td>M4</td><td><strong>Ship it properly</strong> — packaging, operator docs, i18n scaffolding, WCAG audit remediation.</td><td>Installable without a Django expert; HAN audit findings closed.</td><td>8–10k</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin:14px 0 0"><strong>Explicitly not in the proposal:</strong> the chatbot. Grounded retrieval stays in as infrastructure ("a corpus boundary the model cannot escape"), never as the headline. Say so in the proposal — a reviewer who spots <code>gemini-embedding-001</code> after you have not mentioned it will discount everything else.</p>
+  </div>
+
+  <div class="card">
+    <h3>Preconditions — in order, before any writing</h3>
+    <ul class="check">
+      <li><strong>Add a LICENSE.</strong> One hour. The call requires FOSS <em>in its entirety</em>; today <code>ls LICENSE*</code> fails. AGPL-3.0 or Apache-2.0 depending on whether you want hosted-service reciprocity.</li>
+      <li><strong>Push the repo public.</strong> The remote has never been pushed. Reviewers verify claims; a private repo makes every claim in the proposal unfalsifiable, which reads as unverifiable.</li>
+      <li><strong>Add CI.</strong> A workflow running the suite is the cheapest possible proof of the "336 tests" sentence — and their FAQ sells <em>"setup and design of software testing and continuous integration"</em> as fundable activity, so the gap is also a legitimate line item.</li>
+      <li><strong>Get an EU co-applicant taking ≥60% of the funds.</strong> This is the schedule-risk item and it is not technical. Without it, nothing else matters. Start with it today.</li>
+      <li><strong>Decide the embedding story.</strong> Not "remove Gemini" — the lexical floor already stands without a key, so the honest line is "the engine degrades to FTS and says so; a self-hosted embedding provider is a stretch goal." Rehearse that sentence.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Also worth doing this week, whatever you decide</h3>
+    <ul class="check">
+      <li><strong>Attend the NLnet office hour on Wednesday 28 October</strong> — six days before the deadline, in their Matrix room. They explicitly offer it, they will not pre-review a proposal, but "is a sectoral conformity engine in scope" is exactly the question the hour exists for. It is the cheapest way to de-risk the 40% axis.</li>
+      <li><strong>Ask a second PGS group or PGS-SA whether they would adopt a shared engine.</strong> One sentence of interest from a real adopter is worth more than any paragraph of architectural justification. It is also the honest test of whether O2 is a commons or a rationalisation.</li>
+      <li><strong>Note the cadence.</strong> Missing 3 November costs two months, not a year — the next call is early January. A weak submission is worse than waiting: the FAQ is clear that a rejection is not a black mark, but the time spent is.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>What would change my mind</h3>
+    <ul class="check">
+      <li><strong>No EU co-applicant by ~28 October</strong> — then do not submit this cycle. O2 without eligibility is a wasted fortnight; spend it getting the partner instead, or on the second-standard proof, so the January call is strong.</li>
+      <li><strong>NLnet says at the office hour that sectoral applications are out of scope</strong> — then O3 becomes the recommendation, because "local-first infrastructure" is the call's own vocabulary and needs no advocacy.</li>
+      <li><strong>The SAOSO/OPP texts may not be redistributed</strong> — O2 survives, but M2's proof changes shape: the second standard must be one we may ship. Verify before writing the milestone, not after.</li>
+      <li><strong>A second adopter commits</strong> — O2's relevance row strengthens enough that I would raise the ask toward 50k and consider pulling the attestation milestone forward.</li>
+      <li><strong>If you would rather build than write</strong> — that is a legitimate answer, and it points at the January call with M1 and M2 already done. It is not a wasted two months; it is the same work, de-risked.</li>
+    </ul>
+  </div>
+
+  <!-- ============ PART 7 ============ -->
+  <h2 class="sec">Part 7 — Your decision</h2>
+  <div class="confirm">
+    <h3>Pick one. It autosaves.</h3>
+    <p class="muted" style="margin-bottom:0; font-size:14px">Nothing here is committed until you export it and paste it somewhere durable. The page hides this block when printed.</p>
+    <div class="pills">
+      <label class="pill"><input type="radio" name="f1" value="Submit O2 — conformity engine, with attestations as M3; offline deferred to a second proposal" checked>Submit O2 (engine)</label>
+      <label class="pill"><input type="radio" name="f1" value="Submit O3 — local-first field capture, as the cleaner in-scope project">Submit O3 (local-first)</label>
+      <label class="pill"><input type="radio" name="f1" value="Submit O4 — verifiable attestations, as a standalone project">Submit O4 (attestations)</label>
+      <label class="pill"><input type="radio" name="f1" value="Submit O1 — the platform as it is, no re-scoping">Submit O1 (as-is)</label>
+      <label class="pill"><input type="radio" name="f1" value="Do not submit this cycle — do the preconditions and M1/M2, apply in January">Don't submit this cycle</label>
+      <label class="pill"><input type="radio" name="f1" value="Need more discussion before deciding">Let's discuss</label>
+    </div>
+    <textarea id="note" placeholder="Optional note — e.g. 'EU partner is X, starting there Monday' or 'check the OPP licence first, everything else follows'"></textarea>
+    <div class="row">
+      <button class="primary" id="copy">Copy decision</button>
+      <button id="reset">Reset</button>
+      <span class="okmsg" id="ok">Copied</span>
+    </div>
+    <pre class="out" id="out"></pre>
+  </div>
+
+  <footer>
+    Decision F1, 2026-10-19. Evidence re-runnable from the repo at <code>a64a091</code>: <code>ls LICENSE*</code>, <code>git branch -r</code>, <code>pytest --collect-only -q</code>, <code>knowledge/embedding.py</code>, <code>knowledge/services.py</code>, <code>core/tests/test_claim_discipline.py</code>. Fund text quoted from the NLnet ReStack call page, guide for applicants, eligibility page and FAQ (nlnet.nl/restack). This page is a decision document in <code>product/design/</code> — it never becomes a production template.
+  </footer>
+</div>
+
+<script>
+  const KEY = 'pgs-f1-restack';
+  const note = document.getElementById('note');
+  const out  = document.getElementById('out');
+  const okmsg = document.getElementById('ok');
+
+  const verdict = () => (document.querySelector('input[name=f1]:checked') || {}).value || '';
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (saved.note) note.value = saved.note;
+    if (saved.verdict) {
+      let hit = false;
+      document.querySelectorAll('input[name=f1]').forEach(r => {
+        if (r.value === saved.verdict) { r.checked = true; hit = true; }
+      });
+      if (!hit) document.querySelector('input[name=f1]').checked = true;
+    }
+  } catch (e) { /* localStorage unavailable — decide anyway */ }
+
+  const text = () =>
+    '| Field | Value |\n' +
+    '|---|---|\n' +
+    '| Decision | F1 — NLnet ReStack submission |\n' +
+    '| Date | 2026-10-19 |\n' +
+    '| Call deadline | 2026-11-03 12:00 CET |\n' +
+    '| Verdict | ' + verdict() + ' |\n' +
+    '| Note | ' + (note.value.trim() || '—') + ' |\n';
+
+  const save = () => {
+    try { localStorage.setItem(KEY, JSON.stringify({ verdict: verdict(), note: note.value })); } catch (e) {}
+  };
+
+  document.addEventListener('change', (e) => { if (e.target.name === 'f1') save(); });
+  note.addEventListener('input', save);
+
+  document.getElementById('copy').onclick = async () => {
+    out.textContent = text();
+    out.classList.add('show');
+    try { await navigator.clipboard.writeText(text()); }
+    catch (e) {
+      const r = document.createRange(); r.selectNodeContents(out);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      document.execCommand('copy');
+    }
+    okmsg.classList.add('show');
+    setTimeout(() => okmsg.classList.remove('show'), 1800);
+  };
+
+  document.getElementById('reset').onclick = () => {
+    note.value = '';
+    document.querySelectorAll('input[name=f1]').forEach(r => {
+      r.checked = (r.value.indexOf('Submit O2') === 0);
+    });
+    out.classList.remove('show');
+    save();
+  };
+</script>
+</body>
+</html>

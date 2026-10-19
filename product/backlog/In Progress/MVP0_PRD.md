@@ -1,6 +1,6 @@
 # PRD: MVP 0 — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan A (A1–A10), B (B1–B7), C1 (public site) and C4 (claim discipline) landed 2026-10-19; C2 (`/documents/`), C3 (bilingual shell) and D (chatbot) remain. §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
+**Status:** In Progress — sub-plan A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19; D (chatbot) remains. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-18
 **MVP:** 0 of 0 → 1 → 2 → 3 (`PGS_PLATFORM_SPEC.md` §19)
