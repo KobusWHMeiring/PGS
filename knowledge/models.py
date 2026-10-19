@@ -21,7 +21,7 @@ argued over in the spec rather than chosen by default:
 
 **`section_ref` is mandatory — but `NULL`, not `""`, is how a heading-only document
 says so.** SPEC §4.5: "a chunk the user cannot locate in the standard is not a
-citation." SAOSO and the OPP always print a reference (`S20.1.1`, `§4.2(5)`), and a
+citation." SAOSO and the OPP always carry a citation (`S20.1.1`, `§4.2(5)`), and a
 chunk from either with an empty reference is a parser bug. The LANDSCAPE and BPP
 documents print **no clause numbers at all** (SPEC §4.5, reality table), so their
 locator is `page` + `heading_path`; B2's `heading.py` emits no `section_ref` for
@@ -33,6 +33,26 @@ stores `""` happily (testing_hazards.md §1.7) — so this is a `CheckConstraint
     Open for B2: the parser for heading-only documents may emit an anchor-shaped
     reference (`certification-landscape#the-sa-context`) instead of NULL. Both are
     accepted here; the constraint only rules out the silent empty string.
+
+**Scope: Section B and its appendices only (D41).** Measured 2026-10-19 against the
+shipped PDF, SAOSO's numbering is **part-local** and Section A collides with *itself*:
+`1.` is both `PREAMBLE` (p5) and `BASIS OF THE SAOSO STANDARDS` (p8), and Section A's
+item 3 reproduces a regulation that restarts at `1.` inside it (p15–p21); Section C
+restarts at `1.` as well. A globally unique `section_ref` for the whole PDF therefore
+does not exist, so MVP 0 ingests Section B (p23–p89) and its appendices, which is also
+where every verdict reference in the FORM lives (`S20.x`, `S22.x`). Sections A and C
+are a recorded gap, not silently mangled references. Adding them later requires a
+`part` field here *and* a Section A sub-document discriminator — see D41 before doing it.
+
+**`page` is the printed page number (D42), not the PDF index.** They differ by one,
+because the cover is unnumbered: the TOC says `Appendix 1 → 70` where the PDF page is
+71. Printed is the number in the document's own footer, which is what the TOC uses and
+what a human can check against the paper standard (§4.5).
+
+**`section_ref` is the citation as a human reads it (D43), not the raw printing.**
+The standard prints `20.1.1.` and the OPP prints `4.2`; the citation is `S20.1.1` (the
+FORM's convention) and `§4.2(5)`. `sub_refs` stay plain: `4.5(2)(c)`. `B.20.1.1` is
+withdrawn — it appears nowhere.
 
 **`sub_refs` holds character offsets, not separate chunks** (D15). Splitting at every
 enumerated item would fragment the OPP into several hundred context-poor chunks and
@@ -257,7 +277,8 @@ class DocumentChunk(models.Model):
         null=True,
         blank=True,
         help_text=(
-            "Human-meaningful citation, exactly as printed: 'S20.1.1', '§4.2(5)'. "
+            "Human-meaningful citation as a human reads it (D43): 'S20.1.1' for a SAOSO "
+            "clause, '§4.2(5)' for the OPP — not the raw printing ('20.1.1.', '4.2'). "
             "NULL only for documents that print no numbering (LANDSCAPE, BPP); "
             "the empty string is refused by a database constraint."
         ),
@@ -280,7 +301,10 @@ class DocumentChunk(models.Model):
     page = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
-        help_text="PDF page the chunk starts on. One-based, as a reader would count.",
+        help_text=(
+            "Page printed in the document's own footer — the reader's page (D42). "
+            "NOT the PDF viewer's index: the cover is unnumbered, so they differ by one."
+        ),
     )
     text = models.TextField()
     token_count = models.PositiveIntegerField(

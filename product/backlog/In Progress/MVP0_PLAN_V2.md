@@ -440,11 +440,11 @@ def test_toc_is_excluded(saoso_toc_fixture):
 
 def test_opp_roman_sections_are_reachable(opp_seals_fixture):
     refs = {s.section_ref for s in OppParser().parse(opp_seals_fixture)}
-    assert {"V", "VI"} <= refs                            # v1 missed both
+    assert {"§V", "§VI"} <= refs                         # v1 missed both
 
 def test_depth_three_resolves(opp_4_5_fixture):
     subs = {r.ref for s in OppParser().parse(opp_4_5_fixture) for r in s.sub_refs}
-    assert "4.5(2)(c)" in subs
+    assert "4.5(2)(c)" in subs                            # sub_refs stay plain (D43)
 
 def test_depth_four_is_never_synthesised(opp_4_5_fixture):
     for s in OppParser().parse(opp_4_5_fixture):
@@ -523,7 +523,7 @@ def test_ingest_produces_citable_chunks(real_saoso_pdf):
     chunks = DocumentChunk.objects.all()
     assert chunks.count() > 0
     assert not chunks.filter(section_ref="").exists()        # v1's silent failure
-    assert chunks.filter(section_ref__startswith="B.20.1").exists()
+    assert chunks.filter(section_ref__startswith="S20.1").exists()   # D43, not "B.20.1"
 
 def test_ingest_is_idempotent_on_sha256(real_saoso_pdf):
     call_command("ingest_standard", "--doc", "saoso", "--file", real_saoso_pdf)
@@ -536,12 +536,15 @@ def test_duplicate_refs_are_reported(real_saoso_pdf):
     assert duplicate_ref_count() <= KNOWN_SAOSO_DUPLICATES
 ```
 
-The third test exists because ~50 duplicate refs remain in SAOSO (clause numbers repeating within
-a part, or appendix content absorbed). It is a **ratchet**, not a pass: the number may only go
-down. Investigate them during B3/B4; do not silence the check.
+The third test exists because duplicate refs may remain in SAOSO. It is a **ratchet**, not a pass:
+the number may only go down. Investigate them during B3/B4; do not silence the check. Note that
+MVP 0 ingests **Section B only** (D41), which removes the part-local collisions `1.1.1`-style that
+made this number large in the first place — so set `KNOWN_SAOSO_DUPLICATES` from a measurement, not
+from the plan's "~50".
 
 **Then** implement, page-aware: extract per page, skip TOC pages, carry the part letter forward,
-segment appendices from the TOC map, then chunk and embed.
+segment appendices from the TOC map plus the uppercase body headings (measured: both exist — see
+SPEC §4.5 reality 4), then chunk and embed.
 
 **Acceptance:** all four documents ingest; the ratchet holds; re-ingest adds nothing.
 
@@ -557,9 +560,9 @@ segment appendices from the TOC map, then chunk and embed.
 - **Scope to `StandardSet` before ranking** — the corpus boundary is a filter the model cannot
   escape, not a rule it must remember.
 
-**Tests first:** a query returns SAOSO clause `B.20.1.1` for a traceability question (recall
-floor); no result ever comes from outside the session's set; an empty corpus returns `[]` rather
-than raising.
+**Tests first:** a query returns a SAOSO clause in Section B ("`S20.`", never "`B.20.`" — D43)
+for a traceability question (recall floor); no result ever comes from outside the session's set; an
+empty corpus returns `[]` rather than raising.
 
 **Acceptance:** tests pass; retrieval works with the Gemini key absent when only FTS is exercised.
 
