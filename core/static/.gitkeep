@@ -1,0 +1,2 @@
+# Keeps core/static present so `manage.py check` does not warn W004.
+# STATICFILES_DIRS names this directory (§2); C1 fills it with css/site.css.
