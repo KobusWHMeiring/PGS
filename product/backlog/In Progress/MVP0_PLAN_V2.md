@@ -414,16 +414,30 @@ that silently produced zero sections.
 ```python
 # knowledge/sections/saoso.py — verified against the shipped PDF (D14, F1)
 CLAUSE = re.compile(r"^(\d{1,2}(?:\.\d{1,2})*)\.\s+(\S.*)$")   # "20.1.1. text" at column 0
-APPX   = re.compile(r"^Appendix\s+\d+[a-z]?(?:\.\s+Table\s+\d+)?\.?\s*$")
 HDR    = re.compile(r"^\s{8,}SECTION ([A-C])\s*$", re.M)        # running page header
+# CORRECTED by B2 (see `knowledge/sections/saoso.py`). The original title-case,
+# column-0 pattern matches NOTHING in the body and false-positives on p63, where
+# `Appendix 4.` starts a mid-sentence line. Body headings are UPPERCASE at any
+# indent, in four shapes: `APPENDIX 1`, `APPENDIX 4, TABLE 1`, `APPENDIX 4 TABLE 2:`,
+# `APPENDIX 6a:`. The TOC supplies the canonical label, not the boundary.
+APPENDIX = re.compile(
+    r"^\s*(APPENDIX\s+(?:\d{1,2}[a-z]?|[A-C]))"
+    r"(?:\s*,?\s*TABLE\s+(\d{1,2}))?\s*[.:]?\s*$"
+)
 ```
 
 ```python
 # knowledge/sections/opp.py — verified (D15, F2)
 ROMAN = re.compile(r"^\s{0,7}([IVX]+)\.\s+(\S.*)$")             # "V.", "VI."  — indented!
-SUB   = re.compile(r"^\s{0,7}(\d+\.\d+)\s+(\S.*)$")             # "4.5 Non-compliance…"
-ITEM  = re.compile(r"^\s{2,}(\d+)[.)]\s+(\S.*)$")               # "5)" §4.2 / "1." §4.1
-LET   = re.compile(r"^\s{8,}([a-z])\.\s+(\S.*)$")               # "c." §4.5(2)
+SUB   = re.compile(r"^\s{0,7}(\d{1,2}\.\d{1,2})\s+(\S.*)$")     # "4.5 Non-compliance…"
+# CORRECTED by B2. `^\s{2,}` drops §4.5's items 4 and 5, which begin at column 0
+# after the p6/p7 page break, and a marker that is not tracked against the *outer*
+# list manufactures `4.5(3)` from the third attendee of the (2)(c) list. Items may
+# start at any indent; the nested-list rule is a dedent below the nested list's own
+# indent (see `knowledge/sections/opp.py`, which also records that this is calibrated
+# to the printed layout).
+ITEM  = re.compile(r"^(\s*)(\d{1,2})[.)]\s+\S")                 # "5)" §4.2 / "1." §4.1
+LET   = re.compile(r"^\s{8,}([a-z])\.\s+\S")                    # "c." §4.5(2)
 ```
 
 **Tests first — these are the assertions v1 lacked:**
