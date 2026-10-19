@@ -219,3 +219,46 @@ def test_seal_and_category_are_data_not_enums(seeded):
     Seal.objects.create(code="PGS_TEST_ONLY", label="Test", standard_ref="OPP §V")
     Category.objects.create(code="TEST_ONLY", label="Test", display_order=99)
     assert Seal.objects.filter(code="PGS_TEST_ONLY").exists()
+
+
+# --- The corpus set (B6's prerequisite) --------------------------------------
+
+
+def test_seeding_creates_the_default_corpus_set(seeded):
+    """`ingest_standard` refuses to guess a set, so a fresh deployment needs this row.
+
+    Without it the first ingest fails with "Run `manage.py seed_deployment`" — advice
+    that used to be a dead end, because the seed did not create a set. SPEC §4.5's
+    seeding note always said it should.
+    """
+    from knowledge.models import StandardSet
+
+    sets = StandardSet.objects.filter(is_default=True)
+    assert sets.count() == 1
+    assert sets.get().code == "outeniqua"
+
+
+def test_standard_set_seeding_is_idempotent(seeded):
+    from knowledge.models import StandardSet
+
+    call_command("seed_deployment")
+    assert StandardSet.objects.count() == 1
+
+
+def test_seeding_does_not_reinstate_a_deployments_own_default(seeded):
+    """The same rule as `is_active`: a deliberate decision survives a release.
+
+    A deployment loading SAOSO 2.2 beside 2.1 may make the *new* set the default; the
+    next `seed_deployment` must not quietly move it back.
+    """
+    from knowledge.models import StandardSet
+
+    outeniqua = StandardSet.objects.get(code="outeniqua")
+    outeniqua.is_default = False
+    outeniqua.save(update_fields=["is_default"])
+    StandardSet.objects.create(code="saoso-2.2", label="SAOSO 2.2", is_default=True)
+
+    call_command("seed_deployment")
+
+    assert StandardSet.objects.get(code="outeniqua").is_default is False
+    assert StandardSet.objects.get(code="saoso-2.2").is_default is True

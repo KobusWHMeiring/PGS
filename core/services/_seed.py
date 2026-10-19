@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from django.db import transaction
 
 from core.models import Category, Seal
+from knowledge.models import StandardSet
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,21 @@ class CategorySpec:
 
 # --- The deployed Outeniqua set ---------------------------------------------
 #
+# The **StandardSet** is group data, not code (D16, §4.5): it groups the four governed
+# documents so retrieval can be scoped to them and so two corpora (SAOSO 2.1 beside
+# 2.2) can coexist. It belongs here for the same reason the seals do, and SPEC §4.5's
+# seeding note already promised it — `ingest_standard` refuses to guess a set, so
+# without this row a fresh deployment cannot ingest anything at all.
+
+STANDARD_SET_CODE = "outeniqua"
+STANDARD_SET_LABEL = "Outeniqua PGS corpus"
+STANDARD_SET_DESCRIPTION = (
+    "The four governed documents (D16): the SAOSO Standard v2.1, the Outeniqua PGS "
+    "Principles, Policies and Procedures, the Basic Production Principles, and the "
+    "South African organic certification landscape. Retrieval is always scoped to a "
+    "set (§4.5), so a chatbot answering about SAOSO cannot cite another standard."
+)
+
 # Seals: OPP §V, "Seals and certificates issued by the PGS committee", which reads
 # "The following certificates may be issued to the farmer" and lists exactly three.
 
@@ -127,6 +143,31 @@ CATEGORIES: tuple[CategorySpec, ...] = (
 )
 
 
+def _seed_standard_set() -> tuple[int, int]:
+    """Create the corpus set, or refresh an existing one's description.
+
+    `is_default` is applied **on create only**, for the same reason `is_active` is on
+    seals: a deployment that has deliberately made another set the default — while
+    loading SAOSO 2.2 beside 2.1, say — must not have that choice undone by a release.
+    """
+    standard_set, was_created = StandardSet.objects.get_or_create(
+        code=STANDARD_SET_CODE,
+        defaults={
+            "label": STANDARD_SET_LABEL,
+            "description": STANDARD_SET_DESCRIPTION,
+            "is_default": True,
+        },
+    )
+    if was_created:
+        return 1, 0
+
+    # Descriptive fields track the deployment's own corpus, so they are refreshed.
+    standard_set.label = STANDARD_SET_LABEL
+    standard_set.description = STANDARD_SET_DESCRIPTION
+    standard_set.save(update_fields=["label", "description"])
+    return 0, 1
+
+
 def _seed_seals() -> tuple[int, int]:
     """Create-or-update seals. Returns (created, updated).
 
@@ -189,15 +230,16 @@ def seed_deployment() -> dict[str, tuple[int, int]]:
     """Apply the group's data. Safe to run on every deploy.
 
     In: none.
-    Out: `{"seals": (created, updated), "categories": (created, updated)}`.
-    Side Effects: writes `Seal` and `Category` rows. Does **not** change `is_active`
-         on rows that already exist.
+    Out: `{"standard_sets": …, "seals": (created, updated), "categories": …}`.
+    Side Effects: writes `StandardSet`, `Seal` and `Category` rows. Does **not** change
+         `is_active` on seals, or `is_default` on the set, once they exist.
     Fails: never deliberately; a database error propagates. The whole seed is one
          transaction, so a partial deployment state is not reachable.
     Idempotency: yes — this is the requirement, not a nicety, because it runs on
          every release.
     """
     return {
+        "standard_sets": _seed_standard_set(),
         "seals": _seed_seals(),
         "categories": _seed_categories(),
     }
