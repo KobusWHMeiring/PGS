@@ -19,6 +19,12 @@ private_media/
 staticfiles/
 backups/
 
+# Scratch space. HANDOVER §7 tells every session to run throwaway probes from
+# `_scratch/` rather than `%TEMP%` (a stray `inspect.py` in the working directory
+# shadows the stdlib). An un-ignored scratch dir means the next `git add -A`
+# commits a half-written probe.
+_scratch/
+
 # Import Linter (A7). Grimp writes this cache next to the config and ships its own
 # `.gitignore` containing `*`, so git ignores the contents anyway — but relying on a
 # dependency's internal file to keep our tree clean is fragile. Named here too.

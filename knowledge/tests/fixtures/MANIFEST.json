@@ -21,6 +21,43 @@
   "encoding_caveat": "Fixtures are UTF-8. Glyphs the PDFs fail to map to Unicode become U+FFFD (REPLACEMENT CHARACTER). This is a fidelity loss in the SOURCE documents, not in the extraction: pdftotext -enc Latin1 emits 0xFF and -enc ASCII7 emits '-', so the byte is not valid UTF-8 and no encoding recovers the real character. Concretely, the OPP's 'Pasture raised is not defined by the SAOSO standard <0xFF> details on this forthcoming' carries an en-dash in SPEC \u00a74.3 that no extractor produces. Do NOT hand-edit these files to 'fix' it \u2014 a hand-corrected fixture stops being evidence, which is exactly how v1's parser passed its tests while matching nothing in the real document. Assert on text that survives extraction, or normalise explicitly in the parser.",
   "extraction_command": "pdftotext -layout <pdf> -",
   "fixtures": {
+    "bpp_intro": {
+      "anchor": "^\\s{0,8}INTRODUCTION\\b",
+      "anchor_page": 3,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 5281,
+      "file": "knowledge/tests/fixtures/bpp_intro.txt",
+      "notes": [
+        "Two columns, so `pdftotext -layout` puts left- and right-column text on the same line ('INTRODUCTION' and 'DEFINITION OF ORGANIC' share line 1). Any heading regex must therefore tolerate trailing column text and must not be anchored with `$`.",
+        "'GENERAL PRINCIPLES' (p4) is also followed by right-column text on the same line; '1. Ecosystem Management' is a Title Case subheading in the left column."
+      ],
+      "pages": "3-4",
+      "replacement_char_count": 3,
+      "sha256": "a068e6f87e587d94a2052aedf655118a283fc244b422bc8dc3ce97cedc954797",
+      "source": "Basic Production Principles_ENG_PRINT.pdf",
+      "why": "The Basic Production Principles' introduction and general principles, for `heading.py` \u2014 the BPP carries no clause numbering at all, so its citation is page + heading (SPEC \u00a74.5 reality table)."
+    },
+    "landscape_seals": {
+      "anchor": "^\\s*PGS SEALS AND THEIR USE\\s*$",
+      "anchor_page": 6,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 12956,
+      "file": "knowledge/tests/fixtures/landscape_seals.txt",
+      "notes": [
+        "Spans three pages on purpose: 'SOUTH AFRICAN ORGANIC CERTIFICATION LANDSCAPE' is a *running header* on most pages, so a heading detector that does not suppress lines repeating across pages emits it as a section once per page."
+      ],
+      "pages": "6-8",
+      "replacement_char_count": 11,
+      "sha256": "e9be7c8f278e7d047620f565cbb06181e157c454f255867e216fde87cd0dd627",
+      "source": "PGS Certification landscape_Final.pdf",
+      "why": "The certification landscape's seals section. LANDSCAPE is the other heading-only document (SPEC \u00a74.5 reality table) and the second consumer of `heading.py`."
+    },
     "opp_4_1": {
       "anchor": "^\\s{0,7}4\\.1\\s+Preparation",
       "anchor_page": 4,
@@ -106,7 +143,8 @@
       "bytes": 10792,
       "file": "knowledge/tests/fixtures/saoso_appendices.txt",
       "notes": [
-        "The body prints 'APPENDIX 1' in UPPERCASE and indented ~62 columns. The TOC prints 'Appendix 1' in title case. MVP0_PLAN_V2.md B2's APPX regex (r'^Appendix\\s+\\d+...') is title-case and column-0 anchored, so against the real body it matches NOTHING (reality 4 is correct) but FALSE-POSITIVES on p63, where 'Appendix 4.' starts a mid-sentence line. Both cases are in this fixture set: p63 is inside saoso_part_b."
+        "The body prints 'APPENDIX 1' in UPPERCASE and indented ~62 columns. The TOC prints 'Appendix 1' in title case. MVP0_PLAN_V2.md B2's APPX regex (r'^Appendix\\s+\\d+...') is title-case and column-0 anchored, so against the real body it matches NOTHING but FALSE-POSITIVES on p63, where 'Appendix 4.' starts a mid-sentence line. Both cases are in this fixture set: p63 is inside saoso_part_b.",
+        "Corrected 2026-10-19 by measurement: SPEC \u00a74.5 reality 4 overstated this. All twelve appendix headings DO appear in the body in UPPERCASE \u2014 but across four separator shapes (', ' / ':' / '.' / none) and indentation 0-62 columns, so a single tolerant regex is required. The TOC map's job is to supply the *canonical label* ('Appendix 4. Table 2' where the body prints 'APPENDIX 4 TABLE 2:'), not the boundary."
       ],
       "pages": "71-73",
       "replacement_char_count": 5,

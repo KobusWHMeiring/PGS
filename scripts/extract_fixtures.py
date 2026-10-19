@@ -141,9 +141,15 @@ EXTRACTS: tuple[Extract, ...] = (
             "The body prints 'APPENDIX 1' in UPPERCASE and indented ~62 columns. The "
             "TOC prints 'Appendix 1' in title case. MVP0_PLAN_V2.md B2's APPX regex "
             "(r'^Appendix\\s+\\d+...') is title-case and column-0 anchored, so against the "
-            "real body it matches NOTHING (reality 4 is correct) but FALSE-POSITIVES on "
-            "p63, where 'Appendix 4.' starts a mid-sentence line. Both cases are in this "
-            "fixture set: p63 is inside saoso_part_b.",
+            "real body it matches NOTHING but FALSE-POSITIVES on p63, where 'Appendix 4.' "
+            "starts a mid-sentence line. Both cases are in this fixture set: p63 is inside "
+            "saoso_part_b.",
+            "Corrected 2026-10-19 by measurement: SPEC §4.5 reality 4 overstated this. All "
+            "twelve appendix headings DO appear in the body in UPPERCASE — but across four "
+            "separator shapes (', ' / ':' / '.' / none) and indentation 0-62 columns, so a "
+            "single tolerant regex is required. The TOC map's job is to supply the "
+            "*canonical label* ('Appendix 4. Table 2' where the body prints 'APPENDIX 4 "
+            "TABLE 2:'), not the boundary.",
         ],
     ),
     Extract(
@@ -215,6 +221,45 @@ EXTRACTS: tuple[Extract, ...] = (
             "prove the indentation tolerance is necessary.",
             "Reproduces the pasture-raised criteria line verbatim; this is the evidence A4's "
             "is_active=False decision rests on.",
+        ],
+    ),
+    Extract(
+        name="bpp_intro",
+        source=BPP,
+        start_page=3,
+        end_page=4,
+        anchor=r"^\s{0,8}INTRODUCTION\b",
+        anchor_page=3,
+        why=(
+            "The Basic Production Principles' introduction and general principles, for "
+            "`heading.py` — the BPP carries no clause numbering at all, so its citation is "
+            "page + heading (SPEC §4.5 reality table)."
+        ),
+        notes=[
+            "Two columns, so `pdftotext -layout` puts left- and right-column text on the "
+            "same line ('INTRODUCTION' and 'DEFINITION OF ORGANIC' share line 1). Any "
+            "heading regex must therefore tolerate trailing column text and must not be "
+            "anchored with `$`.",
+            "'GENERAL PRINCIPLES' (p4) is also followed by right-column text on the same "
+            "line; '1. Ecosystem Management' is a Title Case subheading in the left column.",
+        ],
+    ),
+    Extract(
+        name="landscape_seals",
+        source=LANDSCAPE,
+        start_page=6,
+        end_page=8,
+        anchor=r"^\s*PGS SEALS AND THEIR USE\s*$",
+        anchor_page=6,
+        why=(
+            "The certification landscape's seals section. LANDSCAPE is the other "
+            "heading-only document (SPEC §4.5 reality table) and the second consumer of "
+            "`heading.py`."
+        ),
+        notes=[
+            "Spans three pages on purpose: 'SOUTH AFRICAN ORGANIC CERTIFICATION LANDSCAPE' "
+            "is a *running header* on most pages, so a heading detector that does not "
+            "suppress lines repeating across pages emits it as a section once per page.",
         ],
     ),
 )
