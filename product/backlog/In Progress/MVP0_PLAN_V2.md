@@ -1,8 +1,8 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan A (A1–A10) landed 2026-10-19. B (corpus), C (public site) and D (chatbot) remain. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`).
+**Status:** In Progress — sub-plan **A (A1–A10) and B (B1–B7) both landed 2026-10-19**; C (public site) and D (chatbot) remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**, and `verify.sh` is green at 242 tests. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B (corpus scope, `page` semantics, citation strings).
 **Owner:** Kobus Meiring (Product)
-**Last Updated:** 2026-10-18
+**Last Updated:** 2026-10-19
 **MVP:** 0 (spec §19)
 **Supersedes:** `MVP0_PLAN.md` (v1). v1 was written against assumptions the shipped PDFs
 contradict — its SAOSO parser matched nothing in the real file. See `MVP0_PRD.md` appendix.

@@ -145,6 +145,43 @@ for the former, `IntegrityError` for the latter.
 
 ---
 
+### 1.8 A near-identical identifier produces an unreadable error
+
+Two of B7's tests asked for `saaso_ingested`. The fixture is `saoso_ingested` — one
+letter different, in the middle of a word, in a file where both spellings surround it.
+pytest's message is actively misleading:
+
+```
+E       fixture 'saaso_ingested' not found
+>       available fixtures: ..., saaso_ingested, saoso_set, settings, ...
+```
+
+It **lists the fixture as available** — because `saoso_ingested` exists — while failing
+to find the name that was asked for. Reading that twice, I concluded the test file was
+stale, cleared `__pycache__` and `.pytest_cache`, renamed the fixture, rewrote the test
+under a different name, and blamed this box's filesystem (3.3). All four were wrong;
+the suite went green the moment the typo was fixed.
+
+**Evidence that ends the argument in one command:**
+
+```python
+data = Path("knowledge/tests/test_retrieval.py").read_bytes()
+data.count(b"saaso_ingested")   # 2   <- the typos
+ data.count(b"saoso_ingested")  # 9   <- the real fixture and its users
+```
+
+**Rule:** when pytest says a fixture is missing but lists it, compare the two
+identifiers **byte for byte** — a count of occurrences, not a visual diff — before
+suspecting the runner, the cache or the filesystem. `saaso`/`saoso` are one letter apart
+and both look right. The same applies to `sub_refs`/`subrefs`, `standard_set`/
+`StandardSet`, and any other pair the domain forces on you.
+
+**Corollary:** do not let a diagnostic become a rewrite. The three changes I made while
+chasing this (clearing caches, renaming a fixture, rewriting a test) all had to be
+undone, and one of them left the file in a state where the typo existed in a *second*
+place — which is why the failure count grew from one to two and looked like progress
+being undone.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML
