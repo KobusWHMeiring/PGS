@@ -1,0 +1,720 @@
+/* ==========================================================================
+   site.css — semantic component classes for the public site.
+
+   Named after what a thing *is*, not how it looks: `.fact-card`, `.fee-table`,
+   `.cite`, `.disclaimer`. Layout lives inside the component, so no utility soup
+   accumulates in the templates (a utility cluster that repeats is a component;
+   a utility cluster that appears once is a layout decision belonging to the
+   component next to it).
+
+   Colours come from `root.css` only, via `var(--brand-*)` or the declared channel
+   triplets. A raw hex here is a bug (DESIGN.md rule 1). The three exceptions are
+   `#fff` as a specified hover state, and nothing else — both are commented.
+
+   Breakpoints are the prototype's: 640 / 768 / 1024 px.
+   ========================================================================== */
+
+/* --- Buttons -------------------------------------------------------------- */
+/* DESIGN.md rule 5 and build_principles.md §IV: touch targets are ≥ 44×44 px.
+   The prototype's `px-4 py-2 text-xs` button is 32 px tall, so it violated its own
+   stated rule; `min-height` here is the fix, and `tests/e2e` asserts it against a
+   real bounding box rather than against the CSS. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.75rem 1.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.btn--upper {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Header CTA: compact, not uppercase (DESIGN §7.1 — a button, not a sixth link). */
+.btn--compact {
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.025em;
+}
+
+.btn--forest {
+  background-color: var(--brand-forest);
+  color: var(--brand-cream);
+  box-shadow: var(--shadow-hairline);
+}
+
+.btn--forest:hover {
+  background-color: var(--brand-forestDark);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.btn--cream {
+  background-color: var(--brand-cream);
+  color: var(--brand-forestDark);
+  box-shadow: var(--shadow-card);
+}
+
+.btn--cream:hover {
+  /* Specified hover state in the prototype (`hover:bg-white`). White is not a
+     brand colour and is not being introduced as one. */
+  background-color: #fff;
+  box-shadow: var(--shadow-raised);
+}
+
+.btn--ghost {
+  color: var(--brand-cream);
+  border-color: rgb(var(--brand-cream-rgb) / 0.35);
+  background-color: transparent;
+}
+
+.btn--ghost:hover {
+  background-color: rgb(var(--brand-cream-rgb) / 0.1);
+}
+
+.btn--ochre {
+  background-color: var(--brand-ochre);
+  color: #fff;
+  box-shadow: var(--shadow-hairline);
+}
+
+.btn--ochre:hover {
+  background-color: var(--brand-ochreDark);
+}
+
+.btn--outline {
+  background-color: #fff;
+  color: var(--brand-forest);
+  border-color: var(--brand-sand);
+}
+
+.btn--outline:hover {
+  background-color: rgb(var(--brand-sand-rgb) / 0.3);
+}
+
+/* --- Header --------------------------------------------------------------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: rgb(var(--brand-cream-rgb) / 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--header-height);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+  color: var(--brand-charcoal);
+}
+
+.brand__mark {
+  height: 2.5rem;
+  width: auto;
+  transition: transform 150ms ease;
+}
+
+.brand:hover .brand__mark {
+  transform: scale(1.05);
+}
+
+.brand__name {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.brand__tag {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: var(--text-nano);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--brand-muted);
+}
+
+/* The wordmark is HTML text, not the raster lockup: it stays crisp at every size,
+   is translatable, and is readable to a screen reader (DESIGN §7.1, §8). */
+
+.site-nav {
+  display: none;
+}
+
+.site-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(var(--brand-charcoal-rgb) / 0.8);
+  transition: color 150ms ease;
+}
+
+.site-nav__link:hover,
+.site-nav__link[aria-current="page"] {
+  color: var(--brand-ochre);
+}
+
+@media (min-width: 768px) {
+  .site-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* --- Language switch ------------------------------------------------------ */
+/* EN/AF is a first-class header control, not a footer afterthought (DESIGN rule
+   7). Until C3 wires the catalogue, AF is a disabled control rather than a link
+   that silently does nothing. */
+
+.lang-switch {
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 44px;
+  padding: 0.25rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-pill);
+  background-color: rgb(var(--brand-sand-rgb) / 0.6);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--brand-muted);
+}
+
+@media (min-width: 640px) {
+  .lang-switch {
+    display: inline-flex;
+  }
+}
+
+.lang-switch__current {
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-pill);
+  background-color: #fff;
+  color: var(--brand-forest);
+  font-weight: 600;
+  box-shadow: var(--shadow-hairline);
+}
+
+.lang-switch__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding-inline: 0.5rem;
+  transition: color 150ms ease;
+}
+
+.lang-switch__link:hover {
+  color: var(--brand-forest);
+}
+
+/* --- Mobile menu ---------------------------------------------------------- */
+/* The prototype hid the nav below `md` and offered nothing in its place, which
+   leaves a phone with no navigation at all. A `<details>` element gives the same
+   affordance with no JavaScript, which is what the zero-build-pipeline rule
+   wants. */
+
+.site-menu {
+  position: relative;
+}
+
+.site-menu__toggle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+  cursor: pointer;
+  list-style: none;
+}
+
+.site-menu__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.site-menu__bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background-color: var(--brand-forestDark);
+}
+
+.site-menu[open] .site-menu__toggle {
+  background-color: var(--brand-sageLight);
+}
+
+.site-menu__panel {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  z-index: 60;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.5rem 1rem 1rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-cream);
+  box-shadow: var(--shadow-raised);
+}
+
+.site-menu__link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 1px solid rgb(var(--brand-sand-rgb) / 0.6);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.site-menu__link:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .site-menu {
+    display: none;
+  }
+}
+
+/* Below 400 px the header's three elements do not fit. Drop the strapline and
+   tighten the CTA rather than letting the row overflow — the 390 px check in
+   tests/e2e measures the result. */
+@media (max-width: 399px) {
+  .brand__tag {
+    display: none;
+  }
+
+  .btn--compact {
+    padding-inline: 0.75rem;
+  }
+}
+
+/* --- Footer --------------------------------------------------------------- */
+
+.site-footer {
+  background-color: var(--brand-forestDeep);
+  color: var(--brand-cream);
+  padding-block: 4rem 3rem;
+  border-top: 1px solid var(--brand-forest);
+}
+
+.footer__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  padding-bottom: 3.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.footer__name {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.footer__mark {
+  height: 3rem;
+  width: auto;
+}
+
+.footer__blurb {
+  max-width: 24rem;
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+  color: rgb(var(--brand-cream-rgb) / 0.7);
+}
+
+.footer__social {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.footer__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  opacity: 0.8;
+  transition: opacity 150ms ease;
+}
+
+.footer__social-link:hover {
+  opacity: 1;
+}
+
+.footer__social-mark {
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+.footer__heading {
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand-ochreLight);
+}
+
+.footer__list {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  font-size: var(--text-xs);
+  color: rgb(var(--brand-cream-rgb) / 0.8);
+}
+
+.footer__list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  transition: color 150ms ease;
+}
+
+.footer__list a:hover {
+  color: #fff;
+}
+
+.footer__place {
+  font-size: var(--text-xs);
+  color: rgb(var(--brand-cream-rgb) / 0.8);
+}
+
+.footer__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-nano);
+}
+
+/* DESIGN rule 8: unresolved data is a visible chip, never a plausible fake. A
+   fake phone number in a mockup is a real number in production. */
+.footer__chip {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-forest);
+  color: var(--brand-ochreLight);
+}
+
+.footer__ask {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-xs);
+  color: var(--brand-ochreLight);
+}
+
+.footer__ask:hover {
+  text-decoration: underline;
+}
+
+.footer__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 2rem;
+  font-size: var(--text-micro);
+  color: rgb(var(--brand-cream-rgb) / 0.5);
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .footer__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer__bottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .footer__bottom-note {
+    text-align: right;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer__grid {
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2.5rem;
+  }
+
+  .footer__brand {
+    grid-column: span 5;
+  }
+
+  .footer__col {
+    grid-column: span 2;
+  }
+
+  .footer__contact {
+    grid-column: span 3;
+  }
+}
+
+.footer__brand,
+.footer__col,
+.footer__contact {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+}
+
+/* --- Hero ----------------------------------------------------------------- */
+/* DESIGN §7.2. The rgba() values in the gradient stack are measured from the
+   prototype and are a *photograph treatment*, not palette surfaces: they exist to
+   hold white text at 8.17:1 median / 4.93:1 worst case over a moving image. They
+   are therefore the one place in this file where literal channel values are
+   correct, and they must be re-measured if the photograph or the stack changes.
+   DESIGN §11.6 records that the wash could be lightened — a judgement call, not a
+   defect. */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 50% 18%,
+      rgba(65, 81, 54, 0.78) 0%,
+      rgba(48, 60, 40, 0.86) 55%,
+      rgba(32, 40, 27, 0.94) 100%
+    ),
+    url("../img/mountain_scene.jpg") center 38% / cover no-repeat;
+}
+
+/* Three ochre/moss ellipse glows, above the photograph and below the text. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse 90% 45% at 50% 95%, rgba(184, 123, 46, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 35% at 50% 85%, rgba(94, 117, 78, 0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 110% 40% at 50% 75%, rgba(55, 70, 46, 0.45) 0%, transparent 75%);
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 2;
+  max-width: var(--container-prose);
+  margin-inline: auto;
+  padding: 6rem 1rem 5rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .hero__inner {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero__inner {
+    padding-inline: 2rem;
+  }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0.25rem 0.875rem;
+  border: 1px solid rgb(var(--brand-ochreLight-rgb) / 0.25);
+  border-radius: var(--radius-pill);
+  background-color: rgb(var(--brand-ochreLight-rgb) / 0.1);
+  color: var(--brand-ochreLight);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hero__title {
+  margin-bottom: 1.75rem;
+  color: #fff;
+  font-size: var(--text-4xl);
+  line-height: var(--leading-title);
+}
+
+.hero__title-accent {
+  color: var(--brand-ochreLight);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* The design breaks the headline after "built by" only when there is room. */
+.hero__break {
+  display: none;
+}
+
+.hero__lede {
+  max-width: var(--container-narrow);
+  margin: 0 auto 2.5rem;
+  color: rgb(var(--brand-cream-rgb) / 0.85);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.hero__ctas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+}
+
+.hero__cta {
+  width: 100%;
+}
+
+/* Base rules above, breakpoints below — in this order, deliberately. A media
+   query placed before the base rule it refines loses to it on equal specificity,
+   which is how the first build shipped a stacked full-width CTA row on desktop
+   while the CSS looked correct in isolation. */
+
+@media (min-width: 640px) {
+  .hero__break {
+    display: block;
+  }
+
+  .hero__title {
+    font-size: var(--text-5xl);
+  }
+
+  .hero__lede {
+    font-size: var(--text-lg);
+  }
+
+  .hero__ctas {
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .hero__cta {
+    width: auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero__title {
+    font-size: var(--text-6xl);
+  }
+}
+
+.hero__note {
+  max-width: 32rem;
+  margin-inline: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.hero__note p {
+  color: rgb(var(--brand-cream-rgb) / 0.65);
+  font-size: var(--text-xs);
+  font-weight: 300;
+  line-height: var(--leading-body);
+}
+
+/* --- Sub-page head -------------------------------------------------------- */
+/* A deep page reuses the home page's type roles (eyebrow, Lora h1, lede) on the
+   warm ground, so that arriving from a search result does not feel like a
+   different site. No border: the ground does the separating (§3). */
+
+.page-head {
+  padding-block: 4rem 3rem;
+  background-color: var(--brand-creamWarm);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--brand-ochreInk);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.page-head__title {
+  color: var(--brand-forestDark);
+  font-size: var(--text-4xl);
+}
+
+@media (min-width: 640px) {
+  .page-head__title {
+    font-size: var(--text-5xl);
+  }
+}
+
+.page-head__lede {
+  max-width: var(--container-narrow);
+  margin-top: 1rem;
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+@media (min-width: 640px) {
+  .page-head__lede {
+    font-size: var(--text-base);
+  }
+}

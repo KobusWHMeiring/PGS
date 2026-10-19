@@ -1,0 +1,78 @@
+{% load static %}
+{% comment %} DESIGN §7.11 — forestDeep ground, four columns, and the bottom bar carrying the
+   OPP's membership-is-not-certification sentence. The social hrefs are the group's
+   real published accounts. {% endcomment %}
+<footer class="site-footer" id="contact-footer">
+  <div class="container">
+
+    <div class="footer__grid">
+
+      <div class="footer__brand">
+        <img class="footer__mark" src="{% static 'img/logo_mark.png' %}"
+             alt="Outeniqua Natural &amp; Organic PGS" width="34" height="48">
+        <p class="footer__name">Outeniqua Natural &amp; Organic PGS</p>
+        <p class="footer__blurb">
+          A participatory guarantee group of farmer and consumer members in the Western Cape,
+          assessing organic practice against the SAOSO standard.
+        </p>
+        <div class="footer__social">
+          <a class="footer__social-link" href="https://www.instagram.com/pgs_outeniqua/"
+             rel="noopener noreferrer" target="_blank" aria-label="Instagram">
+            <img class="footer__social-mark" src="{% static 'img/social_instagram.png' %}"
+                 alt="" aria-hidden="true" width="28" height="28" loading="lazy">
+          </a>
+          <a class="footer__social-link" href="https://www.facebook.com/profile.php?id=61579994608416"
+             rel="noopener noreferrer" target="_blank" aria-label="Facebook">
+            <img class="footer__social-mark" src="{% static 'img/social_facebook.png' %}"
+                 alt="" aria-hidden="true" width="28" height="28" loading="lazy">
+          </a>
+        </div>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">The Group</h2>
+        <ul class="footer__list">
+          <li><a href="{% url 'core:organics' %}">Organics</a></li>
+          <li><a href="{% url 'core:how_it_works' %}">How it works</a></li>
+          <li><a href="{% url 'core:members' %}">Members</a></li>
+          <li><a href="{% url 'core:become_a_member' %}">Fees</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">Documents</h2>
+        {% comment %} C2 replaces these with stable /documents/ addresses. Until the files are
+           published, the anchors point at the home page's document list, which is
+           honest about being unpublished. {% endcomment %}
+        <ul class="footer__list">
+          <li><a href="{% url 'core:home' %}#documents">SAOSO Standard v2.1</a></li>
+          <li><a href="{% url 'core:home' %}#documents">Our procedures</a></li>
+          <li><a href="{% url 'core:home' %}#documents">Basic Production Principles</a></li>
+          <li><a href="{% url 'core:home' %}#documents">Blank checklists</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__contact">
+        <h2 class="footer__heading">Contact</h2>
+        <p class="footer__place">Outeniqua, Western Cape</p>
+        {% comment %} DESIGN rule 8: unresolved data is a visible chip. The live site publishes
+           the administrator's email and two cell numbers; republishing a named
+           person's number is a decision for the group, not a design default. {% endcomment %}
+        <div class="footer__chips">
+          <span class="footer__chip">email</span>
+          <span class="footer__chip">phone</span>
+        </div>
+        <a class="footer__ask" href="{% url 'core:home' %}#ask-standard">Ask the standard →</a>
+      </div>
+
+    </div>
+
+    <div class="footer__bottom">
+      <p>© 2026 Outeniqua Natural &amp; Organic PGS.</p>
+      <p class="footer__bottom-note">
+        Membership is not certification. No certification status is published on this page.
+      </p>
+    </div>
+
+  </div>
+</footer>

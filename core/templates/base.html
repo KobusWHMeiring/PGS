@@ -1,0 +1,43 @@
+{% load i18n static %}{% get_current_language as LANGUAGE_CODE %}<!DOCTYPE html>
+<html class="scroll-smooth" lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>{% block title %}{{ page.title }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}{{ page.description }}{% endblock %}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Outeniqua Natural &amp; Organic PGS">
+  <meta property="og:title" content="{{ page.title }}">
+  <meta property="og:description" content="{{ page.description }}">
+
+  {% comment %} A favicon generated from the sprout mark. The real SVG is an open designer
+     item (DESIGN.md §11.5); a PNG referenced as image/png is valid until then. {% endcomment %}
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+
+  {% comment %} Preload only the two roman faces: they carry the first paint. Italic and the
+     body weights arrive with the stylesheet. {% endcomment %}
+  <link rel="preload" href="{% static 'fonts/lora-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/mulish-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+
+  {% comment %} Zero build pipeline (build_principles.md §IV): two hand-written stylesheets,
+     served from this origin. Nothing on this page comes from a CDN (D40). {% endcomment %}
+  <link rel="stylesheet" href="{% static 'css/root.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  {% include "public/_header.html" %}
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "public/_footer.html" %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

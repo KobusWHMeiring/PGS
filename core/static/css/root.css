@@ -1,0 +1,333 @@
+/* ==========================================================================
+   root.css — tokens, reset, typography, layout primitives.
+
+   Every value here is measured from `product/design/final_home.html`, which is the
+   design of record (DESIGN.md §2). Do not add a colour that is not in this file:
+   DESIGN.md rule 1 — "One palette, and it is brand-*." A new colour family is a bug.
+
+   The prototype was authored in Tailwind utilities served by a CDN. That is out
+   (D40): this file plus `site.css` replace it, and no build step exists to compile
+   them (build_principles.md §IV).
+
+   Token departures from the prototype's `tailwind.config`, each recorded in
+   DESIGN.md §9 and resolved here:
+
+     * `brand-sage` (#8A6828) is a brown-gold, not a sage green — renamed
+       `--brand-ochreInk` (DESIGN §9 #4). It exists because eyebrow text is 12px
+       uppercase and `--brand-ochre` (#B87B2E) on cream is only 3.3:1, below the
+       4.5:1 small-text floor. The deeper gold is a contrast requirement, not taste.
+     * `brand-ochreLight` (#F9F1E2) had 0 uses in the prototype and was declared
+       dead; it is revived as the accent-on-dark. It replaces the Tailwind `amber-*`
+       family the prototype used 11 times for badges and text on the forest band —
+       a second palette that DESIGN.md rule 1 forbids. On `--brand-forest` it
+       measures 10.2:1, so it also fixes contrast.
+     * `#2B2319` was an off-palette hex inside a class on the refusal bubble. It is
+       promoted to `--brand-warmDark` (DESIGN §9 #2 allows exactly this), because a
+       refusal must read as a warm boundary and not as the answered bubble. Mapping
+       it to `forestDeep` would delete the contrast between the two states that
+       DESIGN.md §7.9 calls the product's argument.
+     * `brand-tagGreen` and `brand-badgeBorder` (0 uses each) are deleted.
+       `brand-tagGreenText`'s single use (the gallery consent chip) is
+       `--brand-muted`, which is legible on `--brand-sageLight`.
+     * `shadow-xs` / `shadow-2xs` were Tailwind v4 names on a v3 CDN and were
+       silently dropped — 36 of 48 shadow usages did nothing (DESIGN §9 #1). They
+       become real shadows here, declared once as tokens.
+   ========================================================================== */
+
+/* --- Fonts ---------------------------------------------------------------- */
+/* Self-hosted, latin subset only: Afrikaans' ë ê ô û ï all sit inside U+0000-00FF,
+   and a third-party font request on every page load is exactly what the Faraday
+   rule forbids. Both families are variable (weight ranges, not separate files). */
+
+@font-face {
+  font-family: "Lora";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/lora-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lora";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/lora-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Mulish";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../fonts/mulish-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Mulish";
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../fonts/mulish-italic.woff2") format("woff2");
+}
+
+/* --- Tokens --------------------------------------------------------------- */
+
+:root {
+  /* Surfaces (DESIGN §2.1) */
+  --brand-cream: #fdfbf7;
+  --brand-creamWarm: #f6f1e7;
+  --brand-sageLight: #f3ece0;
+  --brand-sand: #e6dece;
+
+  /* Ink (DESIGN §2.2) */
+  --brand-charcoal: #282622;
+  --brand-muted: #6b665d;
+  --brand-forestDark: #242d1e;
+  --brand-forest: #323e2a;
+  --brand-forestDeep: #1a2116;
+
+  /* Accent (DESIGN §2.3) */
+  --brand-ochre: #b87b2e;
+  --brand-ochreDark: #9c641e;
+  --brand-ochreInk: #8a6828;
+  /* Revived: the accent on dark grounds. */
+  --brand-ochreLight: #f9f1e2;
+  --brand-moss: #425337;
+  /* Promoted from an off-palette hex: the refusal bubble's warm ground. */
+  --brand-warmDark: #2b2319;
+
+  /* Alpha variants. Declared as channel triplets so a component can write
+     `rgb(var(--brand-sand-rgb) / 0.4)` instead of a second raw hex — the rule is
+     that a colour exists once. */
+  --brand-charcoal-rgb: 40 38 34;
+  --brand-muted-rgb: 107 102 93;
+  --brand-cream-rgb: 253 251 247;
+  --brand-creamWarm-rgb: 246 241 231;
+  --brand-sageLight-rgb: 243 236 224;
+  --brand-sand-rgb: 230 222 206;
+  --brand-forest-rgb: 50 62 42;
+  --brand-forestDeep-rgb: 26 33 22;
+  --brand-ochre-rgb: 184 123 46;
+  --brand-ochreLight-rgb: 249 241 226;
+  --brand-ochreDark-rgb: 156 100 30;
+
+  /* Type (DESIGN §4). The prototype's arbitrary `text-[11px]` / `text-[10px]`
+     become named steps rather than magic numbers. */
+  --font-serif: "Lora", Georgia, "Times New Roman", serif;
+  --font-sans: "Mulish", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --text-nano: 0.625rem; /* 10px */
+  --text-micro: 0.6875rem; /* 11px */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+
+  --leading-title: 1.12;
+  --leading-tight: 1.25;
+  --leading-body: 1.625;
+
+  /* Radii (DESIGN §5). The prototype's Tailwind names are in the comment. */
+  --radius-xs: 0.375rem; /* rounded-md */
+  --radius-sm: 0.5rem; /* rounded-lg */
+  --radius-md: 0.75rem; /* rounded-xl */
+  --radius-lg: 1rem; /* rounded-2xl */
+  --radius-pill: 9999px;
+
+  /* Shadows (DESIGN §9 #1). Warm-tinted towards the charcoal ink, not neutral
+     black: a grey shadow on cream reads as dirt. */
+  --shadow-hairline: 0 1px 2px rgb(40 38 34 / 0.06);
+  --shadow-card: 0 1px 3px rgb(40 38 34 / 0.08), 0 1px 2px rgb(40 38 34 / 0.04);
+  --shadow-raised: 0 8px 20px -6px rgb(40 38 34 / 0.18);
+  --shadow-window: 0 24px 48px -12px rgb(26 33 22 / 0.45);
+
+  /* Layout */
+  --container-max: 80rem; /* max-w-7xl */
+  --container-narrow: 42rem;
+  --container-prose: 56rem; /* max-w-4xl */
+  --header-height: 5rem;
+  --section-block: 5rem;
+}
+
+/* --- Reset ---------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* The sticky header must not cover an anchor target. */
+  scroll-padding-top: calc(var(--header-height) + 1rem);
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* --- Base typography ------------------------------------------------------ */
+
+body {
+  background-color: var(--brand-cream);
+  color: var(--brand-charcoal);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--brand-sageLight);
+  color: var(--brand-forestDark);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* DESIGN.md rule 6: `:focus-visible` on every focusable element, never
+   `outline: none`. Ochre on cream is 3.3:1, which is the large-text floor, so the
+   ring is doubled with a cream gap to stay visible against every ground. */
+:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.serif-title {
+  font-family: var(--font-serif);
+  /* Lora at font-normal is deliberate and is most of the design's character
+     (DESIGN §4). Bold serif headings would make it a different site. */
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+/* --- Layout primitives ---------------------------------------------------- */
+/* Only four survive as utilities. Everything else is a component class in
+   site.css, because a utility soup is what the Tailwind prototype was. */
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-inline: 2rem;
+  }
+}
+
+.section {
+  padding-block: var(--section-block);
+}
+
+/* Band grounds (DESIGN §3). A band either carries one of these or is unset.
+   Never a fifth. */
+.section--warm {
+  background-color: var(--brand-creamWarm);
+}
+
+.section--dark {
+  background-color: var(--brand-forest);
+  color: var(--brand-cream);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  z-index: 100;
+  transform: translateY(-120%);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background-color: var(--brand-forest);
+  color: var(--brand-cream);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* --- Motion --------------------------------------------------------------- */
+/* DESIGN §5: nothing animates except colour, the header mark and button lift. */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

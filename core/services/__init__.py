@@ -7,5 +7,6 @@ reports to Sentry — never `except: pass` (HANDOVER §6.5).
 Slices:
     _seed.py     seed_deployment — data, not migrations (A4)
     _health.py   health check aggregation (A5)
+    _public.py   public-site content: page metadata, nav, the OPP fee schedule (C1)
     _chatbot.py  grounded answering + refusal (D)
 """

@@ -1,0 +1,59 @@
+{% load static %}
+{% comment %} DESIGN §7.1 — sticky, cream ground, hairline sand bottom. Left: the sprout mark
+   plus the wordmark as HTML text (crisp at any size, translatable, readable to a
+   screen reader — the raster lockup is light-background-only and needs ≥400 px to
+   be legible, so it is never used here). Centre: the nav links. Right: EN/AF plus
+   the one CTA button. {% endcomment %}
+<header class="site-header">
+  <div class="container site-header__inner">
+
+    <a class="brand" href="{% url 'core:home' %}" aria-label="Outeniqua PGS — home">
+      <img class="brand__mark" src="{% static 'img/logo_mark.png' %}"
+           alt="" aria-hidden="true" width="28" height="40">
+      <span class="brand__text">
+        <span class="brand__name">Outeniqua PGS</span>
+        <span class="brand__tag">Natural &amp; Organic</span>
+      </span>
+    </a>
+
+    {% comment %} Phones: the prototype simply hid the nav below `md` and left nothing in its
+       place. A <details> element is the same affordance with no JavaScript, which
+       is what the zero-build-pipeline rule requires. {% endcomment %}
+    <details class="site-menu">
+      <summary class="site-menu__toggle">
+        <span class="visually-hidden">Menu</span>
+        <span class="site-menu__bar" aria-hidden="true"></span>
+        <span class="site-menu__bar" aria-hidden="true"></span>
+        <span class="site-menu__bar" aria-hidden="true"></span>
+      </summary>
+      <nav class="site-menu__panel" aria-label="Main">
+        {% for link in nav %}
+          {% url link.route as link_url %}
+          <a class="site-menu__link" href="{{ link_url }}"
+             {% if request.path == link_url %}aria-current="page"{% endif %}>{{ link.label }}</a>
+        {% endfor %}
+      </nav>
+    </details>
+
+    <nav class="site-nav" aria-label="Main">
+      {% for link in nav %}
+        {% url link.route as link_url %}
+        <a class="site-nav__link" href="{{ link_url }}"
+           {% if request.path == link_url %}aria-current="page"{% endif %}>{{ link.label }}</a>
+      {% endfor %}
+    </nav>
+
+    <div class="header-actions">
+      {% comment %} DESIGN rule 7: bilingual is a first-class header control. Until C3 wires
+         the catalogue and the session preference, AF is a disabled control rather
+         than a link that silently reloads the same English page. {% endcomment %}
+      <div class="lang-switch" role="group" aria-label="Language">
+        <span class="lang-switch__current" aria-current="true">EN</span>
+        <span class="lang-switch__link" aria-disabled="true" lang="af" title="Afrikaans">AF</span>
+      </div>
+
+      <a class="btn btn--forest btn--compact" href="{% url 'core:become_a_member' %}">Become a member</a>
+    </div>
+
+  </div>
+</header>

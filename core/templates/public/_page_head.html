@@ -1,0 +1,10 @@
+{% comment %} A sub-page's opening band. Same type roles as the home page's section heads
+   (eyebrow / Lora h1 / lede), so a deep page does not invent a second visual
+   language. The h1 text arrives from `Page`, never from the template. {% endcomment %}
+<header class="page-head">
+  <div class="container">
+    <p class="eyebrow">{{ page.eyebrow }}</p>
+    <h1 class="serif-title page-head__title">{{ page.h1 }}</h1>
+    <p class="page-head__lede">{{ page.lede }}</p>
+  </div>
+</header>
