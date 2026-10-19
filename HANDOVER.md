@@ -2,7 +2,7 @@
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, then the public-site session — both 2026-10-19.
-**Repo state:** `main`, **46 commits**, clean tree except two untracked files (§7).
+**Repo state:** `main`, **48 commits**, clean tree except two untracked files (§7).
 `verify.sh` green at **336 tests**; `python -m pytest tests/e2e -q` green at **25** more.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
 never pushed.** No CI (see §3).
@@ -59,7 +59,7 @@ Do **not** read `prd.md` as the spec (superseded provenance). Do **not** execute
 | **C4 — claim discipline** | Complete | six forbidden terms, no seal rendered, no dead certificate link, pending documents are chips not anchors |
 | **C2 — `/documents/`** | **Not started** | home page rows read `Publishing soon`; `test_claim_discipline` fails if they become links |
 | **C3 — bilingual shell** | **Not started** | `LANGUAGES`/`LOCALE_PATHS` set; no `LocaleMiddleware`, no catalogue; AF pill is `aria-disabled` |
-| **D — chatbot** | **Not started** | `core/services/_chatbot.py` and `_chat.py` are scaffold stubs |
+| **D — chatbot** | **Not started** | no `_chatbot.py`/`_chat.py` exists at all (verified 2026-10-19 — an earlier handover said "scaffold stubs") |
 
 **The site's architecture, in one paragraph.** `core/services/_public.py` holds every
 page's metadata, the nav table and the OPP fee schedule as integer cents;
@@ -151,7 +151,7 @@ detail):**
 | 4 | `/endorsed-farms/` has no honest MVP 0 target | **Not present** |
 | 5 | Pledge downloads (farmer + consumer) | **Not present** |
 | 6 | Is `"SOP's"` the OPP under another name? | **Assumed yes**; C2 lists eight items |
-| 7 | "Fees payable by end of February" — **not in the OPP** | **Published**, flagged |
+| 7 | ~~"Fees payable by end of February"~~ — **not in the OPP** | ✅ **Resolved 2026-10-19: withheld.** Removed from `/become-a-member/`; `test_no_unsourced_claim` guards it |
 | 8 | Photography consent for four group photographs | **Published** with a consent chip |
 | 9 | Six-elements wording: LANDSCAPE verbatim vs the prototype's paraphrase | **Verbatim** |
 
@@ -165,7 +165,7 @@ detail):**
 | **UAT sign-off seats** (administrator, committee reviewer, consumer member) | **The human** | C1 and 1a acceptance |
 | **A reversed logo lockup, an SVG of the mark, a real favicon** | The designer | C1 polish; `logo_mark.png` is a stand-in favicon |
 | Seal cardinality; `standard_ref` coverage for ~91 verdicts; hosting cutover; A9's rehearsal on the VPS | MVP 2 / authoring effort | later slices |
-| **Push to `origin`?** | The product owner | 46 commits exist only on this machine |
+| **Push to `origin`?** | The product owner | every commit exists only on this machine |
 
 ---
 

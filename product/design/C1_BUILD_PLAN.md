@@ -78,7 +78,7 @@ to copy:
 | Six membership steps | The design's synthesis of OPP §I + §3.3 + §4 | design (approved) |
 | Recorded verbal pledge | OPP §I.2, verbatim | ✅ |
 | "Roughly from Mossel Bay to the Crags" | live `/members-2/` | live site |
-| "Fees payable by end of February" | live `/become-a-member/` — **not in the OPP**. Ships flagged in §6 below | live site |
+| ~~"Fees payable by end of February"~~ | live `/become-a-member/` — **not in the OPP**. **Withheld** 2026-10-19 (§6 #7) | — |
 | Launch date 21 Oct 2018 | live `/` | live site |
 | Members: **no names** | POPIA consent unrecorded (`content_inventory.md` §6.2) | — |
 
@@ -302,7 +302,7 @@ Recorded rather than guessed. Each ships with a visible placeholder chip until a
 | 4 | **`/endorsed-farms/`** — no honest MVP 0 target. Redirect target or 410? | **Not in C1** (redirect map is MVP 2). |
 | 5 | **Pledge downloads** (farmer + consumer) — D22's seven excludes them; `content_inventory` gap #8 says they are missing. | **Not in C1.** `Publishing soon` chip on the documents band. |
 | 6 | **"SOP's"** — is it the OPP under another name? (`content_inventory` §6.7) | **Assumed yes**; C2 lists seven items, not nine. |
-| 7 | **"Fees payable by end of February"** — on the live site, **not in the OPP**. Publish it? | **Published**, sourced to the live site and flagged here. Say if it should go. |
+| 7 | **"Fees payable by end of February"** — on the live site, **not in the OPP**. Publish it? | ✅ **Resolved 2026-10-19 — withheld.** Removed from `/become-a-member/`; the due-date callout now states only OPP §2.3 ("Fees are payable prior to the farm assessment visit"; "Only fully paid-up members will be eligible for farm assessments and receive certificates"). `test_claim_discipline.py::test_no_unsourced_claim` fails the build if `february` reappears on any public route. |
 | 8 | **Photography consent** — four of the group's own photographs, no identifiable people, consent unrecorded. | **Published** with the `farm attribution & consent to confirm` chip, exactly as the design has it. |
 | 9 | **Six-elements copy** — verbatim from LANDSCAPE (DESIGN §7.4's instruction) versus the prototype's paraphrase. | **Verbatim.** Say if the paraphrase was deliberate. |
 

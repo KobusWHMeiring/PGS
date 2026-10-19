@@ -108,6 +108,31 @@ def test_no_implied_certification_in_a_link(client: Client, url: str):
         assert href not in html, f"{url} links to {href}, which does not exist in MVP 0"
 
 
+#: Claims the *live* site makes that the governed documents do not support. Each is a
+#: content decision, not a design one, so each needs the product owner's word before it
+#: appears — and once refused, this list is what stops it coming back with the next copy
+#: paste from the WordPress site.
+#:
+#: `february` — `/become-a-member/` on the live site says membership fees are "payable by
+#: the end of February" each year. `pdftotext -layout` over the OPP contains no month name
+#: at all; §2.3 says only "Fees are payable prior to the farm assessment visit." Struck by
+#: the product owner 2026-10-19 (`C1_BUILD_PLAN.md` §6 #7).
+UNSOURCED = ["february"]
+
+
+@pytest.mark.parametrize("url", PUBLIC_URLS, ids=[u.strip("/") or "home" for u in PUBLIC_URLS])
+def test_no_unsourced_claim(client: Client, url: str):
+    """A refused claim must not reappear on any public route.
+
+    Same shape as `test_no_unsupported_claim`, and the same mutation test applies: put
+    "by the end of February" back into `become_a_member.html` and this must go red.
+    """
+    assert UNSOURCED, "an empty list makes this test pass vacuously (testing_hazards.md §1.6)"
+    html = client.get(url).content.decode().lower()
+    for term in UNSOURCED:
+        assert term not in html, f"{term!r} is refused but appears on {url}"
+
+
 def test_pending_documents_are_not_links(client: Client):
     """"Publishing soon" must not be clickable.
 

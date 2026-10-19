@@ -12,9 +12,12 @@ Two decisions surface here, both deliberate:
     the ABSA account are on the live site today; republishing them, or retiring them,
     is the group's call, not a design default. Until then the page says to ask the
     administrator, which is true and needs no placeholder.
-  * **"Payable by end of February" is published** and flagged in the build plan: it is
-    the group's own annual rule from the live site, and it is *not* in the OPP. If it
-    should not be published, remove the callout below — nothing else depends on it.
+  * **"Payable by end of February" is not published.** The live site carries that annual
+    deadline; the OPP does not. The product owner struck it on 2026-10-19 (build plan
+    §6 #7), so the due-date callout below states only what OPP §2.3 states — "Fees are
+    payable prior to the farm assessment visit" and "Only fully paid-up members will be
+    eligible for farm assessments and receive certificates". Do not reintroduce a month
+    here; `test_claim_discipline.py` fails the build if you do.
 {% endcomment %}
 
 {% block content %}
@@ -50,13 +53,14 @@ Two decisions surface here, both deliberate:
       <div class="callout">
         <h3 class="callout__title">When it is due</h3>
         <p class="callout__text">
-          Membership fees are payable <strong>by the end of February</strong> each year, and
-          the assessment fee is payable <strong>before</strong> the farm assessment visit.
+          Fees are payable <strong>prior to the farm assessment visit</strong>. Only fully
+          paid-up members are eligible for farm assessments and receive certificates.
         </p>
         <p class="callout__text">
           The group pays the annual PGS South Africa membership fee out of the membership
           fees it collects.
         </p>
+        <p class="callout__text"><span class="cite cite--light">OPP §2.3</span></p>
       </div>
 
       <div class="callout">
