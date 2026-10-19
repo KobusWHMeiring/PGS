@@ -183,6 +183,24 @@ CACHES = {
 CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 
 
+# --- Standards corpus -------------------------------------------------------
+#
+# D3/D20: the embedding model and its dimension are **frozen in the migration**,
+# because changing either later means re-embedding the whole corpus and every
+# stored vector becomes meaningless rather than merely stale. `DocumentChunk.embedding`
+# is a `vector(768)` column, so `EMBEDDING_DIM` is not a tunable dev setting — the
+# value here and the column width must move together in one migration. The
+# 768-dimension choice is deliberate: `gemini-embedding` supports
+# `output_dimensionality=768`, and pgvector 0.5.x `HNSW` indexes only support up to
+# 2000 dimensions, so 768 keeps the option of an ANN index later without a corpus
+# rebuild. `knowledge/tests/test_models.py` asserts the two agree.
+#
+# Read by B5 (embedding) and B1 (the column width). Nothing else.
+
+EMBEDDING_MODEL = env("EMBEDDING_MODEL", "text-embedding-004")
+EMBEDDING_DIM = int(env("EMBEDDING_DIM", "768"))
+
+
 # --- Media ------------------------------------------------------------------
 #
 # Two roots, and the difference is a security boundary, not tidiness (§VI).
