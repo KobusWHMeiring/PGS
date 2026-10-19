@@ -259,6 +259,48 @@ eye):
 **Rule:** when two boxes in a grid disagree about size, measure their boxes before reading
 the CSS. A stacking sibling rule is the usual suspect, and it never looks like one.
 
+### 1.12 An error before the first test is a fixture problem, not a test problem
+
+The Playwright suite (C1e) reported **25 errors and 0 passes**. Nothing was wrong with a
+single test; the whole run died during fixture setup, before any page loaded:
+
+```
+E   django.core.exceptions.SynchronousOnlyOperation:
+    You cannot call this from an async context - use a thread or sync_to_async.
+During handling of the above exception, another exception occurred:
+request = <SubRequest '_live_server_helper' for <Function test_the_phone_menu_opens_fully_on_screen>>
+```
+
+Two libraries want the same thread. `pytest-django`'s `live_server` sets up a
+transactional database synchronously; `pytest-playwright` already has an asyncio loop
+running (it drives the sync API through a greenlet). Django sees a live event loop and
+refuses ORM access. One environment variable fixes it:
+
+```python
+# tests/e2e/conftest.py — here, never in pgs/settings.py
+os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
+```
+
+It is safe in that file and nowhere else: those tests never touch the ORM themselves —
+every database read happens inside the live server's own thread, answering an HTTP
+request. In `settings.py` it would switch the protection off for the gate as well.
+
+**The diagnostic cost was not the bug, it was the shape of the output.** 25 errors read as
+"the tests are broken", and the honest first instinct — rewrite a test — is the wrong
+move. The tell is `errors` rather than `failures`, and a traceback naming a `SubRequest`
+fixture instead of a test line.
+
+**Rules:**
+
+* **`errors` + a fixture name in the traceback = setup, not assertions.** Fix the
+  fixture wiring; do not touch the test until a test body has actually run.
+* **A dependency combination is a suspect in its own right.** `pytest-django` +
+  `pytest-playwright` is a known pair; check the fixture layer before the code.
+* **Prove the suite can run at all** (`pytest tests/e2e -k one_route`) before judging a
+  failing assertion. And mutation-test the first guard you write there — the 44px test
+  failed for a genuine reason (a 26px-wide "Fees" link) *and* for a false one (a
+  `display:none` menu measuring 0×0), which is only visible once the suite runs.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML
