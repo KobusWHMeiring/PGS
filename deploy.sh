@@ -109,18 +109,33 @@ echo "==> 3/6  Installing requirements"
 # --- 4. Back up the database BEFORE migrating --------------------------------
 # R11: the filesystem media volume is the only copy of evidentiary photos and PDFs,
 # and the database is the only copy of the records. A migration that goes sideways
-# without a backup is unrecoverable. Note this is a *pre-migration* copy only; the
-# scheduled off-box backup (scripts/backup.sh, A9) is the real durability story.
+# without a backup is unrecoverable.
+#
+# This calls the REAL backup script (A9) rather than reimplementing pg_dump here.
+# That matters for one specific reason: scripts/backup.sh selects a client whose major
+# version matches the server, and a pg_dump newer than the server writes syntax the
+# server cannot restore. A hand-rolled pg_dump in a deploy script would reintroduce
+# exactly that trap at the moment it is most dangerous — right before a migration.
+#
+# It also fails the deploy if the backup fails. Migrating without a backup is the one
+# irreversible step in this script.
 echo ""
-echo "==> 4/6  Backing up the database"
-mkdir -p "$APP_DIR/backups"
-BACKUP="$APP_DIR/backups/db-$(date +%Y%m%d-%H%M%S).dump"
-PGPASSWORD="${PGPASSWORD:-}" pg_dump --format=custom --no-owner \
-    "${DATABASE_URL_UNSET_HINT:-}" >/dev/null 2>&1 || true
-# The real command belongs here once the VPS database credentials are known (MVP 2).
-# Left explicit rather than guessed, so nobody believes an untested dump happened.
-echo "    TODO(MVP 2): pg_dump wiring — see scripts/backup.sh (A9). Continuing."
-ls -1t "$APP_DIR"/backups/db-*.dump 2>/dev/null | tail -n +"$((KEEP_BACKUPS + 1))" | xargs -r rm -f || true
+echo "==> 4/6  Backing up the database (pre-migration)"
+if ! BACKUP_DIR="${BACKUP_DIR:-$APP_DIR/backups}" "$APP_DIR/scripts/backup.sh"; then
+    echo "" >&2
+    echo "❌ Pre-migration backup FAILED. Refusing to migrate without one." >&2
+    echo "   The site is still running the previous code; nothing has changed." >&2
+    echo "   Investigate: BACKUP_DIR=${BACKUP_DIR:-$APP_DIR/backups}, then re-run." >&2
+    exit 1
+fi
+
+echo "    pre-migration backup verified"
+
+# Retain only the most recent pre-migration backups. The scheduled off-box backup
+# (docs/RUNBOOK.md §1) is the real durability story; these are just the last-resort
+# rollback point for the migration about to run.
+ls -1td "${BACKUP_DIR:-$APP_DIR/backups}"/db-* 2>/dev/null \
+    | tail -n +"$((KEEP_BACKUPS + 1))" | xargs -r rm -rf || true
 
 # --- 5. Migrate, seed, collect static ---------------------------------------
 echo ""

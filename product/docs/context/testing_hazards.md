@@ -195,9 +195,10 @@ healthy while every queued task sat undrained.
 
 ---
 
-## 3. This machine (Windows, Docker Desktop)
+## 3. This machine (Windows, Docker Desktop) — and shell traps
 
-Not code bugs, but they cost time and they will recur.
+Not code bugs, but they cost time and they will recur. §3.6 is not Windows-specific:
+those four bash traps silently produced unrestorable backups.
 
 ### 3.1 Docker binds 5432 alongside a native PostgreSQL service
 
@@ -249,6 +250,48 @@ result. Kill by PID from `netstat -ano`, not by image name.
 leaving a partial database that then reports `migrate --check` exit 1.
 
 **Rule:** never pipe a schema-changing command into anything that can close early.
+
+### 3.6 Shell scripting traps that fail *silently*
+
+Four bugs in `scripts/backup.sh` / `scripts/restore.sh`, every one of which produced a
+backup that looked fine and could not be restored. They are generic bash traps, not
+project-specific.
+
+**`set -e` + `[ cond ] && assignment` aborts with no output.**
+
+```bash
+set -euo pipefail
+parse() { ...; [ "$DB_PORT" = "$DB_HOSTPORT" ] && DB_PORT="5432"; }
+parse    # false condition -> function returns 1 -> set -e kills the script
+```
+
+The script died with **zero output**, which is indistinguishable from a crash. Use
+`if`, so the status is always 0.
+
+**`local a="$1" b="$2" c="$a"`** — bash expands every word of the command *before*
+performing any assignment, so `$a` is still unset and `set -u` aborts with
+`label: unbound variable`. Use one `local` per line.
+
+**`set -a; . .env; set +a` is not a dotenv parser.** Django's
+`get_random_secret_key()` emits `(`, `)`, `*`, `$` and `!`:
+
+```
+.env: line 1: syntax error near unexpected token `)'
+```
+
+Parse it: split on the first `=`, export the remainder verbatim, never evaluate it.
+
+**`if [ -d "$dst" ]` after `mkdir -p "$dst"` restored 0 files and reported success.**
+A backup that creates a directory before deciding between `rsync` and `tar` contains
+*both* an empty directory and a populated tarball; a restore that prefers the
+directory copies nothing. **An empty tree and an absent one must not be
+distinguishable at restore time** — write an explicit `<label>.absent` marker, and
+treat "recorded as present, restored as empty" as a failure.
+
+**Also: `pg_dump` newer than the server.** Client 17 → server 16 emits
+`SET transaction_timeout = 0` (a 17-only GUC). `pg_dump` exits 0, `pg_restore --list`
+lists every entry, and the restore fails on the preamble having restored nothing.
+Compare major versions and choose a matching client (or borrow the container's).
 
 ---
 
