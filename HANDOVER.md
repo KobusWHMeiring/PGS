@@ -3,7 +3,7 @@
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, and the
 documents session — 2026-10-19.
-**Repo state:** `main`, **49 commits**, clean tree except two untracked files (§7).
+**Repo state:** `main`, **50 commits**, clean tree except two untracked files (§7).
 `verify.sh` green at **379 tests**; `python -m pytest tests/e2e -q` green at **30** more.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
 never pushed.** No CI (see §3).
