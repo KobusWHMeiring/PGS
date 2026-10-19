@@ -22,19 +22,26 @@ SETTINGS_SOURCE = Path("pgs/settings.py")
 
 
 def test_required_settings_come_from_env(settings):
-    """The plan's first assertion: the DB name and the two media roots are real.
+    """The DB name and media roots are real, and the DB *tracks* `DATABASE_URL`.
 
-    The plan writes `settings.DATABASES["default"]["NAME"] == "pgs"`, but that
-    cannot pass under pytest-django: Django prefixes the test database with
-    `test_`, so the value here is `test_pgs`. The same trap as `testserver` in
-    ALLOWED_HOSTS — the runner changes the value the test is looking at. The
-    prefix is therefore stripped before comparing, and the underlying URL is
-    asserted separately so the configured name is still pinned.
+    Two corrections to the plan's version of this test, both found by running it:
+
+    1. The plan asserts `DATABASES["default"]["NAME"] == "pgs"`, which cannot pass
+       under pytest-django: Django prefixes the test database with `test_`, so the
+       value is `test_pgs`. Same trap as `testserver` in ALLOWED_HOSTS — the runner
+       changes the value under test.
+
+    2. Hardcoding the name at all made this test fail the moment `scripts/verify.sh`
+       ran against a scratch database (`pgs_verify`), which it must do so migrations
+       are exercised against an empty schema. A test that only passes against one
+       particular database name is asserting a constant, not the behaviour it claims
+       — that settings are *environment-driven*. It now compares against the
+       configured URL, so it holds for whatever database the environment names.
     """
     from pgs import settings as pgs_settings
 
-    assert settings.DATABASES["default"]["NAME"].removeprefix("test_") == "pgs"
-    assert pgs_settings.DATABASE_URL.endswith("/pgs")
+    configured_db = pgs_settings.DATABASE_URL.rsplit("/", 1)[-1]
+    assert settings.DATABASES["default"]["NAME"].removeprefix("test_") == configured_db
     assert settings.PRIVATE_MEDIA_ROOT != settings.MEDIA_ROOT
 
 
