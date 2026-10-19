@@ -13,6 +13,7 @@ the SAOSO standard.
 | **Handover — start here** | `HANDOVER.md` |
 | **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
+| **Testing hazards — read before writing a test** | `product/docs/context/testing_hazards.md` |
 | **Front-end design — only when designing or changing a view** | `product/design/DESIGN.md` |
 | MVP 0 PRD | `product/backlog/ready/MVP0_PRD.md` |
 | MVP 0 implementation plan | `product/backlog/ready/MVP0_PLAN_V2.md` |
@@ -62,6 +63,13 @@ This repo uses the **Harvester backlog convention** (see `product/backlog/CONVEN
 
 ## Conventions that bite people
 
+- **A test that passes for the wrong reason is worse than no test.** Every silent failure
+  found during A1–A7 — Django injecting `testserver` into `ALLOWED_HOSTS`, pytest
+  renaming the test database, Celery's `autoretry_for` being absent rather than `None`, an
+  import-linter config that enforces nothing while exiting 0 — is recorded with evidence in
+  `product/docs/context/testing_hazards.md`. **Read it before writing tests, and append to it**
+  the moment you lose time to something that will recur. Prove a guard can fail (break it,
+  watch the test go red, restore) before trusting it green.
 - **One palette, and it is `brand-*`.** Any new or changed front-end view follows
   `product/design/DESIGN.md` — cream grounds, Lora + Mulish, the `brand-*` tokens, ≥44 px
   targets. That document is scoped to front-end design; do not read it to build a model. A new

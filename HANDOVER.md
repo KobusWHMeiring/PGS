@@ -120,6 +120,12 @@ owner.
 
 ## 6. Traps that will bite
 
+> **Extended, not duplicated:** the traps found while *building* A1–A7 (Django mutating
+> settings under test, Celery's absent `autoretry_for`, an import-linter config that enforces
+> nothing, the Docker/native-Postgres port collision, stale-worker verification) are recorded
+> with evidence in **`product/docs/context/testing_hazards.md`**. Read that before writing
+> tests. The list below is the pre-code, design-and-spec set.
+
 1. **The polarity trap (R1a-2).** Mis-assigning polarity does not crash — it produces plausible,
    wrong data. `V16` "Are there any risks of contamination of the water source?" answered *Yes*
    means **non-compliant**; with the naive `is_compliant = (value == YES)` it stores as compliant and
