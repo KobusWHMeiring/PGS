@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-19 15:36
+> Generated: 2026-10-19 19:18
 
 ## Ready (up next)
 
@@ -10,8 +10,8 @@
 
 ## In Progress
 
-- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plan **A (A1–A10) and B (B1–B7) both landed 2026-10-19**; C (public site) and D (chatbot) remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**, and `verify.sh` is green at 242 tests. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B (corpus scope, `page` semantics, citation strings).
-- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — MVP 0 sub-plan A (A1–A10) landed 2026-10-19; sub-plans B, C and D remain. §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers.
+- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)** and **C4 (claim discipline)** landed 2026-10-19; **C2 (`/documents/`), C3 (bilingual shell)** and **D (chatbot)** remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **336 tests**, plus **25 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B. C1's implementation notes and its nine open content decisions live in `product/design/C1_BUILD_PLAN.md`.
+- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plan A (A1–A10), B (B1–B7), C1 (public site) and C4 (claim discipline) landed 2026-10-19; C2 (`/documents/`), C3 (bilingual shell) and D (chatbot) remain. §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
 
 ## Refinement
 

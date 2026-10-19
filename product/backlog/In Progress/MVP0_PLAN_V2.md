@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan **A (A1–A10) and B (B1–B7) both landed 2026-10-19**; C (public site) and D (chatbot) remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**, and `verify.sh` is green at 242 tests. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B (corpus scope, `page` semantics, citation strings).
+**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)** and **C4 (claim discipline)** landed 2026-10-19; **C2 (`/documents/`), C3 (bilingual shell)** and **D (chatbot)** remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **336 tests**, plus **25 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B. C1's implementation notes and its nine open content decisions live in `product/design/C1_BUILD_PLAN.md`.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-19
 **MVP:** 0 (spec §19)
