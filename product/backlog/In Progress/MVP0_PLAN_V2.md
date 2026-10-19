@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** Ready — the §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`). Sub-plan A is in build.
+**Status:** In Progress — sub-plan A (A1–A10) landed 2026-10-19. B (corpus), C (public site) and D (chatbot) remain. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`).
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-18
 **MVP:** 0 (spec §19)

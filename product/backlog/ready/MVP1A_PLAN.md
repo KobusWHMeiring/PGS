@@ -37,19 +37,31 @@
 | D38 | `Member.probation_until` added |
 | D39 | `membership_no` = `OUT-<year>-<seq>`; `nearest_town` plain text; `is_paid_up` row-period definition |
 
-### 0.2 Hard prerequisite — MVP 0 sub-plan A does not exist yet
+### 0.2 Hard prerequisite — MVP 0 sub-plan A is **complete**
 
-**There is no application code in this repository.** No `manage.py`, no `core/`, no `knowledge/`.
-MVP 0 is *specified*, not built.
+**Sub-plan A (A1–A10) landed on 2026-10-19.** The scaffold, environment-driven settings,
+the **custom `User` model** (migrated, and the first migration — `core_user` exists and
+`auth_user` was never created), `Category`/`Seal` as data with `seed_deployment`,
+`/health/`, Celery with retry policies, the `knowledge` ↛ `core` import contract, the
+`scripts/verify.sh` gate, and backup/restore with a rehearsed restore.
 
-Tasks A1–A10 of `MVP0_PLAN_V2.md` are therefore **a prerequisite for every task below**,
-not a description of the current state. They deliver: the Django project scaffold and Compose services,
-environment-driven settings, the **custom `User` model** (which must be the first migration — it cannot
-be swapped later), `Category` and `Seal` as data with `seed_deployment`, `/health/`, Celery with retry
-policies, the `knowledge` ↛ `core` import contract, CI, and backup/restore with a rehearsed restore.
+So the prerequisite for every task below **is met** — this section previously read
+"there is no application code in this repository", which was true when 1a was written
+and is not any more.
 
-Do not start sub-plan A below until MVP 0 Tasks A1–A5 have landed and migrated. Nothing else from
-MVP 0 (the corpus, the public site, the chatbot) is a prerequisite for 1a.
+Two corrections to the deliverable list as it was written:
+
+- **There is no CI** (A8 was reassessed and rejected; see `HANDOVER.md` §3). The gate is
+  `scripts/verify.sh`, run locally and on the server before a deploy.
+- **Start from B1, not from A.** Sub-plan A needs no further work; MVP 0's remaining
+  increments are B (corpus), C (public site) and D (chatbot).
+
+Confirm the foundation is healthy before building on it:
+
+```bash
+DJANGO_SECRET_KEY=$(python -c "from django.core.management.utils import get_random_secret_key as k; print(k())") \
+DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify ./scripts/verify.sh
+```
 
 ---
 

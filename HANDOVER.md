@@ -35,7 +35,7 @@ DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify \
 
 | # | Artifact | Why | Time |
 |---|---|---|---|
-| 1 | `product/backlog/ready/MVP0_PLAN_V2.md` Tasks **B1–B7** | **Your actual first work.** | 30 min |
+| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` Tasks **B1–B7** | **Your actual first work.** | 30 min |
 | 2 | `product/docs/context/testing_hazards.md` | **Read before writing any test.** Every silent failure found so far, with evidence. | 15 min |
 | 3 | `PGS_PLATFORM_SPEC.md` **§4.5** (corpus + the six verified realities) | The parser realities. **Read this before B2.** | 25 min |
 | 4 | `PGS_PLATFORM_SPEC.md` §18.3 | 40 decisions (D1–D40). Most "obvious improvements" were considered and rejected. | 30 min |

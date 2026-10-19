@@ -1,18 +1,17 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-19 09:44
+> Generated: 2026-10-19 13:20
 
 ## Ready (up next)
 
-- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `ready\MVP0_PLAN_V2.md` - Status: Ready — the §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`). Sub-plan A is in build.
-- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `ready\MVP0_PRD.md` - Status: Ready — §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers.
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
-- **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite:** MVP 0 sub-plan A is not yet built — see `MVP1A_PLAN.md` §0.2.
+- **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 
 ## In Progress
 
-_none_
+- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plan A (A1–A10) landed 2026-10-19. B (corpus), C (public site) and D (chatbot) remain. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`).
+- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — MVP 0 sub-plan A (A1–A10) landed 2026-10-19; sub-plans B, C and D remain. §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers.
 
 ## Refinement
 

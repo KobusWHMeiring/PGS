@@ -15,8 +15,8 @@ the SAOSO standard.
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
 | **Testing hazards — read before writing a test** | `product/docs/context/testing_hazards.md` |
 | **Front-end design — only when designing or changing a view** | `product/design/DESIGN.md` |
-| MVP 0 PRD | `product/backlog/ready/MVP0_PRD.md` |
-| MVP 0 implementation plan | `product/backlog/ready/MVP0_PLAN_V2.md` |
+| MVP 0 PRD | `product/backlog/In Progress/MVP0_PRD.md` |
+| MVP 0 implementation plan | `product/backlog/In Progress/MVP0_PLAN_V2.md` |
 | **MVP 1a PRD — up next** | `product/backlog/ready/MVP1A_PRD.md` |
 | **MVP 1a implementation plan** | `product/backlog/ready/MVP1A_PLAN.md` |
 | MVP 1a UAT | `tests/uat/mvp1a_in_office_visit_uat.md` |

@@ -1,14 +1,14 @@
 # PRD: MVP 1a — In-Office Visit Flow
 
-**Status:** Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite:** MVP 0 sub-plan A is not yet built — see `MVP1A_PLAN.md` §0.2.
+**Status:** Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 **Owner:** Kobus Meiring (Product)
-**Last Updated:** 2026-10-18
+**Last Updated:** 2026-10-19
 **MVP:** 1a of 2 within slice 1 (spec §19, D25)
 **Scope:** Application → membership and pledge → pre-visit questionnaire → scheduling with committee
 validation → assessment capture (connected) → visit report PDF. **Stops at `UNDER_REVIEW`.**
 **Reference:**
 - Target-state spec — `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` §3, §4.1–§4.2, §7, §8, §11
-- Plan — `product/backlog/Refinement/MVP1A_PLAN.md`
+- Plan — `product/backlog/ready/MVP1A_PLAN.md`
 - Shape decision — `product/design/d1_mvp1_shape_exploration.html` (D25, D26)
 - Build rules — `product/docs/context/build_principles.md`
 - Source documents — OPP §I, §II, §3.1, §3.3, §4.1, §4.2; FORM Sheets A, B.1, B.2, I, J; PREP
