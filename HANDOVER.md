@@ -1,9 +1,10 @@
-# Handover — MVP 0: A, B, C1 and C4 landed
+# Handover — MVP 0: A, B, C1, C2 and C4 landed
 
 **For:** the next agent.
-**From:** the corpus-and-retrieval session, then the public-site session — both 2026-10-19.
-**Repo state:** `main`, **48 commits**, clean tree except two untracked files (§7).
-`verify.sh` green at **336 tests**; `python -m pytest tests/e2e -q` green at **25** more.
+**From:** the corpus-and-retrieval session, the public-site session, and the
+documents session — 2026-10-19.
+**Repo state:** `main`, **49 commits**, clean tree except two untracked files (§7).
+`verify.sh` green at **379 tests**; `python -m pytest tests/e2e -q` green at **30** more.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
 never pushed.** No CI (see §3).
 
@@ -11,12 +12,13 @@ never pushed.** No CI (see §3).
 
 ## 0. The one thing to know first
 
-**The standards corpus and the public site both exist; the chatbot and the documents page
-do not.** `knowledge/` is complete (four formats, TOC map, chunker, ingestion, hybrid
-retrieval scoped to a `StandardSet`). The public site is built: six routes, semantic CSS,
-self-hosted type, and the claim discipline that keeps it honest. What is missing is
-narrow and known: **C2** (`/documents/` — the home page's rows say `Publishing soon`),
-**C3** (the EN/AF pill is a disabled control, not a link) and **D** (the chatbot).
+**The standards corpus and the public site both exist; the chatbot and the bilingual
+shell do not.** `knowledge/` is complete (four formats, TOC map, chunker, ingestion, hybrid
+retrieval scoped to a `StandardSet`). The public site is built: **seven** routes at 379
+tests, semantic CSS, self-hosted type, the claim discipline that keeps it honest, and the
+eight published documents behind `/documents/<code>/`. What is missing is narrow and
+known: **C3** (the EN/AF pill is still a disabled control, not a link) and **D** (the
+chatbot).
 
 **Read `product/design/C1_BUILD_PLAN.md` before touching the site.** Its §3 is a
 copy-provenance table — every published string names the OPP, SAOSO or LANDSCAPE passage
@@ -36,9 +38,9 @@ DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify ./scripts/verify.sh
 
 | # | Artifact | Why | Time |
 |---|---|---|---|
-| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` Task **C2**, **C3**, then D1–D5 | Your actual first work. | 20 min |
+| 1 | `product/backlog/In Progress/MVP0_PLAN_V2.md` Task **C3**, then D1–D5 | Your actual first work. | 20 min |
 | 2 | `product/design/C1_BUILD_PLAN.md` | What C1 built, where every string came from, and the nine open decisions. | 20 min |
-| 3 | `product/docs/context/testing_hazards.md` | **Read before writing any test.** Twelve entries now; §1.9–§1.12 and §3.8–§3.9 are from the C1 session. | 20 min |
+| 3 | `product/docs/context/testing_hazards.md` | **Read before writing any test.** Fifteen entries now; §1.13–§1.15 are from the C2 session — a data-driven route the sweeps silently skipped, a `logging` `extra=` collision, and a URL segment that is not a slug. | 20 min |
 | 4 | `product/design/DESIGN.md` + `product/design/content_inventory.md` | The design of record, and the 16 live-site items a rebuild silently drops. | 25 min |
 | 5 | `PGS_PLATFORM_SPEC.md` §4.5 (corpus), §12 (public surface), §18.3 (D40–D43) | The decisions C1 rests on. | 30 min |
 | 6 | `product/docs/context/build_principles.md` | Thin views, service ownership, 30 KB cap, integer cents, zero build pipeline. | 10 min |
@@ -55,16 +57,18 @@ Do **not** read `prd.md` as the spec (superseded provenance). Do **not** execute
 |---|---|---|
 | **A — foundation** | Complete | custom `User` first migration, `/health/` with four independent checks, Celery retry policies, `lint-imports` contract, `verify.sh` |
 | **B — corpus** | Complete | 345 chunks from 4 documents, 30 sections, **0 duplicate `section_ref`s**, FTS + pgvector with RRF (k=60), scope before ranking |
-| **C1 — public site** | Complete | six routes, `root.css`/`site.css`/`components.css`/`chat.css`, self-hosted Lora + Mulish, 336 + 25 tests |
-| **C4 — claim discipline** | Complete | six forbidden terms, no seal rendered, no dead certificate link, pending documents are chips not anchors |
-| **C2 — `/documents/`** | **Not started** | home page rows read `Publishing soon`; `test_claim_discipline` fails if they become links |
+| **C1 — public site** | Complete | six routes, `root.css`/`site.css`/`components.css`/`chat.css`, self-hosted Lora + Mulish (C2 added the seventh route and 37 tests) |
+| **C4 — claim discipline** | Complete | six forbidden terms, no seal rendered, no dead certificate link, no `Publishing soon` left anywhere; `test_nothing_is_pending_on_a_public_route` runs over all seven routes |
+| **C2 — `/documents/`** | Complete | `PublicDocument` + `publish_documents` (idempotent on sha256), eight documents at `/documents/<code>/`, streamed through a view so `is_published` is per request; 379 + 30 tests |
 | **C3 — bilingual shell** | **Not started** | `LANGUAGES`/`LOCALE_PATHS` set; no `LocaleMiddleware`, no catalogue; AF pill is `aria-disabled` |
 | **D — chatbot** | **Not started** | no `_chatbot.py`/`_chat.py` exists at all (verified 2026-10-19 — an earlier handover said "scaffold stubs") |
 
 **The site's architecture, in one paragraph.** `core/services/_public.py` holds every
 page's metadata, the nav table and the OPP fee schedule as integer cents;
-`public_context(page)` is the only context any public view builds; templates render and
-compute nothing; `pgs_extras.format_zar` is the only place money becomes a string. Section
+`public_context(page)` is the only context any public view builds — plus
+`documents_context()` on the two pages that carry the list; templates render and compute
+nothing; the document list lives in `core/services/_documents.py` as *data*: `DOCUMENTS`
+is the tuple the deploy copies, the rows render and the tests assert against; `pgs_extras.format_zar` is the only place money becomes a string. Section
 partials carry **bodies**, and each page owns its own headings — a sub-page's `h1` and the
 home page's summary of the same content must not share a tag level.
 
@@ -75,30 +79,39 @@ home page's summary of the same content must not share a tag level.
 | Gate | Meaning |
 |---|---|
 | **A1–A5 migrated** | ✅ Passed. Custom `User` is the first migration |
-| **`verify.sh` green** | ✅ 336 tests at HEAD. Before any commit |
-| **Playwright green** | ✅ 25 tests: six routes, 390px, measured 44px targets, clean console. Outside the gate by design |
+| **`verify.sh` green** | ✅ 379 tests at HEAD. Before any commit |
+| **Playwright green** | ✅ 30 tests: seven routes, 390px, measured 44px targets, clean console, and a real download click. Outside the gate by design |
 | **B3 needs a second reader** | ⚠️ **Not done.** The Crops template is 38 questions and 37 verdicts by hand |
 | **0∥ spike complete** | ⚠️ **Not done.** Before `1∥` freezes `visitPack`/`VisitSyncEnvelope` |
 | **A9's restore rehearsal, on the server** | ⚠️ **Not done.** The logged rehearsal was on the dev box; R11 requires it on the VPS |
-| **C1's design implemented** | ✅ Verified in code *and* in a browser. UAT Scenarios 4, 6 and 8 are still **unsigned** |
+| **C1 + C2 implemented** | ✅ Verified in code, in a browser and with screenshots. UAT Scenarios 4, 6, 8 and 9 (documents) are still **unsigned** |
 | **UAT sign-off** | ⚠️ **Nothing** in `tests/uat/` is signed. By the local backlog rule, an unsigned UAT makes a human-judged item *partial* — so C1 is partial until Scenario 4/6/8 are judged |
 
 ---
 
 ## 4. Next steps, in order
 
-1. **C2 — `/documents/`.** `PublicDocument` + seven published items (D22), files copied to
-   `media/public/documents/`, stable URLs and content types. Then wire the home page's
-   rows, the header's fifth nav link and the footer's Documents column **in the same
-   commit** — the tests fail if a link appears before the route does, which is the point.
-   Decide `"SOP's"` (§6 #6) before finalising the list.
-2. **C3 — bilingual shell.** `LocaleMiddleware`, `af` catalogue, session-persisted
+1. **C3 — bilingual shell.** `LocaleMiddleware`, `af` catalogue, session-persisted
    switcher, `User.preferred_language` default. Translate the *shell* only (D18); assert
    the `.po` files carry **zero** `#, fuzzy` entries.
-3. **D — the chatbot.** Models → `answer_question()` → citation validity → guardrails →
+2. **D — the chatbot.** Models → `answer_question()` → citation validity → guardrails →
    the surface, which already has its two showcase windows waiting in
    `sections/_chat_windows.html` and `.cite` styling in `chat.css`.
-4. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
+3. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
+
+**Done since the last handover (C2, 2026-10-19).** `PublicDocument` +
+`publish_documents` (idempotent on sha256, wired into `deploy.sh`), eight documents at
+`/documents/<code>/` served through a view so `is_published` is checked per request and a
+missing file answers 503 rather than 404. The home page's eight `Publishing soon` chips,
+the header's fifth nav link and the footer's Documents column all landed in one commit.
+Two corrections are recorded in the plan rather than hidden: the list is **eight**, not
+the plan's "seven" (D22's enumeration was miscounted), and the model went to
+`core/models/_public.py` rather than `_core.py`, which is identity.
+
+**Still open from C2:** the `"SOP's"` question (§6 #6) is answered *by assumption* — if it
+turns out to be a separate document, the ninth is one more tuple entry and one more PDF in
+`pgs_docs/`, with no migration. The workbook stays unpublished until the committee says
+otherwise (D22).
 
 ---
 
@@ -128,12 +141,19 @@ home page's summary of the same content must not share a tag level.
 7. **No fee figure, page title or route may be typed into a template.** They live in
    `core/services/_public.py`; tests fail the build otherwise. The same rule covers the
    chatbot showcase's own answer.
-8. **`Publishing soon` must stay a chip.** A link to a route that does not exist raises
-   `NoReverseMatch`; a link that goes nowhere is worse.
-9. **The live WordPress site is the content baseline, not the design reference.** It
-   publishes `pasture raised` and `GMO free` today — the exact claims
-   `test_claim_discipline.py` forbids.
-10. **Never pipe a schema-changing command into `head`.** Never trust a screenshot until you
+8. **Documents are served through a view, never from `/media/`.** `is_published` is
+   checked on every request, so a document withdrawn in the admin stops downloading for
+   the person who bookmarked it — and `DEBUG=True` cannot serve a file the database says
+   is private. A published row whose file is missing answers **503**, not 404: the
+   document exists, the deployment is wrong.
+9. **A retired chip is not a finished feature.** C2's chips became real links in one
+   commit, and `test_nothing_is_pending_on_a_public_route` now asserts *no* `Publishing
+   soon` survives on any route. If anything is ever pending again, DESIGN rule 8 still
+   applies: a tinted chip, never a link to nowhere.
+10. **The live WordPress site is the content baseline, not the design reference.** It
+    publishes `pasture raised` and `GMO free` today — the exact claims
+    `test_claim_discipline.py` forbids.
+11. **Never pipe a schema-changing command into `head`.** Never trust a screenshot until you
     have confirmed which server answered it.
 
 ---
@@ -150,7 +170,7 @@ detail):**
 | 3 | News in the nav | **Not present** |
 | 4 | `/endorsed-farms/` has no honest MVP 0 target | **Not present** |
 | 5 | Pledge downloads (farmer + consumer) | **Not present** |
-| 6 | Is `"SOP's"` the OPP under another name? | **Assumed yes**; C2 lists eight items |
+| 6 | Is `"SOP's"` the OPP under another name? | **Assumed yes** — that assumption is what makes the list **eight**. If it is a separate document, C2's ninth is one tuple entry and one PDF, no migration |
 | 7 | ~~"Fees payable by end of February"~~ — **not in the OPP** | ✅ **Resolved 2026-10-19: withheld.** Removed from `/become-a-member/`; `test_no_unsourced_claim` guards it |
 | 8 | Photography consent for four group photographs | **Published** with a consent chip |
 | 9 | Six-elements wording: LANDSCAPE verbatim vs the prototype's paraphrase | **Verbatim** |
@@ -199,6 +219,10 @@ python -m pytest core/tests/test_public.py -k fees      # any single slice
 docker compose up -d            # Postgres+pgvector (host port 5433) and Redis. App runs natively (D19)
 python manage.py migrate
 python manage.py seed_deployment           # idempotent; creates the StandardSet and the seals
+python manage.py publish_documents         # idempotent (sha256); copies the 8 PDFs into
+                                           # media/public/documents/ and upserts the rows.
+                                           # Runs in deploy.sh beside seed_deployment — skip it
+                                           # and /documents/ links to eight 503s.
 python manage.py runserver                 # DEBUG defaults to False — see the note below
 
 # Corpus (the four governed documents, D16)
@@ -214,7 +238,8 @@ python product/backlog.py --write          # regenerate the index only
 python product/backlog.py --apply          # move files to match Status: + regenerate
 ```
 
-**Dev database state:** seeded and ingested — 1 `StandardSet`, 4 documents, 345 chunks,
+**Dev database state:** seeded, ingested and published — 1 `StandardSet`, 4 documents, 345
+chunks, 8 `PublicDocument` rows with their files in `media/public/documents/`,
 **no embeddings**, so retrieval reports `lexical_only=True`.
 
 **Windows specifics:** `bash` is git bash; `rsync` is absent (backup falls back to `tar`);
@@ -250,3 +275,29 @@ project, so assert a string from *your* page before believing a screenshot.
 *running the thing* — the real PDFs, a mutation, a query, a browser — and none was visible
 in review. Three C1 defects were found by looking at a rendered page. The plan's own code
 snippets were wrong four times, and the design prototype's own rules were wrong twice.
+
+---
+
+## 10. What the C2 session did (2026-10-19, later the same day)
+
+1. **Withheld the February fee deadline** — the first thing asked for, and a product
+   decision, not a code one: `pdftotext -layout` over the whole OPP contains no month name,
+   so the live site's "payable by end of February" was unsourced. Removed; guarded by
+   `test_no_unsourced_claim` over all routes, mutation-tested.
+2. **C2** — `PublicDocument` (`core/models/_public.py`), `publish_documents`
+   (`core/services/_documents.py`) idempotent on sha256, `core/views/_documents.py`
+   streaming `/documents/<code>/`, the `/documents/` page, and the home band + header nav +
+   footer column rewired in the same commit. `deploy.sh` runs the command.
+3. **Playwright** — the seventh route, plus a fixture that publishes the documents (without
+   it the suite measured an empty list) and a test that asserts eight download links exist
+   so a broken fixture cannot pass as a working page.
+4. **Three new hazards** (§1.13–§1.15) and a corrected test elsewhere: C4's sweep was
+   silently skipping the new data-driven route, and `test_pending_documents_are_not_links`
+   became `test_nothing_is_pending_on_a_public_route`.
+5. **Two plan corrections, recorded rather than hidden:** the list is **eight**, not
+   "seven" (D22's enumeration was miscounted in three documents), and `PublicDocument`
+   belongs in `_public.py`, not `_core.py` as the plan said.
+
+**What the tests could not see, again:** the `logging` `extra={"created": …}` collision,
+both `config_type` mutations, and the empty-rows sweep would all have shipped green. Two
+of the five document guards passed their first mutation and had to be re-broken properly.

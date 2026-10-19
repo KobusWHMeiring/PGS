@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)** and **C4 (claim discipline)** landed 2026-10-19; **C2 (`/documents/`), C3 (bilingual shell)** and **D (chatbot)** remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **336 tests**, plus **25 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B. C1's implementation notes and its nine open content decisions live in `product/design/C1_BUILD_PLAN.md`.
+**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)** and **C4 (claim discipline)** landed 2026-10-19; **C3 (bilingual shell)** and **D (chatbot)** remain. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **379 tests**, plus **30 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D43 were added while building B. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-19
 **MVP:** 0 (spec §19)
@@ -65,10 +65,10 @@ pgs/settings.py  pgs/urls.py  pgs/celery.py  pgs/__init__.py
 docker-compose.yml            # postgres+pgvector, redis — NOT the app (D19)
 requirements.txt  .env.example  .gitattributes
 
-core/models/      __init__.py _core.py _certification.py _chat.py
+core/models/      __init__.py _core.py _certification.py _public.py _chat.py
 core/views/       __init__.py _public.py _documents.py _chatbot.py _health.py
 core/forms/       __init__.py
-core/services/    __init__.py _seed.py _health.py _chatbot.py
+core/services/    __init__.py _seed.py _health.py _documents.py _chatbot.py
 core/tasks/       __init__.py _maintenance.py
 core/tests/       __init__.py test_models.py test_settings.py test_seed_deployment.py
                   test_health.py test_tasks.py test_public.py test_documents.py
@@ -652,16 +652,44 @@ that membership is not certification (an OPP requirement, not a nicety).
 
 ### Task C2: `/documents/`
 
-**Files:** `core/views/_documents.py`, `core/models/_core.py` (`PublicDocument`),
+**Files:** `core/views/_documents.py`, `core/models/_public.py` (`PublicDocument`),
+`core/services/_documents.py`, `core/management/commands/publish_documents.py`,
 `core/tests/test_documents.py`
 
-Publishes exactly seven items (D22): SAOSO v2.1, OPP, Basic Production Principles, Certification
-Landscape, prep list, and the three participant checklists. The assessment workbook is included
-only after the committee confirms (D22). **Dossiers are never public.**
+**Status: landed 2026-10-19.** Two corrections were made to this task while building it;
+both are recorded rather than silently applied:
 
-Copy the files into `media/public/documents/` at deploy; serve with stable URLs and correct
-content types. **Tests first:** each document downloads with a non-zero length and the right
-`Content-Type`; dossiers are not reachable by any public URL.
+* **The list is eight, not seven.** The task said "exactly seven items (D22)" and then
+  enumerated eight — the four governed documents, the visit preparation list and the
+  three participant checklists. `pgs_docs/` has eight PDFs. **Eight shipped.** D22's
+  ninth candidate, the assessment workbook (`…summary_2026.xlsx`), stays excluded until
+  the committee confirms it, and is excluded by *not appearing in the tuple*, so no row,
+  no URL and no flag exists for it.
+* **The model went to `core/models/_public.py`, not `_core.py`.** `_core.py` is identity
+  (`User`, `UserRole`); a published document is not. The `__init__.py` slice table is the
+  authority and now lists `_public.py`.
+
+Publishes (D22): SAOSO v2.1, OPP, Basic Production Principles, Certification Landscape,
+prep list, and the three participant checklists. **Dossiers are never public** — they are
+not rows, so there is no URL to guard.
+
+`publish_documents` copies each file into `MEDIA_ROOT/public/documents/<code>.pdf` and
+upserts its row, idempotently on **sha256**: a second run copies nothing. It is wired
+into `deploy.sh` beside `seed_deployment`, because a deploy that forgets it serves eight
+links to a 503.
+
+Files are served through a view at `/documents/<code>/`, not from `/media/`, so
+`is_published` is consulted per request and `DEBUG=True` cannot serve a withdrawn
+document. A **published row whose file is missing answers 503 and logs**, not 404 — 404
+would claim the document never existed.
+
+**Tests:** each document downloads with a non-zero body, `application/pdf`, a `%PDF-`
+header and a matching `Content-Length`; the served bytes are sha256-identical to the
+shipped `pgs_docs/` file; an unpublished row and an unknown code both 404; the workbook
+is unreachable and unlisted; the gated dossier row's action is `Request access` → contact.
+All five guards are mutation-tested — dropping `published()`, serving octet-stream,
+always-recopied files, and a reinstated `Publishing soon` chip each fail at least one
+test.
 
 ---
 

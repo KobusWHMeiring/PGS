@@ -146,6 +146,11 @@ echo "==> 5/6  Migrating, seeding, collecting static"
 # runs on every deploy and never reactivates a seal the group has retired.
 "$VENV/bin/python" manage.py seed_deployment
 
+# The public document library (C2, D22). Also data, also idempotent — and also a step
+# that must not be forgotten: without it `/documents/` lists eight documents whose 503
+# the deploy's own health check will never see, because /health/ does not read media.
+"$VENV/bin/python" manage.py publish_documents
+
 "$VENV/bin/python" manage.py collectstatic --noinput
 
 # --- 6. Restart and prove it came up ----------------------------------------

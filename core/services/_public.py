@@ -38,12 +38,14 @@ class NavLink(NamedTuple):
 
 #: The header's links. `Become a member` is the CTA button and is deliberately not
 #: in this tuple (DESIGN §7.1: nav is links plus one button, never six links).
-#: `/documents/` joins in C2 — a link to a route that does not exist raises
-#: `NoReverseMatch`, so it cannot be added early "temporarily".
+#: `Documents` joins in C2 — and it joins *with* its route, because a link to a route
+#: that does not exist raises `NoReverseMatch` at render time, so it cannot be added
+#: early "temporarily".
 NAV: tuple[NavLink, ...] = (
     NavLink("Organics", "core:organics"),
     NavLink("How it works", "core:how_it_works"),
     NavLink("Members", "core:members"),
+    NavLink("Documents", "core:documents"),
     NavLink("Contact", "core:contact"),
 )
 
@@ -162,6 +164,24 @@ PAGES: dict[str, Page] = {
         lede=(
             "Any farmer growing food organically along the Outeniqua mountain range — roughly "
             "from Mossel Bay to the Crags — is welcome to apply."
+        ),
+    ),
+    "documents": Page(
+        key="documents",
+        title="Documents — Outeniqua PGS",
+        description=(
+            "The four documents the group assesses against, the farm visit preparation "
+            "list and the blank participant checklists, at addresses you can bookmark "
+            "and cite."
+        ),
+        eyebrow="Documents",
+        heading="What we publish,",
+        heading_accent="and what we do not.",
+        lede=(
+            "Four governed documents set out the standard, our own procedures and the "
+            "wider certification landscape. The rest are the working forms a farm visit "
+            "uses. Farm visit reports and application dossiers are never published: they "
+            "contain a farmer's personal information."
         ),
     ),
     "become_a_member": Page(

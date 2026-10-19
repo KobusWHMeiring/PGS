@@ -301,6 +301,104 @@ fixture instead of a test line.
   failed for a genuine reason (a 26px-wide "Fees" link) *and* for a false one (a
   `display:none` menu measuring 0×0), which is only visible once the suite runs.
 
+### 1.13 The page exists, the rows do not — and the sweep still passes
+
+C4's claim-discipline sweep is parametrised over the public URLs, which is the right
+shape: every route, every forbidden term. C2 made `/documents/` render its eight rows
+from the database — and `test_claim_discipline.py` seeded no documents, so on that
+route the `{% for %}` loop ran zero times.
+
+**Evidence.** A mutation that put `Publishing soon` back inside a document row — the
+exact regression the suite exists to catch, on the page it was just added to — left
+**all 36 tests green**:
+
+```
+$ pytest core/tests/test_claim_discipline.py -q
+36 passed in 1.57s          # with the chip restored in the template
+```
+
+After adding a `public_surface` fixture (`seed_deployment` + `publish_documents`, a
+tmp `MEDIA_ROOT`) the same mutation fails on **two** routes and no others:
+
+```
+FAILED test_claim_discipline.py::test_nothing_is_pending_on_a_public_route[home]
+FAILED test_claim_discipline.py::test_nothing_is_pending_on_a_public_route[documents]
+2 failed, 34 passed
+```
+
+**Rule:** a route that renders **data** is only covered once the fixture seeds that
+data. §1.6 is the empty `parametrize`; this is its subtler sibling — a non-empty
+`parametrize` over a page that renders an empty list, where the URL looks covered and
+the content is not. Whenever a page's body comes from a table, the browser and sweep
+suites need a fixture that populates it, *and* a test that asserts the row count so a
+broken fixture cannot pass as a working page.
+
+### 1.14 `logging`'s `extra=` may not shadow a `LogRecord` attribute
+
+`logger.info("published", extra={"created": n})` raises **`KeyError: "Attempt to
+overwrite 'created' in LogRecord"`** at log time — not at import, not at the call site,
+and not with a useful traceback. `created` is the record's own timestamp, so the
+message is about a field you never wrote and the stack points into
+`logging/__init__.py`:
+
+```
+File ".../logging/__init__.py", line 1636, in makeRecord
+    raise KeyError("Attempt to overwrite %r in LogRecord" % key)
+KeyError: "Attempt to overwrite 'created' in LogRecord"
+```
+
+Here it surfaced as **19 collection-time errors** in `test_documents.py` — every test
+that used the fixture — while the feature itself was correct.
+
+**Rule:** prefix `extra` keys with the domain (`documents_created`, not `created`). The
+reserved set is `LogRecord`'s own attributes: `name`, `msg`, `args`, `levelname`,
+`levelno`, `pathname`, `filename`, `module`, `exc_info`, `exc_text`, `stack_info`,
+`lineno`, `funcName`, `created`, `msecs`, `relativeCreated`, `thread`, `threadName`,
+`processName`, `process`, `taskName`, `message`, `asctime`.
+
+### 1.15 A URL segment is not a Django slug
+
+`<slug:code>` compiles to `[-a-zA-Z0-9_]+` — **no dots** — and `SlugField`'s
+`validate_slug` uses the same pattern. A document code of `saoso-standard-v2.1` is a
+perfectly good URL segment (`/documents/saoso-standard-v2.1/`) and a bad Django slug:
+
+```
+NoReverseMatch: Reverse for 'document_file' with arguments ('saoso-standard-v2.1',) not found.
+1 pattern(s) tried: ['documents/(?P<code>[-a-zA-Z0-9_]+)/\\Z']
+```
+
+And because `validation` is not a `constraint` (§1.7), `PublicDocument.objects.create()`
+accepts the dot happily — so the failure appears at **render** time, on a template, for
+a row that saved without complaint.
+
+**Rule:** when a field is a URL segment, say so with a `CharField` plus an explicit
+`RegexValidator` and route it with `<str:code>`. Do not use `SlugField` for anything
+whose valid values you have not checked against `validate_slug`, and version numbers in
+public addresses are the usual offender.
+
+### 1.16 The backlog classifier reads the whole `Status:` line
+
+`product/backlog.py` classifies a PRD by pattern-matching its **entire** `Status:` line, first
+match wins, and `\bresolved\b`, `\bimplemented\b`, `\bcomplete\b`, `\bshipped\b` and
+`\bdone\b` all mean *Done*. Those are exactly the words you reach for when describing a
+**sub-decision** inside a plan that is still in progress:
+
+```
+Status: In Progress — … C1's open content decisions live in `C1_BUILD_PLAN.md` — #7 (the
+February fee deadline) was **resolved: withheld** while building C2.
+
+$ python product/backlog.py
+DRIFT - 1 file(s) to move so directory matches Status:
+  In Progress\MVP0_PLAN_V2.md  ->  Done\MVP0_PLAN_V2.md
+```
+
+The heading still said *In Progress* and the file still had three unbuilt tasks; one verb
+in a subordinate clause was enough to queue an `--apply` that moves a live plan to Done.
+
+**Rule:** keep `Status:` to the plan's own state. Record sub-decisions in the plan body or in
+the build plan, never in the status line — and after editing a `Status:` line, run
+`python product/backlog.py` and read the **DRIFT** section before running `--write`.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML

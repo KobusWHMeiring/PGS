@@ -1,4 +1,4 @@
-"""Playwright — the six public routes, at desktop and at 390 px.
+"""Playwright — the seven public routes, at desktop and at 390 px.
 
 These tests do not duplicate `core/tests/test_public.py`; they cover what only a real
 browser can see: that the stylesheet actually loaded, that nothing overflows a phone,
@@ -19,6 +19,9 @@ ROUTES = [
     ("/organics/", "Organic agriculture, and what a PGS adds"),
     ("/how-it-works/", "How it works"),
     ("/members/", "Who is in the group"),
+    # C2. The row action `a.doc-row__action` is already in the 44px selector list,
+    # because the home page's band carried those chips before the documents existed.
+    ("/documents/", "What we publish"),
     ("/become-a-member/", "What membership and assessment cost"),
     ("/contact/", "Who to talk to"),
 ]
@@ -117,6 +120,27 @@ def test_text_links_clear_the_wcag_target_size(page, live_server, path):
                         w: Math.round(a.getBoundingClientRect().width)}))"""
     )
     assert not small, f"links under 24px on {path}: {small}"
+
+
+def test_the_documents_page_offers_eight_downloads(page, live_server):
+    """C2: eight rows, eight real links, in a browser.
+
+    Also the guard for the `published_documents` fixture in `conftest.py`. Without that
+    fixture the page renders zero rows and every assertion in this file still passes —
+    measuring an empty list, which is `testing_hazards.md` §1.6 in a browser.
+    """
+    page.goto(live_server.url + "/documents/", wait_until="networkidle")
+
+    links = page.locator("a.doc-row__action[href^='/documents/']")
+    assert links.count() == 8, f"{links.count()} download links — the rows did not render"
+    assert page.locator(".doc-row__action--pending").count() == 0, "a pending chip survived"
+
+    # The download is a streamed attachment, not a media path. Clicking it is the only
+    # way to prove the link resolves to real bytes in a browser.
+    with page.expect_download() as download_info:
+        links.first.click()
+    download = download_info.value
+    assert download.suggested_filename.endswith(".pdf"), download.suggested_filename
 
 
 def test_the_phone_menu_opens_fully_on_screen(phone_page, live_server):

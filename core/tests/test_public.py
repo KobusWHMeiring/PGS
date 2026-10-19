@@ -35,6 +35,12 @@ from django.urls import reverse
 STATIC = Path("core/static")
 CSS_DIR = STATIC / "css"
 
+#: The public pages read data now that C2 made the document list rows rather than
+#: hardcoded chips: `/` and `/documents/` each issue one query. A test that renders a
+#: page without database access would fail with Django's own "Database access not
+#: allowed" — which reads as a broken fixture, not as the missing marker it is.
+pytestmark = pytest.mark.django_db
+
 #: The public route table. Kept as data (never an empty list — an empty
 #: `parametrize` passes vacuously, testing_hazards.md §1.6). Each heading is the
 #: page's own `h1`, so a copy-paste between pages cannot pass.
@@ -43,6 +49,7 @@ PAGES: list[tuple[str, str, str]] = [
     ("organics", "/organics/", "Organic agriculture, and what a PGS adds"),
     ("how-it-works", "/how-it-works/", "How it works"),
     ("members", "/members/", "Who is in the group"),
+    ("documents", "/documents/", "What we publish"),
     ("become-a-member", "/become-a-member/", "What membership and assessment cost"),
     ("contact", "/contact/", "Who to talk to"),
 ]
@@ -302,11 +309,30 @@ def test_every_internal_link_resolves(client: Client, name: str, url: str, headi
         if target not in cache:
             response = client.get(target)
             assert response.status_code == 200, f"{url} links to dead {target}"
-            cache[target] = response.content.decode()
+            body = _html_of(response)
+            if body is None:
+                # A published document: 200 is the whole contract here. Its bytes are
+                # asserted in `test_documents.py`, which knows what they should be.
+                continue
+            cache[target] = body
         if fragment:
             assert f'id="{fragment}"' in cache[target], (
                 f"{url} links to {target}#{fragment}, which has no such id"
             )
+
+
+def _html_of(response) -> str | None:
+    """The body if this is an HTML page, else None.
+
+    C2 added links to PDFs. `response.content.decode()` on a PDF raises a
+    `UnicodeDecodeError` from inside the helper, which reads as a broken link test
+    rather than as "this one is a file, and 200 is all it owes us". A non-HTML
+    response is also never cached: re-downloading a 4.6 MB standard into a string per
+    page would make this suite the slowest thing in the gate.
+    """
+    if "text/html" not in response.headers.get("Content-Type", ""):
+        return None
+    return response.content.decode()
 
 
 @pytest.mark.parametrize(("name", "url", "heading"), PAGES, ids=[p[0] for p in PAGES])

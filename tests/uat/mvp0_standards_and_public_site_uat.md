@@ -20,7 +20,7 @@ The question for every candidate item is not *"does this need the app running?"*
 
 Required before any scenario:
 
-1. Seed the real corpus: `python manage.py seed_deployment && python manage.py ingest_standard --all`
+1. Seed the real corpus: `python manage.py seed_deployment && python manage.py publish_documents && python manage.py ingest_standard --all`
 2. Confirm the corpus is loaded: `python manage.py shell -c "from knowledge.models import DocumentChunk; print(DocumentChunk.objects.count())"` — expect several hundred chunks, not zero.
 3. Have the source PDF open alongside: `pgs_docs/saoso-version-2.1-2026.pdf` and `pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf`.
 4. Run: `python manage.py runserver`
@@ -36,7 +36,7 @@ Recorded here so the manual list is not padded with machine-provable work.
 |------|-------|
 | Every public route returns 200 and contains its expected heading | `core/tests/test_public.py`, Playwright `tests/e2e/test_public_site.py` |
 | `/health/` returns 200 with `db`, `redis`, `celery_broker`, `celery_worker` all `ok`; returns 503 when a dependency is down | `core/tests/test_health.py` |
-| Each document on `/documents/` downloads with the correct content type and non-zero length | `core/tests/test_documents.py` |
+| Each document on `/documents/` downloads with the correct content type, non-zero body, `%PDF-` header and the seeded download name; the served bytes are sha256-identical to `pgs_docs/` | `core/tests/test_documents.py` |
 | A grounded question returns an answer whose every citation's `section_ref` exists in the retrieved chunk set | `core/tests/test_chatbot_grounding.py` |
 | An ungrounded question returns **exactly** `"I cannot find a definitive answer in the SAOSO standards."` and creates one `EscalatedQuery` with reason `INSUFFICIENT_CONTEXT` | `core/tests/test_chatbot_grounding.py` |
 | No answer can cite a chunk outside the session's `StandardSet` | `core/tests/test_retrieval_scope.py` |
@@ -136,13 +136,31 @@ Recorded here so the manual list is not padded with machine-provable work.
 ## Scenario 7 — Do the documents replace Google Drive?
 
 **Category:** documents
-**Setup:** Open `/documents/`.
+**Setup:** Open `/documents/` on a desktop browser **and on a real phone**. Have the
+`/forms/` page of the live WordPress site open beside it.
 
-1. Open each document: SAOSO standard, OPP/SOPs, Basic Production Principles, certification landscape, prep list, the assessment workbook, and the three checklists.
+1. Download all eight: SAOSO v2.1, the OPP, Basic Production Principles, the certification
+   landscape, the visit preparation list, and the three participant checklists.
+2. Open at least the SAOSO standard and one checklist in the phone's own PDF viewer.
+3. Read back the filename each download saved as.
+4. Try to reach the workbook, a farm visit report or an application dossier by guessing a
+   URL under `/documents/`.
 
-**Expected:** Each opens or downloads directly from the site, with no Google sign-in and no "request permission" prompt.
+**Expected:** each opens or downloads directly, with no Google sign-in and no "request
+permission" prompt; the gated row offers `Request access` and leads to `/contact/`.
 
-**Judgement:** Is the list complete and correctly titled *from the group's point of view*? The existing `/forms/` page has its own naming — confirming nothing was dropped or mislabelled requires knowing what the group actually distributes.
+**Judgement:**
+
+* **Completeness against what the group actually distributes.** The site publishes eight.
+  The live `/forms/` page and the group's own filing will settle whether that is the right
+  eight — and specifically whether `"SOP's"` is the OPP under another name (it is
+  **assumed** yes; if not, a ninth document is missing).
+* **The workbook's absence.** It is deliberately held back pending committee confirmation
+  (D22). Is that still the group's decision, or should it be public?
+* **Do the files open on a real phone?** Attachment headers, viewport-sized PDFs and iOS
+  Safari's share sheet are device behaviours no test client can judge.
+* **Are the filenames ones the group recognises?** `PGS-Farm-Visit-Checklist-Crops.pdf` is
+  a decision, not a derivation — the right names come from the people who file them.
 
 ---
 

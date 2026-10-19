@@ -41,14 +41,14 @@
 
       <div class="footer__col">
         <h2 class="footer__heading">Documents</h2>
-        {% comment %} C2 replaces these with stable /documents/ addresses. Until the files are
-           published, the anchors point at the home page's document list, which is
-           honest about being unpublished. {% endcomment %}
+        {% comment %} C2 replaced these anchors' `#documents` fallbacks with the real page. One
+           link to /documents/ beats four links to four anchors: the list is data, so a
+           document added by the group must not need a footer edit. {% endcomment %}
         <ul class="footer__list">
-          <li><a href="{% url 'core:home' %}#documents">SAOSO Standard v2.1</a></li>
-          <li><a href="{% url 'core:home' %}#documents">Our procedures</a></li>
-          <li><a href="{% url 'core:home' %}#documents">Basic Production Principles</a></li>
-          <li><a href="{% url 'core:home' %}#documents">Blank checklists</a></li>
+          <li><a href="{% url 'core:documents' %}">SAOSO Standard v2.1</a></li>
+          <li><a href="{% url 'core:documents' %}">Our procedures</a></li>
+          <li><a href="{% url 'core:documents' %}">Basic Production Principles</a></li>
+          <li><a href="{% url 'core:documents' %}">Blank checklists</a></li>
         </ul>
       </div>
 

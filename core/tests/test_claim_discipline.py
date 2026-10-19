@@ -31,15 +31,37 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def seeded(db):
+def seeded(db, public_surface):
     """The deployed seals, categories and standard set.
 
     `test_no_seal_is_rendered_at_all` reads the seal labels from the database, so the
     seed has to have run — and asserting that it *did* is the point: with an empty
     `Seal` table the test would iterate over nothing and pass (testing_hazards.md §1.6).
+
+    `public_surface` (below) is applied here too, because a seal label can appear on a
+    *document row* as readily as in prose.
     """
-    call_command("seed_deployment")
     return None
+
+
+@pytest.fixture(scope="session")
+def _media_root(tmp_path_factory):
+    return tmp_path_factory.mktemp("media")
+
+
+@pytest.fixture(autouse=True)
+def public_surface(settings, _media_root):
+    """Seed the deployment **and publish the document files**, for every test here.
+
+    Without this fixture `/documents/` renders zero rows, so the claim and refusal
+    sweeps below asserted nothing at all about the eight titles and notes the group
+    publishes — a mutation that added `Publishing soon` back into a document row left
+    all 36 tests green. That is testing_hazards.md §1.6 with a database behind it: the
+    page exists, so the URL looks covered, and the rows do not, so it is not.
+    """
+    settings.MEDIA_ROOT = _media_root
+    call_command("seed_deployment")
+    call_command("publish_documents", verbosity=0)
 
 
 PUBLIC_URLS = [url for _, url, _ in PAGES]
@@ -133,16 +155,25 @@ def test_no_unsourced_claim(client: Client, url: str):
         assert term not in html, f"{term!r} is refused but appears on {url}"
 
 
-def test_pending_documents_are_not_links(client: Client):
-    """"Publishing soon" must not be clickable.
+@pytest.mark.parametrize("url", PUBLIC_URLS, ids=[u.strip("/") or "home" for u in PUBLIC_URLS])
+def test_nothing_is_pending_on_a_public_route(client: Client, url: str):
+    """No `Publishing soon` chip survives C2 — and, if one returns, it is not a link.
 
-    DESIGN rule 8: unresolved data is a visible chip, never a plausible-looking fake. A
-    chip that is an `<a>` is a button that does nothing, which is how a reader concludes
-    the site is broken — or worse, that the document exists.
+    This replaces C4's `test_pending_documents_are_not_links`, which asserted the chip
+    was present and unclickable. C2 published the documents, so the chip's absence is
+    now the invariant; the original rule (DESIGN rule 8: *unresolved data is a tinted
+    chip, never a plausible-looking fake*) is kept for anything that becomes pending
+    again, by keeping the second half of the check.
+
+    Mutation-tested both ways: re-adding a chip fails the first assertion, and making
+    that chip an `<a>` fails the second.
     """
-    html = client.get("/").content.decode()
-    assert "Publishing soon" in html
-
+    html = client.get(url).content.decode()
     for chunk in html.split("Publishing soon")[:-1]:
         opening = chunk.rsplit("<", 1)[-1]
-        assert not opening.startswith("a "), "a pending document is rendered as a link"
+        assert not opening.startswith("a "), "a pending item is rendered as a link"
+
+    assert "Publishing soon" not in html, (
+        f"{url} still claims something is 'Publishing soon' — C2 published every "
+        "document in `core/services/_documents.DOCUMENTS`"
+    )

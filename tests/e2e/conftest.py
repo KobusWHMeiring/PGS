@@ -50,6 +50,31 @@ def phone_page(browser):
     context.close()
 
 
+@pytest.fixture(scope="session")
+def _documents_media(tmp_path_factory):
+    """One media root for the session: 8.6 MB of PDFs, copied once."""
+    return tmp_path_factory.mktemp("media")
+
+
+@pytest.fixture(autouse=True)
+def published_documents(settings, live_server, _documents_media):
+    """Seed the document rows and copy the files, for every test in this suite.
+
+    Without it the browser suite renders `/documents/` with **zero rows** and passes:
+    every 44px and overflow assertion would be measuring an empty list — the
+    `testing_hazards.md` §1.6 failure in a browser instead of in a `parametrize`.
+    `test_the_documents_page_offers_eight_downloads` below asserts the fixture did its
+    job, so a broken fixture cannot be mistaken for a passing page.
+
+    This is the one place the suite touches the ORM directly; it is safe for the reason
+    given in `pytest_configure` at the bottom of this file.
+    """
+    from django.core.management import call_command
+
+    settings.MEDIA_ROOT = _documents_media
+    call_command("publish_documents", verbosity=0)
+
+
 def pytest_configure(config):
     """Let Django's ORM run while pytest-playwright's event loop is active.
 

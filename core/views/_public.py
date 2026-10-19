@@ -13,11 +13,14 @@ from __future__ import annotations
 
 from django.shortcuts import render
 
+from core.services._documents import documents_context
 from core.services._public import public_context
 
 
 def home(request):
-    return render(request, "public/home.html", public_context("home"))
+    # The home page carries the documents band, so it needs the same list the
+    # documents page renders — from one service, in the order the seed declares.
+    return render(request, "public/home.html", public_context("home") | documents_context())
 
 
 def organics(request):

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% comment %}
+`/documents/` — the fifth route (C2, D22).
+
+The page exists because the home page's band claimed *"stable addresses you can
+bookmark and cite"* while every row read `Publishing soon`. A promise with no
+address behind it is the exact failure DESIGN rule 8 forbids.
+
+Two things this page does that the home band cannot:
+
+  * **It draws D22's line in prose.** "Farm visit reports and application dossiers
+    are never published" is in the lede, not only in the gated row's small print —
+    a reader arriving from a search engine needs to know what is *absent* as well as
+    what is here. The gated row carries the action (`Request access` → `/contact/`).
+  * **It shows nothing that is not a published row.** The list is one query over
+    `PublicDocument.objects.published()`; there is no second, hand-maintained list
+    that could drift from the files.
+
+No fee figure, title or route is typed here — those come from
+`core/services/_public.py` and `core/services/_documents.py` (P6, build_principles
+§II).
+{% endcomment %}
+
+{% block content %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section section--warm">
+    <div class="container">
+      {% include "public/sections/_doc_rows.html" %}
+
+      <div class="callout">
+        <h2 class="callout__title">Why these are public</h2>
+        <p class="callout__text">
+          A participatory guarantee system asks a consumer to trust a judgement made
+          face to face rather than by a distant inspector. That trust is only reasonable
+          if the standard being assessed, the group's own procedures and the forms a
+          visit uses are all readable by anyone.
+        </p>
+        <p class="callout__text">
+          <a class="link-more" href="{% url 'core:how_it_works' %}">How a visit works →</a>
+        </p>
+      </div>
+    </div>
+  </section>
+{% endblock %}
