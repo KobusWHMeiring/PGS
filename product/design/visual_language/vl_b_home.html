@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<!--
+  DESIGN PROTOTYPE — Visual language B: "Institutional / documentation-first"
+  Palette is the one already used by the three existing PGS artifacts in product/design/
+  (--bg #f4f6f2, --accent #35604a) so this page sits alongside them without looking foreign.
+  System font stack, no CDN, hairline rules instead of cards, tables instead of tiles.
+  Content is identical to vl_a / vl_c. Placeholders are marked [ ].
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outeniqua Natural &amp; Organic PGS — Visual language B</title>
+<style>
+:root{
+  --bg:#f4f6f2; --surface:#ffffff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+  --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+  --text:#1c2620; --muted:#66756b;
+  --warn:#8a5a1c; --warn-soft:#f7efe1; --warn-line:#e2cba6;
+  --danger:#8c2f2a; --danger-soft:#f9ecea;
+  --rule:#d8ded4;
+  --radius:4px; --radius-lg:10px;
+  --shadow:0 1px 2px rgba(28,38,32,.06),0 6px 20px -8px rgba(28,38,32,.14);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{width:min(1100px,92vw);margin-inline:auto}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3,h4{line-height:1.25;font-weight:650;letter-spacing:-.005em}
+h1{font-size:clamp(1.75rem,3.6vw,2.5rem)}
+h2{font-size:clamp(1.3rem,2.5vw,1.7rem)}
+section{padding:3.4rem 0;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:0}
+
+/* ---------- masthead ---------- */
+.masthead{background:var(--surface);border-bottom:1px solid var(--rule)}
+.toplinebackground{background:var(--accent);height:4px}
+.mast{display:flex;align-items:center;gap:1.5rem;padding:.9rem 0}
+.logo{display:flex;align-items:baseline;gap:.6rem;margin-right:auto;text-decoration:none;color:inherit}
+.logo b{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
+.logo em{font-style:normal;font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.mast nav{display:flex;gap:1.25rem;font-size:.88rem}
+.mast nav a{color:var(--muted);text-decoration:none;padding:.3rem 0;border-bottom:2px solid transparent}
+.mast nav a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.lang{display:flex;font-family:var(--mono);font-size:.72rem;border:1px solid var(--rule);border-radius:var(--radius)}
+.lang span{padding:.2rem .5rem}
+.lang .on{background:var(--accent);color:#fff}
+.lang .off{color:var(--muted)}
+.cta-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:.5rem 1rem;font-size:.85rem;font-weight:600;text-decoration:none;border-radius:var(--radius);background:var(--accent);color:#fff;border:1px solid var(--accent);font-family:inherit;cursor:pointer}
+.cta-btn:hover{background:#2b4f3c}
+.cta-btn.line{background:transparent;color:var(--accent)}
+.cta-btn.line:hover{background:var(--accent-soft)}
+
+/* ---------- hero: typographic, no photograph ---------- */
+.hero{background:var(--surface);padding:3.6rem 0 3.2rem}
+.hero .cols{display:grid;grid-template-columns:1.45fr 1fr;gap:3rem;align-items:start}
+.hero .rule{width:60px;height:3px;background:var(--accent);margin-bottom:1.4rem}
+.hero p.lede{margin-top:1.1rem;font-size:1.02rem;color:var(--muted);max-width:56ch}
+.hero .actions{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.7rem}
+.glance{background:var(--surface-low);border-radius:var(--radius-lg);padding:1.3rem 1.4rem}
+.glance h3{font-size:.72rem;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:.9rem}
+.glance dl{display:grid;grid-template-columns:auto 1fr;gap:.55rem 1rem;font-size:.88rem}
+.glance dt{color:var(--muted)}
+.glance dd{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.glance .foot{margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--rule);font-size:.78rem;color:var(--muted)}
+
+/* ---------- six elements: definition list, not tiles ---------- */
+.elements{display:grid;grid-template-columns:1fr 1fr;gap:0 2.6rem}
+.el{padding:1.15rem 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:1.6rem 1fr;gap:.9rem}
+.el .n{font-family:var(--mono);font-size:.78rem;color:var(--accent);padding-top:.2rem}
+.el h3{font-size:1rem;margin-bottom:.25rem}
+.el p{font-size:.88rem;color:var(--muted)}
+blockquote{margin-top:2rem;background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:1.1rem 1.3rem;font-size:.9rem;color:#2c3a31;max-width:78ch}
+blockquote cite{display:block;margin-top:.5rem;font-style:normal;font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+
+/* ---------- procedure table ---------- */
+.proc{width:100%;border-collapse:collapse;font-size:.9rem}
+.proc th{text-align:left;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:.5rem .7rem;border-bottom:1px solid var(--rule)}
+.proc td{padding:.8rem .7rem;border-bottom:1px solid var(--rule);vertical-align:top}
+.proc td:first-child{font-family:var(--mono);font-size:.78rem;color:var(--accent);white-space:nowrap;width:1%}
+.proc td b{display:block}
+.proc td span{color:var(--muted);font-size:.85rem}
+
+/* ---------- fees ---------- */
+.fee-cols{display:grid;grid-template-columns:1fr 1.25fr;gap:2.8rem;align-items:start}
+table.fees{width:100%;border-collapse:collapse;font-size:.88rem}
+table.fees th{text-align:left;font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:.5rem .7rem;border-bottom:1px solid var(--rule)}
+table.fees td{padding:.58rem .7rem;border-bottom:1px solid var(--rule)}
+table.fees td+td{text-align:right;font-variant-numeric:tabular-nums}
+table.fees tr.hi td{background:var(--accent-soft)}
+.note{font-size:.81rem;color:var(--muted);margin-top:.8rem;line-height:1.55}
+.callout{background:var(--warn-soft);border:1px solid var(--warn-line);border-radius:var(--radius-lg);padding:1rem 1.15rem;font-size:.87rem;color:#5c3d12}
+.callout b{display:block;margin-bottom:.25rem}
+
+/* ---------- documents: index, like a library ---------- */
+.doclist{border-top:1px solid var(--rule)}
+.docrow{display:grid;grid-template-columns:3.4rem 1fr auto;gap:1rem;align-items:center;padding:.85rem 0;border-bottom:1px solid var(--rule)}
+.docrow .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:.2rem .4rem;text-align:center}
+.docrow b{font-size:.92rem;font-weight:600;display:block}
+.docrow span{font-size:.8rem;color:var(--muted)}
+.docrow .act{font-family:var(--mono);font-size:.74rem;color:var(--accent);text-decoration:none;white-space:nowrap}
+.docrow.gated{opacity:.85}
+.docrow.gated .tag{background:var(--surface-high);color:var(--muted)}
+.docrow.gated .act{color:var(--muted)}
+
+/* ---------- chat ---------- */
+.chat-cols{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem}
+.chatbox{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.chatbox .bar{background:var(--accent);color:#fff;padding:.6rem 1rem;font-size:.82rem;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.chatbox .bar em{font-style:normal;font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;opacity:.8;text-transform:uppercase}
+.chatbox .body{padding:1rem;display:flex;flex-direction:column;gap:.7rem;flex:1}
+.msg{font-size:.86rem;border-radius:var(--radius-lg);padding:.7rem .9rem;max-width:92%;line-height:1.55}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff}
+.msg.bot{align-self:flex-start;background:var(--surface-low)}
+.msg.bot.refuse{background:var(--warn-soft);border-left:3px solid var(--warn)}
+.cites{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.6rem}
+.cite{font-family:var(--mono);font-size:.7rem;background:var(--accent-soft);color:var(--accent);border-radius:var(--radius);padding:.2rem .45rem;text-decoration:none}
+.cite.warn{background:var(--warn-soft);color:var(--warn)}
+.chatbox .ask{display:flex;gap:.5rem;padding:.75rem 1rem;background:var(--surface-low);border-top:1px solid var(--rule)}
+.chatbox .ask .f{flex:1;font-size:.83rem;color:var(--muted);background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:.5rem .75rem}
+.chatbox .ask .s{width:38px;height:38px;display:grid;place-items:center;background:var(--accent);color:#fff;border-radius:var(--radius);font-size:.9rem}
+.cap{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+
+/* ---------- disclaimer ---------- */
+.disc{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--warn);border-radius:var(--radius-lg);padding:1.4rem 1.6rem;box-shadow:var(--shadow)}
+.disc h3{font-size:1.02rem;margin-bottom:.5rem;color:#5c3d12}
+.disc p{font-size:.9rem;color:#4c5a51;max-width:74ch}
+.ph{font-family:var(--mono);font-size:.78em;background:var(--warn-soft);border:1px solid var(--warn-line);color:var(--warn);border-radius:var(--radius);padding:.05rem .35rem;white-space:nowrap}
+
+/* ---------- footer ---------- */
+footer{background:#1f2b24;color:#c3cec6;padding:2.8rem 0 1.6rem;font-size:.87rem;margin-top:0}
+.fcols{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2rem}
+footer h4{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-line);margin-bottom:.8rem;font-weight:600}
+footer a{color:#c3cec6;text-decoration:none;display:block;padding:.2rem 0}
+footer a:hover{color:#fff;text-decoration:underline}
+footer .fb b{color:#fff;font-size:1rem;display:block;margin-bottom:.5rem}
+footer .fb p{max-width:36ch;color:#9fb0a5}
+footer .ph{background:rgba(226,203,166,.16);border-color:rgba(226,203,166,.3);color:#e2cba6}
+.frule{margin-top:2rem;padding-top:1.1rem;border-top:1px solid #35443a;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.78rem;color:#8b9c92}
+@media(max-width:900px){
+  .mast nav{display:none}
+  .hero .cols,.fee-cols,.chat-cols,.elements{grid-template-columns:1fr}
+  .fcols{grid-template-columns:1fr 1fr}
+  .elements{gap:0}
+}
+@media(max-width:560px){ .fcols{grid-template-columns:1fr} .docrow{grid-template-columns:3.4rem 1fr;row-gap:.4rem} .docrow .act{grid-column:2} }
+</style>
+</head>
+<body>
+
+<div class="toplinebackground"></div>
+<header class="masthead">
+  <div class="mast wrap">
+    <a class="logo" href="#"><b>Outeniqua PGS</b><em>Natural &amp; Organic</em></a>
+    <nav>
+      <a href="#organics">Organics</a>
+      <a href="#how">How it works</a>
+      <a href="#documents">Documents</a>
+      <a href="#members">Members</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="lang"><span class="on">EN</span><span class="off">AF</span></div>
+    <a class="cta-btn" href="#ask">Become a member</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap cols">
+    <div>
+      <div class="rule"></div>
+      <p class="eyebrow">Participatory Guarantee System &middot; Western Cape</p>
+      <h1 style="margin-top:.8rem">Organic assurance built by farmers, for farmers.</h1>
+      <p class="lede">We are a locally focused quality assurance group. Members assess one another
+        against the SAOSO organic standard, on each other's farms, in the open &mdash; built on
+        trust, social networks and knowledge exchange rather than a distant inspector.</p>
+      <div class="actions">
+        <a class="cta-btn" href="#how">How it works</a>
+        <a class="cta-btn line" href="#ask">Ask the standard</a>
+      </div>
+    </div>
+    <aside class="glance">
+      <h3>At a glance</h3>
+      <dl>
+        <dt>National affiliation</dt><dd>PGS South Africa</dd>
+        <dt>Standard applied</dt><dd>SAOSO v2.1 (2026)</dd>
+        <dt>Way of working</dt><dd>6 basic elements</dd>
+        <dt>Farmer &amp; consumer</dt><dd>R100 / year</dd>
+        <dt>Assessment</dt><dd>R1 500 &ndash; R8 000</dd>
+      </dl>
+      <p class="foot">A PGS is defined by IFOAM&ndash;Organics International as a locally focused
+        quality assurance system.</p>
+    </aside>
+  </div>
+</div>
+
+<section id="organics">
+  <div class="wrap">
+    <p class="eyebrow">The PGS</p>
+    <h2 style="margin:.5rem 0 .8rem">Guided by six basic elements</h2>
+    <p style="color:var(--muted);max-width:66ch">A Participatory Guarantee System is not an
+      inspection regime. It is a group of peers who hold each other to a shared standard. These
+      six elements are what make it a PGS rather than a certificate bought from an agency.</p>
+    <div class="elements" style="margin-top:1.8rem">
+      <div class="el"><span class="n">01</span><div><h3>Shared Vision</h3><p>Members share a common goal based on a shared need, and collectively embrace the principles of PGS and organic agriculture.</p></div></div>
+      <div class="el"><span class="n">02</span><div><h3>Trust</h3><p>An integrity-based approach. Trust and integrity form the ethical basis of the system.</p></div></div>
+      <div class="el"><span class="n">03</span><div><h3>Horizontality</h3><p>A flat, equitable organisational structure, developed and managed by peers rather than a top-heavy management. All are responsible, all are accountable.</p></div></div>
+      <div class="el"><span class="n">04</span><div><h3>Transparency</h3><p>The system is open to public, stakeholder and peer scrutiny at all levels.</p></div></div>
+      <div class="el"><span class="n">05</span><div><h3>Participatory</h3><p>Members participate in developing and managing the process and procedures the group owns, controls and determines collectively.</p></div></div>
+      <div class="el"><span class="n">06</span><div><h3>Learning Process</h3><p>Assessments and site visits focus on skills and knowledge exchange &mdash; traditional knowledge and innovation, soil, climate and market.</p></div></div>
+    </div>
+    <blockquote>
+      &ldquo;Participatory Guarantee Systems are locally focused quality assurance systems. They
+      certify producers based on active participation of stakeholders and are built on a foundation
+      of trust, social networks and knowledge exchange.&rdquo;
+      <cite>IFOAM&ndash;Organics International &middot; quoted in the SA Organic Certification Landscape</cite>
+    </blockquote>
+  </div>
+</section>
+
+<section id="how" style="background:var(--surface-low)">
+  <div class="wrap">
+    <p class="eyebrow">Membership procedure</p>
+    <h2 style="margin:.5rem 0 1.4rem">How it works</h2>
+    <p style="color:var(--muted);max-width:66ch;margin-bottom:1.6rem">Every prospective farmer and
+      producer member follows the same path, in the same order. It is set out in the group's
+      Principles, Policies and Procedures.</p>
+    <table class="proc">
+      <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td><b>Apply</b><span>Approach the group as a prospective farmer or producer member.</span></td></tr>
+        <tr><td>02</td><td><b>Pledge</b><span>Sign the farmer member pledge. A recorded verbal pledge is accepted where reading is a barrier.</span></td></tr>
+        <tr><td>03</td><td><b>Share</b><span>Supply the group with the information it needs to assess your operation.</span></td></tr>
+        <tr><td>04</td><td><b>Prepare</b><span>Familiarise yourself with the Basic Production Principles and the SAOSO standard.</span></td></tr>
+        <tr><td>05</td><td><b>Visit</b><span>A peer assessment team visits the farm and works through the assessment.</span></td></tr>
+        <tr><td>06</td><td><b>Review</b><span>The committee reviews the findings and records a decision.</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="fees">
+  <div class="wrap">
+    <p class="eyebrow">Fees</p>
+    <h2 style="margin:.5rem 0 .8rem">What membership and assessment cost</h2>
+    <p style="color:var(--muted);max-width:66ch;margin-bottom:1.8rem">Fees are set on a
+      cost-recovery basis and approved by the members at the annual general meeting. The
+      assessment fee reflects the scale and commercial intensity of the farm.</p>
+    <div class="fee-cols">
+      <div>
+        <h3 style="font-size:1rem;margin-bottom:.7rem">Annual membership</h3>
+        <table class="fees">
+          <tbody>
+            <tr><td>Farmer &amp; consumer membership</td><td><b>R100</b></td></tr>
+            <tr><td>PGS South Africa membership<br><span style="font-size:.78rem;color:var(--muted)">Paid by the group from membership fees</span></td><td><b>R500</b></td></tr>
+          </tbody>
+        </table>
+        <p class="note">Approved by the members at the 2025 AGM.</p>
+        <div class="callout" style="margin-top:1.4rem">
+          <b>Turnover is self-declared</b>
+          You tell us the band you fall in; we do not estimate it for you. If you are uncertain,
+          ask the administrator and the group will work it out with you before the visit.
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:1rem;margin-bottom:.7rem">Assessment &amp; certification</h3>
+        <table class="fees">
+          <thead><tr><th>Annual turnover</th><th>Initial</th><th>Renewal</th></tr></thead>
+          <tbody>
+            <tr><td>Below R250 000</td><td>1 500</td><td>900</td></tr>
+            <tr><td>R250 001 &ndash; R500 000</td><td>2 500</td><td>2 000</td></tr>
+            <tr><td>R500 001 &ndash; R1 000 000</td><td>3 000</td><td>2 500</td></tr>
+            <tr><td>R1 000 001 &ndash; R2 500 000</td><td>3 700</td><td>3 200</td></tr>
+            <tr><td>R2 500 001 &ndash; R5 000 000</td><td>5 000</td><td>5 000</td></tr>
+            <tr><td>Above R5 000 000</td><td>8 000</td><td>8 000</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Fees are per farm assessment visit. Transport for the administrator is
+          charged separately at the AA rate; visits are clustered geographically wherever possible
+          to reduce that cost.</p>
+        <p class="note"><b>Fees are payable before the farm assessment visit</b>, per the group's
+          procedures.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="documents" style="background:var(--surface-low)">
+  <div class="wrap">
+    <p class="eyebrow">Documents</p>
+    <h2 style="margin:.5rem 0 .8rem">Everything you need, in one place</h2>
+    <p style="color:var(--muted);max-width:68ch;margin-bottom:1.6rem">The standard, our own
+      procedures, the Basic Production Principles, the certification landscape and the blank
+      checklists. No Drive links, no permission requests &mdash; stable addresses you can bookmark
+      and cite.</p>
+    <div class="doclist">
+      <div class="docrow"><span class="tag">PDF</span><span><b>SAOSO Organic Standard v2.1</b><span>The standard we assess against &middot; 2026</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Principles, Policies &amp; Procedures</b><span>How our own PGS is governed</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Basic Production Principles</b><span>Growing the organic sector in South Africa</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Certification Landscape</b><span>Seals and recognition in the SA organic sector</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Farm Visit Preparation List</b><span>What to have ready before the visit</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Checklist &mdash; Crops</b><span>Blank participant checklist</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Checklist &mdash; Crops &amp; Animals</b><span>Blank participant checklist</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow"><span class="tag">PDF</span><span><b>Checklist &mdash; Seed Production</b><span>Blank participant checklist</span></span><a class="act" href="#">Download &darr;</a></div>
+      <div class="docrow gated"><span class="tag">Gated</span><span><b>Farm visit reports &amp; application dossiers</b><span>Historical records containing farmer personal data. Never published on a public address.</span></span><a class="act" href="#">Request access</a></div>
+    </div>
+  </div>
+</section>
+
+<section id="ask" style="background:var(--surface)">
+  <div class="wrap">
+    <p class="eyebrow">Ask the standard</p>
+    <h2 style="margin:.5rem 0 .8rem">A straight answer, or none at all</h2>
+    <p style="color:var(--muted);max-width:70ch;margin-bottom:1.8rem">Ask a question about the
+      standard, our procedures or the certification landscape. Answers are drawn only from the
+      documents above, and every answer cites the passage it came from. If the documents do not
+      cover your question, we will say so rather than guess.</p>
+    <div class="chat-cols">
+      <div>
+        <p class="cap">When the standard answers</p>
+        <div class="chatbox">
+          <div class="bar"><span>Ask Outeniqua PGS</span><em>grounded</em></div>
+          <div class="body">
+            <div class="msg user">What is the membership fee for a farmer?</div>
+            <div class="msg bot">Annual farmer and consumer membership is <b>R100</b>. On top of
+              that, the group pays an annual PGS South Africa membership fee of <b>R500</b>, which
+              is funded from the membership fees collected.
+              <div class="cites"><a class="cite" href="#documents">OPP &sect;2.1</a><a class="cite" href="#documents">Fees</a></div>
+            </div>
+          </div>
+          <div class="ask"><span class="f">Ask about the standard&hellip;</span><span class="s">&#8594;</span></div>
+        </div>
+      </div>
+      <div>
+        <p class="cap">When it does not</p>
+        <div class="chatbox">
+          <div class="bar"><span>Ask Outeniqua PGS</span><em>refusal</em></div>
+          <div class="body">
+            <div class="msg user">Do I need EU organic certification to export to Germany?</div>
+            <div class="msg bot refuse">I could not find this in the documents this group
+              publishes. I can answer from the SAOSO Organic Standard, our Principles, Policies and
+              Procedures, the Basic Production Principles, and the SA Organic Certification
+              Landscape &mdash; and none of them covers EU market access. Please ask the
+              administrator.
+              <div class="cites"><a class="cite warn" href="#contact">&#8594; Send to the administrator</a></div>
+            </div>
+          </div>
+          <div class="ask"><span class="f">Ask about the standard&hellip;</span><span class="s">&#8594;</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="members">
+  <div class="wrap">
+    <p class="eyebrow">Members</p>
+    <h2 style="margin:.5rem 0 1.3rem">Who is in the group</h2>
+    <div class="disc">
+      <h3>&#9888; Membership is not certification</h3>
+      <p>The people and farms listed here are members of the Outeniqua Natural and Organic PGS
+        group. Membership of the group is <b>not</b> a certification, and does not by itself mean
+        that a farm is certified organic. A certification decision is a separate judgement made by
+        the group's certification committee against the SAOSO standard, and is recorded as such.
+        Please do not read this list as a claim about any farm's organic status.</p>
+      <p style="margin-top:.8rem;font-size:.83rem;color:var(--muted)">The member list is being
+        prepared for publication. <span class="ph">[names &amp; consent &mdash; MVP 2]</span></p>
+    </div>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="fcols">
+      <div class="fb">
+        <b>Outeniqua Natural &amp; Organic PGS</b>
+        <p>A participatory guarantee group of farmer and consumer members in the Western Cape,
+          assessing organic practice against the SAOSO standard.</p>
+      </div>
+      <div><h4>The group</h4><a href="#organics">Organics</a><a href="#how">How it works</a><a href="#members">Members</a><a href="#fees">Fees</a></div>
+      <div><h4>Documents</h4><a href="#documents">SAOSO Standard v2.1</a><a href="#documents">Our procedures</a><a href="#documents">Basic Production Principles</a><a href="#documents">Blank checklists</a></div>
+      <div><h4>Contact</h4><p style="color:#9fb0a5;line-height:1.7">Outeniqua, Western Cape<br><span class="ph">[email]</span><br><span class="ph">[phone]</span></p><a href="#ask">Ask the standard</a></div>
+    </div>
+    <div class="frule">
+      <span>&copy; 2026 Outeniqua Natural &amp; Organic PGS</span>
+      <span>Membership is not certification. No certification status is published on this page.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

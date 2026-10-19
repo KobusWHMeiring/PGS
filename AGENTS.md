@@ -13,6 +13,7 @@ the SAOSO standard.
 | **Handover — start here** | `HANDOVER.md` |
 | **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
+| **Front-end design — only when designing or changing a view** | `product/design/DESIGN.md` |
 | MVP 0 PRD | `product/backlog/Refinement/MVP0_PRD.md` |
 | MVP 0 implementation plan | `product/backlog/Refinement/MVP0_PLAN_V2.md` |
 | **MVP 1a PRD — up next** | `product/backlog/ready/MVP1A_PRD.md` |
@@ -61,6 +62,15 @@ This repo uses the **Harvester backlog convention** (see `product/backlog/CONVEN
 
 ## Conventions that bite people
 
+- **One palette, and it is `brand-*`.** Any new or changed front-end view follows
+  `product/design/DESIGN.md` — cream grounds, Lora + Mulish, the `brand-*` tokens, ≥44 px
+  targets. That document is scoped to front-end design; do not read it to build a model. A new
+  colour family is a bug, not a preference: this repo carries four palettes in `product/design/`
+  and only one of them is the design system.
+- **The live WordPress site is the content baseline, not the design reference.**
+  `product/design/content_inventory.md` inventories its 13 URLs and the 16 items the current
+  design would silently drop. It also publishes `pasture raised` and `GMO free` today — the
+  exact claims `test_claim_discipline.py` forbids. Read the inventory before writing sub-plan C.
 - **No unsupported certification claims.** The public surface may reproduce only the
   four FORM outcomes and the *active* seals. Never publish "pasture raised", "GMO free",
   "biodynamic" or similar. `core/tests/test_claim_discipline.py` will fail the build.
