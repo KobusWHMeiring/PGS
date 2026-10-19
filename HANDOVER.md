@@ -29,7 +29,7 @@ detail. It does not change the answer to "what do I build first" — that is sti
 
 | # | Artifact | Why | Time |
 |---|---|---|---|
-| 1 | `product/backlog/Refinement/MVP0_PLAN_V2.md` §0–§2 + Tasks A1–A10 | **Your actual first work.** | 25 min |
+| 1 | `product/backlog/ready/MVP0_PLAN_V2.md` §0–§2 + Tasks A1–A10 | **Your actual first work.** | 25 min |
 | 2 | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` **§18.3 first**, then §4.1–§4.5 | 40 decisions. **Read §18.3 before questioning anything** — most "obvious improvements" were considered and rejected. | 45 min |
 | 3 | `product/docs/context/build_principles.md` | Non-negotiable. Thin views, service ownership, 30 KB cap, integer cents, no logic in templates. | 10 min |
 | 4 | `product/backlog/ready/MVP1A_PLAN.md` + `MVP1A_PRD.md` | The 1a task list and its fence. | 45 min |

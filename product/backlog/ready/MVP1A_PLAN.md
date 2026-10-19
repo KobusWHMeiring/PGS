@@ -42,7 +42,7 @@
 **There is no application code in this repository.** No `manage.py`, no `core/`, no `knowledge/`.
 MVP 0 is *specified*, not built.
 
-Tasks A1–A10 of `../Refinement/MVP0_PLAN_V2.md` are therefore **a prerequisite for every task below**,
+Tasks A1–A10 of `MVP0_PLAN_V2.md` are therefore **a prerequisite for every task below**,
 not a description of the current state. They deliver: the Django project scaffold and Compose services,
 environment-driven settings, the **custom `User` model** (which must be the first migration — it cannot
 be swapped later), `Category` and `Seal` as data with `seed_deployment`, `/health/`, Celery with retry

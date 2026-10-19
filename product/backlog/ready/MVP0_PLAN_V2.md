@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** Refinement — awaiting one system brainstorm (MVP0_PRD.md §9) before Ready
+**Status:** Ready — the §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`). Sub-plan A is in build.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-18
 **MVP:** 0 (spec §19)
@@ -128,7 +128,7 @@ volumes:
 ```bash
 pip install "Django==5.2.*" psycopg2-binary dj-database-url python-dotenv \
   celery redis django-structlog sentry-sdk pgvector \
-  google-generativeai \
+  google-genai \
   pytest pytest-django factory-boy faker import-linter
 pip freeze > requirements.txt
 ```
@@ -139,9 +139,22 @@ pip freeze > requirements.txt
 3. `django-admin startproject pgs .` then `startapp core` and `startapp knowledge`; create the
    domain subpackages listed in §2.
 4. Write `.gitattributes` with `* text=auto eol=lf` — Windows CRLF churn will otherwise pollute
-   every diff.
+   every diff. (Already present in the repo as of the initial commit.)
+
+**Applied deviations, found by running it:**
+
+- **`google-genai`, not `google-generativeai`.** The latter is end-of-life and says so on import
+  (*"All support for the `google.generativeai` package has ended"*), while dragging in
+  `google-api-python-client`, `grpcio` and `protobuf<6`. Sub-plan D builds the embedding and chat
+  clients on this, so the swap is cheap now and expensive later. Adopting it removes 11 packages.
+- **Host port 5433, not 5432.** A native Windows PostgreSQL service already owns `0.0.0.0:5432`,
+  and Docker binds the same port alongside it instead of failing — so a native connection
+  silently reached the *native* server and failed with "password authentication failed for user
+  pgs". CI has no competing service, so A8 is unaffected.
 
 **Acceptance:** `docker compose ps` healthy; `python -c "import django, pgvector, celery"` clean.
+Verified 2026-10-19: both services healthy, pgvector 0.8.7 available in Postgres 16.15, Redis
+PONG, `manage.py check` clean.
 
 ---
 

@@ -1,10 +1,12 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-19 09:10
+> Generated: 2026-10-19 09:44
 
 ## Ready (up next)
 
+- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `ready\MVP0_PLAN_V2.md` - Status: Ready — the §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`). Sub-plan A is in build.
+- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `ready\MVP0_PRD.md` - Status: Ready — §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers.
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
 - **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite:** MVP 0 sub-plan A is not yet built — see `MVP1A_PLAN.md` §0.2.
 
@@ -14,8 +16,6 @@ _none_
 
 ## Refinement
 
-- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `Refinement\MVP0_PLAN_V2.md` - Status: Refinement — awaiting one system brainstorm (MVP0_PRD.md §9) before Ready
-- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `Refinement\MVP0_PRD.md` - Status: Refinement — awaiting one system brainstorm (see §9) before promotion to Ready
 - **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
 
 ## On Hold

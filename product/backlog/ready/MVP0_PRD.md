@@ -1,13 +1,13 @@
 # PRD: MVP 0 — Standards Foundation & Public Shop Window
 
-**Status:** Refinement — awaiting one system brainstorm (see §9) before promotion to Ready
+**Status:** Ready — §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-18
 **MVP:** 0 of 0 → 1 → 2 → 3 (`PGS_PLATFORM_SPEC.md` §19)
 **Scope:** The public site, the standards corpus, and the grounded chatbot. **No certification claim of any kind.**
 **Reference:**
 - Target-state spec — `product/backlog/Refinement/PGS_PLATFORM_SPEC.md`
-- Implementation plan — `product/backlog/Refinement/MVP0_PLAN_V2.md`
+- Implementation plan — `product/backlog/ready/MVP0_PLAN_V2.md`
 - UAT — `tests/uat/mvp0_standards_and_public_site_uat.md`
 - Review artifact — `product/design/mvp0_scope_and_open_questions.html`
 - Build rules — `product/docs/context/build_principles.md`
