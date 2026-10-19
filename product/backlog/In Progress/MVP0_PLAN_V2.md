@@ -521,8 +521,18 @@ chunks; they produce offsets.
 - A section shorter than ~800 tokens is one chunk carrying all its `sub_refs`.
 - A long section splits on paragraph boundaries; every `sub_ref` lands in exactly one chunk, and
   its `start`/`end` are relative to that chunk's `text`.
-- `sub_refs` never overlap and always satisfy `0 <= start < end <= len(text)`.
 - Token estimate uses 4 chars/token (no tokeniser in the request path).
+
+**Clarified by B4:** "`sub_refs` never overlap" cannot hold literally — nested refs nest by design
+(`4.5(2)` contains `(a)`, `(b)`, `(c)`, and a citation for `4.5(2)` that stopped at its own
+sub-items would quote a heading and nothing else). The rule's intent is asserted instead: every ref
+lands in **exactly one** chunk, none is duplicated, and no two *siblings* overlap. All chunk text is
+`section.text[start:end]`, so offsets are exact by construction, and `validate_sub_refs` accepts
+every chunk — the same check the column will enforce.
+
+**Measured chunk counts (the acceptance number):** OPP fixtures 13 sections → 14 chunks; SAOSO
+part_b 29 → 29; appendices 22 → 23. A target of 100 tokens instead of 800 produces 128 chunks, which
+is what the acceptance test catches.
 
 **Acceptance:** the OPP produces a chunk count in the low tens, not the low hundreds — if it
 produces hundreds, sub-items are being split and retrieval will degrade.
