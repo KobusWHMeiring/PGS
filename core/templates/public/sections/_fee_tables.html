@@ -1,0 +1,72 @@
+{% load pgs_extras %}
+{% comment %}
+The two fee tables. Every figure is `|zar`-formatted from integer cents defined in
+`core/services/_public.py`, transcribed from OPP §2.1 and §2.3. No figure is typed
+into markup — `core/tests/test_public.py` fails the build if one is.
+
+OPP §2.3's conditions are reproduced as they are written, because they change what a
+member owes: renewal rates apply only where nothing significant changed; the fee is
+payable before the visit; only fully paid-up members are eligible for assessment.
+{% endcomment %}
+<div class="fees__grid">
+
+  <section class="fee-card fee-card--membership" aria-labelledby="fee-membership-heading">
+    <h2 class="fee-card__title" id="fee-membership-heading">Annual membership</h2>
+
+    <dl class="fee-lines">
+      <div class="fee-line">
+        <dt class="fee-line__label">Farmer &amp; consumer membership</dt>
+        <dd class="fee-line__amount">{{ membership_farmer_cents|zar }}</dd>
+      </div>
+      <div class="fee-line">
+        <dt>
+          <span class="fee-line__label">PGS South Africa membership</span>
+          <span class="fee-line__note">Paid by the group from membership fees</span>
+        </dt>
+        <dd class="fee-line__amount">{{ membership_pgs_sa_cents|zar }}</dd>
+      </div>
+    </dl>
+
+    <p class="fee-tags">
+      <span class="tag tag--note">Approved at the 2025 AGM</span>
+      <span class="tag tag--plain">Per year</span>
+    </p>
+  </section>
+
+  <section class="fee-card fee-card--assessment" aria-labelledby="fee-assessment-heading">
+    <h2 class="fee-card__title" id="fee-assessment-heading">Assessment &amp; certification</h2>
+
+    <div class="fee-table__scroll">
+      <table class="fee-table">
+        <caption class="visually-hidden">
+          Farm assessment and certification fees by self-declared annual turnover
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Annual turnover</th>
+            <th scope="col" class="fee-table__right">Initial</th>
+            <th scope="col" class="fee-table__right">Renewal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for band in fee_bands %}
+            <tr>
+              <th scope="row" class="fee-table__label">{{ band.label }}</th>
+              <td class="fee-table__right fee-table__initial">{{ band.initial_cents|zar }}</td>
+              <td class="fee-table__right fee-table__renewal">{{ band.renewal_cents|zar }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="fee-table__note">
+      Fees are per farm assessment visit. Transport for the administrator is charged
+      separately at the AA rate; visits are clustered geographically wherever possible
+      to reduce that cost. Renewal fees apply only where no significant changes to land,
+      production system or inputs have occurred. Only fully paid-up members are eligible
+      for a farm assessment.
+    </p>
+  </section>
+
+</div>

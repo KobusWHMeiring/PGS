@@ -21,10 +21,13 @@
   <link rel="preload" href="{% static 'fonts/lora-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/mulish-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
 
-  {% comment %} Zero build pipeline (build_principles.md §IV): two hand-written stylesheets,
-     served from this origin. Nothing on this page comes from a CDN (D40). {% endcomment %}
+  {% comment %} Zero build pipeline (build_principles.md §IV): four hand-written stylesheets,
+     served from this origin. Nothing on this page comes from a CDN (D40). They are
+     split by domain because §II caps a source file at 30 KB. {% endcomment %}
   <link rel="stylesheet" href="{% static 'css/root.css' %}">
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
 <body>

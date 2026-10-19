@@ -1,0 +1,207 @@
+/* ==========================================================================
+   chat.css — the "Ask the standard" showcase, and the surface sub-plan D builds on.
+
+   DESIGN §7.9 calls this band the centrepiece: two windows side by side, always,
+   because the contrast between a grounded answer and a confident refusal *is* the
+   product's argument. Styling consequences that are not decoration:
+
+     * the refusal bubble is warm (--brand-warmDark), never error red — a boundary
+       drawn confidently, not a malfunction;
+     * both states share every other treatment, so neither reads as the "broken" one;
+     * a citation chip is monospace and tappable-looking, because a citation that
+       cannot be followed is a decoration.
+
+   Split from site.css by the §II 30 KB file cap; loaded by base.html on every page
+   so D can render inside any of them.
+   ========================================================================== */
+
+.chat-showcase {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.chat-case {
+  display: flex;
+  flex-direction: column;
+}
+
+.case-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  color: var(--brand-ochreLight);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.case-label__tag {
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-nano);
+  font-weight: 400;
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+.chat {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-forestDark);
+  box-shadow: var(--shadow-window);
+}
+
+.chat__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.05);
+  background-color: var(--brand-forestDeep);
+}
+
+.chat__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgb(var(--brand-cream-rgb) / 0.9);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.chat__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-ochre);
+}
+
+.state-badge {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid rgb(var(--brand-ochre-rgb) / 0.35);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-forestDeep);
+  color: var(--brand-ochreLight);
+  font-size: var(--text-nano);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.chat__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+}
+
+.chat__row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.chat__row--user {
+  justify-content: flex-end;
+}
+
+.chat__bubble {
+  max-width: 90%;
+  padding: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-lg);
+  border-top-left-radius: 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.chat__bubble p {
+  margin: 0;
+}
+
+.chat__bubble p + p {
+  margin-top: 0.75rem;
+}
+
+.chat__bubble--user {
+  max-width: 85%;
+  padding: 0.625rem 1rem;
+  border-top-right-radius: 0;
+  border-top-left-radius: var(--radius-lg);
+  background-color: rgb(var(--brand-moss-rgb) / 0.8);
+  color: #fff;
+}
+
+/* The answered state sits a shade lighter than the terminal, so it reads as a reply
+   rather than as chrome. */
+.chat__bubble--answer {
+  background-color: rgb(var(--brand-forest-rgb) / 0.75);
+  color: rgb(var(--brand-cream-rgb) / 0.9);
+}
+
+/* Warm, never red (DESIGN §7.9). `--brand-warmDark` is the prototype's off-palette
+   #2B2319, promoted into the palette for exactly this use. */
+.chat__bubble--refusal {
+  background-color: rgb(43 35 25 / 0.9);
+  border-color: rgb(var(--brand-ochreDark-rgb) / 0.4);
+  color: rgb(var(--brand-ochreLight-rgb) / 0.92);
+}
+
+.chat__bubble strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.chat__bubble--refusal strong {
+  color: var(--brand-ochreLight);
+}
+
+.cite-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+}
+
+.cite {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid rgb(var(--brand-ochre-rgb) / 0.25);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-forestDeep);
+  color: var(--brand-ochreLight);
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-nano);
+}
+
+.chat__followup {
+  padding-top: 0.25rem;
+}
+
+.chat__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--brand-ochreLight);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.chat__link:hover {
+  color: #fff;
+}
+
+@media (min-width: 1024px) {
+  .chat-showcase {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

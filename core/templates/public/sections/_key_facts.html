@@ -1,0 +1,46 @@
+{% load pgs_extras %}
+{% comment %} DESIGN §7.3 — four fact cards on the sageLight band. The figures are not typed
+   here: the fourth card reads the membership fee from `_public.py` through
+   `format_zar`, so it cannot drift from the fee table further down the page.
+   These are <p>, not <h4>, because a ribbon of facts is not a heading hierarchy —
+   the design's tag choice would put four headings between the h1 and the first
+   section heading for a screen-reader user. {% endcomment %}
+<div class="ribbon" id="key-facts">
+  <div class="container ribbon__inner">
+    <div class="ribbon__grid">
+
+      <div class="fact-card">
+        <span class="fact-card__dot" aria-hidden="true"></span>
+        <div>
+          <p class="fact-card__figure">PGS South Africa</p>
+          <p class="fact-card__caption">Member group</p>
+        </div>
+      </div>
+
+      <div class="fact-card">
+        <span class="fact-card__dot" aria-hidden="true"></span>
+        <div>
+          <p class="fact-card__figure">SAOSO v2.1 (2026)</p>
+          <p class="fact-card__caption">The standard we assess against</p>
+        </div>
+      </div>
+
+      <div class="fact-card">
+        <span class="fact-card__dot" aria-hidden="true"></span>
+        <div>
+          <p class="fact-card__figure">6 basic elements</p>
+          <p class="fact-card__caption">The PGS way of working</p>
+        </div>
+      </div>
+
+      <div class="fact-card">
+        <span class="fact-card__dot" aria-hidden="true"></span>
+        <div>
+          <p class="fact-card__figure">{{ membership_farmer_cents|zar }} / year</p>
+          <p class="fact-card__caption">Farmer &amp; consumer membership</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

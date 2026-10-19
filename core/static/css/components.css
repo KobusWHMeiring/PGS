@@ -1,0 +1,728 @@
+/* ==========================================================================
+   components.css — the content blocks a page is built from.
+
+   Split out of site.css because build_principles.md §II caps a source file at
+   30 KB and the public site's content blocks crossed it. The boundary is
+   deliberate: site.css carries chrome (buttons, header, footer, hero, section
+   heads) and this file carries the bands — element cards, the stepper, the fee
+   tables, the document rows, the member disclaimer. A block that appears on
+   more than one page lives here so no page can drift from another.
+   ========================================================================== */
+/* --- Six elements (DESIGN §7.4) ------------------------------------------ */
+
+.element-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.element-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: #fff;
+  box-shadow: var(--shadow-hairline);
+  transition: box-shadow 150ms ease;
+}
+
+.element-card:hover {
+  box-shadow: var(--shadow-card);
+}
+
+.icon-plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-sm);
+  background-color: rgb(var(--brand-sageLight-rgb) / 0.7);
+  color: var(--brand-ochre);
+}
+
+.icon-plate svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.element-card__title {
+  margin-bottom: 0.5rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.element-card__body {
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.element-grid__source {
+  margin-top: -0.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+}
+
+@media (min-width: 768px) {
+  .element-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .element-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- Quote callout ------------------------------------------------------- */
+
+.quote {
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--brand-sand);
+  border-left: 4px solid var(--brand-ochre);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background-color: var(--brand-cream);
+  box-shadow: var(--shadow-hairline);
+}
+
+.quote__text {
+  color: var(--brand-charcoal);
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  font-style: italic;
+  line-height: var(--leading-body);
+}
+
+.quote__source {
+  margin-top: 0.625rem;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  .quote__text {
+    font-size: var(--text-base);
+  }
+}
+
+/* --- How it works: the stepper (DESIGN §7.5) ----------------------------- */
+
+.steps {
+  position: relative;
+}
+
+.steps__track {
+  display: none;
+}
+
+.steps__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+}
+
+.step__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.step__num {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+  /* The ring is the warm band showing through, so the track passes behind the
+     number rather than under it. */
+  box-shadow: 0 0 0 4px var(--brand-creamWarm);
+  background-color: var(--brand-ochre);
+  color: #fff;
+  font-family: var(--font-serif);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.step__label {
+  color: var(--brand-ochre);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.step__card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: #fff;
+  box-shadow: var(--shadow-hairline);
+  transition: border-color 150ms ease;
+}
+
+.step__card:hover {
+  border-color: rgb(var(--brand-ochre-rgb) / 0.4);
+}
+
+.step__title {
+  margin-bottom: 0.5rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.step__body {
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.step__foot {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgb(var(--brand-sand-rgb) / 0.4);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  .steps__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .steps__track {
+    display: block;
+    position: absolute;
+    top: 0.875rem;
+    left: 4.16%;
+    right: 4.16%;
+    height: 2px;
+    background-color: var(--brand-sand);
+  }
+
+  .steps__grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* --- Farm gallery (DESIGN §7.6) ------------------------------------------ */
+
+.gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.gallery__item {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background-color: var(--brand-sand);
+}
+
+.gallery__img {
+  width: 100%;
+  height: 16rem;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+
+.gallery__item:hover .gallery__img {
+  transform: scale(1.05);
+}
+
+.gallery__caption {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 1rem;
+  background-image: linear-gradient(
+    to top,
+    rgb(var(--brand-forestDeep-rgb) / 0.9),
+    transparent
+  );
+  color: var(--brand-cream);
+  font-size: var(--text-xs);
+}
+
+.gallery__note {
+  margin-top: 1.25rem;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-sageLight);
+  color: var(--brand-muted);
+}
+
+@media (min-width: 640px) {
+  .gallery {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+
+  .gallery__img {
+    height: 20rem;
+  }
+}
+
+/* --- Fees (DESIGN §7.7) -------------------------------------------------- */
+
+.fees__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-creamWarm);
+  box-shadow: var(--shadow-hairline);
+}
+
+.fees__panel-body {
+  max-width: 48rem;
+}
+
+.fees__panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fees__panel-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-ochre);
+}
+
+.fees__panel-title {
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.fees__panel-text {
+  margin-bottom: 0.5rem;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.fees__panel-text strong {
+  color: var(--brand-charcoal);
+  font-weight: 600;
+}
+
+.fees__panel-actions {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0.625rem;
+  min-width: 13.75rem;
+}
+
+.fees__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .fees__panel-title {
+    font-size: var(--text-xl);
+  }
+
+  .fees__panel-text {
+    font-size: var(--text-sm);
+  }
+
+  .fees__panel-actions {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 1024px) {
+  .fees__panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .fees__panel-actions {
+    flex-direction: column;
+  }
+
+  .fees__grid {
+    grid-template-columns: repeat(12, 1fr);
+  }
+
+  .fee-card--membership {
+    grid-column: span 5;
+  }
+
+  .fee-card--assessment {
+    grid-column: span 7;
+  }
+}
+
+.fee-card {
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: #fff;
+  box-shadow: var(--shadow-hairline);
+}
+
+.fee-card__title {
+  margin-bottom: 1.25rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.fee-lines {
+  display: grid;
+  gap: 1rem;
+}
+
+.fee-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px dashed rgb(var(--brand-sand-rgb) / 0.7);
+}
+
+.fee-line__label {
+  display: block;
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.fee-line__note {
+  display: block;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+.fee-line__amount {
+  margin: 0;
+  color: var(--brand-ochreDark);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fee-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-micro);
+  font-weight: 600;
+}
+
+.tag--note {
+  border-color: var(--brand-sand);
+  background-color: var(--brand-sageLight);
+  color: var(--brand-ochreInk);
+}
+
+.tag--plain {
+  background-color: rgb(var(--brand-sand-rgb) / 0.5);
+  color: var(--brand-charcoal);
+}
+
+.fee-table__scroll {
+  overflow-x: auto;
+}
+
+.fee-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-xs);
+}
+
+.fee-table thead tr {
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+/* Column headings only. The row labels are also `<th>` (scope="row") and must stay
+   in sentence case — uppercasing a turnover range makes it read as a code. */
+.fee-table thead th {
+  padding-block: 0.75rem;
+  color: var(--brand-muted);
+  font-size: var(--text-nano);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fee-table tbody tr {
+  border-top: 1px solid rgb(var(--brand-sand-rgb) / 0.5);
+}
+
+.fee-table tbody th {
+  padding-block: 0.75rem;
+}
+
+.fee-table__label {
+  color: var(--brand-charcoal);
+  font-size: var(--text-xs);
+  font-weight: 400;
+}
+
+.fee-table td {
+  padding-block: 0.75rem;
+}
+
+.fee-table__right {
+  text-align: right;
+}
+
+.fee-table__initial {
+  color: var(--brand-ochreDark);
+  font-weight: 500;
+}
+
+.fee-table__renewal {
+  color: var(--brand-muted);
+}
+
+.fee-table__note {
+  margin-top: 1.25rem;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* --- Documents (DESIGN §7.8) --------------------------------------------- */
+
+.docs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: #fff;
+  box-shadow: var(--shadow-hairline);
+  transition: border-color 150ms ease;
+}
+
+.doc-row:hover {
+  border-color: rgb(var(--brand-ochre-rgb) / 0.4);
+}
+
+.doc-row__main {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.doc-row__type {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-sageLight);
+  color: var(--brand-ochreInk);
+  font-size: var(--text-nano);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.doc-row__title {
+  color: var(--brand-charcoal);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.doc-row__meta {
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+}
+
+.doc-row__action {
+  flex-shrink: 0;
+  color: var(--brand-ochreDark);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+a.doc-row__action:hover {
+  text-decoration: underline;
+}
+
+/* A pending action is a chip, not a disabled button: it must not look clickable
+   (DESIGN rule 8). C2 replaces it with a real link in one commit. */
+.doc-row__action--pending {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-creamWarm);
+  color: var(--brand-muted);
+  font-weight: 600;
+}
+
+.doc-row--gated {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: var(--brand-sageLight);
+}
+
+.doc-row__gated-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-xs);
+  background-color: rgb(var(--brand-sand-rgb) / 0.8);
+  color: var(--brand-ochreInk);
+}
+
+.doc-row__gated-mark svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+@media (min-width: 640px) {
+  .doc-row--gated {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 768px) {
+  .docs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --- Members (DESIGN §7.10) ---------------------------------------------- */
+
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: #fff;
+  box-shadow: var(--shadow-hairline);
+}
+
+.disclaimer__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-top: 0.125rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-sageLight);
+  color: var(--brand-ochreInk);
+}
+
+.disclaimer__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.disclaimer__body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.disclaimer__title {
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.disclaimer__text {
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.disclaimer__text strong {
+  color: var(--brand-charcoal);
+  font-weight: 600;
+}
+
+.disclaimer__pending {
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+@media (min-width: 640px) {
+  .disclaimer__text {
+    font-size: var(--text-sm);
+  }
+}

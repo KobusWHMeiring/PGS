@@ -111,6 +111,7 @@
   --brand-ochre-rgb: 184 123 46;
   --brand-ochreLight-rgb: 249 241 226;
   --brand-ochreDark-rgb: 156 100 30;
+  --brand-moss-rgb: 66 83 55;
 
   /* Type (DESIGN §4). The prototype's arbitrary `text-[11px]` / `text-[10px]`
      become named steps rather than magic numbers. */

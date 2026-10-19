@@ -1,0 +1,34 @@
+{% comment %}
+DESIGN §7.10 and the OPP: **membership is not certification.** This card is mandatory
+on any page that lists or implies members, and `core/tests/test_claim_discipline.py`
+asserts it. The wording is the design's, which is a stronger version of the live
+site's own disclaimer ("membership does not mean that a farm has been certified by
+the PGS") — both say the same thing, and the stronger one is kept.
+
+No names are published. POPIA consent for the farmers and consumers who are named on
+the live site is unrecorded (`content_inventory.md` §6.2), so the list is pending and
+says so, in a visible chip rather than a plausible placeholder.
+{% endcomment %}
+<div class="disclaimer" id="disclaimer">
+  <span class="disclaimer__icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+    </svg>
+  </span>
+
+  <div class="disclaimer__body">
+    <h3 class="disclaimer__title">Membership is not certification</h3>
+    <p class="disclaimer__text">
+      The people and farms listed here are members of the Outeniqua Natural and Organic
+      PGS group. Membership of the group is <strong>not</strong> a certification, and does
+      not by itself mean that a farm is certified organic. A certification decision is a
+      separate judgement made by the group's certification committee against the SAOSO
+      standard, and is recorded as such. Please do not read this list as a claim about any
+      farm's organic status.
+    </p>
+    <p class="disclaimer__pending">
+      The member list is being prepared for publication.
+      <span class="chip">names &amp; consent — POPIA</span>
+    </p>
+  </div>
+</div>

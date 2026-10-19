@@ -1,0 +1,36 @@
+{% comment %}
+DESIGN §7.7 — the "Which band are you in?" panel comes **first**, full width, before
+any table, because the question a prospective member actually has is which band they
+are in, not what the bands are.
+
+Turnover is self-declared (OPP §2.3: "Annual turnover is self-declared by the farmer
+and subject to peer review within the PGS group"), so this panel states that and does
+not compute a band for the reader — `build_principles.md` §III, "Declared, not
+computed", applies to the prose as much as to the schema.
+
+Both links are absolute (`/` + fragment) because this partial also renders on
+`/become-a-member/`, where a bare `#ask-standard` would point at an id that page does
+not have.
+{% endcomment %}
+<div class="fees__panel">
+  <div class="fees__panel-body">
+    <p class="fees__panel-title-row">
+      <span class="fees__panel-dot" aria-hidden="true"></span>
+      <span class="fees__panel-title">Which band are you in?</span>
+    </p>
+    <p class="fees__panel-text">
+      Turnover is <strong>self-declared</strong> and subject to peer review. You tell us
+      the band you fall in; we do not estimate it for you. If you are uncertain, ask the
+      administrator and the group will work it out with you before the visit.
+    </p>
+    <p class="fees__panel-text">
+      Fees are payable <strong>before</strong> the farm assessment visit, per the group's
+      procedures.
+    </p>
+  </div>
+
+  <div class="fees__panel-actions">
+    <a class="btn btn--ochre" href="{% url 'core:home' %}#ask-standard">Ask about fees</a>
+    <a class="btn btn--outline" href="{% url 'core:contact' %}">Contact the administrator</a>
+  </div>
+</div>

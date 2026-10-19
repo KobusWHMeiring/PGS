@@ -1,5 +1,168 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+The public home page: nine bands on four grounds, in the order DESIGN.md §3 fixes.
+One rule governs this file — **a band either carries one of the four grounds or is
+unset, and there is exactly one dark band.** `core/tests/test_public.py` asserts the
+order and the single dark band, because a second creamWarm section creeping in is the
+kind of thing nobody notices until the page stops reading as composed.
+
+Section heads reuse the corresponding sub-page's `Page` metadata where the copy is
+identical (`{{ pages.organics.h1 }}` and so on), so the home page's summary of a
+section and the page it links to can never diverge. Where the design gives the band a
+different eyebrow from the page (Fees / Join), the literal is used.
+{% endcomment %}
 
 {% block content %}
-{% include "public/sections/_hero.html" %}
+
+  {% include "public/sections/_hero.html" %}
+
+  {% include "public/sections/_key_facts.html" %}
+
+  <section class="section" id="organics">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">{{ pages.organics.eyebrow }}</p>
+        <h2 class="serif-title section__title">{{ pages.organics.h1 }}</h2>
+        <p class="section__lede">{{ pages.organics.lede }}</p>
+      </div>
+
+      {% include "public/sections/_element_cards.html" %}
+
+      <blockquote class="quote">
+        <p class="quote__text">
+          “Participatory Guarantee Systems are locally focused quality assurance systems.
+          They certify producers based on active participation of stakeholders and are
+          built on a foundation of trust, social networks and knowledge exchange.”
+        </p>
+        <footer class="quote__source">
+          — IFOAM–Organics International, quoted in the SA Organic Certification Landscape
+        </footer>
+      </blockquote>
+
+      <p class="section__more">
+        <a class="link-more" href="{% url 'core:organics' %}">How a PGS differs from a certificate →</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--warm" id="how-it-works">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">{{ pages.how_it_works.eyebrow }}</p>
+        <h2 class="serif-title section__title">{{ pages.how_it_works.h1 }}</h2>
+        <p class="section__lede">{{ pages.how_it_works.lede }}</p>
+      </div>
+
+      {% include "public/sections/_steps.html" %}
+
+      <p class="section__more">
+        <a class="link-more" href="{% url 'core:how_it_works' %}">Who is on a farm visit team →</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="farm-gallery">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">From the member farms</p>
+        <h2 class="serif-title section__title">What members actually grow</h2>
+        <p class="section__lede">
+          Every farm in the group is visited by peers. These are the crops, animals and
+          seed that the visits are about — photographed on member farms in the Outeniqua.
+        </p>
+      </div>
+
+      <div class="gallery">
+        <figure class="gallery__item">
+          <img class="gallery__img" src="{% static 'img/farm_maize.jpg' %}" loading="lazy"
+               alt="Multicoloured heritage maize cobs laid out on weathered wood"
+               width="900" height="675">
+          <figcaption class="gallery__caption">Heritage maize varieties</figcaption>
+        </figure>
+        <figure class="gallery__item">
+          <img class="gallery__img" src="{% static 'img/farm_goats.jpg' %}" loading="lazy"
+               alt="Goats walking along a farm road between wire fences and pine trees"
+               width="900" height="600">
+          <figcaption class="gallery__caption">Livestock on a member farm</figcaption>
+        </figure>
+        <figure class="gallery__item">
+          <img class="gallery__img" src="{% static 'img/farm_greens.jpg' %}" loading="lazy"
+               alt="Dense beds of leafy green crops"
+               width="700" height="1050">
+          <figcaption class="gallery__caption">Leaf crops in production</figcaption>
+        </figure>
+      </div>
+
+      {% comment %} Captions name no farm: attribution is unconfirmed, and an invented farm name
+         in a caption is a factual claim about a real business (DESIGN §7.6). {% endcomment %}
+      <p class="gallery__note">
+        Photographs are from member farms.
+        <span class="chip">farm attribution &amp; consent to confirm</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="fees">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">Fees</p>
+        <h2 class="serif-title section__title">{{ pages.become_a_member.h1 }}</h2>
+        <p class="section__lede">{{ pages.become_a_member.lede }}</p>
+      </div>
+
+      {% include "public/sections/_fee_panel.html" %}
+      {% include "public/sections/_fee_tables.html" %}
+    </div>
+  </section>
+
+  <section class="section section--warm" id="documents">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">Documents</p>
+        <h2 class="serif-title section__title">Everything you need, in one place</h2>
+        <p class="section__lede">
+          The standard, our own procedures, the Basic Production Principles, the
+          certification landscape and the blank checklists. No Drive links, no permission
+          requests — stable addresses you can bookmark and cite.
+        </p>
+      </div>
+
+      {% include "public/sections/_doc_rows.html" %}
+    </div>
+  </section>
+
+  <section class="section section--dark" id="ask-standard">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">Ask the standard</p>
+        <h2 class="serif-title section__title">A straight answer, or none at all</h2>
+        <p class="section__lede">
+          Ask a question about the standard, our procedures or the certification
+          landscape. Answers are drawn only from the documents above, and every answer
+          cites the passage it came from. If the documents do not cover your question, we
+          will say so rather than guess.
+        </p>
+      </div>
+
+      {% include "public/sections/_chat_windows.html" %}
+    </div>
+  </section>
+
+  <section class="section" id="members">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">{{ pages.members.eyebrow }}</p>
+        <h2 class="serif-title section__title">{{ pages.members.h1 }}</h2>
+      </div>
+
+      {% include "public/sections/_disclaimer.html" %}
+
+      <p class="section__more">
+        <a class="link-more" href="{% url 'core:members' %}">Who belongs, and what each kind of member does →</a>
+      </p>
+    </div>
+  </section>
+
 {% endblock %}

@@ -1,0 +1,125 @@
+{% comment %}
+The document list, with the seven-plus-one shape the live /forms/ page has: the four
+governed documents, the visit preparation list, and three blank participant
+checklists, plus one gated row for historical records.
+
+**Why "Publishing soon" rather than a Download button (P7, DESIGN rule 8):**
+`/documents/` is task C2 and does not exist yet. A link to it would raise
+`NoReverseMatch` at render time, and a plausible-looking `href="#"` would be a button
+that does nothing — which is the failure DESIGN rule 8 exists to forbid ("unresolved
+data is a tinted chip, never a plausible-looking fake"). C2 replaces these chips with
+real links to real files in one commit.
+
+The gated row is the exception and is already honest: dossiers are never public
+(D22), so its action is `Request access`, never `Download`.
+{% endcomment %}
+<div class="docs">
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">SAOSO Organic Standard v2.1</p>
+        <p class="doc-row__meta">The standard we assess against · 2026</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Principles, Policies &amp; Procedures</p>
+        <p class="doc-row__meta">How our own PGS is governed</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Basic Production Principles</p>
+        <p class="doc-row__meta">Growing the organic sector in South Africa</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Certification Landscape</p>
+        <p class="doc-row__meta">Seals and recognition in the SA organic sector</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Farm Visit Preparation List</p>
+        <p class="doc-row__meta">What to have ready before the visit</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Checklist — Crops</p>
+        <p class="doc-row__meta">Blank participant checklist</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Checklist — Crops &amp; Animals</p>
+        <p class="doc-row__meta">Blank participant checklist</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+  <div class="doc-row">
+    <div class="doc-row__main">
+      <span class="doc-row__type">PDF</span>
+      <div>
+        <p class="doc-row__title">Checklist — Seed Production</p>
+        <p class="doc-row__meta">Blank participant checklist</p>
+      </div>
+    </div>
+    <span class="doc-row__action doc-row__action--pending">Publishing soon</span>
+  </div>
+
+</div>
+
+<div class="doc-row doc-row--gated">
+  <div class="doc-row__main">
+    <span class="doc-row__gated-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 10V7a4 4 0 00-8 0v3"/>
+        <rect x="4" y="10" width="16" height="10" rx="2"/>
+      </svg>
+    </span>
+    <div>
+      <p class="doc-row__title">Farm visit reports &amp; application dossiers</p>
+      <p class="doc-row__meta">
+        Historical records containing farmer personal data. Never published on a public
+        address.
+      </p>
+    </div>
+  </div>
+  <a class="doc-row__action" href="{% url 'core:contact' %}">Request access</a>
+</div>

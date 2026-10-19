@@ -1,0 +1,88 @@
+{% load pgs_extras %}
+{% comment %}
+DESIGN §7.9 — the centrepiece, and the one band on the page that is a dark ground.
+
+**Both windows ship together, always.** The answered case shows what the assistant
+does well; the refusal case shows the boundary. Showing only the first would be
+marketing; the contrast *is* the product's argument (UAT Scenario 3).
+
+A refusal is styled as a **warm, tinted** bubble and never as an error. It names the
+four documents the group publishes (D17) and offers the administrator as the next
+step, so the boundary reads as confident rather than broken.
+
+**There is no input bar.** The prototype drew a fake one; a text box that does
+nothing is a lie in the same way a fake phone number is (DESIGN rule 8). The real
+surface arrives with sub-plan D.
+
+The figures in the answered bubble are the same integers as the fee table, so the
+showcase cannot advertise a price the site does not charge.
+{% endcomment %}
+<div class="chat-showcase">
+
+  <div class="chat-case">
+    <p class="case-label">
+      <span>When the standard answers</span>
+      <span class="case-label__tag">Case A</span>
+    </p>
+
+    <div class="chat">
+      <div class="chat__bar">
+        <span class="chat__title"><span class="chat__dot" aria-hidden="true"></span>Ask Outeniqua PGS</span>
+        <span class="state-badge">Answered</span>
+      </div>
+      <div class="chat__body">
+        <div class="chat__row chat__row--user">
+          <p class="chat__bubble chat__bubble--user">What is the membership fee for a farmer?</p>
+        </div>
+        <div class="chat__row">
+          <div class="chat__bubble chat__bubble--answer">
+            <p>
+              Annual farmer and consumer membership is
+              <strong>{{ membership_farmer_cents|zar }}</strong>. On top of that, the
+              group pays an annual PGS South Africa membership fee of
+              <strong>{{ membership_pgs_sa_cents|zar }}</strong>, which is funded from the
+              membership fees collected.
+            </p>
+            <p class="cite-row">
+              <span class="cite">OPP §2.1</span>
+              <span class="cite">Fees</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-case">
+    <p class="case-label">
+      <span>When it does not</span>
+      <span class="case-label__tag">Case B</span>
+    </p>
+
+    <div class="chat">
+      <div class="chat__bar">
+        <span class="chat__title"><span class="chat__dot" aria-hidden="true"></span>Ask Outeniqua PGS</span>
+        <span class="state-badge">Refusal</span>
+      </div>
+      <div class="chat__body">
+        <div class="chat__row chat__row--user">
+          <p class="chat__bubble chat__bubble--user">Do I need EU organic certification to export to Germany?</p>
+        </div>
+        <div class="chat__row">
+          <div class="chat__bubble chat__bubble--refusal">
+            <p>
+              I could not find this in the documents this group publishes. I can answer
+              from the SAOSO Organic Standard, our Principles, Policies and Procedures, the
+              Basic Production Principles, and the SA Organic Certification Landscape — and
+              none of them covers EU market access. Please ask the administrator.
+            </p>
+            <p class="chat__followup">
+              <a class="chat__link" href="{% url 'core:contact' %}">→ Send to the administrator</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

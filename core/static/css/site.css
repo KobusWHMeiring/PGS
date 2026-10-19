@@ -120,6 +120,9 @@
 }
 
 .site-header__inner {
+  /* The positioning context for the phone menu panel: it must span the header, not
+     the 44px toggle that opens it. */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -147,6 +150,7 @@
 
 .brand__name {
   display: block;
+  white-space: nowrap;
   font-family: var(--font-serif);
   font-size: var(--text-sm);
   font-weight: 700;
@@ -256,7 +260,8 @@
    wants. */
 
 .site-menu {
-  position: relative;
+  /* Deliberately not `position: relative` — see `.site-menu__panel`. */
+  position: static;
 }
 
 .site-menu__toggle {
@@ -289,12 +294,17 @@
   background-color: var(--brand-sageLight);
 }
 
+/* Positioned against the header, not against the toggle. Anchored to the toggle it
+   opened off the left edge of the viewport and clipped its own labels — the kind of
+   bug a screenshot at 390 px catches and a DOM assertion does not. A fixed panel
+   would be no better: `backdrop-filter` on the header makes it the containing block
+   for fixed descendants. */
 .site-menu__panel {
   position: absolute;
-  top: calc(100% + 0.75rem);
-  right: 0;
+  top: 100%;
+  left: 1rem;
+  right: 1rem;
   z-index: 60;
-  width: min(18rem, calc(100vw - 2rem));
   padding: 0.5rem 1rem 1rem;
   border: 1px solid var(--brand-sand);
   border-radius: var(--radius-md);
@@ -329,6 +339,10 @@
 @media (max-width: 399px) {
   .brand__tag {
     display: none;
+  }
+
+  .brand__name {
+    font-size: var(--text-xs);
   }
 
   .btn--compact {
@@ -716,5 +730,144 @@
 @media (min-width: 640px) {
   .page-head__lede {
     font-size: var(--text-base);
+  }
+}
+
+/* --- Section head --------------------------------------------------------- */
+/* Every band that is not the hero opens with eyebrow / Lora h2 / lede. The h2 is
+   `font-normal` (DESIGN §4) and the ground supplies the contrast, so no rule here
+   carries a colour a dark band would need to override — the three `.section--dark`
+   rules at the end of this block are the only exception. */
+
+.section__head {
+  max-width: var(--container-narrow);
+  margin-bottom: 3rem;
+}
+
+.section__title {
+  margin-bottom: 1rem;
+  color: var(--brand-forestDark);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+}
+
+.section__lede {
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+@media (min-width: 640px) {
+  .section__title {
+    font-size: var(--text-4xl);
+  }
+
+  .section__lede {
+    font-size: var(--text-base);
+  }
+}
+
+.section--dark .section__title {
+  color: #fff;
+}
+
+.section--dark .section__lede {
+  color: rgb(var(--brand-cream-rgb) / 0.8);
+}
+
+.section--dark .eyebrow {
+  color: var(--brand-ochreLight);
+}
+
+.section__more {
+  margin-top: 2rem;
+}
+
+.link-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--brand-ochreDark);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.link-more:hover {
+  text-decoration: underline;
+}
+
+/* --- Key-facts ribbon (DESIGN §7.3) --------------------------------------- */
+
+.ribbon {
+  background-color: var(--brand-sageLight);
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+/* The prototype hairlines this band, and it is the one section boundary in the
+   design that carries a border. It earns it: sageLight and cream are within a few
+   percent of each other in value, so without the hairline the edge reads as a
+   smudge rather than as a band. */
+
+.ribbon__inner {
+  padding-block: 1.5rem;
+}
+
+.ribbon__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+}
+
+.fact-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgb(var(--brand-sand-rgb) / 0.8);
+  border-radius: var(--radius-lg);
+  background-color: rgb(var(--brand-cream-rgb) / 0.8);
+  box-shadow: var(--shadow-hairline);
+  transition: background-color 150ms ease;
+}
+
+.fact-card:hover {
+  background-color: #fff;
+}
+
+.fact-card__dot {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-ochre);
+}
+
+.fact-card__figure {
+  color: var(--brand-forest);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+}
+
+.fact-card__caption {
+  margin-top: 0.125rem;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+@media (min-width: 640px) {
+  .ribbon__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fact-card__figure {
+    font-size: var(--text-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ribbon__grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
