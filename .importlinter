@@ -1,0 +1,47 @@
+; Import-linter configuration.
+;
+; NOTE ON FORMAT: this file is read by Import Linter's **INI** reader, not its TOML
+; reader. The two differ in both syntax and filename:
+;
+;   .importlinter / setup.cfg   -> INI   ([importlinter:contract:<id>] sections)
+;   pyproject.toml              -> TOML  ([[tool.importlinter.contracts]])
+;
+; MVP0_PLAN_V2.md A7 shows TOML (`[[importlinter.contracts]]`) in a file named
+; `.importlinter`. That combination is read as INI, finds no `[importlinter]`
+; section, and does nothing at all — `lint-imports` would report success while
+; enforcing nothing. Verified against importlinter/adapters/user_options.py:
+; `IniFileUserOptionReader.potential_config_filenames = ["setup.cfg", ".importlinter"]`.
+;
+; Multi-value keys are **newline**-separated (the INI reader splits on "\n" only, not
+; on commas), hence the indented continuation lines below.
+
+[importlinter]
+; `root_packages` (plural), not `root_package`. The singular form makes Import Linter
+; resolve every module name as a child of that one package, so `root_package = pgs`
+; exits 1 with "Module 'knowledge' does not exist". Here `core`, `knowledge` and `pgs`
+; are **siblings** at the repository root, so each is its own root package.
+; MVP0_PLAN_V2.md A7 shows neither (`root_package = pgs` only); verified against
+; importlinter 2.15, not assumed.
+root_packages =
+    core
+    knowledge
+
+[importlinter:contract:knowledge-independent]
+name = knowledge must never import core
+type = forbidden
+; `knowledge/` is a library: no users, no sessions, no views, and no farm. `core/`
+; owns all of that. The dependency is one-directional — `core` may import
+; `knowledge`; `knowledge` must never import `core`.
+;
+; Enforced here (CI, A8) and again in core/tests/test_architecture.py, because one of
+; the two will eventually be skipped by a human.
+;
+; The failure this prevents is not stylistic. A `knowledge` module that reaches into
+; `core.models` cannot be tested without a database, cannot be reused for another PGS
+; group, and makes the corpus a function of the group's data rather than of the
+; standard — which is exactly the separation §4.8 and build_principles §I exist to
+; preserve.
+source_modules =
+    knowledge
+forbidden_modules =
+    core

@@ -19,6 +19,11 @@ private_media/
 staticfiles/
 backups/
 
+# Import Linter (A7). Grimp writes this cache next to the config and ships its own
+# `.gitignore` containing `*`, so git ignores the contents anyway — but relying on a
+# dependency's internal file to keep our tree clean is fragile. Named here too.
+.import_linter_cache/
+
 # Playwright
 test-results/
 playwright-report/
