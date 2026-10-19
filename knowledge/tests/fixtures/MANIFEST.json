@@ -1,0 +1,159 @@
+{
+  "corpus_sources": {
+    "Basic Production Principles_ENG_PRINT.pdf": {
+      "bytes": 4644079,
+      "sha256": "2565e28b2cdbe11f7b97d0aa226ab07126949872e95186fece856156ff0cc775"
+    },
+    "Outeniqua pgs principles, policies and procedures 2026.pdf": {
+      "bytes": 397032,
+      "sha256": "d2e305aa9852200117ee15dbfac018376a6a05238a3d8fc87d35d29cd7142bae"
+    },
+    "PGS Certification landscape_Final.pdf": {
+      "bytes": 1378780,
+      "sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f"
+    },
+    "saoso-version-2.1-2026.pdf": {
+      "bytes": 1316815,
+      "sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17"
+    }
+  },
+  "description": "Verbatim fixtures for the standards-ingestion tests. Extracted from the shipped PDFs by `pdftotext -layout`. Never hand-edit: hand-written fixtures encode the same assumption as the parser they test, which is how v1 passed its tests while matching zero lines of the real document.",
+  "encoding_caveat": "Fixtures are UTF-8. Glyphs the PDFs fail to map to Unicode become U+FFFD (REPLACEMENT CHARACTER). This is a fidelity loss in the SOURCE documents, not in the extraction: pdftotext -enc Latin1 emits 0xFF and -enc ASCII7 emits '-', so the byte is not valid UTF-8 and no encoding recovers the real character. Concretely, the OPP's 'Pasture raised is not defined by the SAOSO standard <0xFF> details on this forthcoming' carries an en-dash in SPEC \u00a74.3 that no extractor produces. Do NOT hand-edit these files to 'fix' it \u2014 a hand-corrected fixture stops being evidence, which is exactly how v1's parser passed its tests while matching nothing in the real document. Assert on text that survives extraction, or normalise explicitly in the parser.",
+  "extraction_command": "pdftotext -layout <pdf> -",
+  "fixtures": {
+    "opp_4_1": {
+      "anchor": "^\\s{0,7}4\\.1\\s+Preparation",
+      "anchor_page": 4,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 2867,
+      "file": "knowledge/tests/fixtures/opp_4_1.txt",
+      "notes": [
+        "Heading is at column 0; item marker is '1.' (not '1)')."
+      ],
+      "pages": "4-4",
+      "replacement_char_count": 1,
+      "sha256": "76b65933767316eb2ae8cb921d7fc630baab1f52996b7f4260ab6e9d63917283",
+      "source": "Outeniqua pgs principles, policies and procedures 2026.pdf",
+      "why": "\u00a74.1 Preparation, with items '1.'- '3.' and the '5 days notice' rule that SPEC \u00a74.5 cites as \u00a74.1(1). Uses the '1.' item marker."
+    },
+    "opp_4_2": {
+      "anchor": "^\\s{0,7}4\\.2\\s+Assessment",
+      "anchor_page": 5,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 3724,
+      "file": "knowledge/tests/fixtures/opp_4_2.txt",
+      "notes": [
+        "Three item markers exist across the OPP ('1.', '1)', 'a.') \u2014 this fixture and opp_4_1 are why."
+      ],
+      "pages": "5-5",
+      "replacement_char_count": 2,
+      "sha256": "c25d2adb7c929d19a5ab479e7f9f39ff3345f165e34f6ce90603ddd87892790e",
+      "source": "Outeniqua pgs principles, policies and procedures 2026.pdf",
+      "why": "\u00a74.2 Assessment, whose items run '1)' \u2026 '12)' and carry two of the reference citations in SPEC \u00a74.5: \u00a74.2(5) (conclusion within 5 days) and \u00a74.2(12) (traceability). Uses the '1)' item marker, unlike \u00a74.1."
+    },
+    "opp_4_5": {
+      "anchor": "^\\s{0,7}4\\.5\\s+Non-compliance",
+      "anchor_page": 6,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 6424,
+      "file": "knowledge/tests/fixtures/opp_4_5.txt",
+      "notes": [
+        "SPEC \u00a74.5 says '\u00a74.5 has no item 3 (numbering runs 1, 2, 4, 5)'. The extract is verbatim, so B2 can assert exactly that rather than trusting it.",
+        "The (c) attendee list is half-numbered: items 1-3 are numbered and the 'at least one additional group member' clause is not.",
+        "The unnumbered blocks take a content-derived anchor ('4.5#action-first-warning') rather than a fabricated reference."
+      ],
+      "pages": "6-7",
+      "replacement_char_count": 0,
+      "sha256": "bc3f6aa38ebc2aa2dec80227de9ef35313976f7149f3516f68ce80d83f380aff",
+      "source": "Outeniqua pgs principles, policies and procedures 2026.pdf",
+      "why": "\u00a74.5 Non-compliance and discipline \u2014 the hardest block in either document, and the reason reference depth is bounded at three (SPEC \u00a74.5 reality 6). It contains the missing item 3, a nested 'a./b./c.' list whose (c) branch restarts numbering at 1, an unnumbered 'First warning / Second warning / Serious misconduct' block, and \u2014 across the p6/p7 break \u2014 a list split by a page footer."
+    },
+    "opp_seals": {
+      "anchor": "^\\s{0,7}[IVX]+\\.\\s+Seals",
+      "anchor_page": 8,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 4118,
+      "file": "knowledge/tests/fixtures/opp_seals.txt",
+      "notes": [
+        "'V. Seals' is at column 0; 'VI. Aggregation' is at indent 6 (SPEC \u00a74.5 reality 5). The anchor allows 0-7 and the fixture contains both, so B2 can prove the indentation tolerance is necessary.",
+        "Reproduces the pasture-raised criteria line verbatim; this is the evidence A4's is_active=False decision rests on."
+      ],
+      "pages": "8-9",
+      "replacement_char_count": 1,
+      "sha256": "ded9a3b37ae2c376841bd91a05d78b2e81acada7496e4c7955fcebde04bd6e7f",
+      "source": "Outeniqua pgs principles, policies and procedures 2026.pdf",
+      "why": "OPP \u00a7V Seals and \u00a7VI Aggregation. \u00a7V is the source of A4's seed data \u2014 three marks, of which 'PGS pasture-raised' states its criteria are 'details on this forthcoming' \u2014 and \u00a7VI is the aggregation sub-domain. Both are reached by an *indented* Roman-numeral regex: a column-0 pattern misses \u00a7VI at indent 6."
+    },
+    "saoso_appendices": {
+      "anchor": "^\\s*APPENDIX 1\\s*$",
+      "anchor_page": 71,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 10792,
+      "file": "knowledge/tests/fixtures/saoso_appendices.txt",
+      "notes": [
+        "The body prints 'APPENDIX 1' in UPPERCASE and indented ~62 columns. The TOC prints 'Appendix 1' in title case. MVP0_PLAN_V2.md B2's APPX regex (r'^Appendix\\s+\\d+...') is title-case and column-0 anchored, so against the real body it matches NOTHING (reality 4 is correct) but FALSE-POSITIVES on p63, where 'Appendix 4.' starts a mid-sentence line. Both cases are in this fixture set: p63 is inside saoso_part_b."
+      ],
+      "pages": "71-73",
+      "replacement_char_count": 5,
+      "sha256": "9f248c7d10e91fa162395a2614a1f362ffc30cc834cc644f66ac4079cd558356",
+      "source": "saoso-version-2.1-2026.pdf",
+      "why": "Appendix content, for the case where the boundary comes from the TOC page map rather than heading detection (SPEC \u00a74.5 reality 4). APPENDIX 1 begins on p71; the plan's 'pp. 70-73' starts one page early, in the tail of clause 23.x."
+    },
+    "saoso_part_b": {
+      "anchor": "^\\s*SECTION B\\s*$",
+      "anchor_page": 61,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 8949,
+      "file": "knowledge/tests/fixtures/saoso_part_b.txt",
+      "notes": [
+        "SECTION B also appears as a running page header on many pages, and as a body heading three times (SPEC \u00a74.5 reality 1). This fixture contains the body heading on its first page, immediately before '20. PROCESSING AND HANDLING'.",
+        "The part letter is mandatory: '1.1.1' occurs in more than one part, so a bare clause number is ambiguous (SPEC \u00a74.5 reality 3)."
+      ],
+      "pages": "61-63",
+      "replacement_char_count": 3,
+      "sha256": "affeaa140a3a4525dd05b24b3a9bb2596cf71787e5751a6399c38c4acf3db1de",
+      "source": "saoso-version-2.1-2026.pdf",
+      "why": "The processing-and-handling block: the SECTION B body heading and clauses 20.1. / 20.1.1. / 20.1.2. B2's clause parser is written against this. NOTE: page 60 is the tail of section 9.6 (aquaculture) \u2014 including it, as the plan's 'pp. 60-62' would, grafts unrelated text onto the fixture."
+    },
+    "saoso_toc": {
+      "anchor": "^\\s*TABLE OF CONTENTS\\s*$",
+      "anchor_page": 2,
+      "byte_range_in_source_text": [
+        -1,
+        -1
+      ],
+      "bytes": 5745,
+      "file": "knowledge/tests/fixtures/saoso_toc.txt",
+      "notes": [
+        "Lists appendices, which is why a naive 'find appendix headings' strategy appears to work until it is run on the body."
+      ],
+      "pages": "2-3",
+      "replacement_char_count": 3,
+      "sha256": "ca688d708a8329acc3e87d14866f9a4d5ac136c6e41596633128f6f5b0c633fc",
+      "source": "saoso-version-2.1-2026.pdf",
+      "why": "The table of contents. Its purpose in the fixture set is negative: the TOC matches the clause pattern ('1.   Introduction - ...   4'), so an ingestion run that does not exclude these pages ingests 60+ duplicate clauses (SPEC \u00a74.5 reality 2). B3 asserts the exclusion using this file. Page 1 is the cover, not the TOC."
+    }
+  },
+  "generated_by": "scripts/extract_fixtures.py",
+  "line_endings": "\\n",
+  "note_on_page_numbers": "MVP0_PLAN_V2.md A10's page ranges are wrong (saoso_part_b pp.60-62 vs p61; saoso_toc p.1 vs p2; appendices pp.70-73 vs p71). Each extract declares an `anchor` that must appear on its `anchor_page`, verified at extraction time.",
+  "page_separator": "\\f"
+}

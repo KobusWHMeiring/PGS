@@ -346,13 +346,29 @@ excerpts** into `knowledge/tests/fixtures/`, plus a `MANIFEST.json` recording ea
 
 | Fixture | Taken from |
 |---|---|
-| `saoso_part_b.txt` | pp. 60–62 — `SECTION B` header, `20.1.`/`20.1.1.`/`20.1.2.` |
-| `saoso_toc.txt` | p. 1 — the table of contents (proves TOC exclusion) |
-| `saoso_appendices.txt` | pp. 70–73 — appendix content with **no headings** |
+| `saoso_part_b.txt` | pp. 61–63 — `SECTION B` header, `20.1.`/`20.1.1.`/`20.1.2.` |
+| `saoso_toc.txt` | pp. 2–3 — the table of contents (proves TOC exclusion) |
+| `saoso_appendices.txt` | pp. 71–73 — appendix content |
 | `opp_4_1.txt` | `4.1 Preparation` + items `1.`–`3.` |
 | `opp_4_2.txt` | `4.2 Assessment` + items `1)`–`12)` |
 | `opp_4_5.txt` | `4.5 Non-compliance` incl. missing item 3 and `(c)`'s half-numbered list |
 | `opp_seals.txt` | `V. Seals` and `VI. Aggregation` |
+
+**Corrected 2026-10-19 after running the extractor — the page numbers above were wrong.** This
+plan originally said `saoso_part_b` pp. 60–62, `saoso_toc` p. 1, and appendices pp. 70–73. Measured
+against the shipped PDFs: page 60 is the tail of §9.6 (*aquaculture*), so the range would have
+grafted unrelated text onto a processing-and-handling fixture; p1 is the cover, not the TOC; and
+`APPENDIX 1` begins on p71. Taking the original numbers at their word would have reproduced v1's
+exact failure — a fixture that does not match the document it claims to describe — so the extractor
+now declares an `anchor` that must be present on each fixture's start page and **fails** if it is
+not. The anchor is the evidence; a page number copied from a plan is a claim.
+
+Also worth knowing before B2: the body prints `APPENDIX 1` in **UPPERCASE** at ~62 columns of
+indent, so B2's title-case `APPX` regex matches nothing in the body (SPEC §4.5 reality 4 is right)
+but **false-positives on p63**, where `Appendix 4.` starts a mid-sentence line. And the PDFs fail
+to map some glyphs to Unicode (`0xFF` in the source), so fixtures contain U+FFFD — the OPP's
+pasture-raised line carries an en-dash in SPEC §4.3 that no extractor can produce. Both are recorded
+in `MANIFEST.json`; neither should be hand-edited.
 
 **Acceptance:** the script is deterministic (re-running produces byte-identical fixtures), and
 `MANIFEST.json` sha256 values match the PDFs in `pgs_docs/`. B2's tests read only from these files.

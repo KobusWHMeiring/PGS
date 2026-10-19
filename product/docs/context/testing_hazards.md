@@ -293,6 +293,36 @@ treat "recorded as present, restored as empty" as a failure.
 lists every entry, and the restore fails on the preamble having restored nothing.
 Compare major versions and choose a matching client (or borrow the container's).
 
+## 3.7 Fixtures extracted from documents
+
+**A page number in a plan is a claim, not evidence.** A10's stated page ranges were all
+wrong: `saoso_part_b` "pp. 60–62" starts one page early, in the tail of §9.6
+(*aquaculture*), which would have grafted unrelated text onto a processing fixture;
+the TOC is p2, not p1; `APPENDIX 1` starts on p71, not p70. Extracting on trust
+reproduces v1's failure exactly — a fixture that does not match the document it
+describes, so the parser's tests pass while the parser matches nothing.
+
+**Rule:** an extraction script declares an `anchor` that must be present on the
+fixture's start page, verifies it, and **fails** rather than writing the fixture. Show
+the actual page content in the error, so the cause is diagnosable.
+
+**Two things to check before trusting a regex against a real document:**
+
+- `APPENDIX 1` appears in the body in **UPPERCASE** at ~62 columns, while the TOC uses
+  title case `Appendix 1`. A title-case, column-0 regex matches nothing in the body but
+  **false-positives** on p63, where `Appendix 4.` begins a mid-sentence line. Test both.
+- **Glyphs the PDF fails to map to Unicode become U+FFFD.** The OPP's pasture-raised
+  line carries an en-dash in the spec that no extractor produces: `pdftotext -enc
+  Latin1` yields byte `0xFF`, `-enc ASCII7` yields `-`. The byte is not valid UTF-8 and
+  no encoding recovers it. Do **not** hand-edit the fixture — a hand-corrected fixture
+  stops being evidence. Record the count in the manifest and assert on text that
+  survives extraction.
+
+**On determinism:** open files with `newline=""` when writing fixtures. Python
+otherwise translates `
+` to `os.linesep`, so fixtures differ between Windows and the
+VPS — the determinism check passes locally and fails in CI.
+
 ---
 
 ## 4. Domain hazards already in `HANDOVER.md` §6
