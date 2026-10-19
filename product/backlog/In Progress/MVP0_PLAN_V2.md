@@ -576,17 +576,36 @@ def test_duplicate_refs_are_reported(real_saoso_pdf):
     assert duplicate_ref_count() <= KNOWN_SAOSO_DUPLICATES
 ```
 
-The third test exists because duplicate refs may remain in SAOSO. It is a **ratchet**, not a pass:
-the number may only go down. Investigate them during B3/B4; do not silence the check. Note that
-MVP 0 ingests **Section B only** (D41), which removes the part-local collisions `1.1.1`-style that
-made this number large in the first place — so set `KNOWN_SAOSO_DUPLICATES` from a measurement, not
-from the plan's "~50".
+**Corrected and measured by B6.** `KNOWN_SAOSO_DUPLICATES` is **0**, and the ratchet is on
+**sections**, not chunks: `S1` is the glossary and legitimately spans eight chunks all cited `S1`,
+so a chunk-level count reported eight duplicates and made the check meaningless. Two *sections*
+sharing a citation is the failure, and it is what fails a reader.
+
+The whole duplicate population came from one place: **Appendix 1 holds two independently numbered
+criteria lists** (`1.`–`6.` with `1.1`, `1.2` … for organic production on printed pp. 71–72, and
+again for processing on pp. 73–75). Splitting on those clause lines emitted `S1.2` twice for two
+different paragraphs sharing a page range *and* a heading. An appendix is therefore **one section**
+(`section_ref = "Appendix 1"`, page as the locator, sub-headings left in the text); emitting
+`Appendix 1(1.2)` was rejected because it looks precise while resolving to two paragraphs. Also
+fixed: `.title()` produced `Appendix 6A` where the body and TOC print `6a`.
+
+Three operational corrections:
+
+- the command's version flag is `--doc-version` — Django's `BaseCommand` already reserves `--version`;
+- `source_file` is stored POSIX (`as_posix()`), because this repo is developed on Windows and deployed on Linux;
+- **ingest tests must pass `--no-embed`,** or inject a provider. The command defaults to embedding and
+a developer shell usually has a key, so the suite installs an autouse fixture that replaces the
+Gemini provider with a bomb: a forgotten flag is a loud failure, not an API call.
+
+`knowledge/extraction.py` owns the single `pdftotext -layout` call, shared with A10's fixture script,
+so the parsers cannot be tested against one rendering and run against another. Re-running the
+extractor leaves all nine fixtures byte-identical.
 
 **Then** implement, page-aware: extract per page, skip TOC pages, carry the part letter forward,
-segment appendices from the TOC map plus the uppercase body headings (measured: both exist — see
-SPEC §4.5 reality 4), then chunk and embed.
+segment appendices from the body headings plus the TOC map (measured: appendix headings *do* exist in
+the body — see SPEC §4.5 reality 4), then chunk and embed.
 
-**Acceptance:** all four documents ingest; the ratchet holds; re-ingest adds nothing.
+**Acceptance:** all four documents ingest; the ratchet holds at 0; re-ingest adds nothing.
 
 ---
 
