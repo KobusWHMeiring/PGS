@@ -36,9 +36,15 @@ from typing import Literal
 
 import redis
 import structlog
-from celery import Celery
 from django.conf import settings
 from django.db import connection
+
+# One Celery app for the project (A6). A5 built a local stopgap app from
+# CELERY_BROKER_URL because `pgs/celery.py` did not exist yet; two apps would mean
+# this check reports on a broker connection the worker does not use, so it could say
+# `celery_worker: ok` while the real worker was dead. Imported from the project app
+# now that A6 exists.
+from pgs.celery import app as celery_app
 
 logger = structlog.get_logger(__name__)
 
@@ -47,12 +53,6 @@ REDIS_TIMEOUT = 1.0
 WORKER_PING_TIMEOUT = 1.0
 
 Status = Literal["ok", "error"]
-
-# A module-level Celery app so `control.ping()` has a broker to talk to. A6 replaces
-# this with the project app in `pgs/celery.py`; the health check only needs the
-# broker URL, and importing the project app here would create a cycle (A6 imports
-# settings, settings imports nothing of ours).
-celery_app = Celery("pgs", broker=settings.CELERY_BROKER_URL)
 
 
 @dataclass(frozen=True)
