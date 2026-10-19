@@ -206,6 +206,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# A3 owns this: the custom user model. It is set in the same commit that defines
+# `core.User`, because setting it earlier makes `manage.py check` fail outright —
+# django.contrib.auth imports the user model and raises ImproperlyConfigured if it
+# does not exist yet. This must remain the **first** migration applied to a new
+# database; see the A3 gate in HANDOVER.md §5.
+AUTH_USER_MODEL = "core.User"
+
 LANGUAGE_CODE = "en-za"
 TIME_ZONE = "Africa/Johannesburg"
 USE_I18N = True

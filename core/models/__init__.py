@@ -6,10 +6,26 @@ models by importing this package, so a model that is not re-exported here does
 not exist as far as the ORM is concerned.
 
 Slices (see MVP0_PLAN_V2.md §2):
-    _core.py           User, UserRole, Role, Category, Member, Farm, ...
+    _core.py           User, UserRole, Role, Language
     _certification.py  Seal, Assessment*, Certificate (MVP 1/2 forward)
     _chat.py           ChatSession, ChatMessage, ChatCitation
 
 Keep each slice under the 30 KB cap (build_principles.md). When a slice
 approaches it, cut a new slice along a domain seam — do not grow the file.
 """
+
+from core.models._core import (
+    ASSESSOR_CAPABILITY,
+    Language,
+    Role,
+    User,
+    UserRole,
+)
+
+__all__ = [
+    "ASSESSOR_CAPABILITY",
+    "Language",
+    "Role",
+    "User",
+    "UserRole",
+]

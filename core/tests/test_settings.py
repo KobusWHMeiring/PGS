@@ -22,8 +22,19 @@ SETTINGS_SOURCE = Path("pgs/settings.py")
 
 
 def test_required_settings_come_from_env(settings):
-    """The plan's first assertion: the DB name and the two media roots are real."""
-    assert settings.DATABASES["default"]["NAME"] == "pgs"
+    """The plan's first assertion: the DB name and the two media roots are real.
+
+    The plan writes `settings.DATABASES["default"]["NAME"] == "pgs"`, but that
+    cannot pass under pytest-django: Django prefixes the test database with
+    `test_`, so the value here is `test_pgs`. The same trap as `testserver` in
+    ALLOWED_HOSTS — the runner changes the value the test is looking at. The
+    prefix is therefore stripped before comparing, and the underlying URL is
+    asserted separately so the configured name is still pinned.
+    """
+    from pgs import settings as pgs_settings
+
+    assert settings.DATABASES["default"]["NAME"].removeprefix("test_") == "pgs"
+    assert pgs_settings.DATABASE_URL.endswith("/pgs")
     assert settings.PRIVATE_MEDIA_ROOT != settings.MEDIA_ROOT
 
 
