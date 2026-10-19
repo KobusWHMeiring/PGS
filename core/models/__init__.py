@@ -7,13 +7,14 @@ not exist as far as the ORM is concerned.
 
 Slices (see MVP0_PLAN_V2.md §2):
     _core.py           User, UserRole, Role, Language
-    _certification.py  Seal, Assessment*, Certificate (MVP 1/2 forward)
+    _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _chat.py           ChatSession, ChatMessage, ChatCitation
 
 Keep each slice under the 30 KB cap (build_principles.md). When a slice
 approaches it, cut a new slice along a domain seam — do not grow the file.
 """
 
+from core.models._certification import Category, Seal
 from core.models._core import (
     ASSESSOR_CAPABILITY,
     Language,
@@ -24,8 +25,10 @@ from core.models._core import (
 
 __all__ = [
     "ASSESSOR_CAPABILITY",
+    "Category",
     "Language",
     "Role",
+    "Seal",
     "User",
     "UserRole",
 ]
