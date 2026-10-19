@@ -50,12 +50,22 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# `knowledge/extraction.py` owns the `pdftotext` call, so the fixtures and B6's ingest
+# cannot drift apart: a parser tested against one rendering and run against another is
+# exactly how v1 matched zero lines of the real document. The script is run as
+# `python scripts/extract_fixtures.py`, so the repo root has to be importable.
+sys.path.insert(0, str(REPO_ROOT))
+
+from knowledge.extraction import (  # noqa: E402  (import after sys.path)
+    normalise,
+    pdftotext_text as run_pdftotext,
+    sha256_of,
+)
 PDF_DIR = REPO_ROOT / "pgs_docs"
 FIXTURE_DIR = REPO_ROOT / "knowledge" / "tests" / "fixtures"
 
@@ -265,36 +275,9 @@ EXTRACTS: tuple[Extract, ...] = (
 )
 
 
-def run_pdftotext(pdf: Path) -> str:
-    """Full-document text with `-layout`, exactly as the extractor sees it.
-
-    In:  `pdf` — a path under ``pgs_docs/``.
-    Out: the document text, decoded UTF-8 with replacement.
-    Fails: RuntimeError if pdftotext is missing or exits non-zero.
-    """
-    try:
-        result = subprocess.run(
-            ["pdftotext", "-layout", str(pdf), "-"],
-            capture_output=True,
-            check=True,
-        )
-    except FileNotFoundError as exc:  # pragma: no cover - environment guard
-        raise RuntimeError(
-            "pdftotext not found. It is part of poppler-utils (A10's stated dependency)."
-        ) from exc
-    except subprocess.CalledProcessError as exc:  # pragma: no cover
-        raise RuntimeError(f"pdftotext failed on {pdf.name}: {exc.stderr!r}") from exc
-
-    return result.stdout.decode("utf-8", errors="replace")
-
-
 def split_pages(text: str) -> list[str]:
     """Split on form feed. Page N (1-based) is ``pages[N-1]``."""
     return text.split("\f")
-
-
-def sha256_of(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def verify_anchor(pages: list[str], extract: Extract) -> None:
@@ -322,17 +305,6 @@ def verify_anchor(pages: list[str], extract: Extract) -> None:
             + "\n  The declared page is wrong, or the PDF has changed. Do not 'fix' this by "
               "deleting the anchor — that is the check that stops the fixture being wrong."
         )
-
-
-def normalise(text: str) -> str:
-    """Make the text byte-stable across platforms and runs.
-
-    ``\\r\\n`` -> ``\\n`` (pdftotext honours the platform's line separator), and strip
-    trailing whitespace on each line. Page separators are already ``\\f`` because
-    ``split_pages`` consumed the originals.
-    """
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    return "\n".join(line.rstrip() for line in text.split("\n"))
 
 
 def main() -> int:

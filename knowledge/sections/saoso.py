@@ -24,6 +24,16 @@ earlier design:
 lettered (`a  Indicate …`) without a printed, citable numbering, and SPEC §4.5 emits
 `sub_ref` "only where the source actually enumerates a clause". Inventing
 `S20.1.1(a)` would be the same class of error as the withdrawn `B.20.1.1`.
+
+**An appendix is one section, and this is not a shortcut.** Measured on the shipped
+PDF (2026-10-19), Appendix 1 holds **two independently numbered criteria lists** — one
+for organic production (printed pp. 71–72) and one for processing (pp. 73–75) — and
+both run `1.`–`6.` with `1.1`, `1.2`, … ff. So `1.2` inside Appendix 1 is ambiguous
+between two documents that share a page range and a heading. Clause refs there would
+manufacture exactly the ambiguity reality 3 warns about, so appendix content is cited
+as `Appendix 1` plus its page, and its sub-headings stay in the body text where FTS
+finds them. The alternative — emitting `Appendix 1(1.2)` — was rejected because it
+*looks* precise while resolving to two different paragraphs.
 """
 
 from __future__ import annotations
@@ -67,11 +77,15 @@ def canonical_appendix_label(part: str, table: str | None) -> str:
     `APPENDIX 4 TABLE 2:`, `APPENDIX 5:`, `APPENDIX 6a:`); the TOC prints one. A
     citation must show the form the reader can search for, so the body is normalised
     to the TOC's shape rather than left as extracted.
+
+    The trailing letter stays **lowercase** (`Appendix 6a`, not `Appendix 6A`): `.title()`
+    upper-cases it, and the TOC — which is the canonical label's source — prints `6a`.
+    A citation that does not match the page it points at is not a citation.
     """
     label = part.title()
     if table:
-        return f"{label}. Table {table}"
-    return label
+        label = f"{label}. Table {table}"
+    return re.sub(r"([0-9])([A-Z])$", lambda m: m.group(1) + m.group(2).lower(), label)
 
 
 def appendix_number(part: str) -> str:
@@ -123,6 +137,7 @@ class SaosoParser:
         stack: list[tuple[int, str]] = []
         body: list[str] = []
         current: dict | None = None
+        in_appendix = False
 
         def flush() -> None:
             if current is None:
@@ -135,7 +150,11 @@ class SaosoParser:
                 ParsedSection(
                     section_ref=current["ref"],
                     text=text_value,
-                    heading_path=" > ".join(title for _, title in stack[:-1]),
+                    heading_path=(
+                        current["ref"]
+                        if current["kind"] == "appendix"
+                        else " > ".join(title for _, title in stack[:-1])
+                    ),
                     page=current["page"],
                     anchor=current["anchor"],
                 )
@@ -148,9 +167,20 @@ class SaosoParser:
                     body.append(line)
                 continue
 
+            depth, ref, printed_title, anchor, kind = heading
+
+            if kind == "clause" and in_appendix:
+                # Inside an appendix every clause-shaped line is body text. Appendix 1
+                # alone contains two lists that both start at `1.`, so splitting there
+                # would emit `S1.2` twice for two different paragraphs (see the module
+                # docstring). The appendix is one section; its page is the locator.
+                if current is not None and not is_furniture(line):
+                    body.append(line)
+                continue
+
             flush()
             body = []
-            depth, ref, printed_title, anchor = heading
+            in_appendix = kind == "appendix"
             while stack and stack[-1][0] >= depth:
                 stack.pop()
             stack.append((depth, printed_title))
@@ -159,28 +189,30 @@ class SaosoParser:
                 "heading": line.strip(),
                 "page": printed,
                 "anchor": anchor,
+                "kind": kind,
             }
 
         flush()
         return sections
 
-    def _as_heading(self, line: str) -> tuple[int, str, str, str] | None:
+    def _as_heading(self, line: str) -> tuple[int, str, str, str, str] | None:
         """Classify a line as a heading.
 
-        Out: `(depth, section_ref, printed_title, anchor)` or None. `depth` is the
-            number of dotted parts (so `20` is 1, `20.1.1` is 3) and exists only to
-            build `heading_path`; it is never part of the citation.
+        Out: `(depth, section_ref, printed_title, anchor, kind)` or None, where `kind`
+            is `"appendix"` or `"clause"`. `depth` is the number of dotted parts (so
+            `20` is 1, `20.1.1` is 3) and exists only to build `heading_path`; it is
+            never part of the citation.
         """
         appendix = APPENDIX.match(line)
         if appendix:
             label = canonical_appendix_label(appendix.group(1), appendix.group(2))
-            return 0, label, label, ""
+            return 0, label, label, "", "appendix"
 
         clause = CLAUSE.match(line)
         if clause:
             number = clause.group(1)
             depth = number.count(".") + 1
-            return depth, f"S{number}", line.strip(), ""
+            return depth, f"S{number}", line.strip(), "", "clause"
 
         return None
 

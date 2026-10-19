@@ -163,6 +163,38 @@ def test_appendix_headings_are_found_in_the_body():
     assert "Appendix 1" in refs
 
 
+def test_an_appendix_is_one_section_not_a_clause_list():
+    """Appendix 1 contains two lists that both start at `1.` — so it is one section.
+
+    Measured on the shipped PDF: Appendix 1's criteria for *organic production* run
+    `1.`–`6.` with `1.1`, `1.2` … on printed pp. 71–72, and its criteria for
+    *processing* do the same on pp. 73–75. Splitting on those clause-shaped lines
+    emits `S1.2` twice, for two different paragraphs that share a page range and a
+    heading — the ambiguity reality 3 warns about, manufactured by the parser.
+    """
+    sections = SaosoParser().parse(fixture("saoso_appendices"))
+    appendix_sections = [s for s in sections if s.section_ref == "Appendix 1"]
+    assert len(appendix_sections) == 1
+    assert not [s for s in sections if s.section_ref and s.section_ref.startswith("S")]
+    # The appendix's own sub-headings stay in the text, where FTS still finds them.
+    assert "1. Necessity and Alternatives" in appendix_sections[0].text
+    assert appendix_sections[0].heading_path == "Appendix 1"
+
+
+def test_appendix_labels_use_the_toc_form():
+    """`APPENDIX 6a:` in the body, `Appendix 6a` in the TOC, `Appendix 6a` as a label.
+
+    `.title()` alone produces `Appendix 6A`, which matches neither the TOC nor the page
+    it points at. `Appendix 4, TABLE 1` becomes `Appendix 4. Table 1`.
+    """
+    from knowledge.sections.saoso import canonical_appendix_label
+
+    assert canonical_appendix_label("APPENDIX 6a", None) == "Appendix 6a"
+    assert canonical_appendix_label("APPENDIX 6B", None) == "Appendix 6b"
+    assert canonical_appendix_label("APPENDIX 4", "2") == "Appendix 4. Table 2"
+    assert canonical_appendix_label("APPENDIX A", None) == "Appendix A"
+
+
 def test_the_title_case_appendix_regex_is_never_used():
     """The evidence for A10's trap, and the guard that the parser does not repeat it.
 
