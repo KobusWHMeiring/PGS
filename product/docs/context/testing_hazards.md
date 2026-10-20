@@ -676,6 +676,37 @@ this repo that is Playwright against the `file://` URL. If the browser check can
 gate (it cannot — no browser on the VPS), then run it manually and record it, and never describe
 a generated page as "verified" on the strength of a grep.
 
+### 1.31 A reply the audit will reject is cached *before* it is audited
+
+`answer_question()` writes the model's reply to the answer cache immediately after the
+model returns, and runs `audit_citations()` afterwards. A reply whose citations fail the
+audit is therefore cached anyway, and every later question with the same normalised text
+is served that same rejected reply for the whole TTL. A refusal that was one bad model
+turn becomes a refusal that reproduces exactly, which reads like a corpus gap.
+
+Evidence (dev box, 2026-10-20, live provider, the UAT's own Scenario 1 question):
+
+    attempt 1: cached=False citations=0 -> I cannot find a definitive answer in the SAOSO …
+    attempt 2: cached=True  citations=0 -> I cannot find a definitive answer in the SAOSO …
+    # and the audit's own complaint, replayed from the cache:
+    #   general-principles: sub_ref 'd.ii' does not exist in the chunk
+    # the escalation reason was NO_CITATIONS in both cases
+
+The model had produced two citations for one sentence: the real one (`S5.1.9`, quote
+"… **8** continuous hours …") and a paraphrase of it under `general-principles` with an
+invented `sub_ref` ("… **eight** continuous hours …"). The all-or-nothing audit refused
+the pair — correctly; that is the product working. The cache is what made it stick.
+
+**Consequence:** three things are indistinguishable in the record, and only one of them is
+true: "the model cited nothing", "the model cited something wrong", and "a wrong answer
+was cached an hour ago". The first two also hide a model-contract violation behind a
+reason that suggests the corpus is thin.
+
+**Rule:** cache only a reply that passed the audit, and give an audit rejection its own
+`EscalatedQuery` reason. When a grounded question refuses, read the logged
+`chat_problems` (the structlog `extra=` field) before believing the escalation reason —
+and before touching retrieval, the corpus or the prompt.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML
