@@ -45,12 +45,29 @@ MIN_CHAR_SHARE = 0.12
 
 
 def column_bands(page: str) -> list[tuple[int, int]]:
-    """Maximal vertical whitespace bands: `(start, end)` column indices, left to right.
+    """The gutters of a column-laid-out page: `(start, end)` column indices, left to right.
 
-    A band is a maximal run of column indices where the *coverage* — the fraction of
-    lines that cross the index and are blank at it — is at least `MIN_COVERAGE`, the
-    run is crossed by at least `MIN_CROSSING_LINES` lines, and both sides carry at
-    least `MIN_CHAR_SHARE` of the page's non-space characters.
+    Detection has two steps, and the second exists because the first was measurably too
+    generous.
+
+    1. **The maximal band.** A run of column indices where the *coverage* — the fraction
+       of lines that cross the index and are blank at it — is at least `MIN_COVERAGE`, the
+       run is crossed by at least `MIN_CROSSING_LINES` lines, and both sides carry at
+       least `MIN_CHAR_SHARE` of the page's non-space characters.
+    2. **Narrowed to the untouched run.** A long left-column line can overflow into the
+       first columns of the gutter and still leave coverage above 0.70, so the maximal
+       band starts *inside* the left column. `de_column` then sees text at the band and
+       keeps that line whole — which is the defect this narrowing removes. Measured on
+       the shipped BPP (2026-10-22): the maximal band produced **66** lines that a band
+       could not cut, and narrowing it to the columns no line writes in produced **13**,
+       losslessly, on 6 pages. SAOSO and OPP are unchanged, so the table pages keep the
+       bands their reviewed rows were measured with.
+
+    The narrowed run is chosen inside the maximal band and is loss-free **by
+    construction**: coverage 1.00 means no crossing line has a non-space character in
+    that column, and the only characters dropped are the ones no line writes. When no
+    column qualifies (a page whose columns really do touch, e.g. BPP pdf 3) the maximal
+    band is kept — the refinement never invents a gutter.
 
     In:  `page` — one page as `pdftotext -layout` emits it.
     Out: the bands, or `[]` when the page is not column-laid-out.
@@ -62,17 +79,27 @@ def column_bands(page: str) -> list[tuple[int, int]]:
         return []
     non_space_total = sum(len(line.replace(" ", "")) for line in lines)
 
-    def coverage(index: int) -> float:
+    def counts(index: int) -> tuple[int, int]:
+        """`(lines that cross this column, of those, how many are blank here)`."""
         crossing = blank = 0
         for line in lines:
             if not line[:index].rstrip() or not line[index:].lstrip():
-                continue  # the line does not cross this index
+                continue  # the line does not cross this column
             crossing += 1
             if index < len(line) and line[index] == " ":
                 blank += 1
+        return crossing, blank
+
+    def coverage(index: int) -> float:
+        crossing, blank = counts(index)
         if crossing < MIN_CROSSING_LINES:
             return 0.0
         return blank / crossing
+
+    def untouched(index: int) -> bool:
+        """True when every line that crosses this column is blank at it."""
+        crossing, blank = counts(index)
+        return crossing >= MIN_CROSSING_LINES and blank == crossing
 
     def side_share(index: int) -> float:
         if not non_space_total:
@@ -91,10 +118,32 @@ def column_bands(page: str) -> list[tuple[int, int]]:
             start = index
             while index < width and qualifies(index):
                 index += 1
-            bands.append((start, index))
+            bands.append(_narrow_to_untouched(start, index, untouched))
         else:
             index += 1
     return bands
+
+
+def _narrow_to_untouched(
+    start: int, end: int, untouched
+) -> tuple[int, int]:
+    """The longest run of columns inside `[start, end)` that no line writes into.
+
+    Returns the maximal band unchanged when it holds no such run — the fallback is never
+    a guess, because a narrower band than the columns allow would cut a line mid-word.
+    """
+    best: tuple[int, int] | None = None
+    index = start
+    while index < end:
+        if untouched(index):
+            run_start = index
+            while index < end and untouched(index):
+                index += 1
+            if best is None or (index - run_start) > (best[1] - best[0]):
+                best = (run_start, index)
+        else:
+            index += 1
+    return best if best is not None else (start, end)
 
 
 def de_column(page: str, *, bands: list[tuple[int, int]] | None = None) -> str:
@@ -184,8 +233,18 @@ PAGE_LAYOUT_EXCLUSIONS: dict[str, dict[int, str]] = {
 #: landed in different blocks. The measured gutter for the page is (40, 42), which makes
 #: both that rule and `the addition of animal manure (composted)` contiguous while keeping
 #: the success-gate manure sentence intact. Measured 2026-10-20.
+#:
+#: BPP PDF 3 is the second entry, and a different shape: its two columns are *vertically
+#: offset* (the right column starts lower), so only a handful of lines carry text on both
+#: sides and no column is "crossed by six lines". Detection therefore keeps the maximal
+#: band (39, 45), which begins inside the left column's long lines, and the right column's
+#: fragments (`biodiversity and cycles adapted`, `combines tradition, innovation`) were
+#: emitted in the middle of the introduction — the same defect class as G7. `(43, 44)` is
+#: the widest loss-free band, found by searching every band of width 1-7 for the fewest
+#: spanning lines; it leaves only the full-width footnote and the page stamp, which are
+#: genuinely spanning. Measured 2026-10-22.
 PAGE_LAYOUT_BANDS: dict[str, dict[int, list[tuple[int, int]]]] = {
-    "bpp": {4: [(40, 42)]},
+    "bpp": {3: [(43, 44)], 4: [(40, 42)]},
 }
 
 

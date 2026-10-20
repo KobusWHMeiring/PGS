@@ -44,6 +44,7 @@ from django.db.models import Count
 
 from knowledge.chunking import chunk_sections
 from knowledge.columns import apply_layout
+from knowledge.corpus import load_document
 from knowledge.reflow import reflow_pages
 from knowledge.embedding import embed_texts
 from knowledge.extraction import extract_pages, sha256_of
@@ -105,6 +106,10 @@ class IngestReport:
     warnings: tuple[str, ...] = ()
     layout_pages: tuple[int, ...] = ()
     reflow_pages: tuple[int, ...] = ()
+    #: sha256 of the reviewed corpus artefact this corpus was built from (D53), or "" when
+    #: the PDF was parsed at ingest. It is the only record of *which* review produced the
+    #: chunks, because the artefact is not a database row.
+    corpus_digest: str = ""
 
     @property
     def has_duplicates(self) -> bool:
@@ -188,6 +193,7 @@ def ingest_standard(
     embed: bool = True,
     provider=None,
     force: bool = False,
+    corpus_path: str | Path | None = None,
 ) -> IngestReport:
     """Ingest one PDF into one `StandardSet`.
 
@@ -195,7 +201,10 @@ def ingest_standard(
          `doc_key` — a `CORPUS_DOCUMENTS` name, or explicit metadata fields instead;
          `embed` — request embeddings (skipped with a warning when no key is present);
          `provider` — an `EmbeddingProvider`, for tests; `force` — replace an already
-         ingested document (same sha256) instead of returning the no-op report.
+         ingested document (same sha256) instead of returning the no-op report;
+         `corpus_path` — a reviewed artefact (`knowledge/corpus/<doc>.md`) whose text is
+         used instead of parsing the PDF (D53). The PDF is still hashed, still the source
+         of truth, and must match the artefact's recorded sha256.
     Out: an `IngestReport`. `created=False` means the bytes were already ingested.
          `layout_pages` names the PDF pages the column transform changed, so the
          operator's log and the tests can see the transform ran rather than inferring
@@ -257,20 +266,55 @@ def ingest_standard(
         )
 
     parser = registry.get(descriptor["section_scheme"])
-    # The page is de-columned *before* the parser sees it (D46). Layout is a measured
-    # property of a page, not a flag on the document: a new standard ingested with
-    # explicit metadata has no exclusion table and gets generic detection (D16).
-    pages, layout_pages = apply_layout(extract_pages(path), doc_key=doc_key)
-    # Hyphenated words the PDF wrapped are rejoined *after* the columns are ordered, so
-    # line adjacency is reading adjacency (D52). Before this, `non-` / `P a g e | 47` /
-    # `ruminant` was one stored sentence and no quote of it could pass the audit.
-    pages, rejoined_pages = reflow_pages(pages)
-    sections = parser.parse("\f".join(pages))
+    corpus_digest = ""
+    corpus_sections = None
+    if corpus_path is not None:
+        # The reviewed artefact is the text of record (D53). Everything downstream —
+        # chunking, embeddings, retrieval — is unchanged; only the source of the sections
+        # moves from a heuristic to a reviewed file. The PDF is still hashed, and the
+        # artefact must name these exact bytes.
+        document_corpus = load_document(corpus_path)
+        if document_corpus.sha256 != digest:
+            raise IngestError(
+                f"{Path(corpus_path).name} was built from a different PDF "
+                f"(artefact {document_corpus.sha256[:12]}, file {digest[:12]}). "
+                "Regenerate the artefact first: a transcription that is not traceable "
+                "to these bytes is not this document."
+            )
+        if doc_key and document_corpus.doc_key != doc_key:
+            raise IngestError(
+                f"{Path(corpus_path).name} is the artefact for "
+                f"{document_corpus.doc_key!r}, not {doc_key!r}."
+            )
+        corpus_sections = list(document_corpus.sections)
+        corpus_digest = document_corpus.digest
+
+    if corpus_sections is not None:
+        sections = corpus_sections
+        # Nothing is transformed here: the artefact was built (and reviewed) earlier, so
+        # the report has no layout or reflow pages to name.
+        layout_pages: tuple[int, ...] = ()
+        rejoined_pages: tuple[int, ...] = ()
+    else:
+        # The page is de-columned *before* the parser sees it (D46). Layout is a measured
+        # property of a page, not a flag on the document: a new standard ingested with
+        # explicit metadata has no exclusion table and gets generic detection (D16).
+        pages, layout_pages = apply_layout(extract_pages(path), doc_key=doc_key)
+        # Hyphenated words the PDF wrapped are rejoined *after* the columns are ordered,
+        # so line adjacency is reading adjacency (D52). Before this, `non-` /
+        # `P a g e | 47` / `ruminant` was one stored sentence and no quote could pass.
+        pages, rejoined_pages = reflow_pages(pages)
+        sections = parser.parse("\f".join(pages))
     if not sections:
         raise IngestError(
-            f"{path.name} parsed to zero sections with scheme "
-            f"{descriptor['section_scheme']!r}. Refusing to write an empty document — "
-            "this is the failure mode that invalidated MVP 0 v1."
+            f"{path.name} produced zero sections"
+            + (
+                f" from {Path(corpus_path).name}"
+                if corpus_path is not None
+                else f" with scheme {descriptor['section_scheme']!r}"
+            )
+            + ". Refusing to write an empty document — this is the failure mode that "
+            "invalidated MVP 0 v1."
         )
     chunks = chunk_sections(sections)
     # `knowledge/tables.py` replaces a printed table's auto-chunks with one chunk per
@@ -361,6 +405,7 @@ def ingest_standard(
         warnings=tuple(warnings),
         layout_pages=layout_pages,
         reflow_pages=rejoined_pages,
+        corpus_digest=corpus_digest,
     )
 
 

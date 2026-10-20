@@ -34,7 +34,16 @@ PDFTOTEXT_ARGS = ("-layout",)
 #: rendering, because the parsers were written against `-layout`.
 PDFTOTEXT_TABLE_ARGS = ("-table",)
 
-_MODES = {"layout": PDFTOTEXT_ARGS, "table": PDFTOTEXT_TABLE_ARGS}
+#: The third extraction mode: the producer's own content-stream order. It is not the
+#: corpus contract — spacing between text-show operations is lost, so words glue together
+#: (`Sourcedlocallyfromneighbouring`) — but it is the only *order* oracle available without
+#: a layout library, and it is a character-for-character permutation of `-layout` on every
+#: page of the four governed documents (measured 2026-10-22). `scripts/build_corpus.py`
+#: uses it only where it is word-clean, as a per-page fallback for columns that defeat the
+#: geometry (D53).
+PDFTOTEXT_RAW_ARGS = ("-raw",)
+
+_MODES = {"layout": PDFTOTEXT_ARGS, "table": PDFTOTEXT_TABLE_ARGS, "raw": PDFTOTEXT_RAW_ARGS}
 
 #: wkhtmltopdf/poppler separate pages with a form feed. It is kept in the text rather
 #: than consumed here, because page-awareness is a requirement of B2/B3 and of the
@@ -53,8 +62,7 @@ def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
     In:  `pdf_path` — a path to a PDF; `mode` — `"layout"` (the corpus contract) or
          `"table"` (row-aligned, for reading and verifying a printed table).
     Out: the text as `pdftotext <mode>` emits it, decoded UTF-8 with replacement.
-    Fails: `ExtractionError` when `pdftotext` is missing or exits non-zero, naming the
-        file — a missing poppler install must not read as "the document is empty" —
+    Fails: `ExtractionError` when `pdftotext` is missing or exits non-zero, naming the        file — a missing poppler install must not read as "the document is empty" —
         and `ValueError` for an unknown mode, so a typo cannot silently fall back to
         the wrong rendering.
     """
@@ -111,6 +119,7 @@ __all__ = [
     "ExtractionError",
     "PDFTOTEXT",
     "PDFTOTEXT_ARGS",
+    "PDFTOTEXT_RAW_ARGS",
     "PDFTOTEXT_TABLE_ARGS",
     "extract_pages",
     "normalise",

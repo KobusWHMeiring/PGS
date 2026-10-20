@@ -66,6 +66,15 @@ class Command(BaseCommand):
             help="Skip embeddings (chunks are written; retrieval stays lexical).",
         )
         parser.add_argument(
+            "--from-corpus",
+            dest="corpus_path",
+            help=(
+                "Read the text from a reviewed artefact (knowledge/corpus/<doc>.md) "
+                "instead of parsing the PDF (D53). The PDF is still hashed and must "
+                "match the artefact's recorded sha256."
+            ),
+        )
+        parser.add_argument(
             "--force",
             action="store_true",
             help=(
@@ -90,6 +99,7 @@ class Command(BaseCommand):
                 section_scheme=options.get("section_scheme"),
                 embed=options["embed"],
                 force=options["force"],
+                corpus_path=options.get("corpus_path"),
             )
         except IngestError as error:
             # `CommandError` is what makes the exit status non-zero: a failed ingest
@@ -97,10 +107,12 @@ class Command(BaseCommand):
             raise CommandError(str(error)) from error
 
         state = "created" if report.created else "already present"
+        source = "corpus" if report.corpus_digest else "pdf"
         self.stdout.write(
             f"document #{report.document_id} {state}: {report.chunk_count} chunks, "
             f"{len(report.layout_pages)} layout pages, "
-            f"{len(report.reflow_pages)} reflow pages, embedded={report.embedded}"
+            f"{len(report.reflow_pages)} reflow pages, "
+            f"source={source}, embedded={report.embedded}"
         )
         if report.duplicate_refs:
             self.stdout.write(

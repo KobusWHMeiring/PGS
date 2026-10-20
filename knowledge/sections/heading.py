@@ -53,6 +53,32 @@ MIN_HEADING = 4
 MAX_HEADING = 80
 
 
+def page_stamp(page_text: str) -> int | None:
+    """The page number a heading-only document prints, or None.
+
+    Two shapes exist in the corpus: a labelled footer (`Page | 6`, SAOSO and the OPP,
+    read by `page_number`) and a bare number (the certification landscape prints `6`, and
+    the BPP prints `02` at the foot of a page). The bare stamp is searched for anywhere,
+    not just at the end: the stamp is page furniture, and re-ordering a two-column page
+    moves it into the middle. Searching only the tail found it before the column
+    transform and lost it after, silently nulling every landscape citation (D42, hazard
+    §1.21).
+
+    Public because the corpus generator (D53) has to produce the same `page` the parser
+    does — two implementations of "the printed page" would drift, and the artefact's
+    equivalence test would be checking the wrong number.
+    """
+    labelled = page_number(page_text)
+    if labelled is not None:
+        return labelled
+    stamps = [
+        int(line.strip())
+        for line in page_text.splitlines()
+        if BARE_PAGE.match(line.strip())
+    ]
+    return stamps[-1] if stamps else None
+
+
 class HeadingParser:
     """Parse a heading-only document into anchored sections."""
 
@@ -137,22 +163,8 @@ class HeadingParser:
 
     @staticmethod
     def _page_stamp(page_text: str) -> int | None:
-        """`Page | 6` (SAOSO) or a bare `6` (the certification landscape).
-
-        The bare stamp is searched for anywhere, not just at the end: the stamp is
-        page furniture, and re-ordering a two-column page moves it into the middle.
-        Searching only the tail found it before the column transform and lost it after,
-        silently nulling every landscape citation (D42).
-        """
-        labelled = page_number(page_text)
-        if labelled is not None:
-            return labelled
-        stamps = [
-            int(line.strip())
-            for line in page_text.splitlines()
-            if BARE_PAGE.match(line.strip())
-        ]
-        return stamps[-1] if stamps else None
+        """Kept as the method the parser calls; the logic lives in `page_stamp`."""
+        return page_stamp(page_text)
 
     @staticmethod
     def _repeated_headings(pages_segments: list[list[list[str]]]) -> set[str]:
@@ -191,4 +203,4 @@ class HeadingParser:
         return not is_furniture(stripped) and not BARE_PAGE.match(stripped)
 
 
-__all__ = ["HeadingParser"]
+__all__ = ["HeadingParser", "page_stamp"]

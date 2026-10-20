@@ -43,7 +43,11 @@ PDFS = {
 #: Measured 2026-10-21 on the four governed documents, after `de_column`. Every one is a
 #: genuine compound the PDF wrapped at a line end: `post-harvest`, `in-country`,
 #: `non-ruminant`, `self-assessment`, `cobalt-sulphate`, `semi-sparkling`, …
-EXPECTED_WRAPS = {"saoso": 12, "opp": 4, "bpp": 3, "landscape": 1}
+#: Re-measured 2026-10-22 after `column_bands` was narrowed to the untouched run: BPP
+#: went 3 -> 5 because two more wrapped words became adjacent once the gutter stopped
+#: cutting inside the left column. SAOSO and OPP are unchanged, which is the point of
+#: narrowing inside the detected band rather than re-detecting.
+EXPECTED_WRAPS = {"saoso": 12, "opp": 4, "bpp": 5, "landscape": 1}
 
 
 @pytest.fixture(scope="module")

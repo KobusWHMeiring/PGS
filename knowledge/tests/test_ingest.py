@@ -24,6 +24,7 @@ zero and any reappearance is a parser regression, not a known cost.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -528,7 +529,7 @@ def test_a_failed_embedding_under_force_leaves_the_old_corpus(saoso_pdf, standar
 #: Measured on the shipped PDFs (test_reflow.py pins the same numbers beside the pure
 #: function). Literal here because the report is how an operator sees the transform ran:
 #: a no-op that reported nothing would otherwise look like a clean ingest.
-EXPECTED_REFLOW_PAGES = {"saoso": 12, "opp": 4, "bpp": 3, "landscape": 1}
+EXPECTED_REFLOW_PAGES = {"saoso": 12, "opp": 4, "bpp": 5, "landscape": 1}
 
 
 def flat(text: str) -> str:
@@ -592,3 +593,115 @@ def test_no_chunk_in_any_document_carries_the_printed_page_footer(standard_set):
     ]
     assert offenders == []
     assert DocumentChunk.objects.count() > 300, "nothing was ingested"
+
+
+# --- D53: ingesting the reviewed corpus artefact -----------------------------
+
+CORPUS_ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "bpp.md"
+
+
+def flat_text(text: str) -> str:
+    return " ".join(text.split())
+
+
+def test_the_artefact_exists_and_is_the_one_this_document_reviews():
+    assert CORPUS_ARTEFACT.exists(), "the BPP artefact is the spike's deliverable"
+
+
+def test_ingesting_from_the_artefact_uses_its_sections(standard_set):
+    report = ingest_standard(
+        pdf_path=PDFS["bpp"],
+        standard_set=standard_set,
+        doc_key="bpp",
+        embed=False,
+        corpus_path=CORPUS_ARTEFACT,
+    )
+    assert report.created is True
+    assert report.chunk_count == 9
+    assert report.corpus_digest == hashlib.sha256(CORPUS_ARTEFACT.read_bytes()).hexdigest()
+    assert report.layout_pages == () and report.reflow_pages == (), (
+        "nothing is transformed at ingest when the text is reviewed data"
+    )
+    assert DocumentChunk.objects.filter(section_ref__isnull=False).count() == 0
+    assert DocumentChunk.objects.filter(anchor="general-principles").exists()
+
+
+def test_the_artefact_and_the_pdf_produce_the_same_document(db):
+    """The migration's safety net: switching a document to its artefact may not move a
+    section, a page or a locator. Only the text a review corrected may differ."""
+    from knowledge.models import StandardSet
+
+    from_pdf = StandardSet.objects.create(code="bpp-pdf", label="PDF", is_default=True)
+    from_corpus = StandardSet.objects.create(code="bpp-corpus", label="Corpus")
+    ingest_standard(
+        pdf_path=PDFS["bpp"], standard_set=from_pdf, doc_key="bpp", embed=False
+    )
+    ingest_standard(
+        pdf_path=PDFS["bpp"],
+        standard_set=from_corpus,
+        doc_key="bpp",
+        embed=False,
+        corpus_path=CORPUS_ARTEFACT,
+    )
+
+    def identity(standard_set):
+        return sorted(
+            (chunk.section_ref, chunk.anchor, chunk.page, chunk.heading_path)
+            for chunk in DocumentChunk.objects.filter(document__standard_set=standard_set)
+        )
+
+    assert identity(from_pdf) == identity(from_corpus)
+    assert (
+        DocumentChunk.objects.filter(document__standard_set=from_pdf).count()
+        == DocumentChunk.objects.filter(document__standard_set=from_corpus).count()
+    )
+
+
+def test_the_g7_sentence_is_quotable_from_a_chunk_built_from_the_artefact(standard_set):
+    """G7's acceptance: the prohibition is one contiguous, citable passage."""
+    ingest_standard(
+        pdf_path=PDFS["bpp"],
+        standard_set=standard_set,
+        doc_key="bpp",
+        embed=False,
+        corpus_path=CORPUS_ARTEFACT,
+    )
+    carriers = [
+        chunk
+        for chunk in DocumentChunk.objects.all()
+        if "The use of synthetic fertilisers (agro-chemicals) is expressly prohibited."
+        in flat_text(chunk.text)
+    ]
+    assert len(carriers) == 1
+
+
+def test_an_artefact_for_another_pdf_is_refused(standard_set, tmp_path):
+    """A transcription that does not name these bytes is not this document."""
+    text = CORPUS_ARTEFACT.read_text(encoding="utf-8")
+    tampered = tmp_path / "bpp.md"
+    tampered.write_text(
+        text.replace(
+            "sha256: " + CORPUS_ARTEFACT.read_text(encoding="utf-8").split("sha256: ")[1][:64],
+            "sha256: " + "0" * 64,
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(IngestError, match="built from a different PDF"):
+        ingest_standard(
+            pdf_path=PDFS["bpp"],
+            standard_set=standard_set,
+            doc_key="bpp",
+            embed=False,
+            corpus_path=tampered,
+        )
+
+
+def test_an_artefact_for_another_document_is_refused(standard_set):
+    with pytest.raises(IngestError, match="artefact for"):
+        ingest_standard(
+            pdf_path=PDFS["bpp"],
+            standard_set=standard_set,
+            doc_key="opp",
+            embed=False,
+            corpus_path=CORPUS_ARTEFACT,
+        )
