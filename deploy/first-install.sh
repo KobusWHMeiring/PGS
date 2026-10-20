@@ -93,7 +93,21 @@ if [[ "$(printf '%s\n3.12\n' "$PY_VER" | sort -V | head -n1)" != "3.12" ]]; then
     echo "ERROR: need Python >= 3.12, found $PY_VER" >&2
     exit 1
 fi
-echo "[1/9] Python $PY_VER"
+
+# poppler's `pdftotext` is the corpus's only reader. `knowledge/extraction.py`
+# shells out to `pdftotext -layout` for every governed PDF, so a box without it
+# installs, migrates and serves pages perfectly — and cannot ingest the standard,
+# which means /ask/ refuses every question while the site looks finished. Checked
+# here rather than at ingest time, where the operator has no reason to be looking.
+if ! command -v pdftotext >/dev/null 2>&1; then
+    echo "ERROR: pdftotext not found (package poppler-utils)." >&2
+    echo "  knowledge/extraction.py reads the governing PDFs with 'pdftotext -layout'." >&2
+    echo "  Without it the corpus cannot be ingested and /ask/ answers nothing." >&2
+    echo "" >&2
+    echo "      sudo apt-get install -y poppler-utils" >&2
+    exit 1
+fi
+echo "[1/9] Python $PY_VER + pdftotext $(pdftotext -v 2>&1 | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo '')"
 
 # 2. Checkout ----------------------------------------------------------------
 echo "[2/9] Checkout at $APP_DIR"

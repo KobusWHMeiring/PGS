@@ -19,6 +19,19 @@ machine has no key for that box, so it cannot run them for you.
 
 ## 0. Before you start
 
+Two system packages are required on the box — Debian/Ubuntu does not pull either in
+with Python, and both fail in ways that look like a code problem:
+
+```bash
+sudo apt-get install -y postgresql-16-pgvector   # CREATE EXTENSION vector (migrate)
+sudo apt-get install -y poppler-utils           # pdftotext (corpus ingest)
+```
+
+- **pgvector** — without it `migrate` dies on `CREATE EXTENSION vector`.
+- **poppler-utils** — without it the site installs and serves perfectly but the
+  corpus can never be ingested, so `/ask/` refuses every question. `first-install.sh`
+  checks for both before doing any work and names the missing package.
+
 DNS must already resolve, or certbot fails at step 6 of the install:
 
 ```bash
@@ -112,6 +125,16 @@ script actually run.
 `/ask/` answers only from an ingested corpus, and ingestion makes embedding calls
 (340 chunks at the time of writing), so it is a deliberate step rather than part of
 every deploy. It is idempotent on each PDF's sha256.
+
+**Set `GEMINI_API_KEY` first.** Ingesting without it still writes all 340 chunks —
+with `embedding = NULL` — and because the sha256 then matches, a later run reports
+"already ingested" and writes nothing. Retrieval stays lexical-only until you
+re-ingest with `--force`, which is a full re-embed. Check the key is present before
+the first ingest:
+
+```bash
+sudo grep -c '^GEMINI_API_KEY=.' /home/carbonplanner/apps/pgs/.env   # must print 1
+```
 
 ```bash
 sudo -u carbonplanner bash -c 'set -a; . /home/carbonplanner/apps/pgs/.env; set +a; \
