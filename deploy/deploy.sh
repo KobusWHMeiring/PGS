@@ -58,9 +58,12 @@ set -a; . "$ENV_FILE"; set +a
 : "${DATABASE_URL:?DATABASE_URL missing from $ENV_FILE}"
 
 run_manage() {
+    # Same `cd` as first-install.sh: this script already `cd`s to APP_DIR, but the
+    # helper must not depend on that. `publish_documents` resolves `pgs_docs/`
+    # relative to the process CWD.
     sudo -u "$APP_USER" bash -c \
-        'set -a; . "$1"; set +a; exec "$2" "$3" "${@:4}"' _ \
-        "$ENV_FILE" "$APP_DIR/venv/bin/python" "$MANAGE_DIR/manage.py" "$@"
+        'set -a; . "$1"; set +a; cd "$2" || exit 1; exec "$3" "$2/manage.py" "${@:4}"' _ \
+        "$ENV_FILE" "$MANAGE_DIR" "$APP_DIR/venv/bin/python" "$@"
 }
 
 # /health/ through the unix socket, with the headers nginx sends. 200 AND a body

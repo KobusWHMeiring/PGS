@@ -49,9 +49,14 @@ fi
 echo "=== First-time install: $APP_NAME ($DOMAIN) ==="
 
 run_manage() {
+    # `cd "$MANAGE_DIR"` is not cosmetic. `publish_documents` resolves its source
+    # directory relative to the process CWD, and systemd sets WorkingDirectory to
+    # the app dir while `sudo bash /home/.../first-install.sh` inherits the
+    # caller's `~`. Without this line the first install failed at publish_documents
+    # with "pgs_docs/... is not in the tree" while all eight PDFs sat in the checkout.
     sudo -u "$APP_USER" bash -c \
-        'set -a; . "$1"; set +a; exec "$2" "$3" "${@:4}"' _ \
-        "$APP_DIR/.env" "$APP_DIR/venv/bin/python" "$MANAGE_DIR/manage.py" "$@"
+        'set -a; . "$1"; set +a; cd "$2" || exit 1; exec "$3" "$2/manage.py" "${@:4}"' _ \
+        "$APP_DIR/.env" "$MANAGE_DIR" "$APP_DIR/venv/bin/python" "$@"
 }
 
 # /health/ must be reached the way nginx reaches it: over the unix socket, with the

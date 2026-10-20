@@ -39,9 +39,17 @@ from core.models import PublicDocument
 
 logger = logging.getLogger(__name__)
 
-#: The shipped documents. `PDf`s only: D22's workbook is not here until the committee
+#: The shipped documents. `PDF`s only: D22's workbook is not here until the committee
 #: confirms it, and `content_inventory.md` §6.8's pledge downloads are not D22 items.
-DOCS_SOURCE_DIR = Path("pgs_docs")
+#:
+#: Anchored to `BASE_DIR`, NOT a bare `Path("pgs_docs")`. A relative path resolves
+#: against the process's working directory, and the two callers that matter do not
+#: share one: systemd sets `WorkingDirectory` to the app dir, while a provisioning
+#: script run as `sudo bash /home/carbonplanner/apps/pgs/deploy/first-install.sh`
+#: inherits the caller's `~`. The first production install failed exactly here —
+#: `CommandError: saoso-standard-v2.1: pgs_docs/saoso-version-2.1-2026.pdf is not in
+#: the tree` — with all eight PDFs present in the checkout.
+DOCS_SOURCE_DIR = Path(settings.BASE_DIR) / "pgs_docs"
 
 #: Under MEDIA_ROOT. The `public/` segment is the boundary from PRIVATE_MEDIA_ROOT.
 PUBLIC_SUBDIR = Path("public") / "documents"
@@ -232,8 +240,8 @@ def publish_documents(source_dir: Path | None = None) -> PublishResult:
         source = origin / spec.source
         if not source.is_file():
             raise DocumentSourceMissing(
-                f"{spec.code}: {source} is not in the tree. The published copy would "
-                f"have nothing to serve, and /documents/{spec.code}/ would 503."
+                f"{spec.code}: {source.resolve()} is not in the tree. The published copy "
+                f"would have nothing to serve, and /documents/{spec.code}/ would 503."
             )
 
         relative = (PUBLIC_SUBDIR / f"{spec.code}{source.suffix}").as_posix()
