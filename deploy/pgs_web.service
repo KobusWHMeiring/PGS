@@ -1,0 +1,41 @@
+[Unit]
+Description=gunicorn for pgs (organicguarantee.africa)
+Documentation=https://github.com/KobusWHMeiring/PGS
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service
+
+[Service]
+User=carbonplanner
+Group=carbonplanner
+WorkingDirectory=/home/carbonplanner/apps/pgs
+EnvironmentFile=/home/carbonplanner/apps/pgs/.env
+Environment=PYTHONUNBUFFERED=1
+
+ExecStartPre=/bin/mkdir -p /var/log/gunicorn
+# A unix socket left behind by a killed worker is not a listening socket, and
+# gunicorn will refuse to bind over it. Removing it here is the difference between
+# a restart that works and a unit that fails with "Address already in use" for a
+# file that nothing is listening on.
+ExecStartPre=/bin/rm -f /home/carbonplanner/apps/pgs/pgs.sock
+
+# Do NOT add `--umask`. gunicorn's default (0) leaves the socket mode 0777 so
+# nginx, which runs as www-data and is not in the `carbonplanner` group, can
+# connect. Tightening it to 0770 produces a 502 that looks like a dead app.
+ExecStart=/home/carbonplanner/apps/pgs/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/home/carbonplanner/apps/pgs/pgs.sock \
+    --access-logfile /var/log/gunicorn/pgs_access.log \
+    --error-logfile /var/log/gunicorn/pgs_error.log \
+    --timeout 60 \
+    --graceful-timeout 30 \
+    --max-requests 1000 \
+    --max-requests-jitter 50 \
+    pgs.wsgi:application
+
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

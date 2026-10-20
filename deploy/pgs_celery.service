@@ -1,0 +1,34 @@
+[Unit]
+Description=celery worker for pgs (organicguarantee.africa)
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service
+
+[Service]
+User=carbonplanner
+Group=carbonplanner
+WorkingDirectory=/home/carbonplanner/apps/pgs
+EnvironmentFile=/home/carbonplanner/apps/pgs/.env
+Environment=PYTHONUNBUFFERED=1
+
+# `-A pgs` resolves pgs/__init__.py, which exports `celery_app`. That is the same
+# app object `/health/` pings — two apps would let the health check report
+# `celery_worker: ok` while the worker the site actually uses is dead.
+#
+# `--max-tasks-per-child` bounds the damage from a leak in an ingest or embedding
+# task: the child is recycled instead of the worker growing until the box swaps.
+ExecStart=/home/carbonplanner/apps/pgs/venv/bin/celery \
+    -A pgs worker \
+    --loglevel=INFO \
+    --concurrency=2 \
+    --max-tasks-per-child=200
+
+# `always`, not `on-failure`: a worker that exits 0 because Redis went away is
+# still absent, and `/health/` is a readiness probe — it returns 503 until a
+# worker answers `control.ping()`. Without this unit the deploy's own health
+# check fails and the site reports itself unhealthy with every page still served.
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

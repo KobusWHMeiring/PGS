@@ -659,6 +659,35 @@ words; `knowledge.services.search_terms` searches the **rarest** term first and 
 fallback second, then de-duplicates. Test both with a natural question, not only with
 the phrases the standard happens to contain.
 
+### 2.5 `manage.py check --deploy` exits 0 while the deployment is unsafe
+
+Django's `check` command has a `--fail-level` option whose default is **ERROR**.
+Every deployment security check — W004 (no HSTS), W008 (no SSL redirect), W012/W016
+(insecure cookies), **W018 (`DEBUG=True` in deployment)** — is a *warning*, so the
+command prints a page of warnings and exits **0**.
+
+Evidence (`Django==5.2.18`):
+
+```
+$ DJANGO_DEBUG=1 manage.py check --deploy;                     echo $?
+System check identified 5 issues (0 silenced).                0
+$ DJANGO_DEBUG=1 manage.py check --deploy --fail-level WARNING; echo $?
+System check identified 5 issues (0 silenced).                1
+```
+
+**Consequence:** a deploy script written as `if ! manage.py check --deploy; then
+abort; fi` is a gate that can never go red. It reports "checked" in every log while
+the exact misconfiguration it exists to catch — a production site serving tracebacks
+with `DEBUG=True` — passes straight through. This is the same class as §2.1: the
+tool ran, exited successfully, and enforced nothing.
+
+**Rule:** pass `--fail-level WARNING` wherever `check --deploy` gates a release
+(`deploy/first-install.sh`, `deploy/deploy.sh`). If you deliberately decline one
+warning — this project declines `security.W021` (HSTS preload is irreversible and
+this is not yet the group's forever host) — silence it **by id** in
+`SILENCED_SYSTEM_CHECKS`, never by raising the fail level. Then prove the guard can
+fail: set `DJANGO_DEBUG=1`, watch the command exit non-zero, and put it back.
+
 ---
 
 ## 3. This machine (Windows, Docker Desktop) — and shell traps

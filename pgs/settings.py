@@ -93,6 +93,15 @@ DEBUG = env_bool("DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
 
+# CSRF's Origin check needs the scheme to match. Behind nginx the request reaches
+# Django over plain HTTP on a unix socket, so the origin the browser sends
+# (`https://…`) matches no host Django can infer. Without this list every POST —
+# the chatbot form, admin logins — is rejected with "Origin checking failed" while
+# GETs work, which reads as a broken form rather than a missing setting.
+#
+# Empty is correct for a dev box: same-origin requests match the Host header.
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", default="")
+
 WSGI_APPLICATION = "pgs.wsgi.application"
 ASGI_APPLICATION = "pgs.asgi.application"
 
@@ -285,6 +294,51 @@ STATIC_ROOT = Path(env("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 STATICFILES_DIRS = [BASE_DIR / "core" / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# --- TLS, cookies and proxy trust -------------------------------------------
+#
+# Gated on `DJANGO_TLS`, NOT on `not DEBUG`, and the difference is not pedantry.
+# Django's test runner forces `DEBUG=False` while the suite runs, so a `not DEBUG`
+# block switches `SECURE_SSL_REDIRECT` on underneath pytest: every test-client GET
+# becomes a 301 and 86 tests fail on a status code rather than on their subject.
+# The first version of this block did exactly that, and passed only because a
+# developer's shell happened to export `DJANGO_DEBUG=True` — a green run for the
+# wrong reason.
+#
+# So TLS is named as a property of the *deployment*, written into `.env` by
+# deploy/first-install.sh. Forgetting it fails closed: with TLS off, `manage.py
+# check --deploy --fail-level WARNING` reports W004/W008/W012/W016 and the deploy
+# aborts before it restarts anything.
+#
+# `SECURE_PROXY_SSL_HEADER` is the load-bearing one. nginx terminates TLS and
+# forwards the request over a unix socket, so without it Django believes every
+# request is insecure; with `SECURE_SSL_REDIRECT` on, that produces an infinite
+# 301 loop. A loop looks *alive* to a proxy check that only asks "did something
+# answer", which is why this is a settings bug that presents as a healthy site.
+
+DJANGO_TLS = env_bool("DJANGO_TLS", default=False)
+
+if DJANGO_TLS:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # One year. `PRELOAD` stays False deliberately: submitting the domain to the
+    # browser preload list is effectively irreversible, and organicguarantee.africa
+    # is not yet the group's forever host. Include-subdomains is on because the
+    # certificate covers `www` and nothing else is served over plain HTTP here.
+    SECURE_HSTS_SECONDS = 31_536_000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = False
+
+    # W021 asks for PRELOAD once HSTS is on. Declined deliberately, above, so the
+    # warning is silenced BY ID rather than by relaxing the gate: deploy.sh runs
+    # `check --deploy --fail-level WARNING`, and that flag is the only reason a
+    # warning can block a deploy at all. Silence one by name and every other
+    # security warning — W004 HSTS off, W008 no HTTPS redirect, W012/W016 insecure
+    # cookies, W018 DEBUG still True — keeps failing the build.
+    SILENCED_SYSTEM_CHECKS = ["security.W021"]
 
 
 # --- Observability ----------------------------------------------------------
