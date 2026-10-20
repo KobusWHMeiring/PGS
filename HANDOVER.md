@@ -7,8 +7,14 @@ and the answer-coverage session — **2026-10-21**.
 **Repo state:** `main`, **51 commits**. **The working tree is NOT clean**: D, the
 column-transform work and the 2026-10-21 answer-coverage work are uncommitted (see §7).
 `verify.sh` green at **705 tests** (619 before D52, 652 before D53); `python -m pytest tests/e2e -q` green at 34 more.
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
-never pushed.** No CI (see §3).
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed**. It was
+"configured but never pushed" until 2026-10-20; `main` is now on GitHub and the VPS
+clones from it. No CI (see §3).
+**Live:** `https://organicguarantee.africa` on the homtini VPS (the MVP 0 surface:
+site, `/documents/`, grounded `/ask/`, 340 embedded chunks). The install, the five
+defects it exposed and everything still outstanding are recorded in
+`product/backlog/In Progress/VPS_DEPLOYMENT.md`. Read that before touching
+`deploy/` or redeploying.
 
 ---
 
