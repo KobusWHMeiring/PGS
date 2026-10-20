@@ -179,15 +179,19 @@ fi
 DB_PASS_FROM_URL="${DATABASE_URL#*://}"
 DB_PASS_FROM_URL="${DB_PASS_FROM_URL#*:}"
 DB_PASS_FROM_URL="${DB_PASS_FROM_URL%%@*}"
-TMP_SQL="$(mktemp)"
+# The SQL carries the generated password, so it is piped into psql rather than
+# written to a file. `mktemp` creates a 0600 file owned by root; `sudo -u postgres`
+# then cannot read it, and the install dies with
+#     psql: error: /tmp/tmp.XXXX: Permission denied
+# before the role or either database exists. Streaming keeps the password out of
+# /tmp as well. `\connect` works from stdin: psql processes it as it reads.
 sed -e "s|__APP_NAME__|$APP_NAME|g" \
     -e "s|__DB_NAME__|$DB_NAME|g" \
     -e "s|__DB_VERIFY_NAME__|$DB_VERIFY_NAME|g" \
     -e "s|__DB_USER__|$DB_USER|g" \
     -e "s|__DB_PASSWORD__|$DB_PASS_FROM_URL|g" \
-    "$APP_DIR/deploy/psql_setup.sql" > "$TMP_SQL"
-sudo -u postgres psql -v ON_ERROR_STOP=1 -q -f "$TMP_SQL"
-rm -f "$TMP_SQL"
+    "$APP_DIR/deploy/psql_setup.sql" \
+    | sudo -u postgres psql -v ON_ERROR_STOP=1 -q
 
 # 6. Dependencies ------------------------------------------------------------
 echo "[6/9] Installing dependencies"
