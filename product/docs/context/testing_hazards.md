@@ -577,6 +577,105 @@ the page (`knowledge/reflow.py`, and `PAGE_FOOTER` in `FURNITURE`), never the au
 not the prompt first. Measure the corpus before blaming the model, then verify the fix
 with `scripts/probe_chat.py` on the question that failed.
 
+### 1.26 `-raw` glues words, but it is a pure permutation of `-layout`
+
+`pdftotext -raw` keeps the producer's content-stream order — the only order oracle
+available without a layout library — and drops the spaces between text-show operations,
+so `Sourced locally from neighbouring` becomes `Sourcedlocallyfromneighbouring`. Two
+measurements (2026-10-22) turn that from a curiosity into a usable tool:
+
+- **All 139 pages** of the four governed documents are **character-for-character
+  permutations** of their `-layout` rendering (multiset of non-space characters, equality
+  per page). `-raw` invents and loses nothing; only spacing and order differ.
+- The glue is **repairable**: split each glued token into the run of consecutive
+  `-layout` words that concatenates to exactly that token. On BPP, 11 of 13 pages then have
+  *identical word multisets*, and those are the pages whose columns defeat the band
+  detector (pdf 3, 6, 9).
+
+**Rule:** use `-raw` as an *order* oracle and gate it mechanically — a page may be drafted
+from `-raw` only when, after glue repair, its word multiset equals `-layout`'s. Never ship
+`-raw` text unrepaired, and never repair a glue the `-layout` words do not contain: an
+unrepairable token means the page is not clean, so fall back to geometry.
+
+### 1.27 `write_text` writes CRLF on Windows, so the artefact differs per platform
+
+`Path.write_text(text)` opens the file in text mode, and on Windows that translates every
+`
+` to `
+`. A corpus artefact generated on the dev box therefore has different bytes
+— and a different sha256 — from the same artefact generated on the VPS, which defeats the
+whole point of recording the digest. It went unnoticed at first because the *reader*'s
+regexes tolerate `
+` and the tests pass on either.
+
+**Rule:** write generated text with `open(..., newline="")`, exactly as
+`scripts/extract_fixtures.py` already did for the fixtures. Assert `"
+" not in text`
+in a test if the artefact's digest is ever trusted.
+
+### 1.28 A paragraph crosses the page break, and "remove this text" is not `str.replace`
+
+Two small traps met while building the D53 traceability guard:
+
+1. **A block's page is a *start* page.** The BPP manure sentence spans PDF pages 4→5, and
+   `test_the_bpp_manure_sentence_is_quotable_from_one_chunk` requires one chunk. Splitting
+   the paragraph at the page break would insert the chunker's favourite boundary into the
+   middle of the most-quoted sentence in the corpus. So the provenance check is "a
+   contiguous slice of the pages from here on", not "contained in one page".
+2. **`str.replace` for a dropped token eats the wrong occurrence.** Removing the bare page
+   stamp `02` from a page with `text.replace("02", "")` also mangles `2020` and `2022`.
+   Remove *occurrences by position* (`re.finditer` + slice), or the test starts asserting
+   against text the PDF never had.
+
+**Rule:** a generated artefact's provenance is a page **range**, and any character removal
+in a guard is done at a known position, never by plain substring replacement.
+
+### 1.29 A string "present" in a JSON payload is not present in the file
+
+The UAT runner embeds each scenario's raw markdown in a `<script type="application/json">`
+payload, and a test asserted every `Judgement:` clause appeared *verbatim* in the artefact.
+Three scenarios failed that check while the page was perfectly correct: `json.dumps` escapes a
+newline as the two characters `\` `n`, and those judgements contain bullet lists, so the
+multi-line string is not a substring of the file at all.
+
+Evidence:
+    judgments missing: [7, 8, 10]
+    # scenario 7's judgement is prose followed by four `* ` bullets
+
+**Consequence:** the obvious repair is to weaken the assertion until it passes, which is how a
+verbatim guarantee becomes a decoration. The mirror-image trap is asserting against a payload
+that the *same parser* produced, which proves only that the parser is deterministic.
+
+**Rule:** compare against the **source file**, not against the payload — take the judgement's
+lines out of the raw markdown, strip the marks the renderer consumes, and assert the words
+appear in the page's visible text. Check the payload separately, after `json.loads`, for the
+character-for-character equality. Two tests, two different questions.
+
+### 1.30 A self-contained HTML whose script does not parse passes every grep-based check
+
+The UAT artefact is **server-rendered**: the cards, the judgement text, the payload and the
+counts are all in the HTML before any script runs. So when extracting the page's JavaScript into
+`scripts/uat_page.py` left the original IIFE's closing `})(`/`})();` inside the script body *and*
+wrapped it a second time, seventeen tests — including "no network", "every judgement is
+rendered", "no markdown left", "one card per scenario" — stayed green. The page was completely
+inert: no autosave, no PASS button, no export.
+
+Evidence:
+    pageerror: Unexpected token '}'
+    DATA type: undefined          # the payload script never executed
+    progress html: ''             # progress() never ran
+    # 17 structural assertions green throughout
+
+**Consequence:** a file that "opens" proves nothing. Every assertion about a generated page's
+*content* can hold while the page does nothing, and the reviewer discovers it as a dead button
+with no error on screen.
+
+**Rule:** load the artefact in a real browser and assert something that only the script can
+produce — a console with no `pageerror`, a computed progress line, an export that downloads. In
+this repo that is Playwright against the `file://` URL. If the browser check cannot live in the
+gate (it cannot — no browser on the VPS), then run it manually and record it, and never describe
+a generated page as "verified" on the strength of a grep.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML
@@ -687,6 +786,27 @@ warning — this project declines `security.W021` (HSTS preload is irreversible 
 this is not yet the group's forever host) — silence it **by id** in
 `SILENCED_SYSTEM_CHECKS`, never by raising the fail level. Then prove the guard can
 fail: set `DJANGO_DEBUG=1`, watch the command exit non-zero, and put it back.
+
+### 2.6 A test outside `testpaths` is a test nobody runs
+
+`pytest.ini` sets `testpaths = core knowledge`, so a new `tests/tools/` directory full of
+passing tests is not collected by `pytest` at all. The gate stays green, the coverage looks
+higher than it is, and the guard the new tests were written for is decoration.
+
+Evidence:
+    # pytest.ini, before:
+    testpaths = core knowledge
+    $ python -m pytest -q          # 705 passed  — tests/tools/ never mentioned
+    $ python -m pytest tests/tools -q
+    63 passed                      # the directory was fine; it was simply not in the gate
+
+**Consequence:** `verify.sh` reports "this tree is shippable" while the checks that decide what
+a human signs have never run on it. Same class as §2.1 and §2.5: the tool ran, said OK, and
+examined nothing.
+
+**Rule:** when you add a test directory, add it to `testpaths` in the same commit, and prove
+collection — break one of the new tests and watch `pytest -q` (not the directory-scoped run) go
+red. `tests/e2e` stays out on purpose: it needs a browser the VPS does not have.
 
 ---
 
@@ -861,6 +981,26 @@ assert "Outeniqua" in page.title()
 ```
 
 Better still, let Playwright use `live_server`, whose URL it cannot confuse.
+
+### 3.10 Xpdf's `pdftotext -v` prints its version and exits **1**
+
+`deploy/` now installs poppler, this dev box runs Xpdf 4.00, and the two report themselves
+identically at first glance. The preflight row was written as `ok = returncode == 0 and banner`,
+so a correctly installed Xpdf — which prints `pdftotext version 4.00` to stderr and exits 1 —
+read as a permanently red row.
+
+Evidence:
+    $ pdftotext -v; echo $?
+    pdftotext version 4.00
+    1
+
+**Consequence:** a warning that is always on is a warning nobody reads, and the row exists to
+tell a reviewer whether their quotes came from the same extractor as the corpus. One permanent
+red trains them to ignore all six rows.
+
+**Rule:** treat "a version banner was printed" as the check, and name the implementation
+(`poppler` / `Xpdf 4.00`) explicitly — the version is the fact that matters, not the exit code.
+Keep the row advisory: it is needed to re-extract a document, not to judge a scenario.
 
 ## 4. Domain hazards already in `HANDOVER.md` §6
 

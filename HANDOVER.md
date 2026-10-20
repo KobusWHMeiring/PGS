@@ -6,7 +6,7 @@ documents session, the chatbot session, the column session, the embedding sessio
 and the answer-coverage session — **2026-10-21**.
 **Repo state:** `main`, **51 commits**. **The working tree is NOT clean**: D, the
 column-transform work and the 2026-10-21 answer-coverage work are uncommitted (see §7).
-`verify.sh` green at **652 tests** (619 before D52); `python -m pytest tests/e2e -q` green at 34 more.
+`verify.sh` green at **705 tests** (619 before D52, 652 before D53); `python -m pytest tests/e2e -q` green at 34 more.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **configured but
 never pushed.** No CI (see §3).
 
@@ -16,7 +16,7 @@ never pushed.** No CI (see §3).
 
 **The standards corpus, the public site and the grounded chatbot all exist.** `knowledge/`
 is complete (four formats, TOC map, chunker, ingestion, hybrid retrieval scoped to a
-`StandardSet`). The public site is built: **eight** routes at 461 tests, semantic CSS,
+`StandardSet`). The public site is built: **eight** routes, semantic CSS,
 self-hosted type, the claim discipline that keeps it honest, and the eight published
 documents behind `/documents/<code>/`. Sub-plan **D** now adds `/ask/`: a real form,
 a citation audit that refuses on any invented reference, per-IP rate limiting, an answer
@@ -97,7 +97,7 @@ home page's summary of the same content must not share a tag level.
 | Gate | Meaning |
 |---|---|
 | **A1–A5 migrated** | ✅ Passed. Custom `User` is the first migration |
-| **`verify.sh` green** | ✅ 536 tests at HEAD. Before any commit |
+| **`verify.sh` green** | ✅ **768 tests at HEAD** (705 + 63 for the UAT sign-off tooling). Before any commit |
 | **Playwright green** | ✅ 34 tests: eight routes, 390px, measured 44px targets, clean console, and a real download click. Outside the gate by design |
 | **B3 needs a second reader** | ⚠️ **Not done.** The Crops template is 38 questions and 37 verdicts by hand |
 | **0∥ spike complete** | ⚠️ **Not done.** Before `1∥` freezes `visitPack`/`VisitSyncEnvelope` |
@@ -109,12 +109,16 @@ home page's summary of the same content must not share a tag level.
 
 ## 4. Next steps, in order
 
-1. **Judge the answer-coverage work.** UAT Scenarios 1, 2, 3, 9 and 10
+1. **Get the UAT signed** — the reasoning and the tooling are in
+   `product/backlog/Refinement/UAT_SIGN_OFF_TOOLING_PRD.md` (four decisions needed: where UAT runs,
+   screenshot policy, sign-off granularity, who may sign). Nothing in `tests/uat/` is signed, which
+   is what makes C1 and D *partial*; the PRD's slice 1 needs no new data and no new rows.
+2. **Judge the answer-coverage work.** UAT Scenarios 1, 2, 3, 9 and 10
    (`tests/uat/mvp0_standards_and_public_site_uat.md`). Scenario 10 carries the 2026-10-21
    question suite. Use `python scripts/probe_chat.py` for the raw passages and quotes, then
    judge the UI. The human question is whether *“the standard does not name cardboard”* reads
    as a rule or as permission.
-2. ~~**Close the two refusal gaps (G1, G2)** — `S5.5.1` and `S4.1.1` enumerations cannot be
+3. ~~**Close the two refusal gaps (G1, G2)** — `S5.5.1` and `S4.1.1` enumerations cannot be
    quoted whole, so the ducks and seed questions refuse. Measure before changing the chunker
    or the prompt.~~ **Closed 2026-10-22 (D52)** — the cause was the extracted page, not the
    chunker or the prompt: a hyphenated word wrapped across a line break, plus the printed
@@ -122,11 +126,11 @@ home page's summary of the same content must not share a tag level.
    residual of the same class (a spanning BPP line) and is still open.
 3. **Sibling-section retrieval for the cost question (G3)** — the answer omits the R100
    annual membership fee because §2.1 is never retrieved.
-4. **Appendices 3, 4, 6a/6b and 7 (G4)** — same reviewed-row mechanism as Appendix 2, starting
+6. **Appendices 3, 4, 6a/6b and 7 (G4)** — same reviewed-row mechanism as Appendix 2, starting
    with Appendix 3 and Appendix 4 Table 1.
-5. **The escalation answer path (G6)** — `Refinement/ESCALATION_ANSWER_PATH_PRD.md`. The
+7. **The escalation answer path (G6)** — `Refinement/ESCALATION_ANSWER_PATH_PRD.md`. The
    refusal currently links to `/contact/`, whose contact details are placeholder chips.
-6. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
+8. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
 
 **Do not add a classifier (G5).** It would not have fixed any 2026-10-21 failure. Reopen only
 if a suite question retrieves the **wrong section**, and then prefer a seeded alias table to
@@ -294,10 +298,9 @@ answer-coverage work (`knowledge/tables.py`, `tests/test_tables.py`, `scripts/pr
 and edits to the spec, backlog, handover and UAT. **Commit it before handing off** — the next
 agent cannot tell your work from theirs in `git status`.
 
-One file is not ours to file:
-
-- `Homtini Assessment Report 22.10.03.docx.pdf` — in the repo root. Looks like a
-  third-party farm report; it does not belong in a public repo, committed or otherwise.
+`Homtini Assessment Report 22.10.03.docx.pdf` is still in the repo root, but it is now
+**gitignored** (`.gitignore:25`), so it can no longer be committed by accident. That item is
+closed; the file itself is the owner's to delete.
 
 `product/design/f1_restack_fund_fit.html`, the F1/NLnet ReStack explainer, is now tracked;
 it is a review artifact, not product code.
@@ -682,3 +685,214 @@ the extracted page.** That is the whole finding, and it is the same lesson as D4
 the answer-coverage work and this one. `git add` by path if you want this isolated — note
 that `knowledge/tests/fixtures/` also carries the previous session's uncommitted
 regeneration, so committing the fixtures commits both.
+
+---
+
+## 17. What the canonical-corpus session did (2026-10-22)
+
+**The finding:** four consecutive sessions had been repairing *extraction* rather than the
+product (D46 columns, D51 tables, D52 reflow, G7 spans), because the extractor sat on the
+ingest path — every layout irregularity became a wrong or refused chatbot answer. The fix
+is architectural, and it is recorded as **D53**: the text of record is a **reviewed
+artefact** per document, extraction runs per *edition*, and a layout defect becomes a line
+in a diff. Freezing happens at the **section** level; chunking and embeddings stay derived.
+
+1. **`knowledge/corpus.py` (new, pure)** — the format and its reader. Markdown with
+   `<!-- page: N printed: M -->` markers, `##` headings, `<!-- ref: … -->`, text verbatim.
+   A block with no page marker is an error. `CORPUS_EDITS` holds reviewed corrections as
+   **data**, so a test can prove each was necessary and applied. 14 tests
+   (`test_corpus_format.py`).
+2. **`knowledge/corpus/bpp.md`** — the BPP, 13 pages, reviewed, 5 corrections. Frozen at
+   `generator: knowledge corpusgen v2` with `raw_pages` recorded in the header.
+3. **`scripts/build_corpus.py` (new)** — drafts the artefact: `extract_pages` →
+   `apply_layout` → `reflow_pages` → the section parser for *which headings exist*, then
+   page-by-page body text with page markers. Refuses to overwrite an existing artefact
+   without `--force`, because only the operator knows whether it was reviewed.
+4. **Three generator improvements the review produced** (the "prefill" work):
+   - **`columns.py`: bands narrowed to the columns no line writes into.** The detected
+     gutter started inside the left column (long lines overflow into it), so those lines
+     were kept whole and the right column was emitted inside them. Measured: BPP's
+     uncuttable lines **66 → 13**, losslessly, on 6 pages; SAOSO/OPP unchanged by
+     construction. **G7's cause disappeared entirely** — no span-cut code was needed.
+   - **Per-page `-raw` fallback in the generator.** Measured: `-raw` is a
+     character-for-character **permutation** of `-layout` on all **139** pages, so its
+     order is trustworthy; it glues words, which is repairable by splitting each glued
+     token into the run of `-layout` words that concatenates to it. A page is drafted from
+     `-raw` only when, after that repair, its word multiset is identical — **11 of BPP's
+     13 pages**, including 3, 6 and 9, the pages geometry cannot handle.
+   - **`page_stamp()` shared** with `HeadingParser` — the printed page is read from the
+     de-columned rendering, because the two renderings disagree where a stamp shares a
+     line with body text (the BPP's `02`).
+5. **`ingest_standard(..., corpus_path=)` + `--from-corpus`** — the artefact's sections are
+   used instead of parsing the PDF; the PDF is still hashed and must match the artefact's
+   recorded sha256; a mismatch, or another document's artefact, is refused.
+   `IngestReport.corpus_digest` records which review produced the corpus.
+   `--from-pdf` still works and is still tested.
+6. **Tests: 705 green** (was 652), `lint-imports` kept. The guards are the point: character
+   multiset coverage, section-identity equality between the two paths, per-block
+   traceability, edit necessity/application, and the four sentences the product quotes.
+7. **G7 closed, live.** Re-ingested the BPP from the artefact (9 chunks, embedded) and
+   probed: *"can I use synthetic fertilisers or agro-chemicals?"* → **grounded**, 4
+   citations, the BPP's prohibition quoted verbatim. The manure question still cites
+   "Animal manure must be preferably composted prior to application…" verbatim, which is
+   why the page-4 footnote had to move.
+8. **Ten more examples, generated and tested** (the request that closed the session):
+   ten BPP requirements — GM seed, organic-seed sourcing, landless husbandry, daily
+   pasture access, hen rest hours, breeding-stock 10%, approved cleaning agents, feed from
+   the farm, and the two already cited — each asserted to be quotable from **exactly one
+   chunk** (`knowledge`) and accepted by the **real audit** (`core`). A paraphrase is still
+   refused. One candidate was rejected because it had been quoted from memory and the
+   document prints "Employment **practice** should be", singular: every example is copied
+   from the artefact. Live probes for two of them cited SAOSO (S5.1.9, S5.5.3) rather than
+   the BPP, which is the "prefer the governing document" rule working.
+9. **What a human still fixes** (5 corrections): the page-4 footnote interrupting the
+   manure sentence, the glued `Preventativemethods(`, and the repeated four-principle
+   strip on pages 8 and 10 (kept on page 6). The bare page stamp is now a generator rule.
+
+**Not done:** the OPP, landscape and SAOSO are still on the PDF path. Two follow-ups are
+recorded in the PRD §7 and matter: a reviewed edit needs `--force` because idempotency is
+keyed on the PDF's sha256 (nothing compares the stored `corpus_digest`), and
+`CORPUS_DOCUMENTS` lives beside the models so the generator needs Django settings.
+
+**Uncommitted, again.** This session added `knowledge/corpus.py`, `knowledge/corpus/bpp.md`,
+`scripts/build_corpus.py`, `knowledge/tests/test_corpus_*.py`, the ingest/command/columns
+changes and the docs. The fixture/column changes from D52 are still uncommitted beneath it.
+
+---
+
+## 18. NEXT UP — **judge the UAT and sign it** (the tooling is built)
+
+**Nothing in `tests/uat/` is signed.** That is still the single fact keeping C1 (public site) and D
+(chatbot) *partial*, and it stands between MVP 0 and done. **The tooling that makes it possible
+landed on 2026-10-22** — see §19. What remains is a human sitting down and judging, which is the
+one thing no session can do for itself.
+
+**The three commands, in order:**
+
+```bash
+# 1. Is the instance ready? Keep the output: the reviewer sees it.
+python manage.py uat_seed --check > preflight.txt
+
+# 2. One self-contained HTML at product/design/uat/<slug>.html
+python scripts/uat_runner.py --file tests/uat/mvp0_standards_and_public_site_uat.md \
+                             --preflight preflight.txt --database <the DB being signed>
+
+# 3. The reviewer judges every card and downloads uat-<slug>-signoff.json. Then:
+python scripts/uat_signoff.py --file tests/uat/mvp0_standards_and_public_site_uat.md \
+                              --from <the export> --dry-run
+```
+
+| Piece | File | What it does |
+|---|---|---|
+| Skill | `.agents/skills/pgs-presenting-uat/SKILL.md` | the three moves, the hard rules, the anti-patterns |
+| Format + gate + scan | `scripts/uat_parse.py` | parses the UAT format; refuses a scenario with no `Judgement:`; the applicability scan |
+| Shell | `scripts/uat_page.py` | CSS, script, markdown renderer, `environment()` |
+| Runner | `scripts/uat_runner.py` | one self-contained HTML; no CDN, no network, `file://` |
+| Write-back | `scripts/uat_signoff.py` | `--dry-run` diff; `**Result:**` per scenario + `### Per-scenario results`; idempotent |
+| Preflight | `core/services/_uat.py`, `manage.py uat_seed --check` | **366 chunks**, 0 unembedded, **8 published documents**, settings, health, `pdftotext` |
+
+**D1–D4 are settled** (PRD §9, confirmed 2026-10-22): staging for anything that writes and production
+for read-only scenarios; screenshots optional; one sign-off row per scenario; one seat each, product
+may co-sign.
+
+**Definition of done:** scenarios 1, 2, 3, 6, 9, 10 and C1's 4, 6, 8 carry a result and a signature
+in `tests/uat/mvp0_standards_and_public_site_uat.md`, applied by `uat_signoff.py` and committed. That
+flips C1 and D from partial to done.
+
+### Two operational items that outrank it, and are cheap
+
+1. **The deployed corpus predates D52 and D53.** `deploy/deploy.sh` migrates, seeds, publishes and
+   collects static — it **never runs `ingest_standard`** — so the live chatbot is answering from
+   text without the hyphen reflow, the page-footer fix or the BPP artefact. Refresh the four
+   documents once on the box, deliberately (`--force` each), confirm **366 chunks** and
+   `lexical_only=False`, then ask three questions through `/ask/`. Also check `pdftotext -v`: if the
+   server runs poppler and this box runs Xpdf 4.00, the extraction differs from every fixture.
+2. **`--force` must not go into `deploy.sh`.** It re-embeds on every deploy, changes every chunk id,
+   and cascades through `ChatMessage.retrieved_chunks` — every historical answer loses its evidence
+   trail. The recommended replacement is `corpus_check` (read-only diff, no API calls) in the deploy
+   plus `corpus_refresh --apply` as a deliberate operator command; `deploy.sh` may fill an **empty**
+   corpus but must only *report* drift on a non-empty one. Written up in
+   `CORPUS_CANONICAL_FORMAT_PRD.md` §7 item 1, awaiting a yes/no.
+
+### Then, in order
+
+`0∥` spike (the real gate for intake flows, `MVP1A_PLAN` §D26) → MVP 1a → the OPP/SAOSO artefact
+conversion (absorbs G4) → G3 (the cost answer omits the R100 membership fee) → G6 (the refusal
+promises a person who cannot be reached).
+
+### Session close, 2026-10-22
+
+`verify.sh` green at **705 tests**, `lint-imports` kept, backlog index clean (`product/backlog.py`
+reports no drift). **The tree is uncommitted**: 12 modified files plus 6 new ones — the corpus
+artefact and reader (`knowledge/corpus.py`, `knowledge/corpus/bpp.md`), the generator
+(`scripts/build_corpus.py`), two test modules, `CORPUS_CANONICAL_FORMAT_PRD.md`, and the
+`UAT_SIGN_OFF_TOOLING_PRD.md` this section is about. `HEAD == origin/main` (`91cec12`, the ops
+commit), so **none of this session's work is deployed** — it needs one commit and a push before the
+deployed corpus can be refreshed from it.
+
+---
+
+## 19. What the sign-off-tooling session did (2026-10-22)
+
+**The blocker was never the scenarios — it was that signing one took a developer.** Slice 1 of
+`UAT_SIGN_OFF_TOOLING_PRD.md` is built: a reviewer opens one HTML file, runs the preflight, judges,
+and exports a file that writes the results into the UAT markdown. **Nothing is signed yet** — that
+is a human act, and it is now the only thing left.
+
+1. **`scripts/uat_parse.py` (new, pure).** The only code that knows the UAT file's shape: front
+   matter, `## Scenario N — …` sections, labelled fields, numbered steps, notes, and the line spans
+   the write-back needs. It **refuses** rather than copes — a scenario with no `Judgement:` clause,
+   a duplicate scenario number, or a missing `feature slug` is an error naming the scenario, because
+   a card built from a guess is a judgement nobody was asked to make.
+2. **The applicability scan — the thing this session exists for.** An N/A scenario outlives the
+   decision that caused it unless something checks. `scan_applicability()` requires every N/A to
+   cite a `D<n>` in its `**Status:**`, requires the id to exist in `PGS_PLATFORM_SPEC.md` §18.3, and
+   requires that decision's resolution to **still read as a deferral**. Edit D44 to say C3 is picked
+   up and the runner exits non-zero naming Scenario 5, instead of printing a greyed-out card for a
+   scenario that has become deliverable. Pinned by test at **10 scenarios / 9 applicable / 1 N/A**,
+   and by §2.5 of the tests (`mvp1a`'s twelve).
+   *No model decides this.* The product owner asked whether an LLM (via OpenRouter) should; the
+   answer recorded is no — the artefact must make **zero network requests** (its own acceptance
+   criterion), a signature has to be reproducible from the commit, and HANDOVER §4 already settled
+   the same shape of question ("prefer a seeded alias table to an ungrounded model call").
+3. **`scripts/uat_page.py` + `scripts/uat_runner.py`.** The runner was 37 KB in one file and broke
+   the 30 KB cap, so the shell (CSS, script, markdown renderer, `environment()`) is its own module.
+   The artefact embeds the raw markdown in a `uat-data` payload *and* renders it server-side, so it
+   works with JavaScript off and a test can check the words the reviewer read.
+4. **`scripts/uat_signoff.py`.** Two things change and nothing else: a `**Result:**` line after each
+   `Judgement:` paragraph, and a `### Per-scenario results` table plus a `**Signed against:**` line
+   carrying the commit and database. `--dry-run` prints the diff, a second application changes
+   nothing, and a malformed export is refused whole rather than half-applied.
+5. **`core/services/_uat.py` + `manage.py uat_seed --check`.** Six rows, observed beside expected:
+   settings, dependencies, **366 chunks**, 0 unembedded, **8 published documents**, `pdftotext`.
+   The corpus blocks; health and `pdftotext` advise, because `celery_worker` is legitimately absent
+   on a dev box and a row that is always red is a row nobody reads. **Measured on this box: 366
+   chunks, 0 without a vector, 8 published, Xpdf 4.00** — so the dev DB matches §17 exactly.
+   Slice 1 has no `--scenario` seeder: MVP 0 needs no new rows, and a bare `uat_seed` exits 2 rather
+   than pretending.
+6. **63 tests in `tests/tools/` plus 4 browser tests in `tests/e2e/test_uat_artefact.py`**, and `pytest.ini`'s `testpaths` now includes `tests/tools` — a test outside
+   `testpaths` is a test the gate never runs (`testing_hazards.md` §2.6). Gate green at **768**,
+   `lint-imports` kept. Eight guards were mutation-tested: the steps split, the deferral check, the
+   judgement gate, the insertion point, the reason requirement, the CRLF guard, HTML escaping and the
+   blocking corpus row each failed a test when broken.
+7. **Two defects, both invisible to a green suite.** (a) Extracting the script left the IIFE's
+   closing `})();` inside the body *and* wrapped it again, so Chromium threw `Unexpected token '}'`
+   and the page was inert — every structural assertion stayed green because the cards are
+   server-rendered. Found only by loading it in Playwright and reading the console
+   (`testing_hazards.md` §1.30). (b) `write_text` emits CRLF on Windows (§1.27, already recorded).
+   **Verified in a real browser:** ten cards, ten judgement blocks, the N/A card carrying D44's
+   reason, progress `1 of 10` → `10 of 10`, a downloaded export that `uat_signoff.py --dry-run`
+   accepts, one request (the file itself), a clean console, and no horizontal overflow at 390 px.
+   **Mutation-tested:** re-introduce the defect and all 63 gate tests stay green while three of
+   the four browser tests go red — which is the whole argument for keeping them.
+8. **Also recorded:** §1.29 — a string "present" in a JSON payload is not present in the file, because
+   `json.dumps` escapes the newlines; and §3.10 — Xpdf's `pdftotext -v` prints its version and exits
+   **1**, which made the preflight row permanently red until the check became "a banner was printed".
+
+**The artefact is committed at `product/design/uat/mvp0_standards_and_public_site.html`.** It records
+`Generated <date>` from the machine that built it, so **regenerate it on the box whose commit it
+claims** before handing it to a reviewer.
+
+**Next, in order:** judge the UAT (§18) → slice 2's `uat-setup` format and the
+`manage.py <command>` existence lint (which is what catches `mvp1a`'s `load_template`) → the two
+operational items in §18 → MVP 1a.

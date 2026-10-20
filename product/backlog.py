@@ -213,7 +213,7 @@ def fix_statuses(items):
             continue
         new_text = rewrite_status(text, new_status)
         if new_text != text:
-            it["path"].write_text(new_text, encoding="utf-8")
+            it["path"].write_text(new_text, encoding="utf-8", newline="\n")
             print(f"  FIXED: {it['rel']} -> Status: {new_status}")
             fixed += 1
     return fixed
@@ -396,17 +396,17 @@ def main():
         fixed = fix_statuses(items)
         print(f"Fixed {fixed} status line(s).")
         items = scan()
-        INDEX.write_text(build_index(items), encoding="utf-8")
+        INDEX.write_text(build_index(items), encoding="utf-8", newline="\n")
         print(f"Regenerated {INDEX}")
     elif args.apply:
         print("Moving files to match Status buckets...")
         moved, skipped = apply_moves(items)
         print(f"Moved {moved}, skipped {skipped}.")
         items = scan()
-        INDEX.write_text(build_index(items), encoding="utf-8")
+        INDEX.write_text(build_index(items), encoding="utf-8", newline="\n")
         print(f"Regenerated {INDEX}")
     elif args.write:
-        INDEX.write_text(build_index(items), encoding="utf-8")
+        INDEX.write_text(build_index(items), encoding="utf-8", newline="\n")
         print(f"Regenerated {INDEX}")
     else:
         report(items)
