@@ -37,7 +37,9 @@ class NavLink(NamedTuple):
 
 
 #: The header's links. `Become a member` is the CTA button and is deliberately not
-#: in this tuple (DESIGN §7.1: nav is links plus one button, never six links).
+#: in this tuple (DESIGN §7.1: nav is links plus one button). `Ask` was added on
+#: 2026-10-20 at the product owner's request; the header must still hold one line at
+#: 768 px and up, which `tests/e2e/test_public_site.py` measures.
 #: `Documents` joins in C2 — and it joins *with* its route, because a link to a route
 #: that does not exist raises `NoReverseMatch` at render time, so it cannot be added
 #: early "temporarily".
@@ -46,6 +48,7 @@ NAV: tuple[NavLink, ...] = (
     NavLink("How it works", "core:how_it_works"),
     NavLink("Members", "core:members"),
     NavLink("Documents", "core:documents"),
+    NavLink("Ask", "core:ask"),
     NavLink("Contact", "core:contact"),
 )
 
@@ -197,6 +200,24 @@ PAGES: dict[str, Page] = {
             "Fees are set on a cost-recovery basis and approved by the members at the annual "
             "general meeting. The assessment fee reflects the scale and commercial intensity "
             "of the farm."
+        ),
+    ),
+    "ask": Page(
+        key="ask",
+        title="Ask the standard — Outeniqua PGS",
+        description=(
+            "Ask a question about the SAOSO standard, the Outeniqua PGS procedures, the "
+            "Basic Production Principles or the certification landscape. Every answer "
+            "cites the passage it came from, or says plainly that it cannot."
+        ),
+        eyebrow="Ask the standard",
+        heading="Ask the standard",
+        heading_accent="and get a citation, or none at all.",
+        lede=(
+            "Answers are drawn only from the four documents this group publishes. Every "
+            "answer names the section it came from and quotes the passage. If the "
+            "documents do not cover your question, the assistant says so rather than "
+            "guessing — and the question is recorded for the administrator."
         ),
     ),
     "contact": Page(

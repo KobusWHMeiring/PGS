@@ -30,6 +30,8 @@ We adopt the **Harvester** build principles as the baseline for this project, gr
 
 **Decision review — 2026-10-18.** Every item in §18 is now resolved. Three resolutions materially changed the design and are called out where they land: **HTMX is permitted** (§5); **storage is filesystem `media/`, not S3** (§15, R11); and **voice notes** are designed in now but their recorder UI and transcription pipeline are deferred to post-MVP (§17.2). O5 was agreed and *extended*: roles are plural per user (§3). O4 was refined during review — the split line is now the **standards library**, not "the chatbot" (§18.2).
 
+**Addendum — 2026-10-20 (D45).** A worked read of the 2022 Homtini assessment report exposed five omissions in the visit flow: the Sheet I conclusion (social equity and the documentation/records checklist), structured sub-verdicts, a farmer-facing corrective-action follow-up, finalise completeness gates, and the prior-visit action review. All five are assessment evidence and land in `1a`; the four certification outcomes remain MVP 2 (D33). The 2026 FORM is the authority where the 2022 paper differs.
+
 **Adopted from Harvester BP and mandatory in every slice:** `/health/` endpoint; Sentry on all exceptions (no bare `except: pass`); `X-Request-ID` structured logging (`django-structlog`); explicit `timeout=` on every external call; retry policies on every Celery task; `transaction.atomic()` on all multi-table writes; `select_related`/`prefetch_related` on every relational query; domain query logic in custom QuerySets/Managers; `.env` via `python-dotenv` as the sole config source; no secrets in source.
 
 ---
@@ -222,11 +224,17 @@ AssessmentVerdict       assessment, question_key, ref, value(YES|NO|NA|NULL), po
 InputSupply             farm, farm_visit(nullable, first recorded), product_name,
                         manufacturer, is_organic_certified(bool|null), certifier_name,
                         ingredients, purchased_on, amount, use_of_product,
-                        act36_registered(bool|null)
+                        act36_registered(bool|null), input_kind(SEED|COMPOST|AMENDMENT|FEED|OTHER),
+                        seed_status(ORGANIC|CONVENTIONAL_UNTREATED|
+                        CONVENTIONAL_TREATED|UNKNOWN|NA|null), approval_status(PENDING|APPROVED|
+                        REJECTED), approval_rationale, approved_by
                         # D30. FORM Sheet B.2 — the farm's INPUT register (compost, seed,
                         # amendments, feed), a required part of the Crops category. B.1 Q4.3
                         # directs the farmer to it. Act 36 of 1947 registration is the
                         # primary evidence that an input is not a prohibited substance.
+                        # D45: seed_status makes the "conventional, untreated seeds"
+                        # notifiable exception queryable; approval_status records the
+                        # assessor's V5/V25 judgment instead of a notes-column promise.
                         # NOT the same thing as aggregation produce (OPP §VI, §4.4).
 Finding                 farm_visit, assessment, question_key, severity, description, raised_by
 NotifiableExemption     farm_visit, standard_ref, requirement_exempted, rationale,
@@ -235,11 +243,38 @@ NotifiableExemption     farm_visit, standard_ref, requirement_exempted, rational
                         # PGS-SA. Not a non-conformity — see §2, FORM Sheet I §3.
 CorrectiveAction        finding, recommended_action, due_on, status, submitted_on,
                         verified_by, verified_on, closed_on
+                        # D45: after the visit this is the farmer's task. Evidence is
+                        # an EvidenceDocument with corrective_action set; SUBMITTED
+                        # means the farmer has answered, VERIFIED/CLOSED the reviewer.
+SocialEquity            farm_visit(unique), employs_staff(bool|null), worker_count(int|null),
+                        employment_status(PERMANENT|CASUAL|SUBCONTRACTOR|MIXED|NA),
+                        labour_law_compliant(bool|null), staff_live_on_premises(bool|null),
+                        children_under_15(bool|null), children_activities, notes,
+                        recorded_by, recorded_at
+                        # D45. FORM Sheet I §1. Worker and child-labour fields are
+                        # sensitive and never serialised publicly.
+RecordCheck             farm_visit, kind, status(CHECKED|MISSING|NOT_APPLICABLE),
+                        notes, evidence_doc(nullable), checked_by, checked_at
+                        # D45. FORM Sheet I §2 a–i: farm sketch, field diagrams, farm
+                        # diary, input purchase records, sales records, input/output
+                        # reconciliation, soil/water tests, agro-processing documents.
+                        # This is the assessor's verification, not a questionnaire
+                        # attachment; MISSING is a recorded fact, not an omission.
+                        # evidence_doc may point at the questionnaire's EvidenceDocument
+                        # rather than duplicating the file.
+PriorActionReview       farm_visit, corrective_action, outcome(VERIFIED|PARTIAL|NOT_MET),
+                        notes, reviewed_by, reviewed_on
+                        # D45. One per prior open action, per visit. PREP requires the
+                        # last visit's actions at the start of the next; NOT_MET on a
+                        # Critical action sets CorrectiveAction.ESCALATED.
 EvidenceDocument        farm_visit(nullable), assessment(nullable), member(nullable),
+                        corrective_action(nullable), input_supply(nullable),
                         kind, title, file, sha256, uploaded_by, uploaded_at, is_private
                         # D29. D29 defines what was previously a dangling reference (§8, §12).
                         # Questionnaire attachments (soil tests, farm sketch, agro-processing
                         # flow diagrams — FORM Sheet I §2) and, later, historical dossiers.
+                        # D45 adds the two follow-up links: a farmer's answer to a
+                        # corrective action, and an input's supplier TDS/letter/invoice.
 EvidencePhoto           farm_visit, answer(nullable), photo, caption, captured_at,
                         exif_gps, consent_given, client_media_uuid(unique), sha256,
                         derivative_url, uploaded_at
@@ -249,7 +284,10 @@ VoiceNote               farm_visit, answer(nullable), question_key, audio, mime_
                         client_media_uuid(unique), sha256, uploaded_at
                         # VoiceNote is migrated with the schema now; its recorder UI and
                         # transcription pipeline are post-MVP (§17.2).
-Signature               farm_visit, role, signer_name, image, signed_at, ip_hash
+Signature               farm_visit, role, signer_name, image, signed_at, ip_hash,
+                        declined(bool), decline_reason
+                        # D45: a declined signature with a reason is not the same as
+                        # a missing one; finalise refuses only the latter.
 SyncReceipt             client_uuid(unique), device_id, farm_visit, payload_sha256,
                         raw_payload(JSON), received_at, status
 ```
@@ -257,6 +295,7 @@ SyncReceipt             client_uuid(unique), device_id, farm_visit, payload_sha2
 **`FarmVisit.status`**: `DRAFT` → `SCHEDULED` → `IN_FIELD` → `SYNCING` → `SYNCED` → `UNDER_REVIEW` → `DECIDED` → `CLOSED`, plus `ABANDONED`.
 **`Assessment.status`**: `PENDING`, `QUESTIONNAIRE_SUBMITTED`, `IN_FIELD`, `SYNCED`, `REVIEWED`.
 **`CorrectiveAction.status`**: `OPEN`, `SUBMITTED`, `VERIFIED`, `OVERDUE`, `ESCALATED`, `CLOSED`. `ESCALATED` is reached when a **Critical** action lapses; per OPP §4.5 that is grounds for membership termination, so the state machine must be able to represent it and hand off to the discipline workflow.
+**`RecordCheck.status`**: `CHECKED`, `MISSING`, `NOT_APPLICABLE`; `MISSING` requires a note. **`SocialEquity.employment_status`**: `PERMANENT`, `CASUAL`, `SUBCONTRACTOR`, `MIXED`, `NA`. **`PriorActionReview.outcome`**: `VERIFIED`, `PARTIAL`, `NOT_MET`. `SocialEquity` is unique per visit; `RecordCheck` is unique on `(farm_visit, kind)`; `PriorActionReview` is unique on `(farm_visit, corrective_action)`.
 
 ### 4.2.1 Verdict polarity and key namespacing (D27)
 
@@ -301,6 +340,15 @@ rows. Gaps are **declared in the template file** (`allowed_ref_gaps: ["V15", "V3
 on a new gap without failing on a known one.
 
 > Note on immutable history: `Assessment.template_schema` stores a *full copy* of the template JSON at visit creation. Editing `AssessmentTemplate` must never alter a historical assessment. This is the single most important data-integrity rule in the system.
+
+**Sub-verdicts (D45).** The FORM prints several verdicts with child Yes/No rows — Crops V4 (2),
+V10 (2), V11 (2), V19 (3), V21 (2), V35 (2) — and assessors do leave them blank. A child is structured:
+`{"key": "crops.V04.a", "text": "…", "polarity": "POSITIVE", "options": ["YES","NO","NA"], "required": true}`.
+The answer lives on the parent row's `sub_answers` as `{"<sub_key>": "YES|NO|NA"}` and is never folded
+into the parent's single `value`. Children are not top-level `AssessmentVerdict` rows: 37 printed rows
+is a completeness invariant, and the parent is the queryable unit. If a cross-farm query ever needs a
+child in SQL, promote it deliberately rather than duplicating it silently. `NULL` is an omission;
+`NA` is an answer; `finalise_visit` refuses a required child left `NULL`.
 
 ### 4.3 Certification & Registry — `core/models/_certification.py`
 
@@ -602,13 +650,13 @@ def compile_outcome_pdf(visit_id: int, kind: PdfKind) -> Path:
 
 1. From the farmer portal, the applicant opens the questionnaire for each `FarmCategory` on their application. This resolves to the **frozen** `AssessmentTemplate.schema` for that category, rendered server-side, with only `respondent == FARMER` questions visible.
 2. Answers autosave (`AssessmentAnswer`), keyed by `question_key`, so a farmer on a poor connection never loses work. This is an online-first form — it is *not* part of the offline PWA.
-3. The portal shows readiness as a checklist: attachment-required questions (soil test results, farm sketch, flow diagrams for agro-processing — FORM Sheet I §2) are visibly unsatisfied until an `EvidenceDocument` is uploaded.
+3. The portal shows readiness as a checklist: attachment-required questions (soil test results, farm sketch, flow diagrams for agro-processing — FORM Sheet I §2) are visibly unsatisfied until an `EvidenceDocument` is uploaded. The farmer is also told what records the assessor will verify at the visit (sales records, input purchases, input/output reconciliation), so the visit is not the first time they hear it.
 4. Status → `QUESTIONNAIRE_SUBMITTED`. Administrator notified; template snapshot frozen onto the `Assessment` at this point.
 5. Administrator reviews 3 days out and may request clarifications, which loop back to the farmer as a task list.
 6. `PREP` stage — participants, roles and guest list are assembled into `VisitParticipant` rows before the visit.
 7. **Offline pack download:** admin triggers "Prepare visit pack", which bundles the frozen template schemas, farm metadata, prior visit findings and open corrective actions into an IndexedDB payload for the assessor device (`§9`).
 
-Prior-visit corrective actions are surfaced in the pack because PREP explicitly requires *"Last visit — list any corrective actions (if applicable)"* to be opened at the start of the visit.
+Prior-visit corrective actions are surfaced in the pack because PREP explicitly requires *"Last visit — list any corrective actions (if applicable)"* to be opened at the start of the visit. D45 makes the same list available to the **connected** capture in `1a` (a server-side fetch, not the pack), so the review is not an offline-only feature.
 
 ---
 
@@ -651,18 +699,22 @@ Supersedes `prd.md` §4's "Split-Sync Protocol", adding the idempotency and part
 
 ## 11. Flow E — Review, Decision & Certification
 
-1. Committee receives the Sheet J PDF and the structured findings. Visit is `UNDER_REVIEW`.
-2. If members cannot conclude on the day, OPP §4.2(5) allows up to **5 days** after the visit — modelled as `FarmVisit.review_due_on`.
-3. `decide_certification` records one of the four outcomes and, per OPP §4.2(9), the peer-review knowledge-exchange narrative is captured in `knowledge_exchange_narrative` (FORM Sheet J: *"Key knowledge captured during the farm visit"*).
-4. Corrective actions are created from findings; each carries severity and `due_on`. Reviewer tracks `OPEN → SUBMITTED → VERIFIED / OVERDUE`.
-5. **Gating rules enforced server-side:**
-   - `CERTIFIED` is blocked while any **Critical** corrective action is `OPEN`/`OVERDUE` (§2 definitions).
+1. **Prior actions first.** Every open corrective action from the farm's previous visits is opened at the start of capture (PREP: *"Last visit — list any corrective actions"*). One `PriorActionReview` records `VERIFIED | PARTIAL | NOT_MET` with a note; a `NOT_MET` Critical action sets `ESCALATED`. `finalise_visit` refuses while a prior open action has no review (D45).
+2. **Conclusion captured.** `SocialEquity` (Sheet I §1) and one `RecordCheck` per Sheet I §2 item are recorded with the findings. `MISSING` requires a note and may support a Finding; it is a recorded fact, not an omission, and does not auto-create a finding (D45).
+3. `finalise_visit` produces the Sheet J PDF; the committee receives it and the structured findings. Visit is `UNDER_REVIEW`.
+4. If members cannot conclude on the day, OPP §4.2(5) allows up to **5 days** after the visit — modelled as `FarmVisit.review_due_on`.
+5. `decide_certification` records one of the four outcomes and, per OPP §4.2(9), the peer-review knowledge-exchange narrative is captured in `knowledge_exchange_narrative` (FORM Sheet J: *"Key knowledge captured during the farm visit"*).
+6. **Outcome rule.** `CERTIFIED_ORGANIC` requires no `MAJOR` or `CRITICAL` action still `OPEN`, `OVERDUE` or `ESCALATED`. If one exists, the only positive outcome is `PENDING_CORRECTIVE_ACTION`; a product that fails on its own is `NOT_ENDORSED` with a reason. Homtini 2022 — a Critical (ducks not certifiable) and a Major (documents outstanding) — is exactly this case. Minor actions do not block certification; they are continual improvement.
+7. **Corrective-action follow-up.** Every action appears in the farmer's portal with its due date. The farmer uploads the requested evidence (TDS, non-GMO letter, invoice, compost ingredients list); the upload is an `EvidenceDocument` linked to the action and sets `SUBMITTED`. The reviewer moves it to `VERIFIED`/`CLOSED`; `OVERDUE` is derived from `due_on` (D45).
+8. **Gating rules enforced server-side:**
+   - `CERTIFIED` is blocked while any **Critical** corrective action is `OPEN`/`OVERDUE` (§2 definitions), and by the outcome rule in step 6.
    - Any certificate issuance is blocked unless `Member.is_paid_up` (OPP §2.3).
    - A Critical action that lapses → `ESCALATED`, surfaced to the discipline workflow (OPP §4.5), which can reach `REVOKED` certificate status and `TERMINATED` membership (OPP §4.6).
-6. On `CERTIFIED`, a `Certificate` is issued with `seal=PGS_ORGANIC_CERTIFIED`, `expires_on = +12 months`, a `public_uuid`, and a PDF bearing the QR code. `IN_CONVERSION` issues the other seal. `NOT_ENDORSED_RESCHEDULE` issues nothing and sets `next_visit_due`.
-7. Any granted notifiable exemption is recorded as a `NotifiableExemption` against its `standard_ref`, with rationale, grantor and date, and appears in the committee reporting export **with a `reported_to_pgs_sa_on` field that must be filled before the visit can be `CLOSED`** — the OPP requires the grant to be documented *and* reported, and an unrecorded notification is the failure mode.
-8. Products are recorded as `ProductOutcome` rows per category, **including products that were not endorsed** with a reason. The live records already carry exclusions — *"Excluded: pork production (reschedule farm visit), chicken production (not proposed for certification), chard (treated seed)"* — so "not endorsed" is a first-class state with a reason, not an absence of a row. A single visit may also produce different product sets across two visits in one year (The Red Barn was visited twice in October 2025, once for macadamia and once for vegetables and fruit), so outcomes belong to the visit, not the farm.
-9. `Farm.current_status` and `next_visit_due` update; annual reassessment is scheduled (OPP §4.3: *"All producers will be assessed annually"*).
+   - `finalise_visit` refuses an unanswered verdict or required sub-verdict, a missing required signature (unless a recorded refusal with a reason exists), an unset `RecordCheck`, or an unreviewed prior action — and returns **every** unmet item, not the first (D45).
+9. On `CERTIFIED`, a `Certificate` is issued with `seal=PGS_ORGANIC_CERTIFIED`, `expires_on = +12 months`, a `public_uuid`, and a PDF bearing the QR code. `IN_CONVERSION` issues the other seal. `NOT_ENDORSED_RESCHEDULE` issues nothing and sets `next_visit_due`.
+10. Any granted notifiable exemption is recorded as a `NotifiableExemption` against its `standard_ref`, with rationale, grantor and date, and appears in the committee reporting export **with a `reported_to_pgs_sa_on` field that must be filled before the visit can be `CLOSED`** — the OPP requires the grant to be documented *and* reported, and an unrecorded notification is the failure mode.
+11. Products are recorded as `ProductOutcome` rows per category, **including products that were not endorsed** with a reason. The live records already carry exclusions — *"Excluded: pork production (reschedule farm visit), chicken production (not proposed for certification), chard (treated seed)"* — so "not endorsed" is a first-class state with a reason, not an absence of a row. A single visit may also produce different product sets across two visits in one year (The Red Barn was visited twice in October 2025, once for macadamia and once for vegetables and fruit), so outcomes belong to the visit, not the farm.
+12. `Farm.current_status` and `next_visit_due` update; annual reassessment is scheduled (OPP §4.3: *"All producers will be assessed annually"*).
 
 ---
 
@@ -895,6 +947,14 @@ These may later be split across subdomains (`app.` vs `www.`) via `ALLOWED_HOSTS
 | D43 | Citation strings, and where the scheme prefix lives. | **`section_ref` stores the citation as a human reads it:** `S20.1.1` for SAOSO (the FORM's own convention — all 33 references in `6. …summary_2026.xlsx` take that shape) and `§V` / `§4.2(5)` for the OPP, even though the OPP prints `V.` and `4.2` and **never prints `§`** (0 occurrences across A10's four fixtures). `sub_refs` stay plain (`4.5(2)(c)`). The withdrawn `B.20.1.1` is not a citation: the only `B-20` in the FORM is the sheet heading `PART B - Compliance with Section B-20 : Processing & Handling`. Consequence: `MVP0_PLAN_V2.md` B6/B7's `section_ref__startswith="B.20.1"` and `{"V","VI"}` assertions were stale and are corrected in place. |
 
 | D44 | C3 (bilingual shell) — in MVP 0 or not? | **Deferred out of MVP 0 by the product owner (2026-10-19, this session).** No human Afrikaans translator is available, and a machine translation would pass every test except the one about honesty (`#, fuzzy` count = 0 is a proxy for review, not review itself). Consequence, recorded rather than absorbed: the header's AF control stays `aria-disabled` — the same honest-control pattern as C2's former `Publishing soon` chips, and it must **not** become a link that reloads the same English page. UAT Scenario 5 ("Afrikaans quality") is **not applicable**, not failed. `build_principles.md` §IV ("Bilingual by default — strings are translated from the start rather than retrofitted") is therefore **unmet for MVP 0**; the cost lands on whoever first retargets the blueprint to an Afrikaans-speaking group, because every string added between now and then is a retrofit. `LANGUAGES`, `LOCALE_PATHS` and `User.preferred_language` stay in place so C3 remains a catalogue-and-middleware job, not a schema change. |
+| D45 | The Homtini 2022 report exposed five omissions in the visit flow. What changes, and where? | **All five are in `1a`; none touches D33.** (1) Sheet I's conclusion is assessment evidence, not a decision: `SocialEquity` (Sheet I §1) and `RecordCheck` (Sheet I §2 a–i) are captured and reported, while the four outcomes stay in MVP 2. (2) Sub-verdicts become structured `sub_questions` with answers in `sub_answers`; a required child left `NULL` blocks finalise. (3) Corrective actions become a farmer-facing task list with evidence upload (`EvidenceDocument.corrective_action`), not an assessor-only note. (4) `finalise_visit` gates on unanswered verdicts/children, signatures, unset records and unreviewed prior actions, returning every gap. (5) Prior open actions are opened at the start of the next visit (`PriorActionReview`), not only in the `1b` offline pack. Also: `InputSupply.seed_status`/`approval_status` and `EvidenceDocument.input_supply` make the supplier-document and conventional-seed findings queryable. Evidence: the 2022 Homtini report left V5, V11's supplier child and V25 blank, had no applicant signature, and recorded a Major "documents outstanding" action with no follow-up path. |
+| D46 | Corpus layout handling: how do we stop two-column PDFs producing unquotable text? | **Every page is passed through a column-aware transform at ingest, selected by measurement rather than by document.** `knowledge/columns.py` detects vertical whitespace bands (coverage >= 0.70, >= 6 crossing lines, >= 12% of characters on each side) and re-emits the page in reading order, or returns it byte-identical when no band qualifies. Loss-free: the non-space, non-newline character multiset is preserved on every page. The pages it transforms are pinned by a golden expectation per document in `knowledge/tests/test_columns.py` (29 transformed of 33 detected); a page that is column-laid-out but must not be transformed lives in `PAGE_LAYOUT_EXCLUSIONS` with its measured reason — SAOSO PDF 2 (its page-number column is the TOC's content), SAOSO PDF 82-83 (Appendix 4 Table 1: 4-column single-line rows are already coherent), OPP PDF 11 (3-column labelling table). Consequence: `layout` is **not** a field on `StandardDocument` and not a `CORPUS_DOCUMENTS` flag, so a retarget to another standard needs no migration; a new edition that mis-detects fails a test rather than silently degrading citations. Alternative rejected: a per-document `layout: two-column` flag, which would have missed the OPP's three table pages. A page whose *maximal* band starts inside an overflowing left-column line can carry a **measured band override** in `PAGE_LAYOUT_BANDS` (BPP PDF 4: `(40, 42)`, because its left list item reaches column 40 and the default `(38, 42)` split the raw-manure 60-day rule). Recorded 2026-10-20; evidence and build outcome in `product/backlog/In Progress/CORPUS_COLUMN_EXTRACTION_PRD.md`. |
+| D47 | Where should the model-side citation refusals be fixed? | **Tighten the prompt/citation contract (option A), never the audit.** Two live turns on 2026-10-20 were refused after the corpus fix: one invented `sub_ref: "FERTILIZERS AND SOIL CONDITIONERS"` from a heading, the other joined two passages with `...`. Both are uncheckable citations, so the audit was correct. `SYSTEM_PROMPT` now requires a character-for-character quote (no paraphrase, no ellipsis), and allows `sub_ref` only when the passage lists that exact sub-clause under "Numbered sub-clauses available"; `build_prompt()` makes that line explicit for every passage — `none — omit sub_ref for this passage` when the chunk has no stored sub-refs. `PROMPT_VERSION` is `d47-4` (the `d47-1` contract, the retrieval invalidation in D48, and two further prompt iterations after live tests: one-passage quotes and no stitching), so the cache cannot serve an answer produced under the old contract. Consequence: retry the live manure turn; if two prompt revisions still produce invented sub-refs, a narrow repair (drop an unknown `sub_ref`, never a quote) is the fallback. Rejected: fuzzy/elided quote matching, which would accept a passage the reader cannot find on paper. Verified live 2026-10-20: the manure question returned a grounded answer with three verbatim Appendix 2 citations and `sub_ref=None`; it cited no BPP passage, which is a model-selection choice, not a corpus failure. A later `can i use horse manure?` turn was refused for a stitched BPP quote; `d47-3`/`d47-4` made the one-numbered-passage rule explicit, and the D46 band override made the raw-manure 60-day sentence contiguous. The re-run was accepted with six citations. Recorded 2026-10-20. |
+| D48 | Embedding model, dimension and the vector arm. | **`gemini-embedding-001` at 768 dimensions, with the current corpus embedded and the vector arm live.** Ratified by the product owner 2026-10-20. `text-embedding-004` is retired; the replacement does not move the frozen dimension (`DocumentChunk.embedding` is `vector(768)`) because the request asks for `output_dimensionality=768` explicitly. The four documents were force-re-ingested without `--no-embed` (idempotency on sha256 makes a plain re-run a no-op): 340/340 chunks carry a vector, `search()` reports `lexical_only=False`, and the developer key (D20) is used until a group-owned account lands in MVP 2. Enabling the arm exposed a retrieval interaction that would otherwise have been a regression: `search_terms` embedded the rare word *and* the OR query, and the rare-word vector pushed SAOSO Appendix 2 out of the top 8, so the manure question refused again. The rare-term arm is now **lexical only**; the vector arm runs once, on the OR query, which restores Appendix 2 at #2 and BPP at #4 and halves query embeddings per question from two to one. `PROMPT_VERSION` is `d47-4` after the later prompt iterations, so no cached reply outlives the change. Verified live 2026-10-20: grounded answer, two verbatim Appendix 2 citations, `sub_ref=None`; the run cited no BPP passage, which is model selection, not a corpus failure. |
+| D49 | How does retrieval find a clause when the question's subject is a word the corpus does not contain? | **Embed the visitor's question, and give the semantic arm seats the rare-term arm cannot take.** Measured 2026-10-21 on *"can I use cardboard from my neighbours?"*: `search_terms` embedded the OR-joined tokens (`use OR cardboard OR neighbours`) and searched the rarest *known* word (`neighbours` → wild harvest, child labour); the unknown subject `cardboard` was discarded and SAOSO 4.4.4 never reached the model. Embedding the sentence puts 4.4.4 at rank 6; the OR form does not retrieve it at all. Fix: `search(vector_query=)` embeds the question while the lexical arm keeps the rare-term query; `SEMANTIC_SEATS = 3` reserves the vector arm's share (with five lexical chunks first it contributed **nothing**); a term with document frequency 0 marks an unknown subject, so the lexical proxy is capped at two chunks and the semantic arm takes the rest — the two-chunk hedge is also the no-key offline path. Chat `RETRIEVAL_LIMIT` 5 → 8. Rejected: a classifier or alias table to map `cardboard → inputs`; it would not fix any measured failure and a wrong label hides the right passage (reopen trigger in `CHAT_ANSWER_COVERAGE_PRD.md` G5). |
+| D50 | D17 allows only a *definitive* answer. Is a rule that governs an unnamed item an answer? | **Yes — name the gap, state the rule, cite it. D17's refusal wording is unchanged.** Cardboard is not named in SAOSO, but 4.4.4 requires material applied to land to comply with Appendix 2; refusing that is a false refusal, and the corpus contains the rule. `SYSTEM_PROMPT` rule 4 now answers with the governing rule, says plainly that the document does not name the item, and forbids two things: inventing the missing detail and reading permission into silence (*"Silence is not permission"*). `insufficient_context` keeps its meaning — no supplied passage bears on the question — and the citation audit is unchanged. `PROMPT_VERSION` is `d49-1`, so no cached reply outlives the contract. Consequence: the assistant is allowed to be useful about unnamed inputs; it is not allowed to infer that something is permitted. Verified live 2026-10-21: cardboard returned *"The SAOSO Standard does not specifically name cardboard…"* with the biodegradable by-products row and its contaminants condition. UAT Scenario 10 asks the human whether that reads as an answer or as permission. |
+| D51 | Appendix 2's conditions cannot be quoted because `-layout` interleaves the table's columns. Reconstruct rows? | **Yes, as reviewed data — one chunk per printed row — and the extraction mode is the finding, not a pairing algorithm.** `pdftotext -table` aligns the appendix's rows (measured on SAOSO pdf 77–79: wood ↔ "Only if not chemically treated", by-products ↔ contaminants condition); `-layout` cannot, because the rows overflow the gutter and `de_column` keeps a spanning line whole by design. `knowledge/tables.py` holds 30 reviewed rows (printed pp. 76–78) and the measured `TABLE_BANDS`; ingest replaces the section's auto-chunks with one chunk per row, so a substance and its condition are one quotable passage. Assumptions recorded in the module and the PRD: the pairing is the product owner's review, a row with no condition is not permission, each cell is verbatim but the join is not on the paper (the single exception to "a chunk is a slice of the section"), cross-page continuations are merged by hand, sub-headings are not rows, and only Appendix 2 is covered. `ingest_standard(force=True)` / `--force` exists because the sha256 guard otherwise makes a corpus-built-here change unreachable; deletion happens inside the transaction after embedding. Verified live: borax now grounded (was an audit refusal), straw no longer carries wood's condition. Appendices 3/4/6/7 remain on the interleaved path (`CHAT_ANSWER_COVERAGE_PRD.md` G4). |
+| D52 | Two correct answers were refused for a quote the page cannot produce. Fix the chunker, or the prompt? | **Neither: the extracted page was the defect, so the page is repaired at ingest. The audit stays strict.** Measured 2026-10-22 on the two refusals `CHAT_ANSWER_COVERAGE_PRD.md` recorded as G1/G2: `pdftotext -layout` breaks a line inside a hyphenated word — `… 15% dry matter per non-` / `ruminant …` (S5.5.1) and `post-` / `harvest` (S4.1.1) — so a whitespace-normalised quote had to contain `non- ruminant`, a spelling no reader writes; the model elided the word with `...` and the audit refused a substantively correct answer. `knowledge/reflow.py` rejoins a line that ends in letter-hyphen when the next non-blank line starts lowercase, **keeping the printed hyphen**; it runs after `de_column` (line adjacency is reading adjacency only then) and before the parser, in both `ingest_standard` and `scripts/extract_fixtures.py`. Measured on the four governed documents: **20 joins**, every one a genuine compound, and **no page ends inside such a word**, which is why a per-page pass is complete — `knowledge/tests/test_reflow.py` pins both counts. Second defect, same class: the printed footer `P a g e | 47` was not furniture, so it was emitted *inside* a clause that continues onto the next page — **65 of 368 chunks** carried one; `PAGE_FOOTER` is now in `FURNITURE`, and the page number is still read from the page before any line is classified. Rejected: accepting a quote modulo hyphenation in `_normalise_text`, which would admit text a reader cannot find on paper (D47's rule, and `testing_hazards.md` §1.22). Consequence: both live questions are grounded with **no prompt change** — the region was the corpus, not the model — `reflow_pages` is reported by the ingest and the fixture manifest (`pipeline … + reflow v2`), and the answer cache self-invalidates through `_corpus_fingerprint`, so `PROMPT_VERSION` stays `d49-1`. Recorded and **not** fixed: a *spanning* line in the BPP general principles is still emitted as consecutive fragments (`(agro-` / `and thereafter …`), which no line-join can repair (`CHAT_ANSWER_COVERAGE_PRD.md` G7). |
 
 ---
 
@@ -940,6 +1000,7 @@ Slice 1 is **two increments with one ship gate** (D25). The split is between bre
 | Seals and in-conversion periods | OPP §V |
 | Visit stages and committee log fields | PREP |
 | Documentation/records checklist | FORM Sheet I §2 |
+| Social equity and justice | FORM Sheet I §1 |
 | Census reporting purpose | FORM Sheet A |
 | Six basic elements of PGS | LANDSCAPE |
 | Standard structure, section refs, appendices | SAOSO table of contents |

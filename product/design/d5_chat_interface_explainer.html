@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the grounded chat works — Outeniqua PGS</title>
+<style>
+  /* ----------------------------------------------------------------------
+     Self-contained review artifact. No CDN, no external font, no build step.
+     Palette copied from product/design/decisions_review.html (DESIGN.md).
+     ---------------------------------------------------------------------- */
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1.08; margin: 0 0 1rem; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.15; margin: 0 0 0.75rem; }
+  h3 { font-size: 1.18rem; line-height: 1.25; margin: 0 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.4rem; }
+  strong { color: var(--forestDark); }
+  code {
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+  pre {
+    max-width: 100%;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--forestDeep);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  pre code { padding: 0; border: 0; background: none; color: inherit; font-size: inherit; }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0.6rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__links { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.78rem; }
+  .bar__links a { color: var(--muted); text-decoration: none; }
+  .bar__links a:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 36px;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 999px;
+    background: var(--creamWarm);
+    color: var(--forestDark);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1.25rem; }
+  .hero { background: var(--forest); color: var(--cream); padding: 3.5rem 0 3rem; }
+  .hero .eyebrow { color: var(--ochreLight); }
+  .hero p { color: rgb(253 251 247 / 0.86); max-width: 54rem; font-size: 1.05rem; }
+  .hero .lede { font-size: clamp(1.05rem, 2.2vw, 1.3rem); }
+  .hero code { border-color: rgb(249 241 226 / 0.25); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+
+  .eyebrow {
+    margin: 0 0 0.6rem;
+    color: var(--ochreDark);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  main section { padding: 2.6rem 0; border-bottom: 1px solid var(--sand); }
+  main section:last-of-type { border-bottom: 0; }
+  .section--warm { background: var(--creamWarm); }
+  .section--sage { background: var(--sageLight); }
+  .section--dark { background: var(--forestDark); color: var(--cream); }
+  .section--dark h2, .section--dark h3 { color: var(--cream); }
+  .section--dark p, .section--dark li { color: rgb(253 251 247 / 0.85); }
+  .section--dark code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  .section--dark strong { color: #fff; }
+
+  .callout {
+    display: grid;
+    gap: 0.5rem;
+    margin: 1.25rem 0;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--sand);
+    border-left: 4px solid var(--ochre);
+    border-radius: 8px;
+    background: var(--cream);
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout--warm { border-color: rgb(184 123 46 / 0.4); background: var(--warmDark); color: var(--ochreLight); }
+  .callout--warm strong { color: #fff; }
+  .callout--warm code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  /* A grid track is `auto` by default, so a long unbreakable line inside a card can
+     widen the whole column past the viewport. The min-width reset lets the `pre`
+     scroll instead of the page. */
+  .grid-2 > *, .grid-3 > *, .model__row > * { min-width: 0; }
+
+  .card {
+    min-width: 0;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+  .card__kicker {
+    margin: 0 0 0.35rem;
+    color: var(--ochreDark);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .metric-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 1.25rem 0; }
+  .metric {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .metric__value { display: block; font-family: var(--serif); font-size: 1.9rem; line-height: 1; color: var(--forestDark); }
+  .metric__label { display: block; margin-top: 0.35rem; color: var(--muted); font-size: 0.76rem; }
+
+  /* --- Pipeline / diagram primitives ---------------------------------- */
+  .pipeline { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 1.25rem 0; }
+  .pipe {
+    flex: 1 1 130px;
+    min-width: 120px;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+  .pipe b { display: block; color: var(--forestDark); font-size: 0.82rem; }
+  .pipe span { color: var(--muted); }
+  .pipe--dark { border-color: rgb(249 241 226 / 0.2); background: var(--forest); color: var(--cream); }
+  .pipe--dark b { color: var(--ochreLight); }
+  .pipe--dark span { color: rgb(253 251 247 / 0.76); }
+  .pipe--stop { border-color: var(--ochre); background: var(--ochreLight); }
+  .pipe--stop b { color: var(--ochreDark); }
+  .arrow {
+    align-self: center;
+    color: var(--ochreDark);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    padding: 0 0.1rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 1rem 0 0; color: var(--muted); font-size: 0.76rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .swatch { width: 12px; height: 12px; border: 1px solid var(--sand); border-radius: 3px; display: inline-block; }
+  .swatch--step { background: var(--cream); }
+  .swatch--store { background: var(--forest); border-color: var(--forest); }
+  .swatch--stop { background: var(--ochreLight); border-color: var(--ochre); }
+
+  .table-wrap { margin: 1rem 0; overflow-x: auto; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th, td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--sand); text-align: left; vertical-align: top; }
+  th { background: var(--creamWarm); color: var(--forestDark); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 1.25rem 0; }
+  .steps li {
+    position: relative;
+    margin: 0 0 0.7rem;
+    padding: 0.8rem 1rem 0.8rem 3rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 0.85rem;
+    top: 0.8rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--forest);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+  }
+  .steps li b { color: var(--forestDark); }
+  .steps li .stop {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--ochre);
+    border-radius: 999px;
+    background: var(--ochreLight);
+    color: var(--ochreDark);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* --- Data model boxes ------------------------------------------------ */
+  .model { display: grid; gap: 0.75rem; margin: 1.25rem 0; }
+  .model__row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .model__box {
+    flex: 1 1 190px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.78rem;
+  }
+  .model__box b { display: block; color: var(--forestDark); font-family: var(--mono); font-size: 0.78rem; }
+  .model__box span { color: var(--muted); }
+  .model__box--store { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .model__box--store b { color: var(--ochreLight); }
+  .model__box--store span { color: rgb(253 251 247 / 0.76); }
+  .rel {
+    flex: 0 0 auto;
+    color: var(--ochreDark);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-align: center;
+  }
+
+  /* --- Mock chat window ------------------------------------------------ */
+  .mock {
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: var(--radius);
+    background: var(--forestDeep);
+    box-shadow: var(--shadow);
+  }
+  .mock__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    background: var(--forest);
+    color: var(--cream);
+    font-size: 0.76rem;
+  }
+  .mock__dot { display: inline-block; width: 8px; height: 8px; margin-right: 0.4rem; border-radius: 50%; background: var(--ochre); }
+  .mock__badge {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid rgb(249 241 226 / 0.35);
+    border-radius: 4px;
+    color: var(--ochreLight);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .mock__body { display: grid; gap: 1rem; padding: 1rem; }
+  .mock__row { display: flex; }
+  .mock__row--user { justify-content: flex-end; }
+  .mock__bubble {
+    max-width: 92%;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 12px;
+    border-top-left-radius: 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+  .mock__bubble p { margin: 0 0 0.5rem; }
+  .mock__bubble p:last-child { margin: 0; }
+  .mock__bubble--user { border-top-left-radius: 12px; border-top-right-radius: 0; background: rgb(66 83 55 / 0.85); color: #fff; }
+  .mock__bubble--answer { background: rgb(50 62 42 / 0.8); color: rgb(253 251 247 / 0.9); }
+  .mock__bubble--refusal { border-color: rgb(184 123 46 / 0.4); background: rgb(43 35 25 / 0.95); color: var(--ochreLight); }
+  .cites { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.6rem; }
+  .cite {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgb(184 123 46 / 0.3);
+    border-radius: 4px;
+    background: var(--forestDeep);
+    color: var(--ochreLight);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+  }
+  .mock__form {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.8rem 1rem 1rem;
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    background: var(--forest);
+  }
+  .mock__input {
+    min-height: 4.2rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid rgb(249 241 226 / 0.22);
+    border-radius: 8px;
+    background: var(--forestDark);
+    color: var(--cream);
+    font: inherit;
+    font-size: 0.8rem;
+  }
+  .mock__send {
+    justify-self: start;
+    min-height: 38px;
+    padding: 0.35rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ochre);
+    color: #fff;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .notes { display: grid; gap: 0.75rem; margin-top: 1rem; }
+  .notes textarea {
+    width: 100%;
+    min-height: 10rem;
+    padding: 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font: inherit;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    resize: vertical;
+  }
+  .notes__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .notes__status { color: var(--muted); font-size: 0.76rem; }
+  .btn {
+    min-height: 42px;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--forest);
+    border-radius: 999px;
+    background: var(--forest);
+    color: var(--cream);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn--ghost { border-color: var(--sand); background: var(--creamWarm); color: var(--forestDark); }
+
+  footer { padding: 2rem 0 3rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.72); font-size: 0.78rem; }
+  footer strong { color: var(--cream); }
+
+  @media (min-width: 760px) {
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .metric-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    main section { padding: 3.2rem 0; }
+    .model__row { flex-wrap: nowrap; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  @media print {
+    .bar, .notes__actions, .btn, .bar__print { display: none !important; }
+    body { background: #fff; color: #000; font-size: 11pt; }
+    .hero, .section--dark, .section--warm, .section--sage { background: #fff !important; color: #000 !important; }
+    .hero p, .section--dark p, .section--dark li { color: #000 !important; }
+    .hero code, .section--dark code { color: #000 !important; background: #f3ece0 !important; }
+    .card, .pipe, .model__box, .steps li, .metric, .table-wrap { box-shadow: none !important; break-inside: avoid; }
+    .mock { box-shadow: none !important; break-inside: avoid; }
+    .mock, .mock__bar, .mock__body, .mock__form, .mock__input {
+      background: #fff !important; color: #000 !important; border-color: #bbb !important;
+    }
+    .mock__bubble, .mock__bubble--answer, .mock__bubble--user, .mock__bubble--refusal {
+      background: #f3ece0 !important; color: #000 !important; border-color: #bbb !important;
+    }
+    .mock__send { background: #e6dece !important; color: #000 !important; border: 1px solid #999 !important; }
+    .cite { background: #fff !important; color: #000 !important; border-color: #bbb !important; }
+    pre, pre code { background: #f3ece0 !important; color: #000 !important; border-color: #bbb !important; }
+    .callout--warm { background: #f6f1e7 !important; color: #000 !important; border-color: var(--ochre) !important; }
+    .callout--warm strong { color: #000 !important; }
+    main section { break-inside: avoid; }
+    a { color: #000; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">PGS &middot; Sub-plan D explainer</span>
+    <nav class="bar__links" aria-label="Sections">
+      <a href="#inventory">Inventory</a>
+      <a href="#shape">The problem</a>
+      <a href="#path">Path of a question</a>
+      <a href="#stops">Stops</a>
+      <a href="#history">History</a>
+      <a href="#surface">The screen</a>
+      <a href="#evidence">Evidence</a>
+      <a href="#notes">Notes</a>
+    </nav>
+    <button class="bar__print" type="button" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Sub-plan D &middot; MVP 0 &middot; 2026-10-19</p>
+    <h1>How the grounded chat works</h1>
+    <p class="lede">
+      How <code>/ask/</code> turns a typed question into a cited answer, what happens
+      when it cannot, and how the conversation, the history and the cost are kept
+      under control.
+    </p>
+    <p>
+      This is an explainer, not a proposal. Every claim below points at a file, a test
+      or a command you can run. The page is self-contained: no CDN, no external font,
+      no network. It opens from the filesystem.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <!-- 1. Inventory ------------------------------------------------------ -->
+  <section id="inventory">
+    <div class="wrap">
+      <p class="eyebrow">Part 1 &middot; What is actually true</p>
+      <h2>The pieces, and the shape they make</h2>
+      <p>
+        The chat is a thin view over one service, backed by a small history model and
+        the existing corpus library. Nothing in the chat knows how the standard was
+        parsed; nothing in <code>knowledge/</code> knows a user exists.
+      </p>
+
+      <div class="metric-row">
+        <div class="metric"><span class="metric__value">65</span><span class="metric__label">chat tests across five files</span></div>
+        <div class="metric"><span class="metric__value">465</span><span class="metric__label">tests in the gate at this writing</span></div>
+        <div class="metric"><span class="metric__value">34</span><span class="metric__label">Playwright tests, eight public routes</span></div>
+        <div class="metric"><span class="metric__value">4</span><span class="metric__label">documents retrieval is scoped to</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <p class="card__kicker">The files</p>
+          <ul>
+            <li><code>core/views/_chatbot.py</code> &mdash; the one HTTP view: session, form, one service call, render.</li>
+            <li><code>core/services/_chatbot.py</code> &mdash; the contract: refusal, citation audit, guardrails, cache, Gemini adapter.</li>
+            <li><code>core/models/_chat.py</code> + migration <code>0004</code> &mdash; sessions, messages, escalations.</li>
+            <li><code>core/templates/chatbot/panel.html</code> and <code>_thread.html</code> &mdash; full page and the swapped fragment.</li>
+            <li><code>core/static/js/chat.js</code> + vendored <code>htmx.min.js</code> &mdash; progressive enhancement only.</li>
+            <li><code>knowledge/services.py</code> &mdash; <code>search_terms()</code>: scoped retrieval, rarest term first.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__kicker">The one-line contract</p>
+          <pre><code>In:  session_uuid, question (&lt;= 500 chars)
+Out: GroundedAnswer(text, citations,
+                    insufficient_context,
+                    escalated_query_id)
+Side effects: 2 ChatMessage rows;
+             1 EscalatedQuery when refused
+Fails: RateLimitedError, UpstreamModelError
+       -- never a fabricated fallback</code></pre>
+          <p>
+            The public identifier is a UUID, never the integer primary key. A session
+            is pinned to a <code>StandardSet</code>, so the corpus boundary is a
+            property of the conversation rather than a rule the model has to remember.
+          </p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:1.75rem">The path, in seven steps</h3>
+      <div class="pipeline" role="img" aria-label="Question to answer pipeline">
+        <div class="pipe"><b>1. Browser</b><span>plain form or HTMX POST to <code>/ask/</code></span></div>
+        <span class="arrow">&rarr;</span>
+        <div class="pipe"><b>2. View</b><span>validate, resolve session, call the service</span></div>
+        <span class="arrow">&rarr;</span>
+        <div class="pipe"><b>3. Guard</b><span>per-IP rate limit, 500-char cap</span></div>
+        <span class="arrow">&rarr;</span>
+        <div class="pipe"><b>4. Retrieve</b><span>FTS scoped to the session's set, rarest term first</span></div>
+        <span class="arrow">&rarr;</span>
+        <div class="pipe pipe--dark"><b>5. Generate</b><span>Gemini, JSON schema, or a cache hit</span></div>
+        <span class="arrow">&rarr;</span>
+        <div class="pipe pipe--stop"><b>6. Audit</b><span>every ref, sub-ref and quote checked</span></div>
+        <span class="arrow">&rarr;</span>
+        <div class="pipe"><b>7. Record</b><span>messages, evidence, escalation</span></div>
+      </div>
+      <div class="legend">
+        <span><i class="swatch swatch--step"></i> executable step</span>
+        <span><i class="swatch swatch--store"></i> external / paid call</span>
+        <span><i class="swatch swatch--stop"></i> a gate that can refuse</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. The problem ---------------------------------------------------- -->
+  <section id="shape" class="section--warm">
+    <div class="wrap">
+      <p class="eyebrow">Part 2 &middot; The shape of the problem</p>
+      <h2>Why this is not a text box over an API</h2>
+      <p>
+        Four asymmetries drive every design choice below. They are not preferences;
+        each one has a failure mode that looks fine in a browser.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <p class="card__kicker">Asymmetry 1</p>
+          <h3>A confident wrong answer is worse than a refusal</h3>
+          <p>
+            The group's credibility is that every sentence can be traced to SAOSO, the
+            OPP, the Basic Production Principles or the certification landscape. A
+            model answering from memory can sound exactly right and be wrong. So the
+            refusal is the product, not an error state.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Asymmetry 2</p>
+          <h3>A natural question is not a search phrase</h3>
+          <p>
+            Postgres's <code>websearch_to_tsquery</code> joins words with <strong>AND</strong>.
+            Measured on the shipped corpus: <code>"What does the standard require for
+            traceability?"</code> returned <strong>zero</strong> chunks, while
+            <code>"traceability OR standard"</code> returned chunks.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Asymmetry 3</p>
+          <h3>Common words outrank the word that carries the question</h3>
+          <p>
+            A plain OR let a landscape paragraph containing &ldquo;standard&rdquo; outrank
+            the SAOSO clause containing &ldquo;traceability&rdquo;. The rare word is the
+            signal; the common word is the noise. Retrieval searches the rarest term
+            first, then the OR fallback.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Asymmetry 4</p>
+          <h3>A cached answer can outlive its contract</h3>
+          <p>
+            The cache stores the model reply, not the rendered answer. Citations are
+            re-audited on every hit, and <code>PROMPT_VERSION</code> is part of the key.
+            Change the prompt or retrieval without bumping it, and Redis serves an
+            answer produced under the old rules.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>The rule that follows.</strong> A result is grounded only when <em>all</em> of these hold: retrieval returned at least one chunk from the session's set; the model did not set <code>insufficient_context</code>; it returned at least one citation; every reference is in the retrieved set; every sub-reference is in that chunk's stored offset map; every quote is a whitespace-normalised substring of the cited chunk. Anything else produces exactly one refusal.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Walkthrough ---------------------------------------------------- -->
+  <section id="path">
+    <div class="wrap">
+      <p class="eyebrow">Part 3 &middot; Path of a question</p>
+      <h2>What happens after the visitor presses Ask</h2>
+      <p>
+        The order is a correctness property, not an implementation detail: the rate
+        limit runs before any row is written, retrieval runs before the model, and the
+        citation audit runs before the answer is stored.
+      </p>
+
+      <ol class="steps">
+        <li><b>The browser posts the form.</b> With JavaScript, HTMX sends the same POST and asks for a fragment; without it, the browser posts normally and receives the whole page. The server renders one thread template either way.</li>
+        <li><b>The form validates.</b> A blank or over-500-character question never reaches the service. <span class="stop">stop</span></li>
+        <li><b>The service validates again and checks the rate limit.</b> The service is reachable without the form, so the cap lives in both places. A spent per-IP budget raises <code>RateLimitedError</code> before a message is written. <span class="stop">stop</span></li>
+        <li><b>The session is resolved or created.</b> A GET does not create a conversation. The first question creates a <code>ChatSession</code>, pins it to the default <code>StandardSet</code>, and stores its UUID in the Django session cookie.</li>
+        <li><b>The user message is written, then retrieval runs.</b> The query is stripped of function words and searched rarest-term-first, always filtered to the session's corpus before ranking.</li>
+        <li><b>No chunks means no model call.</b> The assistant refuses and records an <code>EscalatedQuery</code> immediately. Calling the model with an empty context is exactly how a bot starts guessing. <span class="stop">stop</span></li>
+        <li><b>The cache is consulted.</b> The key is <code>PROMPT_VERSION + StandardSet + corpus fingerprint + normalised question hash</code>. A hit skips Gemini; citations are still re-audited against fresh chunks.</li>
+        <li><b>Gemini is called once, with JSON output.</b> The prompt contains the numbered passages and the bounded conversation window. The schema is <code>{answer, citations[{section_ref, sub_ref, quote}], insufficient_context}</code>.</li>
+        <li><b>The audit decides.</b> The model's flag is not trusted on its own. Empty citations, an un-retrieved reference, an absent sub-ref or a quote that is not in the chunk all refuse the whole answer. <span class="stop">stop</span></li>
+        <li><b>The exchange is recorded.</b> The assistant row stores the answer, latency, model, token counts and every retrieved chunk. A refusal also writes one <code>EscalatedQuery</code> for the administrator.</li>
+        <li><b>The view renders.</b> A plain POST returns the full page with the answer and citations. An HTMX POST returns only the thread fragment. A 429 or 503 returns the fragment with a warm notice, never a guess.</li>
+      </ol>
+
+      <div class="callout callout--warm">
+        <p><strong>The shape of the refusal.</strong> <code>I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents.</code> The exact string is D17's, and the test is <code>test_the_refusal_is_the_d17_wording</code>. It names four documents, not only SAOSO, because the OPP answers questions the standard does not: fees, joining, committee procedure.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Stops ---------------------------------------------------------- -->
+  <section id="stops" class="section--sage">
+    <div class="wrap">
+      <p class="eyebrow">Part 4 &middot; The stops</p>
+      <h2>Every gate, what triggers it, and what the visitor sees</h2>
+      <p>
+        A &ldquo;stop&rdquo; is a point where the system declines to continue. Some are
+        limits, some are grounding failures, and one is a transport failure. None of
+        them produces a fabricated answer.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Stop</th><th>Trigger</th><th>What happens</th><th>Guarded by</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Question cap</strong></td>
+              <td>blank, or more than 500 characters</td>
+              <td>Form message; no session, no row, no model call.</td>
+              <td><code>test_the_question_cap_is_read_at_call_time</code>; <code>test_an_over_long_question_is_rejected_without_calling_the_service</code></td>
+            </tr>
+            <tr>
+              <td><strong>Per-IP rate limit</strong></td>
+              <td>more than <code>CHAT_RATE_LIMIT</code> questions in the fixed window</td>
+              <td>HTTP 429 with <code>Retry-After</code>; the question is not written and the model is not called.</td>
+              <td><code>test_the_rate_limit_allows_the_budget_then_refuses</code>; <code>test_answer_question_refuses_before_writing_when_rate_limited</code></td>
+            </tr>
+            <tr>
+              <td><strong>Nothing retrieved</strong></td>
+              <td>FTS returns no chunk in the session's set</td>
+              <td>Exact refusal + <code>EscalatedQuery(INSUFFICIENT_CONTEXT)</code>; the model is never called.</td>
+              <td><code>test_no_retrieved_chunks_means_the_model_is_never_called</code></td>
+            </tr>
+            <tr>
+              <td><strong>Model says insufficient</strong></td>
+              <td><code>insufficient_context: true</code></td>
+              <td>Exact refusal; the model's prose is discarded even if it wrote an answer.</td>
+              <td><code>test_an_ungrounded_question_refuses_and_escalates</code></td>
+            </tr>
+            <tr>
+              <td><strong>No citations</strong></td>
+              <td>the flag is false but <code>citations</code> is empty</td>
+              <td>Exact refusal + <code>EscalatedQuery(NO_CITATIONS)</code>. The boolean is not trusted alone.</td>
+              <td><code>test_refusal_fires_on_empty_citations_even_if_the_flag_is_false</code></td>
+            </tr>
+            <tr>
+              <td><strong>Unknown reference</strong></td>
+              <td>a <code>section_ref</code> or anchor not in the retrieved set</td>
+              <td>The whole answer is refused; the citation is not trimmed and kept.</td>
+              <td><code>test_a_citation_naming_an_unretrieved_ref_is_dropped_and_forces_refusal</code></td>
+            </tr>
+            <tr>
+              <td><strong>Wrong corpus</strong></td>
+              <td>a chunk whose <code>standard_set_id</code> differs from the session's</td>
+              <td>Refused. The scope is checked in retrieval <em>and</em> again in the audit.</td>
+              <td><code>test_no_answer_can_cite_a_chunk_outside_the_session_standard_set</code></td>
+            </tr>
+            <tr>
+              <td><strong>Invented sub-ref</strong></td>
+              <td>a sub-ref absent from the chunk's <code>sub_refs</code> map</td>
+              <td>Refused. A bare item number is accepted only when exactly one stored ref ends with it; depth four is never synthesised.</td>
+              <td><code>test_an_invented_sub_ref_is_rejected</code>; <code>test_a_bare_item_number_is_resolved_when_it_is_unambiguous</code></td>
+            </tr>
+            <tr>
+              <td><strong>Paraphrased quote</strong></td>
+              <td>the quote is not a whitespace-normalised substring of the cited chunk</td>
+              <td>Refused. A citation that cannot be checked is not a citation.</td>
+              <td><code>test_a_quote_that_is_not_in_the_cited_chunk_is_rejected</code></td>
+            </tr>
+            <tr>
+              <td><strong>Runaway answer</strong></td>
+              <td>more than 6,000 characters</td>
+              <td>Refused rather than truncated: truncation silently changes what the model said.</td>
+              <td>covered by the refusal path in <code>answer_question</code></td>
+            </tr>
+            <tr>
+              <td><strong>Model unavailable</strong></td>
+              <td>no key, transport error, empty or non-JSON response</td>
+              <td>HTTP 503 with an honest notice. No assistant answer, no escalation: a transport failure is not a corpus gap.</td>
+              <td><code>test_an_upstream_failure_never_fabricates_an_answer</code>; <code>test_an_upstream_failure_returns_503_and_never_a_guess</code></td>
+            </tr>
+            <tr>
+              <td><strong>Conversation window</strong></td>
+              <td>more than <code>CHAT_HISTORY_MESSAGES</code> prior turns</td>
+              <td>The model receives only the last N messages; the database keeps all of them.</td>
+              <td><code>test_the_history_sent_to_the_model_is_capped</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid-2" style="margin-top:1.5rem">
+        <div class="card">
+          <p class="card__kicker">Why the audit is all-or-nothing</p>
+          <p>
+            One invented reference beside two good ones is still an answer that contains
+            an invented reference. Trimming the bad one would leave a confident answer
+            with no visible trace of the hallucination. The test
+            <code>test_the_audit_is_all_or_nothing</code> pins that decision.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Why the refusal is warm, not red</p>
+          <p>
+            DESIGN &sect;7.9: a boundary drawn confidently is not a malfunction. The
+            refusal bubble uses the warm dark ground and offers the administrator as the
+            next step. The same styling is used for 429 and 503 notices.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. History and sessions ------------------------------------------- -->
+  <section id="history">
+    <div class="wrap">
+      <p class="eyebrow">Part 5 &middot; History and sessions</p>
+      <h2>What is kept, where, and for how long it is sent</h2>
+      <p>
+        Chat lives in <code>core</code>, not <code>knowledge</code>, because it is
+        user-owned. The corpus library stays a library: no users, no sessions, no
+        views. Three models carry the conversation.
+      </p>
+
+      <div class="model" role="img" aria-label="Chat data model">
+        <div class="model__row">
+          <div class="model__box model__box--store">
+            <b>ChatSession</b>
+            <span>public_uuid &middot; user? &middot; standard_set &middot; ip_hash &middot; user_agent &middot; created_at</span>
+          </div>
+          <span class="rel">1 &rarr; many</span>
+          <div class="model__box">
+            <b>ChatMessage</b>
+            <span>role &middot; content &middot; latency_ms &middot; model &middot; prompt_tokens &middot; completion_tokens &middot; retrieved_chunks M2M</span>
+          </div>
+          <span class="rel">1 &rarr; 0..n</span>
+          <div class="model__box">
+            <b>EscalatedQuery</b>
+            <span>question &middot; reason &middot; status &middot; answered_by &middot; answer &middot; answered_at</span>
+          </div>
+        </div>
+        <div class="model__row">
+          <div class="model__box">
+            <b>StandardSet</b>
+            <span>the corpus boundary; a session is pinned to one</span>
+          </div>
+          <span class="rel">1 &rarr; many</span>
+          <div class="model__box">
+            <b>DocumentChunk</b>
+            <span>section_ref / anchor &middot; sub_refs &middot; text &middot; page</span>
+          </div>
+          <span class="rel">cited + retrieved</span>
+          <div class="model__box">
+            <b>Redis cache</b>
+            <span>model reply keyed by prompt version, set, corpus fingerprint, normalised question</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <p class="card__kicker">Session lifecycle</p>
+          <ul>
+            <li><strong>GET</strong> <code>/ask/</code> creates nothing. A reader who leaves leaves no row and spends no budget.</li>
+            <li><strong>The first question</strong> creates the session, pins it to the single default <code>StandardSet</code>, hashes the client IP, and stores the UUID in the Django session cookie.</li>
+            <li><strong>Anonymous first, member later.</strong> <code>ChatSession.user</code> is nullable. When the same visitor signs in, <code>attach_user()</code> sets the user on the existing row; the history is not copied or restarted.</li>
+            <li><strong>Pinned corpus.</strong> The set is a foreign key with <code>PROTECT</code>. A conversation that started against v2.1 keeps answering from v2.1 even after the deployment ingests v2.2.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__kicker">What a message records</p>
+          <ul>
+            <li><strong>Both sides</strong> of every exchange: the question as typed and the answer or refusal.</li>
+            <li><strong>Cost:</strong> <code>latency_ms</code>, <code>model</code>, <code>prompt_tokens</code>, <code>completion_tokens</code>. A cache hit stores zero tokens rather than double-counting.</li>
+            <li><strong>Evidence:</strong> the M2M to every retrieved chunk, not only the cited ones. When a refusal is reviewed, the useful question is &ldquo;what did the retriever give the model?&rdquo;</li>
+            <li><strong>Ordering:</strong> <code>created_at, id</code>, because two rows written in the same millisecond would otherwise render arbitrarily.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__kicker">The window sent to Gemini</p>
+          <p>
+            <code>CHAT_HISTORY_MESSAGES</code> (default 8) prior messages, oldest first.
+            The current question is passed separately, so the model sees a bounded
+            transcript plus the numbered passages. The full history stays in Postgres
+            and is rendered on a later GET.
+          </p>
+          <p>
+            The window is a cost and prompt-injection control as much as a relevance
+            one: an unbounded transcript grows the prompt on every turn and gives an
+            attacker more surface.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Escalation, not a dead end</p>
+          <p>
+            Every refusal writes one <code>EscalatedQuery</code> with the question, the
+            reason and <code>OPEN</code> status. The admin is editable: answering stamps
+            <code>answered_at</code>, <code>answered_by</code> and <code>ANSWERED</code>.
+            A gap in the corpus becomes a question a person can answer.
+          </p>
+          <p>
+            The message FK is <code>SET_NULL</code>: deleting a conversation must not
+            erase the evidence that the gap exists. The question stands on its own.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>Cache key, exactly.</strong> <code>chat:answer:&lt;PROMPT_VERSION&gt;:&lt;standard_set_id&gt;:&lt;corpus_fingerprint&gt;:&lt;sha256(normalised question)&gt;</code>. The corpus fingerprint is chunk count + max id + the documents' sha256 list. Changing the prompt or retrieval without bumping <code>PROMPT_VERSION</code> means an old answer outlives the contract it was produced under.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. The screen ----------------------------------------------------- -->
+  <section id="surface" class="section--dark">
+    <div class="wrap">
+      <p class="eyebrow">Part 6 &middot; The screen</p>
+      <h2>What the visitor actually sees</h2>
+      <p>
+        The home page's two windows are a showcase of this surface, not a second
+        implementation. The real form is at <code>/ask/</code>, linked from the showcase
+        and the footer. It is deliberately not a sixth nav link: DESIGN &sect;7.1 keeps
+        five links and one CTA.
+      </p>
+
+      <div class="grid-2" style="align-items:start">
+        <div class="mock" aria-label="Example answered exchange">
+          <div class="mock__bar">
+            <span><span class="mock__dot"></span>Ask Outeniqua PGS</span>
+            <span class="mock__badge">Documents only</span>
+          </div>
+          <div class="mock__body">
+            <div class="mock__row mock__row--user">
+              <div class="mock__bubble mock__bubble--user">
+                What does the standard say about traceability?
+              </div>
+            </div>
+            <div class="mock__row">
+              <div class="mock__bubble mock__bubble--answer">
+                <p>
+                  The SAOSO Standard requires handlers and processors to ensure
+                  traceability in the organic processing and handling chain. For
+                  Outeniqua PGS, full traceability must be ensured for all aggregated
+                  produce, with invoices and delivery notes clearly indicating the name
+                  of each supplying farm.
+                </p>
+                <div class="cites">
+                  <span class="cite">S20.1.2 +</span>
+                  <span class="cite">&sect;6.3 +</span>
+                  <span class="cite">&sect;4.2 &middot; 4.2(12) +</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mock__form">
+            <div class="mock__input">Ask about the standard, our procedures or the certification landscape&hellip;</div>
+            <button class="mock__send" type="button">Ask</button>
+          </div>
+        </div>
+
+        <div class="mock" aria-label="Example refusal">
+          <div class="mock__bar">
+            <span><span class="mock__dot"></span>Ask Outeniqua PGS</span>
+            <span class="mock__badge">Refusal</span>
+          </div>
+          <div class="mock__body">
+            <div class="mock__row mock__row--user">
+              <div class="mock__bubble mock__bubble--user">
+                Do I need EU organic certification to export to Germany?
+              </div>
+            </div>
+            <div class="mock__row">
+              <div class="mock__bubble mock__bubble--refusal">
+                <p>
+                  I cannot find a definitive answer in the SAOSO standard or the
+                  Outeniqua PGS documents.
+                </p>
+                <p style="margin-top:0.6rem">
+                  <span style="color:var(--ochreLight);text-decoration:underline">&rarr; Send this question to the administrator</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="mock__form">
+            <div class="mock__input">The question is recorded for the administrator.</div>
+            <button class="mock__send" type="button">Ask</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top:1.5rem">
+        <div class="card" style="background:var(--forest);border-color:rgb(249 241 226 / 0.2)">
+          <p class="card__kicker" style="color:var(--ochreLight)">Tappable citations</p>
+          <p style="color:rgb(253 251 247 / 0.82)">Each citation is a disclosure. Opening it shows the quote and the document/page. The summary is a 44 px target; the quote is the checkable part.</p>
+        </div>
+        <div class="card" style="background:var(--forest);border-color:rgb(249 241 226 / 0.2)">
+          <p class="card__kicker" style="color:var(--ochreLight)">Progressive enhancement</p>
+          <p style="color:rgb(253 251 247 / 0.82)">HTMX swaps only the thread, but the same form posts normally and returns the whole page. A visitor with JavaScript disabled still gets an answer.</p>
+        </div>
+        <div class="card" style="background:var(--forest);border-color:rgb(249 241 226 / 0.2)">
+          <p class="card__kicker" style="color:var(--ochreLight)">One renderer</p>
+          <p style="color:rgb(253 251 247 / 0.82)"><code>_thread.html</code> renders an exchange for both paths. There is no second template to drift from the first.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Evidence ------------------------------------------------------- -->
+  <section id="evidence">
+    <div class="wrap">
+      <p class="eyebrow">Part 7 &middot; Evidence</p>
+      <h2>What was run, and what the tests cannot see</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <p class="card__kicker">Commands that were run</p>
+          <pre><code>$ ./scripts/verify.sh
+  manage.py check      -> no issues
+  lint-imports         -> 1 kept, 0 broken
+  pytest               -> 465 passed
+
+$ python -m pytest tests/e2e -q
+  34 passed
+
+$ # a real question, against the shipped corpus
+$ # "What does the standard say about traceability?"
+  cites: S20.1.2, &sect;6.3, &sect;4.2 &middot; 4.2(12)</code></pre>
+          <p>
+            The real answer was checked in a browser with JavaScript on, with
+            JavaScript off, and at 390 px. The citation disclosure, the 429/503
+            notices and the refusal link were opened, not just asserted.
+          </p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">The hazard this session found</p>
+          <pre><code>search('What does the standard require for traceability?')
+  -> []                      # websearch_to_tsquery ANDs
+
+search('traceability OR standard')
+  -> chunks                  # but common words win
+
+search_terms(['standard', 'traceability'])
+  -> rarest first, then OR   # the fix</code></pre>
+          <p>
+            Recorded with evidence in <code>product/docs/context/testing_hazards.md</code>
+            &sect;2.4. Without it, a phrase-shaped test suite stayed green while every
+            real question refused.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>What no test here can see.</strong> Whether a citation that resolves is <em>topically</em> the right passage. The first live answer on 2026-10-19 cited a landscape paragraph for a question about the standard's traceability requirement. The prompt now prefers governing documents, and the retrieval now puts the SAOSO clause first, but only UAT Scenario 2 can judge whether the result reads as an answer or as a near-miss.</p>
+      </div>
+
+      <div class="grid-3" style="margin-top:1.25rem">
+        <div class="card">
+          <p class="card__kicker">Still open</p>
+          <ul>
+            <li>D's UAT Scenarios 1, 2 and 6 are unsigned.</li>
+            <li>The corpus has no embeddings; retrieval is lexical only.</li>
+            <li>Topical relevance is a human judgement.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Deliberate choices</p>
+          <ul>
+            <li>Refusal is D17's wide-corpus wording, not the old SAOSO-only string.</li>
+            <li>The audit refuses all, not the worst citation.</li>
+            <li>No API key means 503, never a canned answer.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__kicker">If you change it</p>
+          <ul>
+            <li>Bump <code>PROMPT_VERSION</code> when the prompt or retrieval changes.</li>
+            <li>Run a real question, not only a phrase from the standard.</li>
+            <li>Do not add a sixth nav link; link from the showcase and footer.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Notes ---------------------------------------------------------- -->
+  <section id="notes" class="section--warm">
+    <div class="wrap">
+      <p class="eyebrow">Part 8 &middot; Reviewer notes</p>
+      <h2>Leave a note for the next agent</h2>
+      <p>
+        Notes are saved in this browser only (<code>localStorage</code>) and export as a
+        markdown file. Nothing is sent anywhere; this page makes no network requests.
+      </p>
+      <div class="notes">
+        <label for="notes-box" style="font-weight:700;color:var(--forestDark)">Notes</label>
+        <textarea id="notes-box" placeholder="What did you check? What should the next session know?"></textarea>
+        <div class="notes__actions">
+          <button class="btn" id="export-notes" type="button">Export notes as markdown</button>
+          <button class="btn btn--ghost" id="clear-notes" type="button">Clear</button>
+          <span class="notes__status" id="notes-status" role="status">Saved locally as you type.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Outeniqua PGS &middot; grounded chat explainer.</strong> Self-contained review artifact. Source: <code>core/services/_chatbot.py</code>, <code>core/models/_chat.py</code>, <code>core/views/_chatbot.py</code>, <code>knowledge/services.py</code>.</p>
+    <p>No certification status is published on this page. Membership is not certification.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "pgs-chat-explainer-notes";
+  var box = document.getElementById("notes-box");
+  var status = document.getElementById("notes-status");
+  var exportButton = document.getElementById("export-notes");
+  var clearButton = document.getElementById("clear-notes");
+  var timer = null;
+
+  function setStatus(message) {
+    if (status) {
+      status.textContent = message;
+    }
+  }
+
+  if (box) {
+    try {
+      box.value = window.localStorage.getItem(KEY) || "";
+    } catch (error) {
+      setStatus("Local storage is unavailable; notes will not persist.");
+    }
+
+    box.addEventListener("input", function () {
+      window.clearTimeout(timer);
+      setStatus("Saving...");
+      timer = window.setTimeout(function () {
+        try {
+          window.localStorage.setItem(KEY, box.value);
+          setStatus("Saved locally as you type.");
+        } catch (error) {
+          setStatus("Could not save locally.");
+        }
+      }, 250);
+    });
+  }
+
+  if (exportButton) {
+    exportButton.addEventListener("click", function () {
+      var body = box ? box.value.trim() : "";
+      var text = [
+        "# Chat explainer review notes",
+        "",
+        "Source: product/design/d5_chat_interface_explainer.html",
+        "Date: " + new Date().toISOString().slice(0, 10),
+        "",
+        body || "_No notes._",
+        ""
+      ].join("\n");
+      var blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = "pgs-chat-explainer-notes.md";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setStatus("Exported.");
+    });
+  }
+
+  if (clearButton) {
+    clearButton.addEventListener("click", function () {
+      if (box) {
+        box.value = "";
+      }
+      try {
+        window.localStorage.removeItem(KEY);
+      } catch (error) {
+        /* storage unavailable; the box is already empty */
+      }
+      setStatus("Cleared.");
+    });
+  }
+})();
+</script>
+</body>
+</html>

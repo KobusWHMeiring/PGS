@@ -55,6 +55,13 @@ FUSED_CANDIDATES = 20
 #: Chunks returned to the caller (and, in D, to the model as context).
 DEFAULT_LIMIT = 5
 
+#: How many of a caller's chunks may come from the semantic arm before the rare-term
+#: arm fills the rest. Measured 2026-10-21: with five lexical chunks returned first, the
+#: vector arm contributed *nothing* whenever the lexical arm reached the limit — the
+#: hybrid retrieval the chatbot advertises was lexical in practice. Three seats is
+#: enough for the semantic arm's best clauses and leaves the rare-term arm five.
+SEMANTIC_SEATS = 3
+
 #: The generated `search_vector` was built with `config="english"` (B1). The query must
 #: use the same configuration or the tsquery lexemes will not match the stored ones.
 SEARCH_CONFIG = "english"
@@ -85,6 +92,13 @@ class RetrievedChunk:
     score: float
     lexical_rank: int | None = None
     vector_rank: int | None = None
+    #: The corpus this chunk belongs to. Carried so a caller can re-assert the
+    #: scope after retrieval (D3) without a second query, and so a citation audit
+    #: cannot accept a foreign chunk from a buggy retriever.
+    standard_set_id: int | None = None
+    #: `[{"ref", "start", "end"}]` as stored. A citation's `sub_ref` must appear here;
+    #: depth is never inferred (D15/D43).
+    sub_refs: tuple[dict, ...] = ()
 
     def as_citation(self) -> dict:
         """The shape D's chat contract consumes: `{section_ref, quote, …}`.
@@ -98,7 +112,10 @@ class RetrievedChunk:
             "page": self.page,
             "anchor": self.anchor,
             "heading_path": self.heading_path,
-            "document": f"{self.document_title} v{self.document_version}".strip(),
+            "document": (
+                self.document_title
+                + (f" v{self.document_version}" if self.document_version else "")
+            ),
         }
 
 
@@ -181,15 +198,23 @@ def search(
     limit: int = DEFAULT_LIMIT,
     candidates: int = FUSED_CANDIDATES,
     provider=None,
+    use_vector: bool = True,
+    vector_query: str | None = None,
 ) -> RetrievalResult:
     """Answer a query from one corpus, lexically and (when possible) semantically.
 
-    In:  `query` — raw user text; `standard_set` — the boundary that cannot be escaped;
-         `limit`; `candidates` — per-arm depth before fusion; `provider` — an
-         `EmbeddingProvider`, for tests.
+    In:  `query` — raw user text, used by the lexical arm; `standard_set` — the
+         boundary that cannot be escaped; `limit`; `candidates` — per-arm depth before
+         fusion; `provider` — an `EmbeddingProvider`, for tests; `use_vector` — set
+         false to run the lexical arm alone (the rare-term arm of `search_terms` does
+         this deliberately: a single word is a lexical key, not a semantic question);
+         `vector_query` — what the semantic arm embeds, defaulting to `query`. It is
+         separate because a token-joined string is a good lexical query and a bad
+         sentence: the 2026-10-20 measurement in `search_terms` found the natural
+         question retrieves the inputs clause while its OR form retrieves labelling.
     Out: a `RetrievalResult`. `lexical_only=True` means the vector arm did not run.
-    Side Effects: embeds the query over the network when a key is configured *and* the
-         corpus has vectors.
+    Side Effects: embeds the query over the network when a vector is requested, a key
+         is configured, and the corpus has vectors.
     Fails: nothing on the read path. A missing key, an unembedded corpus, or a provider
          error all degrade to lexical results with a warning recorded.
     """
@@ -203,34 +228,35 @@ def search(
 
     lexical = lexical_search(query, standard_set=standard_set, limit=candidates)
 
-    has_vectors = DocumentChunk.objects.filter(
-        document__standard_set=standard_set, embedding__isnull=False
-    ).exists()
-    has_key = _has_credentials(provider)
-    if not has_key:
-        warnings.append(
-            "GEMINI_API_KEY is not set: retrieval is lexical only, so paraphrases that "
-            "share no words with the standard will not be found."
-        )
-    if not has_vectors:
-        warnings.append(
-            "no chunks in this StandardSet carry embeddings: retrieval is lexical only. "
-            "Re-ingest with embeddings to enable the vector arm."
-        )
-
     vector: list[tuple[int, float]] = []
-    if has_vectors and has_key:
-        try:
-            vector = vector_search(
-                embed_texts([query], provider=provider)[0],
-                standard_set=standard_set,
-                limit=candidates,
+    if use_vector:
+        has_vectors = DocumentChunk.objects.filter(
+            document__standard_set=standard_set, embedding__isnull=False
+        ).exists()
+        has_key = _has_credentials(provider)
+        if not has_key:
+            warnings.append(
+                "GEMINI_API_KEY is not set: retrieval is lexical only, so paraphrases that "
+                "share no words with the standard will not be found."
             )
-        except EmbeddingError as error:
-            # Degrade, do not raise: a lexical answer is better than no answer, and the
-            # caller can see which arms were used. Never silent (see the docstring).
-            logger.warning("retrieval: query embedding failed, lexical only: %s", error)
-            warnings.append(f"query embedding failed, so the vector arm was skipped: {error}")
+        if not has_vectors:
+            warnings.append(
+                "no chunks in this StandardSet carry embeddings: retrieval is lexical only. "
+                "Re-ingest with embeddings to enable the vector arm."
+            )
+
+        if has_vectors and has_key:
+            try:
+                vector = vector_search(
+                    embed_texts([vector_query or query], provider=provider)[0],
+                    standard_set=standard_set,
+                    limit=candidates,
+                )
+            except EmbeddingError as error:
+                # Degrade, do not raise: a lexical answer is better than no answer, and the
+                # caller can see which arms were used. Never silent (see the docstring).
+                logger.warning("retrieval: query embedding failed, lexical only: %s", error)
+                warnings.append(f"query embedding failed, so the vector arm was skipped: {error}")
 
     lexical_only = not vector
     fused = fuse(
@@ -259,6 +285,8 @@ def search(
             score=score,
             lexical_rank=lex_ranks.get(chunk_id),
             vector_rank=vec_ranks.get(chunk_id),
+            standard_set_id=rows[chunk_id].document.standard_set_id,
+            sub_refs=tuple(rows[chunk_id].sub_refs or ()),
         )
         for chunk_id, score in top
         if chunk_id in rows
@@ -270,6 +298,190 @@ def search(
         chunks=chunks,
         lexical_only=lexical_only,
         warnings=tuple(warnings),
+    )
+
+
+def document_frequency(term: str, *, standard_set: StandardSet) -> int:
+    """How many chunks in the set contain `term`, using the same FTS configuration.
+
+    In:  one already-tokenised term; the corpus.
+    Out: a count. Used to find the most discriminative word in a question: "standard"
+        occurs in dozens of chunks, "traceability" in four, and "Traceability" alone is
+        a better retrieval query than their AND or a plain OR.
+    Fails: never for a non-empty term; `websearch_to_tsquery` tolerates raw input.
+    """
+    if not term:
+        return 0
+    tsquery = SearchQuery(term, config=SEARCH_CONFIG, search_type="websearch")
+    return (
+        DocumentChunk.objects.filter(document__standard_set=standard_set)
+        .filter(search_vector=tsquery)
+        .count()
+    )
+
+
+def search_terms(
+    terms: list[str],
+    *,
+    standard_set: StandardSet,
+    limit: int = DEFAULT_LIMIT,
+    candidates: int = FUSED_CANDIDATES,
+    provider=None,
+    question: str = "",
+) -> RetrievalResult:
+    """Search a question's significant terms, rarest first, then the OR fallback.
+
+    In:  `terms` — already-normalised, de-duplicated question words; `standard_set`;
+         `limit`; `candidates`; `provider`; `question` — the visitor's wording, when the
+         caller has it. It is embedded for the semantic arm, and it is the *only* query
+         used when the corpus does not contain one of the terms (see below).
+    Out: a `RetrievalResult` whose chunks are the rare-term results first, then the
+         broader OR results, de-duplicated and truncated to `limit`.
+
+    Why two arms instead of one query: Postgres's `ts_rank` rewards a chunk that
+    matches *any* of the weighted terms, and common words dominate. Measured against
+    the shipped corpus on 2026-10-19, "standard OR traceability" ranked a landscape
+    paragraph above the SAOSO clause that actually contains the requirement, because
+    the paragraph also contained "standard". The rarest term is the one that carries
+    the question: searching it alone puts the clause back in the set, and the OR arm
+    keeps the recall for questions whose terms are all common.
+
+    The rare-term arm is **lexical only**; the vector arm runs once, on the question.
+    Measured 2026-10-20 with the corpus embedded: embedding the rare word as a semantic
+    query retrieved S5/Appendix 6b and pushed SAOSO Appendix 2 out of the top 8, so the
+    manure question refused again despite a good corpus. A single word is a lexical
+    key, not a semantic question. This also spends one query embedding per question
+    instead of two.
+
+    **An unknown word is the subject, not noise.** When a term does not occur in the
+    corpus at all, the lexical arms can only search a proxy: for "can I use cardboard
+    from my neighbours?" the rarest known word is "neighbours", and searching it
+    returned the wild-harvest and child-labour clauses while the inputs clause
+    (SAOSO 4.4.4) never reached the model. Measured 2026-10-21: embedding the *question*
+    puts 4.4.4 in the top 8; embedding `use OR cardboard OR neighbours` does not. So
+    when a question has an unknown term, the lexical arm keeps only its top two chunks
+    as a hedge and the semantic arm takes the rest of the budget: the visitor's own
+    words are the only description of the subject, and five proxy matches must not crowd
+    out of the one clause that governs it. When every term is known, the rare-term arm
+    still leads (that decision is separately measured and pinned), but only for
+    `limit - SEMANTIC_SEATS` chunks: the semantic arm gets the rest, because otherwise a
+    full lexical result set leaves the vector arm contributing nothing at all.
+
+    The hedge is also the offline path: with no embedding key the semantic arm returns
+    nothing, and the two lexical chunks are still better than an empty result set.
+    """
+    cleaned = [term.strip() for term in terms if term and term.strip()]
+    if not cleaned:
+        return RetrievalResult(
+            query="",
+            standard_set_id=getattr(standard_set, "pk", None),
+            warnings=("the question had no searchable terms",),
+        )
+
+    frequencies = {
+        term: document_frequency(term, standard_set=standard_set) for term in cleaned
+    }
+    positive = [term for term in cleaned if frequencies[term] > 0]
+    unknown = [term for term in cleaned if frequencies[term] == 0]
+    # The first occurrence breaks a frequency tie, so the same question is deterministic.
+    ordered = sorted(
+        positive or cleaned,
+        key=lambda term: (frequencies.get(term, 0), cleaned.index(term)),
+    )
+
+    if question and unknown:
+        hedge = search(
+            ordered[0],
+            standard_set=standard_set,
+            limit=min(2, limit),
+            candidates=candidates,
+            provider=provider,
+            use_vector=False,
+        )
+        semantic = search(
+            question,
+            standard_set=standard_set,
+            limit=limit,
+            candidates=candidates,
+            provider=provider,
+        )
+        merged: list[RetrievedChunk] = []
+        seen: set[int] = set()
+        for chunk in (*hedge.chunks, *semantic.chunks):
+            if chunk.chunk_id in seen:
+                continue
+            seen.add(chunk.chunk_id)
+            merged.append(chunk)
+            if len(merged) >= limit:
+                break
+        return RetrievalResult(
+            query=question,
+            standard_set_id=getattr(standard_set, "pk", None),
+            chunks=tuple(merged),
+            lexical_only=hedge.lexical_only and semantic.lexical_only,
+            warnings=tuple(
+                dict.fromkeys(
+                    (
+                        f"the corpus does not contain {', '.join(unknown)!r}: the "
+                        "question was answered from its meaning, not its words",
+                        *hedge.warnings,
+                        *semantic.warnings,
+                    )
+                )
+            ),
+        )
+
+    primary = search(
+        ordered[0],
+        standard_set=standard_set,
+        limit=limit,
+        candidates=candidates,
+        provider=provider,
+        # The rare word is a lexical key. The semantic query is the fallback below.
+        use_vector=False,
+    )
+    fallback = search(
+        " OR ".join(cleaned),
+        standard_set=standard_set,
+        limit=limit,
+        candidates=candidates,
+        provider=provider,
+        vector_query=question or None,
+    )
+
+    merged: list[RetrievedChunk] = []
+    seen: set[int] = set()
+    # The rare-term arm leads, but it does not own the whole budget: three seats are
+    # reserved for the semantic arm, which is otherwise empty whenever the lexical arm
+    # returns a full limit (the shipped five-chunk default did exactly that).
+    for chunk in primary.chunks[: max(0, limit - SEMANTIC_SEATS)]:
+        if chunk.chunk_id not in seen:
+            seen.add(chunk.chunk_id)
+            merged.append(chunk)
+    semantic_added = 0
+    for chunk in fallback.chunks:
+        if chunk.chunk_id in seen:
+            continue
+        seen.add(chunk.chunk_id)
+        merged.append(chunk)
+        semantic_added += 1
+        if semantic_added >= SEMANTIC_SEATS:
+            break
+    for chunk in (*primary.chunks, *fallback.chunks):
+        if len(merged) >= limit:
+            break
+        if chunk.chunk_id in seen:
+            continue
+        seen.add(chunk.chunk_id)
+        merged.append(chunk)
+
+    warnings = tuple(dict.fromkeys((*primary.warnings, *fallback.warnings)))
+    return RetrievalResult(
+        query=question or " OR ".join(cleaned),
+        standard_set_id=getattr(standard_set, "pk", None),
+        chunks=tuple(merged),
+        lexical_only=primary.lexical_only and fallback.lexical_only,
+        warnings=warnings,
     )
 
 
@@ -290,11 +502,14 @@ __all__ = [
     "DEFAULT_LIMIT",
     "FUSED_CANDIDATES",
     "RRF_K",
+    "SEMANTIC_SEATS",
     "Retained",
     "RetrievalResult",
     "RetrievedChunk",
+    "document_frequency",
     "fuse",
     "lexical_search",
     "search",
+    "search_terms",
     "vector_search",
 ]

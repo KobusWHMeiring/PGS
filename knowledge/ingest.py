@@ -43,10 +43,13 @@ from django.db import transaction
 from django.db.models import Count
 
 from knowledge.chunking import chunk_sections
+from knowledge.columns import apply_layout
+from knowledge.reflow import reflow_pages
 from knowledge.embedding import embed_texts
 from knowledge.extraction import extract_pages, sha256_of
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.sections import registry
+from knowledge.tables import chunks_for_rows, rows_for
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +103,8 @@ class IngestReport:
     embedded: bool
     duplicate_refs: dict[str, int] = field(default_factory=dict)
     warnings: tuple[str, ...] = ()
+    layout_pages: tuple[int, ...] = ()
+    reflow_pages: tuple[int, ...] = ()
 
     @property
     def has_duplicates(self) -> bool:
@@ -182,21 +187,31 @@ def ingest_standard(
     section_scheme: str | None = None,
     embed: bool = True,
     provider=None,
+    force: bool = False,
 ) -> IngestReport:
     """Ingest one PDF into one `StandardSet`.
 
     In:  `pdf_path` — the document; `standard_set` — the corpus it belongs to (§4.5);
          `doc_key` — a `CORPUS_DOCUMENTS` name, or explicit metadata fields instead;
          `embed` — request embeddings (skipped with a warning when no key is present);
-         `provider` — an `EmbeddingProvider`, for tests.
+         `provider` — an `EmbeddingProvider`, for tests; `force` — replace an already
+         ingested document (same sha256) instead of returning the no-op report.
     Out: an `IngestReport`. `created=False` means the bytes were already ingested.
+         `layout_pages` names the PDF pages the column transform changed, so the
+         operator's log and the tests can see the transform ran rather than inferring
+         it from better answers.
     Side Effects: writes `StandardDocument` + `DocumentChunk` rows; embeds over the
-         network unless embeddings are skipped.
-    Idempotency: keyed on `(standard_set, sha256)`.
+         network unless embeddings are skipped. With `force`, the previous document
+         and its chunks are deleted inside the same transaction as the new write.
+    Idempotency: keyed on `(standard_set, sha256)`; `force` is the deliberate escape
+         hatch for a corpus-built-here change (a curated table, a parser fix) whose
+         source bytes are unchanged. It drops the old chunks' `retrieved_chunks` links,
+         so run it deliberately rather than as part of a deploy.
     Fails: `IngestError` for missing metadata or an unknown scheme;
         `ExtractionError` when the PDF cannot be read;
         `EmbeddingError` when embeddings were requested and failed. Embedding happens
-        **before** the transaction, so a failure writes nothing at all.
+        **before** the transaction, so a failure writes nothing at all — including no
+        deletion under `force`.
     """
     descriptor = dict(CORPUS_DOCUMENTS.get(doc_key, {})) if doc_key else {}
     if doc_key and doc_key not in CORPUS_DOCUMENTS and not any(
@@ -231,7 +246,7 @@ def ingest_standard(
     existing = StandardDocument.objects.filter(
         standard_set=standard_set, sha256=digest
     ).first()
-    if existing is not None:
+    if existing is not None and not force:
         return IngestReport(
             document_id=existing.pk,
             created=False,
@@ -242,7 +257,14 @@ def ingest_standard(
         )
 
     parser = registry.get(descriptor["section_scheme"])
-    pages = extract_pages(path)
+    # The page is de-columned *before* the parser sees it (D46). Layout is a measured
+    # property of a page, not a flag on the document: a new standard ingested with
+    # explicit metadata has no exclusion table and gets generic detection (D16).
+    pages, layout_pages = apply_layout(extract_pages(path), doc_key=doc_key)
+    # Hyphenated words the PDF wrapped are rejoined *after* the columns are ordered, so
+    # line adjacency is reading adjacency (D52). Before this, `non-` / `P a g e | 47` /
+    # `ruminant` was one stored sentence and no quote of it could pass the audit.
+    pages, rejoined_pages = reflow_pages(pages)
     sections = parser.parse("\f".join(pages))
     if not sections:
         raise IngestError(
@@ -251,6 +273,23 @@ def ingest_standard(
             "this is the failure mode that invalidated MVP 0 v1."
         )
     chunks = chunk_sections(sections)
+    # `knowledge/tables.py` replaces a printed table's auto-chunks with one chunk per
+    # reviewed row (Appendix 2 is the first). The rows are a reconstruction — the single
+    # documented exception to "a chunk is a slice of the section" — because the `-layout`
+    # text interleaves the condition column into the substance column. Data, not a
+    # branch: a reviewed section is looked up in `TABLE_ROWS`.
+    reviewed: set[str] = set()
+    table_chunks: list = []
+    for chunk in chunks:
+        ref = chunk.section_ref
+        if rows_for(ref):
+            if ref in reviewed:
+                continue  # the section's auto-chunks are replaced once, in order
+            reviewed.add(ref)
+            table_chunks.extend(chunks_for_rows(ref))
+            continue
+        table_chunks.append(chunk)
+    chunks = table_chunks
 
     warnings: list[str] = []
     vectors: list[list[float]] | None = None
@@ -266,6 +305,11 @@ def ingest_standard(
     source_file = _relative_source(path)
 
     with transaction.atomic():
+        if existing is not None:
+            # `force`: the bytes are unchanged but what we derive from them changed
+            # (a curated table, a parser fix). Delete inside the transaction, after the
+            # embedding call, so a failed embed leaves the old corpus intact.
+            existing.delete()
         document = StandardDocument.objects.create(
             standard_set=standard_set,
             kind=descriptor["kind"],
@@ -315,6 +359,8 @@ def ingest_standard(
         embedded=vectors is not None,
         duplicate_refs=duplicate_refs,
         warnings=tuple(warnings),
+        layout_pages=layout_pages,
+        reflow_pages=rejoined_pages,
     )
 
 

@@ -19,6 +19,11 @@ private_media/
 staticfiles/
 backups/
 
+# Local evidence documents. A completed farm assessment report is personal data
+# (POPIA) and is not part of the governing corpus, so it never belongs in the
+# repository — `pgs_docs/` versions only the published OPP/SAOSO/workbook set.
+/Homtini Assessment Report 22.10.03.docx.pdf
+
 # Scratch space. HANDOVER §7 tells every session to run throwaway probes from
 # `_scratch/` rather than `%TEMP%` (a stray `inspect.py` in the working directory
 # shadows the stdlib). An un-ignored scratch dir means the next `git add -A`

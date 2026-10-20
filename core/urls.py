@@ -24,6 +24,7 @@ from core.views._public import (
     members,
     organics,
 )
+from core.views._chatbot import ask
 
 app_name = "core"
 
@@ -41,5 +42,8 @@ urlpatterns = [
     path("documents/", documents, name="documents"),
     path("documents/<str:code>/", document_file, name="document_file"),
     path("become-a-member/", become_a_member, name="become_a_member"),
+    # The grounded assistant. `/ask/` is the real surface; the home page's showcase
+    # is an illustration of it, not a second implementation.
+    path("ask/", ask, name="ask"),
     path("contact/", contact, name="contact"),
 ]

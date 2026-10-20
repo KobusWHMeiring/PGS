@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)** and **C4 (claim discipline)** landed 2026-10-19; **C3 (bilingual shell)** is deferred to a later slice (D44, no Afrikaans translator) and **D (chatbot)** remains. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **387 tests**, plus **30 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
+**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** is deferred to a later slice (D44, no Afrikaans translator). D's UAT scenarios are **unsigned**, so the plan is not closed. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **461 tests**, plus **34 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-19
 **MVP:** 0 (spec §19)
@@ -840,6 +840,43 @@ not loaded on any other page that does not use it.
 
 ---
 
+### Built 2026-10-19 — implementation notes (read before changing D)
+
+The tasks above are the contract; these are the decisions taken while making it true, recorded
+here because several are not obvious from the code alone.
+
+* **`/ask/` is the surface.** The home page's two windows are a showcase; the form lives at
+  `/ask/`, linked from the showcase and the footer. A ChatSession is created on the first
+  question, not on a GET, so a reader who leaves does not create a row or spend an IP budget.
+* **Refusal is D17's wording**, exactly: `I cannot find a definitive answer in the SAOSO standard
+  or the Outeniqua PGS documents.` `test_the_refusal_is_the_d17_wording` is the guard.
+* **The citation audit is all-or-nothing.** One invented reference refuses the whole answer.
+  Heading-only documents are citable by their `anchor`; a bare item number (`12`) is resolved to
+  its stored sub-ref (`4.2(12)`) only when exactly one stored ref ends with it, and depth four
+  (`4.5(2)(c)(4)`) is still a hallucination.
+* **Retrieval needed a question mode.** `websearch_to_tsquery` ANDs a natural question into zero
+  results; `core/services/_chatbot.build_retrieval_query` strips function words and
+  `knowledge.services.search_terms` searches the **rarest** term first, then the OR fallback.
+  Without that, a real question refused while the phrase-shaped retrieval tests stayed green —
+  `testing_hazards.md` §2.4 has the evidence.
+* **The answer cache stores the model reply, not the rendered answer.** Citations are re-audited
+  against freshly retrieved chunks on every hit, and `PROMPT_VERSION` is part of the key: bump it
+  whenever the prompt or retrieval changes, or a cached answer outlives its contract.
+* **HTMX is vendored (2.0.4, `core/static/js/vendor/htmx.min.js`) and loaded only on `/ask/`.**
+  `chat.js` is hand-written and only handles scroll, form reset and the 429/503 swap. The plain
+  form POST is the real path, not a fallback.
+* **Admin.** `EscalatedQuery` is editable and answering it stamps `answered_at`, `answered_by`
+  and `ANSWERED`; `ChatMessage` history is read-only.
+* **Embedded 2026-10-20 (D48).** The corpus carries `gemini-embedding-001` vectors at 768 dims
+  (`lexical_only=False`). Enabling the arm exposed a retrieval interaction — the rare-word
+  vector pushed Appendix 2 out of the top 8 — so the rare-term arm is lexical and the vector
+  arm runs once on the OR query. The first live answer was verified against the shipped corpus
+  on 2026-10-19; `HANDOVER.md` §14 records the embedding run and the live re-check.
+* **UAT is not signed.** D is implemented, not accepted: Scenarios 1, 2 and 6 are the human
+  judgement on grounding, citation relevance and phone comfort.
+
+---
+
 ## 3. Order of execution
 
 | # | Tasks | Gate |
@@ -851,7 +888,7 @@ not loaded on any other page that does not use it.
 | 5 | B5 → B6 → B7 | Four documents ingest; ratchet holds; retrieval recall floor met |
 | 6 | C1 → C4 (parallel with 5 once B7 lands) | Public routes 200; claim discipline green |
 | 6b | ~~C3~~ | **Deferred (D44).** Skipped between C2 and D at the product owner's direction. |
-| 7 | D1 → D5 | Grounding and guardrail tests green; refusal exact |
+| 7 | D1 → D5 ✅ | Grounding and guardrail tests green; refusal exact (UAT unsigned) |
 | 8 | UAT | Eight scenarios judged; 1, 3, 8 provisional if D23 applies |
 
 **Run the two-day offline spike in parallel with step 1.** It is not MVP 0 work, but if it fails,

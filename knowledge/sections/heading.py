@@ -6,14 +6,14 @@ refuses the empty string precisely so this case is storable and a parser bug is 
 
 How headings are found:
 
-- **Segments, not lines.** Both documents are two-column, so `pdftotext -layout`
-  puts left- and right-column text on the *same* line
-  (`INTRODUCTION                    DEFINITION OF ORGANIC`). Splitting each line on a
-  run of three or more spaces recovers the columns, which is also why a heading
-  pattern must not be end-anchored.
+- **Segments, not lines.** `pdftotext -layout` puts left- and right-column text on
+  the *same* line (`INTRODUCTION                    DEFINITION OF ORGANIC`), so before
+  the page is de-columned it is split on a run of three or more spaces. That split is
+  kept after the column transform too, because a line that still holds two headings
+  side by side (a spanning heading, a table header) is not cut by the transform.
 - **UPPERCASE only.** Title-case lines (`First-Party Claim`) are therefore *missed*.
-  That is a known, documented gap: catching them needs a column-aware extractor, and
-  a false heading is a worse citation than a missing one.
+  That is a known, documented gap: catching them needs more than a column heuristic,
+  and a false heading is a worse citation than a missing one.
 - **Running headers are suppressed by repetition.** `PGS SA - SOUTH AFRICAN ORGANIC
   CERTIFICATION LANDSCAPE` is stamped on most pages; a detector that emitted every
   caps line would produce one bogus section per page, and a section the reader cannot
@@ -22,16 +22,17 @@ How headings are found:
   `DEFINITION OF ORGANIC` / `AGRICULTURE` is one heading rather than one heading plus
   a spurious one.
 
-**Body attribution in a two-column document is approximate.** The parser walks one
-stream, so right-column text can land in the left column's section. Headings, anchors
-and pages are correct; the section bodies are not guaranteed to be. Both documents
-are `PRINCIPLES`/`GUIDANCE` rather than the assessable standard, and the parser that
-matters for citations (SAOSO Section B, the OPP) is single-column — so a
-column-aware extractor is deferred, deliberately, rather than half-built here.
+**Body attribution is exact for column pages.** The page is de-columned at ingest
+(`knowledge/columns.py`, D46), so the parser walks one column at a time and a section's
+body is its own column's text. Before that transform body attribution in a two-column
+document was approximate — right-column text could land in the left column's section.
+The transform leaves table rows separated rather than associated (§3.5), which is a
+reading caveat, not an attribution one.
 
 `page` is again the number printed in the document (D42). The certification landscape
-stamps a bare number; the BPP stamps none, so its chunks carry `page=None` and the
-`anchor` is the only locator.
+stamps a bare number; the BPP stamps a bare number on only some pages (measured:
+`None, None, None, 10`), so its other chunks carry `page=None` and the `anchor` is the
+only locator.
 """
 
 from __future__ import annotations
@@ -136,16 +137,22 @@ class HeadingParser:
 
     @staticmethod
     def _page_stamp(page_text: str) -> int | None:
-        """`Page | 6` (SAOSO) or a bare `6` (the certification landscape)."""
+        """`Page | 6` (SAOSO) or a bare `6` (the certification landscape).
+
+        The bare stamp is searched for anywhere, not just at the end: the stamp is
+        page furniture, and re-ordering a two-column page moves it into the middle.
+        Searching only the tail found it before the column transform and lost it after,
+        silently nulling every landscape citation (D42).
+        """
         labelled = page_number(page_text)
         if labelled is not None:
             return labelled
-        for line in reversed(page_text.splitlines()):
-            stripped = line.strip()
-            if not stripped:
-                continue
-            return int(stripped) if BARE_PAGE.match(stripped) else None
-        return None
+        stamps = [
+            int(line.strip())
+            for line in page_text.splitlines()
+            if BARE_PAGE.match(line.strip())
+        ]
+        return stamps[-1] if stamps else None
 
     @staticmethod
     def _repeated_headings(pages_segments: list[list[list[str]]]) -> set[str]:

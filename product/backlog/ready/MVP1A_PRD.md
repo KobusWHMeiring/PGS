@@ -1,17 +1,18 @@
 # PRD: MVP 1a — In-Office Visit Flow
 
-**Status:** Ready — all blocking decisions closed (spec §18.3 D27–D39). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
+**Status:** Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 **Owner:** Kobus Meiring (Product)
-**Last Updated:** 2026-10-19
+**Last Updated:** 2026-10-20
 **MVP:** 1a of 2 within slice 1 (spec §19, D25)
 **Scope:** Application → membership and pledge → pre-visit questionnaire → scheduling with committee
-validation → assessment capture (connected) → visit report PDF. **Stops at `UNDER_REVIEW`.**
+validation → assessment capture (connected) → Sheet I conclusion → visit report PDF. **Stops at
+`UNDER_REVIEW`.**
 **Reference:**
 - Target-state spec — `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` §3, §4.1–§4.2, §7, §8, §11
 - Plan — `product/backlog/ready/MVP1A_PLAN.md`
 - Shape decision — `product/design/d1_mvp1_shape_exploration.html` (D25, D26)
 - Build rules — `product/docs/context/build_principles.md`
-- Source documents — OPP §I, §II, §3.1, §3.3, §4.1, §4.2; FORM Sheets A, B.1, B.2, I, J; PREP
+- Source documents — OPP §I, §II, §3.1, §3.3, §4.1, §4.2; FORM Sheets A, B.1, B.2, I §§1–3, J; PREP
 
 ---
 
@@ -64,18 +65,28 @@ answer "which Crops farms were not compliant on on-farm composting?" without ope
 | Pre-visit questionnaire with autosave and attachments | Split-sync, media queues, quota handling | 1b |
 | Scheduling + `validate_assessment_team()` + notice rules | Voice notes (recorder, transcription) | post-MVP |
 | Connected assessment capture (the degrade path) | **Certification decision, outcomes, seals** | **MVP 2** |
-| Verdicts with polarity, findings, corrective actions | Certificates, QR, public registry | MVP 2 |
+| Verdicts with polarity and structured **sub-verdicts**, findings, corrective actions | Certificates, QR, public registry | MVP 2 |
 | Signatures (3 signatories), evidence photos | Aggregation approval workflow | post-MVP |
 | Input register (FORM B.2), prior certification (Sheet A) | Reporting dashboard, gap analysis, census exports | MVP 3 |
+| **Sheet I conclusion**: social equity (§1) + documentation/records checklist (§2) | — | 1a |
+| **Farmer corrective-action follow-up** + prior-action review at the next visit | — | 1a |
 | Visit report PDF (Sheet I report portion, decision block pending) | Discipline workflow, unannounced visits | out of scope (§17.1) |
 | `visitPack` producer + sync API — **gated on `1∥`** | Translated content | post-MVP |
 
-**Two deliberate limitations, stated rather than discovered:**
+**Three deliberate limitations, stated rather than discovered:**
 
 1. **1a requires connectivity.** The connected capture form degrades to nothing without signal. This is
    the honest consequence of the split (D25) and the reason the MVP 1 claim attaches to 1b.
 2. **The PDF has no decision block.** Sheet J's certification section stays visibly pending until MVP 2.
    A report that looks decided but is not would be worse than an obviously incomplete one.
+3. **Sheet I is not the same thing as Sheet J.** 1a captures the conclusion's social-equity and
+   records-checklist sections because they are assessment evidence; it does **not** select one of the
+   four outcomes. D45 makes that distinction explicit so neither half is silently dropped.
+
+**Added after the Homtini 2022 report review (D45).** 1a also captures the Sheet I conclusion
+(§1 social equity, §2 documentation and records), structured sub-verdicts, a farmer corrective-action
+task list, a prior-action review at the next visit, and the finalise gates that make a blank field
+impossible to sign. These are assessment records, not certification decisions: D33 is unchanged.
 
 ---
 
@@ -87,10 +98,10 @@ Seven sub-plans. B is the irreversible one and is sequenced before anything that
 |---|---|---|
 | **A — Membership & application** | `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`, `CommitteeTerm`, `Pledge`, `MembershipFee`, `AssessmentFee`, `PriorCertification`; application flow; eligibility gates | The membership rules from OPP §I–§II can be enforced rather than described |
 | **B — Templates** | `AssessmentTemplate`, the v1 schema format, `load_template`, the hand-authored **Crops** template, freeze semantics | That 38 questions and 37 verdicts can be represented without distorting the paper form |
-| **C — Questionnaire** | `Assessment`, `AssessmentAnswer`, `EvidenceDocument`; farmer-facing render, autosave, attachment readiness, submit and snapshot | That the two-role (grey/white) form works when only half of it is farmer-visible |
+| **C — Questionnaire** | `Assessment`, `AssessmentAnswer`, `EvidenceDocument`; farmer-facing render, autosave, attachment readiness, submit and snapshot; **corrective-action follow-up task list** | That the two-role (grey/white) form works when only half of it is farmer-visible, and the farmer can answer a finding after the visit |
 | **D — Scheduling & committee** | `FarmVisit`, `VisitParticipant`; `validate_assessment_team()`; the numeric pre-visit rules; fee gate | That OPP §3.3/§4.1 composition is a server-side validation, not a guideline |
-| **E — Capture & findings** | `AssessmentVerdict` with polarity, `Finding`, `NotifiableExemption`, `CorrectiveAction`, `Signature`, `EvidencePhoto`, `InputSupply` | That the polarity model survives contact with real verdicts |
-| **F — Visit report** | `finalise_visit`, WeasyPrint Sheet I report | That the administrator's report is generated, not typed |
+| **E — Capture & findings** | `AssessmentVerdict` with polarity and sub-answers, `Finding`, `NotifiableExemption`, `CorrectiveAction`, `Signature`, `EvidencePhoto`, `InputSupply`; **Sheet I conclusion** (`SocialEquity`, `RecordCheck`), `PriorActionReview` | That the polarity model survives contact with real verdicts, and the conclusion is captured with the evidence |
+| **F — Visit report** | `finalise_visit`, WeasyPrint Sheet I report, **completeness and signature gates** | That the administrator's report is generated, not typed, and cannot be finalised around a blank |
 | **G — Seam** | `visitPack` producer, `sync_visit_text`, `store_media_item`, finalise endpoint | That the contract is real on the server side before 1b is built against it |
 
 ---
@@ -128,8 +139,10 @@ The frozen JSON is the contract between the FORM, the questionnaire renderer, th
       "text": "Is there adequate on-farm composting (on farm composting is a key requirement of organic principles)",
       "standard_ref": null,
       "sub_questions": [
-        "Is the compost of a good quality? (decomposed, friable, organisms/biological life visible, etc.)",
-        "Is the source of all ingredients, including manure, acceptable?"
+        { "key": "crops.V04.a", "text": "Is the compost of a good quality? (decomposed, friable, organisms/biological life visible, etc.)",
+          "polarity": "POSITIVE", "options": ["YES", "NO", "NA"], "required": true },
+        { "key": "crops.V04.b", "text": "Is the source of all ingredients, including manure, acceptable?",
+          "polarity": "POSITIVE", "options": ["YES", "NO", "NA"], "required": true }
       ] },
     { "key": "crops.V03", "ref": "V3", "respondent": "ADMINISTRATOR",
       "polarity": "INFORMATIONAL", "options": ["YES", "NO"],
@@ -147,6 +160,10 @@ Rules:
   Crops leaves it `null` rather than inventing one.
 - `allowed_ref_gaps` documents the source's own numbering defects so validation warns on **new** gaps
   without failing on known ones.
+- `sub_questions` are **structured**, not prose: each child has its own `key`, `polarity`, options and
+  `required` flag. They are stored on the parent verdict's `sub_answers` JSON as
+  `{"<sub_key>": "YES|NO|NA"}` and are never folded into the parent's single value. The FORM prints
+  six such groups in Crops (V4, V10, V11, V19, V21, V35).
 
 ### 5.2 Polarity is derived, not authored
 
@@ -210,6 +227,61 @@ The pledge's land-history periods contradict OPP §V (annuals: 12 months in the 
 other perennials the reverse). The platform records exactly what was attested and sets
 `land_history_conflict=True`; it does **not** resolve the conflict or infer a seal. Seals are MVP 2.
 
+### 5.8 Sheet I conclusion (D45)
+
+`finalise_visit` is not the whole of Sheet I. The paper conclusion has two sections the visit report
+must reproduce:
+
+- **§1 Social equity and justice** — one `SocialEquity` row per visit: whether staff are employed,
+  worker count, employment status, labour-law compliance, whether staff live on the premises, and the
+  child-labour question with its activity description. Worker and child-labour fields are sensitive;
+  they are never serialised publicly.
+- **§2 Documentation and records** — one `RecordCheck` per printed item: farm sketch, field diagrams,
+  farm diary, input purchase/donation records, sales records, input/output reconciliation, soil test,
+  water test, and the three agro-processing items. `status ∈ CHECKED | MISSING | NOT_APPLICABLE`;
+  `MISSING` requires a note and may support a Finding but does **not** auto-create one. This is the
+  assessor's verification, not a second upload: `evidence_doc` may point at the questionnaire's
+  `EvidenceDocument`.
+
+A visit cannot be finalised with an unset `RecordCheck` or without a `SocialEquity` row. A `MISSING`
+record is a recorded fact, not a blocker — Homtini's missing sales records did not stop the visit;
+blank did.
+
+### 5.9 Sub-verdicts and completeness (D45)
+
+The FORM prints several verdicts with child Yes/No rows (Crops: V4 ×2, V10 ×2, V11 ×2, V19 ×3,
+V21 ×2, V35 ×2). `AssessmentVerdict.sub_answers` is `{"<sub_key>": "YES|NO|NA"}`. A child is
+answered independently of its parent, but `finalise_visit` refuses while any required child is `NULL`;
+`NA` is an explicit answer, `NULL` is an omission. The capture UI renders one control per child and
+never folds them into the parent's value.
+
+This is the Homtini failure made impossible: V11's supplier-information child and V25 were left blank
+on a report that was nevertheless signed, and V5 was left blank beside them.
+
+### 5.10 Corrective-action follow-up and prior actions (D45)
+
+- **After the visit**, every `CorrectiveAction` appears in the farmer's portal as a task with its due
+  date. The farmer uploads the requested evidence (TDS, non-GMO letter, invoice, compost ingredients
+  list); the upload is an `EvidenceDocument` linked to the action and sets `SUBMITTED`. The reviewer
+  moves it to `VERIFIED`/`CLOSED`; `OVERDUE` is derived from `due_on`.
+- **At the next visit**, every open action from prior visits is opened at the start of capture (PREP
+  requires it). One `PriorActionReview` records `VERIFIED | PARTIAL | NOT_MET` with a note. A
+  `NOT_MET` Critical action → `ESCALATED`. `finalise_visit` refuses while any prior open action has no
+  review.
+
+The Homtini Major action — *"provide these documents for review in 2 weeks"* — is exactly this loop.
+A report that records the action but gives the farmer no way to answer it is a paper process with a
+database behind it.
+
+### 5.11 Input traceability (D45)
+
+`InputSupply` gains `input_kind ∈ SEED | COMPOST | AMENDMENT | FEED | OTHER`,
+`seed_status ∈ ORGANIC | CONVENTIONAL_UNTREATED | CONVENTIONAL_TREATED | UNKNOWN | NA`
+and `approval_status ∈ PENDING | APPROVED | REJECTED` with `approval_rationale` and `approved_by`.
+Supplier documents attach through `EvidenceDocument.input_supply`, not through free-text ingredients.
+Seed status is what makes the *"conventional, untreated seeds"* notifiable exception queryable instead
+of buried in a notes column.
+
 ---
 
 ## 6. Execution Steps
@@ -218,11 +290,11 @@ Task order, acceptance tests and schema details: `MVP1A_PLAN.md`.
 
 1. **A1–A7** — membership, farms, pledge, fees, prior certification, application flow, eligibility gates.
 2. **B1–B4** — template model, schema validation, the hand-authored Crops template, freeze semantics.
-3. **C1–C5** — assessment and answers, questionnaire render + autosave, attachments, submit/snapshot, clarifications.
+3. **C1–C6** — assessment and answers, questionnaire render + autosave, attachments, submit/snapshot, clarifications, corrective-action follow-up.
 4. **D1–D4** — visit and participants, team validation, notice rules, scheduling UI.
-5. **E1–E6** — verdict capture with polarity, findings, exemptions, corrective actions, signatures, photos, input register.
-6. **F1–F2** — WeasyPrint report, `finalise_visit`.
-7. **G1–G4** — **only after `1∥` freezes**: pack producer, sync, media, finalise endpoint.
+5. **E1–E9** — verdict capture with polarity and sub-answers, findings, exemptions, corrective actions, signatures, photos, input register, Sheet I conclusion, prior-action review.
+6. **F1–F3** — WeasyPrint report, `finalise_visit`, completeness gates.
+7. **G1–G5** — **only after `1∥` freezes**: pack producer, sync, media, finalise endpoint.
 
 ---
 
@@ -240,7 +312,12 @@ Task order, acceptance tests and schema details: `MVP1A_PLAN.md`.
 - [ ] A visit with an unpaid `AssessmentFee` cannot leave `DRAFT`
 - [ ] The questionnaire renders `respondent=FARMER` questions and no `ADMINISTRATOR` ones
 - [ ] Attachment-required questions are visibly unsatisfied until an `EvidenceDocument` exists
-- [ ] The report PDF renders every finding with its verbatim severity definition
+- [ ] The Crops template declares the six sub-verdict groups; a parent with an unanswered required child cannot be finalised
+- [ ] `finalise_visit` refuses an unanswered verdict, an unanswered required sub-verdict, a missing signature, an unset `RecordCheck`, an unreviewed prior action, and an unreported exemption
+- [ ] A `MISSING` `RecordCheck` is recordable and renders in the report
+- [ ] The report renders Sheet I §1 and §2 alongside the findings and pending decision block
+- [ ] A farmer can submit evidence against a corrective action; it moves to `SUBMITTED`; `OVERDUE` is derived
+- [ ] Prior open actions appear at the next visit; a `NOT_MET` Critical action escalates
 - [ ] Replaying a `client_uuid` creates zero additional rows (contract test, sub-plan G)
 
 **Human-judged (UAT)**
@@ -249,6 +326,9 @@ Task order, acceptance tests and schema details: `MVP1A_PLAN.md`.
 - [ ] The severity definitions read verbatim as the group's own wording (committee)
 - [ ] An administrator can run one complete visit without touching the spreadsheet (administrator)
 - [ ] The report PDF is something the committee would accept as a visit report (committee)
+- [ ] The conclusion reads as the paper Sheet I — social equity and the records checklist intact (committee)
+- [ ] An administrator can answer a "last visit" action without leaving the capture screen (administrator)
+- [ ] The next visit opens the last visit's actions before the walkabout (administrator)
 - [ ] The input register (B.2) captures what a farmer actually brings — Act 36 answers included (administrator)
 
 ---
@@ -264,6 +344,8 @@ Task order, acceptance tests and schema details: `MVP1A_PLAN.md`.
 | R1a-5 | **1a has no offline path**, so a visit in a dead zone cannot be captured at all. | Stated in §3; 1b is the fix and the MVP 1 claim is attached to it. The administrator is told plainly. |
 | R1a-6 | **Seeding the committee roster stores named individuals.** | The roster is published in OPP §VII, so the processing is already public; keep it to name + position + term, nothing else. |
 | R1a-7 | **`verify_pending`**: sub-plan G is built before any client exists, so the sync API is exercised only by contract tests. | Explicit `contract test` task; the envelope is validated against the JSON Schema on both directions. Accept that real traffic arrives in 1b. |
+| R1a-8 | **Sheet I's conclusion is mistaken for the decision block and dropped.** The outcome is legally significant, so it is easy to hear "no decision in 1a" as "no conclusion in 1a". | D45 separates the two: `SocialEquity` and `RecordCheck` are assessment evidence and ship now; the four outcomes stay in MVP 2. The report renders both, and the UAT asks the committee to read the conclusion. |
+| R1a-9 | **Sub-verdicts are flattened into the parent** and the evidence disappears. | Structured `sub_questions` in the template, `sub_answers` on the row, one control per child, and a finalise gate. Homtini's blank V11 supplier child and V25 are the regression fixture. |
 
 ---
 
@@ -293,4 +375,7 @@ Task order, acceptance tests and schema details: `MVP1A_PLAN.md`.
 - [ ] Integer cents (`_cents`), never floats — `MembershipFee`, `AssessmentFee`, `catering_fee_cents`
 - [ ] No file over 30 KB
 - [ ] Void/deactivate instead of delete on `AssessmentVerdict`, `EvidencePhoto`, `SyncReceipt`, `CorrectiveAction`
+- [ ] `SocialEquity`, `RecordCheck` and `PriorActionReview` migrated and re-exported
+- [ ] Sub-verdicts stored in `sub_answers`, never folded into the parent value
+- [ ] Finalise gates return an enumerated list of unmet items, not a generic "incomplete" error
 - [ ] UAT items carry a `Judgement:` clause; machine-provable checks live in the suite

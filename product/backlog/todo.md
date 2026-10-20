@@ -21,6 +21,18 @@ the generated index's "To Do" section.
 - [ ] Complaints, hearings and discipline workflow (OPP §4.5–4.7).
 - [ ] Membership fee *collection* (fees are tracked only; no gateway).
 
+## Corpus and chat — found while building
+
+- [ ] LLM classifier / alias routing for out-of-vocabulary subjects. **Deferred 2026-10-21**:
+      it would not have fixed any of the round-3 failures. Reopen only when a suite question
+      retrieves the *wrong section*; prefer a seeded alias table to a model call
+      (`CHAT_ANSWER_COVERAGE_PRD.md` G5).
+- [ ] Publish the administrator's email/phone on `/contact/` (currently `contact details to
+      confirm` chips). Needed for the escalation path either way
+      (`Refinement/ESCALATION_ANSWER_PATH_PRD.md`).
+
+
+
 ## Content
 
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.

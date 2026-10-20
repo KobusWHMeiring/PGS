@@ -399,6 +399,184 @@ in a subordinate clause was enough to queue an `--apply` that moves a live plan 
 the build plan, never in the status line — and after editing a `Status:` line, run
 `python product/backlog.py` and read the **DRIFT** section before running `--write`.
 
+### 1.17 An `EscalatedQuery` is not evidence the corpus lacks an answer
+
+The chatbot writes the **same** refusal and the same escalation for three unrelated
+things: the passages really do not answer the question, the model's citation could not
+be verified, and the *provider cut its reply at the output cap*. All three were observed
+live on 2026-10-19 against the shipped corpus, and only the first is about the standard.
+
+The manure question is the one that exposed it. It was refused twice, which reads as a
+corpus gap — but the corpus answers it (BPP "2. Soil Management", SAOSO 4.4, Appendix 2)
+and the model produced the right answer both times. Two separate mechanisms refused it:
+
+```python
+# 1. `sub_ref` spelling. Stored refs are `4.2(12)`; the model returned the printed
+#    item marker, with the brackets. The audit's suffix check built `((12))`.
+>>> audit_citations([{"section_ref": "§4.2", "sub_ref": "(12)", ...}], chunks, ...)
+PROBLEMS: ("§4.2: sub_ref '(12)' does not exist in the chunk",)
+
+# 2. Output cap. 1024 tokens cut a four-citation answer mid-string, and the JSON
+#    error was re-raised as an outage:
+json.decoder.JSONDecodeError: Unterminated string starting at: line 2 column 13 (char 14)
+core.services._chatbot.UpstreamModelError: Gemini returned text that is not the
+    requested JSON schema: Unterminated string ...
+# -> POST /ask/ 503, "The assistant cannot reach the answering service right now."
+```
+
+Both are ours, and both looked to the operator like "the standard doesn't cover this".
+The traceability canary — a question the corpus answers verbatim — was refused by
+mechanism 1 alone, which is the cheapest possible proof that a `NO_CITATIONS`
+escalation is not a corpus finding.
+
+**The diagnostic trap inside the trap:** the citation audit's reasons live in
+`extra={"chat_problems": ...}`, and the project's log format does not render `extra`
+fields. The log said only `chatbot citation audit refused an answer`, so the first
+reproduction had to be done by calling the provider by hand. Until fix 6 (a distinct
+escalation reason per mechanism) lands, put the problems in the message, not only in
+the extras.
+
+**Rules:**
+
+* **Never read a refusal as a corpus finding without the audit's `problems`.** Reproduce
+  with `GeminiChatModel().answer(...)` + `audit_citations(...)` against real chunks —
+  that costs one call and names the mechanism.
+* **`finish_reason` is the authority on truncation, never the JSON parser.** A reply cut
+  after a complete citation array parses perfectly and is still half an answer, so
+  check the reason *before* `json.loads` and retry once at a larger cap.
+* **A spelling is not a fabrication.** Resolve `§4.2`/`4.2`, `Section 6.3`/`§6.3`,
+  `4.2(12)`/`12`/`(12)` — but only through a key that names **exactly one** stored
+  locator, and report the *stored* locator in the `Citation` so the reader can look it
+  up. Never strip the `S` prefix: D14 stores it because `1.1.1` exists in both Section
+  A and Section B.
+* **A cap that is too low is a logic bug with a transport error's face.**
+
+Guards: `core/tests/test_chatbot_provider.py` (cap from settings, retry once, truncation
+named) and the `_manure_chunk` tests in `core/tests/test_retrieval_scope.py`. Both were
+mutation-tested — reverting the normalisation fails three audit tests, restoring
+`max_output_tokens=1024` with no `finish_reason` check fails five provider tests.
+
+### 1.18 A non-space multiset check that counts newlines reports total data loss
+
+The loss-free invariant for the column transform (`knowledge/columns.py`) is "every
+non-space, non-newline character survives". Newlines are excluded **deliberately**:
+reordering a page changes them by definition, so counting them flags all 29 transformed
+pages as catastrophic corruption and buries the real question (did a footnote vanish?).
+
+Evidence (the guard working honestly before newlines were excluded):
+
+```
+Counter(page) != Counter(de_column(page))   # on every column page
+# but the difference is only '
+'
+```
+
+**Rule:** define the invariant you actually mean. For reordering, it is the character
+multiset modulo whitespace structure; strip `" "` and `"
+"` before comparing.
+
+### 1.19 A raw `in` substring assertion fails on a contiguous sentence
+
+`pdftotext` breaks lines inside a sentence, so the BPP manure sentence is contiguous
+*modulo line breaks*: `"Animal manure
+must be preferably composted
+…"`. A raw
+substring test fails on text that `audit_citations` accepts, which looks like the corpus
+fix not working.
+
+**Rule:** normalise exactly as the audit does — `" ".join(text.split())` — before
+asserting a sentence is present. Never "fix" the corpus to satisfy a naive `in`.
+
+### 1.20 A loss-free test passes for the wrong reason when the transform never runs
+
+The multiset test is green when `de_column` returns the page unchanged, and green when
+it is not called at all. It is only a guard **beside the golden page set**. Measured:
+disabling the transform turned 8 column tests red and left the multiset test green.
+
+**Rule:** pair a loss-free test with a pinned set of pages that must change, and pin one
+literal count (BPP = 8) that the golden set cannot drag along when the detector regresses
+to zero.
+
+### 1.21 Reordering page furniture invalidates any parser that reads a stamp by position
+
+`heading.py::_page_stamp` read the **last** non-blank line to find a bare page number.
+That works on the raw landscape page and fails after de-columning, because the stamp is
+page furniture and reordering moves it to roughly line 50 of 90 — so every landscape
+section silently lost its `page` (all `None`, violating D42) while every other test
+stayed green.
+
+**Rule:** a parser that reads a stamp by position is coupled to the page layout. After
+any layout transform, pin `(section_ref, anchor, page)` sets per document before trusting
+it; then search for the stamp anywhere rather than at the tail.
+
+### 1.22 A recorded "correct quote" may be a paraphrase, and chasing it weakens the audit
+
+The 2026-10-19 model reply quoted the BPP as "must preferably be composted and sourced
+from farms under organic management or extensive farming practices". The standard prints
+"must be preferably composted **prior to application, and** must be sourced from farms
+under organic management, **or from extensive farming practice**". It is a paraphrase;
+an exact substring audit refuses it against a *perfect* corpus.
+
+**Rule:** state the success gate against the verbatim corpus sentence, and add a second
+test asserting the recorded paraphrase is still refused. That pins the audit's strictness
+rather than relaxing it to make a recorded answer pass.
+
+### 1.23 A synthetic two-column page whose lines overflow the gutter looks like a bug
+
+A test page built with `f"{left:<28}{right}"` and a 22-28 band is only cut where a line
+is blank across the whole band. If the left text overflows past column 22, the line has
+text at the band positions, rule 2 keeps it whole, and the output looks misordered —
+while the implementation is correct.
+
+**Rule:** build synthetic pages with gutters the text respects (pad to the band, do not
+merely exceed it), and test detection against the real PDF bytes. `test_columns.py`
+does both.
+
+### 1.24 A chunk that looks pre-transform may be exactly what the transform produces
+
+On 2026-10-21 the Appendix 2 chunk held
+`Trace elements, e.g.: boric acid, sodium borate, calcium Use restricted to cases where soil/plant nutrient`.
+The obvious reading is "the corpus predates `de_column`" — `ingest_standard` is a no-op
+when the PDF's sha256 is already stored, so a transform fix never reaches the database
+on its own. That reading was wrong. Rebuilding every document's chunks in memory and
+diffing them against the stored rows found **0 of 340 different**: the pipeline really
+does produce that text, because the table's rows overflow the column gutter and
+`de_column` keeps a spanning line whole by design.
+
+So a re-ingest would have changed nothing, and the actual defect is the one
+`CORPUS_COLUMN_EXTRACTION_PRD.md §3.5` records as out of scope: **table rows are not
+reconstructed** after de-columning. A substance and its condition end up in different
+places, and a model quoting a substance that spans the boundary is refused by the audit
+for a reason that looks like hallucination.
+
+**Rule:** before proposing a re-ingest for a corpus defect, rebuild the chunks in memory
+and diff them against the stored rows. That is the only way to tell "stale" from "as
+good as the transform gets". Test the *symptom a reader sees* — a substance paired with
+its condition — not merely that a sentence inside one cell is contiguous.
+
+### 1.25 A word the extractor hyphenated is not a quote, and the model looks guilty
+
+On 2026-10-21 two correct answers were refused and both were filed as model failures: one
+elided a word with `...`, the other paraphrased. Neither was the model's fault. The stored
+text was
+`The percentage of non-organic feed may not exceed 10% dry matter per ruminant and 15% dry matter per non-`
++ a page footer + `ruminant calculated on an annual basis.` — because `pdftotext -layout`
+breaks lines where the *page* breaks them, and SAOSO prints its body double-spaced, so the
+halves of a hyphenated word end up two lines apart. Whitespace normalisation turns that
+into `non- ruminant`, which no reader writes. The model could only quote it by writing a
+non-word, so it elided; the audit then refused, correctly. Same class in `S4.1.1`
+(`post-` / `harvest`).
+
+**Evidence that it is the corpus, not the model:** print `" ".join(chunk.text.split())`
+and search for the sentence as the page prints it. If it is absent but the chunk *looks*
+right, look for `letter-` at a line end — and for the printed footer (`P a g e | 47`) inside
+the clause, which is the same page-boundary defect and hit 65 of 368 chunks.
+
+**Rule:** a refusal whose quote differs only at a line break is a corpus defect — repair
+the page (`knowledge/reflow.py`, and `PAGE_FOOTER` in `FURNITURE`), never the audit, and
+not the prompt first. Measure the corpus before blaming the model, then verify the fix
+with `scripts/probe_chat.py` on the question that failed.
+
 ## 2. A tool can report success while doing nothing
 
 ### 2.1 Import Linter reads `.importlinter` as **INI**, not TOML
@@ -446,6 +624,40 @@ healthy while every queued task sat undrained.
 
 **Related:** a worker with an **empty registry** still answers pings, so
 `celery_worker: ok` does not mean tasks will run — see 1.5.
+
+### 2.4 `websearch_to_tsquery` ANDs a natural question into zero results
+
+A chatbot question is not a search-box query. Postgres's `websearch_to_tsquery` joins
+space-separated words with **AND**, so
+
+```sql
+websearch_to_tsquery('english', 'What does the standard require for traceability?')
+-- 'standard' & 'requir' & 'traceabl'
+```
+
+matches only a chunk containing *all three* lexemes. The SAOSO traceability clause
+says "Handlers and processers shall ensure traceability…" and contains neither
+"standard" nor "require" as a form that survives stemming in that sentence. Retrieval
+returns **nothing**, the chatbot refuses, and every unit test that uses a
+phrase-shaped query (`"traceability of organic processing"`) still passes.
+
+Evidence, against the shipped corpus on 2026-10-19:
+
+```text
+search('What does the standard require for traceability?')  -> []
+search('traceability OR standard')                          -> chunks
+```
+
+**Consequence:** a grounded chatbot that answers only from retrieved passages refuses
+everything a real person types, while the retrieval suite is green — the classic
+"test the phrase, not the question" failure.
+
+**Rule:** build the lexical query from the question's significant terms, and do not
+trust a single OR either: common words ("standard") can outrank the rare word that
+carries the question. `core/services/_chatbot.build_retrieval_query` strips function
+words; `knowledge.services.search_terms` searches the **rarest** term first and the OR
+fallback second, then de-duplicates. Test both with a natural question, not only with
+the phrases the standard happens to contain.
 
 ---
 

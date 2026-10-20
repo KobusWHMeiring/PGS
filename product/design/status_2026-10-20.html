@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where the platform stands — Outeniqua PGS, 20 October 2026</title>
+<style>
+  /* ----------------------------------------------------------------------
+     Self-contained status artifact. No CDN, no external font, no build step,
+     no network. Palette copied from product/design/d46_chat_corpus_flow_explainer.html
+     (which copied decisions_review.html) — DESIGN.md tokens, not a new family.
+     ---------------------------------------------------------------------- */
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --green: #4a6b3c;
+    --red: #8c3a2b;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.08; margin: 0 0 1rem; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.1rem); line-height: 1.15; margin: 0 0 0.75rem; }
+  h3 { font-size: 1.16rem; line-height: 1.25; margin: 0 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.4rem; }
+  strong { color: var(--forestDark); }
+  a { color: var(--ochreDark); }
+  code {
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+  .hero code, .callout--dark code { border-color: rgb(249 241 226 / 0.25); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+
+  .bar {
+    position: sticky; top: 0; z-index: 20;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1rem;
+    align-items: center; justify-content: space-between;
+    max-width: 1080px; margin: 0 auto; padding: 0.6rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__links { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.78rem; }
+  .bar__links a { color: var(--muted); text-decoration: none; }
+  .bar__links a:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 36px; padding: 0.35rem 0.8rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--creamWarm); color: var(--forestDark);
+    font: inherit; font-size: 0.75rem; cursor: pointer;
+  }
+  .bar__print:hover { border-color: var(--ochre); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+
+  .hero { background: var(--forest); color: var(--cream); padding: 3.25rem 0 2.75rem; }
+  .hero h1 { color: var(--cream); }
+  .hero p { color: rgb(253 251 247 / 0.86); max-width: 56rem; }
+  .eyebrow { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ochreDark); margin: 0 0 0.75rem; }
+  .hero .eyebrow { color: var(--ochreLight); }
+  .hero .lede { font-size: clamp(1.02rem, 2.1vw, 1.24rem); color: var(--cream); }
+  .hero .stamp { font-size: 0.8rem; color: rgb(253 251 247 / 0.62); margin: 1.25rem 0 0; }
+
+  .stats {
+    display: grid; gap: 0.75rem; margin: 1.75rem 0 0;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  }
+  .stat {
+    border: 1px solid rgb(249 241 226 / 0.22);
+    border-radius: var(--radius);
+    background: rgb(249 241 226 / 0.07);
+    padding: 0.7rem 0.85rem;
+  }
+  .stat__n { font-family: var(--serif); font-size: 1.5rem; line-height: 1.1; color: var(--cream); display: block; }
+  .stat__l { font-size: 0.72rem; line-height: 1.35; color: rgb(253 251 247 / 0.64); display: block; margin-top: 0.25rem; }
+
+  section { padding: 3rem 0 1rem; }
+  section + section { border-top: 1px solid var(--sand); }
+  .sechead { max-width: 62rem; margin-bottom: 1.5rem; }
+  .sechead p { color: var(--muted); margin: 0; }
+
+  .card {
+    border: 1px solid var(--sand); border-radius: var(--radius);
+    background: var(--white); padding: 1.15rem 1.3rem; box-shadow: var(--shadow);
+  }
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+  .tag {
+    display: inline-block; padding: 0.12rem 0.5rem;
+    border-radius: 999px; border: 1px solid var(--sand);
+    background: var(--creamWarm); color: var(--muted);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  }
+  .tag--ok { border-color: #cfdcc2; background: #eef3e8; color: var(--green); }
+  .tag--warn { border-color: #e8d3ac; background: var(--ochreLight); color: var(--ochreDark); }
+  .tag--bad { border-color: #e3c3ba; background: #f8ece8; color: var(--red); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 0 0 1.25rem; }
+  caption { text-align: left; font-size: 0.76rem; color: var(--muted); padding: 0 0 0.5rem; }
+  th, td { text-align: left; vertical-align: top; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--sand); }
+  th { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; background: var(--creamWarm); }
+  tbody tr:hover { background: rgb(243 236 224 / 0.5); }
+  td code { font-size: 0.82em; }
+  .tablewrap { overflow-x: auto; }
+
+  .callout {
+    border-left: 3px solid var(--ochre);
+    border-radius: 0 8px 8px 0;
+    background: var(--ochreLight);
+    padding: 0.9rem 1.1rem; margin: 0 0 1.25rem;
+  }
+  .callout p:last-child, .callout ul:last-child, .callout ol:last-child { margin-bottom: 0; }
+  .callout--dark { border-left-color: var(--ochre); background: var(--forestDeep); color: var(--cream); }
+  .callout--dark strong { color: var(--ochreLight); }
+  .callout--bad { border-left-color: var(--red); background: #f8ece8; }
+  .callout__label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); display: block; margin-bottom: 0.35rem; }
+
+  /* ---- pipeline diagram ---- */
+  .pipe { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 0 0 0.75rem; }
+  .pipe__node {
+    flex: 1 1 118px; min-width: 118px;
+    border: 1px solid var(--sand); border-radius: 10px;
+    background: var(--white); padding: 0.6rem 0.7rem;
+  }
+  .pipe__id { font-family: var(--mono); font-size: 0.78rem; font-weight: 700; color: var(--forestDark); display: block; }
+  .pipe__t { font-size: 0.76rem; line-height: 1.35; color: var(--muted); display: block; margin-top: 0.2rem; }
+  .pipe__node--done { background: #eef3e8; border-color: #cfdcc2; }
+  .pipe__node--next { background: var(--ochreLight); border-color: #e8d3ac; }
+  .pipe__node--blocked { background: #f8ece8; border-color: #e3c3ba; }
+  .pipe__node--later { background: var(--creamWarm); }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: 0.74rem; color: var(--muted); margin: 0 0 1.5rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--sand); display: inline-block; }
+  .swatch--done { background: #eef3e8; border-color: #cfdcc2; }
+  .swatch--next { background: var(--ochreLight); border-color: #e8d3ac; }
+  .swatch--blocked { background: #f8ece8; border-color: #e3c3ba; }
+  .swatch--later { background: var(--creamWarm); }
+
+  /* ---- boundary band ---- */
+  .band { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 0.75rem; }
+  .band__col {
+    flex: 1 1 240px; border: 1px solid var(--sand); border-radius: 10px;
+    padding: 0.8rem 0.9rem; background: var(--white);
+  }
+  .band__col--mid { background: var(--forestDeep); border-color: var(--forestDeep); color: var(--cream); }
+  .band__col--mid h3 { color: var(--ochreLight); }
+  .band__col--mid li { color: rgb(253 251 247 / 0.82); }
+  .band__col h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+  .band__col ul { margin: 0; padding-left: 1.1rem; font-size: 0.84rem; }
+  .band__col li { margin-bottom: 0.25rem; }
+
+  .moves { list-style: none; padding: 0; margin: 0; counter-reset: mv; }
+  .moves > li {
+    counter-increment: mv;
+    border: 1px solid var(--sand); border-radius: var(--radius);
+    background: var(--white); padding: 0.95rem 1.1rem 0.95rem 3.1rem;
+    margin-bottom: 0.7rem; position: relative;
+  }
+  .moves > li::before {
+    content: counter(mv);
+    position: absolute; left: 1rem; top: 0.95rem;
+    width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: var(--forest); color: var(--cream);
+    font-family: var(--mono); font-size: 0.78rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .moves h3 { margin-bottom: 0.25rem; }
+  .moves p { margin: 0 0 0.35rem; font-size: 0.92rem; }
+  .moves .who { font-size: 0.76rem; color: var(--muted); }
+
+  footer { padding: 2.5rem 0 4rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.72); margin-top: 2rem; }
+  footer h2 { color: var(--cream); font-size: 1.3rem; }
+  footer code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  footer a { color: var(--ochreLight); }
+
+  @media print {
+    .bar { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    .hero { background: #fff; color: #000; padding: 0 0 1rem; border-bottom: 2px solid #000; }
+    .hero h1, .hero p, .hero .lede, .hero .stamp { color: #000; }
+    .hero .eyebrow { color: #000; }
+    .stat { border-color: #999; background: #fff; }
+    .stat__n, .stat__l { color: #000; }
+    .card, .moves > li { box-shadow: none; break-inside: avoid; }
+    section { padding: 1.2rem 0 0; }
+    section + section { border-top: 1px solid #bbb; }
+    a { color: #000; text-decoration: none; }
+    footer { background: #fff; color: #000; }
+    footer h2, footer code { color: #000; }
+    table { font-size: 9pt; }
+    .pipe__node, .band__col { border-color: #999; }
+    .band__col--mid { background: #eee; color: #000; }
+    .band__col--mid h3, .band__col--mid li { color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">Outeniqua PGS · Status</span>
+    <nav class="bar__links">
+      <a href="#read">How to read</a>
+      <a href="#built">Built</a>
+      <a href="#gates">Gates</a>
+      <a href="#next">Up next</a>
+      <a href="#refine">Refinements</a>
+      <a href="#blocked">Blocked</a>
+      <a href="#hygiene">Tree</a>
+      <a href="#moves">Next moves</a>
+    </nav>
+    <button class="bar__print" type="button" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Status artifact · measured 20 October 2026</p>
+    <h1>The shop window is built.<br>Nothing is signed. The tree is dirty.</h1>
+    <p class="lede">
+      MVP 0 is code-complete: the standards corpus, eight public pages, the eight published
+      documents and a grounded, citation-auditing chatbot all work. What is missing is
+      <strong>judgement</strong> — no UAT scenario has a signature — and <strong>hygiene</strong> —
+      the last two working sessions' code has never been committed. MVP 1a is written, planned
+      and queued behind a two-day offline spike that has not been run.
+    </p>
+    <div class="stats">
+      <div class="stat"><span class="stat__n">52</span><span class="stat__l">commits on <code>main</code></span></div>
+      <div class="stat"><span class="stat__n">530</span><span class="stat__l">tests collected just now</span></div>
+      <div class="stat"><span class="stat__n">8</span><span class="stat__l">public pages, live in dev</span></div>
+      <div class="stat"><span class="stat__n">340</span><span class="stat__l">corpus chunks, 0 embeddings</span></div>
+      <div class="stat"><span class="stat__n">0</span><span class="stat__l">UAT scenarios signed</span></div>
+      <div class="stat"><span class="stat__n">24</span><span class="stat__l">untracked files in the tree</span></div>
+    </div>
+    <p class="stamp">
+      Every number above was read out of this working copy on 20 October 2026, not carried
+      forward from a plan. Where a figure contradicts an earlier document, the newer measurement
+      wins and the contradiction is named.
+    </p>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section id="read">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">How to read this</p>
+      <h2>Three questions, one page</h2>
+      <p>
+        This is a status document, not a proposal and not a decision artifact. It answers
+        <em>where the code is</em>, <em>what ships next</em>, and <em>what still needs a mind
+        made up</em>. The three refinements it summarises are the ones that will otherwise be
+        decided by accident.
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Evidence, labelled</h3>
+        <p style="font-size:0.9rem;margin:0">
+          <span class="tag tag--ok">measured</span> — I ran the command or read the file today.
+          <span class="tag tag--warn">reported</span> — inherited from <code>HANDOVER.md</code>
+          and not re-verified (the Playwright suite is the main one: it needs a browser this
+          session did not start).
+        </p>
+      </div>
+      <div class="card">
+        <h3>What this page is not</h3>
+        <p style="font-size:0.9rem;margin:0">
+          It is not the handover — <code>HANDOVER.md</code> remains authoritative for how to run
+          things. It is not a backlog index — <code>product/backlog/backlog.md</code> is generated
+          and must not be hand-edited. Nothing here moved a file.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Written with another agent live</h3>
+        <p style="font-size:0.9rem;margin:0">
+          A second agent was working in this repository while this page was written. It is a new
+          file that touches nothing else, and deliberately does <strong>not</strong> regenerate the
+          backlog index, which is the one operation that would collide.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="built">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 1 — What is actually true</p>
+      <h2>The platform exists, and it is one slice deep</h2>
+      <p>
+        A Django 5.2 monolith in two apps, <code>core</code> and <code>knowledge</code>, roughly
+        14,100 lines of Python and 2,500 lines of hand-written CSS. No npm, no bundler, no
+        Tailwind build step: HTMX and both typefaces are vendored. Four migrations. Four model
+        modules.
+      </p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>Subsystem inventory — state, and the evidence for it</caption>
+        <thead>
+          <tr><th style="width:15%">Subsystem</th><th style="width:12%">State</th><th>What proves it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>A — foundation</strong></td>
+            <td><span class="tag tag--ok">complete</span></td>
+            <td>Custom <code>User</code> is the first migration; <code>/health/</code> with four independent checks; Celery retry policies; an import-linter contract that actually fails; <code>scripts/verify.sh</code> as the single gate.</td>
+          </tr>
+          <tr>
+            <td><strong>B — corpus</strong></td>
+            <td><span class="tag tag--ok">complete</span></td>
+            <td>Four governed documents ingested into one <code>StandardSet</code>; section-level chunks with a <code>sub_refs</code> offset map; FTS + pgvector fused by RRF (k=60), scoped before ranking; de-columned at ingest by <code>knowledge/columns.py</code> (29 pages transformed, 4 asserted exclusions).</td>
+          </tr>
+          <tr>
+            <td><strong>C1 — public site</strong></td>
+            <td><span class="tag tag--ok">complete</span></td>
+            <td>Eight public pages built from a semantic CSS layer over the 17 <code>brand-*</code> tokens; self-hosted Lora + Mulish; every fee figure an integer cent in <code>core/services/_public.py</code>, never a template literal.</td>
+          </tr>
+          <tr>
+            <td><strong>C2 — <code>/documents/</code></strong></td>
+            <td><span class="tag tag--ok">complete</span></td>
+            <td>Eight <code>PublicDocument</code> rows, streamed through a view so <code>is_published</code> is checked per request against <code>core/services/_documents.py</code> as data; a missing file answers 503, not 404.</td>
+          </tr>
+          <tr>
+            <td><strong>C4 — claim discipline</strong></td>
+            <td><span class="tag tag--ok">complete</span></td>
+            <td><code>core/tests/test_claim_discipline.py</code> sweeps eight routes for six forbidden claims, no seal, no dead certificate link, no <code>Publishing soon</code> anywhere. Mutation-tested.</td>
+          </tr>
+          <tr>
+            <td><strong>D — grounded chat</strong></td>
+            <td><span class="tag tag--warn">built, unaccepted</span></td>
+            <td><code>/ask/</code> plus an HTMX fragment that still works as a plain form POST; an all-or-nothing citation audit (section ref, sub-ref, verbatim quote); per-IP rate limit, 500-char cap, answer cache keyed on <code>PROMPT_VERSION</code> (<code>d47-1</code>); <code>EscalatedQuery</code> for a human to answer. Six test modules, ~74 tests.</td>
+          </tr>
+          <tr>
+            <td><strong>Column fix (D46)</strong></td>
+            <td><span class="tag tag--warn">built, UAT unsigned</span></td>
+            <td>Two-column PDF pages were producing unquotable interleaved text. Fixed by measurement at ingest, not by a per-document flag — so a retarget to another standard needs no migration. 21 new tests; each guard observed failing.</td>
+          </tr>
+          <tr>
+            <td><strong>C3 — bilingual shell</strong></td>
+            <td><span class="tag tag--bad">deferred (D44)</span></td>
+            <td>No Afrikaans translator exists. The AF control is <code>aria-disabled</code> on purpose. <code>LANGUAGES</code>, <code>LOCALE_PATHS</code> and <code>User.preferred_language</code> stay so this remains a catalogue job. <code>build_principles.md</code> §IV is therefore <em>unmet</em> for MVP 0, recorded rather than absorbed.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Where the boundary is</h3>
+    <p style="color:var(--muted);max-width:60rem;margin-bottom:0.9rem">
+      One dependency arrow. <code>core</code> may import <code>knowledge</code>;
+      <code>knowledge</code> may never import <code>core</code>. CI enforces it — and the config
+      itself was a silent no-op once, which is why it is now a recorded hazard
+      (<code>testing_hazards.md</code> §2.1).
+    </p>
+    <div class="band">
+      <div class="band__col">
+        <h3>core/</h3>
+        <ul>
+          <li>accounts, member, farm, visit, assessment, certificate</li>
+          <li><code>views/</code>, <code>services/</code>, <code>models/_*.py</code></li>
+          <li>Templates, CSS, vendored JS</li>
+          <li>Users, sessions, PII, rates</li>
+        </ul>
+      </div>
+      <div class="band__col band__col--mid">
+        <h3>the contract</h3>
+        <ul>
+          <li><code>knowledge.services</code>: retrieve, ingest, scope</li>
+          <li>Returns chunks + citation-ready refs</li>
+          <li>One direction only, enforced by <code>lint-imports</code></li>
+          <li>No views, no users, no sessions inside</li>
+        </ul>
+      </div>
+      <div class="band__col">
+        <h3>knowledge/</h3>
+        <ul>
+          <li>Extraction (<code>pdftotext -layout</code>), column transform</li>
+          <li>Section parsers, TOC map, chunker</li>
+          <li><code>StandardSet</code>, <code>StandardDocument</code>, <code>DocumentChunk</code></li>
+          <li>Embeddings, hybrid retrieval, RRF</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="gates">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 2 — What is not green</p>
+      <h2>Green tests, amber acceptance</h2>
+      <p>
+        The suite is not the problem. The gap is everything a machine cannot assert: whether a
+        topically-adjacent citation reads as an answer, whether a committee would accept the
+        report, whether the group trusts the refusal.
+      </p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th style="width:32%">Gate</th><th style="width:11%">State</th><th>Consequence if skipped</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Automated suite</strong> — <code>verify.sh</code></td>
+            <td><span class="tag tag--ok">green</span></td>
+            <td>530 tests collect; the handover recorded 526 passing at its close. Playwright: 34 tests, run outside the gate by design <span class="tag tag--warn">reported</span>.</td>
+          </tr>
+          <tr>
+            <td><strong>UAT sign-off</strong> — MVP 0</td>
+            <td><span class="tag tag--bad">none signed</span></td>
+            <td>Eight applicable scenarios, four signatory roles, all blank. By the local rule an unsigned UAT keeps a human-judged item <em>partial</em> — so MVP 0 is incomplete on paper however green the suite is. Scenario 5 (Afrikaans) is <em>not applicable</em>, not failed.</td>
+          </tr>
+          <tr>
+            <td><strong>UAT</strong> — MVP 1a</td>
+            <td><span class="tag tag--warn">drafted pre-build</span></td>
+            <td>Twelve scenarios written before implementation, as required. Five of them need the administrator's own machine; one needs a farmer's own device.</td>
+          </tr>
+          <tr>
+            <td><strong>0∥ offline spike</strong></td>
+            <td><span class="tag tag--bad">not run</span></td>
+            <td>Two days, throwaway code, one real iPhone in one real dead zone. It is the only existential risk in the programme and it <strong>gates the seam contract</strong> (D26), not merely the field app.</td>
+          </tr>
+          <tr>
+            <td><strong>1∥ seam contract</strong></td>
+            <td><span class="tag tag--bad">blocked</span></td>
+            <td>Cannot be frozen before the spike answers what <code>VisitSyncEnvelope</code> must carry. Freezing it first is the most expensive sequencing error available in this slice.</td>
+          </tr>
+          <tr>
+            <td><strong>B3 second reader</strong></td>
+            <td><span class="tag tag--bad">not done</span></td>
+            <td>The Crops template is 38 questions and 37 verdicts transcribed by hand. Polarity looks like data when it is wrong — <em>"yes, there are contamination risks"</em> recorded as compliant.</td>
+          </tr>
+          <tr>
+            <td><strong>Embeddings / D20</strong></td>
+            <td><span class="tag tag--warn">lexical only</span></td>
+            <td>Retrieval reports <code>lexical_only=True</code>; 0 vectors stored. The code defaults to <code>gemini-embedding-001</code> at 768 dims and a developer key is present, but the product owner must ratify the default, and the re-ingest must be <em>forced</em> — ingestion is idempotent on sha256, so a plain re-run is a no-op.</td>
+          </tr>
+          <tr>
+            <td><strong>Backups (R11)</strong></td>
+            <td><span class="tag tag--warn">accepted gap</span></td>
+            <td>One local external drive. The restore was rehearsed on the dev box; the VPS rehearsal (A9) has not happened because there is no VPS.</td>
+          </tr>
+          <tr>
+            <td><strong>Push to <code>origin</code></strong></td>
+            <td><span class="tag tag--bad">never</span></td>
+            <td>The remote is configured and empty. Every commit and every line of uncommitted work exists on exactly one laptop.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="next">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 3 — Up next</p>
+      <h2>The delivery sequence, and where the arrow stops</h2>
+      <p>
+        Ordered by risk retired per unit of effort. Two facts drive it: the corpus is shared work
+        — the assessment templates are derived from SAOSO clauses — and the public site is the
+        surface the group needs before it will trust the platform with certification records.
+      </p>
+    </div>
+
+    <div class="pipe">
+      <div class="pipe__node pipe__node--done"><span class="pipe__id">0</span><span class="pipe__t">Standards + shop window. Code-complete.</span></div>
+      <div class="pipe__node pipe__node--next"><span class="pipe__id">0∥</span><span class="pipe__t">2-day offline spike. <strong>Next.</strong> Gates 1∥.</span></div>
+      <div class="pipe__node pipe__node--blocked"><span class="pipe__id">1∥</span><span class="pipe__t">Seam contract. Cannot start.</span></div>
+      <div class="pipe__node pipe__node--next"><span class="pipe__id">1a</span><span class="pipe__t">In-office visit flow. Ready; A–F ungated.</span></div>
+      <div class="pipe__node pipe__node--later"><span class="pipe__id">1b</span><span class="pipe__t">Offline walkabout. Where the MVP 1 claim attaches.</span></div>
+      <div class="pipe__node pipe__node--later"><span class="pipe__id">2</span><span class="pipe__t">Decision, certificate, registry, QR.</span></div>
+      <div class="pipe__node pipe__node--later"><span class="pipe__id">3</span><span class="pipe__t">Reporting and gap analysis.</span></div>
+    </div>
+    <div class="legend">
+      <span><i class="swatch swatch--done"></i> built</span>
+      <span><i class="swatch swatch--next"></i> available now</span>
+      <span><i class="swatch swatch--blocked"></i> blocked by a precondition</span>
+      <span><i class="swatch swatch--later"></i> not started</span>
+      <span>Each node depends on the one before it; 0∥ is the only one that blocks two others.</span>
+    </div>
+
+    <p>
+      Note the shape of the claim: <strong>1a does not make field work paperless.</strong> On its
+      own it means paper in the field and digital re-entry afterwards — more work than today. The
+      MVP 1 claim therefore attaches to <strong>1b</strong>, which is why the slice is two
+      increments and one ship gate rather than two releases (D25).
+    </p>
+
+    <div class="callout">
+      <span class="callout__label">The structural insight</span>
+      <p style="margin:0">
+        All the <em>irreversible</em> risk sits in 1a — <code>Assessment.template_schema</code>
+        freezes as evidentiary history at the first captured visit. All the <em>unknowable</em>
+        risk sits in 1b — browser storage on real devices. Building the determinable half first is
+        the entire point of the split, and it is why MVP 1a can start before the spike returns,
+        while the seam contract cannot.
+      </p>
+    </div>
+
+    <h3 style="margin-top:1.75rem">MVP 1a — seven sub-plans, one irreversible one</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th style="width:8%">Sub-plan</th><th style="width:30%">Delivers</th><th>Proves</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>A</strong></td><td>Member, Farm, FarmAlias, FarmCategory, FarmContact, CommitteeTerm, Pledge, MembershipFee, AssessmentFee, PriorCertification; application flow; eligibility gates</td><td>That OPP §I–§II membership rules can be <em>enforced</em> rather than described.</td></tr>
+          <tr><td><strong>B</strong></td><td><code>AssessmentTemplate</code>, schema v1, <code>load_template</code>, the hand-authored <strong>Crops</strong> template, freeze semantics</td><td>That 38 questions and 37 verdicts survive contact with the paper form without distortion. <strong>This is the irreversible one.</strong></td></tr>
+          <tr><td><strong>C</strong></td><td>Assessment, AssessmentAnswer, EvidenceDocument; farmer render, autosave, attachments, submit/snapshot; corrective-action follow-up</td><td>That the grey/white two-role split works when only half the form is farmer-visible.</td></tr>
+          <tr><td><strong>D</strong></td><td>FarmVisit, VisitParticipant, <code>validate_assessment_team()</code>, numeric pre-visit rules, the D32 fee gate</td><td>That OPP §3.3/§4.1 committee composition is server-side validation, not a guideline.</td></tr>
+          <tr><td><strong>E</strong></td><td>AssessmentVerdict with polarity and sub-answers, Finding, NotifiableExemption, CorrectiveAction, Signature, EvidencePhoto, InputSupply; Sheet I conclusion (<code>SocialEquity</code>, <code>RecordCheck</code>); <code>PriorActionReview</code></td><td>That the polarity model survives real verdicts, and that a blank cannot be signed.</td></tr>
+          <tr><td><strong>F</strong></td><td><code>finalise_visit</code>, WeasyPrint Sheet I report, completeness and signature gates</td><td>That the administrator's report is <em>generated</em>, not retyped — and that the decision block is visibly pending, not quietly absent.</td></tr>
+          <tr><td><strong>G</strong></td><td><code>visitPack</code> producer, <code>sync_visit_text</code>, <code>store_media_item</code>, finalise endpoint</td><td>That the contract is real on the server side before 1b is built against it. <strong>Gated on 1∥.</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>The fence, in one line each</h3>
+        <p style="font-size:0.9rem;margin:0 0 0.5rem">In 1a: application through <code>UNDER_REVIEW</code>, Crops only, connected capture, three signatures, the report PDF.</p>
+        <p style="font-size:0.9rem;margin:0">Not in 1a: offline anything, the other three categories, the certification decision, seals, certificates, the registry, the QR code. Those are 1b and MVP 2.</p>
+      </div>
+      <div class="card">
+        <h3>The quiet failure to watch</h3>
+        <p style="font-size:0.9rem;margin:0">
+          Polarity. <code>is_compliant</code> is derived and materialised, never authored.
+          <code>V16</code> "risks of contamination of the water source?" answered <em>Yes</em> is
+          <em>non-compliant</em>; <code>V3</code> is informational; <code>V23</code> and Animal
+          <code>V14</code> are negative. A wrong polarity looks like data.
+        </p>
+      </div>
+      <div class="card">
+        <h3>The risk that will cost a morning</h3>
+        <p style="font-size:0.9rem;margin:0">
+          WeasyPrint on Windows needs GTK system libraries. The plan's own mitigation: install it
+          as the <em>first</em> action of sub-plan F, not the last. Fallback is rendering in a
+          Linux container.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="refine">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 4 — Next refinements</p>
+      <h2>Three questions that are currently being answered by default</h2>
+      <p>
+        The specification already carries <strong>47 recorded decisions</strong> (D1–D47). The
+        three documents below are the ones that ask for more, and two of them contain decisions
+        that MVP 1a will silently freeze if nobody takes them first.
+      </p>
+    </div>
+
+    <div class="callout callout--bad">
+      <span class="callout__label">Read this before picking a decision number</span>
+      <p style="margin:0">
+        <strong>The decision log is at D47 and both refinement documents propose numbers that are
+        already taken.</strong> <code>SAOSA_MULTI_BRANCH_READINESS.md</code> proposes <em>D46</em>
+        (deployment identity block) — D46 is the corpus-layout decision.
+        <code>REGENERATIVE_ADDON_ARCHITECTURE.md</code> proposes <em>D47</em> (the
+        <code>Programme</code> row) — D47 is the prompt/citation contract. Both documents also note
+        that D45 was allocated twice at the time they were written; that one has since been
+        resolved in favour of the Homtini decision. The next free number is <strong>D48</strong>.
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <p class="eyebrow" style="margin-bottom:0.4rem">Refinement 1 · no build approved</p>
+        <h3>Is this blueprint only for Outeniqua?</h3>
+        <p style="font-size:0.9rem">
+          The measured finding is sharper than the claim it tests: of the eight source documents,
+          <strong>seven are national</strong> — zero occurrences of "outeniqua" in the SAOSO
+          standard, the FORM, the BPP, the landscape, the prep list or the three checklists. Only
+          the OPP is group-owned (14 hits). The FORM is deliberately written group-neutral.
+        </p>
+        <p style="font-size:0.9rem;margin:0">
+          Three deployment shapes are laid out. Shape <strong>i</strong>, one cloned instance per
+          branch, is recommended because it matches <code>build_principles.md</code> §IX verbatim.
+          Shape <strong>ii</strong>, runtime multi-tenancy, is recommended <em>against</em>. Shape
+          <strong>iii</strong> — one national deployment for the public surface, corpus and chatbot,
+          with per-branch instances for members and visits — is flagged as attractive and
+          genuinely undecided.
+        </p>
+      </div>
+      <div class="card">
+        <p class="eyebrow" style="margin-bottom:0.4rem">Refinement 2 · paused, not idle</p>
+        <h3>The regenerative add-on</h3>
+        <p style="font-size:0.9rem">
+          Target shape agreed: <strong>shape A</strong>, a group-defined add-on questionnaire and
+          seal layered on the base certificate, assessed independently of the base outcome.
+          Nothing can be built — the group has not written the criteria, so building the schema
+          first repeats exactly the <code>PGS_PASTURE_RAISED</code> mistake D11 already recorded.
+        </p>
+        <p style="font-size:0.9rem;margin:0">
+          But three decisions are <em>time-sensitive despite the pause</em>, because another
+          slice freezes each of them. They are the table below. Missing P1 costs a namespace
+          retrofit over real evidence.
+        </p>
+      </div>
+      <div class="card">
+        <p class="eyebrow" style="margin-bottom:0.4rem">Refinement 3 · the target state itself</p>
+        <h3>The aimed design spec</h3>
+        <p style="font-size:0.9rem">
+          <code>PGS_PLATFORM_SPEC.md</code> is 1,000 lines of target state: nine flows (A–H plus
+          the offline C), the domain model, the service-layer contracts, the decision log and the
+          delivery sequence. It is the document every plan cites and no one implements directly.
+        </p>
+        <p style="font-size:0.9rem;margin:0">
+          Its §19 delivery sequence is the pipeline diagram above. Its §18.3 is the record that
+          <code>backlog.md</code> entries cite as "closed" — which is why a duplicated
+          <code>D</code> number is not a cosmetic problem.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1.75rem">The three decisions the pause does not protect</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th style="width:7%">#</th><th style="width:38%">Decision</th><th style="width:20%">Frozen by</th><th>Cost of missing it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>P1</strong></td>
+            <td><code>question_key</code> may begin with something that is not a <code>Category</code> code. Nothing in 1a may assume <code>question_key.split(".")[0]</code> is a category.</td>
+            <td><strong>MVP 1a</strong> — the template schema freezes at the first captured visit</td>
+            <td>A namespace retrofit over real evidence. The single most expensive item in that document.</td>
+          </tr>
+          <tr>
+            <td><strong>P2</strong></td>
+            <td>Certificate-to-seal cardinality resolves as <code>CertificateSeal</code> (many-to-many), not <code>Certificate.seal</code> (foreign key).</td>
+            <td><strong>MVP 2</strong> modelling — <code>Certificate</code> does not exist yet</td>
+            <td>A data migration over issued certificates, or an add-on that can never be issued alongside a base seal.</td>
+          </tr>
+          <tr>
+            <td><strong>P3</strong></td>
+            <td><code>Seal.issuer</code> exists before the first seal is seeded from a second authority.</td>
+            <td>Whoever does the multi-branch work</td>
+            <td>A group mark and a national mark become indistinguishable rows, and claim discipline can no longer tell them apart.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <span class="callout__label">The distinction not to merge</span>
+      <p style="margin:0">
+        The <strong>branch</strong> story needs data plus one new deployment — it does not need a
+        new model dimension. The <strong>regenerative add-on</strong> is the case that needs a
+        dimension: a second scheme inside one deployment. Keeping those two apart is the difference
+        between seeding a site and introducing tenancy, which §IX forbids.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="blocked">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 5 — Not yours to resolve</p>
+      <h2>Nine content decisions, and six things waiting on a person</h2>
+      <p>
+        These are shipping on conservative defaults, which is the right way to ship an undecided
+        thing — but they are decisions, not implementation details, and they are currently invisible
+        to anyone who does not open <code>C1_BUILD_PLAN.md</code> §6.
+      </p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>C1's open content decisions — what ships today if nobody answers</caption>
+        <thead><tr><th style="width:6%">#</th><th style="width:44%">Not decided</th><th>Shipping default</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Contact details — the administrator's email and two cell numbers are on the live WordPress site</td><td>Withheld; visible <code>email</code> / <code>phone</code> chips</td></tr>
+          <tr><td>2</td><td>Bank details (NPO name, ABSA, account number)</td><td>Withheld; a "bank details to confirm" chip</td></tr>
+          <tr><td>3</td><td>News in the navigation</td><td>Not present</td></tr>
+          <tr><td>4</td><td><code>/endorsed-farms/</code> has no honest MVP 0 target</td><td>Not present</td></tr>
+          <tr><td>5</td><td>Pledge downloads (farmer and consumer)</td><td>Not present</td></tr>
+          <tr><td>6</td><td>Is "SOP's" the OPP under another name?</td><td><strong>Assumed yes</strong> — that assumption is what makes the list eight documents. A separate document would be one tuple entry and one PDF, no migration.</td></tr>
+          <tr><td>7</td><td>"Fees payable by end of February"</td><td><span class="tag tag--ok">resolved</span> Withheld — not in the OPP. <code>test_no_unsourced_claim</code> guards it.</td></tr>
+          <tr><td>8</td><td>Photography consent for four group photographs</td><td>Published, with a consent chip</td></tr>
+          <tr><td>9</td><td>Six-elements wording: LANDSCAPE verbatim vs the prototype's paraphrase</td><td>Verbatim</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>Blocked on someone else</caption>
+        <thead><tr><th style="width:34%">Item</th><th style="width:28%">Blocked on</th><th>Affects</th></tr></thead>
+        <tbody>
+          <tr><td><strong>UAT sign-off seats</strong> — administrator, committee reviewer, consumer member</td><td>The human</td><td>MVP 0 and 1a acceptance. Nothing in <code>tests/uat/</code> has a signature.</td></tr>
+          <tr><td><strong>An Afrikaans translator</strong> (C3, D44)</td><td>The group</td><td>MVP 0 ships English only; every string added from here is a retrofit.</td></tr>
+          <tr><td><strong>Ratify the embedding default</strong> — <code>gemini-embedding-001</code> at 768 dims</td><td>The product owner</td><td>The first real embedding run. One line in settings if wrong.</td></tr>
+          <tr><td><strong>D31 — which land-history periods govern</strong> (12/12/18 in the pledge vs 18/12/12 in OPP §V)</td><td>The group</td><td>MVP 2 seal issuance. Recorded as a conflict, flagged, never inferred.</td></tr>
+          <tr><td><strong>POPIA consent</strong> for ~31 consumer names, 13 farmer members and four photographs</td><td>The group</td><td>MVP 2 registry. Blocks publishing any member list.</td></tr>
+          <tr><td><strong>A production host</strong> — the group has no server; hosting is local by decision D19</td><td>The group</td><td>WordPress cutover at MVP 2; A9's restore rehearsal; the accepted single-backup gap.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="hygiene">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 6 — The state of the tree</p>
+      <h2>Two sessions of work exist in one place, and it is uncommitted</h2>
+      <p>
+        This is the least romantic section and the most urgent. It is also the one thing a green
+        test suite cannot tell you.
+      </p>
+    </div>
+
+    <div class="callout callout--dark">
+      <span class="callout__label">Measured today</span>
+      <p style="margin:0 0 0.5rem">
+        <code>HEAD</code> is <code>b5c8d3b</code> — "docs(c3): defer the bilingual shell". That is
+        <strong>52 commits</strong>, and it is the C2 close. Everything built after it is
+        <em>not in git</em>:
+      </p>
+      <ul style="margin:0 0 0.5rem">
+        <li><strong>24 untracked files</strong>, including the entire chat sub-plan —
+          <code>core/models/_chat.py</code>, <code>core/services/_chatbot.py</code>,
+          <code>core/views/_chatbot.py</code>, <code>core/forms/_chatbot.py</code>,
+          migration <code>0004</code>, six chat test modules, the vendored HTMX and
+          <code>core/static/js/chat.js</code>, both chat templates —
+          plus <code>knowledge/columns.py</code> and its tests, the corpus PRD and plan,
+          both refinement documents and two explainer artifacts.</li>
+        <li><strong>34 modified tracked files</strong>, ~2,200 insertions — the ingest wiring,
+          the retrieval fixes, the spec's D45–D47, the handover, both UAT files, the backlog
+          index.</li>
+      </ul>
+      <p style="margin:0">
+        The remote <code>origin</code> is configured and <strong>has never been pushed</strong>.
+        There is no CI. Two laptops, one bad morning, and MVP 0's second half is gone.
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Commit in slices that can be reviewed</h3>
+        <p style="font-size:0.9rem;margin:0">
+          The natural seams already exist: (1) the chat sub-plan, (2) the corpus column fix,
+          (3) the two refinement documents, (4) the doc-only updates. Each is a coherent story;
+          one giant <code>git add -A</code> is not.
+        </p>
+      </div>
+      <div class="card">
+        <h3>One file should not be committed at all</h3>
+        <p style="font-size:0.9rem;margin:0">
+          <code>Homtini Assessment Report 22.10.03.docx.pdf</code> sits untracked in the repo root:
+          a third-party farm report containing farmer data. It does not belong in a public
+          repository, committed or otherwise. Move it out, or git-ignore it.
+        </p>
+      </div>
+      <div class="card">
+        <h3>The index is now behind the code</h3>
+        <p style="font-size:0.9rem;margin:0">
+          <code>backlog.md</code> still says "345 chunks (SAOSO 298)" and "461 tests"; the measured
+          state is <strong>340 chunks</strong> and <strong>530 collected</strong>. That is document
+          drift, not corpus drift — regenerate with
+          <code>python product/backlog.py --write</code> when the tree is quiet, never by hand.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="moves">
+  <div class="wrap">
+    <div class="sechead">
+      <p class="eyebrow">Part 7 — Recommendation</p>
+      <h2>Six moves, in this order</h2>
+      <p>
+        The order is not the order of ambition. It is the order in which each move makes the next
+        one cheaper, and it puts the only irreversible work (the template schema) after the only
+        existential unknown (the spike).
+      </p>
+    </div>
+
+    <ol class="moves">
+      <li>
+        <h3>Commit and push what already exists</h3>
+        <p>Four reviewable commits, then set the remote. Nothing else on this list is safe until the
+          corpus fix and the chatbot are in history rather than in a working tree.</p>
+        <p class="who">Anyone with the tree · half a session · unblocks everything</p>
+      </li>
+      <li>
+        <h3>Judge MVP 0 — the seven scenarios the suite cannot see</h3>
+        <p>Grounding (1), citation relevance (2), phone comfort (6), site voice (4), documents
+          replacing Google Drive (7), no certification claim (8), and the column-corpus paper check
+          (9). Book the three sign-off seats before the session, not after. Scenario 5 is not
+          applicable.</p>
+        <p class="who">Product + PGS administrator + consumer member · one afternoon · closes MVP 0 or names its exceptions</p>
+      </li>
+      <li>
+        <h3>Fix the decision numbering, then renumber the two proposals</h3>
+        <p>D48 is free; D46 and D47 are taken. Record what the two refinement documents actually
+          need as D48 and D49, apply the consequent spec edits in the same session, and regenerate
+          the index once.</p>
+        <p class="who">Product · one hour · prevents a decision log that contradicts itself</p>
+      </li>
+      <li>
+        <h3>Ratify the embedding default, then force the re-ingest</h3>
+        <p>D20 ratification, then a re-ingest <em>without</em> <code>--no-embed</code> — the run
+          must be forced, because ingestion is idempotent on sha256 and a plain re-run leaves zero
+          vectors. ~340 chunks, four documents, one batch. Do it after D46 so vectors describe the
+          corrected text.</p>
+        <p class="who">Product owner for the decision; a session for the run · turns <code>lexical_only=True</code> off</p>
+      </li>
+      <li>
+        <h3>Run the 0∥ spike — two days, throwaway code, a real phone in a real dead zone</h3>
+        <p>One question: does persisted storage survive a long visit on the assessor's actual
+          device? The answer determines whether <code>VisitSyncEnvelope</code> v1 is enough or
+          needs checkpointing. It is the only existential risk in the programme and the only thing
+          standing between here and 1a sub-plan G.</p>
+        <p class="who">Whoever holds the assessor's device · two days · retires the largest unknown</p>
+      </li>
+      <li>
+        <h3>Then start MVP 1a at sub-plan B, with a second reader on the template</h3>
+        <p>Sub-plans A–F are ungated and ready; B is the irreversible one and the plan already
+          flags the failure mode — 38 hand-transcribed questions where a partial template looks
+          like a working one. Sequence B early and have the Crops template read by a second person
+          before the first real visit freezes it as evidence.</p>
+        <p class="who">Build session + committee reader · the slice's main body of work</p>
+      </li>
+    </ol>
+
+    <div class="callout">
+      <span class="callout__label">What would change this recommendation</span>
+      <p style="margin:0">
+        If a UAT scenario fails on grounding or citation relevance, move 6 (start 1a) behind a
+        prompt/instrumentation fix — a chatbot the group does not trust is worse than a later
+        visit flow. If the spike comes back "storage does not survive", 1b is re-planned and only
+        1a ships; that is a scheduling change, not a design change, and it does not delay sub-plans
+        A–F. If the group picks deployment shape <strong>iii</strong> (a national public surface),
+        the deployment identity block becomes MVP 1a work rather than later — the one refinement
+        that can pull forward.
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <h2>How this page was produced</h2>
+    <p style="font-size:0.9rem">
+      Every claim above was read from this working copy on 20 October 2026. The measured figures
+      came from these commands, run in the repository root:
+    </p>
+    <pre style="background:#000;border:1px solid #333;border-radius:8px;padding:0.9rem 1rem;overflow-x:auto;font-family:var(--mono);font-size:0.78rem;line-height:1.6"><code>git rev-list --count HEAD            # 52
+git status --porcelain -uall         # 34 modified, 24 untracked
+python -m pytest --collect-only -q   # 530 tests collected in 2.19s
+grep -c "^## Scenario" tests/uat/mvp0_standards_and_public_site_uat.md   # 9 (one N/A)
+find core knowledge -name "*.py" | xargs wc -l                           # 14121
+cat core/urls.py                     # 8 public pages + /health/ + 1 document endpoint</code></pre>
+    <p style="font-size:0.9rem">
+      Documents read, not inferred: <code>HANDOVER.md</code>,
+      <code>product/backlog/backlog.md</code>, <code>product/backlog/todo.md</code>,
+      <code>ready/MVP1A_PRD.md</code>, <code>Refinement/PGS_PLATFORM_SPEC.md</code> §18.3 and §19,
+      <code>Refinement/SAOSA_MULTI_BRANCH_READINESS.md</code>,
+      <code>Refinement/REGENERATIVE_ADDON_ARCHITECTURE.md</code>,
+      <code>In Progress/CORPUS_COLUMN_EXTRACTION_PLAN.md</code>, both UAT files,
+      <code>product/design/C1_BUILD_PLAN.md</code> §6 via <code>HANDOVER.md</code> §6.
+    </p>
+    <p style="font-size:0.9rem;margin:0">
+      Colours are the <code>brand-*</code> tokens from <code>product/design/DESIGN.md</code>, copied
+      from the previous review artifact rather than re-invented. This file is self-contained: no
+      CDN, no external font, no network request, and it opens from the filesystem. It is a review
+      artifact and never becomes a production template.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

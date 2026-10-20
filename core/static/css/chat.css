@@ -205,3 +205,212 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ==========================================================================
+   The real surface at /ask/ (sub-plan D).
+
+   The showcase above illustrates two states; this is the working window. It keeps
+   the same ground, bubble and citation vocabulary so a visitor who saw the home
+   page recognises the product, and adds only what a live exchange needs: a scrolling
+   thread, a form, and a citation a reader can open.
+
+   Mobile-first: the base rules are the phone, and the two-column desktop layout is
+   the enhancement. The thread scrolls independently so the last answer is reachable
+   when the keyboard is open; the form stays in normal flow below it.
+   ========================================================================== */
+
+.chat-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.chat--page {
+  min-height: 32rem;
+}
+
+.chat__body--thread {
+  max-height: 26rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-margin-bottom: 30vh;
+}
+
+.chat__empty {
+  margin: 0;
+  color: rgb(var(--brand-cream-rgb) / 0.72);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+/* A live answer is longer than a showcase bubble. The base `.chat__bubble` caps at
+   90%; a citation block needs the room and must not become a horizontal scroller. */
+.chat__bubble--answer,
+.chat__bubble--refusal {
+  overflow-wrap: anywhere;
+}
+
+.chat-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  background-color: var(--brand-forestDeep);
+}
+
+.chat-form__input {
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgb(var(--brand-cream-rgb) / 0.18);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-forestDark);
+  color: var(--brand-cream);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  resize: vertical;
+  scroll-margin-bottom: 30vh;
+}
+
+.chat-form__input::placeholder {
+  color: rgb(var(--brand-cream-rgb) / 0.45);
+}
+
+.chat-form__input:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+}
+
+.chat__send {
+  justify-self: start;
+  min-height: 44px;
+}
+
+/* Enter sends, Shift+Enter inserts a newline; say so, because a textarea's default
+   is the opposite and a visitor cannot discover the shortcut by looking at it. */
+.chat-form__hint {
+  margin: 0;
+  color: rgb(var(--brand-cream-rgb) / 0.55);
+  font-size: var(--text-xs);
+}
+
+/* HTMX's request indicator: dim the button, never hide it. A control that vanishes
+   mid-request reads as a broken page on a slow connection. */
+.htmx-request.chat__send,
+.chat__send.htmx-request {
+  opacity: 0.6;
+}
+
+/* --- Citations a reader can open ----------------------------------------- */
+
+.cite-detail {
+  display: block;
+  flex-basis: 100%;
+}
+
+/* The summary is the control, so it clears the 44px target rule. The chip keeps the
+   monospace look of the showcase's `.cite`. */
+.cite--reference {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cite--reference::-webkit-details-marker {
+  display: none;
+}
+
+.cite--reference::after {
+  content: " +";
+  font-weight: 700;
+}
+
+.cite-detail[open] .cite--reference::after {
+  content: " −";
+}
+
+.cite-quote {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  border-left: 2px solid var(--brand-ochre);
+  background-color: rgb(var(--brand-forest-rgb) / 0.55);
+  color: rgb(var(--brand-cream-rgb) / 0.92);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.cite-source {
+  margin: 0.5rem 0 0;
+  color: var(--brand-ochreLight);
+  font-size: var(--text-nano);
+}
+
+/* --- The explanation beside the window ----------------------------------- */
+
+.chat-aside {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-md);
+  background-color: rgb(var(--brand-forest-rgb) / 0.45);
+  color: rgb(var(--brand-cream-rgb) / 0.86);
+}
+
+.chat-aside__title {
+  margin: 0 0 0.75rem;
+  color: var(--brand-cream);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 400;
+}
+
+.chat-aside__list {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.chat-aside__list strong {
+  color: var(--brand-cream);
+  font-weight: 600;
+}
+
+.chat-aside__note {
+  margin: 1.25rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  color: rgb(var(--brand-cream-rgb) / 0.68);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
+}
+
+@media (min-width: 1024px) {
+  .chat-page {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .chat__body--thread {
+    max-height: 34rem;
+  }
+}
+
+/* The home band's link into the real surface. The generic `.link-more` is tuned for
+   a cream ground; on the one dark band it needs the light accent. */
+.section__more--dark .link-more--dark {
+  color: var(--brand-ochreLight);
+}
+
+.section__more--dark .link-more--dark:hover {
+  color: #fff;
+}
+
+/* `scrollIntoView` after a swap must clear the sticky header, or the first line of
+   the answer lands underneath it. */
+.chat__body--thread {
+  scroll-margin-top: 5.5rem;
+}

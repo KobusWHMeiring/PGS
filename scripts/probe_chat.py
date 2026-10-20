@@ -1,0 +1,161 @@
+"""Read-only probe: what the chatbot retrieves, what it answers, and why.
+
+This is the measuring instrument for the D17 revision (2026-10-21). The unit tests
+pin control flow with fake providers; this script is the live evidence — the shipped
+corpus, the real embedding arm and the real Gemini model — and it writes no rows, so
+it can be run repeatedly while tuning retrieval or the prompt.
+
+Usage:
+    python scripts/probe_chat.py                     # the fixed measurement suite
+    python scripts/probe_chat.py "can I use straw?"  # one question
+    python scripts/probe_chat.py --chunks-only       # skip the model call
+
+Every question is printed as: the terms and any term the corpus does not contain, the
+retrieved passages with the arm that found them, the model's reply, and the citation
+audit's verdict. A refusal is printed with its escalation reason, because "refused" and
+"the corpus cannot answer" are different findings and the suite exists to tell them
+apart.
+
+No Django rows are written; `ChatMessage`/`EscalatedQuery` are not touched. The probe
+constructs `RetrievedChunk`s and calls the provider directly, which is exactly what
+`answer_question` does between retrieval and the audit.
+
+Skipped from the gate on purpose: it needs a corpus and a Gemini key, and
+`scripts/verify.sh` must stay runnable without either.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO_ROOT))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pgs.settings")
+
+#: The measurement suite. Each line is a question a member of the group could actually
+#: ask; together they cover the four ways a question can fail: an unnamed material
+#: (cardboard, borax), a named one (straw, horse manure), a cost question that spans
+#: several OPP sections, and a paraphrase with no distinctive noun (seeds, sign-up).
+SUITE = (
+    "Do i need to know where my horse manure comes from?",
+    "Can i use cardboard from my neighbour?",
+    "can I use straw mulch?",
+    "what is the yearly cost to get certified, including the farm visit?",
+    "can I use borax for boron supplements?",
+    "if my ducks aren't fed organic food and I make compost from their bedding, will I still pass?",
+    "how do I sign up?",
+    "if I save seeds from a non-organic seed, are those seeds organic?",
+    "if a seed is not organic but I grow it organic will the crop be organic?",
+)
+
+
+def _print_chunks(question: str, chunks, result) -> None:
+    print(f"  arms: lexical_only={result.lexical_only}")
+    for warning in result.warnings:
+        print(f"  warning: {warning}")
+    for position, chunk in enumerate(chunks, start=1):
+        locator = chunk.section_ref or chunk.anchor or f"p.{chunk.page}"
+        arms = []
+        if chunk.lexical_rank is not None:
+            arms.append(f"lex{chunk.lexical_rank}")
+        if chunk.vector_rank is not None:
+            arms.append(f"vec{chunk.vector_rank}")
+        label = ",".join(arms) or "?"
+        text = " ".join((chunk.text or "").split())[:90]
+        print(f"  {position}. {locator:<16} [{label:<8}] {text}")
+
+
+def probe(question: str, *, chunks_only: bool = False) -> None:
+    from core.services._chatbot import (
+        REFUSAL,
+        GeminiChatModel,
+        UpstreamModelError,
+        audit_citations,
+        default_standard_set,
+        significant_terms,
+    )
+    from knowledge.services import document_frequency, search_terms
+
+    standard_set = default_standard_set()
+    terms = significant_terms(question)
+    frequencies = {
+        term: document_frequency(term, standard_set=standard_set) for term in terms
+    }
+    unknown = [term for term, count in frequencies.items() if count == 0]
+
+    print(f"\n{'=' * 78}\nQ: {question}")
+    print(f"  terms: {terms}")
+    print(f"  df:    {frequencies}")
+    if unknown:
+        print(f"  not in the corpus: {unknown}")
+
+    result = search_terms(
+        terms, question=question, standard_set=standard_set, limit=8
+    )
+    _print_chunks(question, result.chunks, result)
+
+    if chunks_only or not result.chunks:
+        if not result.chunks:
+            print(f"  -> REFUSAL before the model: {REFUSAL}")
+        return
+
+    model = GeminiChatModel()
+    try:
+        reply = model.answer(question=question, chunks=result.chunks, history=[])
+    except UpstreamModelError as error:
+        print(f"  -> UPSTREAM ERROR, no answer invented: {error}")
+        return
+
+    citations, problems = audit_citations(
+        reply.citations,
+        result.chunks,
+        standard_set_id=standard_set.pk,
+    )
+
+    print(f"\n  ANSWER: {reply.answer or '(empty)'}")
+    print(f"  insufficient_context: {reply.insufficient_context}")
+    print(f"  citations: {len(reply.citations)} raw, {len(citations)} audited")
+    for raw in reply.citations:
+        locator = raw.get("section_ref", "?") + (
+            f" · {raw['sub_ref']}" if raw.get("sub_ref") else ""
+        )
+        quote = " ".join(str(raw.get("quote", "")).split())[:140]
+        print(f"    raw {locator} | {quote}")
+    for citation in citations:
+        quote = " ".join(citation.quote.split())[:110]
+        print(f"    ok  {citation.locator} | {quote}")
+    if problems:
+        print("  AUDIT: REFUSED")
+        for problem in problems:
+            print(f"    ! {problem}")
+    elif reply.insufficient_context or not citations or not reply.answer.strip():
+        print("  AUDIT: would refuse (insufficient_context / no citation / empty)")
+    else:
+        print("  AUDIT: grounded")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("question", nargs="*", help="one question; omit for the suite")
+    parser.add_argument(
+        "--chunks-only",
+        action="store_true",
+        help="retrieval only: never call the model",
+    )
+    args = parser.parse_args()
+
+    import django
+
+    django.setup()
+
+    questions = [" ".join(args.question)] if args.question else list(SUITE)
+    for question in questions:
+        probe(question, chunks_only=args.chunks_only)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

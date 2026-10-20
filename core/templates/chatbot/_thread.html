@@ -1,0 +1,62 @@
+{% load i18n %}
+{% comment %}
+The thread fragment. Returned on its own for an HTMX POST and included inside
+`#chat-thread` for a plain one, so there is exactly one renderer for an exchange.
+
+A refusal is styled warm, never as an error (DESIGN §7.9): the boundary is the
+product's claim, not a malfunction. Its citation block is empty by definition, and
+the contact link turns the refusal into something a person can follow.
+
+`answer` is only present for the exchange just completed. Historical turns render
+from `messages`; their citation chips are not re-rendered because the quote offsets
+belong to the corpus as it stood then, and pretending otherwise would be a citation
+that cannot be checked.
+{% endcomment %}
+{% if not messages and not error %}
+  <p class="chat__empty">
+    Ask a question about the standard, our procedures, the Basic Production Principles
+    or the certification landscape. Answers cite the passage they came from.
+  </p>
+{% endif %}
+
+{% for message in messages %}
+  {% if message.is_user %}
+    <div class="chat__row chat__row--user">
+      <p class="chat__bubble chat__bubble--user">{{ message.content }}</p>
+    </div>
+  {% else %}
+    <div class="chat__row">
+      <div class="chat__bubble {% if message.content == refusal %}chat__bubble--refusal{% else %}chat__bubble--answer{% endif %}">
+        <p>{{ message.content|linebreaksbr }}</p>
+
+        {% if answer and message.pk == answer.message_id and answer.citations %}
+          <div class="cite-row">
+            {% for citation in answer.citations %}
+              <details class="cite-detail">
+                <summary class="cite cite--reference">
+                  {{ citation.section_ref }}{% if citation.sub_ref %} · {{ citation.sub_ref }}{% endif %}
+                </summary>
+                <blockquote class="cite-quote">{{ citation.quote }}</blockquote>
+                <p class="cite-source">
+                  {{ citation.document }}{% if citation.page %} · p. {{ citation.page }}{% endif %}
+                </p>
+              </details>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if message.content == refusal %}
+          <p class="chat__followup">
+            <a class="chat__link" href="{% url 'core:contact' %}">→ Send this question to the administrator</a>
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}
+
+{% if error %}
+  <div class="chat__row">
+    <div class="chat__bubble chat__bubble--refusal" role="alert">{{ error }}</div>
+  </div>
+{% endif %}

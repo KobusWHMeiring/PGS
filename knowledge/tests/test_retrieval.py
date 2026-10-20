@@ -39,6 +39,7 @@ from knowledge.services import (
     RetrievalResult,
     fuse,
     search,
+    search_terms,
     vector_search,
 )
 
@@ -78,8 +79,12 @@ class FakeProvider:
 
     def __init__(self, dimension=768):
         self.dimension = dimension
+        self.calls = 0
+        self.queries: list[str] = []
 
     def embed(self, texts):
+        self.calls += 1
+        self.queries.extend(texts)
         vectors = []
         for text in texts:
             vector = [0.0] * self.dimension
@@ -284,6 +289,20 @@ def test_a_traceability_question_returns_a_saoso_clause(saoso_ingested, saoso_se
     assert not [ref for ref in refs if ref.startswith("B.20")], "D43: never B.20"
 
 
+def test_a_natural_question_reaches_the_traceability_clause(saoso_ingested, saoso_set):
+    """A chatbot question, not a phrase from the document.
+
+    `websearch_to_tsquery` ANDs the words, so the raw question retrieves nothing (see
+    `testing_hazards.md` §2.4). `search_terms` searches the rarest word first, which is
+    what puts the actual clause back in front of the model.
+    """
+    result = search_terms(
+        ["standard", "require", "traceability"], standard_set=saoso_set
+    )
+    refs = [chunk.section_ref for chunk in result.chunks if chunk.section_ref]
+    assert any(ref.startswith("S20.1") for ref in refs), refs
+
+
 def test_a_labelling_question_reaches_section_22(saoso_ingested, saoso_set):
     result = search("labelling of organic products", standard_set=saoso_set)
     refs = [chunk.section_ref for chunk in result.chunks if chunk.section_ref]
@@ -354,3 +373,146 @@ def test_vector_search_skips_chunks_without_vectors(two_sets):
     DocumentChunk.objects.filter(pk=in_set.pk).update(embedding=vec(1.0))
     ranked = vector_search(vec(1.0), standard_set=first, limit=5)
     assert [chunk_id for chunk_id, _ in ranked] == [in_set.pk]
+
+
+# --- The rare term is a lexical key, the OR query is the semantic question ---
+#
+# Measured 2026-10-20, after the corpus was embedded: `search_terms` used to run the
+# vector arm on the rare word as well as on the OR query. A single word is a lexical
+# key, not a semantic question — embedding it retrieved semantically adjacent passages
+# (S5, Appendix 6b) that pushed SAOSO Appendix 2 out of the top 8, and the manure
+# question refused again despite a good corpus. The fix is structural: the rare-term
+# arm stays lexical; the vector arm runs once, on the broader OR query. It also halves
+# the query embeddings per question from two to one.
+
+
+def test_the_rare_term_arm_can_be_kept_lexical(two_sets):
+    first, second, in_set, out_of_set = two_sets
+    DocumentChunk.objects.filter(pk=in_set.pk).update(embedding=vec(1.0))
+    provider = FakeProvider()
+
+    result = search(
+        "alpha", standard_set=first, provider=provider, use_vector=False
+    )
+
+    assert result.lexical_only is True
+    assert provider.calls == 0, "a lexical-only arm must not spend an embedding call"
+    assert [chunk.chunk_id for chunk in result.chunks] == [in_set.pk]
+
+
+def test_search_terms_embeds_the_question_when_it_has_one(two_sets):
+    """The semantic query is the visitor's sentence, not the OR-joined token string.
+
+    Measured 2026-10-21 against the shipped corpus: "can I use cardboard from my
+    neighbours?" embedded as a sentence puts SAOSO 4.4.4 in the top 8; embedded as
+    `use OR cardboard OR neighbours` it retrieves labelling, construction materials and
+    buffers instead. A token string is a lexical query; a question is a semantic one.
+
+    One embedding per question either way — the cost does not change, only the text.
+    """
+    first, second, in_set, out_of_set = two_sets
+    DocumentChunk.objects.filter(pk=in_set.pk).update(embedding=vec(1.0))
+    provider = FakeProvider()
+
+    result = search_terms(
+        ["alpha", "traceability"],
+        standard_set=first,
+        provider=provider,
+        question="what does alpha traceability mean?",
+    )
+
+    assert result.lexical_only is False, "the vector arm did not run, so this proves nothing"
+    assert provider.calls == 1
+    assert provider.queries == ["what does alpha traceability mean?"]
+    assert in_set.pk in [chunk.chunk_id for chunk in result.chunks]
+
+
+def test_the_semantic_arm_is_not_crowded_out_by_a_full_lexical_limit(two_sets):
+    """A full lexical result set used to leave the vector arm with nothing to add.
+
+    Measured 2026-10-21: with the caller's limit reached by the rare-term arm, the merged
+    result was identical to a lexical-only result — the "hybrid" retrieval the page
+    describes never ran. `SEMANTIC_SEATS` reserves the semantic arm's share, and this
+    test makes the lexical arm deliberately fill the budget first.
+    """
+    first, second, in_set, out_of_set = two_sets
+    semantic = make_chunk(
+        in_set.document,
+        ref="S4.4.4",
+        text="Material applied to the land or crop shall be in accordance with Appendix 2",
+        embedding=vec(0.0, 0.0, 1.0),
+    )
+    for index in range(6):
+        make_chunk(
+            in_set.document,
+            ref=f"S9.{index}",
+            text=f"alpha requirement number {index}",
+        )
+    provider = FakeProvider()
+
+    result = search_terms(
+        ["alpha"],
+        question="what does gamma require?",
+        standard_set=first,
+        provider=provider,
+        limit=4,
+    )
+
+    ids = [chunk.chunk_id for chunk in result.chunks]
+    assert len(ids) == 4
+    assert semantic.pk in ids, "the lexical arm filled every seat and the vector arm was ignored"
+
+
+def test_without_a_question_the_or_query_is_still_the_semantic_query(two_sets):
+    """A caller that has only terms gets the old behaviour, unchanged.
+
+    `search_terms` is a library function; the chat is not its only caller, and a caller
+    that never had the visitor's sentence must not lose the OR fallback.
+    """
+    first, second, in_set, out_of_set = two_sets
+    DocumentChunk.objects.filter(pk=in_set.pk).update(embedding=vec(1.0))
+    provider = FakeProvider()
+
+    result = search_terms(
+        ["alpha", "traceability"], standard_set=first, provider=provider
+    )
+
+    assert result.lexical_only is False
+    assert provider.calls == 1
+    assert provider.queries == ["alpha OR traceability"]
+    assert in_set.pk in [chunk.chunk_id for chunk in result.chunks]
+
+
+def test_a_question_about_an_unknown_material_gives_the_semantic_arm_the_budget(two_sets):
+    """When the subject is a word the corpus lacks, the lexical arms search a proxy.
+
+    "can I use cardboard from my neighbours?" -- `cardboard` has document frequency 0,
+    so the rarest *known* word is `neighbours`, and searching it returned the child-
+    labour clause while the inputs clause never arrived. The lexical match is kept as a
+    two-chunk hedge (it is the only retrieval there is when no embedding key is set),
+    but it must not fill the budget: the question's meaning gets the remaining seats.
+    """
+    first, second, in_set, out_of_set = two_sets
+    decoy = make_chunk(
+        in_set.document,
+        ref="S23.9",
+        text="Neither the operator nor their neighbours shall use child labour.",
+    )
+    DocumentChunk.objects.filter(pk=in_set.pk).update(embedding=vec(0.0, 0.0, 0.0, 1.0))
+    provider = FakeProvider()
+    question = "can I use cardboard from my delta neighbours?"
+
+    result = search_terms(
+        ["use", "cardboard", "delta", "neighbours"],
+        question=question,
+        standard_set=first,
+        provider=provider,
+        limit=3,
+    )
+
+    assert provider.queries == [question], "the OR string was embedded, not the question"
+    assert result.query == question
+    ids = [chunk.chunk_id for chunk in result.chunks]
+    assert decoy.pk in ids, "the hedge chunk was expected; this test would pass vacuously"
+    assert in_set.pk in ids, "the proxy word crowded the semantic result out of the budget"
+    assert "cardboard" in " ".join(result.warnings)

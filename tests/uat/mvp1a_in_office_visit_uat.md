@@ -4,7 +4,7 @@
 **PRD:** `product/backlog/ready/MVP1A_PRD.md`
 **Plan:** `product/backlog/ready/MVP1A_PLAN.md`
 **Status:** Drafted **before** implementation (shift-left validation)
-**Date:** 2026-10-18
+**Date:** 2026-10-20
 
 ---
 
@@ -25,7 +25,7 @@ form is not.
 
 1. `python manage.py seed_deployment && python manage.py load_template core/templates_data/crops.v1.json`
 2. Have the source documents open: **FORM Sheet B.1 (Crops)** and **FORM Sheet B.2 (input suppliers)**,
-   and **OPP §3.1, §3.3, §4.1, §4.2**.
+   **FORM Sheet I (Conclusion)** and **OPP §3.1, §3.3, §4.1, §4.2**.
 3. Create one real applicant with a real farm and turnover band — not a fixture.
 4. Have a printed copy of the existing paper questionnaire beside the screen.
 5. Run: `python manage.py runserver`
@@ -45,6 +45,12 @@ form is not.
 | A visit with an unpaid `AssessmentFee` cannot leave `DRAFT` | `core/tests/test_fees.py` |
 | Only `respondent=FARMER` questions render in the portal | `core/tests/test_questionnaire.py` |
 | Attachment-required questions unsatisfied until an `EvidenceDocument` exists | `core/tests/test_attachments.py` |
+| The six sub-verdict groups are structured and total 13 children | `core/tests/test_crops_template.py` |
+| A child answer never changes the parent's `value` or `is_compliant` | `core/tests/test_evaluation.py` |
+| `SocialEquity` and `RecordCheck` are unique per visit; `MISSING` requires a note | `core/tests/test_conclusion.py` |
+| Farmer evidence upload moves a corrective action to `SUBMITTED`; `OVERDUE` is derived | `core/tests/test_corrective_followup.py` |
+| Prior open actions appear at the next visit; `NOT_MET` Critical escalates | `core/tests/test_prior_actions.py` |
+| `finalise_visit` refuses each unmet item and returns the full list | `core/tests/test_finalise_gates.py` |
 | Severity definitions are character-identical to FORM Sheet I | `core/tests/test_findings.py` |
 | Replay of a `client_uuid` creates zero additional rows | `core/tests/test_sync.py` |
 | No certification outcome, seal or certificate is reachable in 1a | `core/tests/test_scope_fence.py` |
@@ -192,6 +198,82 @@ contradiction in the group's own documents.
 
 ---
 
+## Scenario 9 — Are the sub-verdicts actually answerable?
+
+**Category:** fidelity
+**Setup:** FORM Sheet B.1 beside the screen, open at V4, V10, V11, V19, V21 and V35. A visit in capture.
+
+1. Answer V4 "Yes", then leave one of its two children blank. Try to finalise.
+2. Answer every child, including one `NA`.
+3. Compare the nesting to the printed form.
+
+**Expected:** Each printed child has its own control and key; a blank required child blocks finalise and
+is named in the error; `NA` is accepted as an explicit answer. The parent's single value is unchanged by
+the children.
+
+**Judgement:** Would an assessor notice a skipped child before signing, or does one parent control invite
+the Homtini blanks? Does the screen read like the paper's nested rows, or like a form that has been
+flattened to save space?
+
+---
+
+## Scenario 10 — Does the conclusion survive the digital visit?
+
+**Category:** completeness (D45)
+**Setup:** FORM Sheet I beside the screen. A visit with findings and a farm that does not keep sales
+records.
+
+1. Capture social equity: staff, employment status, labour-law compliance, and the child-labour
+   question with its activity description.
+2. Work the records checklist: mark the sales record `MISSING` with a note, and the soil test `CHECKED`.
+3. Generate the report.
+
+**Expected:** Every Sheet I §1 field and §2 item appears in the PDF; `MISSING` is visibly recorded, not
+blank; no worker or child-labour detail appears in any public output.
+
+**Judgement:** Would the committee accept this as the conclusion page of the paper report? Is the
+social-equity section usable in a real visit, or does it read as a compliance afterthought that an
+administrator will skip?
+
+---
+
+## Scenario 11 — Can the farmer answer the Major action without email?
+
+**Category:** workflow (D45)
+**Setup:** A finalised visit with a Major finding — *"provide these documents for review in 2 weeks"* —
+and a TDS, a non-GMO letter and an invoice to supply.
+
+1. As the farmer, open the portal task list and upload the three documents.
+2. As the administrator, verify the action.
+
+**Expected:** The action shows its reason, recommendation and due date; the upload moves it to
+`SUBMITTED`; the reviewer can move it to `VERIFIED`; after the due date it reads `OVERDUE`; the
+documents remain private.
+
+**Judgement:** Would a farmer who uses WhatsApp and email today understand what is being asked and by
+when — without phoning the administrator? What still forces a fallback to email is the real backlog
+item.
+
+---
+
+## Scenario 12 — Does the next visit remember the last one?
+
+**Category:** continuity (D45)
+**Setup:** A farm with an open Critical action (ducks not certifiable) and an open Major action
+(documents outstanding) from the previous visit.
+
+1. Start the next visit and look for the prior actions before walking the farm.
+2. Record `VERIFIED` for the Major action and `NOT_MET` for the Critical one.
+3. Try to finalise without reviewing one of them.
+
+**Expected:** Both prior actions are visible at the start of capture; `NOT_MET` on the Critical action
+escalates; finalise refuses an unreviewed action and names it.
+
+**Judgement:** Does the assessor open the last visit's actions before the walkabout, as PREP requires?
+Does the escalation read as the next step in the group's process, not as a software error?
+
+---
+
 ## Sign-off
 
 | Role | Name | Date | Result |
@@ -199,8 +281,9 @@ contradiction in the group's own documents.
 | Product | Kobus Meiring | | |
 | PGS administrator | | | |
 | Committee reviewer | | | |
-| Farmer member (Scenarios 1, 7) | | | |
+| Farmer member (Scenarios 1, 7, 11) | | | |
 
 **Release gate:** all scenarios judged acceptable, or the exceptions recorded above with a decision to
-proceed. Scenario 3 and Scenario 6 require the **administrator's own machine** — a developer's laptop
-is not a valid setup for those.
+proceed. Scenarios 3, 6, 9, 10 and 12 require the **administrator's own machine** — a developer's laptop
+is not a valid setup for those. Scenario 11 needs a farmer's own device or account, not an
+administrator impersonating them.

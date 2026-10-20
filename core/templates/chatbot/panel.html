@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+The real assistant surface. The home page's two windows are a showcase of this page,
+not a second implementation: this is the only place a question can be typed.
+
+The form posts to the same URL with or without JavaScript. HTMX swaps only the
+thread, which is why `_thread.html` is the single renderer for an exchange. The
+`<noscript>` path is not a fallback that needs maintaining — a plain POST works.
+
+Both scripts are loaded here and nowhere else: a vendored HTMX file is 50 KB of
+JavaScript that a visitor reading the fees page should not download.
+{% endcomment %}
+
+{% block extra_js %}
+  <script src="{% static 'js/vendor/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/chat.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section section--dark" id="ask">
+    <div class="container chat-page">
+
+      <div class="chat chat--page">
+        <div class="chat__bar">
+          <span class="chat__title">
+            <span class="chat__dot" aria-hidden="true"></span>Ask Outeniqua PGS
+          </span>
+          <span class="state-badge">Documents only</span>
+        </div>
+
+        <div id="chat-thread" class="chat__body chat__body--thread" aria-live="polite">
+          {% include "chatbot/_thread.html" %}
+        </div>
+
+        <form class="chat-form" method="post" action="{% url 'core:ask' %}"
+              hx-post="{% url 'core:ask' %}" hx-target="#chat-thread" hx-swap="innerHTML"
+              hx-indicator="#chat-send">
+          {% csrf_token %}
+          <label class="visually-hidden" for="id_question">{{ form.question.label }}</label>
+          {{ form.question }}
+          <button class="btn btn--ochre chat__send" id="chat-send" type="submit">
+            Ask
+          </button>
+          <p class="chat-form__hint">Press Enter to send &middot; Shift+Enter for a new line</p>
+        </form>
+      </div>
+
+      <aside class="chat-aside" aria-label="How the assistant works">
+        <h2 class="chat-aside__title">How this works</h2>
+        <ul class="chat-aside__list">
+          <li>
+            <strong>It answers only from the documents.</strong>
+            The SAOSO Standard, our Principles, Policies and Procedures, the Basic
+            Production Principles and the certification landscape. Nothing else.
+          </li>
+          <li>
+            <strong>Every answer carries its passage.</strong>
+            Tap a citation to read the exact words it came from, and look it up in the
+            document yourself.
+          </li>
+          <li>
+            <strong>It refuses rather than guesses.</strong>
+            A refusal is recorded for the administrator, so a gap in the documents
+            becomes a question a person can answer.
+          </li>
+        </ul>
+        <p class="chat-aside__note">
+          The assistant is not a certifier. It explains what the documents say; it
+          never decides whether a farm or a product is certified.
+        </p>
+      </aside>
+
+    </div>
+  </section>
+{% endblock %}

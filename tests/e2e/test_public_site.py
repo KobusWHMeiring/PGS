@@ -23,6 +23,7 @@ ROUTES = [
     # because the home page's band carried those chips before the documents existed.
     ("/documents/", "What we publish"),
     ("/become-a-member/", "What membership and assessment cost"),
+    ("/ask/", "Ask the standard"),
     ("/contact/", "Who to talk to"),
 ]
 
@@ -80,7 +81,8 @@ def test_controls_are_at_least_44px(page, live_server, path):
             const selectors = [
               '.btn', '.site-nav__link', '.site-menu__toggle', '.lang-switch',
               '.footer__social-link', '.footer__list a', '.footer__ask',
-              '.chat__link', '.link-more', 'a.doc-row__action'
+              '.chat__link', '.chat__send', '.chat-form__input', '.cite--reference',
+              '.link-more', 'a.doc-row__action'
             ];
             return selectors.flatMap(sel => [...document.querySelectorAll(sel)].map(el => {
                 const r = el.getBoundingClientRect();
@@ -143,6 +145,23 @@ def test_the_documents_page_offers_eight_downloads(page, live_server):
     assert download.suggested_filename.endswith(".pdf"), download.suggested_filename
 
 
+@pytest.mark.parametrize("width", [768, 1024, 1280])
+def test_the_header_holds_the_ask_link_without_overflow(page, live_server, width):
+    """Six links + the CTA must stay on one line once the nav is visible.
+
+    The nav turns on at 768 px; that is the width where one more link is most likely
+    to push the header past the viewport. Measured, not assumed.
+    """
+    page.set_viewport_size({"width": width, "height": 900})
+    page.goto(live_server.url + "/", wait_until="networkidle")
+
+    assert page.locator('.site-nav a[href="/ask/"]').is_visible()
+    overflow = page.evaluate(
+        "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    assert overflow <= 0, f"the header overflows at {width}px by {overflow}px"
+
+
 def test_the_phone_menu_opens_fully_on_screen(phone_page, live_server):
     """The disclosure panel must be reachable and unclipped.
 
@@ -159,6 +178,7 @@ def test_the_phone_menu_opens_fully_on_screen(phone_page, live_server):
     assert box["x"] >= 0, f"menu panel starts at x={box['x']}"
     assert box["x"] + box["width"] <= PHONE_WIDTH, "menu panel overflows the viewport"
 
+    assert panel.locator('a[href="/ask/"]').count() == 1, "Ask is not in the phone menu"
     for link in panel.locator("a").all():
         assert link.is_visible()
         assert link.inner_text().strip() != ""

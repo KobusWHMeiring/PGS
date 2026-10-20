@@ -2,7 +2,7 @@
 
 **Status:** Ready
 **Owner:** Kobus Meiring (Product)
-**Last Updated:** 2026-10-18
+**Last Updated:** 2026-10-20
 **MVP:** 1a of 2 within slice 1 (spec §19, D25)
 **PRD:** `MVP1A_PRD.md` · **Spec:** `PGS_PLATFORM_SPEC.md` §3, §4.1–§4.2, §7, §8, §11
 **Reference:** `../../docs/context/build_principles.md` · `../Done/MVP0_PLAN.md` (superseded, for pattern only)
@@ -78,7 +78,12 @@ core/models/_assessment.py      AssessmentTemplate FarmVisit VisitParticipant
                                 Finding NotifiableExemption CorrectiveAction
                                 EvidenceDocument EvidencePhoto VoiceNote Signature
                                 InputSupply SyncReceipt
+                                SocialEquity RecordCheck PriorActionReview
 ```
+
+`SocialEquity`, `RecordCheck` and `PriorActionReview` are the Sheet I conclusion (D45). `SocialEquity`
+is one row per visit; `RecordCheck` is one row per Sheet I §2 item; `PriorActionReview` is one row per
+prior open action, per visit.
 
 `VoiceNote` ships as **schema only** (spec §17.2 — recorder UI and transcription are post-MVP). It is
 migrated now so deferring costs nothing structural.
@@ -352,6 +357,22 @@ def test_inverted_and_informational_verdicts_carry_the_right_polarity(key):
 marking `respondent` per the FORM's grey/white cells, `attachments` for the documents Sheet I §2
 requires, and `links_to: "INPUT_REGISTER"` on B.1 Q4.3.
 
+**Sub-verdicts are structured, not prose.** Six verdicts carry printed child rows: V4 (2), V10 (2),
+V11 (2), V19 (3), V21 (2), V35 (2) = 13 children. Each child is
+`{"key": "crops.V04.a", "text": "…", "polarity": "POSITIVE", "options": ["YES","NO","NA"], "required": true}`.
+A child key is the parent key plus `.a`/`.b`/`.c`; a child never gets its own top-level verdict row
+(the 37-row count is the completeness invariant).
+
+```python
+def test_the_six_sub_verdict_groups_are_structured():
+    subs = {v["key"]: v.get("sub_questions", []) for v in load_crops_schema()["verdicts"]}
+    assert {k for k, v in subs.items() if v} == {
+        "crops.V04", "crops.V10", "crops.V11", "crops.V19", "crops.V21", "crops.V35"
+    }
+    assert all(isinstance(q, dict) and q.get("key") for group in subs.values() for q in group)
+    assert sum(len(group) for group in subs.values()) == 13
+```
+
 **Polarity assignment — get these right or the data lies:**
 
 | Verdict | Polarity |
@@ -361,8 +382,8 @@ requires, and `links_to: "INPUT_REGISTER"` on B.1 Q4.3.
 | V23 "Do you see evidence of pests or pest damage?" | `NEGATIVE` |
 | all others | `POSITIVE` |
 
-**Acceptance:** four tests pass; a reviewer reads the JSON against the printed sheet and finds no
-omission. **This is the one task worth a second pair of eyes.**
+**Acceptance:** the template tests pass; a reviewer reads the JSON against the printed sheet and finds
+no omission. **This is the one task worth a second pair of eyes.**
 
 ---
 
@@ -453,6 +474,25 @@ the farmer's task list; resolving it returns the assessment to `QUESTIONNAIRE_SU
 clarification cannot be raised after the snapshot is frozen.
 
 Modelled as `ClarificationRequest(assessment, question_key, text, raised_by, raised_at, resolved_at)`.
+
+---
+
+### Task C6: Corrective-action follow-up (farmer portal)
+
+**Files:** `core/views/_portal.py`, `core/services/_corrective.py`,
+`core/templates/portal/tasks.html`, `core/tests/test_corrective_followup.py`
+
+**Tests first:** a farmer sees only corrective actions belonging to their own farms; each row shows the
+reason, recommended action and `due_on`; `OVERDUE` is derived from `due_on` on read, never stored; an
+upload creates an `EvidenceDocument` with `corrective_action` set and moves the action to `SUBMITTED`
+with `submitted_on`; a farmer cannot move an action to `VERIFIED`; a deleted document does not delete
+the action (void/deactivate, never delete).
+
+The upload is the same `EvidenceDocument` pipeline as C3, with one extra nullable FK. No new storage
+code.
+
+**Acceptance:** the Homtini Major action — *"provide these documents for review in 2 weeks"* — can be
+answered by the farmer and verified by the administrator without email.
 
 ---
 
@@ -555,13 +595,22 @@ def test_no_view_can_write_is_compliant(client, ...):
 def test_stored_value_matches_recomputation(recorded_verdicts):
     for v in recorded_verdicts:
         assert v.is_compliant is derive_compliance(v.value, v.polarity)
+
+def test_sub_answers_are_kept_separate_from_the_parent(recorded_verdict):
+    v = recorded_verdict
+    v.sub_answers = {"crops.V04.a": "NO", "crops.V04.b": "YES"}
+    v.save()
+    v.refresh_from_db()
+    assert v.value == "YES"                       # parent untouched
+    assert v.sub_answers["crops.V04.a"] == "NO"   # child preserved
 ```
 
 `derive_compliance` lives in `core/services/_evaluation.py`; the model's `save()` materialises it from
 the snapshotted `polarity`. `AssessmentVerdict(assessment, question_key, ref, value, polarity,
 is_compliant, standard_ref, notes, sub_answers)`.
 
-**Acceptance:** all eight parameter cases pass; no form exposes `is_compliant`.
+**Acceptance:** all eight parameter cases pass; no form exposes `is_compliant`; a child answer never
+changes the parent's `value` or `is_compliant`.
 
 ---
 
@@ -596,7 +645,8 @@ lapsed Critical action sets `ESCALATED`.
 
 **Tests first:** three roles are expected (`ASSESSOR`, `HOST_FARMER`, `PGS_REPRESENTATIVE`); the
 signature is stored under the **private** media root; `ip_hash` is stored, never the raw IP; a
-signature cannot be deleted.
+signature cannot be deleted; a `declined` signature requires `decline_reason` and is distinguishable
+from a missing one.
 
 ---
 
@@ -619,11 +669,15 @@ Adapted from MVP 0's `store_media_item` contract; keep the same idempotency sema
 `core/templates/committee/input_register.html`, `core/tests/test_input_register.py`
 
 **Tests first:** a row requires `product_name`; `act36_registered` is tri-state (`True`/`False`/`null`
-= not stated) because the form asks but does not guarantee an answer; `ingredients` is required when
-`is_organic_certified` is `False`; rows persist across visits for the same farm.
+= not stated) because the form asks but does not guarantee an answer; `input_kind` is required and
+drives `seed_status` (a `SEED` row must have `ORGANIC | CONVENTIONAL_UNTREATED | CONVENTIONAL_TREATED |
+UNKNOWN | NA`; a non-seed row leaves it null); `ingredients` is required when `is_organic_certified` is
+`False`; rows persist across visits for the same farm.
 
 **Acceptance:** the register opens from B.1 Q4.3 (`links_to: "INPUT_REGISTER"`) and round-trips a row
-with all nine Sheet B.2 columns.
+with all nine Sheet B.2 columns. Supplier documents attach to the row through
+`EvidenceDocument.input_supply`; the assessor can mark the row `APPROVED`/`REJECTED` with a rationale
+(the paper form's *"check with Fabian if the planned product is acceptable"*).
 
 ---
 
@@ -638,9 +692,44 @@ implied meaning, and inline finding creation with the verbatim severity definiti
 
 **Tests first:** the capture view reads **only** `assessment.template_schema` (a test replaces the live
 template with a different one and asserts the page is unchanged); the verdict control offers exactly
-`options` from the template; a `NEGATIVE` verdict is labelled so "Yes" does not read as praise.
+`options` from the template; a `NEGATIVE` verdict is labelled so "Yes" does not read as praise; a
+parent with `sub_questions` renders one control per child, each with its own key; the conclusion
+sections render beside the findings (social equity, records checklist, prior actions).
 
-**Acceptance:** one connected visit can be captured end to end in a test, reaching `SYNCED`.
+**Acceptance:** one connected visit can be captured end to end in a test, reaching `SYNCED`, with every
+sub-verdict and every Sheet I §1–2 item recorded.
+
+---
+
+### Task E8: Sheet I conclusion — social equity and records
+
+**Files:** `core/models/_assessment.py` (`SocialEquity`, `RecordCheck`),
+`core/forms/_assessment.py`, `core/templates/committee/conclusion.html`,
+`core/tests/test_conclusion.py`
+
+**Tests first:** `SocialEquity` is unique per visit; `children_under_15=True` requires
+`children_activities`; the worker and child-labour fields are flagged sensitive and excluded from every
+public serialiser; `RecordCheck` is unique on `(farm_visit, kind)`; every printed Sheet I §2 kind is
+created when the visit enters capture (missing is `MISSING`, not absent); `MISSING` requires a note;
+`NOT_APPLICABLE` is allowed for the agro-processing items when the category is not assessed.
+
+**Acceptance:** a visit cannot be finalised with an unset `RecordCheck` or no `SocialEquity` row; a
+`MISSING` sales-record row is recorded and rendered, and does not itself block the visit.
+
+---
+
+### Task E9: Prior-action review
+
+**Files:** `core/models/_assessment.py` (`PriorActionReview`), `core/views/_committee.py`,
+`core/tests/test_prior_actions.py`
+
+**Tests first:** the capture screen lists every `OPEN`/`OVERDUE`/`ESCALATED` action from the farm's
+previous visits; one `PriorActionReview` per `(farm_visit, corrective_action)`; outcome is exactly
+`VERIFIED | PARTIAL | NOT_MET`; a `NOT_MET` Critical action sets `ESCALATED`; a review cannot be
+recorded against another farm's action.
+
+**Acceptance:** the Homtini Critical action (ducks not certifiable) and Major action (documents
+outstanding) both appear at the next visit and must be closed or escalated before finalise.
 
 ---
 
@@ -655,9 +744,11 @@ template with a different one and asserts the page is unchanged); the verdict co
 deliberately deferred from MVP 0 (D19) because of GTK system libraries on Windows; discovering that at
 the end of 1a is avoidable pain.
 
-**Tests first:** the rendered HTML contains every finding with its description and severity;
-citations of the four outcome options appear as **pending**, not selected (D33); no cell number, email
-or GPS appears; the PDF is generated without a partially-written file on failure.
+**Tests first:** the rendered HTML contains every finding with its description and severity; every
+answered sub-verdict with its child text; a `MISSING` `RecordCheck` with its note; the social-equity
+section; and the prior-action review table. Citations of the four outcome options appear as
+**pending**, not selected (D33); no cell number, email, GPS or child-labour detail appears; the PDF is
+generated without a partially-written file on failure.
 
 ---
 
@@ -667,9 +758,30 @@ or GPS appears; the PDF is generated without a partially-written file on failure
 
 **Tests first:** idempotent on `visit_id` (a second call produces no second PDF row); sets
 `SYNCED → UNDER_REVIEW`; refuses when the photo queue is outstanding; refuses while a
-`NotifiableExemption` lacks `reported_to_pgs_sa_on` (F4).
+`NotifiableExemption` lacks `reported_to_pgs_sa_on`.
 
 **Acceptance:** finalise twice → one PDF, status `UNDER_REVIEW`.
+
+---
+
+### Task F3: Completeness and signature gates
+
+**Files:** `core/services/_pdf.py`, `core/tests/test_finalise_gates.py`
+
+`finalise_visit` returns **every** unmet item, not the first, so the administrator can fix the visit in
+one pass. Refuse when:
+
+- a required `AssessmentVerdict.value` is `NULL`;
+- a required `sub_questions` child is `NULL` in `sub_answers` (`NA` is an answer);
+- a required `Signature` is missing and no refusal with a reason is recorded;
+- a `RecordCheck` has no `status`, or a `MISSING` one has no note;
+- a `SocialEquity` row is absent;
+- a prior open `CorrectiveAction` has no `PriorActionReview` for this visit;
+- the photo queue is outstanding or a `NotifiableExemption` is unreported (existing F2 rules).
+
+**Acceptance:** a Homtini-shaped visit — blank V5, V11's supplier child and V25, missing applicant
+signature, missing sales record, unreviewed prior action — is refused with every gap named, not a
+generic error. The suite asserts the list, not a boolean.
 
 ---
 
@@ -749,11 +861,11 @@ reuse E5's validators rather than duplicating them.
 | 1 | A1 → A2 → A3 → A4 → A5 | `pytest` green; fees and gates correct |
 | 2 | A6 → A7 | Application completes end to end |
 | 3 | B1 → B2 → B3 → B4 | Crops template validates; **B3 reviewed against the printed sheet** |
-| 4 | C1 → C2 → C3 → C4 → C5 | Questionnaire completes; snapshot immutability proven |
+| 4 | C1 → C2 → C3 → C4 → C5 → C6 | Questionnaire completes; snapshot immutability proven; farmer can answer a finding |
 | 5 | D1 → D2 → D3 → D4 | Team validation passes one test per OPP clause |
-| 6 | E1 → E2 → E3 → E4 → E5 → E6 → E7 | A connected visit reaches `SYNCED` |
-| 7 | F1 → F2 | Report PDF renders; visit reaches `UNDER_REVIEW` |
-| 8 | **UAT** | Five human judgements signed (PRD §7) |
+| 6 | E1 → E2 → E3 → E4 → E5 → E6 → E7 → E8 → E9 | A connected visit reaches `SYNCED` with the conclusion and prior actions |
+| 7 | F1 → F2 → F3 | Report PDF renders; visit reaches `UNDER_REVIEW`; incomplete visits are refused |
+| 8 | **UAT** | The PRD §7 human judgements signed (all scenarios) |
 | — | G1 → G5 | **Blocked on `1∥`** |
 
 **In parallel:** sub-plan A can begin immediately; the 0∥ spike runs alongside and must complete before
@@ -766,11 +878,14 @@ reuse E5's validators rather than duplicating them.
 - [ ] An application completes: register → consent → pledge → categories → turnover → attestations → fees
 - [ ] A visit cannot be scheduled with an invalid team, inside 5 days, or with unpaid fees
 - [ ] The questionnaire renders only farmer questions, autosaves, and freezes its snapshot on submit
-- [ ] A connected visit captures verdicts (with correct polarity), findings, corrective actions,
-      signatures, photos and the input register, reaching `SYNCED`
-- [ ] `finalise_visit` produces the visit report PDF and reaches `UNDER_REVIEW`
+- [ ] A connected visit captures verdicts (with correct polarity and sub-answers), findings, corrective
+      actions, signatures, photos, the input register, the Sheet I conclusion and prior-action reviews,
+      reaching `SYNCED`
+- [ ] A farmer can submit evidence against a corrective action; the reviewer can verify it
+- [ ] `finalise_visit` produces the visit report PDF, refuses an incomplete visit by naming every gap,
+      and reaches `UNDER_REVIEW`
 - [ ] No certification outcome, seal or certificate exists anywhere in 1a
-- [ ] The five human UAT judgements are signed
+- [ ] The UAT judgements in PRD §7 are signed
 - [ ] `lint-imports` green; `/health/` 200; full suite green
 
 ## 4. Not built here

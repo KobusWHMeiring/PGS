@@ -201,6 +201,19 @@
   }
 }
 
+/* Six links + the CTA fit at 1024 and up, but at exactly 768 px the full 1.75rem
+   nav gap pushes the header 80 px past the viewport. Tighten the gaps only in the
+   tablet band; the desktop rhythm is unchanged. Measured 2026-10-20. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .site-header__inner {
+    gap: 0.5rem;
+  }
+
+  .site-nav {
+    gap: 0.9rem;
+  }
+}
+
 .header-actions {
   display: flex;
   align-items: center;

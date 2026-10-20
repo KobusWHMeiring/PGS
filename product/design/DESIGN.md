@@ -190,13 +190,14 @@ Duration is Tailwind's default (150 ms).
 ### 7.1 Header
 
 Sticky, `brand-cream` ground, hairline `border-sand` bottom. Left: **the real sprout mark**
-(`assets/logo_mark.png`, 40 px) + `OUTENIQUA PGS` / `NATURAL & ORGANIC` as HTML text. Centre: five
+(`assets/logo_mark.png`, 40 px) + `OUTENIQUA PGS` / `NATURAL & ORGANIC` as HTML text. Centre: six
 nav links in `text-xs uppercase tracking-wider`. Right: EN/AF pill + `Become a member` button
 (`rounded-full`, forest ground).
 
 - **The wordmark is HTML text, not an image.** It stays crisp at every size, is translatable, and
   is readable to a screen reader. The raster lockup is not used here — see §8.
-- Nav is **5 links + 1 CTA**. `Become a member` is a button, never a sixth link.
+- Nav is **6 links + 1 CTA**. `Become a member` is a button, never a seventh link. `Ask`
+  (to `/ask/`) joined on 2026-10-20; the header must still hold one line at 768 px and up.
 
 ### 7.2 Hero
 

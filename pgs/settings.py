@@ -210,6 +210,32 @@ EMBEDDING_MODEL = env("EMBEDDING_MODEL", "gemini-embedding-001")
 EMBEDDING_DIM = int(env("EMBEDDING_DIM", "768"))
 
 
+# --- Grounded chat (sub-plan D) ---------------------------------------------
+#
+# The chatbot is a public endpoint in front of a paid API, so every limit is a
+# deployment setting rather than a literal in the service: a group with a larger
+# budget can raise the per-IP allowance without a code release. The defaults are
+# deliberately conservative. `CHAT_MODEL` is the generation model, not the embedding
+# model above — changing it does not touch the frozen vector column.
+
+CHAT_MODEL = env("CHAT_MODEL", "gemini-2.5-flash")
+# Milliseconds, matching `google.genai.types.HttpOptions.timeout`. A hung call must
+# not pin a web worker; §VII.2 requires an explicit timeout on every external call.
+CHAT_TIMEOUT_MS = int(env("CHAT_TIMEOUT_MS", "30000"))
+CHAT_RATE_LIMIT = int(env("CHAT_RATE_LIMIT", "20"))
+CHAT_RATE_LIMIT_WINDOW_SECONDS = int(env("CHAT_RATE_LIMIT_WINDOW_SECONDS", "3600"))
+CHAT_MAX_QUESTION_CHARS = int(env("CHAT_MAX_QUESTION_CHARS", "500"))
+CHAT_HISTORY_MESSAGES = int(env("CHAT_HISTORY_MESSAGES", "8"))
+CHAT_RETRIEVAL_LIMIT = int(env("CHAT_RETRIEVAL_LIMIT", "5"))
+CHAT_ANSWER_CACHE_TTL = int(env("CHAT_ANSWER_CACHE_TTL", "3600"))
+# Output tokens per generation attempt. 1024 truncated a four-citation answer mid-JSON
+# on 2026-10-19, which surfaced to the visitor as "the service is unavailable".
+CHAT_MAX_OUTPUT_TOKENS = int(env("CHAT_MAX_OUTPUT_TOKENS", "2048"))
+# One retry is allowed at this cap when Gemini reports MAX_TOKENS; a second truncation
+# is reported, not retried again.
+CHAT_MAX_OUTPUT_TOKENS_CEILING = int(env("CHAT_MAX_OUTPUT_TOKENS_CEILING", "4096"))
+
+
 # --- Media ------------------------------------------------------------------
 #
 # Two roots, and the difference is a security boundary, not tidiness (§VI).

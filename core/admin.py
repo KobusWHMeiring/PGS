@@ -7,8 +7,17 @@ default `UserAdmin` field lists refer to fields this model does not have.
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils import timezone
 
-from core.models import Category, Seal, User, UserRole
+from core.models import (
+    Category,
+    ChatMessage,
+    ChatSession,
+    EscalatedQuery,
+    Seal,
+    User,
+    UserRole,
+)
 
 
 class UserRoleInline(admin.TabularInline):
@@ -81,3 +90,74 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("code", "label")
     ordering = ("display_order", "code")
+
+
+# --- Chat (sub-plan D) ------------------------------------------------------
+#
+# History is evidence: a refusal is the product's central claim, and an administrator
+# reviewing one needs to see what was asked and what the model was given. The message
+# rows are therefore read-only. `EscalatedQuery` is the one mutable chat record: it is
+# the gap in the corpus, and answering it is the administrator's job.
+
+
+@admin.register(ChatSession)
+class ChatSessionAdmin(admin.ModelAdmin):
+    list_display = ("public_uuid", "user", "standard_set", "message_count", "created_at")
+    list_filter = ("standard_set",)
+    search_fields = ("public_uuid", "user__username", "user__email")
+    readonly_fields = ("public_uuid", "created_at", "ip_hash", "user_agent")
+    date_hierarchy = "created_at"
+
+    @admin.display(description="messages")
+    def message_count(self, obj: ChatSession) -> int:
+        return obj.messages.count()
+
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ("id", "session", "role", "short_content", "model", "latency_ms")
+    list_filter = ("role", "model")
+    search_fields = ("content", "session__public_uuid")
+    readonly_fields = (
+        "session",
+        "role",
+        "content",
+        "created_at",
+        "latency_ms",
+        "model",
+        "prompt_tokens",
+        "completion_tokens",
+        "retrieved_chunks",
+    )
+
+    @admin.display(description="content")
+    def short_content(self, obj: ChatMessage) -> str:
+        return obj.content[:80]
+
+    def has_add_permission(self, request) -> bool:
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
+
+@admin.register(EscalatedQuery)
+class EscalatedQueryAdmin(admin.ModelAdmin):
+    list_display = ("id", "reason", "status", "short_question", "created_at", "answered_at")
+    list_filter = ("reason", "status")
+    search_fields = ("question", "answer")
+    readonly_fields = ("message", "question", "reason", "created_at")
+    date_hierarchy = "created_at"
+
+    @admin.display(description="question")
+    def short_question(self, obj: EscalatedQuery) -> str:
+        return obj.question[:80]
+
+    def save_model(self, request, obj, form, change):
+        """Answering is an act with a timestamp and a name, not a free-text edit."""
+        if (obj.answer or "").strip() and obj.answered_at is None:
+            obj.answered_at = timezone.now()
+            if obj.answered_by_id is None:
+                obj.answered_by = request.user
+            obj.status = EscalatedQuery.Status.ANSWERED
+        super().save_model(request, obj, form, change)

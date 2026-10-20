@@ -66,6 +66,9 @@ from knowledge.extraction import (  # noqa: E402  (import after sys.path)
     pdftotext_text as run_pdftotext,
     sha256_of,
 )
+from knowledge.columns import apply_layout  # noqa: E402  (import after sys.path)
+from knowledge.reflow import reflow_pages  # noqa: E402  (import after sys.path)
+
 PDF_DIR = REPO_ROOT / "pgs_docs"
 FIXTURE_DIR = REPO_ROOT / "knowledge" / "tests" / "fixtures"
 
@@ -73,6 +76,17 @@ SAOSO = "saoso-version-2.1-2026.pdf"
 OPP = "Outeniqua pgs principles, policies and procedures 2026.pdf"
 BPP = "Basic Production Principles_ENG_PRINT.pdf"
 LANDSCAPE = "PGS Certification landscape_Final.pdf"
+
+#: The pipeline this script records in `MANIFEST.json`. Bump the suffix when the
+#: transform changes, so a fixture that predates the change is visibly stale rather
+#: than silently different from what ingest would produce. `+ reflow` is D52: a word
+#: the PDF hyphenated across a line break is rejoined exactly as `ingest_standard`
+#: rejoins it, so the fixture's `post-harvest` is what the parser and the audit see.
+PIPELINE = "pdftotext -layout + de_column + reflow v2"
+
+#: Source filename -> `CORPUS_DOCUMENTS` key, so `apply_layout` can consult the
+#: exclusion table for the same document ingest sees.
+DOC_KEYS = {SAOSO: "saoso", OPP: "opp", BPP: "bpp", LANDSCAPE: "landscape"}
 
 # Every corpus document, so B6's ingest can verify it read the same bytes this
 # manifest was built from. D16 fixes the corpus as SAOSO + OPP + BPP + LANDSCAPE.
@@ -319,6 +333,17 @@ def main() -> int:
             "its tests while matching zero lines of the real document."
         ),
         "extraction_command": "pdftotext -layout <pdf> -",
+        "pipeline": PIPELINE,
+        "pipeline_note": (
+            "Each page is passed through `knowledge.columns.apply_layout` after "
+            "`pdftotext -layout`, with the same doc_key ingest uses, and then through "
+            "`knowledge.reflow.reflow_pages`, so the fixture bytes are what the parser "
+            "sees in production. Pages that are column-laid-out but must not be "
+            "transformed (SAOSO pdf 2, 82, 83; OPP pdf 11) are listed with their reason "
+            "in `PAGE_LAYOUT_EXCLUSIONS`. `layout_pages` names the pages de-columning "
+            "changed; `reflow_pages` names the pages where a hyphenated word was "
+            "rejoined."
+        ),
         "line_endings": "\\n",
         "page_separator": "\\f",
         "encoding_caveat": (
@@ -354,14 +379,28 @@ def main() -> int:
         }
 
     # Cache the full text per source: extracting all fixtures from one document
-    # should not run pdftotext four times.
+    # should not run pdftotext four times. The transformed page list is cached too,
+    # because `apply_layout` is a function of the whole document's page numbers (an
+    # exclusion is keyed by absolute PDF page, not by the extract's local index).
     full_text: dict[str, str] = {}
+    raw_pages: dict[str, list[str]] = {}
+    laid_out_pages: dict[str, list[str]] = {}
+    reflowed_pages: dict[str, list[str]] = {}
 
     for extract in EXTRACTS:
         if extract.source not in full_text:
             full_text[extract.source] = run_pdftotext(PDF_DIR / extract.source)
+            raw_pages[extract.source] = split_pages(full_text[extract.source])
+            laid_out_pages[extract.source] = apply_layout(
+                raw_pages[extract.source], doc_key=DOC_KEYS.get(extract.source)
+            )[0]
+            # Reflowed last, as in `ingest_standard`: line adjacency is reading
+            # adjacency only after the columns are in order (D52).
+            reflowed_pages[extract.source] = reflow_pages(
+                laid_out_pages[extract.source]
+            )[0]
 
-        pages = split_pages(full_text[extract.source])
+        pages = reflowed_pages[extract.source]
         verify_anchor(pages, extract)
 
         if extract.end_page < extract.start_page:
@@ -374,11 +413,35 @@ def main() -> int:
 
         # Byte range in the FULL document text. Recorded so drift from the PDF is
         # detectable, and so a reader can locate the excerpt without the script.
+        # Measured against the RAW pages, because that is what the PDF contains.
         whole = full_text[extract.source].replace("\r\n", "\n")
-        start_byte = whole.find(pages[extract.start_page - 1])
-        end_page_text = pages[extract.end_page - 1]
+        raw = raw_pages[extract.source]
+        start_byte = whole.find(raw[extract.start_page - 1])
+        end_page_text = raw[extract.end_page - 1]
         end_byte = whole.find(end_page_text)
         end_byte = end_byte + len(end_page_text) if end_byte != -1 else -1
+
+        # The hash of each raw page *before* the transform: a later change to
+        # `de_column` makes the manifest comparison fail instead of letting the
+        # fixture drift away from the PDF silently.
+        raw_page_sha256 = {
+            str(number): hashlib.sha256(
+                normalise(raw[number - 1]).encode("utf-8")
+            ).hexdigest()
+            for number in range(extract.start_page, extract.end_page + 1)
+        }
+        changed = [
+            number
+            for number in range(extract.start_page, extract.end_page + 1)
+            if laid_out_pages[extract.source][number - 1] != raw[number - 1]
+        ]
+        # Recorded separately from `layout_pages`, which stays the de-column answer: one
+        # number that means two different transforms is not a measurement.
+        rejoined = [
+            number
+            for number in range(extract.start_page, extract.end_page + 1)
+            if pages[number - 1] != laid_out_pages[extract.source][number - 1]
+        ]
 
         out = FIXTURE_DIR / f"{extract.name}.txt"
         # newline="" so Python does not translate \n to os.linesep on Windows — that
@@ -398,6 +461,10 @@ def main() -> int:
             # artefact rather than the intent.
             "sha256": hashlib.sha256(data).hexdigest(),
             "bytes": len(data),
+            "pipeline": PIPELINE,
+            "layout_pages": changed,
+            "reflow_pages": rejoined,
+            "raw_page_sha256": raw_page_sha256,
             "byte_range_in_source_text": [start_byte, end_byte],
             "why": extract.why,
             "notes": extract.notes,

@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Does the chat work better now? — Outeniqua PGS</title>
+<style>
+  /* ----------------------------------------------------------------------
+     Self-contained review artifact. No CDN, no external font, no build step.
+     Palette copied from product/design/decisions_review.html (DESIGN.md).
+     ---------------------------------------------------------------------- */
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.6rem); line-height: 1.08; margin: 0 0 1rem; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.15; margin: 0 0 0.75rem; }
+  h3 { font-size: 1.18rem; line-height: 1.25; margin: 0 0 0.5rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.4rem; }
+  strong { color: var(--forestDark); }
+  code {
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+  pre {
+    max-width: 100%;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--forestDeep);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  pre code { padding: 0; border: 0; background: none; color: inherit; font-size: inherit; }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0.6rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__links { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.78rem; }
+  .bar__links a { color: var(--muted); text-decoration: none; }
+  .bar__links a:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 36px;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 999px;
+    background: var(--creamWarm);
+    color: var(--forestDark);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1.25rem; }
+  .hero { background: var(--forest); color: var(--cream); padding: 3.5rem 0 3rem; }
+  .hero .eyebrow { color: var(--ochreLight); }
+  .hero p { color: rgb(253 251 247 / 0.86); max-width: 54rem; font-size: 1.05rem; }
+  .hero .lede { font-size: clamp(1.05rem, 2.2vw, 1.3rem); }
+  .hero code { border-color: rgb(249 241 226 / 0.25); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+
+  .eyebrow {
+    margin: 0 0 0.6rem;
+    color: var(--ochreDark);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  main section { padding: 2.6rem 0; border-bottom: 1px solid var(--sand); }
+  main section:last-of-type { border-bottom: 0; }
+  .section--warm { background: var(--creamWarm); }
+  .section--sage { background: var(--sageLight); }
+  .section--dark { background: var(--forestDark); color: var(--cream); }
+  .section--dark h2, .section--dark h3 { color: var(--cream); }
+  .section--dark p, .section--dark li { color: rgb(253 251 247 / 0.85); }
+  .section--dark code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  .section--dark strong { color: #fff; }
+
+  .callout {
+    display: grid;
+    gap: 0.5rem;
+    margin: 1.25rem 0;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--sand);
+    border-left: 4px solid var(--ochre);
+    border-radius: 8px;
+    background: var(--cream);
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout--warm { border-color: rgb(184 123 46 / 0.4); background: var(--warmDark); color: var(--ochreLight); }
+  .callout--warm strong { color: #fff; }
+  .callout--warm code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  /* A grid track is `auto` by default, so a long unbreakable line inside a card can
+     widen the whole column past the viewport. The min-width reset lets the `pre`
+     scroll instead of the page. */
+  .grid-2 > *, .grid-3 > *, .model__row > * { min-width: 0; }
+
+  .card {
+    min-width: 0;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+  .card__kicker {
+    margin: 0 0 0.35rem;
+    color: var(--ochreDark);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .metric-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 1.25rem 0; }
+  .metric {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .metric__value { display: block; font-family: var(--serif); font-size: 1.9rem; line-height: 1; color: var(--forestDark); }
+  .metric__label { display: block; margin-top: 0.35rem; color: var(--muted); font-size: 0.76rem; }
+
+  /* --- Pipeline / diagram primitives ---------------------------------- */
+  .pipeline { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 1.25rem 0; }
+  .pipe {
+    flex: 1 1 130px;
+    min-width: 120px;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+  .pipe b { display: block; color: var(--forestDark); font-size: 0.82rem; }
+  .pipe span { color: var(--muted); }
+  .pipe--dark { border-color: rgb(249 241 226 / 0.2); background: var(--forest); color: var(--cream); }
+  .pipe--dark b { color: var(--ochreLight); }
+  .pipe--dark span { color: rgb(253 251 247 / 0.76); }
+  .pipe--stop { border-color: var(--ochre); background: var(--ochreLight); }
+  .pipe--stop b { color: var(--ochreDark); }
+  .arrow {
+    align-self: center;
+    color: var(--ochreDark);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    padding: 0 0.1rem;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 1rem 0 0; color: var(--muted); font-size: 0.76rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .swatch { width: 12px; height: 12px; border: 1px solid var(--sand); border-radius: 3px; display: inline-block; }
+  .swatch--step { background: var(--cream); }
+  .swatch--store { background: var(--forest); border-color: var(--forest); }
+  .swatch--stop { background: var(--ochreLight); border-color: var(--ochre); }
+
+  .table-wrap { margin: 1rem 0; overflow-x: auto; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th, td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--sand); text-align: left; vertical-align: top; }
+  th { background: var(--creamWarm); color: var(--forestDark); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 1.25rem 0; }
+  .steps li {
+    position: relative;
+    margin: 0 0 0.7rem;
+    padding: 0.8rem 1rem 0.8rem 3rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 0.85rem;
+    top: 0.8rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--forest);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+  }
+  .steps li b { color: var(--forestDark); }
+  .steps li .stop {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--ochre);
+    border-radius: 999px;
+    background: var(--ochreLight);
+    color: var(--ochreDark);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* --- Data model boxes ------------------------------------------------ */
+  .model { display: grid; gap: 0.75rem; margin: 1.25rem 0; }
+  .model__row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .model__box {
+    flex: 1 1 190px;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.78rem;
+  }
+  .model__box b { display: block; color: var(--forestDark); font-family: var(--mono); font-size: 0.78rem; }
+  .model__box span { color: var(--muted); }
+  .model__box--store { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .model__box--store b { color: var(--ochreLight); }
+  .model__box--store span { color: rgb(253 251 247 / 0.76); }
+  .rel {
+    flex: 0 0 auto;
+    color: var(--ochreDark);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-align: center;
+  }
+
+  /* --- Mock chat window ------------------------------------------------ */
+  .mock {
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: var(--radius);
+    background: var(--forestDeep);
+    box-shadow: var(--shadow);
+  }
+  .mock__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    background: var(--forest);
+    color: var(--cream);
+    font-size: 0.76rem;
+  }
+  .mock__dot { display: inline-block; width: 8px; height: 8px; margin-right: 0.4rem; border-radius: 50%; background: var(--ochre); }
+  .mock__badge {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid rgb(249 241 226 / 0.35);
+    border-radius: 4px;
+    color: var(--ochreLight);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .mock__body { display: grid; gap: 1rem; padding: 1rem; }
+  .mock__row { display: flex; }
+  .mock__row--user { justify-content: flex-end; }
+  .mock__bubble {
+    max-width: 92%;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 12px;
+    border-top-left-radius: 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+  .mock__bubble p { margin: 0 0 0.5rem; }
+  .mock__bubble p:last-child { margin: 0; }
+  .mock__bubble--user { border-top-left-radius: 12px; border-top-right-radius: 0; background: rgb(66 83 55 / 0.85); color: #fff; }
+  .mock__bubble--answer { background: rgb(50 62 42 / 0.8); color: rgb(253 251 247 / 0.9); }
+  .mock__bubble--refusal { border-color: rgb(184 123 46 / 0.4); background: rgb(43 35 25 / 0.95); color: var(--ochreLight); }
+  .cites { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.6rem; }
+  .cite {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgb(184 123 46 / 0.3);
+    border-radius: 4px;
+    background: var(--forestDeep);
+    color: var(--ochreLight);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+  }
+  .mock__form {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.8rem 1rem 1rem;
+    border-top: 1px solid rgb(255 255 255 / 0.08);
+    background: var(--forest);
+  }
+  .mock__input {
+    min-height: 4.2rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid rgb(249 241 226 / 0.22);
+    border-radius: 8px;
+    background: var(--forestDark);
+    color: var(--cream);
+    font: inherit;
+    font-size: 0.8rem;
+  }
+  .mock__send {
+    justify-self: start;
+    min-height: 38px;
+    padding: 0.35rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ochre);
+    color: #fff;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .notes { display: grid; gap: 0.75rem; margin-top: 1rem; }
+  .notes textarea {
+    width: 100%;
+    min-height: 10rem;
+    padding: 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font: inherit;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    resize: vertical;
+  }
+  .notes__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .notes__status { color: var(--muted); font-size: 0.76rem; }
+  .btn {
+    min-height: 42px;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--forest);
+    border-radius: 999px;
+    background: var(--forest);
+    color: var(--cream);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn--ghost { border-color: var(--sand); background: var(--creamWarm); color: var(--forestDark); }
+
+  footer { padding: 2rem 0 3rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.72); font-size: 0.78rem; }
+  footer strong { color: var(--cream); }
+
+  @media (min-width: 760px) {
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .metric-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    main section { padding: 3.2rem 0; }
+    .model__row { flex-wrap: nowrap; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  @media print {
+    .bar, .notes__actions, .btn, .bar__print { display: none !important; }
+    body { background: #fff; color: #000; font-size: 11pt; }
+    .hero, .section--dark, .section--warm, .section--sage { background: #fff !important; color: #000 !important; }
+    .hero p, .section--dark p, .section--dark li { color: #000 !important; }
+    .hero code, .section--dark code { color: #000 !important; background: #f3ece0 !important; }
+    .card, .pipe, .model__box, .steps li, .metric, .table-wrap { box-shadow: none !important; break-inside: avoid; }
+    .mock { box-shadow: none !important; break-inside: avoid; }
+    .mock, .mock__bar, .mock__body, .mock__form, .mock__input {
+      background: #fff !important; color: #000 !important; border-color: #bbb !important;
+    }
+    .mock__bubble, .mock__bubble--answer, .mock__bubble--user, .mock__bubble--refusal {
+      background: #f3ece0 !important; color: #000 !important; border-color: #bbb !important;
+    }
+    .mock__send { background: #e6dece !important; color: #000 !important; border: 1px solid #999 !important; }
+    .cite { background: #fff !important; color: #000 !important; border-color: #bbb !important; }
+    pre, pre code { background: #f3ece0 !important; color: #000 !important; border-color: #bbb !important; }
+    .callout--warm { background: #f6f1e7 !important; color: #000 !important; border-color: var(--ochre) !important; }
+    .callout--warm strong { color: #000 !important; }
+    main section { break-inside: avoid; }
+    a { color: #000; text-decoration: none; }
+  }
+
+  /* --- Flow: ingest and ask ------------------------------------------- */
+  .flow { margin: 1.25rem 0; }
+  .flow__step {
+    display: grid;
+    grid-template-columns: 1.9rem minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    align-items: start;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .flow__step + .flow__step { margin-top: 0.35rem; }
+  .flow__num {
+    width: 1.6rem; height: 1.6rem;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--forest);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+  }
+  .flow__body b { display: block; color: var(--forestDark); font-size: 0.86rem; }
+  .flow__body span { display: block; color: var(--muted); font-size: 0.77rem; line-height: 1.45; }
+  .flow__body code { font-size: 0.74em; }
+  .flow__edge {
+    margin: 0 0 0 1.05rem;
+    padding: 0.18rem 0 0.18rem 1.3rem;
+    border-left: 2px dashed var(--sand);
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.08rem 0.42rem;
+    border: 1px solid var(--sand);
+    border-radius: 999px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge--fixed { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .badge--open { border-color: var(--ochre); background: var(--ochreLight); color: var(--ochreDark); }
+  .badge--design { border-color: var(--sand); background: var(--sageLight); color: var(--muted); }
+  .badge--new { border-color: var(--ochre); background: var(--ochre); color: #fff; }
+
+  .diff { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin: 1rem 0; }
+  .diff > * { min-width: 0; }
+  .diff h4 { margin: 0 0 0.35rem; font-family: var(--sans); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .diff pre { margin: 0; }
+
+  .opt {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0.75rem 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .opt--rec { border: 2px solid var(--ochre); }
+  .opt__head { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between; }
+  .opt__head h3 { margin: 0; }
+  .opt label { display: flex; gap: 0.55rem; align-items: flex-start; font-size: 0.84rem; }
+  .opt input[type="radio"] { margin-top: 0.25rem; }
+  .opt ul { margin: 0; padding-left: 1.1rem; font-size: 0.82rem; }
+  .opt li:last-child { margin-bottom: 0; }
+
+  .exportout {
+    width: 100%;
+    min-height: 7rem;
+    padding: 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--creamWarm);
+    color: var(--charcoal);
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+
+  @media (min-width: 760px) {
+    .diff { grid-template-columns: 1fr 1fr; }
+  }
+  @media print {
+    .exportout, .notes textarea { min-height: 0; }
+    .flow__step, .opt, .diff pre { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">PGS &middot; Corpus explainer &middot; D46</span>
+    <nav class="bar__links" aria-label="Sections">
+      <a href="#answer">Short answer</a>
+      <a href="#truth">What is true</a>
+      <a href="#ingest">Ingest flow</a>
+      <a href="#ask">Ask flow</a>
+      <a href="#failures">Refusal causes</a>
+      <a href="#evidence">Evidence</a>
+      <a href="#diagnose">Diagnose a refusal</a>
+      <a href="#decision">Decision</a>
+      <a href="#notes">Notes</a>
+    </nav>
+    <button class="bar__print" type="button" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">D46 &middot; Corpus column extraction &middot; MVP 0 &middot; 2026-10-20</p>
+    <h1>Does the chat work better now?</h1>
+    <p class="lede">
+      <strong>Yes &mdash; for the refusal this work was built to fix. Not yet for every
+      refusal.</strong> The corpus can now be quoted from. If the model quotes the standard
+      exactly and names a real locator, the audit accepts it. What remains is the model&rsquo;s
+      citation habits, retrieval ranking, and the empty vector arm &mdash; all named below,
+      none hidden.
+    </p>
+    <p>
+      This page is the flow as it runs today: where a question enters, where the text is
+      stored, where the citation check sits, and the five places the flow has failed. Each
+      carries a status label: <span class="badge badge--fixed">Fixed</span>,
+      <span class="badge badge--open">Open</span>,
+      <span class="badge badge--open">Verified once (D47)</span>, or
+      <span class="badge badge--design">By design</span>.
+    </p>
+  </div>
+</header>
+
+<main>
+
+  <section id="answer">
+    <div class="wrap">
+      <p class="eyebrow">The short answer</p>
+      <h2>What changed, and what did not</h2>
+      <p>
+        The manure question &mdash; <em>&ldquo;Do I need to know where horse manure comes from before
+        I can use it?&rdquo;</em> &mdash; was refused twice on 2026-10-19. The corpus answered it,
+        and the model kept producing the right answer with a quote. The quote could not be
+        checked because the page was two-column: <code>pdftotext -layout</code> put both
+        columns on one visual line, so a sentence that spans the gutter did not exist as a
+        contiguous run in any stored chunk. The audit was right; the data was wrong.
+      </p>
+      <p>
+        As of 2026-10-20 the page is de-columned at ingest. The BPP sentence and the SAOSO
+        Appendix 2 condition are each contiguous inside one stored chunk, the verbatim
+        sentence is accepted by <code>audit_citations</code>, and the model&rsquo;s recorded
+        <em>paraphrase</em> is still refused. A live turn is refused today only if the model
+        supplies a citation that cannot be checked, or retrieval does not return the passage.
+      </p>
+
+      <div class="metric-row">
+        <div class="metric"><span class="metric__value">29</span><span class="metric__label">of 33 detected pages re-ordered at ingest</span></div>
+        <div class="metric"><span class="metric__value">4</span><span class="metric__label">documented exclusions, with reasons</span></div>
+        <div class="metric"><span class="metric__value">340</span><span class="metric__label">chunks, all carrying a 768-dim vector</span></div>
+        <div class="metric"><span class="metric__value">536</span><span class="metric__label">tests green; architecture contract kept</span></div>
+      </div>
+
+      <div class="callout">
+        <p><strong>What &ldquo;better&rdquo; does <em>not</em> mean.</strong> It does not mean every
+        question now answers. The audit still refuses a paraphrase, an elided quote, an invented
+        locator, or a quote from a chunk retrieval never returned. Those refusals are the feature,
+        not a regression &mdash; but the user sees the same warm refusal either way, so the
+        operator must read the reason before calling it a corpus gap.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="truth" class="section--warm">
+    <div class="wrap">
+      <p class="eyebrow">Part 1 &middot; What is actually true</p>
+      <h2>The inventory, measured</h2>
+      <div class="grid-3">
+        <div class="card">
+          <p class="card__kicker">The corpus</p>
+          <p><strong>33 of 139 pages</strong> are column-laid-out on the four governed PDFs:
+             SAOSO 14, BPP 8, landscape 8, OPP 3. <strong>29 are transformed</strong>;
+             4 are byte-identical exclusions.</p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">The exclusions</p>
+          <p>SAOSO PDF 2 (the TOC &mdash; its page-number column <em>is</em> the content),
+             SAOSO PDF 82&ndash;83 (Appendix 4 Table 1 &mdash; 4-column rows already coherent),
+             OPP PDF 11 (&sect;6.5 &mdash; a 3-column labelling table).</p>
+        </div>
+        <div class="card">
+          <p class="card__kicker">The stored result</p>
+          <p>SAOSO 293 chunks, OPP 30, BPP 9, landscape 8. The answer cache invalidated
+             itself through <code>_corpus_fingerprint()</code>.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>Verified, not inferred.</strong> The two success-gate tests run against a
+        real Postgres and the shipped PDFs: the verbatim BPP sentence is accepted by
+        <code>audit_citations</code> from the stored chunk, and the recorded paraphrase is
+        refused. That pair is what stops a later session from loosening the audit to make a
+        recorded answer pass.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="ingest">
+    <div class="wrap">
+      <p class="eyebrow">Part 2a &middot; The flow today</p>
+      <h2>Ingest: PDF &rarr; quotable stored text</h2>
+      <p>Runs once per document/version. The transform is new; everything else existed before.</p>
+
+      <div class="flow" role="list" aria-label="Ingest pipeline">
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">1</span>
+          <div class="flow__body"><b>PDF in <code>pgs_docs/</code></b><span>Four governed documents. A retarget adds a PDF and metadata; no migration.</span></div>
+          <span class="badge badge--design">Existing</span>
+        </div>
+        <div class="flow__edge">same bytes the fixture manifest hashes</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">2</span>
+          <div class="flow__body"><b><code>pdftotext -layout</code> &rarr; pages</b><span>Keeps the page&rsquo;s own layout. On a two-column page it puts left and right text on one visual line.</span></div>
+          <span class="badge badge--design">Existing</span>
+        </div>
+        <div class="flow__edge">where the old defect lived: columns interleaved, sentence not contiguous</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">3</span>
+          <div class="flow__body"><b><code>apply_layout</code> &rarr; <code>de_column</code></b><span>Detects vertical whitespace bands (coverage &ge; 0.70, &ge; 6 crossing lines, &ge; 12% per side) and re-emits column 1 top-to-bottom, then column 2. No band returns the <em>same object</em>. Exclusions are data, with reasons.</span></div>
+          <span class="badge badge--new">New</span>
+        </div>
+        <div class="flow__edge">29 pages re-ordered &middot; 4 skipped by exclusion &middot; 106 single-column pages untouched</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">4</span>
+          <div class="flow__body"><b>Section parser</b><span>SAOSO clauses/appendices, OPP &sect;-sections, heading-only BPP/landscape. Produces <code>section_ref</code>, <code>anchor</code>, <code>page</code>.</span></div>
+          <span class="badge badge--design">Existing</span>
+        </div>
+        <div class="flow__edge">page attribution pinned per document &mdash; the landscape&rsquo;s stamp had to be rescued</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">5</span>
+          <div class="flow__body"><b>Chunker &rarr; <code>DocumentChunk</code></b><span>Section-level chunks with the locator, heading path, printed page and sub-ref offsets.</span></div>
+          <span class="badge badge--design">Existing</span>
+        </div>
+        <div class="flow__edge">340 rows in Postgres; FTS index and answer-cache fingerprint derived from them</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">6</span>
+          <div class="flow__body"><b>Postgres + FTS (+ vector column)</b><span>The vector arm exists but is empty: the corpus was ingested with <code>--no-embed</code>.</span></div>
+          <span class="badge badge--open">Open: 0 vectors</span>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>Why the transform is not idempotent.</strong> Measured: a second pass is a
+        no-op on some pages and reorders others further (landscape PDF 4 gains bands). Ingest
+        applies it <em>exactly once</em>; a second pass is still loss-free, but it is not the
+        contract.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="ask" class="section--sage">
+    <div class="wrap">
+      <p class="eyebrow">Part 2b &middot; The flow today</p>
+      <h2>Ask: question &rarr; answer or refusal</h2>
+      <p>Runs on every turn. The audit is the gate; everything before it can only supply evidence.</p>
+
+      <div class="flow" role="list" aria-label="Ask pipeline">
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">1</span>
+          <div class="flow__body"><b>Question</b><span>500-character cap. A new <code>ChatMessage</code> is written before the model is called.</span></div>
+          <span class="badge badge--design">Existing</span>
+        </div>
+        <div class="flow__edge">rare word first: <code>significant_terms()</code></div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">2</span>
+          <div class="flow__body"><b>Retrieval, scoped before ranking</b><span>The rare-term arm is lexical; the vector arm runs once on the OR query. Both are fused by Reciprocal Rank Fusion (k=60), scoped to the session&rsquo;s <code>StandardSet</code> before ranking.</span></div>
+          <span class="badge badge--open">Vector live &middot; ranking open</span>
+        </div>
+        <div class="flow__edge">top chunks become the only evidence the model is allowed to use</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">3</span>
+          <div class="flow__body"><b>Prompt + Gemini</b><span>The system prompt forbids unsupported claims; the model returns JSON: <code>answer</code>, <code>citations[]</code>, <code>insufficient_context</code>.</span></div>
+          <span class="badge badge--open">Verified once (D47)</span>
+        </div>
+        <div class="flow__edge">each citation: locator &rarr; sub-ref &rarr; quote substring</div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">4</span>
+          <div class="flow__body"><b><code>audit_citations</code> &mdash; all or nothing</b><span>(a) the locator must resolve to exactly one stored locator; (b) any <code>sub_ref</code> must exist in the chunk&rsquo;s stored list; (c) the quote must be a whitespace-normalised substring of the cited chunk. One failure refuses the whole answer.</span></div>
+          <span class="badge badge--design">By design</span>
+        </div>
+        <div class="flow__edge">pass &rarr; answer + tappable citations &middot; fail &rarr; refusal + <code>EscalatedQuery</code></div>
+        <div class="flow__step" role="listitem">
+          <span class="flow__num">5</span>
+          <div class="flow__body"><b>Answer or refusal</b><span>Grounded: the answer text plus citations whose quotes the reader can find on paper. Refused: the fixed D17 string and an escalation for a human.</span></div>
+          <span class="badge badge--design">Existing</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch swatch--store"></i> Stored / gate</span>
+        <span><i class="swatch swatch--stop" style="background:var(--ochreLight);border-color:var(--ochre)"></i> Open failure</span>
+        <span><i class="swatch swatch--step"></i> Existing step</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="failures">
+    <div class="wrap">
+      <p class="eyebrow">Part 3 &middot; The five ways a question gets refused</p>
+      <h2>One fixed, three model/retrieval, one by design</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Mechanism</th><th>What the user sees</th><th>Status</th><th>Where the fix belongs</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>F1</td>
+              <td><strong>Corpus interleaving.</strong> A two-column page stored as alternating columns; a sentence spanning the gutter is not a substring of any chunk.</td>
+              <td>A refusal that says the quote is not in the cited chunk &mdash; even when the model&rsquo;s answer and quote are correct.</td>
+              <td><span class="badge badge--fixed">Fixed</span></td>
+              <td><code>knowledge/columns.py</code>, wired at ingest. Includes the measured BPP PDF 4 band override <code>(40, 42)</code>, which makes the raw-manure 60-day rule contiguous. Proven by stored-chunk + audit tests.</td>
+            </tr>
+            <tr>
+              <td>F2</td>
+              <td><strong>Paraphrase or elision.</strong> The model rewrites the standard, or joins two passages with <code>...</code>. The quote cannot be found on paper.</td>
+              <td>A refusal naming &ldquo;the quote is not in the cited chunk&rdquo;.</td>
+              <td><span class="badge badge--design">By design</span> <span class="badge badge--open">Verified once (D47)</span></td>
+              <td>The audit stays strict. D47 makes the prompt require character-for-character quotes and forbid an ellipsis; verified on one live turn 2026-10-20.</td>
+            </tr>
+            <tr>
+              <td>F3</td>
+              <td><strong>Invented <code>sub_ref</code>.</strong> The model returns a heading or label where a stored sub-ref is expected.</td>
+              <td>A refusal naming the <code>sub_ref</code> as not existing in the chunk.</td>
+              <td><span class="badge badge--open">Verified once (D47)</span></td>
+              <td>D47: <code>SYSTEM_PROMPT</code> and <code>build_prompt()</code> omit <code>sub_ref</code> unless the passage lists it; verified on one live turn 2026-10-20.</td>
+            </tr>
+            <tr>
+              <td>F4</td>
+              <td><strong>Retrieval ranking.</strong> A rare word wins over the passage that answers the question; &ldquo;horse&rdquo; ranks Appendix 6b&rsquo;s housing table first.</td>
+              <td>A refusal, or a grounded answer citing the wrong-but-topical passage.</td>
+              <td><span class="badge badge--open">Open</span></td>
+              <td>The rare-word/vector collision is fixed (rare-term arm lexical, vector once on the OR query); Appendix 6b still ranks first for &ldquo;horse&rdquo;, so the ranking defect itself remains.</td>
+            </tr>
+            <tr>
+              <td>F5</td>
+              <td><strong>No embeddings.</strong> 0 of 340 chunks carried a vector; retrieval was lexical only.</td>
+              <td>Worse recall on questions whose words do not appear verbatim in the standard.</td>
+              <td><span class="badge badge--fixed">Fixed (D48)</span></td>
+              <td>Done 2026-10-20: <code>gemini-embedding-001</code> @ 768, forced re-ingest, 340/340 embedded; <code>lexical_only=False</code>. A question spends one query embedding.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p><strong>F1 was the only one this work owned.</strong> The PRD&rsquo;s non-goals are
+        explicit: no loosening of the audit, no retrieval ranking, no re-embedding, no prompt
+        changes. A page that claims all five are fixed would be lying about three of them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="evidence" class="section--warm">
+    <div class="wrap">
+      <p class="eyebrow">Part 4 &middot; Evidence</p>
+      <h2>Before and after, on the same page</h2>
+      <p>
+        The BPP manure page (PDF 4), extracted with <code>pdftotext -layout</code> and then
+        through the transform. Line breaks are shown; the audit compares
+        <code>&quot; &quot;.join(text.split())</code>.
+      </p>
+      <div class="diff">
+        <div>
+          <h4>Before &mdash; stored as interleaved columns</h4>
+<pre><code>The organic farm is an element
+a. Mechanisms and practices to
+within an environment or ecosystem.
+increase levels of organic matter in
+...
+Animal manure must be preferably
+composted prior to application, and
+must be sourced from farms under
+organic management, or from extensive
+farming practice.</code></pre>
+        </div>
+        <div>
+          <h4>After &mdash; one column at a time</h4>
+<pre><code>The organic farm is an element
+within an environment or ecosystem.
+...
+Animal manure must be preferably
+composted prior to application, and
+must be sourced from farms under
+organic management, or from extensive
+farming practice.</code></pre>
+        </div>
+      </div>
+      <p>
+        The second block is not enough on its own: the acceptance test runs on
+        <strong>post-ingest chunk text</strong>, because the sentence spans PDF pages 4&rarr;5
+        and only a chunk joins them. The stored chunk with <code>anchor=&quot;general-principles&quot;</code>
+        carries the whole sentence; the Appendix 2 condition is in a chunk with
+        <code>section_ref=&quot;Appendix 2&quot;</code>, <code>page=76</code> (printed page, D42).
+      </p>
+
+      <h3>The live result, stated precisely</h3>
+      <p>Two live turns on 2026-10-20, same question, live Gemini:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Turn</th><th>What the model produced</th><th>What the audit did</th><th>Cause</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Correct answer; three Appendix 2 quotes that <strong>were</strong> in the stored chunk.</td>
+              <td>Refused.</td>
+              <td>Each citation carried <code>sub_ref: &quot;FERTILIZERS AND SOIL CONDITIONERS&quot;</code> &mdash; a heading, not a stored sub-ref. F3.</td>
+            </tr>
+            <tr>
+              <td>2 (fresh generation)</td>
+              <td>Correct answer; one Appendix 2 citation joining two passages with <code>...</code>.</td>
+              <td>Refused.</td>
+              <td>The ellipsis makes the quote a non-verbatim elision. F2.</td>
+            </tr>
+            <tr>
+              <td>3 (D47, <code>d47-1</code>)</td>
+              <td>Correct answer; three Appendix 2 citations, no <code>sub_ref</code>.</td>
+              <td><strong>Accepted.</strong></td>
+              <td>Grounded. It cited no BPP passage, so UAT&rsquo;s &ldquo;at least one BPP citation&rdquo; sub-check is still for a human to judge.</td>
+            </tr>
+            <tr>
+              <td>4 (D48, <code>d47-2</code>, vector arm live)</td>
+              <td>Correct answer; two Appendix 2 citations, no <code>sub_ref</code>.</td>
+              <td><strong>Accepted.</strong></td>
+              <td>Grounded under the embedded corpus. Appendix 2 ranked #2 and BPP #4; the model again preferred Appendix 2&rsquo;s conditions. One query embedding per question.</td>
+            </tr>
+            <tr>
+              <td>5 (<code>d47-4</code>, after the band override)</td>
+              <td><em>&ldquo;can i use horse manure?&rdquo;</em> &mdash; correct answer; six citations, no ellipsis, no <code>sub_ref</code>.</td>
+              <td><strong>Accepted.</strong></td>
+              <td>A second BPP sentence (the raw-manure 60-day rule) had been split by the default band; the <code>(40, 42)</code> override fixed it. No BPP citation in this run either.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Neither refusal was a corpus failure. That is the distinction this page exists to make:
+        before 2026-10-20 the refusal could have been F1; turns 1 and 2 were F2/F3, and the fix
+        is in the model&rsquo;s citation contract, not in <code>pgs_docs/</code>. Turns 3 and 4 are
+        that fix, verified live. Neither cited a BPP passage: the BPP passage was retrieved (rank
+        4), but the model preferred Appendix 2&rsquo;s more specific conditions. That is citation
+        selection, not a corpus or retrieval failure. Turn 5 is the second iteration: the short
+        question exposed a split BPP sentence, fixed by the measured band override, and answered
+        once the prompt required one contiguous excerpt per numbered passage.
+      </p>
+    </div>
+  </section>
+
+  <section id="diagnose">
+    <div class="wrap">
+      <p class="eyebrow">Part 5 &middot; What to do when it refuses</p>
+      <h2>Read the reason before calling it a corpus gap</h2>
+      <p>
+        The user-visible refusal is always the same warm string (D17). The escalation records a
+        reason, and the audit&rsquo;s problems name the mechanism. Use this table, not intuition.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Audit problem / symptom</th><th>Most likely cause</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>&ldquo;the quote is not in the cited chunk&rdquo;, and the quote&rsquo;s wording differs from the standard</td>
+              <td>F2 paraphrase (or an elision with <code>...</code>)</td>
+              <td>Model/prompt follow-up. Do not edit the corpus to match a paraphrase.</td>
+            </tr>
+            <tr>
+              <td>&ldquo;sub_ref &hellip; does not exist in the chunk&rdquo;</td>
+              <td>F3 invented sub-ref</td>
+              <td>Model/prompt follow-up. The audit is correct.</td>
+            </tr>
+            <tr>
+              <td>&ldquo;not present in the retrieved set&rdquo;</td>
+              <td>F4 retrieval miss/ranking</td>
+              <td>Check the retrieved chunk list; file under the retrieval PRD.</td>
+            </tr>
+            <tr>
+              <td>Every citation names a two-column document, and the quoted words cannot be found on the printed page</td>
+              <td>F1 corpus interleaving &mdash; should now be historical</td>
+              <td>Check <code>IngestReport.layout_pages</code> for that document; re-ingest if it is empty.</td>
+            </tr>
+            <tr>
+              <td>Grounded answer, citation resolves</td>
+              <td>Working as intended</td>
+              <td>Still do UAT: can you find the quote on paper?</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="decision" class="section--sage">
+    <div class="wrap">
+      <p class="eyebrow">Part 6 &middot; The one decision left</p>
+      <h2>Where should the model-side refusals be fixed? <span class="badge badge--fixed">D47 &middot; Decided A</span></h2>
+      <p>
+        F1 is closed. F2 and F3 remain, and both are citation-contract problems. The PRD for
+        the corpus fix deliberately does not touch prompts or the audit, so this was a real
+        choice, not a cleanup.
+      </p>
+
+      <div class="callout">
+        <p><strong>Decided 2026-10-20: option A.</strong> Recorded as <strong>D47</strong> in
+        <code>PGS_PLATFORM_SPEC.md</code> §18.3 and implemented in <code>SYSTEM_PROMPT</code>.
+        The audit was <em>not</em> changed. The live manure turn was re-run under
+        <code>d47-1</code> (three verbatim Appendix 2 citations), then D48 embedded the corpus
+        and moved the version to <code>d47-2</code> (two verbatim Appendix 2 citations).
+        **Two further iterations followed:** the informal <em>&ldquo;can i use horse
+        manure?&rdquo;</em> still produced stitched quotes &mdash; first with an ellipsis, then
+        across two numbered passages &mdash; so <code>d47-3</code> and <code>d47-4</code> made
+        the one-contiguous-excerpt rule explicit, in the prompt and in the schema. The same
+        question then answered with six verbatim citations. The audit still refuses a paraphrase
+        by design.</p>
+      </div>
+
+      <div class="opt opt--rec">
+        <div class="opt__head">
+          <h3>A &mdash; Tighten the prompt/citation contract</h3>
+          <span class="badge badge--fixed">Decided</span>
+        </div>
+        <label>
+          <input type="radio" name="d47" value="A" checked>
+          <span><strong>Tell the model, in the contract it is given, to (i) omit <code>sub_ref</code> unless it appears in the passage&rsquo;s stored list, (ii) copy quotes character-for-character, and (iii) never join passages with an ellipsis.</strong></span>
+        </label>
+        <ul>
+          <li><strong>For:</strong> fixes the actual cause; the audit stays strict; no corpus or audit change; testable with the existing fake-model harness.</li>
+          <li><strong>Against:</strong> a prompt is a request, not a guarantee; a future model may still misbehave, and the refusal is the safety net.</li>
+        </ul>
+      </div>
+
+      <div class="opt">
+        <div class="opt__head"><h3>B &mdash; Repair the model&rsquo;s citations before the audit</h3><span class="badge badge--design">Rejected</span></div>
+        <label>
+          <input type="radio" name="d47" value="B">
+          <span><strong>Strip <code>...</code> and drop a <code>sub_ref</code> the chunk does not contain, then audit the repaired citation.</strong></span>
+        </label>
+        <ul>
+          <li><strong>For:</strong> fewer refusals with no corpus work; the answer text is unchanged.</li>
+          <li><strong>Against:</strong> silently changes what the model said; a quote with an elision is still not a quote the reader can find; dropping a sub-ref loses lookup precision. This is the &ldquo;accept the checkable part&rdquo; rule the audit exists to refuse.</li>
+        </ul>
+      </div>
+
+      <div class="opt">
+        <div class="opt__head"><h3>C &mdash; Leave it; refusals escalate to a human</h3><span class="badge badge--design">Rejected</span></div>
+        <label>
+          <input type="radio" name="d47" value="C">
+          <span><strong>Accept that some turns refuse, and rely on the <code>EscalatedQuery</code> queue.</strong></span>
+        </label>
+        <ul>
+          <li><strong>For:</strong> zero risk of weakening the audit; the refusal is honest and the human sees the question.</li>
+          <li><strong>Against:</strong> the product owner&rsquo;s exact question still refuses when the model misbehaves, and the queue grows with questions the corpus can answer.</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <p><strong>What would change my mind:</strong> evidence that the model cannot be steered by the
+        contract &mdash; repeated live runs across two prompt revisions still inventing sub-refs or
+        ellipses. Then a narrowly-scoped repair (B) for the <em>sub_ref only</em>, never for the quote,
+        would be the lesser evil.</p>
+      </div>
+
+      <h3>Record the decision</h3>
+      <div class="notes">
+        <div class="notes__actions" role="group" aria-label="Decision actions">
+          <button class="btn" type="button" id="exportDecision">Export decision row</button>
+          <button class="btn btn--ghost" type="button" id="copyDecision">Copy to clipboard</button>
+          <span class="notes__status" id="decisionStatus" aria-live="polite">Decision recorded; notes save locally.</span>
+        </div>
+        <label for="decisionNotes"><strong>Notes for the decision record</strong></label>
+        <textarea id="decisionNotes" placeholder="Optional: why this option, what would change your mind, any condition."></textarea>
+        <label for="decisionOut"><strong>Export (paste into PGS_PLATFORM_SPEC.md &sect;18.3)</strong></label>
+        <textarea id="decisionOut" class="exportout" readonly aria-live="polite"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section id="notes">
+    <div class="wrap">
+      <p class="eyebrow">Evidence &amp; limits</p>
+      <h2>What was checked, and what was not</h2>
+      <div class="grid-2">
+        <div class="card">
+          <p class="card__kicker">Checked</p>
+          <ul>
+            <li>33 detected pages, 29 transformed, 4 exclusions &mdash; <code>knowledge/tests/test_columns.py</code>.</li>
+            <li>Non-space character multiset preserved on all 139 pages; second pass also loss-free.</li>
+            <li>Stored BPP sentence and Appendix 2 condition contiguous &mdash; <code>knowledge/tests/test_ingest.py</code>.</li>
+            <li>Verbatim sentence accepted, paraphrase refused by the real audit &mdash; <code>core/tests/test_chatbot_grounding.py</code>.</li>
+            <li>Parser page sets unchanged, including landscape <code>[4, 4, 6, 7, 7, 9]</code> &mdash; <code>knowledge/tests/test_section_parsers.py</code>.</li>
+            <li>Two live turns refused for F3 then F2; the quotes in turn 1 were verbatim.</li>
+            <li>D48 verified: 340/340 chunks embedded, <code>lexical_only=False</code>, and the manure turn grounded under <code>d47-2</code> with two verbatim Appendix 2 citations.</li>
+            <li>The raw-manure 60-day rule is contiguous after the BPP PDF 4 band override; two tests fail if the override is removed.</li>
+            <li><em>&ldquo;can i use horse manure?&rdquo;</em> accepted under <code>d47-4</code> with six verbatim citations.</li>
+            <li>The retrieval fix verified: <code>search_terms</code> makes one embedding call, on the OR query; Appendix 2 ranks #2 and BPP #4.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card__kicker">Not checked / not fixed</p>
+          <ul>
+            <li>No human UAT sign-off yet; Scenario 9 is unsigned.</li>
+            <li>D47 verified on one live turn; the UAT &ldquo;at least one BPP citation&rdquo; sub-check is still human-judged.</li>
+            <li>Retrieval ranking (F4) remains open in general: Appendix 6b still ranks first for &ldquo;horse&rdquo;, even though the rare-word/vector collision is fixed.</li>
+            <li>Table row association is not reconstructed &mdash; cells are separated, not paired (&sect;3.5).</li>
+            <li>SAOSO Appendix 4 Table 1 and OPP &sect;6.5 remain byte-identical exclusions; a multi-gutter treatment is a follow-up.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="eyebrow" style="margin-top:2rem">Locatable references</p>
+      <p>
+        Decision <strong>D46</strong> &mdash; <code>PGS_PLATFORM_SPEC.md</code> &sect;18.3.
+        PRD and plan &mdash; <code>product/backlog/In Progress/CORPUS_COLUMN_EXTRACTION_PRD.md</code>.
+        Module &mdash; <code>knowledge/columns.py</code>.
+        UAT &mdash; <code>tests/uat/mvp0_standards_and_public_site_uat.md</code>, Scenario 9.
+        Hazards &mdash; <code>product/docs/context/testing_hazards.md</code> &sect;1.18&ndash;1.23.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Outeniqua PGS &middot; corpus column extraction (D46)</strong> &mdash; a self-contained
+    explainer. No network requests, no build step. The live transcript is quoted from the
+    2026-10-20 session; the tests are the authority on what is repeatable.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var STORE = 'pgs-d47-decision';
+  var notes = document.getElementById('decisionNotes');
+  var out = document.getElementById('decisionOut');
+  var status = document.getElementById('decisionStatus');
+  var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="d47"]'));
+
+  function selected() {
+    var found = radios.filter(function (r) { return r.checked; })[0];
+    return found ? found.value : 'A';
+  }
+
+  function row() {
+    var labels = {
+      A: 'Tighten the prompt/citation contract: omit sub_ref unless it is in the stored list; copy quotes exactly; never join with an ellipsis.',
+      B: 'Repair citations before the audit: strip ellipses and drop unknown sub_refs, then audit the repaired citation.',
+      C: 'Leave it: accept refusals and rely on the escalation queue.'
+    };
+    var note = (notes.value || '').replace(/\s+/g, ' ').trim();
+    return '| D47 | Where should the model-side citation refusals be fixed? | **' + selected() + ' \u2014 ' +
+      labels[selected()] + '**' + (note ? ' Notes: ' + note : '') + ' |';
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({ choice: selected(), notes: notes.value }));
+      status.textContent = 'Saved locally.';
+    } catch (e) {
+      status.textContent = 'Could not save locally (storage disabled).';
+    }
+    out.value = row();
+  }
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+    if (saved) {
+      radios.forEach(function (r) { r.checked = r.value === saved.choice; });
+      notes.value = saved.notes || '';
+    }
+  } catch (e) { /* storage disabled: still usable */ }
+
+  radios.forEach(function (r) { r.addEventListener('change', save); });
+  notes.addEventListener('input', save);
+
+  document.getElementById('exportDecision').addEventListener('click', function () {
+    out.value = row();
+    out.focus();
+    out.select();
+    status.textContent = 'Row generated — copy it into the spec.';
+  });
+
+  document.getElementById('copyDecision').addEventListener('click', function () {
+    out.value = row();
+    out.focus();
+    out.select();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(out.value).then(function () {
+        status.textContent = 'Copied.';
+      }, function () {
+        status.textContent = 'Select and copy manually.';
+      });
+    } else {
+      status.textContent = 'Select and copy manually.';
+    }
+  });
+
+  save();
+})();
+</script>
+
+</body>
+</html>

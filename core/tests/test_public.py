@@ -51,6 +51,7 @@ PAGES: list[tuple[str, str, str]] = [
     ("members", "/members/", "Who is in the group"),
     ("documents", "/documents/", "What we publish"),
     ("become-a-member", "/become-a-member/", "What membership and assessment cost"),
+    ("ask", "/ask/", "Ask the standard"),
     ("contact", "/contact/", "Who to talk to"),
 ]
 

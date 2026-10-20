@@ -43,7 +43,15 @@ PAGE_FOOTER = re.compile(r"P\s*a\s*g\s*e\s*\|\s*(\d+)")
 
 #: Page furniture that is never a heading and never body text. Kept as patterns
 #: rather than as exact strings because the phone/fax/e-mail block varies.
+#:
+#: The printed page number belongs here too, and that is not cosmetic: the footer sits at
+#: every page boundary, so a clause that continues onto the next page had it injected in
+#: the middle of a sentence — `… per non-` / `P a g e | 47` / `ruminant` — which is a
+#: quote the citation audit can never match (D52). It is listed first because
+#: `page_number()` reads it from the page *before* any line is classified, so dropping
+#: the line here cannot cost a section its `page`.
 FURNITURE = (
+    PAGE_FOOTER,
     re.compile(r"Registration\s+\d"),
     re.compile(r"Postnet Suite"),
     re.compile(r"The South African Organic Sector Organisation"),

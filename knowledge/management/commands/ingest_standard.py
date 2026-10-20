@@ -65,6 +65,16 @@ class Command(BaseCommand):
             action="store_false",
             help="Skip embeddings (chunks are written; retrieval stays lexical).",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help=(
+                "Replace an already ingested document with the same sha256. Use after a "
+                "corpus change that does not touch the PDF (a curated table, a parser "
+                "fix): the sha guard would otherwise report 'already present' and write "
+                "nothing. Deletes the old chunks, and their retrieved_chunks links."
+            ),
+        )
 
     def handle(self, *args, **options) -> None:
         try:
@@ -79,6 +89,7 @@ class Command(BaseCommand):
                 version=options.get("version"),
                 section_scheme=options.get("section_scheme"),
                 embed=options["embed"],
+                force=options["force"],
             )
         except IngestError as error:
             # `CommandError` is what makes the exit status non-zero: a failed ingest
@@ -88,7 +99,8 @@ class Command(BaseCommand):
         state = "created" if report.created else "already present"
         self.stdout.write(
             f"document #{report.document_id} {state}: {report.chunk_count} chunks, "
-            f"embedded={report.embedded}"
+            f"{len(report.layout_pages)} layout pages, "
+            f"{len(report.reflow_pages)} reflow pages, embedded={report.embedded}"
         )
         if report.duplicate_refs:
             self.stdout.write(

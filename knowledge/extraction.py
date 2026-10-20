@@ -26,6 +26,16 @@ from pathlib import Path
 PDFTOTEXT = "pdftotext"
 PDFTOTEXT_ARGS = ("-layout",)
 
+#: The second extraction mode. Xpdf's `-table` aligns cells row by row where `-layout`
+#: leaves a table's condition column vertically offset; measured 2026-10-21 on SAOSO
+#: Appendix 2 (pdf 77–79). It is used to *curate and verify* `knowledge/tables.py`, not
+#: to ingest free text: the reviewed rows are data, and the golden test checks every cell
+#: against this output. Adding a mode is deliberate — a document must not silently flip
+#: rendering, because the parsers were written against `-layout`.
+PDFTOTEXT_TABLE_ARGS = ("-table",)
+
+_MODES = {"layout": PDFTOTEXT_ARGS, "table": PDFTOTEXT_TABLE_ARGS}
+
 #: wkhtmltopdf/poppler separate pages with a form feed. It is kept in the text rather
 #: than consumed here, because page-awareness is a requirement of B2/B3 and of the
 #: `page` column (D42): a fixture or an ingest that flattened pages could not place a
@@ -37,18 +47,24 @@ class ExtractionError(RuntimeError):
     """The PDF could not be read. Never swallowed: an empty ingest looks like success."""
 
 
-def pdftotext_text(pdf_path: str | Path) -> str:
+def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
     """The whole document, raw, pages separated by form feeds.
 
-    In:  `pdf_path` — a path to a PDF.
-    Out: the text as `pdftotext -layout` emits it, decoded UTF-8 with replacement.
+    In:  `pdf_path` — a path to a PDF; `mode` — `"layout"` (the corpus contract) or
+         `"table"` (row-aligned, for reading and verifying a printed table).
+    Out: the text as `pdftotext <mode>` emits it, decoded UTF-8 with replacement.
     Fails: `ExtractionError` when `pdftotext` is missing or exits non-zero, naming the
-        file — a missing poppler install must not read as "the document is empty".
+        file — a missing poppler install must not read as "the document is empty" —
+        and `ValueError` for an unknown mode, so a typo cannot silently fall back to
+        the wrong rendering.
     """
+    args = _MODES.get(mode)
+    if args is None:
+        raise ValueError(f"unknown extraction mode {mode!r}; expected one of {sorted(_MODES)}")
     path = Path(pdf_path)
     try:
         result = subprocess.run(
-            [PDFTOTEXT, *PDFTOTEXT_ARGS, str(path), "-"],
+            [PDFTOTEXT, *args, str(path), "-"],
             capture_output=True,
             check=True,
         )
@@ -81,9 +97,9 @@ def pages_of(text: str) -> list[str]:
     return [normalise(page) for page in text.split(PAGE_SEPARATOR)]
 
 
-def extract_pages(pdf_path: str | Path) -> list[str]:
+def extract_pages(pdf_path: str | Path, *, mode: str = "layout") -> list[str]:
     """The document as normalised pages — what the section parsers consume."""
-    return pages_of(pdftotext_text(pdf_path))
+    return pages_of(pdftotext_text(pdf_path, mode=mode))
 
 
 def sha256_of(path: str | Path) -> str:
@@ -95,6 +111,7 @@ __all__ = [
     "ExtractionError",
     "PDFTOTEXT",
     "PDFTOTEXT_ARGS",
+    "PDFTOTEXT_TABLE_ARGS",
     "extract_pages",
     "normalise",
     "pages_of",
