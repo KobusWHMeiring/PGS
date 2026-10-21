@@ -22,6 +22,7 @@ from django.test import override_settings
 
 from core.models import ChatMessage, ChatSession
 from core.services._chatbot import (
+    REFUSAL,
     InvalidQuestionError,
     ModelReply,
     RateLimitedError,
@@ -250,3 +251,105 @@ def test_provider_usage_is_stored_on_the_assistant_message(
     assert (assistant.prompt_tokens, assistant.completion_tokens) == (321, 54)
     assert assistant.latency_ms is not None
     assert assistant.model == "fake-model"
+
+
+# --- The cache holds answers only -------------------------------------------
+
+
+def _escalation_reason():
+    from core.models import EscalatedQuery
+
+    return EscalatedQuery.objects.latest("id").reason
+
+
+def test_a_reply_the_audit_rejects_is_not_cached(
+    chat_session, chat_corpus, fake_chat_model, chat_cache
+):
+    """D47's all-or-nothing audit refuses the answer — and must not preserve the reply.
+
+    The cache write used to happen immediately after the model replied, so a reply the
+    audit rejected was re-served for the whole TTL: one bad generation became a refusal
+    that reproduced exactly and read like a gap in the corpus
+    (`testing_hazards.md` §1.31). Breaking the ordering fails this test on
+    `len(model.calls)`: the second question must reach the model again.
+    """
+    from core.services._chatbot import _cache_key
+
+    model = fake_chat_model(
+        reply=_reply(
+            citations=(
+                {
+                    "section_ref": "S20.1.1",
+                    # A quote that is nowhere in the retrieved chunk: exactly the
+                    # paraphrase-with-an-invented-sub_ref shape seen live on 2026-10-20.
+                    "quote": "Traceability is required for every batch of organic product, at all times.",
+                    "sub_ref": "d.ii",
+                },
+            )
+        )
+    )
+
+    first = _ask(chat_session, "What does the standard require for traceability?", model)
+    second = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert first.text == second.text == REFUSAL
+    assert len(model.calls) == 2, "a rejected reply was cached and replayed"
+    assert chat_cache.get(_cache_key("what does the standard require for traceability?", chat_session.standard_set)) is None
+
+
+def test_an_audit_rejection_has_its_own_escalation_reason(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """`NO_CITATIONS` and "the citations were wrong" are different findings.
+
+    Recording both as "no valid citations" hides a model-contract violation behind a
+    reason that suggests the corpus is thin — which is what sent three live turns down
+    the wrong diagnostic path on 2026-10-20.
+    """
+    from core.models import EscalatedQuery
+
+    model = fake_chat_model(
+        reply=_reply(
+            citations=(
+                {"section_ref": "S20.1.1", "quote": "a sentence the standard does not print"},
+            )
+        )
+    )
+
+    _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert _escalation_reason() == EscalatedQuery.Reason.CITATION_AUDIT
+
+
+def test_a_reply_with_no_citations_is_recorded_as_no_citations(
+    chat_session, chat_corpus, fake_chat_model
+):
+    from core.models import EscalatedQuery
+
+    model = fake_chat_model(reply=_reply(citations=()))
+
+    _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert _escalation_reason() == EscalatedQuery.Reason.NO_CITATIONS
+
+
+def test_a_refusal_is_never_cached(chat_session, chat_corpus, fake_chat_model):
+    """A genuine refusal is not cached either — one extra call beats a stale refusal."""
+    model = fake_chat_model(reply=_reply(insufficient_context=True, citations=()))
+
+    _ask(chat_session, "What does the standard require for traceability?", model)
+    _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert len(model.calls) == 2, "a refusal was cached and re-served"
+
+
+def test_a_runaway_answer_is_not_cached(
+    chat_session, chat_corpus, fake_chat_model, settings
+):
+    settings.CHAT_ANSWER_CACHE_TTL = 60
+    model = fake_chat_model(reply=_reply(answer="x" * 100_000))
+
+    _ask(chat_session, "What does the standard require for traceability?", model)
+    _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert len(model.calls) == 2

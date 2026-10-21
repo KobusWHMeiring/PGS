@@ -1,0 +1,142 @@
+{% load static %}<!DOCTYPE html>
+{% comment %}
+  The UAT console. **Not a public page** — `core/views/_uat.py` puts it behind the admin
+  login. It is a standalone template rather than an extension of `public/base.html`
+  because that base includes the public header and footer, which need the site's nav
+  table and would render a "Become a member" CTA on a staff tool.
+
+  The palette, type scale and `.btn` system are the product's (`root.css`, `site.css`,
+  `components.css`), so this page cannot drift into a fourth look (DESIGN.md).
+{% endcomment %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }}</title>
+  <meta name="description" content="{{ page.description }}">
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+  <link rel="stylesheet" href="{% static 'css/root.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/uat-console.css' %}">
+</head>
+<body class="uat">
+
+<header class="uat__head">
+  <div class="uat__wrap">
+    <p class="eyebrow">Outeniqua PGS · staff only</p>
+    <h1>UAT console</h1>
+    <p class="uat__lede">
+      Prepares and checks the instance a reviewer is about to sign. The judging itself
+      happens in the artefact, which is a file on disk: it makes no network request.
+    </p>
+    <p class="uat__meta">
+      Database <code>{{ database }}</code>
+      <span class="uat__sep">·</span>
+      Commands run on <em>this</em> instance, as the process that serves this page.
+    </p>
+  </div>
+</header>
+
+<main class="uat__wrap">
+
+  {% if outcome %}
+    <section class="callout {% if outcome.ok %}callout--ok{% else %}callout--bad{% endif %}">
+      <h2 class="callout__title">
+        {{ outcome.label }} — {% if outcome.ok %}done{% else %}failed{% endif %}
+        <span class="tag tag--plain">{{ outcome.duration_ms }} ms</span>
+      </h2>
+      <pre class="uat__output">{{ outcome.output }}</pre>
+    </section>
+  {% endif %}
+
+  <section>
+    <h2>Preflight</h2>
+    <p class="uat__note">
+      Observed beside expected. A blocking failure means the scenarios cannot be run yet;
+      a warning is advisory on a dev box.
+    </p>
+    <div class="uat__table-scroll">
+      <table class="uat__table">
+        <caption class="uat__visually-hidden">Preflight checks, observed beside expected</caption>
+        <thead>
+          <tr><th scope="col">Check</th><th scope="col">Observed</th><th scope="col">Expected</th><th scope="col">State</th></tr>
+        </thead>
+        <tbody>
+          {% for row in report.rows %}
+            <tr>
+              <th scope="row">
+                {{ row.name }}
+                {% if row.note %}<span class="uat__row-note">{{ row.note }}</span>{% endif %}
+              </th>
+              <td><code>{{ row.observed }}</code></td>
+              <td><code>{{ row.expected }}</code></td>
+              <td>
+                {% if row.ok %}
+                  <span class="tag">ok</span>
+                {% elif row.blocking %}
+                  <span class="tag tag--bad">blocking</span>
+                {% else %}
+                  <span class="tag tag--note">warning</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Run</h2>
+    <p class="uat__note">
+      Each button runs one command and shows its own output. Nothing here decides a
+      verdict — that is the reviewer's, in the artefact.
+    </p>
+    <ul class="uat__actions">
+      {% for action in actions %}
+        <li class="uat__action">
+          <form method="post" action="{% url 'core:uat_run' action.key %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn--forest btn--upper">
+              {{ action.label }}{% if action.writes %} · writes{% endif %}
+            </button>
+          </form>
+          <div class="uat__action-body">
+            <code class="uat__command">{{ action.command }}</code>
+            <p>{{ action.description }}</p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>Shown, not clickable</h2>
+    <p class="uat__note">
+      These are the commands a button must not press. The reason is on each one.
+    </p>
+    {% for item in manual_only %}
+      <div class="uat__manual">
+        <h3>{{ item.label }}</h3>
+        <code class="uat__command">{{ item.command }}</code>
+        <p>{{ item.reason }}</p>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section>
+    <h2>Then judge it</h2>
+    <p class="uat__note">
+      Press <b>Rebuild the UAT page</b>, then open
+      <code>product/design/uat/mvp0_standards_and_public_site.html</code> from disk. Its
+      header records the commit, the working-tree state and the database above, so a
+      signature can be traced to what you were looking at.
+    </p>
+  </section>
+
+</main>
+</body>
+</html>

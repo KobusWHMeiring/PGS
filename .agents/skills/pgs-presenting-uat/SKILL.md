@@ -15,11 +15,18 @@ from disk, judge, and export — and then writes that export back into the markd
 
 It is **three moves**, and they are separate on purpose:
 
-| Move | Script | What it produces |
+| Move | Where | What it produces |
 |---|---|---|
-| **Prepare** | `manage.py uat_seed --check` | observed vs expected for the instance |
-| **Present** | `scripts/uat_runner.py` | `product/design/uat/<slug>.html` |
+| **Prepare** | the console at `/uat/` (staff-only), or `manage.py uat_seed --check` in a shell | observed vs expected, and the setup commands **as buttons** |
+| **Present** | `scripts/uat_runner.py`, or the console's *Rebuild the UAT page* | `product/design/uat/<slug>.html` |
 | **Close** | `scripts/uat_signoff.py` | `**Result:**` lines + the sign-off table, in the UAT file |
+
+**Why a console and not buttons in the artefact.** The artefact is a `file://` document and
+must stay one: it makes no network request, so a reviewer's notes never leave their machine
+and it works with the wifi off. A browser cannot run `manage.py` from a `file://` page, so
+the buttons live on a second, served page — `/uat/` — which runs the command on the instance
+that serves it and shows the command's own output. The console seeds and rebuilds; it never
+decides. The artefact judges; it never runs anything.
 
 The skill is text-in / text-out like `pgs-writing-explorations`. It never edits the UAT
 file itself — that is the write-back script, so there is exactly one path from an export
@@ -52,6 +59,10 @@ to the file.
    the database. "Signed something" is not a signature.
 
 ## The sequence
+
+With the app running, open **`/uat/`** (staff login) and press the buttons — that is the
+path for anyone who does not want a terminal. The commands below are what the buttons run,
+and the only way to do it on a machine where the console is not reachable.
 
 ```bash
 # 1. Prepare, and keep the output — the reviewer sees what the instance looked like.
@@ -119,7 +130,7 @@ Behaviour that matters, and why:
 | Anti-pattern | Why it is wrong | Do instead |
 |---|---|---|
 | Rendering the automated-coverage table as checklist rows | Asks a human to confirm what pytest proves, and hides the real gap | The runner excludes it; the test pins that |
-| Adding a "Run check" button that turns a row green | That is a test runner | Leave the judgement to the reviewer |
+| A button that decides anything | The console runs a command and shows output; it must never mark a scenario or a check as *good* | Leave every verdict to the reviewer |
 | Marking a scenario PASS by default | A signature nobody made | Blank until judged; the export refuses blanks |
 | A hand-edited `**Result:**` line | It drifts from the file and is unreviewable | `uat_signoff.py`, so the diff is the review |
 | "The reviewer said it was fine in chat" | Not a signature | The export JSON, applied to the file |
@@ -133,5 +144,6 @@ Behaviour that matters, and why:
 | `scripts/uat_runner.py` | Renders the artefact, embeds the verbatim payload |
 | `scripts/uat_signoff.py` | Validates the export, writes results back, idempotent |
 | `core/services/_uat.py`, `core/management/commands/uat_seed.py` | The preflight |
+| `core/services/_uat_console.py`, `core/views/_uat.py`, `core/templates/uat/console.html` | `/uat/`: the preflight plus the setup commands as buttons, staff-only |
 | `tests/tools/test_uat_*.py` | The guarantees above, each mutation-tested |
 | `tests/uat/<slug>.md` | Source of truth for the scenarios and, after sign-off, the results |

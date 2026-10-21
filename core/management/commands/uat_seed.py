@@ -24,6 +24,7 @@ from __future__ import annotations
 from django.core.management.base import BaseCommand
 
 from core.services._uat import EXPECTED_CHUNKS, preflight
+from core.services._uat_console import render_preflight
 
 
 class Command(BaseCommand):
@@ -53,26 +54,9 @@ class Command(BaseCommand):
 
         report = preflight(options["expect_chunks"])
 
-        width = max(len(row.name) for row in report.rows)
-        for row in report.rows:
-            marker = "ok  " if row.ok else ("FAIL" if row.blocking else "warn")
-            self.stdout.write(f"[{marker}] {row.name.ljust(width)}  {row.observed}")
-            self.stdout.write(f"{' ' * 7}{row.command}")
-            self.stdout.write(f"{' ' * 7}expected: {row.expected}")
-            if row.note:
-                self.stdout.write(f"{' ' * 7}note: {row.note}")
+        # The same rendering the console and the artefact use, so the three cannot
+        # disagree about the same instance.
+        self.stdout.write(render_preflight(report))
 
-        self.stdout.write("")
-        if report.is_ready:
-            self.stdout.write(
-                self.style.SUCCESS(f"preflight: ready - {len(report.rows)} checks, no blocking failure")
-            )
-            return
-
-        self.stdout.write(
-            self.style.ERROR(
-                "preflight: NOT ready - "
-                + ", ".join(row.name for row in report.blocking_failures)
-            )
-        )
-        raise SystemExit(1)
+        if not report.is_ready:
+            raise SystemExit(1)

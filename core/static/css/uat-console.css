@@ -1,0 +1,262 @@
+/* The UAT console (`core/templates/uat/console.html`).
+ *
+ * Brand tokens only — `root.css` carries the palette, type scale and radii, `site.css`
+ * the `.btn` system, `components.css` the callout, tag and chip styles. This file adds
+ * only what a staff table needs, because a new colour family would be a bug rather than
+ * a preference (AGENTS.md, DESIGN.md).
+ *
+ * Touch targets stay ≥44 px even here: a reviewer may open this on the same phone they
+ * judge Scenario 6 with.
+ */
+
+.uat {
+  background: var(--brand-cream);
+  color: var(--brand-charcoal);
+  font-family: var(--font-sans);
+  line-height: var(--leading-body);
+}
+
+.uat__wrap {
+  width: 100%;
+  max-width: var(--container-prose);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.uat__head {
+  background: var(--brand-forest);
+  color: var(--brand-cream);
+  padding: 2.5rem 0 2rem;
+  margin-bottom: 2rem;
+}
+
+.uat__head h1 {
+  font-family: var(--font-serif);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-title);
+  margin: 0.25rem 0 0.75rem;
+}
+
+.uat__head .eyebrow {
+  font-size: var(--text-micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.uat__lede {
+  max-width: 62ch;
+  margin: 0 0 1rem;
+  opacity: 0.92;
+}
+
+.uat__meta {
+  font-size: var(--text-sm);
+  opacity: 0.85;
+  margin: 0;
+}
+
+.uat__meta code,
+.uat__command,
+.uat__output {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.uat__meta code {
+  font-size: var(--text-xs);
+  background: rgb(var(--brand-cream-rgb) / 0.14);
+  padding: 0.125rem 0.4rem;
+  border-radius: var(--radius-xs);
+}
+
+.uat__sep {
+  margin: 0 0.5rem;
+}
+
+.uat section {
+  background: var(--brand-cream);
+  border-top: 1px solid var(--brand-sand);
+  padding: 1.75rem 0 2rem;
+}
+
+.uat section h2 {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  margin: 0 0 0.35rem;
+}
+
+.uat__note {
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  margin: 0 0 1rem;
+  max-width: 66ch;
+}
+
+.uat__note code {
+  font-size: var(--text-xs);
+  background: var(--brand-creamWarm);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs);
+}
+
+/* --- preflight table ------------------------------------------------------ */
+
+.uat__table-scroll {
+  overflow-x: auto;
+}
+
+.uat__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.uat__table th,
+.uat__table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.uat__table thead th {
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+  border-bottom-width: 2px;
+}
+
+.uat__table tbody th {
+  font-weight: 600;
+}
+
+.uat__table code {
+  font-size: var(--text-xs);
+  word-break: break-word;
+}
+
+.uat__row-note {
+  display: block;
+  font-weight: 400;
+  font-size: var(--text-micro);
+  color: var(--brand-muted);
+  margin-top: 0.2rem;
+}
+
+.tag--bad {
+  background: var(--brand-ochre);
+  color: var(--brand-cream);
+}
+
+/* --- actions -------------------------------------------------------------- */
+
+.uat__actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.uat__action {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  background: var(--brand-creamWarm);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.uat__action form {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.uat__action-body {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.uat__action-body p {
+  margin: 0.35rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--brand-muted);
+}
+
+.uat__command {
+  display: block;
+  font-size: var(--text-xs);
+  background: var(--brand-sageLight);
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-xs);
+  padding: 0.4rem 0.55rem;
+  word-break: break-word;
+  /* One click selects the whole command: the two entries below cannot be buttons. */
+  user-select: all;
+}
+
+.uat__manual {
+  border-left: 3px solid var(--brand-ochre);
+  padding: 0.25rem 0 0.25rem 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.uat__manual h3 {
+  font-size: var(--text-base);
+  margin: 0 0 0.4rem;
+}
+
+.uat__manual p {
+  margin: 0.4rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--brand-muted);
+}
+
+/* --- outcome -------------------------------------------------------------- */
+
+.callout--ok {
+  border-left-color: var(--brand-moss);
+}
+
+.callout--bad {
+  border-left-color: var(--brand-ochreDark);
+}
+
+.uat__output {
+  font-size: var(--text-xs);
+  background: var(--brand-forestDeep);
+  color: var(--brand-cream);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0 0;
+  white-space: pre-wrap;
+}
+
+.uat__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .uat__head h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .uat__action {
+    padding: 0.85rem;
+  }
+
+  .uat__action form,
+  .uat__action form .btn {
+    width: 100%;
+  }
+}

@@ -161,6 +161,11 @@ class EscalatedQuery(models.Model):
     class Reason(models.TextChoices):
         INSUFFICIENT_CONTEXT = "INSUFFICIENT_CONTEXT", "Insufficient context"
         NO_CITATIONS = "NO_CITATIONS", "No valid citations"
+        #: The model cited something the audit could not verify — a section that was not
+        #: retrieved, a quote that is not a substring, or an invented `sub_ref`. Kept
+        #: apart from `NO_CITATIONS` because they are different findings: one is a corpus
+        #: gap, the other is a contract violation (`testing_hazards.md` §1.31).
+        CITATION_AUDIT = "CITATION_AUDIT", "Citation audit refused"
         USER_REQUESTED = "USER_REQUESTED", "User requested"
 
     class Status(models.TextChoices):

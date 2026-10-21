@@ -582,7 +582,9 @@ PAGE = """<!DOCTYPE html>
 
   <div class="panel">
     <h2>Preflight - is the instance ready?</h2>
-    <p>Observed against expected, from <code>python manage.py uat_seed --check</code>.</p>
+    <p>Observed against expected. To run a setup command or re-check, use the staff console at
+       <code>/uat/</code> on this instance - it has them as buttons, so nothing here has to be
+       copied. This panel is the snapshot taken when the page was built.</p>
     {preflight_html}
   </div>
 

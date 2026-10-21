@@ -16,6 +16,7 @@ from django.urls import path
 
 from core.views._documents import document_file, documents
 from core.views._health import health
+from core.views._uat import console as uat_console, run as uat_run
 from core.views._public import (
     become_a_member,
     contact,
@@ -46,4 +47,10 @@ urlpatterns = [
     # is an illustration of it, not a second implementation.
     path("ask/", ask, name="ask"),
     path("contact/", contact, name="contact"),
+    # The UAT console: staff-only, and deliberately **not** in `_public.PAGES`, so the
+    # public sweeps (claim discipline, the Playwright route list) do not treat it as a
+    # page the group publishes. It exists because a `file://` artefact cannot run
+    # `manage.py`, and the setup commands should be buttons rather than homework.
+    path("uat/", uat_console, name="uat_console"),
+    path("uat/run/<str:action>/", uat_run, name="uat_run"),
 ]

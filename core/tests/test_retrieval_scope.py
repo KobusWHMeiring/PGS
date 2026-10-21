@@ -147,7 +147,9 @@ def test_an_invented_sub_ref_is_rejected(chat_session, chat_corpus, fake_chat_mo
 
     assert out.text == REFUSAL
     assert out.citations == []
-    assert EscalatedQuery.objects.get().reason == EscalatedQuery.Reason.NO_CITATIONS
+    # D54: the model *did* cite; the audit could not verify it. That is a different
+    # finding from "the model cited nothing", and the record must say so.
+    assert EscalatedQuery.objects.get().reason == EscalatedQuery.Reason.CITATION_AUDIT
 
 
 def test_a_real_sub_ref_is_accepted(chat_session, chat_corpus, fake_chat_model):

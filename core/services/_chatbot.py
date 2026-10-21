@@ -1075,7 +1075,9 @@ def answer_question(
     Fails: `InvalidQuestionError`, `SessionNotFoundError`, `RateLimitedError`,
          `UpstreamModelError`. Never returns a fabricated fallback.
     Idempotency: not idempotent by design (each question is a new turn); the answer
-         cache removes the repeated Gemini call for a normalised question.
+         cache removes the repeated Gemini call for a question that was **answered**, and
+         only for one that was answered — a refusal is never cached, so a bad generation
+         cannot poison the question (`testing_hazards.md` §1.31).
     """
     text = validate_question(question)
     check_rate_limit(ip_hash, now=now)
@@ -1129,11 +1131,6 @@ def answer_question(
             raise UpstreamModelError(
                 "The generation provider returned something other than a ModelReply."
             )
-        cache.set(
-            cache_key,
-            _reply_to_json(reply),
-            timeout=int(getattr(settings, "CHAT_ANSWER_CACHE_TTL", ANSWER_CACHE_TTL)),
-        )
 
     latency_ms = int((time.monotonic() - started) * 1000)
     citations, problems = audit_citations(
@@ -1155,15 +1152,42 @@ def answer_question(
             reply=reply,
             cached=cached,
         )
-    if problems or not citations or not reply.answer.strip():
-        if problems:
-            logger.warning(
-                "chatbot citation audit refused an answer",
-                extra={
-                    "chat_session": str(session.public_uuid),
-                    "chat_problems": "; ".join(problems)[:500],
-                },
-            )
+    if not reply.citations:
+        # The model cited nothing at all. `NO_CITATIONS` is the honest reason here; the
+        # audit reports it as a problem, but "cited nothing" and "cited something wrong"
+        # are different findings and the record must not blur them.
+        return _as_refusal(
+            session=session,
+            user_message=user_message,
+            question=text,
+            chunks=chunks,
+            reason=EscalatedQuery.Reason.NO_CITATIONS,
+            latency_ms=latency_ms,
+            reply=reply,
+            cached=cached,
+        )
+    if problems:
+        # A distinct reason from `NO_CITATIONS`: the model *did* cite, and the citations
+        # were wrong. Recording both as "no valid citations" hides a contract violation
+        # behind a reason that suggests the corpus is thin (testing_hazards.md §1.31).
+        logger.warning(
+            "chatbot citation audit refused an answer",
+            extra={
+                "chat_session": str(session.public_uuid),
+                "chat_problems": "; ".join(problems)[:500],
+            },
+        )
+        return _as_refusal(
+            session=session,
+            user_message=user_message,
+            question=text,
+            chunks=chunks,
+            reason=EscalatedQuery.Reason.CITATION_AUDIT,
+            latency_ms=latency_ms,
+            reply=reply,
+            cached=cached,
+        )
+    if not citations or not reply.answer.strip():
         return _as_refusal(
             session=session,
             user_message=user_message,
@@ -1188,6 +1212,19 @@ def answer_question(
             latency_ms=latency_ms,
             reply=reply,
             cached=cached,
+        )
+
+    # **Cache only what passed.** The write used to happen immediately after the model
+    # replied, so a reply the audit would reject was cached anyway and re-served for the
+    # whole TTL: one bad generation turned into a refusal that reproduced exactly, and
+    # read like a gap in the corpus (testing_hazards.md §1.31). A refusal is therefore
+    # never cached — including a genuine one — which costs one model call when the same
+    # unanswerable question is repeated and is the correct trade.
+    if not cached:
+        cache.set(
+            cache_key,
+            _reply_to_json(reply),
+            timeout=int(getattr(settings, "CHAT_ANSWER_CACHE_TTL", ANSWER_CACHE_TTL)),
         )
 
     with transaction.atomic():

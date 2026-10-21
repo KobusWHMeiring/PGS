@@ -899,6 +899,18 @@ is a human act, and it is now the only thing left.
 `Generated <date>` from the machine that built it, so **regenerate it on the box whose commit it
 claims** before handing it to a reviewer.
 
+**Two more landed the same day, both prompted by bringing the UAT up:**
+
+* **`/uat/` — the setup commands as buttons** (staff-only, POST + CSRF, whitelist). The
+  artefact stays a `file://` document with zero network requests; a browser cannot run
+  `manage.py` from one, so the buttons live on a served page beside it. `--force` is
+  *shown with its reason, never clickable*. One `render_preflight()` feeds the console, the
+  management command and the artefact, so they cannot disagree.
+* **The chat cache and the audit** — `answer_question()` cached the model's reply *before*
+  auditing it, so a reply the audit rejected was re-served for the whole TTL and Scenario 1
+  refused reproducibly. Only an accepted answer is cached now, and an audit rejection is its
+  own escalation reason (`CITATION_AUDIT`, **D54**) instead of `NO_CITATIONS`. Gate **788**.
+
 **Next, in order:** judge the UAT (§18) → slice 2's `uat-setup` format and the
 `manage.py <command>` existence lint (which is what catches `mvp1a`'s `load_template`) → the two
 operational items in §18 → MVP 1a.

@@ -129,10 +129,18 @@ def test_the_message_role_is_a_closed_pair(standard_set):
     assert set(ChatMessage.Role.values) == {"USER", "ASSISTANT"}
 
 
-def test_escalation_reasons_are_the_three_the_spec_names(standard_set):
+def test_escalation_reasons_are_the_four_the_spec_names(standard_set):
+    """Four since D54. The fourth exists so the record can tell three findings apart.
+
+    `NO_CITATIONS` = the model cited nothing; `INSUFFICIENT_CONTEXT` = the corpus could not
+    ground the question; `CITATION_AUDIT` = it cited something the audit could not verify
+    (a paraphrase, an absent section, an invented `sub_ref`). The first and third used to
+    share a reason, which made a model-contract violation read like a thin corpus.
+    """
     assert set(EscalatedQuery.Reason.values) == {
         "INSUFFICIENT_CONTEXT",
         "NO_CITATIONS",
+        "CITATION_AUDIT",
         "USER_REQUESTED",
     }
 

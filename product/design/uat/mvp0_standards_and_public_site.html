@@ -150,7 +150,7 @@
     <p class="eyebrow">Outeniqua PGS - user acceptance testing</p>
     <h1>MVP 0 UAT — Standards Foundation &amp; Public Shop Window</h1>
     <p>9 scenarios to judge, 1 marked not applicable. Read the judgement question, run the scenario in the app, then record what you saw.</p>
-    <div class="meta"><span>Slug <code>mvp0_standards_and_public_site</code></span><span>Commit <code>3a46b1a (modified)</code></span><span>Database <code>pgs_dev</code></span><span>Generated <code>2026-10-20</code></span><span>Source <code>mvp0_standards_and_public_site_uat.md</code></span></div>
+    <div class="meta"><span>Slug <code>mvp0_standards_and_public_site</code></span><span>Commit <code>7b75303 (modified)</code></span><span>Database <code>pgs</code></span><span>Generated <code>2026-10-21</code></span><span>Source <code>mvp0_standards_and_public_site_uat.md</code></span></div>
   </div>
 </header>
 
@@ -173,7 +173,9 @@
 
   <div class="panel">
     <h2>Preflight - is the instance ready?</h2>
-    <p>Observed against expected, from <code>python manage.py uat_seed --check</code>.</p>
+    <p>Observed against expected. To run a setup command or re-check, use the staff console at
+       <code>/uat/</code> on this instance - it has them as buttons, so nothing here has to be
+       copied. This panel is the snapshot taken when the page was built.</p>
     <pre class="preflight">[ok  ] settings and app     no issues
        python manage.py check
        expected: no issues
@@ -245,10 +247,10 @@ preflight: ready - 6 checks, no blocking failure</pre>
  "slug": "mvp0_standards_and_public_site",
  "title": "MVP 0 UAT — Standards Foundation & Public Shop Window",
  "environment": {
-  "commit": "3a46b1a",
+  "commit": "7b75303",
   "working_tree": "modified",
-  "database": "pgs_dev",
-  "generated_on": "2026-10-20"
+  "database": "pgs",
+  "generated_on": "2026-10-21"
  },
  "scenarios": [
   {

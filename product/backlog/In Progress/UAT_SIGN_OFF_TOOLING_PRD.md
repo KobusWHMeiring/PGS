@@ -353,6 +353,50 @@ a signature has to be reproducible from the commit.
    runner passes `newline="\n"` and a test asserts no `\r\n` and byte-identical output on a second
    run.
 
+### Slice 1.5 — the console, added 2026-10-22 at the product owner's request
+
+The request was *"wire the management commands up as buttons so I don't have to copy and
+paste"*. A `file://` artefact cannot run `manage.py`, and giving it a network call would
+destroy the property the whole design rests on (§4.2, AC 3). So the buttons live on a
+**second, served page**: `/uat/`, staff-only (`staff_member_required` → admin login), POST +
+CSRF, and it can only run keys that are in `core/services/_uat_console.ACTIONS`.
+
+| Button | Runs | Writes |
+|---|---|---|
+| Re-check the instance | the six preflight rows | no |
+| Publish the documents | `publish_documents` (idempotent on sha256) | yes |
+| Seed the deployment | `seed_deployment` (idempotent) | yes |
+| Rebuild the UAT page | `scripts/uat_runner.py` **as a subprocess**, with the live preflight | yes |
+
+**Shown, never clickable:** `ingest_standard --force` (deletes and re-embeds: API cost,
+minutes, and every historical `ChatMessage` detaches from its evidence) and
+`uat_signoff.py` (needs the reviewer's downloaded file). A button for either would be a
+button that deletes the corpus or cannot work. `test_no_destructive_command_is_reachable`
+asserts `--force` is not in `ACTIONS` and cannot be posted.
+
+The console prints the **same preflight text** as `manage.py uat_seed --check` and the
+artefact, from one `render_preflight()`, so the three cannot disagree about an instance.
+Verified in a browser: staff login, six rows observed vs expected, `Re-check` returning
+`done 1206 ms` with its own output, no console errors, and the artefact still containing
+zero `http://`, `https://`, `src=` or `href=`.
+
+### Also fixed in the same session: the cache and the escalation reason
+
+Bringing the UAT up made the flagship Scenario 1 question refuse, reproducibly. Two defects,
+both in `answer_question`:
+
+1. **The reply was cached before it was audited**, so a reply the citation audit rejected was
+   re-served for the whole TTL — one bad generation became a refusal that reproduced exactly.
+   The write now happens only after every refusal branch, so **only an accepted answer is
+   cached** (a refusal is never cached, which costs one model call on a repeat and is the
+   right trade).
+2. **An audit rejection was recorded as `NO_CITATIONS`**, hiding a model-contract violation
+   behind a reason that reads as a thin corpus. It is now its own reason, `CITATION_AUDIT`
+   (**D54**), and the model returning zero citations still records `NO_CITATIONS`.
+
+Five tests pin it, and reintroducing the old ordering fails two of them. See
+`testing_hazards.md` §1.31 for the evidence.
+
 ### Still open
 
 * **Slice 2** — the `uat-setup` format and the `manage.py <command>` existence lint. Worth starting
