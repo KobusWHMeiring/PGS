@@ -138,6 +138,17 @@ home page's summary of the same content must not share a tag level.
    refusal currently links to `/contact/`, whose contact details are placeholder chips.
 8. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
 
+**G8 blocks the sign-off, and it is the first thing to read:** bringing the UAT up on
+2026-10-20 showed that Scenario 1's own question refuses, reproducibly. The model cites one
+sentence twice — verbatim from `S5.1.9`, then a paraphrase of it against a BPP passage with an
+invented `sub_ref` — and the all-or-nothing audit refuses the pair (correctly). Corpus,
+retrieval, cache and audit were each excluded by measurement; the likely trigger is prompt rule
+7's *"name the document you are citing"*. Full diagnosis, candidate fixes and acceptance tests:
+`CHAT_ANSWER_COVERAGE_PRD.md` §7 **G8**. Related, and already fixed: `answer_question()` used to
+cache the reply **before** auditing it, so one bad generation became a refusal that reproduced
+for the whole TTL — see `testing_hazards.md` §1.31, D54, and the five tests in
+`test_chatbot_guardrails.py`. **Do not relax `audit_citations` to make Scenario 1 pass.**
+
 **Do not add a classifier (G5).** It would not have fixed any 2026-10-21 failure. Reopen only
 if a suite question retrieves the **wrong section**, and then prefer a seeded alias table to
 an ungrounded model call.
@@ -800,6 +811,11 @@ python scripts/uat_signoff.py --file tests/uat/mvp0_standards_and_public_site_ua
 **D1–D4 are settled** (PRD §9, confirmed 2026-10-22): staging for anything that writes and production
 for read-only scenarios; screenshots optional; one sign-off row per scenario; one seat each, product
 may co-sign.
+
+**Read G8 before judging.** Scenario 1 refuses today, for a measured reason that is not the
+reviewer's to fix; Scenarios 2, 3, 9 and 10 are the same class of surface and may refuse the same
+way. Judge what you see and record it — the scenarios still have to be judged, and a recorded
+FAIL with a cause is worth more than a blank.
 
 **Definition of done:** scenarios 1, 2, 3, 6, 9, 10 and C1's 4, 6, 8 carry a result and a signature
 in `tests/uat/mvp0_standards_and_public_site_uat.md`, applied by `uat_signoff.py` and committed. That

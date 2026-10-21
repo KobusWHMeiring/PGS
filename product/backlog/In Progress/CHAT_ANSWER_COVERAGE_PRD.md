@@ -225,6 +225,83 @@ This is the same class as Appendix 2 (a spanning line needs row/cell reconstruct
 the likely fix is a reviewed line or a narrower band override for that page — measure
 before adding either.
 
+### G8. The model cites one sentence twice, and the second citation is a paraphrase
+
+**Found 2026-10-20 while bringing the MVP 0 UAT up for sign-off. This one blocks the
+sign-off itself**, because it makes UAT Scenario 1 (*"Does the chatbot answer from the
+standard?"*) refuse on its own question, reproducibly.
+
+**Symptom.** Through `/ask/` and through `answer_question()` directly, five consecutive
+attempts on *"What does the standard say about the minimum rest period for laying hens
+without artificial light?"* return D17's refusal. `cached=False` on every attempt, so this
+is not the answer cache (that defect is fixed and pinned — see `testing_hazards.md` §1.31).
+
+**Measured cause.** The model returns two citations for **one** sentence:
+
+```
+S5.1.9              "For laying hens, a minimum daily rest period of 8 continuous hours …"   audit: ACCEPTED
+general-principles  "For laying hens, a minimum daily rest period of eight continuous hours …"  audit: REJECTED
+                    ^ a paraphrase of the sentence above, and: sub_ref 'd.ii.' does not exist in the chunk
+```
+
+The all-or-nothing audit refuses the pair — correctly; trimming the bad one is exactly what
+D47 forbids. So the refusal is the product working. The defect is the model's citation.
+
+**What it is *not* — each excluded by measurement, not by inspection:**
+
+| Suspect | Evidence it is innocent |
+|---|---|
+| The corpus | `S5.1.9` is in the retrieved set (rank 2) and its sentence is quoted **verbatim** by the accepted citation |
+| Retrieval | the `general-principles` chunk *the model chose to cite* is in the five passages it was given, and in the stored `retrieved_chunks` |
+| The cache | every attempt shows `cached=False`; deleting the key changes nothing |
+| The audit | it accepted the correct citation and named the invented `sub_ref` exactly |
+| The chunker / D53 artefact | no quote is mangled; the failing quote is a *paraphrase the model wrote*, not text from the file |
+
+**The likely trigger is prompt rule 7.** It says the Basic Production Principles are
+guidance and *"When both answer, prefer the governing document for a question about a
+requirement or procedure, and **name the document you are citing**"*. The model reads that
+as "cite both", and adds a BPP citation for a sentence it took from SAOSO. Note that
+`build_prompt` already tells it, for that very passage, `Numbered sub-clauses available:
+none — omit sub_ref for this passage`, and rule 5 already forbids inventing one. The
+instruction is present and the model overrides it, so the fix is wording that removes the
+*invitation*, not another prohibition.
+
+**Candidate fix A (preferred): prompt wording + `PROMPT_VERSION` bump.** One citation per
+statement; never cite a passage whose words you did not take verbatim; if naming a second
+document helps the reader, name it **in the answer text**, not as a citation. Bump
+`PROMPT_VERSION` (the answer cache is keyed on it) and re-measure.
+
+**Candidate fixes rejected:**
+
+- *Drop a duplicate citation after the fact.* That is "trim a bad citation and keep the
+  rest" — D47 exists to forbid it, and it would let a paraphrased quote through whenever it
+  happens to be first.
+- *Relax the `sub_ref` check.* The audit is the product; a citation nobody can verify is
+  the failure mode the whole design is built around.
+- *Add a classifier or a repair model call.* Same answer as G5.
+
+**The instrument needs fixing too.** `scripts/probe_chat.py` **looks fine** on this question
+— it prints a grounded answer with one audited citation — because it retrieves with its own
+limit (8), and the failing `general-principles` citation only appears in the product's
+`CHAT_RETRIEVAL_LIMIT` (5). A probe that measures a different retrieval path than the
+product is the "test passes for the wrong reason" pattern. Give the probe the chat limit (a
+`--limit` flag defaulting to `settings.CHAT_RETRIEVAL_LIMIT`) **before** tuning the prompt,
+or the measurement will say the fix worked when it did not.
+
+**Acceptance:**
+
+1. `python scripts/probe_chat.py` with the chat limit reproduces all five refusals *now*.
+2. After the change, that question answers with at least one verbatim citation through
+   `/ask/`, **five consecutive fresh sessions** (the model is stochastic; one green run is
+   not evidence).
+3. The nine-question suite has no new refusals, and no already-grounded question regresses
+   (G1/G2's ducks and seed questions, `can i use straw mulch?`, the manure question).
+4. `PROMPT_VERSION` is bumped, and the diff contains **no** change to `audit_citations`.
+
+**Blocks:** MVP 0 sign-off (`tests/uat/mvp0_standards_and_public_site_uat.md` Scenario 1),
+and by the same rule likely Scenarios 2, 3, 9 and 10 — all five are chat scenarios and all
+five are unsigned.
+
 ## 8. Deployment note
 
 `ingest_standard` is a no-op when the PDF's sha256 is already stored, so **shipping this

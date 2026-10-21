@@ -136,12 +136,22 @@ def test_every_scenario_gains_exactly_one_result_line(real_copy):
 
 
 def test_the_result_lands_after_the_judgement_and_before_what_follows(real_copy):
-    """Scenario 9 has a recorded observation after its judgement; the result goes above it."""
+    """Scenario 9 has a recorded observation after its judgement; the result goes above it.
+
+    Anchored on the scenario's heading rather than on a line number: the first version
+    counted lines (`i > 220`) and broke the moment a note was added above it — a test that
+    encodes today's line offsets is a test that fails for the wrong reason.
+    """
     uat = parse_uat(real_copy)
     after = apply_export(uat, make_export(uat)).splitlines()
 
-    result_index = next(i for i, line in enumerate(after) if "**Result:**" in line and i > 220)
-    observed_index = next(i for i, line in enumerate(after) if line.startswith("**Observed 2026-10-20"))
+    heading = next(i for i, line in enumerate(after) if line.startswith("## Scenario 9"))
+    result_index = next(
+        i for i in range(heading, len(after)) if after[i].startswith("**Result:**")
+    )
+    observed_index = next(
+        i for i in range(heading, len(after)) if after[i].startswith("**Observed 2026-10-20")
+    )
 
     assert result_index < observed_index
 

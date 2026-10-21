@@ -71,6 +71,16 @@ Recorded here so the manual list is not padded with machine-provable work.
 
 **Judgement:** Does the answer read as a *quotation of the standard* rather than a plausible-sounding summary of general poultry knowledge? A model answering from memory can produce something that reads correctly and is confidently wrong — only a person who knows the standard can tell the difference, and that is the whole purpose of this feature.
 
+**Observed 2026-10-20 (dev box, live provider):** this question currently **refuses** —
+reproducibly, five attempts out of five, with `cached=False` on every one. The cause is
+recorded as **G8** in `product/backlog/In Progress/CHAT_ANSWER_COVERAGE_PRD.md` §7: the
+model cites the correct sentence from `S5.1.9` and then cites the *same* sentence again, as
+a paraphrase, against a BPP passage with an invented `sub_ref`; the all-or-nothing audit
+refuses the pair, which is the product working. The corpus, the retrieval, the cache and the
+audit were each excluded by measurement. **This is an observation, not a result** — judge the
+scenario as you find it, and record FAIL with this cause if the refusal is still what you
+see. A fix is expected before the next sign-off attempt.
+
 ---
 
 ## Scenario 2 — Do the citations actually lead somewhere?
