@@ -1,6 +1,6 @@
 # PRD: Corpus column-aware extraction (all four governed documents)
 
-**Status:** In Progress — built 2026-10-20; UAT Scenario 9 unsigned
+**Status:** In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
 **Owner:** Build — knowledge ingestion (sub-plan B), grounded chat (sub-plan D)
 **Last Updated:** 2026-10-19 — errata folded in (see “2026-10-19 Errata” at the end)
 **Plan:** `CORPUS_COLUMN_EXTRACTION_PLAN.md` (tasks C1–C9; it supersedes §5 where they disagree,

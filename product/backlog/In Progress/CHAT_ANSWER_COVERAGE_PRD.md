@@ -1,6 +1,6 @@
 # PRD: Chat answer coverage — governing rules, table rows, and the gaps left
 
-**Status:** In Progress — built 2026-10-21; UAT Scenarios 1, 2, 3, 9 and 10 unsigned
+**Status:** In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
 **Owner:** Build — grounded chat (sub-plan D), corpus ingestion (sub-plan B)
 **Last Updated:** 2026-10-21
 **MVP:** MVP 0 — defect fix and a deliberate widening of D17.

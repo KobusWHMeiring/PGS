@@ -70,6 +70,7 @@ Recorded here so the manual list is not padded with machine-provable work.
 **Expected:** An answer with one or more citations naming a document and a section reference.
 
 **Judgement:** Does the answer read as a *quotation of the standard* rather than a plausible-sounding summary of general poultry knowledge? A model answering from memory can produce something that reads correctly and is confidently wrong — only a person who knows the standard can tell the difference, and that is the whole purpose of this feature.
+**Result:** PASS · Kobus (Product) · 2026-10-21 — Didn't refuse, it gave both references which looks irght
 
 **Observed 2026-10-20 (dev box, live provider):** this question currently **refuses** —
 reproducibly, five attempts out of five, with `cached=False` on every one. The cause is
@@ -93,6 +94,7 @@ see. A fix is expected before the next sign-off attempt.
 **Expected:** The cited clause exists, and its text supports the claim made.
 
 **Judgement:** Is the cited passage actually *about* the question asked, or merely in the same neighbourhood? Topical-but-wrong citations are the failure mode that survives every automated check, because the reference does resolve — it just does not say what the answer implies.
+**Result:** PASS · Kobus (Product) · 2026-10-21 — The clause opens but maybe good here to also have a link to that relevant pdf on th epage
 
 ---
 
@@ -107,6 +109,7 @@ see. A fix is expected before the next sign-off attempt.
 **Expected:** The exact string `"I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents."` (D17, wide corpus) and an escalation action offered. The action should not promise more than it does: it must say the question was recorded, and clicking it must lead somewhere a person can actually be reached (`/contact/` currently shows `contact details to confirm` chips — see `ESCALATION_ANSWER_PATH_PRD.md`).
 
 **Judgement:** Does the refusal read as a confident boundary rather than a malfunction? This is the moment the group's trust in the tool is either won or lost — a bot that hedges here will be assumed to invent answers elsewhere. And: does the follow-up leave you believing a person will answer — or that the promise is hollow?
+**Result:** PASS · Kobus (Product) · 2026-10-21
 
 ---
 
@@ -120,6 +123,7 @@ see. A fix is expected before the next sign-off attempt.
 **Expected:** The group's own voice, principles, members, fees and contact details are present and current.
 
 **Judgement:** Does this read as Outeniqua PGS's site, or as a generic template with the group's name inserted? The existing site has years of accumulated voice in it — losing that in a rebuild would be a real regression that no test can catch.
+**Result:** PASS · Kobus (Product) · 2026-10-21
 
 ---
 
@@ -140,6 +144,7 @@ control in the header is `aria-disabled` by design and must stay that way.
 **Expected:** Content is present in Afrikaans rather than falling back to English.
 
 **Judgement:** Does it read as written by an Afrikaans speaker, or as a translation? Machine-translated Afrikaans is recognisable to every member of this group, and it would undercut the site's credibility more than leaving it in English would.
+**Result:** N/A · Kobus (Product) · 2026-10-21 — D44: Deferred out of MVP 0 by the product owner (2026-10-19, this session).
 
 ---
 
@@ -160,6 +165,7 @@ control in the header is `aria-disabled` by design and must stay that way.
 **Expected:** The answer is readable; the keyboard does not permanently obscure the input or the last part of the answer; citations are tappable. Enter sends without a page reload; Shift+Enter inserts a newline; the hint under the composer is visible and honest. The question appears in the thread immediately and the box clears while the answer is being generated; the response does not erase a question you started typing during the wait.
 
 **Judgement:** Is this genuinely comfortable for a farmer standing in a market, or does it merely pass a 390 px layout check? Touch-target size and scroll behaviour after the keyboard opens are only truly judgeable on the device. On a phone keyboard, Enter may be labelled Send or Return — check that the behaviour the label promises is the behaviour that happens.
+**Result:** PASS · Kobus (Product) · 2026-10-21
 
 ---
 
@@ -191,6 +197,7 @@ permission" prompt; the gated row offers `Request access` and leads to `/contact
   Safari's share sheet are device behaviours no test client can judge.
 * **Are the filenames ones the group recognises?** `PGS-Farm-Visit-Checklist-Crops.pdf` is
   a decision, not a derivation — the right names come from the people who file them.
+**Result:** PASS · Kobus (Product) · 2026-10-21
 
 ---
 
@@ -202,6 +209,7 @@ permission" prompt; the gated row offers `Request access` and leads to `/contact
 **Expected:** Member names appear with the explicit disclaimer that membership is not certification.
 
 **Judgement:** Does the site avoid implying that a member is certified? The automated claim-discipline check bans specific forbidden terms, but *tone* — a member list under a heading like "Our certified farms" — is exactly the kind of overclaim a grep cannot see. The OPP is explicit that the group's credibility depends on not doing this.
+**Result:** PASS · Kobus (Product) · 2026-10-21
 
 ---
 
@@ -233,6 +241,7 @@ permission" prompt; the gated row offers `Request access` and leads to `/contact
 **Judgement:** For each citation, can you put your finger on the quoted words on the
 printed page? A quote that only exists in the database is the defect this scenario
 exists to catch.
+**Result:** PASS · Kobus (Product) · 2026-10-21
 
 **Observed 2026-10-20 (dev box, live provider):** the corpus gate passes — the stored
 BPP chunk carries the whole sentence, the Appendix 2 condition is contiguous, and the
@@ -296,6 +305,13 @@ human-only question: does the cardboard answer read as *"here is what the standa
 of this material"* or as *"cardboard is fine"*? A farmer will read it as the second unless
 the wording is careful. For 5–6, is the gap visible to the reader, or does the answer look
 complete when it is not?
+**Result:** PASS · Kobus (Product) · 2026-10-21
+
+**Re-checked 2026-10-21 (agent, dev box):** item 5 — *"What is the yearly cost to get
+certified, including the farm visit?"* — currently **refuses** (`CITATION_AUDIT`, the same
+cause as **G8**), and the R100 annual membership fee is still the open gap **G3**. Recorded
+because this scenario's own text says not to sign that item as passed until it is fixed: the
+PASS above is the reviewer's judgement of items 1–4, 6 and 7.
 
 ---
 
@@ -303,9 +319,37 @@ complete when it is not?
 
 | Role | Name | Date | Result |
 |------|------|------|--------|
-| Product | Kobus Meiring | | |
+| Product | Kobus Meiring | 2026-10-21 | Accepted with G8 and G3 recorded (see the decision below) |
 | PGS administrator | | | |
 | Committee reviewer | | | |
 | Consumer member | | | |
 
 **Release gate:** all scenarios judged acceptable, or the exceptions recorded above with a decision to proceed.
+
+**Decision to proceed (product owner, 2026-10-21):** MVP 0 is accepted with two defects
+**recorded rather than absorbed** — **G8** (the model cites one sentence twice, so the chat
+refuses on a re-run; `CHAT_ANSWER_COVERAGE_PRD.md` §7) and **G3** (the cost answer omits the
+R100 annual membership fee). Both carry into MVP 1a. The record is not permission to weaken
+`audit_citations`: a citation nobody can verify is the failure this feature exists to prevent.
+**Seats:** the product owner has signed; the **PGS administrator**, **committee reviewer** and
+**consumer member** rows above are still empty, so the OPP's three-voice requirement (D4) is
+not yet met.
+
+### Per-scenario results
+
+| Scenario | Category | Result | Reviewer | Role | Date |
+|---|---|---|---|---|---|
+| 1. Does the chatbot answer *from the standard*, or from general knowle… | grounding | PASS | Kobus | Product | 2026-10-21 |
+| 2. Do the citations actually lead somewhere? | citations | PASS | Kobus | Product | 2026-10-21 |
+| 3. Does the fallback feel trustworthy or evasive? | honesty | PASS | Kobus | Product | 2026-10-21 |
+| 4. Does the public site read as *the group's* site? | identity / aesthetics | PASS | Kobus | Product | 2026-10-21 |
+| 5. Afrikaans quality — **NOT APPLICABLE (C3 deferred, D44)** | language | N/A | Kobus | Product | 2026-10-21 |
+| 6. Is the chat usable on a real phone? | mobile | PASS | Kobus | Product | 2026-10-21 |
+| 7. Do the documents replace Google Drive? | documents | PASS | Kobus | Product | 2026-10-21 |
+| 8. Does the site still make no certification claim? | claim discipline | PASS | Kobus | Product | 2026-10-21 |
+| 9. Is the column-laid-out corpus actually quotable on paper? | corpus integrity (D46) | PASS | Kobus | Product | 2026-10-21 |
+| 10. Does the assistant answer everyday input questions, and admit what … | grounding / governing rules (D49, D50, D51) | PASS | Kobus | Product | 2026-10-21 |
+
+**Results:** 9 PASS · 0 FAIL · 1 N/A — signed by Kobus (Product).
+
+**Signed against:** commit `59f5e93` (clean), database `pgs`, generated 2026-10-21.

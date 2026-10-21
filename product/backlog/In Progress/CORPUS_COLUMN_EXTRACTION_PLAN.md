@@ -1,6 +1,6 @@
 # Corpus Column-Aware Extraction — Implementation Plan
 
-**Status:** In Progress — C0–C9 landed 2026-10-20; UAT Scenario 9 unsigned
+**Status:** In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 **Owner:** Build — knowledge ingestion (sub-plan B), grounded chat (sub-plan D)
 **Last Updated:** 2026-10-19
 **MVP:** MVP 0 — defect fix. Blocks the UAT scenario 1 judgement (D23); must land before MVP 1a.

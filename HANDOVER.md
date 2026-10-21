@@ -30,9 +30,12 @@ cache and an `EscalatedQuery` an administrator can answer. **C3 was deferred out
 by the product owner (D44)** — no Afrikaans translator exists, so the AF pill stays a
 disabled control and that is deliberate, not a regression.
 
-**D is implemented, not accepted.** D's UAT scenarios — grounding (1), citation relevance
-(2) and phone comfort (6) — are unsigned. By the local backlog rule that makes D partial,
-exactly as C1 is partial.
+**MVP 0's UAT is signed — by one of the three seats.** `tests/uat/mvp0_standards_and_public_site_uat.md`
+now carries ten results: nine **PASS** and Scenario 5 **N/A** (D44), signed by the product
+owner on 2026-10-21, with a recorded **decision to proceed** that names **G8** and **G3** as
+open defects rather than absorbing them. The PGS administrator, committee reviewer and
+consumer member rows are still empty, so the OPP's three-voice requirement (D4) is not met
+and that is stated in the file. `tests/uat/mvp1a_*` is still unsigned — 1a is not built.
 
 **2026-10-21 — the answer-coverage revision is built and measured, not accepted.**
 `CHAT_ANSWER_COVERAGE_PRD.md` records it: the assistant now embeds the visitor's *question*
@@ -81,11 +84,11 @@ Do **not** read `prd.md` as the spec (superseded provenance). Do **not** execute
 |---|---|---|
 | **A — foundation** | Complete | custom `User` first migration, `/health/` with four independent checks, Celery retry policies, `lint-imports` contract, `verify.sh` |
 | **B — corpus** | Complete | 340 chunks from 4 documents, 30 sections, **0 duplicate `section_ref`s**, **340/340 embedded** (D48, `lexical_only=False`), FTS + pgvector with RRF (k=60), scope before ranking; pages de-columned at ingest (D46) — 29 transformed, 4 documented exclusions |
-| **C1 — public site** | Complete | six routes, `root.css`/`site.css`/`components.css`/`chat.css`, self-hosted Lora + Mulish (C2 added the seventh route and 37 tests) |
+| **C1 — public site** | **Accepted** (product owner, 2026-10-21; scenarios 4, 6, 8 PASS) | six routes, `root.css`/`site.css`/`components.css`/`chat.css`, self-hosted Lora + Mulish (C2 added the seventh route and 37 tests) |
 | **C4 — claim discipline** | Complete | six forbidden terms, no seal rendered, no dead certificate link, no `Publishing soon` left anywhere; `test_nothing_is_pending_on_a_public_route` runs over all eight routes |
 | **C2 — `/documents/`** | Complete | `PublicDocument` + `publish_documents` (idempotent on sha256), eight documents at `/documents/<code>/`, streamed through a view so `is_published` is per request; 379 + 30 tests |
 | **C3 — bilingual shell** | **Deferred (D44)** | No Afrikaans translator. `LANGUAGES`/`LOCALE_PATHS`/`User.preferred_language` stay in place; no `LocaleMiddleware`, no catalogue; AF pill is `aria-disabled` — honest, and it must not become a link |
-| **D — chatbot** | **Built; UAT unsigned** | `/ask/`, `_chat.py` + migration 0004, `_chatbot.py` (refusal + citation audit + guardrails), vendored HTMX on that page only, 74 tests across `test_chat_models`/`test_chatbot_grounding`/`test_retrieval_scope`/`test_chatbot_guardrails`/`test_chatbot_surface` |
+| **D — chatbot** | **Accepted with G8 open** (2026-10-21) | `/ask/`, `_chat.py` + migration 0004, `_chatbot.py` (refusal + citation audit + guardrails), vendored HTMX on that page only, 74 tests across `test_chat_models`/`test_chatbot_grounding`/`test_retrieval_scope`/`test_chatbot_guardrails`/`test_chatbot_surface` |
 
 **The site's architecture, in one paragraph.** `core/services/_public.py` holds every
 page's metadata, the nav table and the OPP fee schedule as integer cents;
@@ -103,13 +106,13 @@ home page's summary of the same content must not share a tag level.
 | Gate | Meaning |
 |---|---|
 | **A1–A5 migrated** | ✅ Passed. Custom `User` is the first migration |
-| **`verify.sh` green** | ✅ **768 tests at HEAD** (705 + 63 for the UAT sign-off tooling). Before any commit |
+| **`verify.sh` green** | ✅ **788 tests at HEAD** (705 + 63 UAT tooling + 13 console + 5 cache/audit + 2 changed to D54). Before any commit |
 | **Playwright green** | ✅ 34 tests: eight routes, 390px, measured 44px targets, clean console, and a real download click. Outside the gate by design |
 | **B3 needs a second reader** | ⚠️ **Not done.** The Crops template is 38 questions and 37 verdicts by hand |
 | **0∥ spike complete** | ⚠️ **Not done.** Before `1∥` freezes `visitPack`/`VisitSyncEnvelope` |
 | **A9's restore rehearsal, on the server** | ⚠️ **Not done.** The logged rehearsal was on the dev box; R11 requires it on the VPS |
 | **C1 + C2 + D built** | ✅ Verified in code, in a browser and with screenshots. UAT Scenarios 4, 6, 8 and 9 (documents) and D's Scenarios 1, 2 and 6 are still **unsigned** |
-| **UAT sign-off** | ⚠️ **Nothing** in `tests/uat/` is signed. By the local backlog rule, an unsigned UAT makes a human-judged item *partial* — so C1 and D are partial until their scenarios are judged |
+| **UAT sign-off** | ✅ **Signed by the product owner, 2026-10-21** (9 PASS · 1 N/A, with the decision to proceed recorded in the file). ⚠️ The **PGS administrator, committee reviewer and consumer member** seats are unsigned — the OPP wants three voices (D4). ⚠️ `tests/uat/mvp1a_*` is unsigned |
 
 ---
 
@@ -930,3 +933,41 @@ claims** before handing it to a reviewer.
 **Next, in order:** judge the UAT (§18) → slice 2's `uat-setup` format and the
 `manage.py <command>` existence lint (which is what catches `mvp1a`'s `load_template`) → the two
 operational items in §18 → MVP 1a.
+
+---
+
+## 20. Session close, 2026-10-21 — MVP 0 signed
+
+**The sign-off that four sessions deferred is in the file.** `tests/uat/mvp0_standards_and_public_site_uat.md`
+carries ten results — nine **PASS**, Scenario 5 **N/A** (D44) — signed by the product owner,
+applied by `scripts/uat_signoff.py` and committed. The diff was exactly what the tool promises:
+ten `**Result:**` lines, the `### Per-scenario results` table, the `**Signed against:**` line,
+and nothing else.
+
+1. **The tooling paid for itself on its first use.** The reviewer judged in the HTML artefact,
+   exported JSON, and the write-back landed it with `--dry-run` reviewed first. No markdown was
+   hand-edited.
+2. **The console earned its place.** `/uat/` ran the preflight and rebuilt the artefact from
+   buttons, which is what the product owner asked for; a `file://` page cannot run `manage.py`,
+   so the commands live on a served page and the artefact stays offline.
+3. **Two defects were found by bringing the UAT up, and both are recorded, not absorbed.**
+   `answer_question()` cached the model's reply *before* auditing it (fixed; §1.31, five tests),
+   and the model still cites one sentence twice on Scenario 1's question (**G8**, open — the
+   refusal is the audit doing its job). The cost question (Scenario 10 item 5) refuses for the
+   same reason, so **G3** is not merely "omits the R100 fee" any more.
+4. **What the signature does and does not mean.** It means the product owner judged all ten and
+   accepted MVP 0 with G8 and G3 written down. It does **not** mean the OPP's three voices have
+   spoken: the PGS administrator, committee reviewer and consumer member rows are empty, and the
+   file says so. `mvp1a`'s UAT is unsigned because 1a is not built.
+5. **A test that was passing for the wrong reason is fixed.** `test_the_result_lands_after_the_
+   judgement_and_before_what_follows` anchored on a line number (`i > 220`) and broke the moment
+   a note was added above it; it now anchors on Scenario 9's heading.
+
+**For the next agent, in order:** **G8** (prompt rule 7 + `PROMPT_VERSION`, measured against the
+probe *with the chat retrieval limit* — the probe currently measures a different path and looks
+green) → the two operational items in §18 (the deployed corpus predates D52/D53; `--force` must
+not enter `deploy.sh`) → the remaining two seats → the `0∥` spike → MVP 1a.
+
+**State:** gate green at **788**, `lint-imports` kept, backlog no drift, tree clean, everything
+pushed. The dev instance from the sign-off session is stopped; `manage.py changepassword admin`
+is the way into `/uat/` and `/admin/` if the password is not to hand.
