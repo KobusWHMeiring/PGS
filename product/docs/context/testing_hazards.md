@@ -1243,6 +1243,31 @@ red trains them to ignore all six rows.
 (`poppler` / `Xpdf 4.00`) explicitly — the version is the fact that matters, not the exit code.
 Keep the row advisory: it is needed to re-extract a document, not to judge a scenario.
 
+### 3.11 A suite outside the gate drifts, and the handover's count is not a result
+
+`tests/e2e` is deliberately outside `scripts/verify.sh` (no chromium in the gate), and
+`HANDOVER.md` §8 recorded it as *"**34 Playwright tests** green, outside the gate by design"*.
+On 2026-10-22 the suite collected **45** and **8 of them failed at HEAD**, reproducibly:
+
+    $ python -m pytest tests/e2e/test_public_site.py::test_controls_are_at_least_44px -q
+    FAILED ...::test_controls_are_at_least_44px[chromium-home]
+    FAILED ...::test_controls_are_at_least_44px[chromium-ask]   (8 routes, one offender)
+    AssertionError: targets under 44px on /ask/: [{'sel': '.site-nav__link', 'text': 'Ask',
+                                                    'w': 26, 'h': 44}]
+
+`.site-nav__link` had `min-height: 44px` and nothing on the horizontal axis, so every label
+wider than 44 px passed and the three-letter one did not. It was live on
+`organicguarantee.africa` for as long as the rule had been written.
+
+**Consequence:** two separate failures of process. The count in the handover was stale by
+eleven tests, so "green" described a suite that no longer existed; and because e2e is outside
+the gate, a real DESIGN rule 5 breach shipped. Neither would have been caught by anything
+except running `pytest tests/e2e`.
+
+**Rule:** run `python -m pytest tests/e2e -q` and read the **number** before any deploy, and
+quote the collected count rather than a remembered one. When a rule has two axes, assert both:
+`min-height` alone quietly satisfies half of "≥44×44".
+
 ## 4. Domain hazards already in `HANDOVER.md` §6
 
 Not duplicated here — read that section. It covers the polarity trap (R1a-2), the
