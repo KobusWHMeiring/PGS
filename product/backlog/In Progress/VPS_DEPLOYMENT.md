@@ -122,6 +122,54 @@ the first check is expected to 503).
 poppler build: **363 chunks**, 316 of them SAOSO where Xpdf builds 319 — so `uat_seed --check`
 *correctly* reports `corpus present` as blocking until plan P7.4 rebuilds it from artefacts.
 
+## 4b. Second redeploy and the corpus refresh, 2026-10-22 — clean, and one doc claim disproved
+
+`f4e8907` deployed with no failures. What it proved, and the one surprise:
+
+| Step | Result |
+|---|---|
+| Gate on the box (clean scratch tree) | **804 passed / 67 s** — matches the dev box exactly |
+| Pull | `fb41a47..f4e8907`, **five** commits |
+| migrate | **"No migrations to apply."** — see below |
+| collectstatic | 2 copied, 145 unmodified, **no duplicate-destination warnings** (§4a item 6 holding) |
+| backup | 172 archive entries, 21 tables, 12 files checksummed |
+| `check --deploy` | no issues, 1 silenced |
+| `/health/` | 503 once (`celery_worker: error` — the worker restarts first), `ok` on retry |
+
+**The surprise, recorded because the docs caused it:** §4a above said live was `206f35f` and
+`fb41a47` was undeployed. It was not — the pull was `fb41a47..f4e8907`, so a deploy had already
+landed `fb41a47` and `core.0005` with it, and `migrate` correctly had nothing to do. The lesson is
+the ordinary one: a handover's "state after it" line is true at the moment it is written and is not
+maintained by anything.
+
+### 4b.1 Corpus rebuilt from the current pipeline (D52/D53) — `--force`, once
+
+`ingest_standard --doc <doc> --file <pdf> --force` for all four, run as `carbonplanner` with
+`deploy.sh`'s environment. Every document re-embedded; the old chunks and their
+`retrieved_chunks` links were destroyed in the same transaction.
+
+| Document | Box (poppler 24.02) | Dev box (Xpdf 4.00) |
+|---|---|---|
+| SAOSO | 311 | 319 |
+| OPP | 29 | 30 |
+| BPP | 16 | 9 |
+| landscape | 8 | 8 |
+| **total** | **364** | **366** |
+
+All four report `embedded=True`, `source=pdf`; `probe_chat --chunks-only` reports
+`limit: 8` and `arms: lexical_only=False`. The pre-refresh build was 363/316 — so the deltas are
+the reflow (13 reflow pages on SAOSO), not a regression.
+
+**The count is not the check; the extractor is.** 364 vs 366 is the poppler/Xpdf split already
+recorded in hazard §3.10, and **366 would have been the alarming answer** — it would mean the box
+was reading Xpdf while the gate's committed page fixtures are poppler-calibrated. BPP's 16-vs-9
+reads worse than it is: the box reported 16 at first install, before any reviewed artefact existed,
+so it is page splitting, not a different text of record.
+
+**Still outstanding, unchanged:** P2–P7 convert the remaining documents to reviewed artefacts. Until
+P7.4 the box serves the PDF extraction for all four, so `uat_seed --check` still reports
+`corpus present` as blocking.
+
 ## 5. Operating notes
 
 - **Redeploy:** `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh`. The gate runs

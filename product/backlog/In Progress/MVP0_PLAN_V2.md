@@ -1,6 +1,6 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: five items left** — two engineering, two human gates, one in flight and verified. Committee confirmation of no-claims left the MVP 0 close-out for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
+**Status:** In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: two items left, both human gates** — the VPS restore rehearsal and the missing UAT seats. `f4e8907` deployed and the corpus was rebuilt with `--force` on 2026-10-22 (364 chunks, all embedded, `lexical_only=False`); committee confirmation of no-claims left for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 **Owner:** Kobus Meiring (Product)
 **Last Updated:** 2026-10-22
 **MVP:** 0 (spec §19)
@@ -901,7 +901,8 @@ MVP 1 is a rewrite — better to know before six weeks of chatbot work.
 **Audited 2026-10-22.** Each box carries its evidence. Four are proved; of the three that are open,
 **two block the close-out and both are human gates — neither is a build task** — and the third was
 moved to project level by **D60**, because it needs a committee meeting rather than a commit.
-§4.1 is the close-out: the five things that stand between here and "MVP 0 done", and who owns each.
+§4.1 is the close-out: **two things** that stand between here and "MVP 0 done", and who owns
+each. Both need a person.
 
 - [x] Every document ingests with non-zero sections and non-empty `section_ref`
       — four documents, **340/340 chunks embedded**, 0 duplicate `section_ref`s, `lexical_only=False`
@@ -931,8 +932,8 @@ moved to project level by **D60**, because it needs a committee meeting rather t
       until the platform is presented to the committee, which is a project milestone after MVP 0. It is
       tracked in `todo.md` §Project and is **not** an MVP 0 close-out blocker.
 
-**MVP 0 is closed when** the five items in §4.1 are done **and** the two open boxes above (5 and 6)
-are ticked. Nothing outside that list is in scope for closing it; item 7's second half is D60's
+**MVP 0 is closed when** rows 3 and 4 of §4.1 are done and the two open boxes above (5 and 6) are
+ticked. Nothing outside that list is in scope for closing it; item 7's second half is D60's
 project-level gate.
 
 ### 4.1 Close-out — what is actually left
@@ -944,8 +945,8 @@ a blocker. Rows 3 and 4 need a person, not a build; row 4 is the only one this c
 
 | # | Item | Kind | Closed when | Owner |
 |---|---|---|---|---|
-| 1 | **Deploy the pending commits** — `fb41a47` (migration `core/0005` + the `makemigrations --check` gate step), `54ef082` (poppler attribution label), `c088718` (docs). Live is `206f35f` | engineering | `deploy.sh` green end to end; `Apply all migrations: … core.0005` in the output; no static warnings; `/health/` ok | Build |
-| 2 | **Refresh the deployed corpus and the chat budget** (D52/D53 predate the box) | engineering | The box serves the canonical corpus: non-zero sections per document, `lexical_only=False`, `CHAT_RETRIEVAL_LIMIT=8` confirmed, and three questions through the live `/ask/` return citations. **`--force` never enters `deploy.sh`** — it destroys every `ChatMessage.retrieved_chunks` trail | Build |
+| 1 | **Deploy the pending commits** — `fb41a47` (migration `core/0005` + the `makemigrations --check` gate step), `54ef082` (poppler attribution label), `c088718` (docs) | engineering, **deployed 2026-10-22** | `f4e8907` live. Gate on the box **804 passed / 67 s**; backup verified (172 archive entries, 21 tables); no static warnings; `/health/` `ok` on retry. **`migrate` had nothing to do** — `core.0005` had already landed in an unrecorded earlier deploy, which disproves §4a's "live is `206f35f`" claim. See `VPS_DEPLOYMENT.md` §4b | Build |
+| 2 | **Refresh the deployed corpus and the chat budget** (D52/D53 predate the box) | engineering, **fresh 2026-10-22** | Re-ingested all four with `--force`: **364 chunks** (SAOSO 311, OPP 29, BPP 16, landscape 8), every one `embedded=True`, `source=pdf`. `probe_chat` confirms `limit: 8`, `arms: lexical_only=False`. The poppler build — 366 would have meant the box was reading Xpdf. Budget is live at 8; the cardboard question now answers instead of refusing. **`--force` stays out of `deploy.sh`** — it destroys every `ChatMessage.retrieved_chunks` trail | Build |
 | 3 | **Rehearse the restore on the VPS** (A9, R11) | human, on the box | `docs/RUNBOOK.md` §2.1 gains a **server-dated** row: 13/13 tables matched, media checksums matched, run against the production database | Operator |
 | 4 | **The missing UAT seats on scenarios 1, 3, 8** (D4, D23) | human, external | Either signed by the **PGS administrator**, **committee reviewer** and **consumer member**, **or** those three scenarios recorded explicitly provisional with the re-run scheduled at MVP 1 kickoff (D23 permits this) | Product owner |
 | 5 | **Committee confirmation of no-claims** (§4 item 7) | **project-level (D60)** | Tracked in `todo.md` §Project and linked back here. **Not an MVP 0 blocker** — the grep stands as the guarantee until the committee signs | Product owner |
