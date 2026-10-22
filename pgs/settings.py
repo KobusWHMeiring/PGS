@@ -296,7 +296,12 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 STATIC_URL = "/static/"
 STATIC_ROOT = Path(env("STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 # Zero build pipeline (§IV): assets ship via collectstatic, JS is vendored.
-STATICFILES_DIRS = [BASE_DIR / "core" / "static"]
+# `core/static/` is an *app* directory, so AppDirectoriesFinder already serves it.
+# Listing it here as well made every file a duplicate destination, and `collectstatic`
+# warned twenty times per deploy ("Found another file with the destination path
+# 'css/root.css'. It will be ignored..."). Which copy wins depended on finder order, and
+# there was nothing to choose between them — so the second entry is gone.
+STATICFILES_DIRS = []
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

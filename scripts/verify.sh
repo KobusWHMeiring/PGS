@@ -145,6 +145,21 @@ echo ""
 echo "==> 1/3  manage.py check"
 "$PYTHON" manage.py check
 
+# A model change with no migration is invisible on the dev box and prints a warning on
+# every deploy (`migrate`: "your models have changes that are not yet reflected in a
+# migration"). Found on the VPS 2026-10-22: `EscalatedQuery.reason` gained D54's
+# `CITATION_AUDIT` choice and no migration followed. `--check` exits non-zero, and needs
+# no database, so it belongs beside `check`.
+echo "==> 1/3  makemigrations --check (no model change without a migration)"
+if ! "$PYTHON" manage.py makemigrations --check --dry-run; then
+    echo "" >&2
+    echo "ERROR: a model changed without a migration. Run:" >&2
+    echo "    python manage.py makemigrations" >&2
+    echo "  A schema change that never reaches the server is worse than a missing field:" >&2
+    echo "  the code expects a column the deployment does not have." >&2
+    exit 1
+fi
+
 # --- 2. Architecture contract ------------------------------------------------
 # `--no-cache`: Grimp's cached module graph can outlive a deleted file and report a
 # stale result (testing_hazards.md §2.2).
