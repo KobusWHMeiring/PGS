@@ -194,13 +194,27 @@ if [ -n "$DB_PASS" ]; then export PGPASSWORD="$DB_PASS"; fi
 PG_DUMP_MODE="${PG_DUMP_MODE:-auto}"     # auto | host | docker
 DOCKER_SERVICE="${PG_DUMP_DOCKER_SERVICE:-db}"
 
+# The major version from a version banner, **first match only**.
+#
+# `grep -oE` prints every match on its own line, and Debian/Ubuntu's banner contains more
+# than one number: `pg_dump (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)` yields
+# 16.15, 16.15, 0.24 and 04.1 — so the parse produced four lines, the equality test against
+# "16" failed, and the deploy died at step 3/8 claiming no matching client was on PATH while
+# `pg_dump 16.15` was sitting right there (VPS, 2026-10-22).
+#
+# `grep -m1` does NOT fix this: it stops after one matching *line*, and every match is on
+# that line. The pipe is `head -n1`. One function so the two callers cannot drift.
+version_major() {
+    grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1
+}
+
 server_major="$(psql --no-psqlrc --tuples-only --no-align --command 'SHOW server_version;' \
     | cut -d. -f1 | tr -d '[:space:]')"
 [ -n "$server_major" ] || die "could not determine the server version."
 
 host_dump_major=""
 if command -v pg_dump >/dev/null 2>&1; then
-    host_dump_major="$(pg_dump --version | grep -oE '[0-9]+\.[0-9]+' | cut -d. -f1)"
+    host_dump_major="$(pg_dump --version | version_major)"
 fi
 
 choose_dump_mode() {
@@ -242,8 +256,11 @@ dump_version() {
 # The chosen client must not be newer than the server. With `auto` this is already
 # guaranteed; with an explicit `host` it is re-checked, because PG_DUMP_MODE is
 # operator-supplied and an operator can be wrong.
-dump_major="$(dump_version | grep -oE '[0-9]+\.[0-9]+' | cut -d. -f1)"
-if [ -n "$dump_major" ] && [ "$dump_major" -gt "$server_major" ] 2>/dev/null; then
+dump_major="$(dump_version | version_major)"
+case "$dump_major" in
+    ''|*[!0-9]*) die "could not read the client's major version from: $(dump_version)" ;;
+esac
+if [ "$dump_major" -gt "$server_major" ]; then
     die "pg_dump client is $dump_major but the server is $server_major. A newer client writes syntax the older server cannot restore (PG 17 emits SET transaction_timeout; PG 16 rejects it). Install postgresql-client-$server_major, or set PG_DUMP_MODE=docker."
 fi
 log "dump client: $DUMP_MODE, version $dump_major against server $server_major"

@@ -993,6 +993,62 @@ now fetches full and repairs an existing `.git/shallow` before fetching. The gat
 need history — `git archive FETCH_HEAD` only reads the fetched commit — so there was never
 anything to save.
 
+### 2.11 `grep -oE` prints every match, and `-m1` does not mean "one match"
+
+`scripts/backup.sh` refused to back up on the VPS:
+
+```text
+FATAL: no pg_dump matching server major 16 on PATH, and docker is unavailable.
+```
+
+`pg_dump 16.15` was on PATH the whole time. The parse was
+
+```bash
+host_dump_major="$(pg_dump --version | grep -oE '[0-9]+\.[0-9]+' | cut -d. -f1)"
+```
+
+and Ubuntu's banner is one line with four numbers in it:
+
+```text
+pg_dump (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+      matches:        16.15        16.15        0.24     04.1
+      after cut:      16           16           0        04
+```
+
+so `host_dump_major` was the four-line string `16
+16
+0
+04`, `[ "$host_dump_major" = 16 ]`
+was false, and the script fell through to its "no matching client" error. The same parse fed
+the newer-client guard, where `[ "$dump_major" -gt "$server_major" ]` failed on a four-line
+operand and was silenced by `2>/dev/null` — so even the check that exists to catch a bad
+client was inert.
+
+**`grep -m1` does not fix it.** `-m1` stops after one matching *line*; every match is on that
+line, so `-m1 -oE` still prints all four. The fix is `head -n1`:
+
+```bash
+version_major() { grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1; }
+```
+
+**Why it survived until a deploy:** the dev box has no native `pg_dump` at all — `backup.sh`
+uses `docker compose exec` there, so the host-banner path was never executed on any machine
+that ran the script. `tests/tools/test_backup_version_parse.py` now extracts the shipped
+function and feeds it real banners; dropping `head -n1` fails it.
+
+**Two harness traps found while writing that guard**, both the same lesson — the test was
+failing for its own reasons, not the script's:
+
+- `bash -c "<multi-line script>"` mangles quotes through Windows; and a `tempfile` path handed
+  to msys bash fails on both the backslashes and the 8.3 short name (`KOBUSM~1`). Feed the
+  script on **stdin**: `bash -s -- <arg>`.
+- `subprocess.run(..., input=script, text=True)` translates LF to CRLF on Windows on the way
+  **into** the child, so bash dies on the trailing carriage return of every line. Pass bytes.
+
+**Rule:** a version string is parsed with an anchor (`head -n1`, or a regex that consumes the
+whole banner), never with a bare `grep -o`. And a guard against a malformed value needs its
+own test: `2>/dev/null` on an integer comparison turns "wrong input" into "check passed".
+
 ---
 
 ## 3. This machine (Windows, Docker Desktop) — and shell traps
