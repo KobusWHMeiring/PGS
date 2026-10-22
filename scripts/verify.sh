@@ -51,6 +51,47 @@ echo "==> verify.sh"
 echo "    python:        $PYTHON"
 echo "    lint-imports:  ${LINT_IMPORTS:-<not found>}"
 
+# --- Scripts must be executable ----------------------------------------------
+#
+# `git archive` — how deploy/deploy.sh materialises the commit it gates — preserves
+# the mode recorded in the commit. Three scripts were committed 100644, so the first
+# real redeploy died at step 1/8 with `./scripts/verify.sh: Permission denied`, and
+# the same defect would have stopped `scripts/backup.sh` at step 3/8 — after the pull,
+# before the migration.
+#
+# This belongs here rather than on the box: a `chmod` on a server cannot fix a mode
+# that is not in the commit, and the next archive would be broken again.
+#
+# Two records, because the gate runs in two places. In a checkout (CI, a dev box) the
+# **index** is the authority — and it is the only form of this check that can fail on
+# Windows, where msys reports every file as executable. In the `git archive` tree that
+# deploy.sh builds there is no `.git`, and the committed mode has become the file's
+# mode, so the filesystem is then the same fact.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+missing=""
+if [ -d "$REPO_ROOT/.git" ]; then
+    # `awk` rather than a bash loop: a path with a space stays one path.
+    missing="$(git -C "$REPO_ROOT" ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')"
+else
+    for script in "$REPO_ROOT"/*.sh "$REPO_ROOT"/scripts/*.sh "$REPO_ROOT"/deploy/*.sh; do
+        [ -e "$script" ] || continue
+        if [ ! -x "$script" ]; then
+            missing="${missing}${script#"$REPO_ROOT"/}"$'\n'
+        fi
+    done
+fi
+if [ -n "$missing" ]; then
+    {
+        echo ""
+        echo "ERROR: these scripts are not executable in the commit:"
+        printf '  %s\n' $missing
+        echo "  Fix the index, not just the disk:"
+        echo "    git update-index --chmod=+x <path>"
+        echo "  Their sibling scripts run them directly, and git archive keeps 644."
+    } >&2
+    exit 2
+fi
+
 # --- Preconditions -----------------------------------------------------------
 
 # A2 makes a missing SECRET_KEY an error on purpose. Say so here rather than

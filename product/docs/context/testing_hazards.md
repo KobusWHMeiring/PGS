@@ -879,6 +879,38 @@ fallback disagree. When you change a budget, change it in `pgs/settings.py` **an
 `.env.example`, then bump `PROMPT_VERSION` — the answer cache is keyed on the prompt contract,
 not on the retrieval budget.
 
+### 2.8 A file mode is part of the commit, and Windows cannot see it
+
+`scripts/verify.sh`, `scripts/backup.sh` and `scripts/restore.sh` were committed
+**`100644`**. On the dev box `ls -l` shows them `-rwxr-xr-x` — msys fakes the bit — so no
+local run could notice. `git archive`, which is how `deploy/deploy.sh` materialises the
+commit it gates, writes the **index** mode. The first real redeploy therefore died before
+it verified anything:
+
+```text
+==> 1/8  Verifying origin/main in a clean tree
+bash: line 1: ./scripts/verify.sh: Permission denied
+❌ The gate FAILED on origin/main. Nothing was deployed.
+```
+
+Two victims, one cause. `deploy.sh` also runs `"$APP_DIR/scripts/backup.sh"` directly at
+step 3/8, so the same defect would have stopped the pre-migration backup — after the pull,
+before the migration, which is the worst place to discover it. `scripts/restore.sh` was
+the third: it would have failed during a restore, in an emergency.
+
+**Consequence:** an entire class of defect is invisible on the machine the code is written
+on and only appears where the archive is unpacked. And it stayed invisible because
+`deploy.sh` had **never run** — a deploy script nobody has executed is a hypothesis, not a
+gate.
+
+**Rule:** the mode is fixed in the index, never on a server —
+`git update-index --chmod=+x <path>`, then commit; a `chmod` on the box is erased by the
+next archive. `scripts/verify.sh` now checks it as step 0: in a checkout it reads
+`git ls-files -s` (the only form that can fail on Windows), and in a `git archive` tree,
+where there is no `.git`, it tests `-x` on every `*.sh`. Proven: `git update-index
+--chmod=-x scripts/backup.sh` makes the gate exit 2 naming the file; restoring the bit
+turns it green.
+
 ---
 
 ## 3. This machine (Windows, Docker Desktop) — and shell traps
