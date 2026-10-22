@@ -104,7 +104,17 @@ SELF_BEFORE="$(sha256sum "$SELF_PATH" | cut -d' ' -f1)"
 # exactly what the pull below installs.
 echo ""
 echo "==> 1/8  Verifying origin/$GIT_BRANCH in a clean tree"
-sudo -u "$APP_USER" git -C "$APP_DIR" fetch --quiet --depth 1 origin "$GIT_BRANCH"
+# Never `--depth 1` here. This fetch runs against the LIVE checkout, and a depth-limited
+# fetch writes a shallow graft into it: `origin/main` arrives with no ancestors, so the
+# `--ff-only` pull at step 2/8 can never find a merge base and reports a bogus divergence
+# ("have diverged, and have 57 and 1 different commits each") — measured on the VPS
+# 2026-10-22, after the first deploy run had already made the clone shallow. A deploy must
+# not damage the repository it is deploying.
+if [[ -f "$APP_DIR/.git/shallow" ]]; then
+    echo "        repo is shallow (a previous deploy fetched with --depth 1) — unshallowing"
+    sudo -u "$APP_USER" git -C "$APP_DIR" fetch --quiet --unshallow origin "$GIT_BRANCH"
+fi
+sudo -u "$APP_USER" git -C "$APP_DIR" fetch --quiet origin "$GIT_BRANCH"
 VERIFY_COMMIT="$(sudo -u "$APP_USER" git -C "$APP_DIR" rev-parse FETCH_HEAD)"
 SCRATCH="$(sudo -u "$APP_USER" mktemp -d /tmp/${APP_NAME}-verify-XXXXXX)"
 cleanup() {

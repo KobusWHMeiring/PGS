@@ -960,6 +960,39 @@ and `--from-corpus` ingestion — after which the runtime text is reviewable dat
 gate assertion depends on a binary. Until then, **a green gate on one machine is not
 evidence that the deploy target can run it.**
 
+### 2.10 A `git fetch --depth 1` in a deploy makes the next `--ff-only` pull impossible
+
+`deploy/deploy.sh` fetched `origin/main` with `--depth 1` **into the live checkout** before
+running the gate. A depth-limited fetch writes a **shallow graft** (`.git/shallow`) into the
+repository: `origin/main` then exists locally with no ancestors, so the `--ff-only` pull two
+steps later cannot find a merge base and refuses, with a divergence count that looks like
+local work:
+
+```text
+==> 2/8  Pulling origin/main
+Your branch and 'origin/main' have diverged,
+and have 57 and 1 different commits each, respectively.
+fatal: Not possible to fast-forward, aborting.
+```
+
+There were no local commits: 57 was the checkout's real history and 1 was the grafted tip.
+Reproduced off-box from a full clone checked out at the same commit:
+
+```bash
+git checkout <old-head>; git fetch --depth 1 origin main; git pull --ff-only
+# fatal: Not possible to fast-forward, aborting.
+git fetch --unshallow origin main; git pull --ff-only     # repairs it
+```
+
+**Consequence:** a deploy that cannot pull can never deliver its own fix — the new
+`deploy.sh` is on the far side of the pull that the old `deploy.sh` broke. The first run has
+to be repaired by hand, once.
+
+**Rule:** never depth-limit a fetch that runs against the tree being deployed. `deploy.sh`
+now fetches full and repairs an existing `.git/shallow` before fetching. The gate does not
+need history — `git archive FETCH_HEAD` only reads the fetched commit — so there was never
+anything to save.
+
 ---
 
 ## 3. This machine (Windows, Docker Desktop) — and shell traps
