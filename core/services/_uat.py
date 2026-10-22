@@ -172,8 +172,20 @@ def _extraction_row() -> PreflightRow:
     # while printing its banner (measured: `pdftotext version 4.00`, exit 1). Failing the
     # row for that would make a correct installation read as a broken one, and a warning
     # that is always on is a warning nobody reads.
+    # Attribution reads the WHOLE banner, not just the version line. Poppler's first line
+    # is `pdftotext version 24.02.0`; the word "poppler" appears only on its copyright
+    # line, so the version-line-only check printed `(unknown)` for a perfectly good poppler
+    # install on the VPS (2026-10-22) — and this row exists to tell a reviewer which
+    # extractor built the corpus, so "unknown" defeats it. Check poppler first: both
+    # banners carry a Glyph & Cog copyright line.
     lowered = observed.lower()
-    kind = "Xpdf" if "xpdf" in lowered or "4.00" in lowered else ("poppler" if "poppler" in lowered else "unknown")
+    banner_text = "\n".join(banner).lower()
+    if "poppler" in banner_text:
+        kind = "poppler"
+    elif "glyph & cog" in banner_text or lowered.startswith("pdftotext version 4."):
+        kind = "Xpdf"
+    else:
+        kind = "unknown"
     return PreflightRow(
         name="extraction tool",
         command=f"{binary} -v",
@@ -181,7 +193,11 @@ def _extraction_row() -> PreflightRow:
         observed=f"{observed} ({kind})",
         ok=bool(banner),
         blocking=False,
-        note="poppler and Xpdf 4.00 word-wrap differently; Scenario 9 compares against paper",
+        note=(
+            "poppler and Xpdf 4.00 wrap lines differently: the live corpus holds 316 "
+            "SAOSO chunks where Xpdf builds 319 (measured 2026-10-22). Scenario 9 compares "
+            "against paper, so the reader must be the one the corpus was built with."
+        ),
     )
 
 

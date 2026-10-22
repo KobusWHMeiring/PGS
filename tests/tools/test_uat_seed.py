@@ -127,6 +127,30 @@ def test_the_extraction_row_names_the_implementation(monkeypatch):
     assert row.observed == "pdftotext version 4.00 (Xpdf)"
 
 
+def test_the_extraction_row_names_poppler_from_its_copyright_line(monkeypatch):
+    """The real poppler banner, verbatim from the VPS (`pdftotext -v`, exit 1).
+
+    Mutation: reading only the version line prints `(unknown)` — which is what the live
+    box reported for a correct install, because poppler's first line never says "poppler".
+    """
+    banner = (
+        "pdftotext version 24.02.0\n"
+        "Copyright 2005-2024 The Poppler Developers - http://poppler.freedesktop.org\n"
+        "Copyright 1996-2011, 2022 Glyph & Cog, LLC"
+    )
+    monkeypatch.setattr(_uat, "check_health", lambda: _ok_health())
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda *a, **k: subprocess.CompletedProcess(a, 99, "", banner),
+    )
+
+    row = next(row for row in preflight(expected_chunks=0).rows if row.name == "extraction tool")
+
+    assert row.ok is True
+    assert row.observed == "pdftotext version 24.02.0 (poppler)"
+
+
 def test_the_command_exits_non_zero_on_a_blocking_failure(monkeypatch, capsys):
     monkeypatch.setattr(_uat, "check_health", lambda: _ok_health())
 
