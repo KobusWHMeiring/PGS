@@ -24,6 +24,17 @@ pytestmark = pytest.mark.e2e
 URL = "/ask/"
 QUESTION = "can i use horse manure?"
 
+#: Real laptop and phone viewports. The composer is the page's only control: if the
+#: visitor has to scroll to reach it, the page has failed before the product starts.
+#: Measured in the browser rather than reasoned about from the stylesheet, because a
+#: page can be 40 px too tall without any test or linter noticing.
+FOLD_VIEWPORTS = [
+    {"width": 1440, "height": 900},
+    {"width": 1366, "height": 768},
+    {"width": 1280, "height": 800},
+    {"width": 390, "height": 844},
+]
+
 
 @pytest.fixture
 def composer(page, live_server):
@@ -52,6 +63,34 @@ def _fulfil_ok(route):
         content_type="text/html",
         body="<p id='fake-answer'>sent</p>",
     )
+
+
+@pytest.mark.parametrize(
+    "viewport",
+    FOLD_VIEWPORTS,
+    ids=[f"{v['width']}x{v['height']}" for v in FOLD_VIEWPORTS],
+)
+def test_the_composer_is_above_the_fold(browser, live_server, viewport):
+    """The question box and its button are wholly visible without scrolling.
+
+    `/ask/` opened with a four-sentence head band under the header, and the explainer
+    below the header said the same thing as the aside beside the window. The band is
+    now one line, so the whole window — thread, textarea and button — fits a 768 px
+    laptop. That is a layout claim, and this is the only place it can be checked: the
+    CSS reads correctly at every height, including the ones where it does not fit.
+    """
+    context = browser.new_context(viewport=viewport)
+    page = context.new_page()
+    page.goto(live_server.url + URL, wait_until="networkidle")
+
+    box = page.locator("#chat-send").bounding_box()
+    assert box is not None, "the Ask button is not laid out"
+    bottom = box["y"] + box["height"]
+    assert bottom <= viewport["height"], (
+        f"the Ask button ends at {bottom:.0f} px on a {viewport['height']} px viewport — "
+        "the visitor must scroll to ask a question"
+    )
+    context.close()
 
 
 def test_enter_sends_and_shows_the_message_before_the_answer(composer):

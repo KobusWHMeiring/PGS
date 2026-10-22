@@ -210,15 +210,16 @@ PAGES: dict[str, Page] = {
             "Basic Production Principles or the certification landscape. Every answer "
             "cites the passage it came from, or says plainly that it cannot."
         ),
-        eyebrow="Ask the standard",
+        # The eyebrow names the surface, not the page: with a one-line `h1`, an
+        # eyebrow reading "Ask the standard" directly above it printed the same
+        # words twice, which reads as a broken template rather than as hierarchy.
+        eyebrow="The assistant",
         heading="Ask the standard",
-        heading_accent="and get a citation, or none at all.",
-        lede=(
-            "Answers are drawn only from the four documents this group publishes. Every "
-            "answer names the section it came from and quotes the passage. If the "
-            "documents do not cover your question, the assistant says so rather than "
-            "guessing — and the question is recorded for the administrator."
-        ),
+        # The page is the window, so the head band is one line of invitation and no
+        # more. The four-sentence explainer that used to live here said what the aside
+        # beside the window already says, in less room and further from the thing it
+        # describes — and it pushed the composer below the fold on a laptop.
+        lede="Ask any question about the organic standards. Answers from the documents only.",
     ),
     "contact": Page(
         key="contact",

@@ -1,7 +1,12 @@
 {% comment %} A sub-page's opening band. Same type roles as the home page's section heads
    (eyebrow / Lora h1 / lede), so a deep page does not invent a second visual
-   language. The h1 text arrives from `Page`, never from the template. {% endcomment %}
-<header class="page-head">
+   language. The h1 text arrives from `Page`, never from the template.
+
+   The page key rides along as a modifier class so a band can be tuned for the one
+   page whose height is a functional constraint — `/ask/`, where the window is the
+   page (see `chat.css`, `.page-head--ask`). A modifier that matches nothing is
+   inert; a second head template would be a second thing to keep in step. {% endcomment %}
+<header class="page-head page-head--{{ page.key }}">
   <div class="container">
     <p class="eyebrow">{{ page.eyebrow }}</p>
     <h1 class="serif-title page-head__title">{{ page.h1 }}</h1>

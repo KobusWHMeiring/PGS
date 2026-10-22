@@ -219,6 +219,21 @@
    when the keyboard is open; the form stays in normal flow below it.
    ========================================================================== */
 
+/* The band above the window. `/ask/` is the one page whose head band height is a
+   functional constraint rather than a rhythm: the window *is* the page, and a visitor
+   who has to scroll to find the question box has been told the wrong thing about what
+   the page is for. The head is cut to eyebrow / one-line h1 / one-line lede and the
+   band's padding is halved, which puts the whole window — bar, thread, textarea and
+   button — above the fold on a 768 px laptop. Measured, not assumed:
+   `tests/e2e/test_chat_composer.py::test_the_composer_is_above_the_fold`. */
+.page-head--ask {
+  padding-block: 2rem 1.5rem;
+}
+
+.section--ask {
+  padding-block: 1.5rem 4rem;
+}
+
 .chat-page {
   display: grid;
   grid-template-columns: 1fr;
@@ -227,7 +242,9 @@
 }
 
 .chat--page {
-  min-height: 32rem;
+  /* Sized so bar + thread + composer clear a 768 px viewport. An empty window that
+     pushes its own form below the fold is the defect this number removes. */
+  min-height: 28rem;
 }
 
 .chat__body--thread {
@@ -237,8 +254,11 @@
   scroll-margin-bottom: 30vh;
 }
 
+/* The empty thread holds one line and a lot of room. Centring that line stops the
+   blank panel reading as a render that failed; the note disappears with the first
+   question, so nothing is displaced by it later. */
 .chat__empty {
-  margin: 0;
+  margin: auto 0;
   color: rgb(var(--brand-cream-rgb) / 0.72);
   font-size: var(--text-xs);
   line-height: var(--leading-body);
