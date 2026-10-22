@@ -1,6 +1,7 @@
 # PRD: A canonical corpus — reviewed text as data, extraction as a build step
 
-**Status:** In Progress — the BPP artefact is built and reviewed; the OPP, landscape and SAOSO are not converted
+**Status:** In Progress — the BPP artefact is built and reviewed; the OPP, landscape and SAOSO are not converted.
+**2026-10-22:** scope extended by §8 — the deployment gate proved the *runtime* still depends on the extractor (`testing_hazards.md` §2.9). Decisions **D55–D58** are recorded in `PGS_PLATFORM_SPEC.md` §18.3, and the work is scheduled in `CORPUS_CANONICAL_FORMAT_PLAN.md`.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
 **Last Updated:** 2026-10-22
 **MVP:** MVP 0 — architecture change to how the corpus is produced. **No migration.**
@@ -196,25 +197,65 @@ artefact** → review only what changed, which is a better story than the curren
 
 ## 7. Open questions / follow-ups
 
-1. **Idempotency.** `ingest_standard` is keyed on the PDF's sha256, so a *reviewed edit*
-   needs `--force`. `report.corpus_digest` records which artefact produced the chunks, but
-   nothing compares it to a stored value. Options: a `corpus_digest` column (a migration,
-   so it needs a decision) or a management check that reports drift.
-2. **`CORPUS_DOCUMENTS` lives beside the models**, so the generator needs Django settings
-   to read a PDF. Move the descriptors to a Django-free module when the OPP is converted.
-3. **Should the artefact carry `chunk_sections` output instead of sections?** No: chunking
-   is retrieval tuning and must stay code. Recorded so it is not re-litigated.
-4. **Regenerating overwrites the review.** `build_corpus.py --force` writes a fresh draft;
-   the BPP's five corrections are re-applied by `_scratch/apply_bpp_edits.py`, which is
-   git-ignored and therefore not part of the record. They should be replayable from
-   `CORPUS_EDITS` (each entry has `original`, `replacement` and `kind`), so that
-   draft + declared edits = reviewed artefact. Until then, regenerating the BPP means
-   re-running that script.
-5. **The edit table is not self-cleaning.** When the generator learns a correction, the
-   edit must be deleted by hand; `test_each_edit_was_necessary` fails only if the
-   `original` stops existing, not if the `replacement` becomes identical to it.
-5. **`snapshot` or diff-based review for a 101-page SAOSO?** The BPP review was a full
-   read. SAOSO should be reviewed as a diff against the PDF path's sections, page by page.
+**All six were answered on 2026-10-22 while scoping the deployment failure — see §8 and `PGS_PLATFORM_SPEC.md`
+§18.3 D55–D58. The answers, in order:**
+
+1. **Idempotency.** A `corpus_digest` column on `StandardDocument` plus a read-only `corpus_check`; deploys *report*
+   drift and never refresh (D56). No silent `--force` in `deploy.sh`.
+2. **`CORPUS_DOCUMENTS` beside the models.** Still to do, folded into the plan (P7): move the descriptors into a
+   Django-free module so the generator needs no settings.
+3. **Artefact carries sections, not chunk_sections.** Confirmed, unchanged: chunking stays code.
+4. **Regenerating overwrites the review.** Fixed by making edits replayable (plan P3): the generator applies
+   `CORPUS_EDITS` itself, so `draft + declared edits = reviewed artefact`, proven by a test. The git-ignored
+   `_scratch/apply_bpp_edits.py` must not be part of the record.
+5. **The edit table is not self-cleaning.** A test asserts each edit's `replacement` still differs from its
+   `original`; when the generator learns a correction, the entry must be deleted by hand and the test fails until it is.
+6. **SAOSO review at 101 pages.** Diff-based, with mechanical acceptance first and human review of the flagged delta
+   (D58).
+
+---
+
+## 8. Taking the reader out of the runtime (2026-10-22)
+
+**Trigger.** The first real run of `deploy/deploy.sh` on the VPS failed its gate: *15 failed, 718 passed, 61 errors*.
+Every failure was extraction — poppler 24.02 versus the Xpdf 4.00 the goldens were measured on. `-table` does not
+exist in poppler at all (exit 99), poppler detects a different set of column-laid-out pages, and it rejoins a
+different number of hyphen wraps. Nothing was deployed, and that is the gate working. But it proved D53 was only
+**half** done: the artefact existed, and the runtime still had a reader on the path.
+
+### 8.1 What "out of the runtime" means — three requirements
+
+| # | Requirement | Decision |
+|---|---|---|
+| 1 | **Ingest cannot fall back to the PDF** for a governed document. A missing artefact is an error naming the generator, not a silent extract. | D55 |
+| 2 | **The gate needs no reader.** The parsers' goldens read committed page fixtures; `verify.sh` runs pytest with `PDFTOTEXT_BIN` pointed at a path that cannot exist, so extractor-independence is proved on every run, on every machine. | D57 |
+| 3 | **A deployment can tell whether its corpus is the committed one.** `corpus_digest` stored, `corpus_check` reports drift, `corpus_refresh --apply` is deliberate. | D56 |
+
+### 8.2 What stays dependent, deliberately
+
+- `scripts/build_corpus.py` and `scripts/extract_fixtures.py` still run `pdftotext`. They are **build-time** tools:
+  they run on the machine that produces artefacts, and their output is reviewed and committed. The artefact header
+  and `MANIFEST.json` record the extractor banner, so a regeneration under a different build is attributable.
+- `--from-pdf` stays available and tested: it is the equivalence oracle that makes the migration reversible
+  (section 4.4, guards 1 and 2) and the only way to ingest a document whose artefact does not exist yet.
+- `-table` remains Xpdf-4-only. That is now a constraint on the *artefact build*, not on the deployment.
+
+### 8.3 Acceptance for this scope extension
+
+1. `PDFTOTEXT_BIN=/nonexistent ./scripts/verify.sh` is green — no test in the gate reaches a PDF reader.
+2. On a box with no `pdftotext` at all: `deploy.sh` passes its gate, and `corpus_refresh --apply` rebuilds the corpus
+   from the committed artefacts.
+3. `corpus_check` on a stale deployment exits non-zero and names the documents whose digest differs.
+4. The transform tests still assert the same golden values — they read the same bytes from a file instead of a pipe.
+   A re-extraction diff script reports when a new extractor build would change them, and is run only by the person
+   building artefacts.
+
+### 8.4 The rollout this adds
+
+The document order in section 6 is unchanged (OPP, landscape, SAOSO). Two tasks move **ahead** of it, because they
+are what makes a deployment possible at all: the gate fixtures (plan P1) and drift reporting (P2). The per-document
+conversion follows, and the last task is the VPS refresh from artefacts — which is the proof that the box needs no
+reader.
 
 ---
 
