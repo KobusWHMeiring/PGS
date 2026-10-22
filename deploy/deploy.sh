@@ -132,10 +132,14 @@ sudo -u "$APP_USER" "$APP_DIR/venv/bin/pip" install --quiet gunicorn
 # inside verify.sh drops and rebuilds `test_$DB_VERIFY_NAME` every run.
 VERIFY_DATABASE_URL="${DATABASE_URL%/*}/$DB_VERIFY_NAME"
 VERIFY_SECRET="$(openssl rand -hex 32)"
+# `PDFTOTEXT_BIN` travels with the gate: the parsers' golden page/wrap tables match
+# one extractor implementation, so a deployment that pins Xpdf must be verified with
+# Xpdf. `sudo -u` resets the environment, so it is named explicitly like the two above.
 echo "        verify.sh (check + lint-imports + pytest --create-db)"
 if ! sudo -u "$APP_USER" env \
         DJANGO_SECRET_KEY="$VERIFY_SECRET" \
         DATABASE_URL="$VERIFY_DATABASE_URL" \
+        PDFTOTEXT_BIN="${PDFTOTEXT_BIN:-}" \
         bash -c "cd '$SCRATCH' && ./scripts/verify.sh"; then
     echo "" >&2
     echo "❌ The gate FAILED on origin/$GIT_BRANCH ($VERIFY_COMMIT)." >&2
