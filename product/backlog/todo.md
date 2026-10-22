@@ -33,6 +33,11 @@ the generated index's "To Do" section.
 
 
 
+- [ ] **Set a retention schedule for public chat transcripts** (D59: kept indefinitely until
+      then). Public questions can contain personal data about a third party; the group already has
+      a POPIA retention schedule for assessment records. Revisit at MVP 2 registry work at the
+      latest. Plan: `CORPUS_CANONICAL_FORMAT_PLAN.md` P2.8.
+
 ## Content
 
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.

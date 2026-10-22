@@ -1,6 +1,8 @@
 # Deployment: organicguarantee.africa on the homtini VPS
 
-**Status:** In Progress — live and serving; admin user, verification pass and UAT sign-off outstanding
+**Status:** In Progress — **redeploy path exercised 2026-10-22** (six runs; four deploy-blocking defects found and
+fixed, listed below). Live at `206f35f`; two commits ahead pending one more deploy. Admin user and the
+corpus refresh from artefacts (plan P7.4) outstanding.
 **Owner:** Deployment (the D19 cutover, pulled forward)
 **Last Updated:** 2026-10-20
 **MVP:** Deploys the **MVP 0 surface** — public site, `/documents/`, grounded `/ask/` —
@@ -95,6 +97,30 @@ be moved into §18.3 as D54, verbatim or amended:**
 > outage rather than a failed preview; and D19's "no public host" premise is
 > superseded — MVP 2's remaining content is the PWA and the cutover of the old
 > WordPress redirects onto this host, not standing the host up.
+
+## 4a. First real redeploy, 2026-10-22 — what it cost, and what it proved
+
+Six runs of `deploy.sh` before a green one. Every failure was in the *deploy path*, not the
+app, and every one had been invisible because the script had never run:
+
+| # | Failure | Fix |
+|---|---|---|
+| 1 | `./scripts/verify.sh: Permission denied` | three scripts committed `100644`; `git archive` uses the index mode. Fixed in the index; `verify.sh` now checks it (hazard §2.8) |
+| 2 | `git pull --ff-only` refused — "have diverged, 57 and 1" | the deploy's own `git fetch --depth 1` wrote a shallow graft into the live checkout. Fetch full, unshallow first (hazard §2.10) |
+| 3 | gate failed: 15 failed, 61 errors | poppler 24.02 vs the Xpdf 4.00 the goldens were measured on. The gate now reads committed page fixtures and runs with a poisoned `PDFTOTEXT_BIN` (plan P1, hazard §2.9) |
+| 4 | `no pg_dump matching server major 16 on PATH` (client 16.15 was on PATH) | the version parse took every `grep -oE` match on Ubuntu's four-number banner, so the comparison never matched (hazard §2.11) |
+| 5 | `migrate` warned "models have changes not yet reflected in a migration" | D54's `CITATION_AUDIT` choice had no migration. `core/0005` added; `verify.sh` now runs `makemigrations --check` |
+| 6 | twenty `collectstatic` duplicate-destination warnings per deploy | `STATICFILES_DIRS` listed `core/static`, which is already an app directory. Removed; 147 files either way |
+
+**Result:** gate green on the box at **803 tests / 63 s**, backup verified (172 archive
+entries, 21 tables, media + private_media checksums), migrate/seed/publish/static/`check
+--deploy`/restart, and `/health/` `ok` on the second attempt (the worker is restarted first;
+the first check is expected to 503).
+
+**State after it:** live `206f35f`; `fb41a47` (migration `0005` + static) and `54ef082`
+(poppler attribution) are pushed and **not yet deployed**. The corpus is the pre-D52/D53
+poppler build: **363 chunks**, 316 of them SAOSO where Xpdf builds 319 — so `uat_seed --check`
+*correctly* reports `corpus present` as blocking until plan P7.4 rebuilds it from artefacts.
 
 ## 5. Operating notes
 

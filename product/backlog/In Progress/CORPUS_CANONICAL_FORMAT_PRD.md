@@ -261,6 +261,30 @@ reader.
 
 ---
 
+### 8.5 Chat telemetry and retention (D59)
+
+The record the assistant already keeps is the input to this PRD's later tasks: every turn
+stores the question, the answer **or the refusal**, the model, latency, token counts, and the
+`retrieved_chunks` the model was given; every refusal also writes an `EscalatedQuery` with a
+reason (`INSUFFICIENT_CONTEXT`, `NO_CITATIONS`, `CITATION_AUDIT`, `USER_REQUESTED`). A refused
+question is therefore a corpus gap with its retrieval evidence attached.
+
+Two things were missing for that record to be usable, and neither is a change to what the
+product does. Both are plan tasks, not this PRD's decision:
+
+- **Attribution** (P2.5): a stored answer does not say which `PROMPT_VERSION` or corpus
+  produced it, so after a re-ingest old and new rows are indistinguishable.
+- **A review loop** (P2.6/P2.7): only refusals have a queue. A grounded-looking wrong answer
+  has nowhere to go, and there is no bulk way to read the record.
+
+**Retention is D59: keep every transcript until the group sets a schedule.** Recorded rather
+than assumed, because this is a public form and the question text can contain personal data
+about a third party; the decision to keep is a POPIA decision, not an absence of one. No purge
+is built, and the eventual purge must be explicit about `EscalatedQuery`, which survives
+message deletion on purpose.
+
+---
+
 ## Pre-Flight Checklist
 
 - [x] Models changed? **No** — no migration.

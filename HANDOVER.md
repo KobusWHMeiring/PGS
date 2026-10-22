@@ -3,13 +3,15 @@
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
-the answer-coverage session and the budget-and-instrument session — **2026-10-22**.
-**Repo state:** `main`, **52 commits**, tree **clean**, `HEAD == origin/main`.
-`verify.sh` green at **794 tests**; `python -m pytest tests/e2e -q` green at 34 more.
+the answer-coverage session, the budget-and-instrument session and the deployment session — **2026-10-22**.
+**Repo state:** `main`, **78 commits**, tree **clean**, `HEAD == origin/main`.
+`verify.sh` green at **804 tests**; `python -m pytest tests/e2e -q` green at 34 more.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed** (see §3).
-**Live:** `https://organicguarantee.africa` on the homtini VPS — but **the deployed
-corpus and chat budget predate D52/D53 and §21**; see §4 item 2 and
-`product/backlog/In Progress/VPS_DEPLOYMENT.md`.
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`**; two commits
+(`fb41a47`, `54ef082`) are pushed and **not yet deployed**. The corpus is the pre-D52/D53
+poppler build — **363 chunks**, 316 SAOSO against Xpdf's 319 — so `uat_seed --check`
+correctly blocks until plan **P7.4** rebuilds it from artefacts. See §22 and
+`product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
 
 ---
 
@@ -1034,3 +1036,57 @@ instrument that agrees with the fix is the one that hides it.
 **Next, in order:** the two operational items in §4 item 2 (the deployed corpus and the box's
 `CHAT_RETRIEVAL_LIMIT` both predate this commit) → the remaining two UAT seats → `0∥` spike →
 MVP 1a. Then G3, G4, G6, G7 and UAT-tooling slice 2.
+
+---
+
+## 22. Session close, 2026-10-22 — the deploy that found six bugs, and the plan that ends the extractor
+
+**This session started with "fix G8's prompt" and ended with a deployed site, a gate that no
+longer needs a PDF reader, and a plan that takes the extractor out of the runtime entirely.**
+
+### What shipped
+
+1. **G8 closed by measurement — and the cause was a budget nobody was reading.** See §21. The
+   fix is `chat_retrieval_limit()` + `default_retrieval()`, `CHAT_RETRIEVAL_LIMIT` at 8, and
+   `PROMPT_VERSION` `d49-2`. No prompt change; `audit_citations` untouched.
+2. **D55–D59 recorded** in `PGS_PLATFORM_SPEC.md` §18.3: fail-closed artefact ingest; stored
+   corpus digest with drift reporting; the gate reads committed pages and the extractor
+   becomes a build-time tool; SAOSO review is mechanical-first; **chat transcripts are kept
+   indefinitely until the group sets a schedule** (POPIA decision, revisit trigger named).
+3. **`CORPUS_CANONICAL_FORMAT_PLAN.md`** — P0–P7, the plan that makes "which PDF reader" stop
+   being a runtime question. **P1 is built**: nine committed page fixtures, provenance checked
+   both ways, `verify.sh` runs pytest with `PDFTOTEXT_BIN` pointed at a path that cannot exist,
+   and `scripts/check_extraction.py` is the build-time drift check that replaces what the gate
+   gave up. 800→804 tests, and the suite dropped from 89 s to 38 s.
+4. **The site is live and redeployable.** Six runs of `deploy.sh`; six defects, each now fixed
+   with the guard that fails if it returns: exec bits (§2.8), the shallow fetch that broke its
+   own pull (§2.10), the extractor calibration (§2.9), the `pg_dump` version parse (§2.11), a
+   missing migration + `makemigrations --check` in the gate, and a duplicated static directory.
+
+### What the next agent should do, in order
+
+1. **Deploy the two pending commits.** `fb41a47` adds migration `core/0005` (choices-only) and
+   the `makemigrations --check` gate step; `54ef082` fixes the poppler attribution label. One
+   deploy applies both. Expect `Apply all migrations: … core.0005`, no static warnings, and
+   `uat_seed --check` reporting `pdftotext version 24.02.0 (poppler)`.
+2. **P2** — `corpus_digest` + `corpus_check`/`corpus_refresh`, **plus P2.5–P2.8**: attribution
+   fields on `ChatMessage`, `manage.py chat_review`, a staff flag for the wrong-but-grounded
+   answer, and the retention record (D59). This is what turns "the corpus is 363, is that
+   right?" into a command, and a refusal into a corpus-gap queue.
+3. **P3** (replayable edits), then **P4 → P5 → P6** (OPP 15 pp, landscape 10 pp, SAOSO 101 pp +
+   appendices, absorbing G4), then **P7** (fail-closed ingest, docs, and the VPS refresh from
+   artefacts — after which the box needs no `pdftotext` at all).
+
+### Traps recorded this session (all in `testing_hazards.md`)
+
+`§2.8` a file mode is part of the commit and Windows cannot see it · `§2.9` the gate was
+calibrated to one `pdftotext` implementation · `§2.10` `git fetch --depth 1` in a deploy makes
+the next `--ff-only` pull impossible · `§2.11` `grep -oE` prints every match and `-m1` is not a
+fix, plus two harness traps that made a test fail for its own reasons.
+
+**The theme worth carrying forward:** four of those six deploy defects were invisible to 800
+green tests, and every one was found by *running the thing that had never been run*. The gate is
+stronger than it was, but its strength now comes from the deploy having been exercised.
+
+**State:** gate green at **804**, `lint-imports` kept, backlog no drift, tree clean, everything
+pushed. Live `206f35f`; `/health/` ok; corpus 363 chunks with 0 unembedded; MVP 0's UAT signed by the product owner only (three seats still empty).

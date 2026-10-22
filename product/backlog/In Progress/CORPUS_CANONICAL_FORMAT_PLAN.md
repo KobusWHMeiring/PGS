@@ -1,6 +1,7 @@
 # Corpus Canonical Format — Implementation Plan
 
-**Status:** In Progress — P0 (decisions D55–D58) settled; **P1 landed 2026-10-22**; P2 is the current task
+**Status:** In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; P2 (including the chat-telemetry
+sub-tasks P2.5–P2.8) is the next task
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment
 **Last Updated:** 2026-10-22
 **PRD:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, extended by section 8)
@@ -54,7 +55,7 @@ it names. Nothing here is a migration except **P2.1**, which is additive.
 | Task | New | Changed |
 |---|---|---|
 | P1 | `knowledge/tests/page_fixtures.py`; `knowledge/tests/fixtures/pages/*.txt` | `scripts/extract_fixtures.py`, `scripts/verify.sh`, `knowledge/tests/{test_columns,test_reflow,test_section_parsers,test_corpus_bpp,test_tables,test_ingest}.py`, `knowledge/tests/fixtures/MANIFEST.json` |
-| P2 | `knowledge/management/commands/corpus_check.py`, `corpus_refresh.py`; `knowledge/migrations/0003_*.py` | `knowledge/models.py`, `knowledge/ingest.py`, `deploy/deploy.sh` |
+| P2 | `knowledge/management/commands/corpus_check.py`, `corpus_refresh.py`, `core/management/commands/chat_review.py`; `knowledge/migrations/0003_*.py`, `core/migrations/0006_*.py` | `knowledge/models.py`, `core/models/_chat.py`, `core/services/_chatbot.py`, `core/admin.py`, `knowledge/ingest.py`, `deploy/deploy.sh` |
 | P3 | — | `knowledge/corpus.py`, `scripts/build_corpus.py`, `knowledge/tests/test_corpus_format.py` |
 | P4–P6 | `knowledge/corpus/{opp,landscape,saoso}.md`; tests per document | `knowledge/corpus.py` (`CORPUS_EDITS`), `knowledge/tables.py` (P6 only) |
 | P7 | — | `knowledge/management/commands/ingest_standard.py`, `knowledge/ingest.py`, `deploy/deploy.sh`, `HANDOVER.md` |
@@ -188,6 +189,56 @@ stale corpus is worse than a reported one. Records the outcome in the deploy out
 
 **Gate:** stale fixture → `corpus_check` exits 1 naming the document; `--apply` makes it exit 0;
 `deploy.sh` unchanged in exit status when `corpus_check` fails.
+
+**P2.5 — Answers become attributable.** Two fields on `ChatMessage`, written with the
+assistant row: `prompt_version` (the `PROMPT_VERSION` under which it was produced) and
+`corpus_fingerprint` (the same fingerprint the answer cache uses, so a stored answer can be
+tied to the exact corpus that produced it). Additive migration `core/0006`.
+
+*Why:* after P7.4 re-ingests the corpus, old and new answers sit in one table. Without
+these fields a refusal cannot be attributed to a corpus gap, a retrieval budget or a prompt
+contract that no longer exists — which is the difference between a fix and a guess.
+
+*Fails if:* a stored assistant row has an empty `prompt_version`; or two corpora produce
+rows indistinguishable by `corpus_fingerprint`.
+
+**P2.6 — `manage.py chat_review`: read-only, weekly.** A window (default 30 days), markdown
+out, no writes:
+
+- refusal counts by `reason`, and OPEN escalations older than the window;
+- the most-asked questions, normalised (the same key the answer cache uses) — repetition is
+  the strongest signal that something should be answered;
+- answers whose citations all come from one document, and `CITATION_AUDIT` clusters (the
+  model-contract metric, not the corpus metric);
+- cache-hit share (`model` is blank on a cache hit), so the volume being analysed is real.
+
+The loop it serves: refusal → review the stored `retrieved_chunks` → fix the artefact
+(P3–P6) **or** add the question to `SUITE` in `scripts/probe_chat.py`, so the fix is measured
+forever. That is how G1, G2 and G7 were found and closed.
+
+*Fails if:* the command writes a row (assert before/after counts); or a refusal with no
+retrieved chunks is reported as a corpus gap rather than as a retrieval failure.
+
+**P2.7 — A staff flag for the wrong-but-grounded answer.** Append-only fields on
+`ChatMessage` (`flagged_at`, `flagged_by`, `flag_note`) plus an admin action. **No public
+surface** — a public thumbs-down is a spam vector and a support queue nobody staffs yet.
+`chat_review` lists flagged rows first.
+
+*Fails if:* a non-staff user can flag; or flagging makes the message content editable
+(history is evidence).
+
+**P2.8 — Retention (D59).** The decision is **keep every transcript until the group sets a
+schedule**. Consequence recorded, not deferred: this is a public form, `ip_hash` and
+`user_agent` are stored, and a question can contain personal data ("my neighbour's farm on
+the N2"), so the group's schedule is a POPIA obligation rather than a preference. No purge
+job is built today; the documented path is deliberate, because deleting a `ChatSession`
+cascades its messages while an `EscalatedQuery` survives via `SET_NULL` — which is exactly
+right for the gap record and therefore must be answered explicitly by whoever writes the
+purge.
+
+*Fails if:* a doc claims a retention schedule that does not exist.
+
+---
 
 ---
 
