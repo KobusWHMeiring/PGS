@@ -839,6 +839,46 @@ examined nothing.
 collection — break one of the new tests and watch `pytest -q` (not the directory-scoped run) go
 red. `tests/e2e` stays out on purpose: it needs a browser the VPS does not have.
 
+### 2.7 A `getattr(settings, ...)` fallback is dead code, so the "fix" changes nothing
+
+`answer_question()` read its retrieval budget as
+`int(getattr(settings, "CHAT_RETRIEVAL_LIMIT", RETRIEVAL_LIMIT))`. `settings` **always**
+defines `CHAT_RETRIEVAL_LIMIT` (its own default is `"5"`), so the second argument could never
+be used. The 2026-10-21 answer-coverage work recorded *"Chat `RETRIEVAL_LIMIT` 5 → 8"* and
+changed the module constant — the product kept retrieving five passages, and the plan, the
+constant's comment and the PRD all said eight. Nobody noticed because the **probe** hardcoded
+`limit=8`: the instrument and the product disagreed, and the instrument is what the session
+measured.
+
+Evidence, 2026-10-22, against the shipped corpus (366 chunks, embedded):
+
+```text
+settings.CHAT_RETRIEVAL_LIMIT = 5      # the live budget
+_chatbot.RETRIEVAL_LIMIT      = 8      # the fallback: never read
+
+$ python scripts/probe_chat.py "Can i use cardboard from my neighbour?"          # limit 5
+  ... no inputs clause retrieved; ANSWER: (empty); insufficient_context: True
+  AUDIT: REFUSED
+$ python scripts/probe_chat.py --limit 8 "Can i use cardboard from my neighbour?"
+  ANSWER: The SAOSO Standard does not specifically name cardboard. However, for
+          biodegradable processing by-products of plant origin ...
+  AUDIT: grounded
+```
+
+A real visitor question was refused in production for a day while the suite, the probe and the
+PRD were green — the "passes for the wrong reason" pattern applied to a *deployment* setting.
+
+**Consequence:** any setting read through `getattr(settings, NAME, DEFAULT)` is only a default
+for a settings module that does not define it. If `pgs/settings.py` defines it, the module
+constant is documentation, not configuration.
+
+**Rule:** one accessor, no duplicated numbers. The budget is now `chat_retrieval_limit()` and
+retrieval is `default_retrieval()`; the view and `scripts/probe_chat.py` both call them, and
+`test_the_shipped_retrieval_budget_and_the_fallback_agree` fails if the setting and the
+fallback disagree. When you change a budget, change it in `pgs/settings.py` **and**
+`.env.example`, then bump `PROMPT_VERSION` — the answer cache is keyed on the prompt contract,
+not on the retrieval budget.
+
 ---
 
 ## 3. This machine (Windows, Docker Desktop) — and shell traps

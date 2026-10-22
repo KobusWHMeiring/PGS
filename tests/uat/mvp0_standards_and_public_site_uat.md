@@ -82,6 +82,17 @@ audit were each excluded by measurement. **This is an observation, not a result*
 scenario as you find it, and record FAIL with this cause if the refusal is still what you
 see. A fix is expected before the next sign-off attempt.
 
+**Closed 2026-10-22 — the refusal no longer reproduces.** There were two defects, not one.
+`scripts/probe_chat.py` retrieved eight passages while the product retrieved five, so the
+instrument could not see the product's own refusal; and the product's budget really was
+five, because the 2026-10-21 change edited `_chatbot.RETRIEVAL_LIMIT` — a `getattr` fallback
+that `settings` always shadows — instead of `settings.CHAT_RETRIEVAL_LIMIT`. With the
+instrument fixed and the setting at eight, this question answered with one verbatim
+`S5.1.9` citation in **five consecutive fresh runs**, and the nine-question suite returned
+**9/9 grounded** (the same suite at five refused *cardboard*). Evidence:
+`CHAT_ANSWER_COVERAGE_PRD.md` §7 G8, `testing_hazards.md` §2.7. No prompt rule was changed
+and `audit_citations` is untouched.
+
 ---
 
 ## Scenario 2 — Do the citations actually lead somewhere?

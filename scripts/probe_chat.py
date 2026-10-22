@@ -9,12 +9,19 @@ Usage:
     python scripts/probe_chat.py                     # the fixed measurement suite
     python scripts/probe_chat.py "can I use straw?"  # one question
     python scripts/probe_chat.py --chunks-only       # skip the model call
+    python scripts/probe_chat.py --limit 8           # compare retrieval budgets
 
 Every question is printed as: the terms and any term the corpus does not contain, the
 retrieved passages with the arm that found them, the model's reply, and the citation
 audit's verdict. A refusal is printed with its escalation reason, because "refused" and
 "the corpus cannot answer" are different findings and the suite exists to tell them
 apart.
+
+**The default `--limit` is `settings.CHAT_RETRIEVAL_LIMIT`, and retrieval goes through
+`core.services._chatbot.default_retrieval`** — the same function the view calls. That is
+deliberate: this script once hardcoded 8 while the product used 5 and reported a
+grounded answer for a question `/ask/` refuses (G8, `testing_hazards.md` §2.7). An
+instrument that measures a different path is worse than no instrument.
 
 No Django rows are written; `ChatMessage`/`EscalatedQuery` are not touched. The probe
 constructs `RetrievedChunk`s and calls the provider directly, which is exactly what
@@ -68,17 +75,20 @@ def _print_chunks(question: str, chunks, result) -> None:
         print(f"  {position}. {locator:<16} [{label:<8}] {text}")
 
 
-def probe(question: str, *, chunks_only: bool = False) -> None:
+def probe(question: str, *, chunks_only: bool = False, limit: int | None = None) -> None:
     from core.services._chatbot import (
         REFUSAL,
         GeminiChatModel,
         UpstreamModelError,
         audit_citations,
+        chat_retrieval_limit,
+        default_retrieval,
         default_standard_set,
         significant_terms,
     )
-    from knowledge.services import document_frequency, search_terms
+    from knowledge.services import document_frequency
 
+    budget = chat_retrieval_limit() if limit is None else limit
     standard_set = default_standard_set()
     terms = significant_terms(question)
     frequencies = {
@@ -87,14 +97,13 @@ def probe(question: str, *, chunks_only: bool = False) -> None:
     unknown = [term for term, count in frequencies.items() if count == 0]
 
     print(f"\n{'=' * 78}\nQ: {question}")
+    print(f"  limit: {budget} (the product's budget)" if limit is None else f"  limit: {budget}")
     print(f"  terms: {terms}")
     print(f"  df:    {frequencies}")
     if unknown:
         print(f"  not in the corpus: {unknown}")
 
-    result = search_terms(
-        terms, question=question, standard_set=standard_set, limit=8
-    )
+    result = default_retrieval(question, standard_set, limit=budget)
     _print_chunks(question, result.chunks, result)
 
     if chunks_only or not result.chunks:
@@ -137,7 +146,14 @@ def probe(question: str, *, chunks_only: bool = False) -> None:
         print("  AUDIT: grounded")
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
+    """The CLI. Built per call so `--limit`'s default is read when it is built.
+
+    The default is the product's own budget, not a number typed here: a hardcoded 8 hid
+    G8 by measuring a retrieval path the product does not use.
+    """
+    from core.services._chatbot import chat_retrieval_limit
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("question", nargs="*", help="one question; omit for the suite")
     parser.add_argument(
@@ -145,15 +161,27 @@ def main() -> int:
         action="store_true",
         help="retrieval only: never call the model",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=chat_retrieval_limit(),
+        help="passages to retrieve (default: settings.CHAT_RETRIEVAL_LIMIT)",
+    )
+    return parser
 
+
+def main() -> int:
     import django
 
+    # Before the parser: `--limit`'s default comes from the product's own helper, and
+    # importing the service module needs the app registry ready.
     django.setup()
+
+    args = build_parser().parse_args()
 
     questions = [" ".join(args.question)] if args.question else list(SUITE)
     for question in questions:
-        probe(question, chunks_only=args.chunks_only)
+        probe(question, chunks_only=args.chunks_only, limit=args.limit)
     return 0
 
 

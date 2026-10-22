@@ -89,11 +89,11 @@ TRUNCATED_MESSAGE = (
 #: or a deployment can override it with `override_settings`/an environment variable.
 MAX_QUESTION_CHARS = 500
 HISTORY_MESSAGES = 8
-#: How many passages the model is given. Five was measured to be too few once the
-#: question (rather than its OR-joined words) became the semantic query: for "can I use
-#: cardboard from my neighbours?" the inputs clause (SAOSO 4.4.4) lands at rank 6, just
-#: outside a five-chunk budget, and the model refuses a question the corpus can govern.
-#: Eight is the smallest budget that carries it without inviting unrelated citations.
+#: How many passages the model is given, when the setting is absent. **`settings`
+#: always defines `CHAT_RETRIEVAL_LIMIT`**, so this value is a fallback and not the live
+#: budget — see `chat_retrieval_limit()`. The 2026-10-21 answer-coverage work raised this
+#: constant from 5 to 8 believing it was the budget; the product kept running at 5
+#: (`testing_hazards.md` §2.7). Read the limit through the function, never from here.
 RETRIEVAL_LIMIT = 8
 RATE_LIMIT = 20
 RATE_LIMIT_WINDOW_SECONDS = 3600
@@ -118,7 +118,10 @@ MAX_OUTPUT_TOKENS_CEILING = 4096
 #: reply unsafe to reuse. It is part of the cache key, so a stale answer cannot outlive
 #: the contract it was produced under. `d47-2`: the D47 prompt contract plus the
 #: 2026-10-20 retrieval fix (the rare-term arm is lexical; the vector arm runs once).
-PROMPT_VERSION = "d49-1"
+#: `d49-2` (2026-10-22): the budget is now really eight passages — `CHAT_RETRIEVAL_LIMIT`
+#: had stayed at five because D49 raised the fallback constant instead of the setting, so
+#: every cached answer was produced against a five-passage set (`testing_hazards.md` §2.7).
+PROMPT_VERSION = "d49-2"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -307,6 +310,43 @@ class ChatModel(Protocol):
 
 
 # --- Session lifecycle ------------------------------------------------------
+
+
+def chat_retrieval_limit() -> int:
+    """The one retrieval budget: the setting, falling back to `RETRIEVAL_LIMIT`.
+
+    In:  nothing.
+    Out: how many passages the model is given.
+
+    A function rather than a constant so that the view path and every measuring
+    instrument read the *same* number. `scripts/probe_chat.py` used to hardcode 8 while
+    the product used 5, and printed a grounded answer for a question `/ask/` refuses —
+    the instrument measured a path the product does not have (`testing_hazards.md` §2.7).
+    """
+    return int(getattr(settings, "CHAT_RETRIEVAL_LIMIT", RETRIEVAL_LIMIT))
+
+
+def default_retrieval(
+    question: str,
+    standard_set: StandardSet,
+    *,
+    limit: int | None = None,
+) -> RetrievalResult:
+    """Retrieve the passages a question is answered from.
+
+    In:  the visitor's question, the corpus to search, and optionally an explicit
+         `limit` (used by the probe's `--limit` when comparing budgets).
+    Out: a `RetrievalResult`; `limit` defaults to `chat_retrieval_limit()`.
+
+    This is the single retrieval path: `answer_question()` calls it, and
+    `scripts/probe_chat.py` calls it too, so a measurement cannot drift from the product.
+    """
+    return search_terms(
+        significant_terms(question),
+        standard_set=standard_set,
+        question=question,
+        limit=chat_retrieval_limit() if limit is None else limit,
+    )
 
 
 def default_standard_set() -> StandardSet:
@@ -1091,14 +1131,6 @@ def answer_question(
     )
 
     started = time.monotonic()
-    def default_retrieval(query, standard_set):
-        return search_terms(
-            significant_terms(query),
-            standard_set=standard_set,
-            question=query,
-            limit=int(getattr(settings, "CHAT_RETRIEVAL_LIMIT", RETRIEVAL_LIMIT)),
-        )
-
     retrieve = retrieval or default_retrieval
     result: RetrievalResult = retrieve(text, session.standard_set)
     chunks = tuple(result.chunks)

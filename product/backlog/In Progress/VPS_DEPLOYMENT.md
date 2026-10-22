@@ -63,8 +63,16 @@ recorded in the `deploy-vps` skill so the next app does not rediscover it:
   there: `pytest --create-db` needs `vector` creatable in `test_pgs_verify` (pgvector
   0.6.0 is trusted or it is not; `grep '^trusted' …/vector.control` decides), and the
   backup step needs `/home/carbonplanner/backups/pgs` outside the checkout.
-- **D's UAT scenarios 1, 2, 3, 9 and 10 are unsigned**, and C1 and D were both already
-  partial. The MVP 0 completion criteria are not met.
+- ~~**D's UAT scenarios 1, 2, 3, 9 and 10 are unsigned**~~ — **signed 2026-10-21** by the
+  product owner (9 PASS · 1 N/A, applied by `uat_signoff.py`). The PGS administrator,
+  committee reviewer and consumer member seats are still empty, so the OPP's three-voice
+  requirement is not met and C1 and D stay *partial* on that count alone.
+- **The deployed corpus and the deployed chat budget both predate the 2026-10-22 fixes.**
+  `deploy.sh` never runs `ingest_standard`, so the live corpus is the pre-D52/D53 text (366
+  chunks locally, fewer on the box), and the box's `.env` — if it sets
+  `CHAT_RETRIEVAL_LIMIT` at all — still carries the old value. Check it after the next
+  deploy: `sudo grep CHAT_RETRIEVAL_LIMIT /home/carbonplanner/apps/pgs/.env`. Eight is the
+  live budget (`testing_hazards.md` §2.7); at five the cardboard question refuses.
 - **The decision log entry is missing** (see §4).
 
 ## 4. The decision this makes, recorded here because the spec was busy

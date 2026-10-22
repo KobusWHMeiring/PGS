@@ -1,6 +1,7 @@
 # PRD: Chat answer coverage — governing rules, table rows, and the gaps left
 
 **Status:** In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
+**2026-10-22:** **G8 is closed by measurement**, and the retrieval budget it depended on was wrong in a way nobody had measured — the product was retrieving five passages, not eight (§7 G8, `testing_hazards.md` §2.7). G3, G4, G6 and G7 remain open.
 **Owner:** Build — grounded chat (sub-plan D), corpus ingestion (sub-plan B)
 **Last Updated:** 2026-10-21
 **MVP:** MVP 0 — defect fix and a deliberate widening of D17.
@@ -50,7 +51,11 @@ from the documents or a refusal that is true — never an answer that is grounde
 - An out-of-vocabulary term is treated as the subject, not noise: the lexical proxy is
   capped at two chunks and the semantic arm takes the rest. This is the offline-safe
   hedge — with no key, the two lexical chunks still return.
-- Chat `RETRIEVAL_LIMIT` 5 → 8. Measured: 4.4.4 lands at rank 6.
+- Chat retrieval budget 5 → 8 — **but this line was wrong until 2026-10-22.** It raised
+  `_chatbot.RETRIEVAL_LIMIT`, a fallback that is never read because `settings` always defines
+  `CHAT_RETRIEVAL_LIMIT`; the product kept five passages. The live setting is now eight, and
+  the cardboard question that motivated the change answers at eight and refuses at five
+  (measured 2026-10-22; `testing_hazards.md` §2.7).
 
 ### 3.2 The governing-rule answer mode (D50, revises D17)
 
@@ -178,6 +183,11 @@ each cited. Options to measure: a sibling-section expansion (if a §2.x chunk is
 add its siblings) vs. a prompt-side "cost question" checklist. Do not widen the retrieval
 limit blindly; that trades this defect for noise.
 
+**Re-measured 2026-10-22 at the corrected budget (8):** still open, and now with clean
+evidence — the answer is grounded with five citations (§2.3 ×4, §2.5) and never mentions
+§2.1's R100 annual membership fee. Retrieval returns `r500`, §2.3, §2.4, §2.2, `pgs-sa`,
+`saoso-organic-certification`, §2.5 and §4.1; §2.1 is not in the set at eight either.
+
 ### G4. Appendices 3, 4, 6a/6b and 7 are still on the interleaved path
 
 **Symptom.** The same class of defect as Appendix 2 — a condition or limit printed in a
@@ -297,6 +307,37 @@ or the measurement will say the fix worked when it did not.
 3. The nine-question suite has no new refusals, and no already-grounded question regresses
    (G1/G2's ducks and seed questions, `can i use straw mulch?`, the manure question).
 4. `PROMPT_VERSION` is bumped, and the diff contains **no** change to `audit_citations`.
+
+### G8 — closed by measurement, 2026-10-22
+
+**The refusal no longer reproduces, and the reason is not a prompt edit.** Three things were
+done, in this order, because the diagnosis could not be trusted until the instrument was.
+
+1. **The instrument was fixed first.** `scripts/probe_chat.py` now takes `--limit`, defaulting
+   to `chat_retrieval_limit()`, and retrieves through `core.services._chatbot.default_retrieval`
+   — the function `answer_question()` calls. It has no retrieval call of its own, and
+   `tests/tools/test_probe_chat.py` fails if one comes back.
+2. **The budget was measured, and it was wrong.** `settings.CHAT_RETRIEVAL_LIMIT` was **5**,
+   not the 8 this PRD recorded: the 2026-10-21 change landed on `RETRIEVAL_LIMIT`, a
+   `getattr` fallback that `settings` always shadows. At 5 the Scenario 1 question retrieves
+   *two* `general-principles` chunks, and the model cites the hen sentence from both; at 8 it
+   cites `S5.1.9` once. The same defect refused **cardboard** in production (no inputs clause
+   in a five-chunk set) — the question §3.1 raised the budget for in the first place.
+   The live setting is now 8 and `PROMPT_VERSION` is `d49-2`, because every cached answer had
+   been produced against a five-passage set (`testing_hazards.md` §2.7).
+3. **Then it was measured, not assumed.** With the corrected budget, five consecutive fresh
+   runs of Scenario 1's question each returned a grounded answer with **one** verbatim
+   `S5.1.9` citation, and the nine-question suite returned **9/9 grounded** (limit 5, before
+   the fix: 7 grounded, cardboard refused, the cost question truncated). No prompt rule was
+   changed: rule 7 is unmeasured churn once the failing case is gone, and the acceptance
+   tests above now pass as written.
+
+**Residual, recorded rather than absorbed.** At limit 5 the model's second citation was
+*accepted* — it quotes `general-principles` with "eight" spelled out, and the D53 BPP
+artefact happens to spell it that way. That is corpus luck, not a looser audit; if the BPP
+said "8" the same paraphrase would refuse again. If the duplicate citation returns, candidate
+fix A (one citation per statement; name a second document in the answer text) is the remedy,
+measured against the five-run rule above.
 
 **Blocks:** MVP 0 sign-off (`tests/uat/mvp0_standards_and_public_site_uat.md` Scenario 1),
 and by the same rule likely Scenarios 2, 3, 9 and 10 — all five are chat scenarios and all

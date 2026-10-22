@@ -22,6 +22,7 @@ import pytest
 from core.models import ChatMessage, EscalatedQuery
 from core.services._chatbot import (
     REFUSAL,
+    RETRIEVAL_LIMIT,
     SYSTEM_PROMPT,
     GroundedAnswer,
     InvalidQuestionError,
@@ -31,6 +32,8 @@ from core.services._chatbot import (
     answer_question,
     audit_citations,
     build_prompt,
+    chat_retrieval_limit,
+    default_retrieval,
 )
 
 pytestmark = pytest.mark.django_db
@@ -68,6 +71,44 @@ def test_the_system_prompt_forbids_unsupported_claims():
     lowered = SYSTEM_PROMPT.lower()
     for term in ("pasture raised", "gmo free", "biodynamic", "chemical-free", "spray-free"):
         assert term in lowered, f"{term!r} is not named in the system prompt"
+
+
+def test_the_shipped_retrieval_budget_and_the_fallback_agree(settings):
+    """One number, not two that are believed to be one.
+
+    The 2026-10-21 answer-coverage work changed `RETRIEVAL_LIMIT` from 5 to 8, but
+    `settings.CHAT_RETRIEVAL_LIMIT` always exists, so the constant is a fallback that is
+    never read and the product kept a five-passage budget. Measured 2026-10-22: at 5 the
+    cardboard question returns no inputs clause and refuses; at 8 it answers from
+    Appendix 2 (`testing_hazards.md` §2.7).
+    """
+    assert settings.CHAT_RETRIEVAL_LIMIT == 8
+    assert RETRIEVAL_LIMIT == settings.CHAT_RETRIEVAL_LIMIT
+    assert chat_retrieval_limit() == settings.CHAT_RETRIEVAL_LIMIT
+
+
+def test_default_retrieval_passes_the_shipped_budget(chat_standard_set, monkeypatch, settings):
+    """`default_retrieval` is the view's path; it must use the setting, not a literal."""
+    from core.services import _chatbot
+
+    seen: dict[str, object] = {}
+
+    def spy(terms, *, standard_set, limit, question):
+        seen["terms"] = terms
+        seen["limit"] = limit
+        return _chatbot.RetrievalResult(
+            query=question,
+            standard_set_id=standard_set.pk,
+            lexical_only=True,
+        )
+
+    monkeypatch.setattr(_chatbot, "search_terms", spy)
+    settings.CHAT_RETRIEVAL_LIMIT = 3
+
+    default_retrieval("how do I sign up?", chat_standard_set)
+
+    assert seen["limit"] == 3
+    assert seen["terms"] == ["sign"]
 
 
 def test_the_refusal_is_the_d17_wording():

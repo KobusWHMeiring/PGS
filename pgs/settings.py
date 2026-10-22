@@ -235,7 +235,12 @@ CHAT_RATE_LIMIT = int(env("CHAT_RATE_LIMIT", "20"))
 CHAT_RATE_LIMIT_WINDOW_SECONDS = int(env("CHAT_RATE_LIMIT_WINDOW_SECONDS", "3600"))
 CHAT_MAX_QUESTION_CHARS = int(env("CHAT_MAX_QUESTION_CHARS", "500"))
 CHAT_HISTORY_MESSAGES = int(env("CHAT_HISTORY_MESSAGES", "8"))
-CHAT_RETRIEVAL_LIMIT = int(env("CHAT_RETRIEVAL_LIMIT", "5"))
+# How many passages the model is given. Eight, not five: at five the cardboard question
+# retrieves no inputs clause and refuses, at eight it answers from Appendix 2 (measured
+# 2026-10-22, `testing_hazards.md` §2.7). The 2026-10-21 change raised
+# `_chatbot.RETRIEVAL_LIMIT` instead of this setting, and that constant is only a
+# fallback — so the product ran at five for a day while the plan believed eight.
+CHAT_RETRIEVAL_LIMIT = int(env("CHAT_RETRIEVAL_LIMIT", "8"))
 CHAT_ANSWER_CACHE_TTL = int(env("CHAT_ANSWER_CACHE_TTL", "3600"))
 # Output tokens per generation attempt. 1024 truncated a four-citation answer mid-JSON
 # on 2026-10-19, which surfaced to the visitor as "the service is unavailable".
