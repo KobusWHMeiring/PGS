@@ -1,8 +1,8 @@
 # MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window
 
-**Status:** In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** is deferred to a later slice (D44, no Afrikaans translator). D's UAT scenarios are **unsigned**, so the plan is not closed. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **461 tests**, plus **34 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
+**Status:** In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: five items left** — two engineering, two human gates, one in flight and verified. Committee confirmation of no-claims left the MVP 0 close-out for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 **Owner:** Kobus Meiring (Product)
-**Last Updated:** 2026-10-19
+**Last Updated:** 2026-10-22
 **MVP:** 0 (spec §19)
 **Supersedes:** `MVP0_PLAN.md` (v1). v1 was written against assumptions the shipped PDFs
 contradict — its SAOSO parser matched nothing in the real file. See `MVP0_PRD.md` appendix.
@@ -898,13 +898,83 @@ MVP 1 is a rewrite — better to know before six weeks of chatbot work.
 
 ## 4. Definition of done
 
-- [ ] Every document ingests with non-zero sections and non-empty `section_ref`
-- [ ] `sub_refs` offsets valid; duplicate-ref ratchet not exceeded
-- [ ] Full suite green, including claim discipline, retrieval scope, grounding, idempotency, import-linter
-- [ ] `/health/` returns 503 when a dependency is down
+**Audited 2026-10-22.** Each box carries its evidence. Four are proved; of the three that are open,
+**two block the close-out and both are human gates — neither is a build task** — and the third was
+moved to project level by **D60**, because it needs a committee meeting rather than a commit.
+§4.1 is the close-out: the five things that stand between here and "MVP 0 done", and who owns each.
+
+- [x] Every document ingests with non-zero sections and non-empty `section_ref`
+      — four documents, **340/340 chunks embedded**, 0 duplicate `section_ref`s, `lexical_only=False`
+      (D48; `knowledge/tests/test_ingest.py`). ⚠️ True of the repo, **not of the deployed box** — §4.1 item 2.
+- [x] `sub_refs` offsets valid; duplicate-ref ratchet not exceeded
+      — `knowledge/tests/test_chunking.py::test_sub_refs_are_never_duplicated_across_chunks_of_a_long_section`,
+      `knowledge/tests/test_ingest.py::test_duplicate_refs_are_reported_and_the_ratchet_holds`.
+- [x] Full suite green, including claim discipline, retrieval scope, grounding, idempotency, import-linter
+      — re-run 2026-10-22: `scripts/verify.sh` green, **804 passed in 101 s**, `lint-imports`
+      `knowledge must never import core` **KEPT** (1 contract, 0 broken), `manage.py check` clean.
+- [x] `/health/` returns 503 when a dependency is down
+      — `core/tests/test_health.py`: Redis down, DB down, no worker responds, worker ping raises.
 - [ ] A restore has been performed from the backup drive and recorded in `docs/RUNBOOK.md`
+      — **open.** §2.1 has exactly one row: dev box, 2026-10-19, 13/13 tables, 3/3 media checksums.
+      The row's own note requires repetition on the server: *"It does **not** prove the VPS's drive,
+      permissions, or `postgresql-client` version are correct."* `todo.md` separately carries the
+      single-physical-copy gap (R11, accepted).
 - [ ] All eight UAT scenarios judged acceptable, signed by the seats D23 requires
+      — **open, and not satisfied as it stands.** Signed 2026-10-21 by the product owner only
+      (9 PASS · 1 N/A). D23 requires the PGS administrator and the consumer representative on
+      scenarios **1, 3, 8**, and says signing them on the product owner's word alone *"would make
+      the UAT self-certification"*. The permitted fallback is to record those three **provisional**
+      and re-run at MVP 1 kickoff — a decision, not a build.
 - [ ] No certification claim anywhere on the public surface — confirmed by the committee, not just the grep
+      — **half done, and the other half is project-level (D60).** `core/tests/test_claim_discipline.py`
+      is green and remains the standing guarantee; the committee's confirmation cannot be discharged
+      until the platform is presented to the committee, which is a project milestone after MVP 0. It is
+      tracked in `todo.md` §Project and is **not** an MVP 0 close-out blocker.
+
+**MVP 0 is closed when** the five items in §4.1 are done **and** the two open boxes above (5 and 6)
+are ticked. Nothing outside that list is in scope for closing it; item 7's second half is D60's
+project-level gate.
+
+### 4.1 Close-out — what is actually left
+
+Ordered as they must happen: the two engineering items first, because the human gates are judged
+against a live site. **The table has six rows but only five are close-out items** — rows 1, 2, 3, 4
+and 6. Row 5 is kept here so nobody re-adds it as work: it is a **project-level** gate (D60) and not
+a blocker. Rows 3 and 4 need a person, not a build; row 4 is the only one this close-out can stall on.
+
+| # | Item | Kind | Closed when | Owner |
+|---|---|---|---|---|
+| 1 | **Deploy the pending commits** — `fb41a47` (migration `core/0005` + the `makemigrations --check` gate step), `54ef082` (poppler attribution label), `c088718` (docs). Live is `206f35f` | engineering | `deploy.sh` green end to end; `Apply all migrations: … core.0005` in the output; no static warnings; `/health/` ok | Build |
+| 2 | **Refresh the deployed corpus and the chat budget** (D52/D53 predate the box) | engineering | The box serves the canonical corpus: non-zero sections per document, `lexical_only=False`, `CHAT_RETRIEVAL_LIMIT=8` confirmed, and three questions through the live `/ask/` return citations. **`--force` never enters `deploy.sh`** — it destroys every `ChatMessage.retrieved_chunks` trail | Build |
+| 3 | **Rehearse the restore on the VPS** (A9, R11) | human, on the box | `docs/RUNBOOK.md` §2.1 gains a **server-dated** row: 13/13 tables matched, media checksums matched, run against the production database | Operator |
+| 4 | **The missing UAT seats on scenarios 1, 3, 8** (D4, D23) | human, external | Either signed by the **PGS administrator**, **committee reviewer** and **consumer member**, **or** those three scenarios recorded explicitly provisional with the re-run scheduled at MVP 1 kickoff (D23 permits this) | Product owner |
+| 5 | **Committee confirmation of no-claims** (§4 item 7) | **project-level (D60)** | Tracked in `todo.md` §Project and linked back here. **Not an MVP 0 blocker** — the grep stands as the guarantee until the committee signs | Product owner |
+| 6 | **Land the `/ask/` above-the-fold fix** | engineering, **committed** | `4c3cdd4`. Verified 2026-10-22: `tests/e2e/test_chat_composer.py` **8 passed**, including `test_the_composer_is_above_the_fold` at 1440×900, 1366×768, 1280×800 and 390×844 | Build |
+
+**Found while closing out, and fixed (`ffd0a51`):** `test_controls_are_at_least_44px` failed on **all
+ eight routes at HEAD**, reproducibly — `.site-nav__link`'s `Ask` was **26 px wide**, because the rule
+was implemented as `min-height: 44px` with nothing on the horizontal axis. DESIGN rule 5 names nav
+specifically, so this was a live breach on `organicguarantee.africa`, not a test artefact. It did not
+appear in the close-out list because `tests/e2e` sits outside `verify.sh` and the handover's *"34
+Playwright tests green"* was stale against 45 collected. Now 49 green; `testing_hazards.md` §3.11.
+
+**On item 4, because it is the one this close-out can stall on:** the seats filled today are **product
+and founder, which are two seats held by one person.** That is one voice, not two. D23 wants the
+administrator, the committee reviewer and the consumer member on scenarios 1, 3 and 8 — and calls
+signing them on the product owner's word alone *"self-certification"*. Recorded in the sign-off table
+at `tests/uat/mvp0_standards_and_public_site_uat.md`, whose three rows are empty, and raised in
+`todo.md` §Project. **Not waived** — either seated before the committee presentation, or recorded
+provisional with the re-run scheduled.
+
+### 4.2 Adjacent, and deliberately **not** MVP 0
+
+Recorded so they are not mis-filed as close-out debt:
+
+- **The `0∥` offline spike** — `spike/OFFLINE_SPIKE_PRD.md`. §3 above says it outright: *"It is not
+  MVP 0 work"*, and it gates `1∥`, not this plan.
+- **C3 bilingual shell** — deferred out of MVP 0 by D44 (no named Afrikaans reviewer). PRD §7's
+  Afrikaans scenario is therefore **unjudged by decision**, and must not be counted as a pass or a fail.
+- **The Crops-template second reader** — `ready/MVP1A_PLAN.md` Task B3, not this plan. See `todo.md`.
 
 ---
 

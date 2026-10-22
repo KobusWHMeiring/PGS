@@ -346,6 +346,19 @@ R100 annual membership fee). Both carry into MVP 1a. The record is not permissio
 **consumer member** rows above are still empty, so the OPP's three-voice requirement (D4) is
 not yet met.
 
+> **Read this before counting voices (raised 2026-10-22).** The seats available today are **product
+> and founder, and both are held by Kobus** — two seats, one person, one voice. D23 asks for the PGS
+> administrator, the committee reviewer and the consumer member on **scenarios 1, 3 and 8**
+> specifically, and says signing them on the product owner's word alone *"would make the UAT
+> self-certification."* Adding a Founder row beside the Product row does not answer that; it records
+> the same person twice.
+>
+> Two legitimate ways to close it: **sit the three seats** before the platform is presented to the
+> committee, or record scenarios 1, 3 and 8 **provisional** and re-run them at MVP 1 kickoff (D23
+> permits exactly this). The one option closed off is leaving it unstated and letting the file read as
+> though nine PASS with ten rows is a three-voice sign-off. Tracked in `todo.md` §Project and as item 4
+> of `MVP0_PLAN_V2.md` §4.1.
+
 ### Per-scenario results
 
 | Scenario | Category | Result | Reviewer | Role | Date |

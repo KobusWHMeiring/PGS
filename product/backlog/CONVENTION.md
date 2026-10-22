@@ -39,6 +39,13 @@ Matching order matters (e.g. "Draft - Ready for Review" → refinement;
 "Investigation Complete" → spike). The executable source of truth is
 `STATUS_RULES` in `product/backlog.py`.
 
+**The match is a `\b` word-boundary search anywhere in the `Status:` line, so a status word
+buried inside a hyphenated compound still fires.** Written on 2026-10-22: a plan whose status line
+said *"four of the seven definition-of-done criteria are proved"* was classified **Done** by
+`\bdone\b`, because `-` is a word boundary. Write **DoD**, not *definition-of-done*, in a `Status:`
+line. The same applies to "shipped date", "not yet complete", and any incidental use of the
+terminal words while describing what is *left* to do.
+
 `Done/`, `on_hold/`, `systems/`, `spike/` and `BugFixes/` are **terminal**: their
 files are never auto-moved. The directory is the human decision; a `Status:` line
 that disagrees is only flagged as stale.

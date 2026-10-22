@@ -16,7 +16,8 @@
 - **Schema before logic.** Models land in `core/models/` and migrate before the views that use them.
 - **No view may write a derived field.** `is_compliant` is computed; see Task E1.
 - **Sub-plan G does not start** until the `1∥` seam contract is frozen (D26). A hard gate, not a
-  preference.
+  preference. The spike that `1∥` waits on is its own backlog item —
+  `../spike/OFFLINE_SPIKE_PRD.md` (`0∥`). It blocks G only; **A–F start immediately**.
 
 ### 0.1 Frozen decisions
 

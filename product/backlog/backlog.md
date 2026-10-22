@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-22 10:48
+> Generated: 2026-10-22 16:32
 
 ## Ready (up next)
 
@@ -15,8 +15,8 @@
 - **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — the BPP artefact is built and reviewed; the OPP, landscape and SAOSO are not converted.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
-- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plan **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** is deferred to a later slice (D44, no Afrikaans translator). D's UAT scenarios are **unsigned**, so the plan is not closed. Corpus measured end to end: all four documents ingest to **345 chunks** (SAOSO 298, OPP 30, BPP 9, landscape 8), **0 duplicate section refs**. `verify.sh` is green at **461 tests**, plus **34 Playwright tests** that run outside the gate. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15 (citation depth, `sub_ref`, `anchor`); D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
-- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plan A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19; D (chatbot) remains. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
+- **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: five items left** — two engineering, two human gates, one in flight and verified. Committee confirmation of no-claims left the MVP 0 close-out for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
+- **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plans A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19, and **D (D1–D5, chatbot)** landed with it, so every sub-plan except the deferred C3 is built. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. **Closing MVP 0 is now an enumerated list, not a judgement call** — `MVP0_PLAN_V2.md` §4.1 (audited 2026-10-22): two engineering items, three human gates, one fix in flight. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
 - **PRD: UAT sign-off tooling — an HTML judgement surface with the data already loaded** - `In Progress\UAT_SIGN_OFF_TOOLING_PRD.md` - Status: **Slice 1 BUILT 2026-10-22** — moved to `In Progress/`. 768 tests green, artefact driven
 - **Deployment: organicguarantee.africa on the homtini VPS** - `In Progress\VPS_DEPLOYMENT.md` - Status: In Progress — **redeploy path exercised 2026-10-22** (six runs; four deploy-blocking defects found and
 
@@ -33,7 +33,7 @@ _none_
 
 ## Spikes
 
-_none_
+- **Spike: `0∥` — Offline capture on the assessor's real device** - `spike\OFFLINE_SPIKE_PRD.md` - Status: Spike — not started. Brief written from the spec; no code, no decision yet.
 
 ## Bug Fixes
 
@@ -77,16 +77,44 @@ the generated index's "To Do" section.
 - [ ] Publish the administrator's email/phone on `/contact/` (currently `contact details to
       confirm` chips). Needed for the escalation path either way
       (`Refinement/ESCALATION_ANSWER_PATH_PRD.md`).
-
-
-
 - [ ] **Set a retention schedule for public chat transcripts** (D59: kept indefinitely until
       then). Public questions can contain personal data about a third party; the group already has
       a POPIA retention schedule for assessment records. Revisit at MVP 2 registry work at the
       latest. Plan: `CORPUS_CANONICAL_FORMAT_PLAN.md` P2.8.
 
+## Human gates — on the box
+
+- [ ] **Rehearse the backup restore on the VPS** (A9, R11). `docs/RUNBOOK.md` §2.1 has one row, from
+      the dev box, and says of itself: *"It does **not** prove the VPS's drive, permissions, or
+      `postgresql-client` version are correct."* Closed when §2.1 gains a **server-dated** row with
+      13/13 tables and matching media checksums, run against the production database.
+      Blocks: MVP 0 close-out (`MVP0_PLAN_V2.md` §4.1 item 3).
+
+## Project — before we present to the committee
+
+Project-level, not build-level: these need a meeting, not a commit, and none of them can happen
+until the platform has been shown to the group. Logged here and linked from the plan so the repo
+points at them instead of pretending they are imminent (D60).
+
+- [ ] **Committee confirmation that the public surface makes no certification claim.**
+      It is the second half of `MVP0_PLAN_V2.md` §4 item 7 and was moved out of the MVP 0 close-out by
+      **D60**. `core/tests/test_claim_discipline.py` proves the *grep* and remains the standing
+      guarantee — it cannot prove the committee read the site and agreed. Closed when a dated minute
+      or email from the committee is recorded against §4 item 7.
+- [ ] **Raise and fill the missing UAT seats** (D4, D23) — see the sign-off table in
+      `tests/uat/mvp0_standards_and_public_site_uat.md`. The PGS administrator, committee reviewer and
+      consumer member rows are empty. **Product and founder are two seats held by one person**, which
+      is one voice, not two; D23 calls signing on the product owner's word alone *"self-certification"*.
+      Scenarios **1, 3 and 8** are the ones it names. Two ways to close it: sit the three seats before
+      the committee presentation, or record those three **provisional** and re-run at MVP 1 kickoff,
+      which D23 explicitly permits. Leaving it unstated is the one option D23 closes off.
+
 ## Content
 
+- [ ] **Second reader for the Crops template.** `ready/MVP1A_PLAN.md` Task B3 hand-authors 38 questions
+      and 37 verdicts from the FORM workbook (D28), including six sub-verdict groups. The tests assert
+      the counts and the schema; *whether the wording says what the FORM says* is a domain judgement no
+      test can make. Recorded only as a gate row in `HANDOVER.md` §3 until now.
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.
 - [ ] Afrikaans: decide whether to translate the full site or navigation and headings only.
 
