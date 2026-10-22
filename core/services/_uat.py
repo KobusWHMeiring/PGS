@@ -142,9 +142,15 @@ def _documents_row() -> PreflightRow:
 
 
 def _extraction_row() -> PreflightRow:
+    # The binary the *app* will use, not whatever `pdftotext` resolves to first: a
+    # deployment can pin one with `PDFTOTEXT_BIN` (poppler and Xpdf wrap differently, and
+    # `-table` is Xpdf-only — `testing_hazards.md` §2.9).
+    from knowledge.extraction import pdftotext_bin
+
+    binary = pdftotext_bin()
     try:
         result = subprocess.run(
-            ("pdftotext", "-v"),
+            (binary, "-v"),
             capture_output=True,
             text=True,
             timeout=10,
@@ -153,9 +159,9 @@ def _extraction_row() -> PreflightRow:
     except (OSError, subprocess.SubprocessError):
         return PreflightRow(
             name="extraction tool",
-            command="pdftotext -v",
+            command=f"{binary} -v",
             expected="installed; the same implementation the fixtures pin",
-            observed="not found on PATH",
+            observed=f"{binary}: not found",
             ok=False,
             blocking=False,
             note="needed to re-extract a document, not to judge a scenario",
@@ -170,7 +176,7 @@ def _extraction_row() -> PreflightRow:
     kind = "Xpdf" if "xpdf" in lowered or "4.00" in lowered else ("poppler" if "poppler" in lowered else "unknown")
     return PreflightRow(
         name="extraction tool",
-        command="pdftotext -v",
+        command=f"{binary} -v",
         expected="installed; the same implementation the fixtures pin",
         observed=f"{observed} ({kind})",
         ok=bool(banner),

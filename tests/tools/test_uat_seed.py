@@ -103,7 +103,10 @@ def test_a_missing_pdftotext_is_advisory(monkeypatch):
 
     assert row.ok is False
     assert row.blocking is False
-    assert row.observed == "not found on PATH"
+    # The binary the app would actually run — pinned or resolved from PATH — so the row
+    # cannot report `pdftotext` when the deployment set `PDFTOTEXT_BIN`.
+    assert row.observed == "pdftotext: not found"
+    assert row.command == "pdftotext -v"
 
 
 def test_the_extraction_row_names_the_implementation(monkeypatch):

@@ -20,10 +20,22 @@ is part of the contract with the fixtures.
 from __future__ import annotations
 
 import hashlib
+import os
 import subprocess
 from pathlib import Path
 
+#: The extractor binary. `pdftotext` resolves through PATH — poppler on Debian/Ubuntu,
+#: Xpdf on a developer box — and the two do **not** produce the same bytes: they wrap
+#: lines and detect columns differently, so the parsers' golden tables (which pages are
+#: column-laid-out, which wraps are rejoined) match only the implementation they were
+#: measured against. `PDFTOTEXT_BIN` pins one explicitly, per deployment, without
+#: shadowing `pdftotext` for every other app on a shared host.
+#:
+#: Measured 2026-10-22: the VPS gate ran poppler 24.02.0 and failed 15 tests and 61
+#: errors, every one of them an extraction difference; `-table` does not exist in
+#: poppler at all (`exit 99`), so Appendix 2's verification is Xpdf-4-only.
 PDFTOTEXT = "pdftotext"
+PDFTOTEXT_ENV = "PDFTOTEXT_BIN"
 PDFTOTEXT_ARGS = ("-layout",)
 
 #: The second extraction mode. Xpdf's `-table` aligns cells row by row where `-layout`
@@ -56,6 +68,18 @@ class ExtractionError(RuntimeError):
     """The PDF could not be read. Never swallowed: an empty ingest looks like success."""
 
 
+def pdftotext_bin() -> str:
+    """The extractor to run: `PDFTOTEXT_BIN`, else `pdftotext` from PATH.
+
+    Read per call, not at import, so a deployment (and a test) can pin the implementation
+    without a module reload — and so the value a run actually used is the value that
+    appears in its error messages.
+    """
+    # `or`, not a default argument: `.env.example` ships `PDFTOTEXT_BIN=` (empty), and an
+    # empty binary name is a `PermissionError`, not "use the default".
+    return os.environ.get(PDFTOTEXT_ENV) or PDFTOTEXT
+
+
 def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
     """The whole document, raw, pages separated by form feeds.
 
@@ -70,20 +94,22 @@ def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
     if args is None:
         raise ValueError(f"unknown extraction mode {mode!r}; expected one of {sorted(_MODES)}")
     path = Path(pdf_path)
+    binary = pdftotext_bin()
     try:
         result = subprocess.run(
-            [PDFTOTEXT, *args, str(path), "-"],
+            [binary, *args, str(path), "-"],
             capture_output=True,
             check=True,
         )
     except FileNotFoundError as error:  # pragma: no cover - environment guard
         raise ExtractionError(
-            f"`{PDFTOTEXT}` not found. It is part of poppler-utils and is required to "
-            "read the corpus documents; install it or the ingest cannot run."
+            f"`{binary}` not found. It is required to read the corpus documents "
+            f"(set {PDFTOTEXT_ENV} to pin a specific build); install it or the ingest "
+            "cannot run."
         ) from error
     except subprocess.CalledProcessError as error:  # pragma: no cover - environment
         raise ExtractionError(
-            f"`{PDFTOTEXT}` failed on {path.name}: {error.stderr!r}"
+            f"`{binary}` failed on {path.name}: {error.stderr!r}"
         ) from error
     return result.stdout.decode("utf-8", errors="replace")
 
@@ -119,11 +145,13 @@ __all__ = [
     "ExtractionError",
     "PDFTOTEXT",
     "PDFTOTEXT_ARGS",
+    "PDFTOTEXT_ENV",
     "PDFTOTEXT_RAW_ARGS",
     "PDFTOTEXT_TABLE_ARGS",
     "extract_pages",
     "normalise",
     "pages_of",
+    "pdftotext_bin",
     "pdftotext_text",
     "sha256_of",
 ]

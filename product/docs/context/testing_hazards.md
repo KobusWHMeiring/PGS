@@ -911,6 +911,49 @@ where there is no `.git`, it tests `-x` on every `*.sh`. Proven: `git update-ind
 --chmod=-x scripts/backup.sh` makes the gate exit 2 naming the file; restoring the bit
 turns it green.
 
+### 2.9 The gate is calibrated to one `pdftotext` implementation
+
+Poppler and Xpdf are both "pdftotext" and they do not produce the same bytes: they wrap
+lines differently and disagree about which pages are column-laid-out. The parsers' golden
+tables (`EXPECTED_TRANSFORMED_PAGES`, `EXPECTED_WRAPS`, page attribution) were measured on
+**Xpdf 4.00**, and the transform tests extract from the PDF *live* rather than from a
+committed fixture — so the gate that passed 794 times on the Windows dev box had never run
+on the deployment target at all.
+
+Evidence, 2026-10-22, first real run of `deploy/deploy.sh` on the VPS (poppler 24.02.0):
+
+```text
+15 failed, 718 passed, 61 errors
+pdftotext failed on saoso-version-2.1-2026.pdf: b"pdftotext version 24.02.0 ... Usage:"
+  Command '['pdftotext', '-table', ...]' returned non-zero exit status 99
+assert {12} == {4, 12}                     # opp: which pages are columnar
+assert 13 == 12                            # saoso: which wraps are rejoined
+AssertionError: saoso pdf 93 is unaccounted for
+```
+
+Three distinct causes, all one class:
+
+1. **`-table` does not exist in poppler.** It is Xpdf-4 only, so every
+   `extract_pages(..., mode="table")` call is a usage error (exit 99) — Appendix 2's
+   verification is Xpdf-only by construction.
+2. **Column detection differs.** Poppler reports a different set of column-laid-out
+   pages, so the transform's own coverage test finds a page nobody accounted for.
+3. **Wrapping differs.** A different number of hyphen wraps is rejoined, and page
+   attribution shifts by one on a handful of sections.
+
+**Consequence:** the parsers were tested against one rendering and the deployment extracts
+with another — the exact failure `knowledge/extraction.py` was written to prevent, one
+level up. It also means the live corpus was *built by a different extractor* than every
+measurement behind the gate.
+
+**Rule:** pin the extractor per deployment with `PDFTOTEXT_BIN` (read per call, empty
+means default), and say which one a run used — `uat_seed --check` reports it. A pinned
+value must be the *same* build the golden tables were measured on, so this is a stopgap:
+the structural fix is D53's direction — `knowledge/corpus/<doc>.md` for all four documents
+and `--from-corpus` ingestion — after which the runtime text is reviewable data and no
+gate assertion depends on a binary. Until then, **a green gate on one machine is not
+evidence that the deploy target can run it.**
+
 ---
 
 ## 3. This machine (Windows, Docker Desktop) — and shell traps
