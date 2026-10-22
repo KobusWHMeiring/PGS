@@ -1,20 +1,15 @@
-# Handover — MVP 0: A, B, C1, C2, C4 and D landed; chat answer coverage revised
+# Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
-and the answer-coverage session — **2026-10-21**.
-**Repo state:** `main`, **51 commits**. **The working tree is NOT clean**: D, the
-column-transform work and the 2026-10-21 answer-coverage work are uncommitted (see §7).
-`verify.sh` green at **705 tests** (619 before D52, 652 before D53); `python -m pytest tests/e2e -q` green at 34 more.
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed**. It was
-"configured but never pushed" until 2026-10-20; `main` is now on GitHub and the VPS
-clones from it. No CI (see §3).
-**Live:** `https://organicguarantee.africa` on the homtini VPS (the MVP 0 surface:
-site, `/documents/`, grounded `/ask/`, 340 embedded chunks). The install, the five
-defects it exposed and everything still outstanding are recorded in
-`product/backlog/In Progress/VPS_DEPLOYMENT.md`. Read that before touching
-`deploy/` or redeploying.
+the answer-coverage session and the budget-and-instrument session — **2026-10-22**.
+**Repo state:** `main`, **52 commits**, tree **clean**, `HEAD == origin/main`.
+`verify.sh` green at **794 tests**; `python -m pytest tests/e2e -q` green at 34 more.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed** (see §3).
+**Live:** `https://organicguarantee.africa` on the homtini VPS — but **the deployed
+corpus and chat budget predate D52/D53 and §21**; see §4 item 2 and
+`product/backlog/In Progress/VPS_DEPLOYMENT.md`.
 
 ---
 
@@ -32,20 +27,30 @@ disabled control and that is deliberate, not a regression.
 
 **MVP 0's UAT is signed — by one of the three seats.** `tests/uat/mvp0_standards_and_public_site_uat.md`
 now carries ten results: nine **PASS** and Scenario 5 **N/A** (D44), signed by the product
-owner on 2026-10-21, with a recorded **decision to proceed** that names **G8** and **G3** as
-open defects rather than absorbing them. The PGS administrator, committee reviewer and
-consumer member rows are still empty, so the OPP's three-voice requirement (D4) is not met
-and that is stated in the file. `tests/uat/mvp1a_*` is still unsigned — 1a is not built.
+owner on 2026-10-21, with a recorded **decision to proceed** that names **G3** as an open
+defect rather than absorbing it (**G8 is closed, below**). The PGS administrator, committee
+reviewer and consumer member rows are still empty, so the OPP's three-voice requirement
+(D4) is not met and that is stated in the file. `tests/uat/mvp1a_*` is still unsigned — 1a
+is not built.
 
-**2026-10-21 — the answer-coverage revision is built and measured, not accepted.**
-`CHAT_ANSWER_COVERAGE_PRD.md` records it: the assistant now embeds the visitor's *question*
-(not the OR-joined tokens), reserves seats for the semantic arm, and may answer with a
-**governing rule** when the document does not name the item (“The standard does not name
-cardboard…”). Appendix 2 is stored as **30 reviewed table rows**, so a substance and its
-condition are one citable passage. Live round 3: cardboard, straw, borax and manure are
-grounded; the straw answer no longer borrows wood's condition. **UAT Scenarios 1, 2, 3, 9
-and the new 10 are unsigned**, so the feature is partial. The next gaps are listed in §4 and
-in the PRD's §7 (G3, G4, G6 and the new G7; **G1, G2 closed by D52 on 2026-10-22**).
+**The answer-coverage revision (D49–D51) is what makes the chat worth signing.** The
+assistant embeds the visitor's *question*, reserves seats for the semantic arm, and may
+answer with a **governing rule** when the document does not name the item (“The standard
+does not name cardboard…”). Appendix 2 is **30 reviewed table rows**, so a substance and
+its condition are one citable passage. The remaining gaps are G3, G4, G6 and G7
+(`CHAT_ANSWER_COVERAGE_PRD.md` §7); **G1, G2 closed by D52**, **G8 closed by §21**.
+
+**2026-10-22 — G8 is closed, and the reason was a budget nobody was reading.**
+`settings.CHAT_RETRIEVAL_LIMIT` was **5**, not the 8 D49 recorded: the change landed on
+`_chatbot.RETRIEVAL_LIMIT`, a `getattr` fallback `settings` always shadows, and
+`probe_chat.py` hardcoded 8 — so the instrument measured a path the product did not have.
+Cardboard (the question the budget was raised for) refused on the live site. One accessor
+(`chat_retrieval_limit()`) and one path (`default_retrieval()`) now serve both the view and
+the probe; the setting is 8 and `PROMPT_VERSION` is `d49-2`. Measured: cardboard refuses at
+five and answers at eight, Scenario 1's question grounds **5/5** fresh runs with one
+verbatim `S5.1.9` citation, suite **9/9** grounded. **No prompt rule changed** — G8's
+refusal was the audit working, and rule 7 is unmeasured churn once the case is gone. Full
+record: §21, `CHAT_ANSWER_COVERAGE_PRD.md` §7 G8, `testing_hazards.md` §2.7.
 
 **Read `product/design/C1_BUILD_PLAN.md` before touching the site.** Its §3 is a
 copy-provenance table — every published string names the OPP, SAOSO or LANDSCAPE passage
@@ -106,51 +111,60 @@ home page's summary of the same content must not share a tag level.
 | Gate | Meaning |
 |---|---|
 | **A1–A5 migrated** | ✅ Passed. Custom `User` is the first migration |
-| **`verify.sh` green** | ✅ **788 tests at HEAD** (705 + 63 UAT tooling + 13 console + 5 cache/audit + 2 changed to D54). Before any commit |
+| **`verify.sh` green** | ✅ **794 tests at HEAD** (788 + 4 probe-tooling + 2 budget tests, §21). Before any commit |
 | **Playwright green** | ✅ 34 tests: eight routes, 390px, measured 44px targets, clean console, and a real download click. Outside the gate by design |
 | **B3 needs a second reader** | ⚠️ **Not done.** The Crops template is 38 questions and 37 verdicts by hand |
 | **0∥ spike complete** | ⚠️ **Not done.** Before `1∥` freezes `visitPack`/`VisitSyncEnvelope` |
 | **A9's restore rehearsal, on the server** | ⚠️ **Not done.** The logged rehearsal was on the dev box; R11 requires it on the VPS |
-| **C1 + C2 + D built** | ✅ Verified in code, in a browser and with screenshots. UAT Scenarios 4, 6, 8 and 9 (documents) and D's Scenarios 1, 2 and 6 are still **unsigned** |
+| **C1 + C2 + D built** | ✅ Verified in code, in a browser and with screenshots. All ten MVP 0 scenarios carry a result (9 PASS · 1 N/A) |
 | **UAT sign-off** | ✅ **Signed by the product owner, 2026-10-21** (9 PASS · 1 N/A, with the decision to proceed recorded in the file). ⚠️ The **PGS administrator, committee reviewer and consumer member** seats are unsigned — the OPP wants three voices (D4). ⚠️ `tests/uat/mvp1a_*` is unsigned |
 
 ---
 
 ## 4. Next steps, in order
 
-1. **Get the UAT signed** — the reasoning and the tooling are in
-   `product/backlog/Refinement/UAT_SIGN_OFF_TOOLING_PRD.md` (four decisions needed: where UAT runs,
-   screenshot policy, sign-off granularity, who may sign). Nothing in `tests/uat/` is signed, which
-   is what makes C1 and D *partial*; the PRD's slice 1 needs no new data and no new rows.
-2. **Judge the answer-coverage work.** UAT Scenarios 1, 2, 3, 9 and 10
-   (`tests/uat/mvp0_standards_and_public_site_uat.md`). Scenario 10 carries the 2026-10-21
-   question suite. Use `python scripts/probe_chat.py` for the raw passages and quotes, then
-   judge the UI. The human question is whether *“the standard does not name cardboard”* reads
-   as a rule or as permission.
+1. ~~**Get the UAT signed.**~~ **Signed 2026-10-21** by the product owner, applied by
+   `scripts/uat_signoff.py` (slice 1 of `UAT_SIGN_OFF_TOOLING_PRD.md`). The remaining two
+   seats — PGS administrator, committee reviewer, consumer member — are a *human* step; the
+   tooling is built and worked once.
+2. **The deployed corpus and chat budget predate D52/D53 and §21.** `deploy.sh` never runs
+   `ingest_standard`, so the box answers from pre-reflow text, and its `.env` may still pin
+   `CHAT_RETRIEVAL_LIMIT=5`. Refresh the four documents once with `--force`, confirm 366
+   chunks and `lexical_only=False`, check the setting, and ask three questions through
+   `/ask/`. `--force` must **not** enter `deploy.sh` (it destroys every
+   `ChatMessage.retrieved_chunks` trail); `corpus_check`/`corpus_refresh` is the pending
+   yes/no in `CORPUS_CANONICAL_FORMAT_PRD.md` §7 item 1.
+3. ~~**Judge the answer-coverage work.**~~ Done with the sign-off on 2026-10-21; **G8 closed
+   by measurement on 2026-10-22** (§21) — the question was a five-passage budget, not the
+   prompt. The human question — whether *“the standard does not name cardboard”* reads as a
+   rule or as permission — is recorded as PASS in Scenario 10.
 3. ~~**Close the two refusal gaps (G1, G2)** — `S5.5.1` and `S4.1.1` enumerations cannot be
    quoted whole, so the ducks and seed questions refuse. Measure before changing the chunker
    or the prompt.~~ **Closed 2026-10-22 (D52)** — the cause was the extracted page, not the
    chunker or the prompt: a hyphenated word wrapped across a line break, plus the printed
    page footer inside the clause. Both questions are grounded; see §16. **G7** is the
    residual of the same class (a spanning BPP line) and is still open.
-3. **Sibling-section retrieval for the cost question (G3)** — the answer omits the R100
-   annual membership fee because §2.1 is never retrieved.
-6. **Appendices 3, 4, 6a/6b and 7 (G4)** — same reviewed-row mechanism as Appendix 2, starting
+4. **Sibling-section retrieval for the cost question (G3)** — the answer omits the R100
+   annual membership fee because §2.1 is never retrieved. Re-measured at the corrected
+   budget on 2026-10-22: still open (five citations, none §2.1).
+5. **Appendices 3, 4, 6a/6b and 7 (G4)** — same reviewed-row mechanism as Appendix 2, starting
    with Appendix 3 and Appendix 4 Table 1.
-7. **The escalation answer path (G6)** — `Refinement/ESCALATION_ANSWER_PATH_PRD.md`. The
+6. **The escalation answer path (G6)** — `Refinement/ESCALATION_ANSWER_PATH_PRD.md`. The
    refusal currently links to `/contact/`, whose contact details are placeholder chips.
-8. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
+7. **Then MVP 1a** (`ready/MVP1A_PRD.md`), gated on the 0∥ spike.
 
-**G8 blocks the sign-off, and it is the first thing to read:** bringing the UAT up on
-2026-10-20 showed that Scenario 1's own question refuses, reproducibly. The model cites one
-sentence twice — verbatim from `S5.1.9`, then a paraphrase of it against a BPP passage with an
-invented `sub_ref` — and the all-or-nothing audit refuses the pair (correctly). Corpus,
-retrieval, cache and audit were each excluded by measurement; the likely trigger is prompt rule
-7's *"name the document you are citing"*. Full diagnosis, candidate fixes and acceptance tests:
-`CHAT_ANSWER_COVERAGE_PRD.md` §7 **G8**. Related, and already fixed: `answer_question()` used to
-cache the reply **before** auditing it, so one bad generation became a refusal that reproduced
-for the whole TTL — see `testing_hazards.md` §1.31, D54, and the five tests in
-`test_chatbot_guardrails.py`. **Do not relax `audit_citations` to make Scenario 1 pass.**
+Queued behind those: UAT tooling slice 2 (`uat-setup` format + the `manage.py <command>`
+existence lint that would have caught `mvp1a`'s `load_template`), and the OPP/SAOSO/landscape
+artefact conversion (`CORPUS_CANONICAL_FORMAT_PRD.md`, which absorbs G4).
+
+**G8 was the last chat blocker, and it is closed (§21).** The refusal was the audit doing its
+job: the model cited one sentence twice, the second time as a paraphrase, and the
+all-or-nothing audit refused the pair. What made it reproducible was a **budget nobody was
+reading** — `settings.CHAT_RETRIEVAL_LIMIT` was 5 while the PRD, the constant's comment and
+the probe all said 8 — so the failing `general-principles` citation was in the product's set
+and not in the probe's. Cardboard refused on the live site for the same reason. The fix is
+one accessor, one retrieval path and the setting at 8; **do not relax `audit_citations`**, and
+do not "fix" a citation problem by trimming citations (D47).
 
 **Do not add a classifier (G5).** It would not have fixed any 2026-10-21 failure. Reopen only
 if a suite question retrieves the **wrong section**, and then prefer a seeded alias table to
@@ -971,3 +985,52 @@ not enter `deploy.sh`) → the remaining two seats → the `0∥` spike → MVP 
 **State:** gate green at **788**, `lint-imports` kept, backlog no drift, tree clean, everything
 pushed. The dev instance from the sign-off session is stopped; `manage.py changepassword admin`
 is the way into `/uat/` and `/admin/` if the password is not to hand.
+
+---
+
+## 21. What the budget-and-instrument session did (2026-10-22)
+
+**G8 was a measurement failure before it was a model failure.** The session opened with
+"fix G8's prompt" and ended with **no prompt change at all**, because the first thing the
+PRD demanded — a trustworthy instrument — showed that the product had been retrieving five
+passages for a day while four documents said eight.
+
+1. **The probe now measures the product.** `scripts/probe_chat.py` takes `--limit`
+   (default `chat_retrieval_limit()`) and retrieves through `core.services._chatbot.
+   default_retrieval()` — the function `answer_question()` calls. It has no retrieval call
+   of its own; `tests/tools/test_probe_chat.py` fails if one returns. Before this, the probe
+   hardcoded `limit=8` and printed a grounded answer for a question `/ask/` refuses.
+2. **The budget defect.** D49 recorded "Chat `RETRIEVAL_LIMIT` 5 → 8" and edited the module
+   constant. `answer_question()` read `getattr(settings, "CHAT_RETRIEVAL_LIMIT",
+   RETRIEVAL_LIMIT)`, and `settings` always defines that attribute (default `"5"`), so the
+   constant was never read: **production ran at five.** Measured: at five, *"Can i use
+   cardboard from my neighbour?"* retrieves no inputs clause and refuses — the exact
+   question the budget was raised for — and Scenario 1's question retrieves **two**
+   `general-principles` chunks, which is what invited the duplicate citation. At eight,
+   cardboard answers from Appendix 2 and Scenario 1 cites `S5.1.9` once.
+3. **The fix is one accessor and one path.** `chat_retrieval_limit()` is the only reader of
+   the setting; `default_retrieval()` is the only retrieval path. `CHAT_RETRIEVAL_LIMIT` is 8
+   in `pgs/settings.py` and `.env.example`; `PROMPT_VERSION` is `d49-2`, because every cached
+   answer had been produced against a five-passage set. `RETRIEVAL_LIMIT` is now documented
+   as what it is — a fallback — and a test fails if the two disagree.
+4. **Measured after the change, five runs as the PRD requires.** Scenario 1's question:
+   **5/5** grounded, one verbatim `S5.1.9` citation each. The nine-question suite: **9/9**
+   grounded (at five it was 7/9 — cardboard refused, the cost question truncated). The cost
+   question still omits §2.1's R100 membership fee, so **G3 is unchanged and re-measured**.
+5. **Why rule 7 was left alone.** Once the failing case is gone, rewording the prompt is
+   unmeasured churn, and `audit_citations` was never the problem. The residual is recorded:
+   at five, the duplicate BPP citation was *accepted* only because the D53 artefact spells
+   "eight" — corpus luck, not a looser audit. If it returns, candidate fix A in the PRD is
+   the remedy, measured against the same five-run rule.
+6. **Five guards, mutation-checked** (break it, watch it go red, restore): the parser's
+   default limit, an explicit `--limit`, "no retrieval call of its own", the limit reaching
+   the shared helper, and the setting/fallback agreement. Gate **794**, `lint-imports` kept,
+   backlog no drift.
+
+**Traps recorded:** `testing_hazards.md` **§2.7** — a `getattr(settings, ...)` default is
+dead code when `pgs/settings.py` defines the name, so the "fix" changes nothing and the
+instrument that agrees with the fix is the one that hides it.
+
+**Next, in order:** the two operational items in §4 item 2 (the deployed corpus and the box's
+`CHAT_RETRIEVAL_LIMIT` both predate this commit) → the remaining two UAT seats → `0∥` spike →
+MVP 1a. Then G3, G4, G6, G7 and UAT-tooling slice 2.
