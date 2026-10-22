@@ -157,6 +157,16 @@ echo ""
 echo "==> 3/3  pytest"
 # `--create-db` forces the test database to be dropped and rebuilt, so migrations
 # are proven to apply to an empty schema on every run rather than reusing yesterday's.
+#
+# `PDFTOTEXT_BIN` is pointed at a path that cannot exist, and an inherited value is
+# DISCARDED (D57). Poppler and Xpdf wrap lines and detect columns differently, and
+# `-table` is Xpdf-only, so the first deployment gate on the VPS failed 15 tests and 61
+# errors on extraction alone (`testing_hazards.md` §2.9). The parsers' goldens now read
+# committed page fixtures (`knowledge/tests/page_fixtures.py`), and this line proves it
+# on every run, on every machine: the gate passes by not needing a reader, not by having
+# one. Regenerating the fixtures is `scripts/extract_fixtures.py`; checking whether a new
+# extractor build would change them is `scripts/check_extraction.py`.
+export PDFTOTEXT_BIN="$REPO_ROOT/scripts/_no_extractor"
 "$PYTHON" -m pytest -q --create-db
 
 echo ""

@@ -33,6 +33,8 @@ import re
 from pathlib import Path
 
 import pytest
+
+from knowledge.tests.page_fixtures import pages
 from django.conf import settings
 
 from knowledge.models import StandardDocument
@@ -520,9 +522,8 @@ def expected_pages(doc_key: str) -> list:
 
 @pytest.fixture(scope="module")
 def shipped_corpus():
-    from knowledge.extraction import extract_pages
-
-    return {key: extract_pages(PDF_DIR / name) for key, (name, _) in SHIPPED.items()}
+    """Committed pages (D57): the gate must not need a PDF reader to place a clause."""
+    return {key: pages(key) for key in SHIPPED}
 
 
 @pytest.mark.parametrize("doc_key", sorted(SHIPPED))

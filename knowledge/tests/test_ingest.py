@@ -40,6 +40,7 @@ from knowledge.ingest import (
     resolve_standard_set,
 )
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
+from knowledge.tests.page_fixtures import stub_ingest_extraction
 from knowledge.tests.test_columns import EXPECTED_TRANSFORMED_PAGES
 
 pytestmark = pytest.mark.django_db
@@ -60,6 +61,20 @@ PDFS = {
     "bpp": PDF_DIR / "Basic Production Principles_ENG_PRINT.pdf",
     "landscape": PDF_DIR / "PGS Certification landscape_Final.pdf",
 }
+
+@pytest.fixture(autouse=True)
+def committed_extraction(monkeypatch):
+    """Feed the ingest the committed pages instead of running `pdftotext` (D57).
+
+    The ingest's extraction step is the only place this module needs a PDF reader, and the
+    deployment gate must run where no reader exists (poppler and Xpdf disagree about
+    columns and wrapping — `testing_hazards.md` §2.9). `knowledge/tests/page_fixtures.py`
+    holds the seam; nothing about the ingest changes.
+
+    A test that *should* fail when the extractor changes cannot live in the gate: that job
+    belongs to `scripts/check_extraction.py`, run by whoever builds artefacts.
+    """
+    stub_ingest_extraction(monkeypatch)
 
 
 @pytest.fixture(autouse=True)
@@ -343,7 +358,13 @@ def test_a_document_that_parses_to_nothing_is_refused(standard_set):
     assert StandardDocument.objects.count() == 0
 
 
-def test_a_file_that_is_not_a_pdf_is_a_loud_extraction_error(standard_set, tmp_path):
+def test_an_unreadable_file_is_a_loud_extraction_error(standard_set, tmp_path):
+    """An extraction failure propagates; it never becomes an empty document.
+
+    The extraction itself is stubbed by `committed_extraction` (D57), and it raises for a
+    path that is not one of the governed PDFs — which is the point here: *ingest* must not
+    swallow the error. What `pdftotext` does with a corrupt file is not this suite's subject.
+    """
     from knowledge.extraction import ExtractionError
 
     not_a_pdf = tmp_path / "not-a-pdf.pdf"

@@ -47,7 +47,9 @@ driven by a page map). A fixture that flattened the pages could not test that.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
+import subprocess
 import json
 import re
 import sys
@@ -62,7 +64,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from knowledge.extraction import (  # noqa: E402  (import after sys.path)
+    PAGE_SEPARATOR,
+    extract_pages,
     normalise,
+    pdftotext_bin,
     pdftotext_text as run_pdftotext,
     sha256_of,
 )
@@ -71,6 +76,7 @@ from knowledge.reflow import reflow_pages  # noqa: E402  (import after sys.path)
 
 PDF_DIR = REPO_ROOT / "pgs_docs"
 FIXTURE_DIR = REPO_ROOT / "knowledge" / "tests" / "fixtures"
+PAGE_FIXTURE_DIR = FIXTURE_DIR / "pages"
 
 SAOSO = "saoso-version-2.1-2026.pdf"
 OPP = "Outeniqua pgs principles, policies and procedures 2026.pdf"
@@ -87,6 +93,94 @@ PIPELINE = "pdftotext -layout + de_column + reflow v2"
 #: Source filename -> `CORPUS_DOCUMENTS` key, so `apply_layout` can consult the
 #: exclusion table for the same document ingest sees.
 DOC_KEYS = {SAOSO: "saoso", OPP: "opp", BPP: "bpp", LANDSCAPE: "landscape"}
+
+#: Every page of every governed document, exactly as `extract_pages` returns it.
+#: These are the *inputs* of the transform tests, not transformed text: `test_columns`,
+#: `test_reflow`, `test_section_parsers` and `test_corpus_bpp` apply the transform
+#: themselves, so committing the pages removes the extractor from the gate without
+#: touching a single assertion (D57).
+#:
+#: `table` exists only for SAOSO: `-table` is an **Xpdf-4-only flag** (poppler exits 99 with
+#: a usage message), and Appendix 2's cells are verified against it. Committing that output
+#: is what lets the gate run on a machine whose extractor cannot produce it.
+PAGE_MODES = {SAOSO: ("layout", "raw", "table"), OPP: ("layout", "raw"),
+              BPP: ("layout", "raw"), LANDSCAPE: ("layout", "raw")}
+
+
+def extractor_banner() -> str:
+    """The first line of `pdftotext -v`: which build produced these bytes.
+
+    Xpdf prints the banner to stderr and exits **1** (hazard section 3.10), so `check=False`
+    and the text is read from either stream.
+    """
+    result = subprocess.run(
+        [pdftotext_bin(), "-v"], capture_output=True, text=True, check=False
+    )
+    banner = (result.stderr or result.stdout or "").strip().splitlines()
+    return banner[0] if banner else "unknown extractor"
+
+
+def _recorded_extractor() -> str:
+    """The banner recorded by the last run, or "" when there is no manifest yet."""
+    path = FIXTURE_DIR / "MANIFEST.json"
+    if not path.exists():
+        return ""
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("extractor", "")
+    except (OSError, ValueError):  # a corrupt manifest must not block regeneration
+        return ""
+
+
+def write_page_fixtures(manifest: dict, *, force: bool = False) -> None:
+    """Write the whole-document page fixtures and record their provenance.
+
+    In: `manifest` — the dict about to be serialised; `force` — regenerate even when the
+        extractor build differs from the recorded one.
+    Fails: `SystemExit` when the extractor has changed, naming both banners. A different
+        build wraps lines and detects columns differently, so regenerating silently would
+        rewrite the goldens a review approved without anybody deciding to.
+    """
+    banner = extractor_banner()
+    recorded = _recorded_extractor()
+    if recorded and recorded != banner and not force:
+        raise SystemExit(
+            "The extractor changed since these fixtures were written:\n"
+            f"  recorded: {recorded}\n"
+            f"  now:      {banner}\n"
+            "Poppler and Xpdf wrap lines and detect columns differently, so this is a\n"
+            "re-baseline of the goldens, not a refresh. Run `scripts/check_extraction.py`\n"
+            "to see what would change, review the diff, then re-run with --force.\n"
+            "(Set PDFTOTEXT_BIN to pin the build the fixtures were measured on.)"
+        )
+
+    PAGE_FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
+    manifest["extractor"] = banner
+    manifest["pages"] = {}
+
+    for source, modes in PAGE_MODES.items():
+        doc_key = DOC_KEYS[source]
+        pdf = PDF_DIR / source
+        pdf_digest = sha256_of(pdf)
+        for mode in modes:
+            pages = extract_pages(pdf, mode=mode)
+            body = PAGE_SEPARATOR.join(pages)
+            out = PAGE_FIXTURE_DIR / f"{doc_key}.{mode}.txt"
+            # newline="" for the same reason the range fixtures use it: no os.linesep
+            # translation, or the fixture differs between this box and the VPS.
+            with open(out, "w", encoding="utf-8", newline="") as fh:
+                fh.write(body)
+            data = out.read_bytes()
+            manifest["pages"][f"{doc_key}.{mode}"] = {
+                "file": f"knowledge/tests/fixtures/pages/{out.name}",
+                "source": f"pgs_docs/{source}",
+                "mode": mode,
+                "pages": len(pages),
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "bytes": len(data),
+                "pdf_sha256": pdf_digest,
+                "extractor": banner,
+            }
+            print(f"  pages/{out.name}  ({len(pages)} pages, {len(data)} bytes)")
 
 # Every corpus document, so B6's ingest can verify it read the same bytes this
 # manifest was built from. D16 fixes the corpus as SAOSO + OPP + BPP + LANDSCAPE.
@@ -321,7 +415,14 @@ def verify_anchor(pages: list[str], extract: Extract) -> None:
         )
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="regenerate the page fixtures even if the extractor build changed",
+    )
+    args = parser.parse_args(argv)
     FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
 
     manifest: dict = {
@@ -471,6 +572,8 @@ def main() -> int:
             "replacement_char_count": body.count("�"),
         }
         print(f"  {extract.name}.txt  <- {extract.source} pp.{extract.start_page}-{extract.end_page}  ({len(data)} bytes)")
+
+    write_page_fixtures(manifest, force=args.force)
 
     manifest_path = FIXTURE_DIR / "MANIFEST.json"
     with open(manifest_path, "w", encoding="utf-8", newline="") as fh:

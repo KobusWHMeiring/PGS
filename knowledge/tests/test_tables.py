@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from knowledge.tests.page_fixtures import pages
+
 from knowledge.extraction import extract_pages
 from knowledge.tables import APPENDIX_2_ROWS, TABLE_BANDS, chunks_for_rows, rows_for
 
@@ -86,7 +88,7 @@ def _join_lines(lines: list[str]) -> str:
 @pytest.fixture(scope="module")
 def table_pages() -> list[str]:
     """The SAOSO PDF as `pdftotext -table` renders it, one string per PDF page."""
-    return extract_pages(SAOSO_PDF, mode="table")
+    return pages("saoso", "table")
 
 
 def _printed_page(pages: list[str], printed: int) -> str:

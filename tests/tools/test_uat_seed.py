@@ -92,6 +92,9 @@ def test_an_unhealthy_dependency_warns_without_blocking(monkeypatch):
 
 
 def test_a_missing_pdftotext_is_advisory(monkeypatch):
+    # The gate exports a deliberately dead `PDFTOTEXT_BIN` (D57); this test is about the
+    # default binary's absence, so it must not inherit that.
+    monkeypatch.delenv("PDFTOTEXT_BIN", raising=False)
     monkeypatch.setattr(_uat, "check_health", lambda: _ok_health())
 
     def _no_binary(*args, **kwargs):

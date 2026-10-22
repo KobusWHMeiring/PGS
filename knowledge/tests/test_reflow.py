@@ -26,6 +26,8 @@ from pathlib import Path
 
 import pytest
 
+from knowledge.tests.page_fixtures import pages
+
 from knowledge.columns import apply_layout
 from knowledge.extraction import extract_pages
 from knowledge.reflow import join_hyphenated, reflow_pages
@@ -53,10 +55,7 @@ EXPECTED_WRAPS = {"saoso": 12, "opp": 4, "bpp": 5, "landscape": 1}
 @pytest.fixture(scope="module")
 def corpus() -> dict[str, list[str]]:
     """The shipped PDFs, de-columned — the exact pages ingest hands to the parser."""
-    return {
-        key: apply_layout(extract_pages(PDF_DIR / name), doc_key=key)[0]
-        for key, name in PDFS.items()
-    }
+    return {key: apply_layout(pages(key), doc_key=key)[0] for key in PDFS}
 
 
 def non_space(text: str) -> Counter:

@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pytest
 
+from knowledge.tests.page_fixtures import pages
+
 from knowledge.columns import (
     PAGE_LAYOUT_EXCLUSIONS,
     apply_layout,
@@ -116,9 +118,12 @@ EXPECTED_TRANSFORMED_PAGES = {
 
 @pytest.fixture(scope="module")
 def corpus():
-    from knowledge.extraction import extract_pages
+    """The committed pages, not a fresh extraction (D57).
 
-    return {key: extract_pages(PDF_DIR / name) for key, name in PDFS.items()}
+    The assertions are unchanged: these are the same `pdftotext -layout` bytes the goldens
+    below were measured on, read from `fixtures/pages/` so the gate needs no extractor.
+    """
+    return {key: pages(key) for key in PDFS}
 
 
 def non_space(text: str) -> Counter:

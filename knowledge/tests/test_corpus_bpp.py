@@ -28,6 +28,8 @@ from pathlib import Path
 
 import pytest
 
+from knowledge.tests.page_fixtures import pages
+
 from knowledge.columns import apply_layout
 from knowledge.corpus import CORPUS_EDITS, flat, load_document
 from knowledge.extraction import extract_pages, sha256_of
@@ -51,9 +53,9 @@ def document():
 @pytest.fixture(scope="module")
 def pdf_pages():
     """Both renderings: the artefact is drafted from whichever page is word-clean."""
-    laid, _ = apply_layout(extract_pages(PDF), doc_key="bpp")
+    laid, _ = apply_layout(pages("bpp"), doc_key="bpp")
     laid, _ = reflow_pages(laid)
-    raw, _ = reflow_pages(extract_pages(PDF, mode="raw"))
+    raw, _ = reflow_pages(pages("bpp", "raw"))
     return laid, raw
 
 

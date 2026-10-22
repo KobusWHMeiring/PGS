@@ -20,6 +20,7 @@
   "description": "Verbatim fixtures for the standards-ingestion tests. Extracted from the shipped PDFs by `pdftotext -layout`. Never hand-edit: hand-written fixtures encode the same assumption as the parser they test, which is how v1 passed its tests while matching zero lines of the real document.",
   "encoding_caveat": "Fixtures are UTF-8. Glyphs the PDFs fail to map to Unicode become U+FFFD (REPLACEMENT CHARACTER). This is a fidelity loss in the SOURCE documents, not in the extraction: pdftotext -enc Latin1 emits 0xFF and -enc ASCII7 emits '-', so the byte is not valid UTF-8 and no encoding recovers the real character. Concretely, the OPP's 'Pasture raised is not defined by the SAOSO standard <0xFF> details on this forthcoming' carries an en-dash in SPEC \u00a74.3 that no extractor produces. Do NOT hand-edit these files to 'fix' it \u2014 a hand-corrected fixture stops being evidence, which is exactly how v1's parser passed its tests while matching nothing in the real document. Assert on text that survives extraction, or normalise explicitly in the parser.",
   "extraction_command": "pdftotext -layout <pdf> -",
+  "extractor": "pdftotext version 4.00",
   "fixtures": {
     "bpp_intro": {
       "anchor": "^\\s{0,8}INTRODUCTION\\b",
@@ -28,7 +29,7 @@
         -1,
         -1
       ],
-      "bytes": 4093,
+      "bytes": 4110,
       "file": "knowledge/tests/fixtures/bpp_intro.txt",
       "layout_pages": [
         3,
@@ -48,7 +49,7 @@
         4
       ],
       "replacement_char_count": 3,
-      "sha256": "c78053254d4e29016f8ecd206d66a5393bcb62fb0682aa143e8517b45e3ce876",
+      "sha256": "2aae66b1d0e7f84b3966be6a205f7e653434700f782f295b557d790c65b878db",
       "source": "Basic Production Principles_ENG_PRINT.pdf",
       "why": "The Basic Production Principles' introduction and general principles, for `heading.py` \u2014 the BPP carries no clause numbering at all, so its citation is page + heading (SPEC \u00a74.5 reality table)."
     },
@@ -59,7 +60,7 @@
         -1,
         -1
       ],
-      "bytes": 8560,
+      "bytes": 8558,
       "file": "knowledge/tests/fixtures/landscape_seals.txt",
       "layout_pages": [
         6,
@@ -78,7 +79,7 @@
       },
       "reflow_pages": [],
       "replacement_char_count": 11,
-      "sha256": "7d1d2d3642a6409cdc7ebeeea9191c6b06b8d69f317207765f4fc06051cbe179",
+      "sha256": "5ac12908405af155493510ff4d16de65af9e790e2346c679c3ef6460fc1375fe",
       "source": "PGS Certification landscape_Final.pdf",
       "why": "The certification landscape's seals section. LANDSCAPE is the other heading-only document (SPEC \u00a74.5 reality table) and the second consumer of `heading.py`."
     },
@@ -276,6 +277,98 @@
   "line_endings": "\\n",
   "note_on_page_numbers": "MVP0_PLAN_V2.md A10's page ranges are wrong (saoso_part_b pp.60-62 vs p61; saoso_toc p.1 vs p2; appendices pp.70-73 vs p71). Each extract declares an `anchor` that must appear on its `anchor_page`, verified at extraction time.",
   "page_separator": "\\f",
+  "pages": {
+    "bpp.layout": {
+      "bytes": 26552,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/bpp.layout.txt",
+      "mode": "layout",
+      "pages": 13,
+      "pdf_sha256": "2565e28b2cdbe11f7b97d0aa226ab07126949872e95186fece856156ff0cc775",
+      "sha256": "788df65693bd078d6b30b6dffa787b1dcb1d61ac411aba1125a78d5cce0e235a",
+      "source": "pgs_docs/Basic Production Principles_ENG_PRINT.pdf"
+    },
+    "bpp.raw": {
+      "bytes": 18661,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/bpp.raw.txt",
+      "mode": "raw",
+      "pages": 13,
+      "pdf_sha256": "2565e28b2cdbe11f7b97d0aa226ab07126949872e95186fece856156ff0cc775",
+      "sha256": "698acfc08dff4482732c87bca7157da42fa1a30ef00365be162e17c392ba716b",
+      "source": "pgs_docs/Basic Production Principles_ENG_PRINT.pdf"
+    },
+    "landscape.layout": {
+      "bytes": 31187,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/landscape.layout.txt",
+      "mode": "layout",
+      "pages": 10,
+      "pdf_sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+      "sha256": "52045d1dafa41dc0de8226200e70a5479854721a529c0f870dd03253fa62e185",
+      "source": "pgs_docs/PGS Certification landscape_Final.pdf"
+    },
+    "landscape.raw": {
+      "bytes": 16912,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/landscape.raw.txt",
+      "mode": "raw",
+      "pages": 10,
+      "pdf_sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+      "sha256": "8cae940202581628a16d97dd0b2845ff79a08e0042d03362cddc7045687ab4e6",
+      "source": "pgs_docs/PGS Certification landscape_Final.pdf"
+    },
+    "opp.layout": {
+      "bytes": 33742,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/opp.layout.txt",
+      "mode": "layout",
+      "pages": 15,
+      "pdf_sha256": "d2e305aa9852200117ee15dbfac018376a6a05238a3d8fc87d35d29cd7142bae",
+      "sha256": "6c85a188c954c57a45513688eb5c5fa9fa78cd34405700398bfcb78918840cdb",
+      "source": "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf"
+    },
+    "opp.raw": {
+      "bytes": 27988,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/opp.raw.txt",
+      "mode": "raw",
+      "pages": 15,
+      "pdf_sha256": "d2e305aa9852200117ee15dbfac018376a6a05238a3d8fc87d35d29cd7142bae",
+      "sha256": "4a060619cd2266510d59aef3917708653baa7f14019c0a8f4761e5a29155aef1",
+      "source": "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf"
+    },
+    "saoso.layout": {
+      "bytes": 295180,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/saoso.layout.txt",
+      "mode": "layout",
+      "pages": 101,
+      "pdf_sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+      "sha256": "2c1cfa925bb698cf526c7dcfc51aba582a0b0ed055ba9bef3e2ea3f7dcdcfdf9",
+      "source": "pgs_docs/saoso-version-2.1-2026.pdf"
+    },
+    "saoso.raw": {
+      "bytes": 239127,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/saoso.raw.txt",
+      "mode": "raw",
+      "pages": 101,
+      "pdf_sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+      "sha256": "88e6fa130f93c66368a1ab7b046d25dc02ae25bb3546c1ce62f63cb6ee749de0",
+      "source": "pgs_docs/saoso-version-2.1-2026.pdf"
+    },
+    "saoso.table": {
+      "bytes": 303455,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/saoso.table.txt",
+      "mode": "table",
+      "pages": 101,
+      "pdf_sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+      "sha256": "b328e53e45db5a3fde7014d06cf61b98b9fbacd87876a6d95d270a646c74a162",
+      "source": "pgs_docs/saoso-version-2.1-2026.pdf"
+    }
+  },
   "pipeline": "pdftotext -layout + de_column + reflow v2",
   "pipeline_note": "Each page is passed through `knowledge.columns.apply_layout` after `pdftotext -layout`, with the same doc_key ingest uses, and then through `knowledge.reflow.reflow_pages`, so the fixture bytes are what the parser sees in production. Pages that are column-laid-out but must not be transformed (SAOSO pdf 2, 82, 83; OPP pdf 11) are listed with their reason in `PAGE_LAYOUT_EXCLUSIONS`. `layout_pages` names the pages de-columning changed; `reflow_pages` names the pages where a hyphenated word was rejoined."
 }

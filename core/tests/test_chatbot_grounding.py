@@ -36,6 +36,19 @@ from core.services._chatbot import (
     default_retrieval,
 )
 
+@pytest.fixture(autouse=True)
+def committed_extraction(monkeypatch):
+    """Ingest from the committed BPP pages, not through a PDF reader (D57).
+
+    Two tests below build a real stored chunk by ingesting `pgs_docs/`. The gate runs with
+    `PDFTOTEXT_BIN` pointed at a path that cannot exist, so the bytes come from
+    `knowledge/tests/fixtures/pages/` — the same bytes, committed as evidence.
+    """
+    from knowledge.tests.page_fixtures import stub_ingest_extraction
+
+    stub_ingest_extraction(monkeypatch)
+
+
 pytestmark = pytest.mark.django_db
 
 

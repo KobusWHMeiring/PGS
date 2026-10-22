@@ -242,11 +242,13 @@ different number of hyphen wraps. Nothing was deployed, and that is the gate wor
 
 ### 8.3 Acceptance for this scope extension
 
-1. `PDFTOTEXT_BIN=/nonexistent ./scripts/verify.sh` is green — no test in the gate reaches a PDF reader.
+1. ✅ **Met 2026-10-22 (plan P1).** `./scripts/verify.sh` is green at 800 tests with `PDFTOTEXT_BIN`
+   pointed at a path that cannot exist, and an inherited value is discarded by the gate itself.
 2. On a box with no `pdftotext` at all: `deploy.sh` passes its gate, and `corpus_refresh --apply` rebuilds the corpus
    from the committed artefacts.
 3. `corpus_check` on a stale deployment exits non-zero and names the documents whose digest differs.
-4. The transform tests still assert the same golden values — they read the same bytes from a file instead of a pipe.
+4. ✅ **Met 2026-10-22 (plan P1).** The same bytes, read from nine committed page fixtures; no assertion
+   changed. `scripts/check_extraction.py` is the build-time diff that replaces what the gate gave up.
    A re-extraction diff script reports when a new extractor build would change them, and is run only by the person
    building artefacts.
 

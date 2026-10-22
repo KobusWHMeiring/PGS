@@ -30,6 +30,7 @@ from pathlib import Path
 import pytest
 
 from knowledge.ingest import ingest_standard
+from knowledge.tests.page_fixtures import stub_ingest_extraction
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.services import (
     DEFAULT_LIMIT,
@@ -67,8 +68,9 @@ def saoso_set(db):
 
 
 @pytest.fixture
-def saoso_ingested(saoso_set, settings):
+def saoso_ingested(saoso_set, settings, monkeypatch):
     settings.GEMINI_API_KEY = ""
+    stub_ingest_extraction(monkeypatch)  # D57: no PDF reader in the gate
     return ingest_standard(
         pdf_path=SAOSO_PDF, standard_set=saoso_set, doc_key="saoso", embed=False
     )

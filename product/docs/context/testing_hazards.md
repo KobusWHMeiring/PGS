@@ -946,6 +946,12 @@ with another — the exact failure `knowledge/extraction.py` was written to prev
 level up. It also means the live corpus was *built by a different extractor* than every
 measurement behind the gate.
 
+**Fixed 2026-10-22 (plan P1):** the gate no longer calls an extractor at all — it reads nine committed
+page fixtures and runs pytest with `PDFTOTEXT_BIN` pointed at a path that cannot exist, so the
+property is proved on every run. `scripts/check_extraction.py` reports what a new extractor build
+would change, on the machine that builds artefacts. What follows is the stopgap that was available
+before that landed, kept because a deployment may still want to pin the build it was measured on.
+
 **Rule:** pin the extractor per deployment with `PDFTOTEXT_BIN` (read per call, empty
 means default), and say which one a run used — `uat_seed --check` reports it. A pinned
 value must be the *same* build the golden tables were measured on, so this is a stopgap:

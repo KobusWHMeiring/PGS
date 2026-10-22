@@ -1,6 +1,6 @@
 # Corpus Canonical Format — Implementation Plan
 
-**Status:** In Progress — P0 (decisions D55–D58) settled; P1 (the gate) is the current task
+**Status:** In Progress — P0 (decisions D55–D58) settled; **P1 landed 2026-10-22**; P2 is the current task
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment
 **Last Updated:** 2026-10-22
 **PRD:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, extended by section 8)
@@ -138,6 +138,31 @@ cannot, because the gate must run where no reader exists.
 
 **Gate:** 798 + new tests; `PDFTOTEXT_BIN=/usr/bin/true ./scripts/verify.sh` green; the golden
 page/wrap/table assertions unchanged in value.
+
+**Built 2026-10-22 — measured, not assumed.**
+
+| Check | Result |
+|---|---|
+| `./scripts/verify.sh` | **800 tests**, `lint-imports` kept, **38 s** (was 89 s — the suite no longer shells out to `pdftotext`) |
+| `PDFTOTEXT_BIN=<inherited bogus value> ./scripts/verify.sh` | green — the export discards it |
+| Mutation: remove the export from `verify.sh` | `tests/tools/test_verify_gate.py` fails |
+| Mutation: hand-edit one page fixture | `page_fixtures.pages()` fails, naming the digest |
+| Mutation: set a different extractor banner in `MANIFEST.json`, run the generator | `extract_fixtures.py` refuses, naming both banners |
+| `scripts/check_extraction.py` on this box | `no drift` across 9 fixtures, 139 pages |
+
+Nine page fixtures (4 × `layout`, 4 × `raw`, SAOSO × `table`), ~1 MB, with the extractor
+banner and the source PDF's sha256 in `MANIFEST.json`. Six modules changed their *input*,
+not one assertion: `test_columns`, `test_reflow`, `test_section_parsers`,
+`test_corpus_bpp`, `test_tables`, and `test_ingest` (via
+`page_fixtures.stub_ingest_extraction`, which also has to serve `test_retrieval`'s and
+`core/tests/test_chatbot_grounding.py`'s ingest-from-PDF fixtures — two more than the plan
+predicted, found by running the gate with the poison in place).
+
+One test changed subject rather than input:
+`test_a_file_that_is_not_a_pdf_is_a_loud_extraction_error` became
+`test_an_unreadable_file_is_a_loud_extraction_error` — the ingest must not swallow an
+extraction failure, and *what `pdftotext` does with a corrupt file* is not the suite's
+subject. The stub raises for it.
 
 ---
 
