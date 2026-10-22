@@ -82,6 +82,18 @@ health_ok() {
     return 1
 }
 
+# 0. Backup client ------------------------------------------------------------
+# `scripts/backup.sh` refuses a pg_dump whose major differs from the server, and
+# `deploy.sh` refuses to migrate without a verified backup. A box provisioned with the
+# *server* package can still lack a matching client on PATH, and the deploy then dies at
+# step 3/8 on a site that otherwise looks healthy (VPS, 2026-10-22).
+if ! command -v pg_dump >/dev/null 2>&1; then
+    echo "ERROR: pg_dump not found. The deploy backs up before migrating and refuses to" >&2
+    echo "  migrate without one." >&2
+    echo "      sudo apt-get install -y postgresql-client-16   # match the server's major" >&2
+    exit 1
+fi
+
 # 1. Python gate -------------------------------------------------------------
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
     echo "ERROR: $PYTHON_BIN not found." >&2

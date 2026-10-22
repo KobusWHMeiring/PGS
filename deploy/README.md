@@ -24,12 +24,20 @@ with Python, and both fail in ways that look like a code problem:
 
 ```bash
 sudo apt-get install -y postgresql-16-pgvector   # CREATE EXTENSION vector (migrate)
+sudo apt-get install -y postgresql-client-16     # pg_dump 16 (pre-migration backup)
 sudo apt-get install -y poppler-utils           # pdftotext (corpus ingest)
 ```
 
 - **pgvector** — without it `migrate` dies on `CREATE EXTENSION vector`.
+- **postgresql-client-16** — `scripts/backup.sh` refuses a `pg_dump` whose major version
+  differs from the server, and `deploy.sh` refuses to migrate without a verified backup.
+  The client is easy to miss: a box provisioned with the *server* package can still have
+  no matching client on `PATH`, and the deploy then dies at step 3/8 ("no pg_dump matching
+  server major 16") on a site that otherwise looks healthy. Install the client named after
+  the server's major, not whatever `apt` suggests.
 - **poppler-utils** — without it the site installs and serves perfectly but the
-  corpus can never be ingested, so `/ask/` refuses every question. `first-install.sh`
+  corpus can never be ingested, so `/ask/` refuses every question. (Since D57 the *gate*
+  no longer needs it; the artefact build and a PDF-path ingest still do.) `first-install.sh`
   checks for both before doing any work and names the missing package.
 
 DNS must already resolve, or certbot fails at step 6 of the install:
