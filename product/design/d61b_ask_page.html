@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask the standard — Outeniqua PGS</title>
+<style>
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(1.8rem, 3.6vw, 2.6rem); line-height: 1.12; margin: 0 0 0.6rem; }
+  h2 { font-size: clamp(1.35rem, 2.8vw, 1.9rem); line-height: 1.18; margin: 0 0 0.6rem; }
+  h3 { font-size: 1.12rem; line-height: 1.25; margin: 0 0 0.4rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.2rem; }
+  li { margin-bottom: 0.35rem; }
+  code {
+    padding: 0.08rem 0.34rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.86em;
+  }
+  a { color: var(--ochreDark); }
+  a:hover { color: var(--forestDark); }
+  :focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  .container { max-width: 1120px; margin: 0 auto; padding: 0 1.25rem; }
+  .container--narrow { max-width: 820px; }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  .site-header {
+    position: sticky; top: 0; z-index: 40;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.97);
+    backdrop-filter: blur(8px);
+  }
+  .site-header__inner {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+    align-items: center; justify-content: space-between;
+    max-width: 1120px; margin: 0 auto; padding: 0.55rem 1.25rem;
+  }
+  .brand { display: inline-flex; align-items: center; gap: 0.55rem; text-decoration: none; }
+  .brand__mark { width: 26px; height: 36px; object-fit: contain; }
+  .brand__text { display: grid; line-height: 1.15; }
+  .brand__name { font-family: var(--serif); font-size: 1rem; color: var(--forestDark); letter-spacing: 0.02em; }
+  .brand__tag { font-size: 0.56rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .site-nav { display: none; gap: 1.15rem; }
+  .site-nav__link {
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); text-decoration: none; padding: 0.85rem 0;
+  }
+  .site-nav__link:hover { color: var(--ochreDark); }
+  .site-nav__link[aria-current="page"] { color: var(--forestDark); box-shadow: inset 0 -2px 0 var(--ochre); }
+  .header-actions { display: flex; align-items: center; gap: 0.6rem; margin-left: auto; }
+  .site-menu { display: none; position: relative; }
+  .site-menu__toggle {
+    display: flex; flex-direction: column; justify-content: center; gap: 4px;
+    width: 44px; height: 44px; padding: 0 11px;
+    border: 1px solid var(--sand); border-radius: 8px; cursor: pointer; list-style: none;
+  }
+  .site-menu__toggle::-webkit-details-marker { display: none; }
+  .site-menu__bar { display: block; height: 2px; background: var(--forestDark); }
+  .site-menu__panel {
+    position: absolute; right: 0; top: calc(100% + 0.45rem); z-index: 50;
+    display: grid; width: min(16rem, 78vw); padding: 0.5rem;
+    border: 1px solid var(--sand); border-radius: 10px; background: var(--cream);
+    box-shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+  .site-menu__link {
+    padding: 0.75rem 0.6rem; border-radius: 6px;
+    color: var(--muted); text-decoration: none;
+    font-size: 0.76rem; letter-spacing: 0.09em; text-transform: uppercase;
+  }
+  .site-menu__link:hover { background: var(--sageLight); color: var(--forestDark); }
+  .site-menu__link[aria-current="page"] { color: var(--forestDark); font-weight: 700; }
+  .lang { display: inline-flex; border: 1px solid var(--sand); border-radius: 999px; overflow: hidden; }
+  .lang span { padding: 0.35rem 0.55rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; }
+  .lang__on { background: var(--forest); color: var(--cream); }
+  .lang__off { color: var(--muted); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 0.45rem 1.1rem;
+    border: 1px solid var(--forest); border-radius: 999px;
+    background: var(--forest); color: var(--cream);
+    font: inherit; font-size: 0.8rem; font-weight: 700;
+    text-decoration: none; cursor: pointer;
+  }
+  .btn:hover { background: var(--forestDark); color: var(--cream); }
+  .btn--ochre { background: var(--ochre); border-color: var(--ochre); color: #fff; }
+  .btn--ochre:hover { background: var(--ochreDark); border-color: var(--ochreDark); color: #fff; }
+  .btn--compact { min-height: 40px; padding: 0.3rem 0.9rem; font-size: 0.74rem; }
+
+  .eyebrow {
+    margin: 0 0 0.45rem; color: var(--ochreDark);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+  }
+
+  .page-head { padding: 1.9rem 0 1.4rem; }
+  .page-head__lede { margin: 0; max-width: 42rem; color: var(--muted); font-size: 0.98rem; }
+
+  .ask { background: var(--forestDark); color: var(--cream); padding: 1.6rem 0 2.6rem; }
+  .ask__inner { display: grid; gap: 1rem; }
+
+  .composer { display: grid; gap: 0.7rem; }
+  .composer__label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreLight); }
+  .composer__row { display: grid; grid-template-columns: 1fr; gap: 0.6rem; }
+  .composer textarea {
+    width: 100%; min-height: 6rem; padding: 0.85rem 1rem;
+    border: 1px solid rgb(249 241 226 / 0.24); border-radius: 10px;
+    background: var(--cream); color: var(--charcoal);
+    font: inherit; font-size: 1rem; line-height: 1.5; resize: vertical;
+  }
+  .composer textarea::placeholder { color: rgb(107 102 93 / 0.8); }
+  .composer textarea:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  .composer__meta { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; align-items: center; color: rgb(253 251 247 / 0.62); font-size: 0.74rem; }
+  .composer__meta .count { font-variant-numeric: tabular-nums; }
+
+  .sources { border: 1px solid rgb(249 241 226 / 0.2); border-radius: 10px; background: rgb(249 241 226 / 0.05); }
+  .sources__toggle {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; justify-content: space-between;
+    width: 100%; min-height: 48px; padding: 0.5rem 0.85rem;
+    border: 0; background: transparent; color: inherit;
+    font: inherit; font-size: 0.8rem; text-align: left; cursor: pointer;
+  }
+  .sources__toggle:hover { background: rgb(249 241 226 / 0.06); }
+  .sources__what { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+  .sources__what b { font-weight: 700; color: #fff; }
+  .sources__action { color: var(--ochreLight); font-weight: 700; font-size: 0.75rem; text-decoration: underline; text-underline-offset: 3px; }
+  .sources__badge {
+    padding: 0.05rem 0.42rem; border: 1px solid rgb(249 241 226 / 0.35); border-radius: 999px;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ochreLight);
+  }
+  .sources__badge--wide { border-color: var(--ochre); background: rgb(184 123 46 / 0.22); }
+  .sources__panel { padding: 0 0.85rem 0.9rem; border-top: 1px solid rgb(249 241 226 / 0.14); }
+  .sources__panel[hidden] { display: none; }
+
+  .srcgroup { padding-top: 0.85rem; }
+  .srcgroup__title { margin: 0 0 0.15rem; font-size: 0.84rem; font-weight: 700; color: #fff; }
+  .srcgroup__note { margin: 0 0 0.5rem; color: rgb(253 251 247 / 0.68); font-size: 0.76rem; }
+  .src {
+    display: grid; grid-template-columns: 1.5rem 1fr auto; gap: 0.6rem; align-items: center;
+    min-height: 46px; padding: 0.35rem 0.4rem; border-radius: 8px;
+  }
+  .src:hover { background: rgb(249 241 226 / 0.06); }
+  .src input { width: 1.2rem; height: 1.2rem; margin: 0; accent-color: var(--ochre); }
+  .src label { font-size: 0.83rem; color: rgb(253 251 247 / 0.95); cursor: pointer; }
+  .src label small { display: block; color: rgb(253 251 247 / 0.6); font-size: 0.72rem; }
+  .src__open {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    min-height: 40px; padding: 0.25rem 0.6rem;
+    border: 1px solid rgb(249 241 226 / 0.25); border-radius: 999px;
+    color: var(--ochreLight); font-size: 0.68rem; text-decoration: none; white-space: nowrap;
+  }
+  .src__open:hover { border-color: var(--ochre); color: #fff; }
+  .src__none { font-size: 0.66rem; color: rgb(253 251 247 / 0.45); white-space: nowrap; }
+  .srcgroup--wide { margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px dashed rgb(249 241 226 / 0.22); }
+  .sources__warn {
+    margin: 0 0.85rem 0.85rem; padding: 0.55rem 0.7rem;
+    border: 1px solid rgb(184 123 46 / 0.55); border-radius: 8px;
+    background: rgb(184 123 46 / 0.16); color: var(--ochreLight); font-size: 0.78rem;
+  }
+  .sources__warn[hidden] { display: none; }
+
+  .examples { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .examples__label { color: rgb(253 251 247 / 0.55); font-size: 0.74rem; }
+  .example {
+    min-height: 40px; padding: 0.3rem 0.75rem;
+    border: 1px solid rgb(249 241 226 / 0.28); border-radius: 999px;
+    background: transparent; color: rgb(253 251 247 / 0.9);
+    font: inherit; font-size: 0.75rem; cursor: pointer;
+  }
+  .example:hover { border-color: var(--ochre); background: rgb(184 123 46 / 0.15); }
+
+  .answer { background: var(--cream); color: var(--charcoal); border-radius: var(--radius); padding: 1.25rem 1.3rem; }
+  .answer[hidden] { display: none; }
+  .answer__q { margin: 0 0 0.75rem; font-family: var(--serif); font-size: 1.15rem; line-height: 1.3; color: var(--forestDark); }
+  .answer__tier + .answer__tier { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--sand); }
+  .answer__label {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; align-items: center;
+    margin: 0 0 0.45rem;
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ochreDark);
+  }
+  .answer__label .tag {
+    padding: 0.05rem 0.45rem; border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--creamWarm); color: var(--muted);
+    font-size: 0.6rem; letter-spacing: 0.08em;
+  }
+  .answer__text { margin: 0 0 0.75rem; font-size: 0.92rem; }
+  .answer__text:last-child { margin-bottom: 0; }
+
+  .cites { display: grid; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+  .cite { margin: 0; padding: 0.65rem 0.75rem; border: 1px solid var(--sand); border-left: 3px solid var(--ochre); border-radius: 0 8px 8px 0; background: var(--creamWarm); }
+  .cite__quote { margin: 0 0 0.4rem; font-size: 0.82rem; line-height: 1.55; }
+  .cite__src {
+    display: flex; flex-wrap: wrap; gap: 0.35rem 0.6rem; align-items: center; justify-content: space-between;
+    font-size: 0.72rem;
+  }
+  .cite__src a { color: var(--ochreDark); font-family: var(--mono); font-size: 0.7rem; text-decoration: underline; text-underline-offset: 2px; }
+  .cite__src a:hover { color: var(--forestDark); }
+
+  .answer__tier--wide .answer__label { color: var(--muted); }
+  .answer__tier--wide .cite { border-left-color: var(--sand); background: var(--cream); border-style: dashed; }
+  .answer__gap { margin: 1rem 0 0; padding: 0.7rem 0.8rem; border: 1px dashed var(--sand); border-radius: 8px; font-size: 0.8rem; color: var(--muted); }
+  .answer__gap b { color: var(--forestDark); }
+  .answer__gap[hidden] { display: none; }
+
+  .answer--refusal .answer__text { font-size: 0.95rem; }
+  .answer--refusal .answer__gap { border-color: rgb(184 123 46 / 0.5); background: var(--ochreLight); color: var(--forestDark); }
+
+  .board { padding: 2.4rem 0 3rem; }
+  .board__head { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: baseline; justify-content: space-between; }
+  .board__count { margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .board__controls { display: grid; gap: 0.6rem; margin: 0.9rem 0 1.1rem; }
+  .board__search {
+    width: 100%; min-height: 44px; padding: 0.5rem 0.75rem;
+    border: 1px solid var(--sand); border-radius: 8px;
+    background: var(--cream); color: var(--charcoal); font: inherit; font-size: 0.86rem;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    min-height: 44px; padding: 0.3rem 0.8rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--muted);
+    font: inherit; font-size: 0.76rem; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: var(--cream); font-weight: 700; }
+
+  .board__grid { display: grid; grid-template-columns: 1fr; gap: 0.8rem; }
+  .qcard { padding: 0.95rem 1.05rem; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  .qcard[hidden] { display: none; }
+  .qcard__q { margin: 0 0 0.35rem; font-family: var(--serif); font-size: 1rem; line-height: 1.3; color: var(--forestDark); }
+  .qcard__a { margin: 0 0 0.6rem; font-size: 0.85rem; }
+  .qcard__meta { display: flex; flex-wrap: wrap; gap: 0.35rem 0.7rem; align-items: center; font-size: 0.72rem; color: var(--muted); }
+  .qcard__meta a { color: var(--ochreDark); font-family: var(--mono); font-size: 0.71rem; text-decoration: underline; text-underline-offset: 2px; }
+  .qcard__meta a:hover { color: var(--forestDark); }
+  .qcard--pending { border-left: 4px solid var(--ochre); background: var(--warmDark); }
+  .qcard--pending .qcard__q { color: var(--ochreLight); }
+  .qcard--pending .qcard__a, .qcard--pending .qcard__meta { color: rgb(249 241 226 / 0.82); }
+  .qcard--pending .qcard__meta a { color: var(--ochreLight); }
+  .tag {
+    display: inline-block; padding: 0.08rem 0.45rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--creamWarm); color: var(--muted);
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .tag--waiting { border-color: var(--ochre); background: var(--ochreLight); color: var(--ochreDark); }
+  .board__empty { margin: 0; padding: 0.9rem 1rem; border: 1px dashed var(--sand); border-radius: 10px; color: var(--muted); font-size: 0.85rem; }
+  .board__empty[hidden] { display: none; }
+
+  .site-footer { background: var(--forestDeep); color: rgb(253 251 247 / 0.72); padding: 2rem 0 1.6rem; font-size: 0.8rem; }
+  .site-footer__grid { display: grid; gap: 1.4rem; }
+  .site-footer h4 { margin: 0 0 0.5rem; color: var(--cream); font-family: var(--sans); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+  .site-footer ul { margin: 0; padding: 0; list-style: none; }
+  .site-footer li { margin-bottom: 0.3rem; }
+  .site-footer a { color: rgb(253 251 247 / 0.78); text-decoration: none; }
+  .site-footer a:hover { color: #fff; text-decoration: underline; }
+  .site-footer__brand p { margin: 0.4rem 0 0; max-width: 22rem; }
+  .site-footer__bottom { margin-top: 1.4rem; padding-top: 0.9rem; border-top: 1px solid rgb(249 241 226 / 0.16); font-size: 0.72rem; }
+  .site-footer__bottom p { margin: 0; }
+
+  @media (min-width: 760px) {
+    .site-nav { display: flex; }
+    .composer__row { grid-template-columns: 1fr auto; align-items: start; }
+    .composer__row .btn { min-width: 7rem; height: 3.5rem; }
+    .board__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .site-footer__grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+    .ask { padding: 2rem 0 3rem; }
+    .page-head { padding: 2.3rem 0 1.6rem; }
+  }
+
+  @media (max-width: 759px) {
+    .brand__tag { display: none; }
+    .header-actions .btn { display: none; }
+    .site-menu { display: block; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  @media print {
+    .site-header, .site-nav, .header-actions, .examples, .composer__row, .composer__label, .composer__meta, .sources, .board__controls, .site-footer { display: none !important; }
+    body { background: #fff; }
+    .ask { background: #fff !important; color: #000 !important; padding: 0 0 1rem; }
+    .ask * { color: #000 !important; }
+    .answer { border: 1px solid #999; }
+    .qcard, .cite, .answer { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="#" aria-label="Outeniqua PGS — home">
+      <img class="brand__mark" src="../../core/static/img/logo_mark.png" alt="">
+      <span class="brand__text">
+        <span class="brand__name">Outeniqua PGS</span>
+        <span class="brand__tag">Natural &amp; Organic</span>
+      </span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a class="site-nav__link" href="#">Organics</a>
+      <a class="site-nav__link" href="#">How it works</a>
+      <a class="site-nav__link" href="#">Members</a>
+      <a class="site-nav__link" href="#">Documents</a>
+      <a class="site-nav__link" href="#" aria-current="page">Ask</a>
+      <a class="site-nav__link" href="#">Contact</a>
+    </nav>
+    <div class="header-actions">
+      <div class="lang" role="group" aria-label="Language">
+        <span class="lang__on" aria-current="true">EN</span>
+        <span class="lang__off" aria-disabled="true" lang="af">AF</span>
+      </div>
+      <a class="btn btn--compact" href="#">Become a member</a>
+    </div>
+    <details class="site-menu">
+      <summary class="site-menu__toggle">
+        <span class="visually-hidden">Menu</span>
+        <span class="site-menu__bar"></span>
+        <span class="site-menu__bar"></span>
+        <span class="site-menu__bar"></span>
+      </summary>
+      <nav class="site-menu__panel" aria-label="Main">
+        <a class="site-menu__link" href="#">Organics</a>
+        <a class="site-menu__link" href="#">How it works</a>
+        <a class="site-menu__link" href="#">Members</a>
+        <a class="site-menu__link" href="#">Documents</a>
+        <a class="site-menu__link" href="#" aria-current="page">Ask</a>
+        <a class="site-menu__link" href="#">Contact</a>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="container">
+    <p class="eyebrow">The assistant</p>
+    <h1>Ask the standard</h1>
+    <p class="page-head__lede">
+      Answers come from the documents. Wider reading, when you ask for it, is marked as such.
+    </p>
+  </div>
+</div>
+
+<section class="ask">
+  <div class="container ask__inner">
+    <form class="composer" id="composer">
+      <span class="composer__label">Your question</span>
+      <div class="composer__row">
+        <textarea id="question" placeholder="Do I need to know where my horse manure comes from?" maxlength="500"></textarea>
+        <button class="btn btn--ochre" id="send" type="submit">Ask</button>
+      </div>
+      <div class="composer__meta">
+        <span class="count" id="count">0 / 500</span>
+        <span>Enter to send &middot; Shift+Enter for a new line</span>
+      </div>
+
+      <div class="sources">
+        <button class="sources__toggle" id="sources-toggle" type="button" aria-expanded="false" aria-controls="sources-panel">
+          <span class="sources__what" id="sources-summary">
+            Answering from <b>4 governing documents</b>
+          </span>
+          <span class="sources__action" id="sources-action">Change sources</span>
+        </button>
+
+        <p class="sources__warn" id="sources-warn" hidden>
+          No governing document is selected. An answer without the standard is context, not a rule.
+        </p>
+
+        <div class="sources__panel" id="sources-panel" hidden>
+          <div class="srcgroup">
+            <p class="srcgroup__title">Governing documents</p>
+            <p class="srcgroup__note">What we assess against. These carry the rules.</p>
+
+            <div class="src">
+              <input type="checkbox" id="src-saoso" data-doc="saoso" checked>
+              <label for="src-saoso">SAOSO Organic Standard v2.1<small>The standard we assess against &middot; 2026</small></label>
+              <a class="src__open" href="../../pgs_docs/saoso-version-2.1-2026.pdf" target="_blank" rel="noopener">Open</a>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-opp" data-doc="opp" checked>
+              <label for="src-opp">Principles, Policies &amp; Procedures<small>How our own PGS is governed</small></label>
+              <a class="src__open" href="../../pgs_docs/Outeniqua%20pgs%20principles,%20policies%20and%20procedures%202026.pdf" target="_blank" rel="noopener">Open</a>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-bpp" data-doc="bpp" checked>
+              <label for="src-bpp">Basic Production Principles<small>Growing the organic sector in South Africa</small></label>
+              <a class="src__open" href="../../pgs_docs/Basic%20Production%20Principles_ENG_PRINT.pdf" target="_blank" rel="noopener">Open</a>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-land" data-doc="land" checked>
+              <label for="src-land">Certification Landscape<small>Seals and recognition in the SA organic sector</small></label>
+              <a class="src__open" href="../../pgs_docs/PGS%20Certification%20landscape_Final.pdf" target="_blank" rel="noopener">Open</a>
+            </div>
+          </div>
+
+          <div class="srcgroup srcgroup--wide">
+            <p class="srcgroup__title">Wider reading</p>
+            <p class="srcgroup__note">
+              Optional context. Nothing here is assessed against, and nothing here is a
+              certification claim.
+            </p>
+            <div class="src">
+              <input type="checkbox" id="src-knf" data-wide="knf">
+              <label for="src-knf">KNF<small>Korean Natural Farming</small></label>
+              <span class="src__none">not published</span>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-jadam" data-wide="jadam">
+              <label for="src-jadam">JADAM<small>Low-cost natural farming</small></label>
+              <span class="src__none">not published</span>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-jnf" data-wide="jnf">
+              <label for="src-jnf">Japanese Natural Farming<small></small></label>
+              <span class="src__none">not published</span>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-jmf" data-wide="jmf">
+              <label for="src-jmf">JMF<small></small></label>
+              <span class="src__none">not published</span>
+            </div>
+            <div class="src">
+              <input type="checkbox" id="src-inf" data-wide="inf">
+              <label for="src-inf">INF<small></small></label>
+              <span class="src__none">not published</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="examples">
+        <span class="examples__label">Ask about:</span>
+        <button class="example" type="button" data-q="Do I need to know where my horse manure comes from?">manure</button>
+        <button class="example" type="button" data-q="Can I use Korean Natural Farming preparations on my farm?">KNF preparations</button>
+        <button class="example" type="button" data-q="What is the yearly cost to get certified, including the farm visit?">what it costs</button>
+        <button class="example" type="button" data-q="How do I make lactic acid bacteria for my compost?">making LAB</button>
+      </div>
+    </form>
+
+    <article class="answer" id="answer" hidden aria-live="polite"></article>
+  </div>
+</section>
+
+<section class="board">
+  <div class="container">
+    <div class="board__head">
+      <h2 style="margin:0">Questions we have answered</h2>
+      <p class="board__count" id="board-count">6 questions</p>
+    </div>
+
+    <div class="board__controls">
+      <input class="board__search" id="board-search" type="search" placeholder="Search the answers" aria-label="Search answered questions">
+      <div class="chips" id="board-chips">
+        <button class="chip" type="button" data-cat="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-cat="inputs" aria-pressed="false">Inputs</button>
+        <button class="chip" type="button" data-cat="animals" aria-pressed="false">Animals</button>
+        <button class="chip" type="button" data-cat="money" aria-pressed="false">Money</button>
+        <button class="chip" type="button" data-cat="waiting" aria-pressed="false">Waiting</button>
+      </div>
+    </div>
+
+    <div class="board__grid" id="board-grid">
+      <article class="qcard" data-cat="animals inputs">
+        <p class="qcard__q">Do I need to know where my horse manure comes from?</p>
+        <p class="qcard__a">Yes &mdash; the source decides the rule. Extensive livestock farming is fine; intensive or conventional needs permission and composting; factory-farming origin is forbidden.</p>
+        <p class="qcard__meta">
+          <span class="tag">Animals</span>
+          <a href="../../pgs_docs/saoso-version-2.1-2026.pdf#page=77" target="_blank" rel="noopener">SAOSO &middot; Appendix 2 &middot; p.76</a>
+          <span>asked 6 times</span>
+        </p>
+      </article>
+
+      <article class="qcard" data-cat="inputs">
+        <p class="qcard__q">Can I use cardboard from my neighbour?</p>
+        <p class="qcard__a">The standard does not name cardboard. It governs it as a biodegradable by-product: free of significant contaminants, or composted first.</p>
+        <p class="qcard__meta">
+          <span class="tag">Inputs</span>
+          <a href="../../pgs_docs/saoso-version-2.1-2026.pdf#page=77" target="_blank" rel="noopener">SAOSO &middot; Appendix 2 &middot; p.76</a>
+          <span>asked 14 times</span>
+        </p>
+      </article>
+
+      <article class="qcard" data-cat="money">
+        <p class="qcard__q">What is the yearly cost to get certified, including the farm visit?</p>
+        <p class="qcard__a">Four amounts: R100 membership, the turnover-band assessment fee, catering per visit, and R500 a year to license the seal.</p>
+        <p class="qcard__meta">
+          <span class="tag">Money</span>
+          <a href="../../pgs_docs/Outeniqua%20pgs%20principles,%20policies%20and%20procedures%202026.pdf#page=1" target="_blank" rel="noopener">OPP &middot; &sect;2.1&ndash;&sect;2.5 &middot; pp.1&ndash;3</a>
+          <span>asked 21 times</span>
+        </p>
+      </article>
+
+      <article class="qcard" data-cat="inputs">
+        <p class="qcard__q">Can I use Korean Natural Farming preparations?</p>
+        <p class="qcard__a">The standard names them, with a limit: the ingredients must be among those listed in Appendix 2 and Appendix 3. The preparation&rsquo;s name does not make it permitted &mdash; its ingredients do.</p>
+        <p class="qcard__meta">
+          <span class="tag">Inputs</span>
+          <a href="../../pgs_docs/saoso-version-2.1-2026.pdf#page=81" target="_blank" rel="noopener">SAOSO &middot; Appendix 3 &middot; p.80</a>
+          <span>asked 4 times</span>
+        </p>
+      </article>
+
+      <article class="qcard" data-cat="animals">
+        <p class="qcard__q">If my ducks are not fed organic food and I compost their bedding, will I still pass?</p>
+        <p class="qcard__a">Conditional: the bedding and the compost both have to satisfy Appendix 2, and the feed has to meet S5.5 &mdash; 5.5.1 requires that animals are fed organic feed.</p>
+        <p class="qcard__meta">
+          <span class="tag">Animals</span>
+          <a href="../../pgs_docs/saoso-version-2.1-2026.pdf#page=48" target="_blank" rel="noopener">SAOSO &middot; S5.5.1 &middot; p.47</a>
+          <span>asked 3 times</span>
+        </p>
+      </article>
+
+      <article class="qcard qcard--pending" data-cat="waiting">
+        <p class="qcard__q">Do I need EU organic certification to export to Germany?</p>
+        <p class="qcard__a">Not answered from the documents. This question is with the administrator &mdash; it is a gap in what we publish, and it stays visible until a person answers it.</p>
+        <p class="qcard__meta">
+          <span class="tag tag--waiting">Waiting</span>
+          <span>asked 2 times &middot; escalated 20 Oct 2026</span>
+        </p>
+      </article>
+    </div>
+
+    <p class="board__empty" id="board-empty" hidden>No card matches that search.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="site-footer__grid">
+      <div class="site-footer__brand">
+        <h4>Outeniqua PGS</h4>
+        <p>
+          A Participatory Guarantee System for the Southern Cape. Farmers guarantee each
+          other, in public, against the SAOSO standard.
+        </p>
+      </div>
+      <div>
+        <h4>The group</h4>
+        <ul>
+          <li><a href="#">Organics</a></li>
+          <li><a href="#">How it works</a></li>
+          <li><a href="#">Members</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Documents</h4>
+        <ul>
+          <li><a href="#">SAOSO Standard v2.1</a></li>
+          <li><a href="#">Principles, Policies &amp; Procedures</a></li>
+          <li><a href="#">All eight documents</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="#">Become a member</a></li>
+          <li><a href="#">Talk to the administrator</a></li>
+          <li><a href="#">Instagram &middot; Facebook</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="site-footer__bottom">
+      <p>Membership is not certification. No certification status is published on this page.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var MAX = 500;
+  var PDF = {
+    saoso: "../../pgs_docs/saoso-version-2.1-2026.pdf",
+    opp: "../../pgs_docs/Outeniqua%20pgs%20principles,%20policies%20and%20procedures%202026.pdf",
+    bpp: "../../pgs_docs/Basic%20Production%20Principles_ENG_PRINT.pdf",
+    land: "../../pgs_docs/PGS%20Certification%20landscape_Final.pdf"
+  };
+  var DOC_NAME = {
+    saoso: "SAOSO v2.1",
+    opp: "OPP",
+    bpp: "Basic Production Principles",
+    land: "Certification Landscape"
+  };
+
+  var field = document.getElementById("question");
+  var send = document.getElementById("send");
+  var form = document.getElementById("composer");
+  var count = document.getElementById("count");
+  var answer = document.getElementById("answer");
+  var summary = document.getElementById("sources-summary");
+  var action = document.getElementById("sources-action");
+  var toggle = document.getElementById("sources-toggle");
+  var panel = document.getElementById("sources-panel");
+  var warn = document.getElementById("sources-warn");
+  var govBoxes = Array.prototype.slice.call(document.querySelectorAll("[data-doc]"));
+  var wideBoxes = Array.prototype.slice.call(document.querySelectorAll("[data-wide]"));
+
+  var ANSWERS = [
+    {
+      match: ["manure", "horse", "muck", "slurry"],
+      gov: {
+        text: "Yes. The source decides which rule applies. Manure from extensive livestock farming may be used. Manure from intensive or conventional systems needs the control body's prior permission and must be composted, and factory-farming origin is forbidden. In every case it must not be the main source of nitrogen, with a ceiling of 170 kg of nitrogen per hectare per year.",
+        cites: [
+          {
+            doc: "saoso",
+            page: 77,
+            ref: "Appendix 2 · p.76",
+            quote: "Farmyard manure, slurry and urine — shall not constitute the main source of nitrogen… shall not be from conventional intensive livestock production systems without prior permission from the control body… Forbidden if from factory farming origin."
+          },
+          {
+            doc: "saoso",
+            page: 77,
+            ref: "Appendix 2 · p.76",
+            quote: "Manure applications should not be the primary source of nitrogen. See Section B — Appendix 6 for the density of livestock for the equivalent of 170 Kg nitrogen per hectare per year."
+          }
+        ]
+      },
+      gap: "This does not tell you whether your own supply qualifies. The standard sets the test; your records answer it."
+    },
+    {
+      match: ["knf", "korean natural", "natural farming", "jadam", "preparation", "imo", "ferment"],
+      gov: {
+        text: "The standard names these, and sets a limit on them. It lists effective microorganisms, Korean Natural Farming preparations, biofertilizers and other naturally derived preparations, with the condition that ingredients be limited to those listed in Appendix 2 and Appendix 3. So a preparation is permitted to the extent that what goes into it is already permitted.",
+        cites: [
+          {
+            doc: "saoso",
+            page: 81,
+            ref: "Appendix 3 · p.80",
+            quote: "Effective Microorganisms, Korean Natural Farming preparations, Biofertilizers, other naturally derived preparations — Ingredients limited to those listed in Annexures 2 and 3."
+          }
+        ]
+      },
+      wide: {
+        source: "knf",
+        text: "KNF is the Korean Natural Farming line: cultured preparations grown on the farm from simple materials, such as indigenous micro-organisms, lactic acid bacteria and fermented plant juice. This describes what the preparations are. It does not change the rule above — Appendix 2 and Appendix 3 still decide what may go into them.",
+        both: "Turn on KNF under wider reading to see what the preparation actually is, alongside the rule that governs it."
+      },
+      gap: "The standard limits ingredients. It does not assess whether a preparation works, and nothing here is a certification decision."
+    },
+    {
+      match: ["cost", "fee", "fees", "price", "yearly", "pay", "how much"],
+      gov: {
+        text: "Four separate amounts, and you need all four. R100 a year for farmer or consumer membership. The assessment fee follows your self-declared annual turnover across six bands, from R1 500 below R250 000 to R8 000 above R5 000 000, plus the administrator's transport at the AA rate. R30 per visit towards catering as a member, or R50 as a non-member. And once certified, R500 a year per farm to license the seal. Fees are payable before the visit, and only paid-up members are eligible for an assessment.",
+        cites: [
+          { doc: "opp", page: 1, ref: "§2.1 · p.1", quote: "Annual Farmer & consumer Membership fee: R 100" },
+          { doc: "opp", page: 2, ref: "§2.3 · p.2", quote: "Below R 250,000 — 1,500 — 900 … Above R 5,000,000 — 8,000 — 8,000. Fees are per farm assessment visit. Transport costs for the PGS administrator are charged separately at cost (AA rate)." },
+          { doc: "opp", page: 3, ref: "§2.4 · p.3", quote: "Members contribute R30 per visit toward catering. Non-members contribute R50 per visit, inclusive of snacks." },
+          { doc: "opp", page: 3, ref: "§2.5 · p.3", quote: "The licensing fee is R500 per annum per farm." }
+        ]
+      },
+      gap: "Turnover is self-declared and peer-reviewed. We do not work out your band for you."
+    },
+    {
+      match: ["lactic", "lab", "how do i make", "make my own", "recipe"],
+      gov: {
+        text: "The standard does not give a method for making a preparation. It governs what may be applied to your land and what may go into an input, and neither of those is a recipe.",
+        cites: []
+      },
+      wide: {
+        source: "knf",
+        text: "KNF describes lactic acid bacteria as a cultured preparation made on the farm from simple materials. The method lives in the wider reading, not in the standard. Making it yourself does not make it permitted: Appendix 2 and Appendix 3 still decide the ingredients.",
+        both: "Turn on KNF under wider reading to see how the wider reading describes it. The standard will not tell you — it has no method for making preparations."
+      },
+      gap: "If your question is whether you may use it, that is a substances question, and Appendix 2 and Appendix 3 answer it."
+    }
+  ];
+
+  var REFUSAL = "I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents.";
+
+  function esc(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function govOn() {
+    return govBoxes.filter(function (box) { return box.checked; }).map(function (box) { return box.dataset.doc; });
+  }
+
+  function wideOn() {
+    return wideBoxes.filter(function (box) { return box.checked; }).map(function (box) { return box.dataset.wide; });
+  }
+
+  function matchAnswer(text) {
+    var q = text.toLowerCase();
+    var best = null;
+    ANSWERS.forEach(function (entry) {
+      entry.match.forEach(function (word) {
+        if (q.indexOf(word) !== -1 && (!best || word.length > best.word.length)) {
+          best = { entry: entry, word: word };
+        }
+      });
+    });
+    return best ? best.entry : null;
+  }
+
+  function updateSummary() {
+    var gov = govOn().length;
+    var wide = wideOn().length;
+    var parts = ["Answering from <b>" + gov + " governing document" + (gov === 1 ? "" : "s") + "</b>"];
+    if (wide) {
+      parts.push("<span class=\"sources__badge sources__badge--wide\">+ " + wide + " wider reading</span>");
+    }
+    summary.innerHTML = parts.join(" ");
+    action.textContent = panel.hidden ? "Change sources" : "Done";
+    warn.hidden = gov !== 0;
+  }
+
+  function citeHtml(cite) {
+    var href = PDF[cite.doc] + "#page=" + cite.page;
+    return "<li class=\"cite\">" +
+      "<p class=\"cite__quote\">&ldquo;" + esc(cite.quote) + "&rdquo;</p>" +
+      "<p class=\"cite__src\"><a href=\"" + href + "\" target=\"_blank\" rel=\"noopener\">" +
+      esc(DOC_NAME[cite.doc]) + " &middot; " + esc(cite.ref) + " &nearr;</a></p>" +
+      "</li>";
+  }
+
+  function render(question) {
+    var entry = matchAnswer(question);
+    var gov = govOn();
+    var wide = wideOn();
+    var html = "<p class=\"answer__q\">" + esc(question) + "</p>";
+    var shownGov = false;
+    var shownWide = false;
+
+    if (!entry) {
+      answer.className = "answer answer--refusal";
+      html += "<p class=\"answer__text\">" + REFUSAL + "</p>";
+      html += gov.length === 0
+        ? "<p class=\"answer__gap\">No governing document is selected, so there is nothing to ground an answer in.</p>"
+        : "<p class=\"answer__gap\"><b>What happens next</b> &mdash; the question goes to the administrator. If it is a gap in what we publish, it stays on the board below as a waiting question.</p>";
+      answer.innerHTML = html;
+      answer.hidden = false;
+      return;
+    }
+
+    if (entry.gov && gov.length) {
+      var cites = entry.gov.cites.filter(function (cite) { return gov.indexOf(cite.doc) !== -1; });
+      var grounded = entry.gov.cites.length ? cites.length > 0 : true;
+      if (grounded) {
+        shownGov = true;
+        html += "<div class=\"answer__tier answer__tier--gov\">" +
+          "<p class=\"answer__label\">From the documents</p>" +
+          "<p class=\"answer__text\">" + entry.gov.text + "</p>";
+        if (cites.length) {
+          html += "<ul class=\"cites\">" + cites.map(citeHtml).join("") + "</ul>";
+        }
+        html += "</div>";
+      }
+    }
+
+    if (entry.wide && wide.indexOf(entry.wide.source) !== -1) {
+      shownWide = true;
+      html += "<div class=\"answer__tier answer__tier--wide\">" +
+        "<p class=\"answer__label\">Wider reading <span class=\"tag\">Not assessed against</span></p>" +
+        "<p class=\"answer__text\">" + entry.wide.text + "</p>" +
+        "</div>";
+    }
+
+    if (!shownGov && !shownWide) {
+      answer.className = "answer answer--refusal";
+      html += "<p class=\"answer__text\">" + REFUSAL + "</p>";
+      if (entry.wide && !wide.length) {
+        html += "<p class=\"answer__gap\">" + entry.wide.both + "</p>";
+      } else if (gov.length === 0) {
+        html += "<p class=\"answer__gap\">No governing document is selected, so there is nothing to ground an answer in.</p>";
+      } else if (entry.gov && entry.gov.cites.length) {
+        html += "<p class=\"answer__gap\">None of the sources you selected answer this. Adding <b>" + esc(DOC_NAME[entry.gov.cites[0].doc]) + "</b> would." + (entry.wide ? " " + entry.wide.both : "") + "</p>";
+      } else {
+        html += "<p class=\"answer__gap\"><b>What happens next</b> &mdash; the question goes to the administrator.</p>";
+      }
+      answer.innerHTML = html;
+      answer.hidden = false;
+      return;
+    }
+
+    if (entry.gap) {
+      html += "<p class=\"answer__gap\"><b>What this does not cover</b> &mdash; " + entry.gap + "</p>";
+    }
+    if (entry.wide && !shownWide) {
+      html += "<p class=\"answer__gap\">" + entry.wide.both + "</p>";
+    }
+
+    answer.className = "answer";
+    answer.innerHTML = html;
+    answer.hidden = false;
+  }
+
+  field.addEventListener("input", function () {
+    count.textContent = field.value.length + " / " + MAX;
+  });
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var question = field.value.trim();
+    if (question.length < 4) { field.focus(); return; }
+    render(question);
+    answer.scrollIntoView({ block: "nearest" });
+  });
+
+  field.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      send.click();
+    }
+  });
+
+  document.querySelectorAll(".example").forEach(function (button) {
+    button.addEventListener("click", function () {
+      field.value = button.dataset.q;
+      count.textContent = field.value.length + " / " + MAX;
+      field.focus();
+    });
+  });
+
+  toggle.addEventListener("click", function () {
+    var open = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", String(!open));
+    panel.hidden = open;
+    updateSummary();
+  });
+
+  govBoxes.concat(wideBoxes).forEach(function (box) {
+    box.addEventListener("change", updateSummary);
+  });
+
+  var boardSearch = document.getElementById("board-search");
+  var boardChips = Array.prototype.slice.call(document.querySelectorAll("#board-chips .chip"));
+  var boardGrid = document.getElementById("board-grid");
+  var boardEmpty = document.getElementById("board-empty");
+  var boardCount = document.getElementById("board-count");
+  var activeCat = "all";
+
+  function applyFilter() {
+    var term = (boardSearch.value || "").trim().toLowerCase();
+    var cards = Array.prototype.slice.call(boardGrid.querySelectorAll(".qcard"));
+    var shown = 0;
+    cards.forEach(function (card) {
+      var catOk = activeCat === "all" || (card.dataset.cat || "").indexOf(activeCat) !== -1;
+      var termOk = !term || (card.textContent || "").toLowerCase().indexOf(term) !== -1;
+      card.hidden = !(catOk && termOk);
+      if (!card.hidden) { shown += 1; }
+    });
+    boardEmpty.hidden = shown !== 0;
+    boardCount.textContent = shown + (shown === 1 ? " question" : " questions");
+  }
+
+  boardSearch.addEventListener("input", applyFilter);
+  boardChips.forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      activeCat = chip.dataset.cat;
+      boardChips.forEach(function (other) {
+        other.setAttribute("aria-pressed", String(other === chip));
+      });
+      applyFilter();
+    });
+  });
+
+  updateSummary();
+  applyFilter();
+})();
+</script>
+</body>
+</html>

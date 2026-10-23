@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rewrite or something else — and the trace console</title>
+<style>
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0; background: var(--cream); color: var(--charcoal);
+    font-family: var(--sans); font-size: 16px; line-height: 1.62;
+  }
+
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.1; margin: 0 0 0.85rem; }
+  h2 { font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.15; margin: 0 0 0.6rem; }
+  h3 { font-size: 1.12rem; line-height: 1.25; margin: 0 0 0.45rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.2rem; }
+  li { margin-bottom: 0.35rem; }
+  code {
+    padding: 0.08rem 0.34rem; border: 1px solid var(--sand); border-radius: 4px;
+    background: var(--sageLight); color: var(--forestDark);
+    font-family: var(--mono); font-size: 0.85em; overflow-wrap: anywhere;
+  }
+  pre {
+    max-width: 100%; margin: 0 0 1rem; padding: 0.85rem 1rem;
+    border: 1px solid var(--sand); border-radius: 8px;
+    background: var(--forestDeep); color: var(--cream);
+    font-family: var(--mono); font-size: 0.72rem; line-height: 1.6;
+    overflow-x: auto; white-space: pre;
+  }
+  pre code { padding: 0; border: 0; background: none; color: inherit; font-size: inherit; }
+  a { color: var(--ochreDark); }
+  :focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 0 1.25rem; }
+  .wrap--narrow { max-width: 860px; }
+
+  .bar {
+    position: sticky; top: 0; z-index: 30;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96); backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; justify-content: space-between;
+    max-width: 1140px; margin: 0 auto; padding: 0.55rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__right { display: flex; gap: 0.6rem; align-items: center; }
+  .bar__link { font-size: 0.76rem; color: var(--muted); text-decoration: none; }
+  .bar__link:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 44px; padding: 0.3rem 0.85rem; border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--creamWarm); color: var(--forestDark); font: inherit; font-size: 0.74rem; cursor: pointer;
+  }
+
+  .hero { background: var(--forest); color: var(--cream); padding: 3rem 0 2.6rem; }
+  .hero .eyebrow { color: var(--ochreLight); }
+  .hero p { color: rgb(253 251 247 / 0.88); max-width: 54rem; }
+  .hero .lede { font-size: clamp(1.02rem, 2vw, 1.24rem); color: rgb(253 251 247 / 0.96); }
+  .hero strong { color: #fff; }
+  .hero code { border-color: rgb(249 241 226 / 0.25); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+
+  .eyebrow {
+    margin: 0 0 0.5rem; color: var(--ochreDark);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+  }
+
+  main section { padding: 2.4rem 0; border-bottom: 1px solid var(--sand); }
+  main section:last-of-type { border-bottom: 0; }
+  .section--warm { background: var(--creamWarm); }
+  .section--sage { background: var(--sageLight); }
+  .section--dark { background: var(--forestDark); color: var(--cream); }
+  .section--dark h2, .section--dark h3 { color: var(--cream); }
+  .section--dark p, .section--dark li { color: rgb(253 251 247 / 0.86); }
+  .section--dark strong { color: #fff; }
+  .section--dark code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  .section--dark .eyebrow { color: var(--ochreLight); }
+
+  .table-wrap { margin: 1rem 0; overflow-x: auto; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.81rem; }
+  th, td { padding: 0.6rem 0.65rem; border-bottom: 1px solid var(--sand); text-align: left; vertical-align: top; }
+  th { background: var(--creamWarm); color: var(--forestDark); font-size: 0.65rem; letter-spacing: 0.07em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; font-size: 0.76rem; }
+  .yes { color: var(--forest); font-weight: 700; }
+  .no { color: var(--ochreDark); font-weight: 700; }
+  .worse { color: #8c2f1f; font-weight: 700; }
+
+  .callout {
+    margin: 1.25rem 0; padding: 0.95rem 1.1rem;
+    border: 1px solid var(--sand); border-left: 4px solid var(--ochre);
+    border-radius: 8px; background: var(--cream);
+  }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .section--dark .callout { background: rgb(249 241 226 / 0.06); border-color: rgb(249 241 226 / 0.18); }
+
+  /* the four consumers of the text */
+  .pipe { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; margin: 1rem 0; }
+  .pnode {
+    flex: 1 1 150px; min-width: 140px; padding: 0.65rem 0.75rem;
+    border: 1px solid var(--sand); border-radius: 8px; background: var(--cream); font-size: 0.78rem; line-height: 1.45;
+  }
+  .pnode b { display: block; color: var(--forestDark); font-size: 0.8rem; }
+  .pnode span { color: var(--muted); }
+  .pnode--fix { border-color: var(--forest); background: var(--sageLight); }
+  .pnode--fix b { color: var(--forest); }
+  .pnode--downstream { border-style: dashed; }
+  .parrow { align-self: center; color: var(--ochreDark); font-family: var(--mono); font-size: 0.85rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0.75rem 0 0; color: var(--muted); font-size: 0.74rem; }
+  .swatch { display: inline-block; width: 11px; height: 11px; border: 1px solid var(--sand); border-radius: 3px; }
+
+  .stage { display: grid; gap: 0.8rem; margin: 1.2rem 0; }
+  .stagecard { padding: 0.9rem 1rem; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  .stagecard__k { margin: 0 0 0.25rem; color: var(--ochreDark); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; }
+  .stagecard p { font-size: 0.85rem; margin-bottom: 0.45rem; }
+  .stagecard p:last-child { margin-bottom: 0; }
+  .stagecard b { color: var(--forestDark); }
+
+  .gaps { display: grid; gap: 0.7rem; margin: 1rem 0; }
+  .gap {
+    display: grid; grid-template-columns: 1.9rem 1fr; gap: 0.7rem; align-items: start;
+    padding: 0.75rem 0.85rem; border: 1px solid var(--sand); border-radius: 8px; background: var(--cream);
+  }
+  .gap__n {
+    display: grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%;
+    background: var(--forest); color: var(--cream); font-family: var(--mono); font-size: 0.7rem; font-weight: 700;
+  }
+  .gap b { color: var(--forestDark); font-size: 0.86rem; display: block; }
+  .gap span { color: var(--muted); font-size: 0.82rem; }
+
+  /* ---------------- the console prototype ---------------- */
+  .console {
+    border: 1px solid var(--sand); border-radius: var(--radius); background: var(--cream);
+    box-shadow: var(--shadow); overflow: hidden; margin-top: 1rem;
+  }
+  .console__bar {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between;
+    padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--sand); background: var(--forestDark);
+    color: var(--cream); font-size: 0.76rem;
+  }
+  .console__bar b { font-family: var(--mono); font-size: 0.72rem; }
+  .console__bar span { color: rgb(253 251 247 / 0.7); }
+
+  .console__body { display: grid; grid-template-columns: 1fr; gap: 0; }
+  .ledger { border-bottom: 1px solid var(--sand); background: var(--creamWarm); }
+  .ledger__head {
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--sand);
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  }
+  .lturn {
+    display: block; width: 100%; text-align: left; padding: 0.6rem 0.75rem;
+    border: 0; border-bottom: 1px solid var(--sand); background: transparent;
+    font: inherit; cursor: pointer;
+  }
+  .lturn:hover { background: rgb(253 251 247 / 0.8); }
+  .lturn[aria-current="true"] { background: var(--cream); box-shadow: inset 3px 0 0 var(--ochre); }
+  .lturn__q { display: block; font-size: 0.8rem; color: var(--forestDark); margin-bottom: 0.2rem; }
+  .lturn__meta { display: flex; flex-wrap: wrap; gap: 0.3rem 0.5rem; align-items: center; font-size: 0.66rem; color: var(--muted); }
+  .vchip {
+    padding: 0.03rem 0.4rem; border-radius: 999px; border: 1px solid var(--sand);
+    background: var(--creamWarm); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .vchip--ok { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .vchip--bad { border-color: var(--ochre); background: var(--warmDark); color: var(--ochreLight); }
+  .vchip--cache { border-color: var(--sand); background: var(--sageLight); color: var(--forestDark); }
+
+  .detail { min-width: 0; background: var(--cream); }
+  .ptabs { display: flex; flex-wrap: wrap; gap: 0.2rem; padding: 0.5rem 0.6rem 0; border-bottom: 1px solid var(--sand); }
+  .ptab {
+    min-height: 38px; padding: 0.3rem 0.75rem; border: 1px solid transparent; border-bottom: 0;
+    border-radius: 8px 8px 0 0; background: transparent; color: var(--muted);
+    font: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+  }
+  .ptab[aria-selected="true"] { border-color: var(--sand); background: var(--cream); color: var(--forestDark); }
+  .pane { padding: 0.9rem 1rem 1.1rem; }
+  .pane[hidden] { display: none; }
+  .pane__h { margin: 0 0 0.55rem; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .kv { display: grid; grid-template-columns: 1fr; gap: 0.15rem; margin-bottom: 0.9rem; font-size: 0.78rem; }
+  .kv div { display: flex; gap: 0.5rem; }
+  .kv dt { color: var(--muted); min-width: 8.5rem; }
+  .kv dd { margin: 0; font-family: var(--mono); font-size: 0.74rem; overflow-wrap: anywhere; }
+  .qbig { margin: 0 0 0.6rem; font-family: var(--serif); font-size: 1.1rem; color: var(--forestDark); }
+
+  .rrow { display: grid; grid-template-columns: 1.6rem 1fr; gap: 0.5rem; padding: 0.45rem 0; border-bottom: 1px solid var(--sand); font-size: 0.78rem; }
+  .rrow:last-child { border-bottom: 0; }
+  .rrow__n { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
+  .rrow__loc { font-family: var(--mono); font-size: 0.72rem; color: var(--forestDark); }
+  .rrow__meta { display: flex; flex-wrap: wrap; gap: 0.3rem 0.55rem; color: var(--muted); font-size: 0.68rem; }
+  .cited { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .ret-summary { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0 0 0.6rem; font-size: 0.75rem; color: var(--muted); }
+  .ret-summary b { color: var(--forestDark); }
+
+  .prompt-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.6rem; align-items: center; }
+  .mini {
+    min-height: 36px; padding: 0.2rem 0.6rem; border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--forestDark); font: inherit; font-size: 0.71rem; font-weight: 600; cursor: pointer;
+  }
+  .mini[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .banner {
+    margin: 0 0 0.6rem; padding: 0.5rem 0.65rem;
+    border: 1px solid var(--ochre); border-radius: 8px; background: var(--ochreLight);
+    font-size: 0.76rem; color: var(--forestDark);
+  }
+  .banner b { color: var(--ochreDark); }
+  pre.prompt { font-size: 0.7rem; max-height: 22rem; overflow: auto; }
+  pre.prompt .add { display: block; background: rgb(184 123 46 / 0.28); box-shadow: inset 3px 0 0 var(--ochre); }
+  pre.prompt .del { display: block; background: rgb(140 47 31 / 0.22); text-decoration: line-through; }
+
+  .audit { margin: 0 0 0.8rem; }
+  .audit__row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid var(--sand); font-size: 0.78rem; }
+  .audit__row:last-child { border-bottom: 0; }
+  .audit__ref { font-family: var(--mono); font-size: 0.72rem; }
+  .audit__why { grid-column: 1 / -1; color: var(--muted); font-size: 0.72rem; }
+  .audit__quote {
+    grid-column: 1 / -1; padding: 0.35rem 0.5rem; border-left: 2px solid var(--sand);
+    background: var(--creamWarm); color: var(--charcoal);
+    font-family: var(--mono); font-size: 0.7rem; line-height: 1.5;
+  }
+  .verdict-ok { color: var(--forest); font-weight: 700; }
+  .verdict-bad { color: #8c2f1f; font-weight: 700; }
+  .answerbox { padding: 0.65rem 0.75rem; border: 1px solid var(--sand); border-left: 3px solid var(--ochre); border-radius: 0 8px 8px 0; background: var(--creamWarm); font-size: 0.82rem; }
+  .answerbox--refusal { border-left-color: var(--ochre); background: var(--warmDark); color: var(--ochreLight); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.7rem 1rem 0.9rem; border-top: 1px solid var(--sand); background: var(--creamWarm); }
+  .act {
+    min-height: 38px; padding: 0.3rem 0.8rem; border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--forestDark); font: inherit; font-size: 0.73rem; font-weight: 600; cursor: pointer;
+  }
+  .act:hover { border-color: var(--forest); }
+  .act--primary { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .act[aria-pressed="true"] { border-color: var(--ochre); background: var(--ochreLight); color: var(--ochreDark); }
+  .act__note { margin-left: auto; align-self: center; color: var(--muted); font-size: 0.7rem; }
+
+  .decision { display: grid; gap: 0.55rem; margin: 1rem 0 0; }
+  .opt {
+    display: grid; grid-template-columns: 1.4rem 1fr; gap: 0.65rem; align-items: start;
+    padding: 0.75rem 0.9rem; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); cursor: pointer;
+  }
+  .opt:has(input:checked) { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); background: var(--sageLight); }
+  .opt input { width: 1.15rem; height: 1.15rem; margin: 0.2rem 0 0; accent-color: var(--forest); }
+  .opt b { display: block; color: var(--forestDark); font-size: 0.87rem; }
+  .opt span { display: block; color: var(--muted); font-size: 0.78rem; }
+  .notes { display: grid; gap: 0.7rem; margin-top: 1rem; }
+  .notes textarea {
+    width: 100%; min-height: 7rem; padding: 0.8rem; border: 1px solid var(--sand); border-radius: 8px;
+    background: var(--cream); color: var(--charcoal); font: inherit; font-size: 0.86rem; resize: vertical;
+  }
+  .notes__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .notes__status { color: var(--muted); font-size: 0.76rem; }
+  .btn {
+    min-height: 44px; padding: 0.45rem 1rem; border: 1px solid var(--forest); border-radius: 999px;
+    background: var(--forest); color: var(--cream); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  }
+  .btn--ghost { border-color: var(--sand); background: var(--cream); color: var(--forestDark); }
+
+  footer { padding: 1.9rem 0 2.6rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.72); font-size: 0.78rem; }
+  footer strong { color: var(--cream); }
+  footer p:last-child { margin-bottom: 0; }
+
+  @media (min-width: 820px) {
+    .console__body { grid-template-columns: 19rem minmax(0, 1fr); }
+    .ledger { border-bottom: 0; border-right: 1px solid var(--sand); }
+    .stage { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kv { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  @media print {
+    .bar, .ptabs, .actions, .notes__actions, .mini, .btn, .console__bar { display: none !important; }
+    body { background: #fff; color: #000; font-size: 10.5pt; }
+    .hero, .section--dark, .console__bar { background: #fff !important; color: #000 !important; }
+    .hero *, .section--dark * { color: #000 !important; background-color: transparent !important; }
+    pre, pre.prompt { color: #000 !important; background: #f6f1e7 !important; border: 1px solid #999 !important; max-height: none; }
+    .pane[hidden] { display: none !important; }
+    .console, .callout, .stagecard, .gap { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">Ask &middot; the rewrite, and the instrument</span>
+    <div class="bar__right">
+      <a class="bar__link" href="d61c_follow_up.html">Follow-up decision</a>
+      <a class="bar__link" href="d61b_ask_page.html">The ask page</a>
+      <button class="bar__print" id="print-page" type="button">Print</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Part 2 of the follow-up decision</p>
+    <h1>Is a rewrite the right instrument &mdash; and what builds the prompt next time?</h1>
+    <p class="lede">
+      Two questions that turn out to be one. The alternatives to a rewrite are only comparable
+      once you separate <strong>what goes to retrieval</strong> from <strong>what becomes the
+      canonical question</strong>. And you cannot choose between them by argument &mdash; you
+      need a screen that shows the question, the passages, the prompt and the verdict.
+    </p>
+    <p style="margin-bottom:0">
+      Short version: <strong>the rewrite is for the ledger, not for retrieval</strong>. Retrieval
+      can be fixed without a model. The last section is the console that lets you prove which
+      one you actually needed.
+    </p>
+  </div>
+</header>
+
+<main>
+
+<!-- ======================================================================
+     1. Decomposition
+     ====================================================================== -->
+<section id="decompose">
+  <div class="wrap">
+    <p class="eyebrow">Part 1 &middot; The decomposition</p>
+    <h2>One typed sentence feeds four things, and they want different texts</h2>
+    <p style="max-width:64rem;color:var(--muted)">
+      This is the whole argument in one picture. A &ldquo;rewrite&rdquo; is not one decision;
+      it is a decision about <em>which</em> of these four gets the standalone text.
+    </p>
+
+    <div class="pipe">
+      <div class="pnode">
+        <b>Typed question</b>
+        <span>Turn 2: <em>&ldquo;what if I compost it first?&rdquo;</em></span>
+      </div>
+      <div class="parrow" aria-hidden="true">-&gt;</div>
+      <div class="pnode pnode--fix">
+        <b>1 &middot; Retrieval query</b>
+        <span>Wants nouns. This is the only consumer a rewrite <em>has</em> to serve, and the only one a model can improve on.</span>
+      </div>
+      <div class="parrow" aria-hidden="true">-&gt;</div>
+      <div class="pnode">
+        <b>2 &middot; Prompt</b>
+        <span>Already gets the last 8 messages. Wants an instruction, not a rewrite.</span>
+      </div>
+      <div class="parrow" aria-hidden="true">-&gt;</div>
+      <div class="pnode pnode--downstream">
+        <b>3 &middot; Ledger</b>
+        <span>Cache key, escalation row, board card. Wants a <em>standalone</em> text that a stranger could search for.</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--sageLight);border-color:var(--forest)"></span> a model can help here</span>
+      <span><span class="swatch" style="background:var(--cream);border-style:dashed"></span> a convention is enough</span>
+    </div>
+
+    <p style="margin-top:1.1rem;max-width:64rem">
+      Retrieval wants <strong>nouns the corpus contains</strong>. The ledger wants
+      <strong>a question a stranger could have typed</strong>. Those are not the same test, and
+      conflating them is what made my earlier recommendation look like one big mechanism. It is
+      two: a retrieval fix, and a canonical-text convention.
+    </p>
+
+    <div class="callout">
+      <p><strong>The constraint that decides every option below: the audit is
+      all-or-nothing over the retrieved set.</strong> A passage the model can <em>see</em> in the
+      conversation is still inadmissible unless the retriever supplied it this turn. So any
+      technique that encourages the model to lean on history must also put those chunks in the
+      candidate set, or it converts a good answer into a refusal.</p>
+      <p style="margin-bottom:0">That single fact rules out one of the three ideas in the
+      question, and it is the reason the cheap options below are shaped the way they are.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     2. The alternatives
+     ====================================================================== -->
+<section id="options" class="section--warm">
+  <div class="wrap">
+    <p class="eyebrow">Part 2 &middot; The alternatives</p>
+    <h2>Seven ways to answer &ldquo;what if I compost it first?&rdquo;</h2>
+    <p style="max-width:64rem;color:var(--muted)">
+      Each row is judged on four things only: does it put the right passages in front of the
+      model, does it survive the audit, does it produce a text the ledger can use, and what does
+      it cost per follow-up.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:15rem">Option</th>
+            <th>What changes</th>
+            <th>Retrieval</th>
+            <th>Audit</th>
+            <th>Ledger text</th>
+            <th>Cost</th>
+            <th>Breaks when</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>0 &middot; Today</strong><br><span class="muted">fragment + history in the prompt</span></td>
+            <td>Nothing</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+            <td>0</td>
+            <td>Always, eventually. It works only when the fragment happens to retrieve the parent's clause.</td>
+          </tr>
+          <tr>
+            <td><strong>1 &middot; Whole chain as the query</strong><br><span class="muted">send turn 1 + turn 2 to search</span></td>
+            <td>Query</td>
+            <td class="no">dilutes</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+            <td>0</td>
+            <td>Two topics in one query: the 8-passage budget splits, and the lexical arm ANDs the chain into nothing (&sect;2.4).</td>
+          </tr>
+          <tr>
+            <td><strong>2 &middot; Seeded retrieval</strong><br><span class="muted">union the parent's chunks</span></td>
+            <td>Candidate set</td>
+            <td class="no">no</td>
+            <td class="yes">yes</td>
+            <td class="no">no</td>
+            <td>0</td>
+            <td>The fragment retrieves a different topic; the parent's clauses are present but ranked last and the budget is crowded.</td>
+          </tr>
+          <tr>
+            <td><strong>3 &middot; A context arm</strong><br><span class="muted">the parent's rarest term, fused in</span></td>
+            <td>Candidate set + rank</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td>partly</td>
+            <td>0</td>
+            <td>The fragment adds no noun at all: <em>&ldquo;what about in winter?&rdquo;</em> has nothing for the second arm to match.</td>
+          </tr>
+          <tr>
+            <td><strong>4 &middot; Instruction only</strong><br><span class="muted">&ldquo;the latest message is a follow-up; answer it&rdquo;</span></td>
+            <td>Prompt</td>
+            <td class="no">no</td>
+            <td class="worse">worse</td>
+            <td class="no">no</td>
+            <td>0</td>
+            <td>Always. It makes the model likelier to cite a clause the audit cannot see, so it refuses <em>more</em> often.</td>
+          </tr>
+          <tr>
+            <td><strong>5 &middot; Concatenate, don't synthesise</strong><br><span class="muted">query = <code>parent_marker + fragment</code></span></td>
+            <td>Query + key</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td>readable-ish</td>
+            <td>0</td>
+            <td>Same as 3, plus the &ldquo;question&rdquo; is two questions glued together &mdash; fine for a queue, wrong for a public card.</td>
+          </tr>
+          <tr>
+            <td><strong>6 &middot; Rewrite</strong><br><span class="muted">history + fragment &rarr; standalone question</span></td>
+            <td>Query + ledger</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td>1 call</td>
+            <td>The rewrite invents a subject the visitor did not mean, and does it confidently.</td>
+          </tr>
+          <tr>
+            <td><strong>7 &middot; No follow-ups</strong><br><span class="muted">ask for a complete sentence</span></td>
+            <td>Interface</td>
+            <td>n/a</td>
+            <td>n/a</td>
+            <td class="yes">yes</td>
+            <td>0</td>
+            <td>Friction on every follow-up, and it reads as the product failing to understand.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:1.8rem">On the two ideas in the question specifically</h3>
+
+    <div class="gap">
+      <span class="gap__n">A</span>
+      <div>
+        <b>&ldquo;Send the entire chain history instead of rewriting the newest question&rdquo;</b>
+        <span>
+          This is option 1, and it is the natural first instinct because it needs no model. It
+          fails for a measurable reason: <code>significant_terms()</code> picks terms by rarity and
+          <code>default_retrieval</code> runs the rare-term arm first. From a two-turn chain the
+          rarest term usually comes from <em>turn 1</em> &mdash; <em>cardboard</em> &mdash; so the
+          search answers the question you already had. Add the 8-passage budget split across two
+          topics and the vector arm averaging two subjects, and the failure is structural, not a
+          tuning problem.
+          <br><br>
+          <strong>But the instinct is right about one thing:</strong> the parent's nouns are exactly
+          what the fragment is missing. Option 5 keeps them by gluing instead of synthesising, and
+          option 3 keeps them as a second <em>arm</em> so they cannot crowd out the new intent.
+        </span>
+      </div>
+    </div>
+
+    <div class="gap">
+      <span class="gap__n">B</span>
+      <div>
+        <b>&ldquo;Append to the prompt: this is what the user asked, please answer the latest question&rdquo;</b>
+        <span>
+          This is option 4, and it is the one the audit rules out <em>on its own</em>. Today the
+          prompt already says <em>&ldquo;Conversation so far (for context only)&rdquo;</em>; saying
+          it more forcefully changes which passage the model <em>wants</em> to cite, not which
+          passages are <em>available</em>.
+          <br><br>
+          A model that obeys harder writes a citation for the clause it remembers from turn 1. The
+          audit looks that clause up in this turn's retrieved set, does not find it, and refuses
+          &mdash; all-or-nothing, by design (D47). So the instruction converts a lucky answer into
+          a definite refusal.
+          <br><br>
+          It is still worth doing &mdash; <strong>after</strong> the candidate set contains the
+          parent's clauses (option 2 or 3), where it becomes a useful precision nudge rather than a
+          trap. Two lines, versioned, A/B-able in the console.
+        </span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>So: is the rewrite for the retrieval step?</strong> Yes and no, and the split is
+      the useful part. It is the only option that fixes the retrieval query <em>and</em> produces a
+      canonical text; but the retrieval half can be bought much more cheaply. What you are really
+      paying the model for is the sentence a stranger could have typed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     3. Recommendation
+     ====================================================================== -->
+<section id="stages" class="section--sage">
+  <div class="wrap">
+    <p class="eyebrow">Part 3 &middot; Staging it</p>
+    <h2>Buy retrieval deterministically. Rent the rewrite for the ledger.</h2>
+
+    <div class="stage">
+      <div class="stagecard">
+        <p class="stage__k">Stage 1 &mdash; now, no model call</p>
+        <b>Context arm + carried citations + instruction.</b>
+        <p>
+          Add a lexical arm over the previous question's rarest term and fuse it in, capped at
+          two passages. Carry the parent answer's <em>cited</em> clauses in as a floor — the
+          previous question's words are often in no clause at all, which is why the arm alone
+          would not have fixed the cardboard case. Then the two-line follow-up instruction, now
+          that a remembered clause is admissible.
+        </p>
+        <p><b>Proves:</b> whether follow-ups fail because of retrieval at all. If they stop
+        failing, you never needed the model.</p>
+      </div>
+
+      <div class="stagecard">
+        <p class="stage__k">Stage 1b &mdash; the ledger, no model call</p>
+        <b>Composite canonical text.</b>
+        <p>
+          Key the cache on <code>parent_question + fragment</code> instead of the fragment alone.
+          Two visitors asking the same fragment about different parents get different keys and
+          cannot collide; identical contexts share. The escalation row stores the same composite,
+          rendered as <em>&ldquo;Can I use cardboard? &rarr; what if I compost it first?&rdquo;</em>
+          &mdash; answerable by a human.
+        </p>
+        <p><b>Proves:</b> the cache leak was never a reason to call a model.</p>
+      </div>
+
+      <div class="stagecard">
+        <p class="stage__k">Stage 2 &mdash; only if the console says so</p>
+        <b>The rewrite, for the board.</b>
+        <p>
+          When a follow-up deserves to become a card, the composite is not a title. At that point
+          pay for the rewrite &mdash; or, cheaper still, have the administrator write the title from
+          the composite. Either way it is a <em>publishing</em> decision, not an answering one.
+        </p>
+        <p><b>Proves:</b> the rewrite earns its call on the surface that needs prose, not on the
+        one that needs nouns.</p>
+      </div>
+
+      <div class="stagecard">
+        <p class="stage__k">The honest revision</p>
+        <b>What I got wrong last time.</b>
+        <p>
+          I said the rewrite was load-bearing for the whole mechanism. That was true only because I
+          had not separated the four consumers. It is load-bearing for <em>one</em> of them. The
+          staging above is the same conclusion with the cost removed from the critical path.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:1.6rem">What would change my mind</h3>
+    <ul style="max-width:64rem">
+      <li><strong>If stage 1 leaves real fragments unfixed.</strong> The console should let you count them: follow-ups where the composite query still returns no clause the new intent needs. Above roughly one in five, the deterministic arm is not enough.</li>
+      <li><strong>If the fused arm pollutes ordinary questions.</strong> A third arm on every turn is not free &mdash; it must only run when there is a parent, and the console must show it is not displacing good chunks.</li>
+      <li><strong>If the group wants cards for everything.</strong> Then the rewrite moves to stage 1, because every good follow-up becomes a publishing candidate.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================================================================
+     4. The console, part one: what it shows
+     ====================================================================== -->
+<section id="console-what">
+  <div class="wrap">
+    <p class="eyebrow">Part 4 &middot; The instrument</p>
+    <h2>The screen that decides all of the above</h2>
+    <p style="max-width:64rem">
+      You cannot choose between these by argument, and you should not. The choice is settled by
+      looking at twenty real turns. Here is what that screen needs to show, and what already
+      exists to build it from.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>What you asked for</th><th>Where it comes from today</th><th>Gap</th></tr></thead>
+        <tbody>
+          <tr>
+            <td rowspan="1"><strong>The question</strong></td>
+            <td><code>ChatMessage.content</code> on the user row; the session UUID; the hashed IP</td>
+            <td>None. (The rewrite, when added, needs its own field.)</td>
+          </tr>
+          <tr>
+            <td><strong>The retrieved sections</strong></td>
+            <td><code>ChatMessage.grounding</code> &mdash; locator, page, heading path, document, text sha &mdash; plus the <code>retrieved_chunks</code> M2M</td>
+            <td>No rank, no arm, no score. <code>RetrievedChunk</code> has all three and they are dropped at persist time. A JSON field: <em>no migration</em>.</td>
+          </tr>
+          <tr>
+            <td><strong>The prompt that got built</strong></td>
+            <td>Not stored &mdash; but <code>build_prompt()</code> is deterministic from the messages, the chunks and <code>PROMPT_VERSION</code>, all of which are stored</td>
+            <td>None for new rows. Rebuild on demand; store <code>prompt_version</code> and a prompt digest so the console can say when a rebuild is no longer faithful.</td>
+          </tr>
+          <tr>
+            <td><strong>The response</strong></td>
+            <td><code>citations.raw</code>, <code>citations.accepted</code>, <code>refusal_checks</code>, <code>content</code>, tokens, latency, model</td>
+            <td><code>cached</code> is not stored; it is inferable (zero prompt tokens) but should be explicit.</td>
+          </tr>
+          <tr>
+            <td><strong>Which corpus and which contract</strong></td>
+            <td><code>corpus_fingerprint</code>, <code>prompt_version</code></td>
+            <td>None. This is what makes an old turn interpretable after an ingest.</td>
+          </tr>
+          <tr>
+            <td><strong>The audit&rsquo;s reason</strong></td>
+            <td><code>refusal_checks</code> &mdash; the <code>problems</code> list, verbatim</td>
+            <td>None, and it is the most under-used field in the model.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p><strong>Why rebuild the prompt instead of storing it.</strong> A stored prompt is a copy
+      that drifts from the function that produced it, and the first thing you want this console for
+      is <em>what would the prompt be today?</em> Rebuilding calls the same <code>build_prompt()</code>
+      the service calls, so there is one definition. The stored <code>prompt_version</code> and the
+      text sha of each passage are what tell you whether the rebuild is still the same prompt.</p>
+      <p style="margin-bottom:0"><strong>Guardrails:</strong> staff-only, outside
+      <code>_public.PAGES</code> like <code>/uat/</code>; it shows one visitor's question, so it is
+      never linked from a public route; and a replay writes no rows &mdash; it is an experiment, not
+      a turn.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     5. The console, part two: the prototype
+     ====================================================================== -->
+<section id="console" class="section--warm">
+  <div class="wrap">
+    <p class="eyebrow">Part 5 &middot; The console, as a work surface</p>
+    <h2>Pick a turn. Read the four things that happened.</h2>
+    <p style="max-width:64rem;color:var(--muted)">
+      Three turns: a grounded answer, the follow-up that refused, and a cache hit. The refused
+      turn is the one that matters &mdash; the audit blames the corpus, and the retrieval pane is
+      what proves it is actually a retrieval gap.
+    </p>
+
+    <div class="console">
+      <div class="console__bar">
+        <b>/console/ask/</b>
+        <span>staff only &middot; replayed answers write no rows</span>
+      </div>
+
+      <div class="console__body">
+        <div class="ledger" id="ledger">
+          <p class="ledger__head">Recent turns &middot; 3 of 1&thinsp;842</p>
+        </div>
+
+        <div class="detail">
+          <div class="ptabs" role="tablist" aria-label="Turn panes">
+            <button class="ptab" role="tab" aria-selected="true" data-pane="question">Question</button>
+            <button class="ptab" role="tab" aria-selected="false" data-pane="retrieval">Retrieval</button>
+            <button class="ptab" role="tab" aria-selected="false" data-pane="prompt">Prompt</button>
+            <button class="ptab" role="tab" aria-selected="false" data-pane="response">Response</button>
+          </div>
+
+          <div class="pane" id="pane-question" role="tabpanel">
+            <p class="qbig" id="q-text">&mdash;</p>
+            <dl class="kv" id="q-meta"></dl>
+          </div>
+
+          <div class="pane" id="pane-retrieval" role="tabpanel" hidden>
+            <p class="ret-summary" id="ret-summary"></p>
+            <div id="ret-list"></div>
+          </div>
+
+          <div class="pane" id="pane-prompt" role="tabpanel" hidden>
+            <div class="prompt-tabs">
+              <button class="mini" id="p-stored" type="button" aria-pressed="true">As sent</button>
+              <button class="mini" id="p-today" type="button" aria-pressed="false">As it would be today</button>
+            </div>
+            <div class="banner" id="p-banner"></div>
+            <pre class="prompt"><code id="p-code"></code></pre>
+          </div>
+
+          <div class="pane" id="pane-response" role="tabpanel" hidden>
+            <p class="pane__h">What the model returned, and what the audit made of it</p>
+            <div class="audit" id="audit"></div>
+            <p class="pane__h">What the visitor saw</p>
+            <div class="answerbox" id="answerbox"></div>
+            <dl class="kv" id="r-meta" style="margin-top:0.8rem"></dl>
+          </div>
+
+          <div class="actions">
+            <button class="act act--primary" id="pin" type="button">Pin as a test case</button>
+            <button class="act" id="replay" type="button">Replay with today's prompt</button>
+            <span class="act__note" id="act-note">Replays may cost a model call.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     6. Decision
+     ====================================================================== -->
+<section id="decide">
+  <div class="wrap wrap--narrow">
+    <p class="eyebrow">Part 6 &middot; Your decision</p>
+    <h2>Staging and the console</h2>
+
+    <div class="decision" role="radiogroup" aria-label="Which retrieval fix first">
+      <label class="opt">
+        <input type="radio" name="stage" value="s1">
+        <span><b>Stage 1 only for now</b><span>Third RRF arm + parent chunks + composite cache key. No model call. Measure before buying anything.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="stage" value="s1r">
+        <span><b>Stage 1 and the rewrite together</b><span>Ship the mechanism whole, because follow-ups should become board cards from day one.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="stage" value="s2">
+        <span><b>Rewrite only</b><span>Skip the deterministic work; one mechanism to maintain and to reason about.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="stage" value="none">
+        <span><b>Neither, yet</b><span>Build the console first and decide from twenty real follow-ups.</span></span>
+      </label>
+    </div>
+
+    <div class="decision" role="radiogroup" aria-label="How much console" style="margin-top:1.1rem">
+      <label class="opt">
+        <input type="radio" name="console" value="full">
+        <span><b>Full trace console</b><span>Ledger, four panes, prompt rebuild and diff, replay, pin-as-test-case.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="console" value="readonly">
+        <span><b>Read-only inspector</b><span>The four panes and the prompt rebuild, no replay and no pinning. Much smaller.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="console" value="admin">
+        <span><b>Admin inlines only</b><span>Show <code>refusal_checks</code> and <code>grounding</code> on the existing ChatMessage admin page.</span></span>
+      </label>
+    </div>
+
+    <div class="notes">
+      <label for="notes" style="font-weight:700;color:var(--forestDark)">Notes</label>
+      <textarea id="notes" placeholder="What should the console answer first? Which follow-ups would you want pinned as tests?"></textarea>
+      <div class="notes__actions">
+        <button class="btn" id="export" type="button">Export decision</button>
+        <button class="btn btn--ghost" id="clear" type="button">Clear</button>
+        <span class="notes__status" id="status" role="status">Saved locally as you type.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <strong>Rewrite or something else &middot; and the ask trace console.</strong>
+      Self-contained: no CDN, no build step, no network request.
+    </p>
+    <p>
+      The console prototype is populated with a grounded turn, a refused follow-up and a cache hit;
+      the locators are real and the prose is illustrative. Membership is not certification, and no
+      certification status is published here.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var TODAY_VERSION = "d49-4";
+
+  var PROMPT_INTRO = [
+    "You answer questions about the SAOSO Organic Standard, the Outeniqua PGS",
+    "Principles, Policies and Procedures, the Basic Production Principles, and the",
+    "South African organic certification landscape.",
+    "",
+    "Rules, in order of importance:",
+    "1. Use only the passages supplied below. Do not answer from memory.",
+    "2. Every claim carries a citation with a locator from those passages.",
+    "3. If the passages do not answer the question, say insufficient_context.",
+    "4. If a passage states a rule that governs the question, answer with it and say",
+    "   plainly that the document does not name the item.",
+    "5. Silence is not permission.",
+    ""
+  ].join("\n");
+
+  var SCHEMA = '{"answer": string, "citations": [{"section_ref": string, "sub_ref": string|null, "quote": string}], "insufficient_context": boolean}';
+
+  var TURNS = [
+    {
+      id: "t1",
+      time: "14:22:07",
+      session: "b1e4…9c2a",
+      question: "Can I use cardboard from my neighbour?",
+      verdict: "grounded",
+      cached: false,
+      latency: 2140,
+      version: "d49-2",
+      fingerprint: "3f9a…41d0",
+      history: [],
+      retrieval: [
+        { loc: "Appendix 2", doc: "SAOSO v2.1", page: 76, heading: "Fertilizers & soil conditioners", arm: "lex1, vec2", score: "0.0328", cited: true, text: "Biodegradable processing by-products, plant or animal origin … Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants" },
+        { loc: "Appendix 1", doc: "SAOSO v2.1", page: 70, heading: "Criteria for evaluating inputs", arm: "lex4, vec6", score: "0.0291", cited: false, text: "Criteria for the evaluation of inputs, additives and processing aids for organic production and processing." },
+        { loc: "S4", doc: "SAOSO v2.1", page: 34, heading: "Crop Production", arm: "vec3", score: "0.0287", cited: false, text: "Crop production requirements, including soil fertility and contamination risks." },
+        { loc: "Appendix 3", doc: "SAOSO v2.1", page: 79, heading: "Crop protectants and growth regulators", arm: "vec5", score: "0.0264", cited: false, text: "Substances permitted for pest and disease control." },
+        { loc: "S20", doc: "SAOSO v2.1", page: 60, heading: "Processing Handling", arm: "lex6", score: "0.0241", cited: false, text: "Handling, storage and transport of organic product." }
+      ],
+      raw: [
+        { ref: "Appendix 2", sub: null, quote: "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing" }
+      ],
+      audit: [
+        { ref: "Appendix 2", ok: true, why: "quote found in the cited chunk" }
+      ],
+      answer: "The standard does not name cardboard. It governs it as a biodegradable processing by-product, which is permitted only if it is free of significant contaminants, or composted before it comes onto organic land and then confirmed free of significant contaminants.",
+      problems: [],
+      tokens: "2 214 prompt · 268 completion"
+    },
+    {
+      id: "t2",
+      time: "14:23:31",
+      session: "b1e4…9c2a",
+      question: "what if I compost it first?",
+      verdict: "refused",
+      cached: false,
+      latency: 1870,
+      version: "d49-2",
+      fingerprint: "3f9a…41d0",
+      history: [
+        { role: "User", text: "Can I use cardboard from my neighbour?" },
+        { role: "Assistant", text: "The standard does not name cardboard. It governs it as a biodegradable processing by-product, which is permitted only if it is free of significant contaminants, or composted before it comes onto organic land…" }
+      ],
+      retrieval: [
+        { loc: "Appendix 2", doc: "SAOSO v2.1", page: 76, heading: "Fertilizers & soil conditioners", arm: "lex1", score: "0.0311", cited: false, text: "Crop residues and plant materials, mulch, green manure, straw" },
+        { loc: "Appendix 2", doc: "SAOSO v2.1", page: 76, heading: "Fertilizers & soil conditioners", arm: "lex2", score: "0.0302", cited: false, text: "Farmyard manure, slurry and urine — shall not constitute the main source of nitrogen…" },
+        { loc: "S4", doc: "SAOSO v2.1", page: 34, heading: "Crop Production", arm: "vec1", score: "0.0294", cited: false, text: "Soil fertility and the use of compost in crop production." },
+        { loc: "S1", doc: "SAOSO v2.1", page: 22, heading: "Definitions", arm: "vec3", score: "0.0270", cited: false, text: "Definitions used throughout this standard." },
+        { loc: "Appendix 5", doc: "SAOSO v2.1", page: 84, heading: "Pest and disease control", arm: "vec4", score: "0.0255", cited: false, text: "Substances for pest and disease control in livestock housing." },
+        { loc: "S23", doc: "SAOSO v2.1", page: 67, heading: "Social Justice", arm: "vec5", score: "0.0240", cited: false, text: "Social justice requirements." }
+      ],
+      raw: [
+        { ref: "Appendix 2", sub: null, quote: "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing — Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants" }
+      ],
+      audit: [
+        { ref: "Appendix 2", ok: false, why: "the quote is not in the cited chunk — the only Appendix 2 rows supplied were &ldquo;crop residues&rdquo; and &ldquo;farmyard manure&rdquo;" }
+      ],
+      answer: "I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents.",
+      problems: ["Appendix 2: the quote is not in the cited chunk"],
+      escalated: true,
+      tokens: "2 486 prompt · 312 completion"
+    },
+    {
+      id: "t3",
+      time: "14:31:02",
+      session: "77ac…0e51",
+      question: "Can I use cardboard from my neighbour?",
+      verdict: "cached",
+      cached: true,
+      latency: 118,
+      version: "d49-2",
+      fingerprint: "3f9a…41d0",
+      history: [],
+      retrieval: [
+        { loc: "Appendix 2", doc: "SAOSO v2.1", page: 76, heading: "Fertilizers & soil conditioners", arm: "lex1, vec2", score: "0.0328", cited: true, text: "Biodegradable processing by-products, plant or animal origin …" }
+      ],
+      raw: [
+        { ref: "Appendix 2", sub: null, quote: "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing" }
+      ],
+      audit: [
+        { ref: "Appendix 2", ok: true, why: "quote found in the cited chunk (served from cache; audit not re-run)" }
+      ],
+      answer: "The standard does not name cardboard. It governs it as a biodegradable processing by-product, which is permitted only if it is free of significant contaminants, or composted before it comes onto organic land and then confirmed free of significant contaminants.",
+      problems: [],
+      tokens: "0 · served from cache"
+    }
+  ];
+
+  var selected = TURNS[0].id;
+  var promptMode = "stored";
+  var pinned = {};
+
+  function esc(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function turn() {
+    return TURNS.filter(function (t) { return t.id === selected; })[0];
+  }
+
+  function buildLedger() {
+    var box = document.getElementById("ledger");
+    box.innerHTML = "<p class=\"ledger__head\">Recent turns &middot; 3 of 1&thinsp;842</p>";
+    TURNS.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "lturn";
+      b.setAttribute("aria-current", String(t.id === selected));
+      b.innerHTML =
+        "<span class=\"lturn__q\">" + esc(t.question) + "</span>" +
+        "<span class=\"lturn__meta\">" +
+          "<span class=\"vchip " + (t.verdict === "grounded" ? "vchip--ok" : t.verdict === "cached" ? "vchip--cache" : "vchip--bad") + "\">" + t.verdict + "</span>" +
+          "<span>" + t.time + "</span>" +
+          "<span>" + t.retrieval.length + " passages</span>" +
+          (t.problems.length ? "<span class=\"vchip vchip--bad\">audit</span>" : "") +
+        "</span>";
+      b.addEventListener("click", function () {
+        selected = t.id;
+        promptMode = "stored";
+        buildLedger();
+        render();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  function renderQuestion(t) {
+    document.getElementById("q-text").textContent = t.question;
+    var meta = [
+      ["session", t.session],
+      ["turn", t.history.length ? "2 of 2" : "1"],
+      ["asked at", t.time],
+      ["cache key", "sha256(normalise(question)) · " + (t.cached ? "hit" : "miss")],
+      ["history supplied", t.history.length ? t.history.length + " messages" : "none"],
+      ["prompt version", t.version],
+      ["corpus", t.fingerprint]
+    ];
+    document.getElementById("q-meta").innerHTML = meta.map(function (row) {
+      return "<div><dt>" + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
+    }).join("");
+  }
+
+  function renderRetrieval(t) {
+    var cited = t.retrieval.filter(function (r) { return r.cited; }).length;
+    document.getElementById("ret-summary").innerHTML =
+      "<span><b>" + t.retrieval.length + "</b> of 8 supplied</span>" +
+      "<span><b>" + cited + "</b> cited</span>" +
+      "<span><b>" + t.problems.length + "</b> audit problems</span>" +
+      "<span>budget <b>8</b></span>";
+    document.getElementById("ret-list").innerHTML = t.retrieval.map(function (r, i) {
+      return "<div class=\"rrow\">" +
+        "<span class=\"rrow__n\">" + (i + 1) + "</span>" +
+        "<div><span class=\"rrow__loc\">" + esc(r.loc) + "</span> " +
+        (r.cited ? "<span class=\"vchip cited\">cited</span>" : "") +
+        "<div>" + esc(r.text) + "</div>" +
+        "<div class=\"rrow__meta\"><span>" + esc(r.doc) + "</span><span>p." + r.page + "</span>" +
+        "<span>" + esc(r.heading) + "</span><span>" + esc(r.arm) + "</span><span>score " + r.score + "</span></div>" +
+        "</div></div>";
+    }).join("");
+  }
+
+  function promptText(t, today) {
+    var lines = [];
+    lines.push(PROMPT_INTRO);
+    if (t.history.length) {
+      lines.push("Conversation so far (for context only):");
+      t.history.forEach(function (m) { lines.push(m.role + ": " + m.text); });
+      if (today) {
+        lines.push("The latest message is a follow-up. Answer the latest message; use the earlier");
+        lines.push("turns only to resolve what it refers to. Do not cite a passage that is not");
+        lines.push("supplied below.");
+      }
+      lines.push("");
+    }
+    lines.push("Passages:");
+    lines.push("");
+    t.retrieval.forEach(function (r, i) {
+      lines.push("[" + (i + 1) + "] LOCATOR: " + r.loc);
+      lines.push("Document: " + r.doc + ", page " + r.page);
+      lines.push("Numbered sub-clauses available: none — omit `sub_ref` for this passage.");
+      lines.push(r.text);
+      lines.push("");
+    });
+    lines.push("Question: " + t.question);
+    lines.push("");
+    lines.push("Return JSON only, using the supplied schema.");
+    return lines.join("\n");
+  }
+
+  function renderPrompt(t) {
+    var stored = promptText(t, false);
+    var today = promptText(t, true);
+    var html;
+    if (promptMode === "stored" || stored === today) {
+      html = esc(stored);
+    } else {
+      var a = stored.split("\n");
+      var b = today.split("\n");
+      var out = [];
+      var i = 0;
+      var j = 0;
+      while (i < a.length || j < b.length) {
+        if (a[i] === b[j]) { out.push(esc(a[i])); i += 1; j += 1; }
+        else if (j < b.length && a.indexOf(b[j], i) === -1) { out.push("<span class=\"add\">+ " + esc(b[j]) + "</span>"); j += 1; }
+        else if (i < a.length) { out.push("<span class=\"del\">- " + esc(a[i]) + "</span>"); i += 1; }
+        else { j += 1; }
+      }
+      html = out.join("\n");
+    }
+    document.getElementById("p-code").innerHTML = html;
+
+    var banner = document.getElementById("p-banner");
+    if (t.version !== TODAY_VERSION) {
+      banner.hidden = false;
+      banner.innerHTML = "<b>Produced under " + t.version + "; the builder is now " + TODAY_VERSION + ".</b> " +
+        "The prompt is rebuilt from the stored messages, passages and version, so this is exactly what " +
+        "the service would send today &mdash; not a copy.";
+    } else {
+      banner.hidden = true;
+      banner.innerHTML = "";
+    }
+    document.getElementById("p-stored").setAttribute("aria-pressed", String(promptMode === "stored"));
+    document.getElementById("p-today").setAttribute("aria-pressed", String(promptMode === "today"));
+  }
+
+  function renderResponse(t) {
+    document.getElementById("audit").innerHTML = t.raw.map(function (raw) {
+      var a = t.audit.filter(function (x) { return x.ref === raw.ref; })[0] ||
+        { ok: false, why: "no verdict recorded" };
+      return "<div class=\"audit__row\">" +
+        "<span class=\"audit__ref\">" + esc(raw.ref) + (raw.sub ? " &middot; " + esc(raw.sub) : "") + "</span>" +
+        "<span class=\"" + (a.ok ? "verdict-ok" : "verdict-bad") + "\">" + (a.ok ? "accepted" : "refused") + "</span>" +
+        "<span class=\"audit__quote\">&ldquo;" + esc(raw.quote) + "&rdquo;</span>" +
+        "<span class=\"audit__why\">" + a.why + "</span></div>";
+    }).join("");
+    var box = document.getElementById("answerbox");
+    box.className = "answerbox" + (t.verdict === "refused" ? " answerbox--refusal" : "");
+    box.textContent = t.answer;
+    document.getElementById("r-meta").innerHTML = [
+      ["latency", t.latency + " ms"],
+      ["tokens", t.tokens],
+      ["cached", t.cached ? "yes" : "no"],
+      ["escalated", t.escalated ? "yes — queue item created" : "no"]
+    ].map(function (row) {
+      return "<div><dt>" + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>";
+    }).join("");
+  }
+
+  function render() {
+    var t = turn();
+    renderQuestion(t);
+    renderRetrieval(t);
+    renderPrompt(t);
+    renderResponse(t);
+    var pin = document.getElementById("pin");
+    pin.setAttribute("aria-pressed", String(Boolean(pinned[t.id])));
+    pin.textContent = pinned[t.id] ? "Pinned as a test case" : "Pin as a test case";
+    document.getElementById("act-note").textContent = pinned[t.id]
+      ? "In the suite: this question will be re-run by probe_chat.py."
+      : "Replays may cost a model call.";
+  }
+
+  document.querySelectorAll(".ptab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".ptab").forEach(function (other) {
+        other.setAttribute("aria-selected", String(other === tab));
+      });
+      ["question", "retrieval", "prompt", "response"].forEach(function (name) {
+        document.getElementById("pane-" + name).hidden = name !== tab.dataset.pane;
+      });
+    });
+  });
+
+  document.getElementById("p-stored").addEventListener("click", function () {
+    promptMode = "stored";
+    renderPrompt(turn());
+  });
+  document.getElementById("p-today").addEventListener("click", function () {
+    promptMode = "today";
+    renderPrompt(turn());
+  });
+
+  document.getElementById("pin").addEventListener("click", function () {
+    var t = turn();
+    pinned[t.id] = !pinned[t.id];
+    render();
+  });
+
+  document.getElementById("replay").addEventListener("click", function () {
+    var note = document.getElementById("act-note");
+    note.textContent = "Replay is not wired in this prototype: it would send the rebuilt prompt and write no rows.";
+  });
+
+  document.getElementById("print-page").addEventListener("click", function () { window.print(); });
+
+  var KEY_S = "pgs-d61d-stage";
+  var KEY_C = "pgs-d61d-console";
+  var KEY_N = "pgs-d61d-notes";
+  var status = document.getElementById("status");
+  var notes = document.getElementById("notes");
+  var timer = null;
+
+  function save() {
+    try {
+      var stage = "";
+      var cons = "";
+      document.querySelectorAll("input[name=stage]").forEach(function (r) { if (r.checked) { stage = r.value; } });
+      document.querySelectorAll("input[name=console]").forEach(function (r) { if (r.checked) { cons = r.value; } });
+      window.localStorage.setItem(KEY_S, stage);
+      window.localStorage.setItem(KEY_C, cons);
+      window.localStorage.setItem(KEY_N, notes.value);
+      status.textContent = "Saved locally.";
+    } catch (error) {
+      status.textContent = "Could not save locally; export still works.";
+    }
+  }
+
+  try {
+    var s = window.localStorage.getItem(KEY_S) || "";
+    var c = window.localStorage.getItem(KEY_C) || "";
+    document.querySelectorAll("input[name=stage]").forEach(function (r) { r.checked = r.value === s; });
+    document.querySelectorAll("input[name=console]").forEach(function (r) { r.checked = r.value === c; });
+    notes.value = window.localStorage.getItem(KEY_N) || "";
+  } catch (error) { /* storage unavailable */ }
+
+  document.querySelectorAll("input[name=stage], input[name=console]").forEach(function (r) {
+    r.addEventListener("change", save);
+  });
+  notes.addEventListener("input", function () {
+    window.clearTimeout(timer);
+    status.textContent = "Saving…";
+    timer = window.setTimeout(save, 250);
+  });
+
+  document.getElementById("export").addEventListener("click", function () {
+    var stage = "";
+    var cons = "";
+    document.querySelectorAll("input[name=stage]").forEach(function (r) { if (r.checked) { stage = r.value; } });
+    document.querySelectorAll("input[name=console]").forEach(function (r) { if (r.checked) { cons = r.value; } });
+    var text = [
+      "# Decision — follow-up mechanism and the trace console",
+      "",
+      "Source: product/design/d61d_rewrite_and_trace.html",
+      "Date: " + new Date().toISOString().slice(0, 10),
+      "",
+      "| D62 (provisional) | How do follow-ups retrieve, and what instrument refines the prompts? | **Stage " +
+        (stage || "(none)") + ", console " + (cons || "(none)") + "** — " +
+        (notes.value.trim() || "(no reason recorded)") + " |",
+      "",
+      "## Notes",
+      "",
+      notes.value.trim() || "_No notes._",
+      ""
+    ].join("\n");
+    var blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "pgs-d61d-follow-up-and-console-decision.md";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    status.textContent = "Exported.";
+  });
+
+  document.getElementById("clear").addEventListener("click", function () {
+    document.querySelectorAll("input[name=stage], input[name=console]").forEach(function (r) { r.checked = false; });
+    notes.value = "";
+    try {
+      window.localStorage.removeItem(KEY_S);
+      window.localStorage.removeItem(KEY_C);
+      window.localStorage.removeItem(KEY_N);
+    } catch (error) { /* ignore */ }
+    status.textContent = "Cleared.";
+  });
+
+  buildLedger();
+  render();
+})();
+</script>
+</body>
+</html>

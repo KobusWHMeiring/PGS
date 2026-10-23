@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow-up or new question? — Outeniqua PGS</title>
+<style>
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.1; margin: 0 0 0.85rem; }
+  h2 { font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.15; margin: 0 0 0.6rem; }
+  h3 { font-size: 1.14rem; line-height: 1.25; margin: 0 0 0.45rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.2rem; }
+  li { margin-bottom: 0.35rem; }
+  code {
+    padding: 0.08rem 0.34rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+  }
+  pre {
+    max-width: 100%; margin: 0 0 1rem; padding: 0.9rem 1rem;
+    border: 1px solid var(--sand); border-radius: 8px;
+    background: var(--forestDeep); color: var(--cream);
+    font-family: var(--mono); font-size: 0.75rem; line-height: 1.55; overflow-x: auto;
+  }
+  pre code { padding: 0; border: 0; background: none; color: inherit; font-size: inherit; }
+  a { color: var(--ochreDark); }
+  a:hover { color: var(--forestDark); }
+  :focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1.25rem; }
+  .wrap--narrow { max-width: 840px; }
+
+  .bar {
+    position: sticky; top: 0; z-index: 30;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+    align-items: center; justify-content: space-between;
+    max-width: 1120px; margin: 0 auto; padding: 0.55rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__right { display: flex; gap: 0.6rem; align-items: center; }
+  .bar__link { font-size: 0.76rem; color: var(--muted); text-decoration: none; }
+  .bar__link:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 44px; padding: 0.3rem 0.85rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--creamWarm); color: var(--forestDark);
+    font: inherit; font-size: 0.74rem; cursor: pointer;
+  }
+
+  .hero { background: var(--forest); color: var(--cream); padding: 3rem 0 2.6rem; }
+  .hero .eyebrow { color: var(--ochreLight); }
+  .hero p { color: rgb(253 251 247 / 0.88); max-width: 54rem; }
+  .hero .lede { font-size: clamp(1.02rem, 2vw, 1.24rem); color: rgb(253 251 247 / 0.96); }
+  .hero strong { color: #fff; }
+  .hero code { border-color: rgb(249 241 226 / 0.25); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+
+  .eyebrow {
+    margin: 0 0 0.5rem; color: var(--ochreDark);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+  }
+
+  main section { padding: 2.4rem 0; border-bottom: 1px solid var(--sand); }
+  main section:last-of-type { border-bottom: 0; }
+  .section--warm { background: var(--creamWarm); }
+  .section--sage { background: var(--sageLight); }
+  .section--dark { background: var(--forestDark); color: var(--cream); }
+  .section--dark h2, .section--dark h3 { color: var(--cream); }
+  .section--dark p, .section--dark li { color: rgb(253 251 247 / 0.86); }
+  .section--dark strong { color: #fff; }
+  .section--dark code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  .section--dark .eyebrow { color: var(--ochreLight); }
+
+  .table-wrap { margin: 1rem 0; overflow-x: auto; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th, td { padding: 0.65rem 0.7rem; border-bottom: 1px solid var(--sand); text-align: left; vertical-align: top; }
+  th { background: var(--creamWarm); color: var(--forestDark); font-size: 0.67rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+
+  .callout {
+    margin: 1.25rem 0; padding: 0.95rem 1.1rem;
+    border: 1px solid var(--sand); border-left: 4px solid var(--ochre);
+    border-radius: 8px; background: var(--cream);
+  }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .section--dark .callout { background: rgb(249 241 226 / 0.06); border-color: rgb(249 241 226 / 0.18); }
+
+  .print-note { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.78rem; font-style: italic; }
+
+  .trace { display: grid; gap: 0.5rem; margin: 1rem 0; }
+  .step {
+    display: grid; grid-template-columns: 2rem 1fr; gap: 0.7rem; align-items: start;
+    padding: 0.7rem 0.85rem; border: 1px solid var(--sand); border-radius: 8px; background: var(--cream);
+  }
+  .step__n {
+    display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+    background: var(--forest); color: var(--cream); font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+  }
+  .step--fail .step__n { background: var(--warmDark); border: 1px solid var(--ochre); color: var(--ochreLight); }
+  .step b { display: block; color: var(--forestDark); font-size: 0.86rem; }
+  .step span { color: var(--muted); font-size: 0.82rem; }
+  .step span code { font-size: 0.78rem; }
+
+  .signals { display: grid; gap: 0.7rem; margin: 1rem 0; }
+  .signal { padding: 0.8rem 0.95rem; border: 1px solid var(--sand); border-left: 3px solid var(--forest); border-radius: 8px; background: var(--cream); }
+  .signal b { color: var(--forestDark); }
+  .signal q { font-style: italic; color: var(--charcoal); }
+
+  .variants { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 1rem 0 0.9rem; }
+  .vtab {
+    min-height: 44px; padding: 0.4rem 0.85rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--muted);
+    font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  }
+  .vtab[aria-selected="true"] { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+  .vtab--rec { border-color: var(--ochre); }
+  .vtab--rec[aria-selected="true"] { background: var(--ochre); border-color: var(--ochre); color: #fff; }
+
+  .demo {
+    border: 1px solid var(--sand); border-radius: var(--radius);
+    background: var(--forestDark); color: var(--cream);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .demo__bar {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between;
+    padding: 0.55rem 0.9rem; border-bottom: 1px solid rgb(249 241 226 / 0.14);
+    background: var(--forestDeep); font-size: 0.74rem; color: rgb(253 251 247 / 0.72);
+  }
+  .demo__bar b { color: var(--cream); font-family: var(--mono); font-size: 0.72rem; }
+  .demo__stage { padding: 1rem; }
+
+  .who {
+    display: grid; gap: 0.35rem; margin: 0 0 0.7rem; padding: 0.6rem 0.75rem;
+    border: 1px solid rgb(249 241 226 / 0.22); border-radius: 8px;
+    background: rgb(249 241 226 / 0.06); font-size: 0.8rem;
+  }
+  .who[hidden] { display: none; }
+  .who__line { display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem; align-items: center; }
+  .who__label { color: var(--ochreLight); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .who__q { color: #fff; font-family: var(--serif); font-style: italic; }
+  .who__x {
+    margin-left: auto; min-height: 36px; padding: 0.1rem 0.55rem;
+    border: 1px solid rgb(249 241 226 / 0.3); border-radius: 999px;
+    background: transparent; color: var(--ochreLight); font: inherit; font-size: 0.7rem; cursor: pointer;
+  }
+  .who__x:hover { border-color: var(--ochre); color: #fff; }
+  .who__fresh { color: rgb(253 251 247 / 0.7); font-size: 0.76rem; }
+  .who__undo { color: var(--ochreLight); text-decoration: underline; }
+
+  .composer { display: grid; gap: 0.6rem; }
+  .composer__row { display: grid; grid-template-columns: 1fr; gap: 0.55rem; }
+  .composer textarea {
+    width: 100%; min-height: 4.6rem; padding: 0.75rem 0.85rem;
+    border: 1px solid rgb(249 241 226 / 0.24); border-radius: 10px;
+    background: var(--cream); color: var(--charcoal);
+    font: inherit; font-size: 0.95rem; line-height: 1.5; resize: vertical;
+  }
+  .composer textarea:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 44px; padding: 0.45rem 1.1rem;
+    border: 1px solid var(--ochre); border-radius: 999px;
+    background: var(--ochre); color: #fff;
+    font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  }
+  .btn:hover { background: var(--ochreDark); border-color: var(--ochreDark); }
+  .btn--ghost {
+    background: transparent; border-color: rgb(249 241 226 / 0.35);
+    color: var(--cream); font-weight: 600;
+  }
+  .btn--ghost:hover { background: rgb(249 241 226 / 0.1); border-color: var(--ochre); }
+
+  .seg { display: inline-flex; border: 1px solid rgb(249 241 226 / 0.3); border-radius: 999px; overflow: hidden; }
+  .seg button {
+    min-height: 40px; padding: 0.3rem 0.9rem; border: 0; background: transparent;
+    color: rgb(253 251 247 / 0.75); font: inherit; font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ochre); color: #fff; }
+  .seg-note { margin: 0; color: rgb(253 251 247 / 0.62); font-size: 0.74rem; }
+
+  .reply {
+    margin-top: 0.9rem; padding: 1rem 1.05rem;
+    border-radius: 10px; background: var(--cream); color: var(--charcoal);
+  }
+  .reply[hidden] { display: none; }
+  .reply__under {
+    margin: 0 0 0.8rem; padding: 0.6rem 0.7rem;
+    border: 1px dashed var(--ochre); border-radius: 8px;
+    background: var(--ochreLight); font-size: 0.8rem;
+  }
+  .reply__under[hidden] { display: none; }
+  .reply__under b { display: block; color: var(--ochreDark); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .reply__under i { font-family: var(--serif); font-size: 0.92rem; }
+  .reply__raw { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.74rem; }
+  .reply__edit {
+    min-height: 36px; padding: 0.1rem 0.5rem; border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--forestDark); font: inherit; font-size: 0.7rem; font-weight: 700; cursor: pointer;
+  }
+  .reply__q { margin: 0 0 0.5rem; font-family: var(--serif); font-size: 1.02rem; color: var(--forestDark); }
+  .reply__a { margin: 0 0 0.7rem; font-size: 0.9rem; }
+  .reply__cite {
+    margin: 0 0 0.6rem; padding: 0.55rem 0.7rem;
+    border: 1px solid var(--sand); border-left: 3px solid var(--ochre);
+    border-radius: 0 8px 8px 0; background: var(--creamWarm); font-size: 0.8rem;
+  }
+  .reply__src { display: block; margin-top: 0.3rem; font-family: var(--mono); font-size: 0.68rem; color: var(--ochreDark); }
+  .reply__gap { margin: 0; padding: 0.6rem 0.7rem; border: 1px dashed var(--sand); border-radius: 8px; font-size: 0.79rem; color: var(--muted); }
+  .reply__gap b { color: var(--forestDark); }
+  .reply__gap[hidden] { display: none; }
+  .nudge {
+    margin: 0.7rem 0 0; padding: 0.7rem 0.8rem;
+    border: 1px solid var(--ochre); border-radius: 8px;
+    background: var(--ochreLight); font-size: 0.8rem;
+  }
+  .nudge[hidden] { display: none; }
+  .nudge b { color: var(--ochreDark); }
+  .nudge__btn {
+    min-height: 40px; margin-top: 0.45rem; padding: 0.3rem 0.8rem;
+    border: 1px solid var(--forest); border-radius: 999px;
+    background: var(--forest); color: var(--cream); font: inherit; font-size: 0.76rem; font-weight: 700; cursor: pointer;
+  }
+  .reply--refusal { border: 1px solid rgb(184 123 46 / 0.5); background: var(--warmDark); color: var(--ochreLight); }
+  .reply--refusal .reply__q { color: #fff; }
+  .reply--refusal .reply__a { color: rgb(249 241 226 / 0.92); }
+  .reply--refusal .reply__gap { border-color: rgb(249 241 226 / 0.3); color: rgb(249 241 226 / 0.9); }
+  .reply--refusal .reply__gap b { color: #fff; }
+
+  .verdict { display: grid; gap: 0.85rem; margin-top: 1rem; }
+  .vbox { padding: 0.85rem 1rem; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  .vbox--for { border-left: 4px solid var(--forest); }
+  .vbox--against { border-left: 4px solid var(--ochre); }
+  .vbox h4 { margin: 0 0 0.35rem; font-family: var(--sans); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ochreDark); }
+  .vbox ul { margin: 0; padding-left: 1.1rem; font-size: 0.84rem; }
+  .vbox li:last-child { margin-bottom: 0; }
+
+  .states { display: grid; gap: 0.8rem; margin-top: 1rem; }
+  .state { padding: 0.85rem 1rem; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  .state__k { margin: 0 0 0.2rem; color: var(--ochreDark); font-size: 0.64rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; }
+  .state p { font-size: 0.84rem; margin-bottom: 0.4rem; }
+  .state p:last-child { margin-bottom: 0; }
+  .state b { color: var(--forestDark); }
+
+  .decision { display: grid; gap: 0.55rem; margin: 1rem 0 0; }
+  .opt {
+    display: grid; grid-template-columns: 1.4rem 1fr; gap: 0.65rem; align-items: start;
+    padding: 0.75rem 0.9rem; border: 1px solid var(--sand); border-radius: 10px;
+    background: var(--cream); cursor: pointer;
+  }
+  .opt:has(input:checked) { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); background: var(--sageLight); }
+  .opt input { width: 1.15rem; height: 1.15rem; margin: 0.2rem 0 0; accent-color: var(--forest); }
+  .opt b { display: block; color: var(--forestDark); font-size: 0.87rem; }
+  .opt span { display: block; color: var(--muted); font-size: 0.78rem; }
+  .notes { display: grid; gap: 0.7rem; margin-top: 1rem; }
+  .notes textarea {
+    width: 100%; min-height: 8rem; padding: 0.8rem;
+    border: 1px solid var(--sand); border-radius: 8px;
+    background: var(--cream); color: var(--charcoal); font: inherit; font-size: 0.86rem; resize: vertical;
+  }
+  .notes__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .notes__status { color: var(--muted); font-size: 0.76rem; }
+
+  footer { padding: 1.9rem 0 2.6rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.72); font-size: 0.78rem; }
+  footer strong { color: var(--cream); }
+  footer p:last-child { margin-bottom: 0; }
+
+  @media (min-width: 760px) {
+    .composer__row { grid-template-columns: 1fr; }
+    .verdict { grid-template-columns: 1fr 1fr; }
+    .states { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .signals { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  @media print {
+    .bar, .variants, .btns, .seg, .note-actions, .notes__actions, .btn, .composer__row { display: none !important; }
+    body { background: #fff; color: #000; font-size: 10.5pt; }
+    .hero, .section--dark, .demo, .demo__bar, .section--warm, .section--sage { background: #fff !important; color: #000 !important; }
+    .hero *, .section--dark *, .demo *, .demo__bar * { color: #000 !important; background-color: transparent !important; }
+    .reply, .reply--refusal, .nudge, .vbox, .state, .callout { color: #000 !important; background: #fff !important; border-color: #999 !important; }
+    .reply *, .nudge *, .vbox *, .state * { color: #000 !important; }
+    .reply, .vbox, .state, .step, .callout { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">Ask &middot; follow-up or new question</span>
+    <div class="bar__right">
+      <a class="bar__link" href="d61b_ask_page.html">The ask page</a>
+      <button class="bar__print" id="print-page" type="button">Print</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Interaction decision &middot; the ask surface</p>
+    <h1>What is the difference between a follow-up and a new question?</h1>
+    <p class="lede">
+      Not a wording question. A follow-up and a new question have to differ in
+      <strong>five places under the interface</strong> &mdash; retrieval, the prompt, the cache, the
+      escalation, and the board &mdash; or the two buttons are decoration.
+    </p>
+    <p style="margin-bottom:0">
+      The product already half-believes in follow-ups: every question is sent to the model with
+      the last eight messages attached. But retrieval, the cache and the escalation all treat
+      the same question as if it stood alone. That gap is where the bugs are.
+    </p>
+  </div>
+</header>
+
+<main>
+
+<!-- ======================================================================
+     1. What happens today
+     ====================================================================== -->
+<section id="today">
+  <div class="wrap">
+    <p class="eyebrow">Part 1 &middot; What the code does today</p>
+    <h2>Every question is a follow-up for the model, and a new question for everything else</h2>
+    <p style="max-width:62rem;color:var(--muted)">
+      Read off <code>core/services/_chatbot.py</code> at <code>HEAD</code>. The trace below is a
+      reading of the code path, not a measured run &mdash; <code>probe_chat.py</code> is what would
+      confirm which chunks come back.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Layer</th><th>What it does</th><th>Consequence for a follow-up</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Retrieval</strong></td>
+            <td><code>retrieve(text, standard_set)</code> &mdash; the typed text, nothing else</td>
+            <td><em>&ldquo;What if I compost it first?&rdquo;</em> is searched as <code>compost</code>. Whether the right clause comes back is luck.</td>
+          </tr>
+          <tr>
+            <td><strong>Prompt</strong></td>
+            <td><code>_history_for(session)</code> &mdash; up to 8 messages, always, labelled <em>&ldquo;for context only&rdquo;</em></td>
+            <td>The model can see the earlier exchange, so it <em>will</em> answer from it &mdash; and cite a clause that is not in the retrieved set.</td>
+          </tr>
+          <tr>
+            <td><strong>Citation audit</strong></td>
+            <td>All-or-nothing, over the retrieved chunks only</td>
+            <td>That remembered clause is refused. So the follow-up either works by luck or refuses &mdash; and the refusal looks like a corpus gap.</td>
+          </tr>
+          <tr>
+            <td><strong>Answer cache</strong></td>
+            <td><code>sha256(normalise(question))</code> + corpus fingerprint. No session, no history.</td>
+            <td>A context-dependent answer is stored under a fragment and can be served to <em>another visitor</em> asking the same fragment about something else.</td>
+          </tr>
+          <tr>
+            <td><strong>Escalation</strong></td>
+            <td><code>EscalatedQuery.question = text</code></td>
+            <td>The administrator receives <em>&ldquo;what if I compost it first?&rdquo;</em> &mdash; unanswerable without the conversation.</td>
+          </tr>
+          <tr>
+            <td><strong>Board</strong></td>
+            <td>A card is one question plus one answer</td>
+            <td>A follow-up cannot become a card. A fragment is not a question anybody would search for.</td>
+          </tr>
+          <tr>
+            <td><strong>Session control</strong></td>
+            <td><code>answer_question()</code> takes no switch for history</td>
+            <td><strong>&ldquo;Ask new question&rdquo; cannot be built honestly today</strong> &mdash; the old thread still goes into the prompt.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:1.8rem">The trace, in the order it happens</h3>
+    <div class="trace">
+      <div class="step">
+        <span class="step__n">1</span>
+        <div><b>Turn 1: &ldquo;Can I use cardboard from my neighbour?&rdquo;</b>
+          <span>Retrieves the Appendix 2 by-product row. The model quotes it. The audit accepts it. The answer is grounded and cached under that question.</span></div>
+      </div>
+      <div class="step">
+        <span class="step__n">2</span>
+        <div><b>Turn 2: &ldquo;what if I compost it first?&rdquo;</b>
+          <span>Retrieval runs on <code>compost</code>. The eight-message history is attached. The model answers <em>&ldquo;yes, composting satisfies the condition&rdquo;</em> and cites the cardboard row.</span></div>
+      </div>
+      <div class="step step--fail">
+        <span class="step__n">3</span>
+        <div><b>If &ldquo;compost&rdquo; did not retrieve that row, the audit refuses the citation</b>
+          <span>The answer is discarded, a refusal is shown, and an <code>EscalatedQuery</code> is written containing <em>&ldquo;what if I compost it first?&rdquo;</em>. Three separate things are now wrong: the visitor was told the documents cannot answer, the queue gained an unanswerable row, and the count of corpus gaps went up for a retrieval miss.</span></div>
+      </div>
+      <div class="step step--fail">
+        <span class="step__n">4</span>
+        <div><b>If it did answer, the answer is cached under the fragment</b>
+          <span>Somebody else typing <em>&ldquo;what if I compost it first?&rdquo;</em> within the hour &mdash; about manure, or about straw &mdash; receives this answer. That is an answer from someone else's conversation.</span></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>The uncomfortable conclusion.</strong> Today, a follow-up is not a feature we
+      chose; it is a leak in a design that assumes every question stands alone. The interface
+      never asks the visitor which one they mean, because the system never had two behaviours
+      to choose between.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     2. What actually makes it a follow-up
+     ====================================================================== -->
+<section id="define" class="section--warm">
+  <div class="wrap">
+    <p class="eyebrow">Part 2 &middot; The definition</p>
+    <h2>One test, and three signals</h2>
+    <p style="max-width:62rem">
+      <strong>The test: could this sentence be typed into the search box cold, by someone who
+      had never seen the previous answer?</strong> If yes, it is a new question. If it only makes
+      sense next to something else, it is a follow-up.
+    </p>
+
+    <div class="signals">
+      <div class="signal">
+        <p><b>1. No subject of its own</b></p>
+        <p><q>what if I compost it first?</q> &mdash; <em>it</em> has no meaning without turn 1. The subject is missing, not merely implied.</p>
+      </div>
+      <div class="signal">
+        <p><b>2. It points at the answer, not the topic</b></p>
+        <p><q>is that allowed for poultry too?</q> &mdash; <em>that</em> refers to a sentence in the previous answer. No retrieval on this text can find the sentence.</p>
+      </div>
+      <div class="signal">
+        <p><b>3. It is short and shares a term</b></p>
+        <p><q>and for goats?</q> &mdash; four words, one noun from the previous question. Short plus overlap is the cheapest machine signal there is.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Do not ask the visitor to classify their own question.</strong> They know least
+      about what they are asking at the moment they choose. A visitor who wrongly picks
+      &ldquo;new&rdquo; loses the context and gets a worse answer; one who wrongly picks
+      &ldquo;follow-up&rdquo; gets an answer polluted by an unrelated passage &mdash; and, today, a
+      cache entry under a fragment.</p>
+      <p style="margin-bottom:0">The interface should <strong>infer</strong> the mode and then
+      <strong>show the inference</strong>, so the visitor can correct it with one edit. That
+      correction <em>is</em> the &ldquo;new question&rdquo; control.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     3. Three interfaces
+     ====================================================================== -->
+<section id="interfaces">
+  <div class="wrap">
+    <p class="eyebrow">Part 3 &middot; Three interfaces, one engine</p>
+    <h2>The chrome differs; the behaviour must not</h2>
+    <p style="max-width:62rem;color:var(--muted)">
+      All three run the same scripted engine, so anything that looks different is the interface
+      and nothing else. Ask the first question, then try a follow-up
+      (<em>&ldquo;what if I compost it first?&rdquo;</em>) and a disguised new topic
+      (<em>&ldquo;what about the annual fee?&rdquo;</em>).
+    </p>
+
+    <div class="variants" role="tablist" aria-label="Interface variants">
+      <button class="vtab" role="tab" id="tab-1" aria-selected="true" data-variant="1">1 &middot; Two buttons</button>
+      <button class="vtab vtab--rec" role="tab" id="tab-2" aria-selected="false" data-variant="2">2 &middot; Context strip &middot; recommended</button>
+      <button class="vtab" role="tab" id="tab-3" aria-selected="false" data-variant="3">3 &middot; Mode switch</button>
+    </div>
+
+    <div class="demo">
+      <div class="demo__bar">
+        <b id="demo-title">Variant 1 &middot; two buttons</b>
+        <span id="demo-note">The visitor chooses the mode before they know what their question will be.</span>
+      </div>
+      <div class="demo__stage">
+
+        <div class="who" id="who" hidden>
+          <div class="who__line">
+            <span class="who__label">Following on from</span>
+            <span class="who__q" id="who-q">&mdash;</span>
+            <button class="who__x" id="who-x" type="button" aria-label="Start a new question">Start fresh &times;</button>
+          </div>
+        </div>
+        <p class="who__fresh" id="who-fresh" hidden>
+          Starting a new question. <button class="who__undo" id="who-undo" type="button">Bring the last answer back</button>
+        </p>
+
+        <form class="composer" id="composer">
+          <div id="seg-wrap" hidden>
+            <div class="seg" role="group" aria-label="Question mode">
+              <button type="button" id="seg-follow" aria-pressed="true">Follow-up</button>
+              <button type="button" id="seg-new" aria-pressed="false">New question</button>
+            </div>
+            <p class="seg-note" id="seg-note">Answered together with the previous answer.</p>
+          </div>
+
+          <div class="composer__row">
+            <textarea id="question" placeholder="Can I use cardboard from my neighbour?" maxlength="500"></textarea>
+            <div class="btns" id="btns">
+              <button class="btn" id="ask" type="submit">Ask</button>
+            </div>
+          </div>
+        </form>
+
+        <article class="reply" id="reply" hidden aria-live="polite"></article>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <div class="vbox vbox--for">
+        <h4>1 &middot; Two buttons</h4>
+        <ul>
+          <li>Both actions are always visible, so nothing is hidden behind a mode.</li>
+          <li>It names the concept once, which teaches the visitor what the system can do.</li>
+          <li>Fails on its own terms: <b>the choice is made before typing</b>, and the two buttons compete for one action. Most visitors will hit the left one every time, which makes &ldquo;new question&rdquo; dead.</li>
+        </ul>
+      </div>
+      <div class="vbox vbox--for">
+        <h4>2 &middot; Context strip</h4>
+        <ul>
+          <li>One primary action. The mode is a <b>statement of fact</b> (&ldquo;following on from this&rdquo;), not a prediction.</li>
+          <li>It shows <em>which</em> answer, so a visitor can see it is the wrong one and clear it.</li>
+          <li>The escape (&ldquo;start fresh&rdquo;) is a link, which is the right weight for something most visitors will never need.</li>
+          <li>Costs: the strip takes vertical space, and it must be rebuilt from the session or it lies after a refresh.</li>
+        </ul>
+      </div>
+      <div class="vbox vbox--for">
+        <h4>3 &middot; Mode switch</h4>
+        <ul>
+          <li>It makes the mode explicit and lets the placeholder explain it (&ldquo;ask about the previous answer&rdquo; vs &ldquo;ask anything&rdquo;).</li>
+          <li>Two states to keep in sync, and the switch is set before typing &mdash; the same flaw as the two buttons, with more chrome.</li>
+          <li>Worse on a phone: a segmented control plus a textarea plus a button is a lot of tap targets above the fold.</li>
+        </ul>
+      </div>
+      <div class="vbox">
+        <h4>The failure all three share, and the fix</h4>
+        <ul>
+          <li>None of them can tell that <em>&ldquo;what about the annual fee?&rdquo;</em> is a disguised new question.</li>
+          <li>Every variant therefore needs the same <b>nudge</b> after the answer: when the new answer shares no passage with the parent, say so and offer to ask it on its own.</li>
+          <li>That nudge is measurable, and it is the only honest way to admit the inference was wrong.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     4. Under the interface
+     ====================================================================== -->
+<section id="under" class="section--sage">
+  <div class="wrap">
+    <p class="eyebrow">Part 4 &middot; What has to change underneath</p>
+    <h2>Five changes, and one that makes the rest work</h2>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Change</th><th>Why it is needed</th><th>Size</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>A context parameter on the service</strong><br><code>answer_question(..., context=…)</code></td>
+            <td>So &ldquo;new question&rdquo; can actually drop the thread from the prompt. Today <code>_history_for()</code> always runs.</td>
+            <td>Small: one parameter, one branch, three tests.</td>
+          </tr>
+          <tr>
+            <td><strong>Rewrite the follow-up into a standalone question</strong></td>
+            <td>The only mechanism that fixes retrieval, the cache, the escalation and the board at once. One cheap model call with the last exchange as input.</td>
+            <td>Medium: a second prompt, a 64-token cap, a fallback to the literal text on failure.</td>
+          </tr>
+          <tr>
+            <td><strong>Retrieve on the rewrite, not the fragment</strong></td>
+            <td>&ldquo;what if I compost it first?&rdquo; becomes &ldquo;If I compost the cardboard first, is it acceptable?&rdquo; and the right row comes back for the right reason.</td>
+            <td>One line, once the rewrite exists.</td>
+          </tr>
+          <tr>
+            <td><strong>Key the cache on the rewritten question</strong></td>
+            <td>A standalone question is safe to share between visitors; a fragment is not. Two different fragments that resolve to the same question <em>should</em> share an answer.</td>
+            <td>One line. Removes a cross-session defect rather than adding a feature.</td>
+          </tr>
+          <tr>
+            <td><strong>Escalate the rewritten question, keep the fragment</strong></td>
+            <td>The administrator can only answer a question that stands alone. The fragment is context for them, not the question.</td>
+            <td>Small: one field (or a prefixed store) plus the admin display.</td>
+          </tr>
+          <tr>
+            <td><strong>Publish rewrites only</strong></td>
+            <td>A board card must be a question somebody could search for. &ldquo;and for goats?&rdquo; is not.</td>
+            <td>Small: the publish action takes the rewrite, and shows it for approval first.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p><strong>The rewrite is the load-bearing part.</strong> It is not a nicety for pronoun
+      resolution &mdash; it is what turns a follow-up into an object that can be cached,
+      escalated and published. Without it, every other change is either unsafe (a fragment in
+      the cache) or useless (a fragment on the board).</p>
+      <p style="margin-bottom:0">It also gives the interface its one honest control:
+      <em>&ldquo;Understood as: …&rdquo;</em>, editable. If the visitor edits it into a question
+      that stands alone, they have asked a new question, and the system can see that.</p>
+    </div>
+
+    <h3 style="margin-top:1.8rem">What is deliberately <em>not</em> needed</h3>
+    <ul style="max-width:62rem">
+      <li><strong>No classifier.</strong> The same rule the PRD already applies to routing (G5): a short question that shares a term with the previous one is a follow-up. Failing that, treat it as new. Both mistakes degrade to today's behaviour.</li>
+      <li><strong>No multi-turn retrieval</strong> (rewriting the query from the whole thread). Only the <em>previous exchange</em> is used. Eight messages of drift produce worse rewrites than one.</li>
+      <li><strong>No stored conversation state beyond the session.</strong> The context strip is rebuilt from the last assistant message; clearing it sets one session flag.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================================================================
+     5. The states
+     ====================================================================== -->
+<section id="states">
+  <div class="wrap">
+    <p class="eyebrow">Part 5 &middot; The states that will happen</p>
+    <h2>Six, and only one of them is the happy path</h2>
+
+    <div class="states">
+      <div class="state">
+        <p class="state__k">1 &middot; A real follow-up</p>
+        <p><b>Compost after cardboard.</b> Rewrite shown, retrieval on the rewrite, the answer cites the <em>same row</em> as the parent. The overlap with the parent's citations is the proof it was a follow-up.</p>
+      </div>
+      <div class="state">
+        <p class="state__k">2 &middot; A disguised new question</p>
+        <p><b>&ldquo;What about the annual fee?&rdquo;</b> Answered correctly, but its citation shares nothing with the parent. Show the nudge: <em>&ldquo;this answer doesn't use the earlier passage&rdquo;</em> and a one-click &ldquo;ask it on its own&rdquo;.</p>
+      </div>
+      <div class="state">
+        <p class="state__k">3 &middot; A follow-up to a refusal</p>
+        <p>The parent is a <em>gap</em>, not a clause, so there is nothing to seed retrieval with. The rewrite still resolves <em>&ldquo;and in winter?&rdquo;</em>, and the answer will usually refuse again &mdash; so the escalation must attach the parent's gap id, or the administrator gets two unrelated fragments.</p>
+      </div>
+      <div class="state">
+        <p class="state__k">4 &middot; A follow-up that refuses</p>
+        <p>Escalate the <b>rewritten</b> question, and keep the fragment beside it. An administrator answering &ldquo;what if I compost it first?&rdquo; is answering a question they were never asked.</p>
+      </div>
+      <div class="state">
+        <p class="state__k">5 &middot; Publishing a follow-up</p>
+        <p>The tick to make a question public applies to the <b>rewrite</b>, and the visitor sees the wording before it is queued. Publishing the fragment would put &ldquo;and for goats?&rdquo; on the board.</p>
+      </div>
+      <div class="state">
+        <p class="state__k">6 &middot; Coming back later</p>
+        <p>The strip is rebuilt from the session's last answer, so it survives a refresh. &ldquo;Start fresh&rdquo; is remembered for the session. On a published card, <em>&ldquo;Ask about this&rdquo;</em> seeds context from the <b>card</b>, not from whatever the visitor last typed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     6. Recommendation
+     ====================================================================== -->
+<section id="recommend" class="section--dark">
+  <div class="wrap">
+    <p class="eyebrow">Part 6 &middot; Recommendation</p>
+    <h2>One composer, an inferred mode, and a rewrite the visitor can edit</h2>
+
+    <p class="lede" style="max-width:62rem">
+      <strong>Use the context strip (variant 2).</strong> The visitor never picks a mode. The
+      system infers it, shows <em>which</em> answer it is following on from, and shows the
+      question it actually searched for. Editing that question is the way to say &ldquo;this is
+      something else&rdquo;; &ldquo;start fresh&rdquo; is the explicit escape.
+    </p>
+
+    <div class="callout">
+      <p><strong>Why not the labelled pair.</strong> &ldquo;Ask follow-up&rdquo; and
+      &ldquo;Ask new question&rdquo; describe a system state the visitor cannot see. A strip
+      describes it for them. And naming it in two buttons teaches a distinction the visitor
+      does not need to hold in their head &mdash; the product should hold it.</p>
+      <p style="margin-bottom:0"><strong>What survives from the pair:</strong> the words. The
+      strip says &ldquo;Following on from&rdquo; and the cleared state says &ldquo;Starting a new
+      question&rdquo;, so the vocabulary is still on the page, attached to the state instead of
+      to a button.</p>
+    </div>
+
+    <h3 style="margin-top:1.8rem">What would change my mind</h3>
+    <ul style="max-width:62rem">
+      <li><strong>If rewrites are bad on real questions.</strong> Run the nine-question probe suite as follow-ups and compare: if more than one in five rewrites changes the subject, drop the rewrite and fall back to &ldquo;seed retrieval with the parent's chunks&quot;, which needs no model call.</li>
+      <li><strong>If follow-ups are rare.</strong> Measure the share of questions typed within 60 seconds of an answer. Under 10%, the whole mechanism is a cost for a rounding error and the honest product is one-shot questions with an explicit reset.</li>
+      <li><strong>If the group wants the session to be a document.</strong> Then the follow-up chain should be printable as one record &mdash; which argues for keeping the exchange in the session and rendering it as a letter, not for anything in this page.</li>
+      <li><strong>If the cache cannot be keyed on the rewrite</strong> for a reason I have not seen, key it on <code>rewrite + parent hash</code> instead. Same safety, slightly lower hit rate.</li>
+    </ul>
+
+    <p style="margin-bottom:0;font-size:0.88rem;color:rgb(253 251 247 / 0.75)">
+      <strong>What I would not do:</strong> ship an &ldquo;Ask new question&rdquo; button before the
+      service can drop history, or let a follow-up reach the cache or the escalation queue as a
+      fragment. Both look like features and behave like defects.
+    </p>
+  </div>
+</section>
+
+<!-- ======================================================================
+     7. Decision
+     ====================================================================== -->
+<section id="decide">
+  <div class="wrap wrap--narrow">
+    <p class="eyebrow">Part 7 &middot; Your decision</p>
+    <h2>Which interface, and how far do we go underneath?</h2>
+
+    <div class="decision" role="radiogroup" aria-label="Which follow-up interface">
+      <label class="opt">
+        <input type="radio" name="ui" value="1">
+        <span><b>1 &mdash; Two buttons</b><span>Visible &ldquo;Ask follow-up&rdquo; and &ldquo;Ask new question&rdquo;. Simplest to explain, and the mode is chosen before typing.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="ui" value="2">
+        <span><b>2 &mdash; Context strip</b><span>One Ask button, a strip naming the parent answer, a quiet &ldquo;start fresh&rdquo;. Recommended.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="ui" value="3">
+        <span><b>3 &mdash; Mode switch</b><span>A follow-up / new toggle inside the composer, with the placeholder changing.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="ui" value="none">
+        <span><b>No follow-ups</b><span>Every question stands alone; the visitor retypes. Keeps the board pure and the cache safe.</span></span>
+      </label>
+    </div>
+
+    <div class="decision" role="radiogroup" aria-label="How far to go underneath" style="margin-top:1.2rem">
+      <label class="opt">
+        <input type="radio" name="depth" value="ui">
+        <span><b>Interface only</b><span>Ship the strip on today's service. Not recommended: the cache and the escalation still see fragments.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="depth" value="full">
+        <span><b>Full mechanism</b><span>Context parameter, rewrite, retrieval on the rewrite, cache and escalation on the rewrite, publish rewrites only.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="depth" value="seeded">
+        <span><b>Seeded retrieval, no rewrite</b><span>Seed retrieval with the parent's chunks and skip the extra model call. Cheaper, weaker on pronouns.</span></span>
+      </label>
+    </div>
+
+    <div class="notes">
+      <label for="notes" style="font-weight:700;color:var(--forestDark)">Notes and conditions</label>
+      <textarea id="notes" placeholder="What should be true before this is built? Which states matter most to the group?"></textarea>
+      <div class="notes__actions">
+        <button class="btn" id="export" type="button">Export decision</button>
+        <button class="btn btn--ghost" id="clear" type="button" style="background:var(--cream);color:var(--forestDark);border-color:var(--sand)">Clear</button>
+        <span class="notes__status" id="status" role="status">Saved locally as you type.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <strong>Follow-up or new question &middot; interaction decision.</strong>
+      Self-contained: no CDN, no build step, no network request.
+    </p>
+    <p>
+      Quotations of SAOSO v2.1 and the OPP are verbatim. The connecting answer prose in the
+      demo is written for this page and is not recorded model output. Membership is not
+      certification, and no certification status is published here.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var field = document.getElementById("question");
+  var form = document.getElementById("composer");
+  var askBtn = document.getElementById("ask");
+  var btns = document.getElementById("btns");
+  var reply = document.getElementById("reply");
+  var who = document.getElementById("who");
+  var whoQ = document.getElementById("who-q");
+  var whoX = document.getElementById("who-x");
+  var whoFresh = document.getElementById("who-fresh");
+  var whoUndo = document.getElementById("who-undo");
+  var segWrap = document.getElementById("seg-wrap");
+  var segFollow = document.getElementById("seg-follow");
+  var segNew = document.getElementById("seg-new");
+  var segNote = document.getElementById("seg-note");
+  var demoTitle = document.getElementById("demo-title");
+  var demoNote = document.getElementById("demo-note");
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".vtab"));
+
+  var variant = "1";
+  var context = null;
+  var lastContext = null;
+  var cleared = false;
+  var segMode = "follow";
+
+  var CARDBOARD_QUOTE = "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing — Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants";
+  var FEE_QUOTE = "Annual Farmer & consumer Membership fee: R 100";
+  var PASSAGE_A = "saoso-appendix-2";
+  var PASSAGE_B = "opp-2-1";
+
+  var FIRST = {
+    cardboard: {
+      match: ["cardboard", "card board", "box"],
+      answer: "The standard does not name cardboard. It governs it as a biodegradable processing by-product, which is permitted only if it is free of significant contaminants, or composted before it comes onto organic land and then confirmed free of significant contaminants.",
+      passages: [PASSAGE_A],
+      quote: CARDBOARD_QUOTE,
+      ref: "SAOSO v2.1 · Appendix 2 · p.76",
+      gap: "This does not cover the record-keeping duty for inputs, and it does not decide whether your neighbour's cardboard is contaminated."
+    },
+    fee: {
+      match: ["fee", "cost", "pay", "r100", "money", "price"],
+      answer: "R100 a year for a farmer or consumer member. It is separate from the assessment fee, which follows your turnover band, and only paid-up members are eligible for an assessment.",
+      passages: [PASSAGE_B],
+      quote: FEE_QUOTE,
+      ref: "OPP · §2.1 · p.1",
+      gap: "It does not tell you which assessment band you are in — turnover is self-declared and peer-reviewed."
+    },
+    manure: {
+      match: ["manure", "horse", "muck", "slurry"],
+      answer: "Yes. The source decides which rule applies: extensive livestock farming may be used; intensive or conventional needs prior permission and must be composted; factory-farming origin is forbidden. It must not be the main source of nitrogen.",
+      passages: [PASSAGE_A],
+      quote: "Farmyard manure, slurry and urine — shall not constitute the main source of nitrogen… Forbidden if from factory farming origin.",
+      ref: "SAOSO v2.1 · Appendix 2 · p.76",
+      gap: "This does not tell you whether your own supply qualifies."
+    }
+  };
+
+  var FOLLOWUPS = [
+    {
+      match: ["compost"],
+      rewrite: "If I compost the cardboard before bringing it onto organic land, is that acceptable?",
+      answer: "Yes — composting is one of the two ways the row allows. The condition is that the composted material is then confirmed free of significant contaminants, so the record you keep matters more than the act of composting.",
+      passages: [PASSAGE_A],
+      quote: CARDBOARD_QUOTE,
+      ref: "SAOSO v2.1 · Appendix 2 · p.76",
+      gap: "Composting is the condition; the confirmation is still yours to produce."
+    },
+    {
+      match: ["goat", "poultry", "duck", "chicken", "cattle", "cow"],
+      rewrite: "Does the manure rule apply to other livestock as well, not only horses?",
+      answer: "Yes. The row is about the substance, not the animal: it says farmyard manure, slurry and urine, which is species-neutral. The housing and density rules in Section 5 are what change by species.",
+      passages: [PASSAGE_A],
+      quote: "Farmyard manure, slurry and urine — shall not constitute the main source of nitrogen…",
+      ref: "SAOSO v2.1 · Appendix 2 · p.76",
+      gap: "It does not tell you which density applies — that is Appendix 6, by species."
+    },
+    {
+      match: ["fee", "cost", "pay", "r100", "money", "price"],
+      rewrite: "What is the annual membership fee?",
+      answer: "R100 a year for a farmer or consumer member. It is separate from the assessment fee, which follows your turnover band, and only paid-up members are eligible for an assessment.",
+      passages: [PASSAGE_B],
+      quote: FEE_QUOTE,
+      ref: "OPP · §2.1 · p.1",
+      gap: "It does not tell you which assessment band you are in — turnover is self-declared and peer-reviewed.",
+      separate: true
+    }
+  ];
+
+  var REFUSAL = "I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents.";
+
+  function esc(value) {
+    return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function find(list, text) {
+    var q = text.toLowerCase();
+    var best = null;
+    list.forEach(function (item) {
+      item.match.forEach(function (word) {
+        if (q.indexOf(word) !== -1) {
+          if (!best || word.length > best.word.length) { best = { item: item, word: word }; }
+        }
+      });
+    });
+    return best ? best.item : null;
+  }
+
+  function renderChrome() {
+    if (variant === "1") {
+      demoTitle.textContent = "Variant 1 · two buttons";
+      demoNote.textContent = "The visitor chooses the mode before they know what their question will be.";
+      segWrap.hidden = true;
+      who.hidden = true;
+      btns.innerHTML = context
+        ? "<button class=\"btn\" id=\"ask\" type=\"submit\">Ask follow-up</button>" +
+          "<button class=\"btn btn--ghost\" id=\"ask-new\" type=\"button\">Ask new question</button>"
+        : "<button class=\"btn\" id=\"ask\" type=\"submit\">Ask</button>";
+    } else if (variant === "2") {
+      demoTitle.textContent = "Variant 2 · context strip";
+      demoNote.textContent = "One primary action; the mode is a statement of fact, and the escape is a link.";
+      segWrap.hidden = true;
+      who.hidden = !context;
+      whoFresh.hidden = !(cleared && !context);
+      btns.innerHTML = "<button class=\"btn\" id=\"ask\" type=\"submit\">Ask</button>";
+    } else {
+      demoTitle.textContent = "Variant 3 · mode switch";
+      demoNote.textContent = "The mode is chosen before typing, with more chrome and no more information.";
+      segWrap.hidden = false;
+      who.hidden = !context;
+      whoFresh.hidden = true;
+      btns.innerHTML = "<button class=\"btn\" id=\"ask\" type=\"submit\">Ask</button>";
+      segFollow.setAttribute("aria-pressed", String(segMode === "follow"));
+      segNew.setAttribute("aria-pressed", String(segMode === "new"));
+      segNote.textContent = segMode === "follow"
+        ? "Answered together with the previous answer."
+        : "Answered on its own. The previous answer is ignored.";
+      field.placeholder = segMode === "follow"
+        ? "Ask about the previous answer"
+        : "Ask anything about the standard";
+    }
+    if (context) { whoQ.textContent = context.q; }
+    bind();
+  }
+
+  function bind() {
+    var newBtn = document.getElementById("ask-new");
+    if (newBtn) {
+      newBtn.addEventListener("click", function () { startFresh(); field.focus(); });
+    }
+  }
+
+  function startFresh() {
+    lastContext = context;
+    context = null;
+    cleared = true;
+    reply.hidden = true;
+    renderChrome();
+  }
+
+  function citeHtml(item) {
+    return "<p class=\"reply__cite\">&ldquo;" + esc(item.quote) + "&rdquo;" +
+      "<span class=\"reply__src\">" + esc(item.ref) + " &nearr;</span></p>";
+  }
+
+  function renderAnswer(question, item, rewrite, separate) {
+    var html = "";
+    if (rewrite) {
+      html += "<div class=\"reply__under\">" +
+        "<b>Understood as</b>" +
+        "<i>" + esc(rewrite) + "</i>" +
+        "<p class=\"reply__raw\">You asked &ldquo;" + esc(question) + "&rdquo; &mdash; " +
+        "<button class=\"reply__edit\" id=\"edit-rewrite\" type=\"button\">edit</button></p>" +
+        "</div>";
+    }
+    if (!rewrite) {
+      html += "<p class=\"reply__q\">" + esc(question) + "</p>";
+    }
+    html += "<p class=\"reply__a\">" + item.answer + "</p>";
+    html += citeHtml(item);
+    html += "<p class=\"reply__gap\"><b>What this does not cover</b> &mdash; " + item.gap + "</p>";
+    if (separate) {
+      html += "<div class=\"nudge\"><b>This answer doesn't use the earlier passage.</b> " +
+        "It looks like a separate question, so it is cached and counted as one." +
+        "<br><button class=\"nudge__btn\" id=\"nudge-new\" type=\"button\">Ask it as a new question</button></div>";
+    }
+    reply.dataset.question = rewrite || question;
+    reply.className = "reply";
+    reply.innerHTML = html;
+    reply.hidden = false;
+    return html;
+  }
+
+  function renderRefusal(question, rewrite) {
+    var html = "";
+    if (rewrite) {
+      html += "<div class=\"reply__under\"><b>Understood as</b><i>" + esc(rewrite) + "</i>" +
+        "<p class=\"reply__raw\">You asked &ldquo;" + esc(question) + "&rdquo;</p></div>";
+    }
+    html += "<p class=\"reply__q\">" + esc(rewrite || question) + "</p>";
+    html += "<p class=\"reply__a\">" + REFUSAL + "</p>";
+    html += "<p class=\"reply__gap\"><b>What happens next</b> &mdash; " +
+      (context
+        ? "the rewritten question goes to the administrator, with the earlier answer attached as context."
+        : "the question goes to the administrator.") + "</p>";
+    reply.className = "reply reply--refusal";
+    reply.innerHTML = html;
+    reply.hidden = false;
+  }
+
+  function send(forceNew) {
+    var question = field.value.trim();
+    if (question.length < 4) { field.focus(); return; }
+    if (forceNew) { context = null; cleared = true; }
+
+    if (context) {
+      var follow = find(FOLLOWUPS, question);
+      if (follow) {
+        renderAnswer(question, follow, follow.rewrite, Boolean(follow.separate));
+        context = { q: follow.rewrite, passages: follow.passages };
+        renderChrome();
+        wireReply();
+        return;
+      }
+      renderRefusal(question, question);
+      context = { q: question, passages: [] };
+      renderChrome();
+      return;
+    }
+
+    var first = find([FIRST.cardboard, FIRST.manure, FIRST.fee], question);
+    if (first) {
+      renderAnswer(question, first, null, false);
+      context = { q: question, passages: first.passages };
+      cleared = false;
+      renderChrome();
+      return;
+    }
+    renderRefusal(question, null);
+    context = { q: question, passages: [] };
+    renderChrome();
+  }
+
+  function wireReply() {
+    var edit = document.getElementById("edit-rewrite");
+    if (edit) {
+      edit.addEventListener("click", function () {
+        var text = reply.querySelector(".reply__under i").textContent;
+        field.value = text;
+        field.focus();
+        field.setSelectionRange(text.length, text.length);
+      });
+    }
+    var nd = document.getElementById("nudge-new");
+    if (nd) {
+      nd.addEventListener("click", function () {
+        var stored = field.value.trim();
+        context = null;
+        cleared = true;
+        field.value = reply.dataset.question || field.value;
+        reply.hidden = true;
+        send(true);
+        if (stored) { field.value = stored; }
+      });
+    }
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (variant === "3" && segMode === "new") {
+      send(true);
+      segMode = "follow";
+    } else {
+      send(false);
+    }
+  });
+
+  whoX.addEventListener("click", startFresh);
+  whoUndo.addEventListener("click", function () {
+    if (lastContext) { context = lastContext; }
+    cleared = false;
+    whoFresh.hidden = true;
+    renderChrome();
+  });
+
+  segFollow.addEventListener("click", function () { segMode = "follow"; renderChrome(); });
+  segNew.addEventListener("click", function () { segMode = "new"; renderChrome(); });
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      variant = tab.dataset.variant;
+      tabs.forEach(function (other) {
+        other.setAttribute("aria-selected", String(other === tab));
+      });
+      renderChrome();
+    });
+  });
+
+  document.querySelectorAll(".example").forEach(function (button) {
+    button.addEventListener("click", function () { field.value = button.dataset.q; });
+  });
+
+  document.getElementById("print-page").addEventListener("click", function () { window.print(); });
+
+  var KEY_UI = "pgs-d61c-ui";
+  var KEY_DEPTH = "pgs-d61c-depth";
+  var KEY_NOTES = "pgs-d61c-notes";
+  var status = document.getElementById("status");
+  var notes = document.getElementById("notes");
+  var timer = null;
+
+  function save() {
+    try {
+      var ui = "";
+      var depth = "";
+      document.querySelectorAll("input[name=ui]").forEach(function (r) { if (r.checked) { ui = r.value; } });
+      document.querySelectorAll("input[name=depth]").forEach(function (r) { if (r.checked) { depth = r.value; } });
+      window.localStorage.setItem(KEY_UI, ui);
+      window.localStorage.setItem(KEY_DEPTH, depth);
+      window.localStorage.setItem(KEY_NOTES, notes.value);
+      status.textContent = "Saved locally.";
+    } catch (error) {
+      status.textContent = "Could not save locally; export still works.";
+    }
+  }
+
+  try {
+    var ui = window.localStorage.getItem(KEY_UI) || "";
+    var depth = window.localStorage.getItem(KEY_DEPTH) || "";
+    document.querySelectorAll("input[name=ui]").forEach(function (r) { r.checked = r.value === ui; });
+    document.querySelectorAll("input[name=depth]").forEach(function (r) { r.checked = r.value === depth; });
+    notes.value = window.localStorage.getItem(KEY_NOTES) || "";
+  } catch (error) { /* storage unavailable */ }
+
+  document.querySelectorAll("input[name=ui], input[name=depth]").forEach(function (r) {
+    r.addEventListener("change", save);
+  });
+  notes.addEventListener("input", function () {
+    window.clearTimeout(timer);
+    status.textContent = "Saving…";
+    timer = window.setTimeout(save, 250);
+  });
+
+  document.getElementById("export").addEventListener("click", function () {
+    var ui = "";
+    var depth = "";
+    document.querySelectorAll("input[name=ui]").forEach(function (r) { if (r.checked) { ui = r.value; } });
+    document.querySelectorAll("input[name=depth]").forEach(function (r) { if (r.checked) { depth = r.value; } });
+    var text = [
+      "# Decision — follow-up versus new question",
+      "",
+      "Source: product/design/d61c_follow_up.html",
+      "Date: " + new Date().toISOString().slice(0, 10),
+      "",
+      "| D62 (provisional) | How do follow-ups work on /ask/? | **Interface " + (ui || "(none)") +
+        ", mechanism " + (depth || "(none)") + "** — " + (notes.value.trim() || "(no reason recorded)") + " |",
+      "",
+      "## Notes",
+      "",
+      notes.value.trim() || "_No notes._",
+      ""
+    ].join("\n");
+    var blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "pgs-d61c-follow-up-decision.md";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    status.textContent = "Exported.";
+  });
+
+  document.getElementById("clear").addEventListener("click", function () {
+    document.querySelectorAll("input[name=ui], input[name=depth]").forEach(function (r) { r.checked = false; });
+    notes.value = "";
+    try {
+      window.localStorage.removeItem(KEY_UI);
+      window.localStorage.removeItem(KEY_DEPTH);
+      window.localStorage.removeItem(KEY_NOTES);
+    } catch (error) { /* ignore */ }
+    status.textContent = "Cleared.";
+  });
+
+  renderChrome();
+})();
+</script>
+</body>
+</html>

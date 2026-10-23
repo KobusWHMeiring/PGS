@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Five shapes for /ask/ — Outeniqua PGS</title>
+<style>
+  /* ----------------------------------------------------------------------
+     Self-contained decision artifact. No CDN, no external font, no build step,
+     no network request of any kind. Palette copied from
+     product/design/d5_chat_interface_explainer.html (DESIGN.md §2).
+     ---------------------------------------------------------------------- */
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --moss: #425337;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.5rem); line-height: 1.08; margin: 0 0 1rem; }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.15; margin: 0 0 0.75rem; }
+  h3 { font-size: 1.2rem; line-height: 1.25; margin: 0 0 0.5rem; }
+  h4 { font-size: 1rem; line-height: 1.3; margin: 0 0 0.4rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.4rem; }
+  strong { color: var(--forestDark); }
+  a { color: var(--ochreDark); }
+  a:hover { color: var(--forestDark); }
+  code {
+    padding: 0.1rem 0.35rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+  pre {
+    max-width: 100%;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--forestDeep);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  pre code { padding: 0; border: 0; background: none; color: inherit; font-size: inherit; }
+
+  /* --- Shell ----------------------------------------------------------- */
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0.6rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__links { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.78rem; }
+  .bar__links a { color: var(--muted); text-decoration: none; }
+  .bar__links a:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 44px;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--sand);
+    border-radius: 999px;
+    background: var(--creamWarm);
+    color: var(--forestDark);
+    font: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.25rem; }
+  .wrap--narrow { max-width: 860px; }
+
+  .hero { background: var(--forest); color: var(--cream); padding: 3.5rem 0 3rem; }
+  .hero .eyebrow { color: var(--ochreLight); }
+  .hero p { color: rgb(253 251 247 / 0.87); max-width: 56rem; font-size: 1.02rem; }
+  .hero .lede { font-size: clamp(1.05rem, 2.2vw, 1.3rem); color: rgb(253 251 247 / 0.95); }
+  .hero code { border-color: rgb(249 241 226 / 0.25); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+  .hero strong { color: #fff; }
+
+  .eyebrow {
+    margin: 0 0 0.6rem;
+    color: var(--ochreDark);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  main section { padding: 2.6rem 0; border-bottom: 1px solid var(--sand); }
+  /* Anchor jumps must clear the sticky bar, or a nav link lands with its heading hidden
+     underneath it. 5.5rem covers the two-row mobile bar. */
+  main section[id], .option[id] { scroll-margin-top: 5.5rem; }
+  main section:last-of-type { border-bottom: 0; }
+  .section--warm { background: var(--creamWarm); }
+  .section--sage { background: var(--sageLight); }
+  .section--dark { background: var(--forestDark); color: var(--cream); }
+  .section--dark h2, .section--dark h3, .section--dark h4 { color: var(--cream); }
+  .section--dark p, .section--dark li { color: rgb(253 251 247 / 0.86); }
+  .section--dark code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  .section--dark strong { color: #fff; }
+  .section--dark .eyebrow { color: var(--ochreLight); }
+
+  .callout {
+    display: grid;
+    gap: 0.5rem;
+    margin: 1.25rem 0;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--sand);
+    border-left: 4px solid var(--ochre);
+    border-radius: 8px;
+    background: var(--cream);
+  }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .callout--warm { border-color: rgb(184 123 46 / 0.4); background: var(--warmDark); color: var(--ochreLight); }
+  .callout--warm strong { color: #fff; }
+  .callout--warm code { border-color: rgb(249 241 226 / 0.2); background: rgb(249 241 226 / 0.1); color: var(--ochreLight); }
+  .section--dark .callout { background: rgb(249 241 226 / 0.06); border-color: rgb(249 241 226 / 0.18); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .grid-2 > *, .grid-3 > * { min-width: 0; }
+
+  .card {
+    min-width: 0;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .card p:last-child, .card ul:last-child, .card ol:last-child { margin-bottom: 0; }
+  .card__kicker {
+    margin: 0 0 0.35rem;
+    color: var(--ochreDark);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .section--dark .card { background: rgb(249 241 226 / 0.05); border-color: rgb(249 241 226 / 0.16); box-shadow: none; }
+  .section--dark .card__kicker { color: var(--ochreLight); }
+
+  .metric-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 1.25rem 0; }
+  .metric {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .metric__value { display: block; font-family: var(--serif); font-size: 1.7rem; line-height: 1; color: var(--forestDark); }
+  .metric__label { display: block; margin-top: 0.35rem; color: var(--muted); font-size: 0.76rem; }
+
+  .table-wrap { margin: 1rem 0; overflow-x: auto; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th, td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--sand); text-align: left; vertical-align: top; }
+  th { background: var(--creamWarm); color: var(--forestDark); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+  table.compact th, table.compact td { padding: 0.5rem 0.6rem; font-size: 0.78rem; }
+
+  .pill {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border: 1px solid var(--ochre);
+    border-radius: 999px;
+    background: var(--ochreLight);
+    color: var(--ochreDark);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .pill--muted { border-color: var(--sand); background: var(--creamWarm); color: var(--muted); }
+  .pill--dark { border-color: rgb(249 241 226 / 0.3); background: rgb(249 241 226 / 0.12); color: var(--ochreLight); }
+
+  .btn {
+    min-height: 44px;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--forest);
+    border-radius: 999px;
+    background: var(--forest);
+    color: var(--cream);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn--ghost { border-color: var(--sand); background: var(--creamWarm); color: var(--forestDark); }
+  .btn:focus-visible, .bar__print:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  /* --- Part 1: facts --------------------------------------------------- */
+  .fact {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--sand);
+    border-left: 4px solid var(--forest);
+    border-radius: 8px;
+    background: var(--cream);
+  }
+  .fact__n {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--ochreDark);
+    letter-spacing: 0.06em;
+  }
+  .fact__t { font-weight: 700; color: var(--forestDark); font-size: 0.9rem; }
+  .fact__d { color: var(--muted); font-size: 0.82rem; }
+  .fact__d code { font-size: 0.78rem; }
+
+  .index { display: grid; gap: 0.45rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+  .index li {
+    display: grid;
+    gap: 0.1rem;
+    margin: 0;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--sand);
+    border-left: 3px solid var(--ochre);
+    border-radius: 8px;
+    background: var(--cream);
+  }
+  .index a { color: var(--forestDark); text-decoration: none; }
+  .index a:hover { text-decoration: underline; }
+  .index b { font-size: 0.86rem; }
+  .index span { color: var(--muted); font-size: 0.8rem; }
+
+  /* --- Part 2: the four claims ---------------------------------------- */
+  .claims { display: grid; gap: 0.75rem; margin: 1.25rem 0; }
+  .claim {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .claim__mark {
+    display: grid;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .claim--true .claim__mark { background: var(--forest); color: var(--cream); }
+  .claim--false .claim__mark { background: var(--warmDark); color: var(--ochreLight); border: 1px solid var(--ochre); }
+  .claim__body p:last-child { margin-bottom: 0; }
+  .claim__body b { color: var(--forestDark); }
+  .claim__body span { color: var(--muted); font-size: 0.86rem; }
+
+  .case {
+    margin: 1.25rem 0;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--creamWarm);
+  }
+  .case__q { font-family: var(--serif); font-size: 1.05rem; margin: 0 0 0.5rem; color: var(--forestDark); }
+  .case__sections { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+  .case__sec {
+    flex: 1 1 170px;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.78rem;
+  }
+  .case__sec b { display: block; color: var(--forestDark); font-family: var(--mono); font-size: 0.76rem; }
+  .case__sec span { color: var(--muted); }
+  .case__sec--missing { border-color: var(--ochre); border-style: dashed; background: var(--ochreLight); }
+  .case__sec--missing b { color: var(--ochreDark); }
+
+  /* --- Prototype frame ------------------------------------------------- */
+  .option { margin: 2rem 0 2.5rem; }
+  .option__head { display: flex; flex-wrap: wrap; gap: 0.5rem 0.85rem; align-items: baseline; margin-bottom: 0.35rem; }
+  .option__letter {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--forest);
+    color: var(--cream);
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .option__thesis { margin: 0 0 1rem; color: var(--muted); font-size: 0.92rem; max-width: 62rem; }
+
+  .pf {
+    overflow: hidden;
+    border: 1px solid var(--sand);
+    border-radius: var(--radius);
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .pf__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--sand);
+    background: var(--creamWarm);
+    font-size: 0.74rem;
+    color: var(--muted);
+  }
+  .pf__bar b { color: var(--forestDark); font-family: var(--mono); font-size: 0.72rem; }
+  .pf__stage { padding: 1rem; }
+  .pf__stage--dark { background: var(--forestDark); }
+  .pf__stage--paper { background: var(--sageLight); }
+  .pf__note {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem 1rem;
+    border-top: 1px solid var(--sand);
+    background: var(--creamWarm);
+    font-size: 0.78rem;
+  }
+  .pf__note b { display: block; color: var(--forestDark); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .pf__note p { margin: 0; color: var(--muted); }
+  .pf__note code { font-size: 0.74rem; }
+
+  .verdict { display: grid; gap: 0.9rem; margin-top: 1rem; }
+  .verdict__box { padding: 0.9rem 1rem; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); }
+  .verdict__box--for { border-left: 4px solid var(--forest); }
+  .verdict__box--against { border-left: 4px solid var(--ochre); }
+  .verdict__box h4 { font-family: var(--sans); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ochreDark); }
+  .verdict__box ul { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; }
+  .verdict__box li:last-child { margin-bottom: 0; }
+
+  /* --- Shared mock atoms ---------------------------------------------- */
+  .mockq { margin: 0 0 0.75rem; font-family: var(--serif); color: var(--forestDark); font-size: 1rem; }
+  .pf__stage--dark .mockq { color: var(--cream); }
+  .mono { font-family: var(--mono); }
+  .tiny { font-size: 0.72rem; }
+  .muted { color: var(--muted); }
+  .dark .muted, .pf__stage--dark .muted { color: rgb(253 251 247 / 0.62); }
+  .clause {
+    padding: 0.55rem 0.7rem;
+    border-left: 2px solid var(--ochre);
+    background: rgb(50 62 42 / 0.5);
+    color: rgb(253 251 247 / 0.92);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    margin: 0.5rem 0 0;
+  }
+  .clause--paper { border-left-color: var(--ochre); background: var(--cream); color: var(--charcoal); }
+  .clause__src { display: block; margin-top: 0.35rem; color: var(--ochreLight); font-family: var(--mono); font-size: 0.68rem; }
+  .clause--paper .clause__src { color: var(--ochreDark); }
+  .doclink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 32px;
+    color: var(--ochreDark);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .pf__stage--dark .doclink { color: var(--ochreLight); }
+  .mockbtn {
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--ochre);
+    border-radius: 999px;
+    background: var(--ochre);
+    color: #fff;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .mockbtn--ghost { background: transparent; color: inherit; border-color: currentColor; opacity: 0.85; }
+  .mockbtn:focus-visible, .chip:focus-visible, .pinbtn:focus-visible, .treenode:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  .mockinput {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font: inherit;
+    font-size: 0.82rem;
+  }
+  .pf__stage--dark .mockinput { border-color: rgb(249 241 226 / 0.24); background: var(--forest); color: var(--cream); }
+  .mockinput:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; }
+  .stageflag {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    padding: 0.1rem 0.45rem;
+    border: 1px dashed var(--ochre);
+    border-radius: 4px;
+    color: var(--ochreDark);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pf__stage--dark .stageflag { color: var(--ochreLight); }
+
+  /* --- Option 0: the current thread ------------------------------------ */
+  .threadwin { border: 1px solid rgb(255 255 255 / 0.1); border-radius: 10px; background: var(--forestDark); overflow: hidden; }
+  .threadwin__bar {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    align-items: center; justify-content: space-between;
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    background: var(--forestDeep);
+    color: rgb(253 251 247 / 0.9);
+    font-size: 0.74rem;
+  }
+  .threadwin__dot { display: inline-block; width: 8px; height: 8px; margin-right: 0.4rem; border-radius: 50%; background: var(--ochre); }
+  .threadwin__body { display: grid; gap: 0.85rem; padding: 0.9rem; }
+  .trow { display: flex; }
+  .trow--user { justify-content: flex-end; }
+  .tbub {
+    max-width: 92%;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 12px;
+    border-top-left-radius: 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+  .tbub p { margin: 0 0 0.4rem; }
+  .tbub p:last-child { margin: 0; }
+  .tbub--user { border-top-left-radius: 12px; border-top-right-radius: 0; background: rgb(66 83 55 / 0.85); color: #fff; }
+  .tbub--answer { background: rgb(50 62 42 / 0.8); color: rgb(253 251 247 / 0.9); }
+  .tbub--refusal { border-color: rgb(184 123 46 / 0.4); background: rgb(43 35 25 / 0.95); color: var(--ochreLight); }
+  .cites { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.5rem; }
+  .cite {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid rgb(184 123 46 / 0.3);
+    border-radius: 4px;
+    background: var(--forestDeep);
+    color: var(--ochreLight);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+  }
+
+  /* --- Option A: the board --------------------------------------------- */
+  .board__controls { display: grid; gap: 0.6rem; margin-bottom: 0.9rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    min-height: 44px;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--sand);
+    border-radius: 999px;
+    background: var(--cream);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.74rem;
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: var(--cream); font-weight: 700; }
+  .board__grid { display: grid; grid-template-columns: 1fr; gap: 0.7rem; }
+  .qcard {
+    padding: 0.85rem 0.95rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .qcard[hidden] { display: none; }
+  .qcard__q { margin: 0 0 0.35rem; font-family: var(--serif); font-size: 0.95rem; color: var(--forestDark); }
+  .qcard__a { margin: 0 0 0.5rem; font-size: 0.8rem; color: var(--charcoal); }
+  .qcard__meta { display: flex; flex-wrap: wrap; gap: 0.4rem 0.75rem; align-items: center; font-size: 0.68rem; color: var(--muted); }
+  .qcard--pending { border-left: 4px solid var(--ochre); background: var(--warmDark); }
+  .qcard--pending .qcard__q { color: var(--ochreLight); }
+  .qcard--pending .qcard__a, .qcard--pending .qcard__meta { color: rgb(249 241 226 / 0.8); }
+
+  /* --- Option B: the concordance --------------------------------------- */
+  .conc { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  .conc__tree {
+    padding: 0.6rem;
+    border: 1px solid rgb(249 241 226 / 0.14);
+    border-radius: 10px;
+    background: var(--forestDeep);
+    max-height: 30rem;
+    overflow-y: auto;
+  }
+  .conc__tree p { margin: 0.35rem 0 0.4rem; padding-left: 0.4rem; color: var(--ochreLight); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+  .treenode {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.35rem 0.45rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: rgb(253 251 247 / 0.8);
+    font: inherit;
+    font-size: 0.76rem;
+    text-align: left;
+    cursor: pointer;
+  }
+  .treenode b { font-family: var(--mono); font-size: 0.68rem; color: var(--ochreLight); font-weight: 400; min-width: 3.6rem; }
+  .treenode:hover { background: rgb(249 241 226 / 0.07); }
+  .treenode[aria-current="true"] { background: rgb(249 241 226 / 0.13); color: #fff; box-shadow: inset 2px 0 0 var(--ochre); }
+  .treenode--gap b, .treenode--gap span { color: rgb(253 251 247 / 0.42); font-style: italic; }
+  .conc__pane {
+    padding: 1rem;
+    border-radius: 10px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-size: 0.82rem;
+    line-height: 1.62;
+    max-height: 30rem;
+    overflow-y: auto;
+  }
+  .conc__crumb { margin: 0 0 0.5rem; font-family: var(--mono); font-size: 0.68rem; color: var(--ochreDark); }
+  /* The pane is a light surface inside a dark stage. Without these two overrides the
+     dark-stage `.muted` and `.doclink` rules paint near-white text on cream — which is
+     exactly the invisible-on-invisible failure this artifact is arguing against. */
+  .conc__pane .muted { color: var(--muted); }
+  .conc__pane .doclink { color: var(--ochreDark); }
+  .conc__pane .doclink:hover { color: var(--forestDark); }
+  .conc__answer {
+    margin: 0 0 0.85rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid rgb(184 123 46 / 0.45);
+    border-radius: 8px;
+    background: var(--ochreLight);
+    font-size: 0.8rem;
+  }
+  .conc__answer b { display: block; margin-bottom: 0.25rem; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ochreDark); }
+  mark.hl { background: #f4e2c2; color: var(--charcoal); padding: 0.05rem 0.1rem; box-shadow: 0 0 0 2px #f4e2c2; }
+  .conc__row { display: grid; grid-template-columns: 1fr; gap: 0.15rem; padding: 0.45rem 0; border-bottom: 1px solid var(--sand); }
+  .conc__row:last-child { border-bottom: 0; }
+  .conc__row b { font-family: var(--mono); font-size: 0.7rem; color: var(--forestDark); }
+
+  /* --- Option C: the answer page --------------------------------------- */
+  .ap { max-width: 44rem; margin: 0 auto; }
+  .ap__url {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+    margin-bottom: 0.9rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .ap__q { margin: 0 0 0.75rem; font-family: var(--serif); font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.2; color: var(--forestDark); }
+  .ap__answer { font-size: 0.88rem; }
+  .ap__h { margin: 1.25rem 0 0.5rem; font-family: var(--sans); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ochreDark); }
+  .ap__next { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+  .ap__next li { margin: 0; padding: 0.5rem 0.6rem; border: 1px solid var(--sand); border-radius: 8px; background: var(--cream); font-size: 0.78rem; }
+  .ap__cite {
+    padding: 0.7rem 0.8rem;
+    border: 1px dashed var(--ochre);
+    border-radius: 8px;
+    background: var(--ochreLight);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.6;
+    color: var(--forestDark);
+    overflow-wrap: anywhere;
+  }
+
+  /* --- Option D: the worksheet ----------------------------------------- */
+  .ws__who { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+  .ws__prog { height: 6px; border-radius: 999px; background: var(--sand); overflow: hidden; margin: 0 0 0.35rem; }
+  .ws__prog span { display: block; height: 100%; width: 33%; background: var(--ochre); transition: width 150ms ease; }
+  .ws__stage { margin: 0 0 0.75rem; font-family: var(--mono); font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .wsitem {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 0.6rem;
+    align-items: start;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    margin-bottom: 0.45rem;
+  }
+  .wsitem input { width: 1.15rem; height: 1.15rem; margin: 0.2rem 0 0; accent-color: var(--forest); }
+  .wsitem label { font-size: 0.8rem; cursor: pointer; }
+  .wsitem label b { display: block; color: var(--forestDark); font-size: 0.82rem; font-weight: 700; }
+  .wsitem label span { display: block; color: var(--muted); font-size: 0.76rem; }
+  .wsitem:has(input:checked) { border-color: var(--forest); background: var(--sageLight); }
+
+  /* --- Option E: the desk ---------------------------------------------- */
+  .desk { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  .desk__col { min-width: 0; }
+  .desk__label { margin: 0 0 0.45rem; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ochreLight); }
+  .askline {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem;
+  }
+  .asked { display: grid; gap: 0.35rem; margin: 0.7rem 0 0; padding: 0; list-style: none; }
+  .asked li {
+    margin: 0;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid rgb(249 241 226 / 0.16);
+    border-radius: 6px;
+    background: rgb(249 241 226 / 0.04);
+    color: rgb(253 251 247 / 0.85);
+    font-size: 0.76rem;
+  }
+  .asked li b { display: block; color: #fff; font-weight: 600; }
+  .evidence { display: grid; gap: 0.5rem; }
+  .evcard {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgb(249 241 226 / 0.16);
+    border-radius: 8px;
+    background: var(--warmDark);
+    color: var(--ochreLight);
+    font-size: 0.76rem;
+    line-height: 1.5;
+  }
+  .evcard b { display: block; margin-bottom: 0.2rem; font-family: var(--mono); font-size: 0.68rem; color: #fff; }
+  .evcard .evq { color: rgb(249 241 226 / 0.85); }
+  .evcard__foot { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between; margin-top: 0.45rem; }
+  .pinbtn {
+    min-height: 44px;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid rgb(249 241 226 / 0.3);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ochreLight);
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pinbtn[aria-pressed="true"] { border-color: var(--ochre); background: var(--ochre); color: #fff; }
+  .desk__tray {
+    margin-top: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px dashed rgb(249 241 226 / 0.3);
+    border-radius: 8px;
+    background: rgb(249 241 226 / 0.05);
+    color: rgb(253 251 247 / 0.82);
+    font-size: 0.74rem;
+  }
+  .desk__tray b { color: #fff; }
+
+  /* --- Decision control ------------------------------------------------ */
+  .decision { display: grid; gap: 0.6rem; margin: 1rem 0 0; }
+  .opt {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+    cursor: pointer;
+  }
+  .opt:has(input:checked) { border-color: var(--forest); box-shadow: inset 0 0 0 1px var(--forest); background: var(--sageLight); }
+  .opt input { width: 1.15rem; height: 1.15rem; margin: 0.2rem 0 0; accent-color: var(--forest); }
+  .opt b { display: block; color: var(--forestDark); font-size: 0.88rem; }
+  .opt span { display: block; color: var(--muted); font-size: 0.78rem; }
+  .notes { display: grid; gap: 0.75rem; margin-top: 1.25rem; }
+  .notes textarea {
+    width: 100%;
+    min-height: 9rem;
+    padding: 0.8rem;
+    border: 1px solid var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font: inherit;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    resize: vertical;
+  }
+  .notes textarea:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; }
+  .notes__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+  .notes__status { color: var(--muted); font-size: 0.76rem; }
+
+  footer { padding: 2rem 0 3rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.72); font-size: 0.78rem; }
+  footer strong { color: var(--cream); }
+  footer p:last-child { margin-bottom: 0; }
+
+  @media (min-width: 760px) {
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .metric-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    main section { padding: 3.2rem 0; }
+    .pf__stage { padding: 1.25rem; }
+    .pf__note { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .verdict { grid-template-columns: 1fr 1fr; }
+    .board__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .conc { grid-template-columns: 17rem 1fr; }
+    .fact { grid-template-columns: 2.5rem 15rem 1fr; align-items: baseline; }
+    .desk { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
+  }
+
+  @media (max-width: 759px) {
+    /* A three-line sticky bar eats a fifth of a 390 px screen. Keep the brand and the
+       print button on one row and let the section links scroll horizontally. */
+    .bar__inner { gap: 0.4rem 0.6rem; padding: 0.5rem 1rem; }
+    .bar__links {
+      order: 3;
+      width: 100%;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .bar__links a { white-space: nowrap; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .ws__prog span { transition: none; }
+  }
+
+  @media print {
+    .bar, .notes__actions, .btn, .mockbtn, .pinbtn, .bar__print { display: none !important; }
+    body { background: #fff; color: #000; font-size: 10.5pt; }
+    .hero, .section--dark, .section--warm, .section--sage, .pf__stage--dark, .pf__stage--paper {
+      background: #fff !important; color: #000 !important;
+    }
+    .hero p, .section--dark p, .section--dark li, .pf__stage--dark .muted { color: #222 !important; }
+    .hero h1, .hero .eyebrow, .section--dark h2, .section--dark h3, .section--dark .eyebrow { color: #000 !important; }
+    /* Every dark-ground surface becomes white paper, so every inherited light colour has
+       to be forced back to ink — otherwise `strong`, `code` and the desk labels print
+       white-on-white and the page silently loses its lead-ins. */
+    .hero *, .section--dark *, .pf__stage--dark * {
+      color: #111 !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+      border-color: #bbb !important;
+    }
+    .card, .pf, .claim, .fact, .qcard, .evcard { box-shadow: none !important; break-inside: avoid; }
+    .threadwin, .conc__tree, .conc__pane, .pf__stage--dark { border: 1px solid #999 !important; }
+    .clause, .evcard, .qcard--pending, .tbub--refusal { background: #f6f1e7 !important; color: #000 !important; border: 1px solid #999 !important; }
+    .clause__src, .cite, .doclink, .treenode b { color: #444 !important; }
+    tr, .option { break-inside: avoid; }
+    .decision .opt { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">Outeniqua PGS &middot; the ask surface</span>
+    <nav class="bar__links" aria-label="Sections">
+      <a href="#read">How to read</a>
+      <a href="#facts">1 &middot; Facts</a>
+      <a href="#shape">2 &middot; Problem</a>
+      <a href="#options">3 &middot; Options</a>
+      <a href="#needs">4 &middot; What it costs</a>
+      <a href="#principles">5 &middot; Principles</a>
+      <a href="#matrix">6 &middot; Comparison</a>
+      <a href="#recommend">7 &middot; Recommendation</a>
+      <a href="#decide">8 &middot; Decide</a>
+    </nav>
+    <button class="bar__print" id="print-page" type="button">Print / PDF</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Decision artifact &middot; the <code>/ask/</code> surface</p>
+    <h1>Should the ask interface be a conversation &mdash; or is that only what everybody else builds?</h1>
+    <p class="lede">
+      We have a working chat window at <code>/ask/</code>. It grounds every answer, refuses
+      rather than guesses, and passes 94 tests. None of that proves a conversation is the
+      right <em>shape</em>. This page holds five alternative shapes as clickable prototypes,
+      all answering the same real question from the same real corpus, so the shape can be
+      judged instead of assumed.
+    </p>
+    <p>
+      <strong>The question for you:</strong> which of these should <code>/ask/</code> be,
+      and what should happen to the transcript archive and the published documents when it
+      becomes that?
+    </p>
+  </div>
+</header>
+
+<main>
+
+<!-- ======================================================================
+     How to read
+     ====================================================================== -->
+<section id="read" class="section--warm">
+  <div class="wrap wrap--narrow">
+    <p class="eyebrow">How to read this</p>
+    <h2>Five prototypes, one question, one corpus</h2>
+    <p>
+      Every one of the five mocks below answers <em>the same question</em> &mdash;
+      <q>Do I need to know where my horse manure comes from?</q> &mdash; from
+      <em>the same two Appendix 2 rows</em>. That is deliberate: it is the only way to
+      compare shapes rather than copywriting. Each one also shows what happens to the
+      fee question, because that question is the one our own PRD says we answer
+      <em>incompletely</em>.
+    </p>
+    <ol>
+      <li><strong>The quotes are real; the prose is mine.</strong> Every quotation below is
+        verbatim from the shipped documents (Appendix 2, page 76 of SAOSO v2.1, and
+        OPP &sect;2.1&ndash;&sect;2.5). The connecting sentences are written for this page
+        and are <em>not</em> recorded model output. Each mock says so.</li>
+      <li><strong>The interactions are real.</strong> Type in the board's filter, click a
+        section in the tree, tick a worksheet item, pin an evidence card. If a control
+        moves, the shape works; if it feels like a nuisance, the shape is the nuisance.</li>
+      <li><strong>Read the strip under each mock.</strong> It says where the links live,
+        where history lives, and what the shape costs in things that do not exist yet.</li>
+      <li><strong>Part 6 is the comparison, Part 7 is my recommendation, Part 8 is yours.</strong>
+        The recommendation is one answer, not a menu.</li>
+      <li><strong>Then read it at 390 px.</strong> A shape that only works on a laptop is a
+        shape for the people who wrote it, not for the farmers who use it.</li>
+    </ol>
+    <div class="callout">
+      <p>
+        <strong>This is not a proposal to throw the chat away.</strong> The five shapes are
+        not five skins of one thing: each one changes <em>what a visitor's question produces</em>.
+        Keeping the current window is Option 0, and it stays on the table throughout.
+      </p>
+    </div>
+
+    <h3 style="margin-top:2rem">The five, in one line each</h3>
+    <ul class="index">
+      <li><a href="#opt-a"><b>A &middot; The answered-questions board</b></a><span>The page opens on what has already been answered; asking adds to it, and an unanswerable question stays visible as a Waiting card.</span></li>
+      <li><a href="#opt-b"><b>B &middot; The concordance</b></a><span>The four documents become the navigation; the answer pins to the clause the reader is already on.</span></li>
+      <li><a href="#opt-c"><b>C &middot; The answer page</b></a><span>One question, one URL: answer, full clauses, what it does not cover, and a citation block you can copy into a FORM.</span></li>
+      <li><a href="#opt-d"><b>D &middot; The worksheet</b></a><span>No search box. The published farm-visit stages become a tickable clause checklist that prints.</span></li>
+      <li><a href="#opt-e"><b>E &middot; The desk</b></a><span>Conversation stays, scrollback goes; citations accumulate as pinnable evidence cards.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 1 — what is actually true
+     ====================================================================== -->
+<section id="facts">
+  <div class="wrap">
+    <p class="eyebrow">Part 1 &middot; What is actually true</p>
+    <h2>The inventory, counted rather than characterised</h2>
+    <p class="sub" style="max-width:60rem;color:var(--muted)">
+      Everything in this table was read out of the working tree at <code>1dd0e9b</code>,
+      except the corpus size, which is the recorded measurement in
+      <code>CHAT_ANSWER_COVERAGE_PRD.md</code> &sect;5 (round 4).
+    </p>
+
+    <div class="metric-row">
+      <div class="metric"><span class="metric__value">1</span><span class="metric__label">route serving a question &mdash; <code>/ask/</code></span></div>
+      <div class="metric"><span class="metric__value">4</span><span class="metric__label">documents in the corpus &middot; 8 published</span></div>
+      <div class="metric"><span class="metric__value">~366</span><span class="metric__label">retrievable chunks &middot; ~101 printed pages</span></div>
+      <div class="metric"><span class="metric__value">94</span><span class="metric__label">tests collected across 5 chat modules</span></div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="compact">
+        <thead>
+          <tr><th>What</th><th>Measured</th><th>Where it is written down</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Ask surface</td><td>1 route, 1 form, 1 thread fragment, 1 aside; plus two showcase windows on the home page that are an illustration, not a second implementation</td><td><code>core/urls.py</code>, <code>core/templates/chatbot/panel.html</code></td></tr>
+          <tr><td>Service</td><td>1,315 lines &mdash; retrieval budget, citation audit, rate limit, answer cache, prompt</td><td><code>core/services/_chatbot.py</code></td></tr>
+          <tr><td>Client</td><td>207 lines of JS; HTMX is vendored and loaded on this page only</td><td><code>core/static/js/chat.js</code></td></tr>
+          <tr><td>Retrieval budget</td><td>8 passages per question; at most 8 citations returned</td><td><code>CHAT_RETRIEVAL_LIMIT</code>, <code>MAX_CITATIONS</code></td></tr>
+          <tr><td>Answer cache</td><td>1 hour, keyed on <code>sha256(normalise_question)</code> &mdash; case and whitespace only, so two phrasings are two keys</td><td><code>ANSWER_CACHE_TTL</code>, <code>_cache_key</code></td></tr>
+          <tr><td>Rate limit</td><td>20 questions per hour per hashed IP</td><td><code>RATE_LIMIT</code></td></tr>
+          <tr><td>Refusals</td><td>Never cached; every refusal writes one <code>EscalatedQuery</code></td><td><code>_chatbot.py</code>, <code>EscalatedQuery</code></td></tr>
+          <tr><td>What survives a visit</td><td>A <code>ChatMessage</code> row (question, answer, model, tokens, the chunks the model was given) and, for refusals, an <code>EscalatedQuery</code> with a status and an optional human answer</td><td><code>core/models/_chat.py</code>; retention decided in D59</td></tr>
+          <tr><td>What a visitor can do with an answer afterwards</td><td>Nothing that persists: the thread renders from the session, and historical citation chips are deliberately <em>not</em> re-rendered because the quote offsets belong to the corpus as it stood then</td><td><code>core/templates/chatbot/_thread.html</code></td></tr>
+          <tr><td>What a citation knows</td><td>section ref, sub-ref, page, heading path, and the document <em>title</em> &mdash; but not the <code>PublicDocument.code</code></td><td><code>Citation</code>; <code>RetrievedChunk.as_citation()</code></td></tr>
+          <tr><td>What a document link does today</td><td><code>/documents/&lt;code&gt;/</code> streams the PDF with <code>as_attachment=True</code>, so it downloads. A <code>#page=76</code> fragment cannot land because the file never opens in a viewer</td><td><code>core/views/_documents.py</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:2rem">Five constraints that decide the options before taste does</h3>
+    <div class="grid-2" style="margin-top:1rem">
+      <div class="fact">
+        <span class="fact__n">1</span>
+        <span class="fact__t">A citation cannot link to its document</span>
+        <span class="fact__d">A citation carries the title <code>SAOSO Standard v2.1</code>. The public route is keyed on <code>saoso-standard-v2.1</code>. Nothing maps one to the other, so no citation on the site is clickable today.</span>
+      </div>
+      <div class="fact">
+        <span class="fact__n">2</span>
+        <span class="fact__t">Even with a code, the link would download</span>
+        <span class="fact__d"><code>document_file()</code> serves <code>as_attachment=True</code>. Landing on page 76 needs a second response shape (inline) or a rendered HTML clause page &mdash; the chunk text is already in the database either way.</span>
+      </div>
+      <div class="fact">
+        <span class="fact__n">3</span>
+        <span class="fact__t">An answer does not outlive an hour</span>
+        <span class="fact__d">The only reusable answer is a cache entry with a one-hour life, keyed on the exact normalised question. A board of answered questions is a <em>content table</em>, not a cache &mdash; that is new modelling, not a new template.</span>
+      </div>
+      <div class="fact">
+        <span class="fact__n">4</span>
+        <span class="fact__t">Refusals are the only structured question record</span>
+        <span class="fact__d"><code>EscalatedQuery</code> already carries the question, a reason, a status, an answer and who answered it. It is the one place where "a question the documents cannot answer" is a first-class row &mdash; and it is also the G6 gap we have not closed.</span>
+      </div>
+      <div class="fact">
+        <span class="fact__n">5</span>
+        <span class="fact__t">Showing other people's questions is a new decision</span>
+        <span class="fact__d">D59 says we keep transcripts. It does not say we may publish them. A question is free text from a public form: <em>"my neighbour's farm"</em> is a third party. Anything history-shaped therefore needs an approved-and-published flag, not a query.</span>
+      </div>
+      <div class="fact">
+        <span class="fact__n">6</span>
+        <span class="fact__t">The corpus is smaller than the audience's question space, but not by much</span>
+        <span class="fact__d">Four documents, ~101 pages, ~366 chunks. This is not a search problem at internet scale. It is small enough that the <em>whole standard's structure</em> fits on one screen &mdash; which is what makes Option B possible at all.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 2 — the shape of the problem
+     ====================================================================== -->
+<section id="shape" class="section--dark">
+  <div class="wrap">
+    <p class="eyebrow">Part 2 &middot; The shape of the problem</p>
+    <h2>What a chat window quietly claims</h2>
+    <p style="max-width:60rem">
+      A conversation makes four claims about the product. Three of them are false here &mdash;
+      not because the implementation is wrong, but because the form asserts something about
+      what an answer <em>is</em>.
+    </p>
+
+    <div class="claims">
+      <div class="claim claim--false">
+        <span class="claim__mark" aria-hidden="true">&#10007;</span>
+        <div class="claim__body">
+          <p><b>&ldquo;The conversation is the unit of value.&rdquo;</b></p>
+          <p><span>Our unit of value is a <em>grounded passage</em>. The sentence is pleasant; the clause is the deliverable. A thread that scrolls the clause out of view at the next question keeps the thing that expires and discards the thing that does not.</span></p>
+        </div>
+      </div>
+      <div class="claim claim--false">
+        <span class="claim__mark" aria-hidden="true">&#10007;</span>
+        <div class="claim__body">
+          <p><b>&ldquo;The answer is unique to this asker.&rdquo;</b></p>
+          <p><span>It is not. Everybody's question is retrieved from the same four documents. The ninth farmer asking about cardboard gets the same Appendix 2 row as the first, cannot see that eight others asked, and leaves nothing behind that the tenth can use. A chat is a write-only surface.</span></p>
+        </div>
+      </div>
+      <div class="claim claim--false">
+        <span class="claim__mark" aria-hidden="true">&#10007;</span>
+        <div class="claim__body">
+          <p><b>&ldquo;The answer is finished when the bubble ends.&rdquo;</b></p>
+          <p><span>For a standard, an answer is a <em>locator</em>. The reader has to go to the clause, read it in context, and be able to name it in a FORM or to a neighbour. Our citations are chips that expand into a quote and then go nowhere.</span></p>
+        </div>
+      </div>
+      <div class="claim claim--true">
+        <span class="claim__mark" aria-hidden="true">&#10003;</span>
+        <div class="claim__body">
+          <p><b>&ldquo;A refusal is a legitimate answer.&rdquo;</b></p>
+          <p><span>This one is true and it is the best thing the current surface does. A conversational refusal reads as a boundary drawn confidently; a page of near-miss search results reads as a malfunction. Whatever replaces the chat must keep refusal a <em>state</em>, not an error.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2rem">The case that decides it: the fee question needs four sections and we retrieve one</h3>
+    <div class="case">
+      <p class="case__q">What is the yearly cost to get certified, including the farm visit?</p>
+      <p style="font-size:0.88rem;margin-bottom:0.5rem">
+        A person asking this has not asked a question about a sentence. They have asked for a
+        <em>set</em> &mdash; and the set is spread across four OPP sections on three printed pages.
+      </p>
+      <div class="case__sections">
+        <div class="case__sec"><b>&sect;2.1 &middot; p.1</b><span>Annual Farmer &amp; consumer membership: <strong>R 100</strong></span></div>
+        <div class="case__sec"><b>&sect;2.3 &middot; p.2</b><span>Assessment fee, six turnover bands: <strong>R1 500&ndash;R8 000</strong> initial; renewal R900&ndash;R8 000</span></div>
+        <div class="case__sec"><b>&sect;2.4 &middot; p.3</b><span>Catering per visit: <strong>R30</strong> member, <strong>R50</strong> non-member</span></div>
+        <div class="case__sec"><b>&sect;2.5 &middot; p.3</b><span>Seal licence: <strong>R500 per annum per farm</strong></span></div>
+      </div>
+      <p style="font-size:0.85rem;margin-bottom:0">
+        <span class="pill">Recorded defect G3</span>
+        Our own measurement says the live answer <strong>omits &sect;2.1 &mdash; the R100</strong>, because
+        &sect;2.1 is never retrieved. A bubble cannot show the reader what it did not fetch. The four
+        shapes that can &mdash; a board of related cards, a document tree, an answer page with
+        &ldquo;clauses near this answer&rdquo;, a checklist of all four sections &mdash; are the four
+        shapes that make that omission <em>visible rather than invisible</em>.
+      </p>
+    </div>
+
+    <div class="callout">
+      <p><strong>The asymmetry that drives the whole decision.</strong> Answers are cheap to
+      regenerate and expensive to find again; refusals are expensive to regenerate (never
+      cached) and the only evidence of a gap in the standard. A surface that optimises for
+      the answer optimises for the wrong half of its own record.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 3 — the options
+     ====================================================================== -->
+<section id="options">
+  <div class="wrap">
+    <p class="eyebrow">Part 3 &middot; The options</p>
+    <h2>Five shapes, in the order a visitor meets them</h2>
+    <p style="max-width:62rem;color:var(--muted)">
+      Option 0 is what exists. A&ndash;E are alternatives, not refinements: each one changes
+      what the visitor's question <em>produces</em>, not just how it is dressed.
+    </p>
+
+    <!-- ------------------------------------------------------------------
+         Option 0 — the current thread
+         ------------------------------------------------------------------ -->
+    <div class="option">
+      <div class="option__head">
+        <span class="option__letter" aria-hidden="true">0</span>
+        <h3 style="margin:0">The thread &mdash; what we have now</h3>
+        <span class="pill pill--muted">Baseline &middot; shipped</span>
+      </div>
+      <p class="option__thesis">
+        Question in, answer out, citations as disclosures, refusal styled warm. It works,
+        and it is the only shape here that has 94 tests behind it.
+      </p>
+
+      <div class="pf">
+        <div class="pf__bar">
+          <b>/ask/</b>
+          <span>Real markup and real strings. This mock is the shipped design, not a sketch.</span>
+        </div>
+        <div class="pf__stage pf__stage--dark">
+          <span class="stageflag">Mockup</span>
+          <div class="threadwin">
+            <div class="threadwin__bar">
+              <span><span class="threadwin__dot" aria-hidden="true"></span>Ask Outeniqua PGS</span>
+              <span class="tiny muted">Documents only</span>
+            </div>
+            <div class="threadwin__body">
+              <div class="trow trow--user">
+                <div class="tbub tbub--user">Do I need to know where my horse manure comes from?</div>
+              </div>
+              <div class="trow">
+                <div class="tbub tbub--answer">
+                  <p>Yes. The source decides which rule applies: manure from extensive livestock
+                     farming may be used, manure from intensive or conventional systems needs
+                     prior permission and must be composted, and factory-farming origin is
+                     forbidden. In every case it must not be your main nitrogen source.</p>
+                  <div class="cites">
+                    <span class="cite">Appendix 2 +</span>
+                    <span class="cite">Appendix 2 +</span>
+                  </div>
+                </div>
+              </div>
+              <div class="trow trow--user">
+                <div class="tbub tbub--user">What is the yearly cost to get certified, including the farm visit?</div>
+              </div>
+              <div class="trow">
+                <div class="tbub tbub--answer">
+                  <p>The assessment fee follows a turnover scale from R1 500 to R8 000,
+                     plus administrator transport. The R100 annual membership fee is
+                     <em>not mentioned</em> &mdash; &sect;2.1 was never retrieved.</p>
+                  <div class="cites">
+                    <span class="cite">&sect;2.3 +</span>
+                    <span class="cite">&sect;2.3 +</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;gap:0.5rem;margin-top:0.75rem">
+            <div class="mockinput" style="color:rgb(253 251 247 / 0.45)">Ask about the standard, our procedures or the certification landscape&hellip;</div>
+            <button class="mockbtn" type="button" disabled>Ask</button>
+          </div>
+        </div>
+        <div class="pf__note">
+          <div><b>Where the links live</b><p>Nowhere. A citation expands to a quote and a page number. There is no route to the clause.</p></div>
+          <div><b>Where history lives</b><p>In the database, unreadable by anyone. (D59 keeps it; nothing publishes it.)</p></div>
+          <div><b>Cost to build</b><p>Already built. The question is what it <em>cannot</em> do, not what it costs.</p></div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict__box verdict__box--for">
+          <h4>Strongest case for it</h4>
+          <ul>
+            <li>The visitor can ask in their own words, with no vocabulary and no taxonomy. Every other option either needs a category or a search term.</li>
+            <li>Refusal is a visible, honest state &mdash; the best expression of the product's claim.</li>
+            <li>It is built, tested, UAT-signed and deployed. Replacing it is a decision to spend engineering on shape rather than on G3&ndash;G7.</li>
+          </ul>
+        </div>
+        <div class="verdict__box verdict__box--against">
+          <h4>What kills it</h4>
+          <ul>
+            <li>It cannot show what it did not retrieve, which is exactly the failure we have measured (G3).</li>
+            <li>Its own record &mdash; the questions, the refusals, the frequency &mdash; is invisible to the people who would use it.</li>
+            <li>The citation is where the answer's authority lives, and it is where the interface stops.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------
+         Option A — the board
+         ------------------------------------------------------------------ -->
+    <div class="option" id="opt-a">
+      <div class="option__head">
+        <span class="option__letter" aria-hidden="true">A</span>
+        <h3 style="margin:0">The answered-questions board</h3>
+        <span class="pill">History is the hero</span>
+      </div>
+      <p class="option__thesis">
+        The page opens on what has already been answered. Asking is how a question gets
+        <em>added</em> to the board &mdash; and a question nobody can answer becomes a card the
+        group can see, not a shrug that disappears.
+      </p>
+
+      <div class="pf">
+        <div class="pf__bar">
+          <b>/ask/</b>
+          <span>Try the filter and the category chips. The cards filter live.</span>
+        </div>
+        <div class="pf__stage">
+          <span class="stageflag">Mockup &middot; quotes verbatim, prose written for this page</span>
+          <h4 class="mockq">Questions we have answered</h4>
+          <div class="board__controls">
+            <input class="mockinput" id="board-search" type="search" placeholder="Filter by word &mdash; try &ldquo;manure&rdquo; or &ldquo;fee&rdquo;" aria-label="Filter answered questions">
+            <div class="chips" id="board-chips">
+              <button class="chip" type="button" data-cat="all" aria-pressed="true">All</button>
+              <button class="chip" type="button" data-cat="inputs" aria-pressed="false">Inputs</button>
+              <button class="chip" type="button" data-cat="animals" aria-pressed="false">Animals</button>
+              <button class="chip" type="button" data-cat="money" aria-pressed="false">Money</button>
+              <button class="chip" type="button" data-cat="gap" aria-pressed="false">Waiting</button>
+            </div>
+          </div>
+
+          <div class="board__grid" id="board-grid">
+            <article class="qcard" data-cat="animals inputs" data-text="manure horse muck compost intensive factory farming nitrogen">
+              <p class="qcard__q">Do I need to know where my horse manure comes from?</p>
+              <p class="qcard__a">Yes &mdash; the source decides the rule. Extensive is fine; intensive or conventional needs permission and composting; factory-farming origin is forbidden.</p>
+              <p class="qcard__meta">
+                <span class="pill pill--muted">Animals</span>
+                <a class="doclink" href="#needs">Appendix 2 &middot; p.76</a>
+                <span>asked 6 times</span>
+              </p>
+            </article>
+
+            <article class="qcard" data-cat="inputs" data-text="cardboard neighbour mulch contaminants compost input">
+              <p class="qcard__q">Can I use cardboard from my neighbour?</p>
+              <p class="qcard__a">The standard does not name cardboard. It governs it as a biodegradable by-product: free of significant contaminants, or composted first.</p>
+              <p class="qcard__meta">
+                <span class="pill pill--muted">Inputs</span>
+                <a class="doclink" href="#needs">Appendix 2 &middot; p.76</a>
+                <span>asked 14 times</span>
+              </p>
+            </article>
+
+            <article class="qcard" data-cat="money" data-text="cost fee yearly certified farm visit membership r100 assessment turnover">
+              <p class="qcard__q">What is the yearly cost to get certified, including the farm visit?</p>
+              <p class="qcard__a">Four things, and you need all four: R100 membership, the turnover-band assessment fee, per-visit catering, and the seal licence if you sell with it.</p>
+              <p class="qcard__meta">
+                <span class="pill pill--muted">Money</span>
+                <a class="doclink" href="#needs">OPP &sect;2.1&ndash;&sect;2.5 &middot; pp.1&ndash;3</a>
+                <span>asked 21 times</span>
+              </p>
+            </article>
+
+            <article class="qcard" data-cat="animals" data-text="ducks bedding compost organic feed pass">
+              <p class="qcard__q">If my ducks are not fed organic food and I compost their bedding, will I still pass?</p>
+              <p class="qcard__a">Conditional: the bedding material and the compost both have to satisfy Appendix 2, and the feed itself has to meet S5.5 &mdash; 5.5.1 requires that animals are fed organic feed.</p>
+              <p class="qcard__meta">
+                <span class="pill pill--muted">Animals</span>
+                <a class="doclink" href="#needs">S5.5.1 &middot; p.47</a>
+                <span>asked 3 times</span>
+              </p>
+            </article>
+
+            <article class="qcard qcard--pending" data-cat="gap" data-text="export germany eu equivalence foreign market sell abroad">
+              <p class="qcard__q">Do I need EU organic certification to export to Germany?</p>
+              <p class="qcard__a">Not answered from the documents yet. This question has been put to the administrator &mdash; it is a gap in what we publish, and it stays visible until a person answers it.</p>
+              <p class="qcard__meta">
+                <span class="pill">Waiting</span>
+                <span>asked 2 times &middot; escalated 2026-10-20</span>
+              </p>
+            </article>
+          </div>
+
+          <div style="display:grid;gap:0.5rem;margin-top:0.9rem;padding-top:0.9rem;border-top:1px solid var(--sand)">
+            <label class="tiny muted" for="board-ask">Ask something that is not on the board</label>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:0.45rem">
+              <input class="mockinput" id="board-ask" type="text" placeholder="Your question, in your own words">
+              <button class="mockbtn" type="button" disabled>Ask</button>
+            </div>
+            <p class="tiny muted" style="margin:0">A new answer joins the board only once the administrator has read it. Until then it is a Waiting card, which is how the group sees what is missing.</p>
+          </div>
+        </div>
+        <div class="pf__note">
+          <div><b>Where the links live</b><p>On every card, next to the answer. &ldquo;Appendix 2 &middot; p.76&rdquo; is the unit of proof, repeated rather than hidden.</p></div>
+          <div><b>Where history lives</b><p>It <em>is</em> the page. Curated, approved, counted. The refusal queue is public by design.</p></div>
+          <div><b>Cost to build</b><p>A publishable-question table (question, answer, citations, category, ask-count, approved-by), plus an admin action. <code>EscalatedQuery</code> already has most of the shape.</p></div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict__box verdict__box--for">
+          <h4>Strongest case for it</h4>
+          <ul>
+            <li>It answers the user's request directly: the value of other people's questions is that the tenth visitor no longer has to ask.</li>
+            <li>It turns the refusal into the group's best transparency artefact &mdash; a visible list of what the standard does not cover.</li>
+            <li>It makes the corpus's gaps measurable in public, which is what G4&ndash;G7 need to be prioritised.</li>
+          </ul>
+        </div>
+        <div class="verdict__box verdict__box--against">
+          <h4>What kills it</h4>
+          <ul>
+            <li>An empty board is a form with extra steps. On day one every card is a gap, and the first visitor's question is still novel.</li>
+            <li>It needs a curator forever. Curated surfaces rot; a board with a card last verified in 2026 is a claim we have stopped checking.</li>
+            <li>Publishing visitor text is a POPIA decision nobody has made (fact 5). &ldquo;My neighbour's farm&rdquo; is a third party.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------
+         Option B — the concordance
+         ------------------------------------------------------------------ -->
+    <div class="option" id="opt-b">
+      <div class="option__head">
+        <span class="option__letter" aria-hidden="true">B</span>
+        <h3 style="margin:0">The concordance &mdash; the standard on one screen</h3>
+        <span class="pill">The link is the surface</span>
+      </div>
+      <p class="option__thesis">
+        The corpus becomes the navigation. The tree is the real table of contents of SAOSO
+        v2.1; choosing a section shows its text and pins the answer and its governing
+        passage on top of it. There is no citation chip because there is nowhere to go.
+      </p>
+
+      <div class="pf">
+        <div class="pf__bar">
+          <b>/documents/saoso-standard-v2.1/</b>
+          <span>Click any section. The tree is the published TOC, including the nine blank sections.</span>
+        </div>
+        <div class="pf__stage pf__stage--dark">
+          <span class="stageflag">Mockup &middot; section titles and pages are the printed TOC</span>
+          <div class="conc">
+            <div class="conc__tree" role="group" aria-label="Standard contents">
+              <div style="display:grid;grid-template-columns:1fr auto;gap:0.4rem;margin-bottom:0.5rem">
+                <input class="mockinput" id="conc-ask" type="text" placeholder="Highlight a question&hellip;" aria-label="Ask a question to highlight">
+                <button class="mockbtn" id="conc-go" type="button">Find</button>
+              </div>
+              <p>Section B</p>
+              <button class="treenode" type="button" data-sec="definitions"><b>1</b><span>Definitions &middot; p.22</span></button>
+              <button class="treenode" type="button" data-sec="ecosystems"><b>2</b><span>Organic Ecosystems &middot; p.30</span></button>
+              <button class="treenode" type="button" data-sec="general"><b>3</b><span>General Requirements &middot; p.33</span></button>
+              <button class="treenode" type="button" data-sec="crops"><b>4</b><span>Crop Production &middot; p.34</span></button>
+              <button class="treenode" type="button" data-sec="animals" aria-current="true"><b>5</b><span>Animal Husbandry &middot; p.41</span></button>
+              <button class="treenode" type="button" data-sec="wild"><b>6</b><span>Wild Harvesting &middot; p.52</span></button>
+              <button class="treenode" type="button" data-sec="bees"><b>7</b><span>Bee Keeping &middot; p.53</span></button>
+              <button class="treenode" type="button" data-sec="mushroom"><b>8</b><span>Mushroom Production &middot; p.56</span></button>
+              <button class="treenode" type="button" data-sec="aqua"><b>9</b><span>Aquaculture &middot; p.57</span></button>
+              <button class="treenode treenode--gap" type="button" data-sec="blank"><b>10&ndash;19</b><span>Left blank for future enterprises</span></button>
+              <button class="treenode" type="button" data-sec="processing"><b>20</b><span>Processing Handling &middot; p.60</span></button>
+              <button class="treenode" type="button" data-sec="wine"><b>21</b><span>Wine Making &middot; p.64</span></button>
+              <button class="treenode" type="button" data-sec="labels"><b>22</b><span>Labelling &middot; p.65</span></button>
+              <button class="treenode" type="button" data-sec="social"><b>23</b><span>Social Justice &middot; p.67</span></button>
+              <p>Appendices</p>
+              <button class="treenode" type="button" data-sec="app1"><b>App 1</b><span>Criteria for inputs &middot; p.70</span></button>
+              <button class="treenode" type="button" data-sec="app2" id="conc-app2"><b>App 2</b><span>Fertilizers &amp; soil conditioners &middot; p.76</span></button>
+              <button class="treenode" type="button" data-sec="app3"><b>App 3</b><span>Crop protectants &middot; p.79</span></button>
+              <button class="treenode" type="button" data-sec="app4"><b>App 4</b><span>Additives &middot; p.81</span></button>
+            </div>
+
+            <div class="conc__pane" id="conc-pane" aria-live="polite">
+              <p class="conc__crumb">SAOSO v2.1 &rsaquo; Section B &rsaquo; 5 Animal Husbandry</p>
+              <p class="tiny muted" style="margin-bottom:0.5rem">Question: &ldquo;Do I need to know where my horse manure comes from?&rdquo; &mdash; answered from Appendix 2, not from this section.</p>
+              <div class="conc__answer">
+                <b>Answer, pinned to the clause that governs it</b>
+                Yes, the source decides the rule: extensive is fine; intensive or conventional
+                needs permission and composting; factory farming origin is forbidden.
+                <a class="doclink" href="#needs">Appendix 2 &middot; p.76 &rarr;</a>
+              </div>
+              <p style="margin-bottom:0.35rem"><strong>5. Animal Husbandry</strong> sets the housing and
+                feed rules that decide whether the manure is even the question. The substance
+                rule lives in the appendix.</p>
+              <div class="conc__row"><b>5.1 Animal Management</b><span class="tiny muted">5.1.9 &mdash; a minimum daily rest period of 8 continuous hours for laying hens without artificial light.</span></div>
+              <div class="conc__row"><b>5.5 Animal Nutrition</b><span class="tiny muted">5.5.1 &mdash; animals shall be fed organic feed; 5.5.3 &mdash; for non-ruminants, 50% of feed must come from the farm unit or the region.</span></div>
+              <div class="conc__row"><b>Appendix 2</b><span class="tiny muted">Fertilizers, conditioners and soil conditioners &mdash; 30 reviewed rows, one per substance.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pf__note">
+          <div><b>Where the links live</b><p>They are the left column. A citation stops being a chip and becomes the page the reader is already on.</p></div>
+          <div><b>Where history lives</b><p>Under the section: &ldquo;asked 6 times, last answered 2026-10-22&rdquo;. History per clause, not per question.</p></div>
+          <div><b>Cost to build</b><p>Highest of the five: an HTML clause browser, a deep-link scheme, and inline PDF serving for the 8 pages that cannot be chunked. Corpus covers 4 of 8 documents (D41: Section B only).</p></div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict__box verdict__box--for">
+          <h4>Strongest case for it</h4>
+          <ul>
+            <li>It makes the product's central claim structural rather than illustrative: the answer <em>is</em> the passage.</li>
+            <li>It is honest about the corpus's shape &mdash; including the nine blank sections, which no chat can ever show.</li>
+            <li>It turns <code>/documents/</code> from a download list into the reading surface that the OPP actually needs.</li>
+          </ul>
+        </div>
+        <div class="verdict__box verdict__box--against">
+          <h4>What kills it</h4>
+          <ul>
+            <li>A visitor who says &ldquo;cardboard&rdquo; can never get to Appendix 2 by browsing: the word does not appear in a heading. Browsing needs vocabulary; that is the whole reason search exists.</li>
+            <li>It is a textbook, and nobody comes to a certification group's website to read a textbook.</li>
+            <li>It does not replace the chat, so it must be paid for <em>in addition to</em> the thing we already maintain.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------
+         Option C — the answer page
+         ------------------------------------------------------------------ -->
+    <div class="option" id="opt-c">
+      <div class="option__head">
+        <span class="option__letter" aria-hidden="true">C</span>
+        <h3 style="margin:0">The answer page &mdash; one question, one URL</h3>
+        <span class="pill">Answers become assets</span>
+      </div>
+      <p class="option__thesis">
+        Asking produces a page, not a bubble. The page has the question as asked, the answer,
+        the governing clauses in full, what the answer does <em>not</em> cover, the questions
+        next to it, and a block you can copy into a FORM. History is the browser's now, and
+        the site's sitemap.
+      </p>
+
+      <div class="pf">
+        <div class="pf__bar">
+          <b>/ask/can-i-use-cardboard-from-my-neighbour</b>
+          <span>A real page. A real title. Something Google and WhatsApp can both point at.</span>
+        </div>
+        <div class="pf__stage pf__stage--paper">
+          <span class="stageflag">Mockup &middot; quotes verbatim, prose written for this page</span>
+          <div class="ap">
+            <div class="ap__url"><span aria-hidden="true">&#128279;</span> organicguarantee.africa/ask/can-i-use-cardboard-from-my-neighbour</div>
+            <h4 class="ap__q">Can I use cardboard from my neighbour?</h4>
+            <p class="ap__answer">
+              The standard does not name cardboard. It governs it as a <strong>biodegradable
+              processing by-product</strong>, which is permitted only if it is free of
+              significant contaminants, or composted before it comes onto organic land and
+              then confirmed free of significant contaminants. In practice that means you must
+              be able to say what the cardboard is, what was on it, and where it was stored.
+            </p>
+
+            <p class="ap__h">The clause it comes from</p>
+            <div class="clause clause--paper">
+              Biodegradable processing by-products, plant or animal origin, e.g., by-products of
+              food, feed, oilseed, brewery, distillery or textile processing
+              <span class="clause__src">&mdash; condition: free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants</span>
+              <span class="clause__src">SAOSO v2.1 &middot; Appendix 2 &middot; printed p.76 &nbsp; <a class="doclink" href="#needs">Open the document &rarr;</a></span>
+            </div>
+
+            <p class="ap__h">What this answer does not cover</p>
+            <ul style="font-size:0.82rem;margin:0;padding-left:1.1rem">
+              <li>Whether <em>your</em> supply is contaminated &mdash; the standard sets the test, not the result.</li>
+              <li>Record keeping for inputs (S20.1.1). This page only answers the substance rule.</li>
+            </ul>
+
+            <p class="ap__h">Questions next to this one</p>
+            <ul class="ap__next">
+              <li><a href="#options">Can I use wood chips or sawdust as mulch?</a> <span class="tiny muted">&mdash; Appendix 2, only if not chemically treated</span></li>
+              <li><a href="#options">Do I need to know where my horse manure comes from?</a> <span class="tiny muted">&mdash; Appendix 2</span></li>
+              <li><a href="#options">Can I use straw mulch?</a> <span class="tiny muted">&mdash; Appendix 2</span></li>
+            </ul>
+
+            <p class="ap__h">Cite this answer</p>
+            <div class="ap__cite">
+              SAOSO Organic Standard v2.1, Appendix 2 (p.76): &ldquo;Biodegradable processing
+              by-products, plant or animal origin&hellip; Free of significant contaminants; or
+              composted before bringing onto organic land&hellip;&rdquo;
+            </div>
+            <p class="tiny muted" style="margin:0.6rem 0 0">
+              Read from the documents on 2026-10-22. This page explains what the documents say.
+              It is not a certification decision.
+            </p>
+          </div>
+        </div>
+        <div class="pf__note">
+          <div><b>Where the links live</b><p>Two places per page: the clause itself links to the document, and <em>questions next to this one</em> is a real internal link graph.</p></div>
+          <div><b>Where history lives</b><p>The URL. A visitor's own browser history becomes the archive, and every answer is shareable to a WhatsApp group.</p></div>
+          <div><b>Cost to build</b><p>Moderate: a slugged answer-of-record table (not the 1-hour cache), a route, a sitemap entry, and a decision about <code>noindex</code> on refusals.</p></div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict__box verdict__box--for">
+          <h4>Strongest case for it</h4>
+          <ul>
+            <li>It makes an answer <em>shareable</em>, which is how this group's members actually communicate &mdash; and it makes the site findable for the questions people type into Google.</li>
+            <li>It gives the &ldquo;what this does not cover&rdquo; block a home, which is the honest counterpart to a grounded answer.</li>
+            <li>It is the cheapest way to get persistence, because the answer is a document rather than a feature.</li>
+          </ul>
+        </div>
+        <div class="verdict__box verdict__box--against">
+          <h4>What kills it</h4>
+          <ul>
+            <li>A permanent, indexable, generated answer is a claim we now stand behind forever. One wrong sentence becomes a public page the group cannot quietly fix.</li>
+            <li>Two visitors asking the same thing in different words get two pages, and neither is canonical.</li>
+            <li>A refusal at a public URL is a strange artefact &mdash; it has to become a gap page, which is Option A wearing a costume.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------
+         Option D — the worksheet
+         ------------------------------------------------------------------ -->
+    <div class="option" id="opt-d">
+      <div class="option__head">
+        <span class="option__letter" aria-hidden="true">D</span>
+        <h3 style="margin:0">The worksheet &mdash; the standard as a checklist</h3>
+        <span class="pill">No search box at all</span>
+      </div>
+      <p class="option__thesis">
+        Not a question interface: a preparation interface. It uses the stage list the group
+        already publishes in the Farm Visit Preparation List, and every clause in scope is a
+        tickable line with its passage. The fee question is answered because all four fee
+        sections are <em>on the list</em> &mdash; you cannot miss what is enumerated.
+      </p>
+
+      <div class="pf">
+        <div class="pf__bar">
+          <b>/prepare/</b>
+          <span>Tick the boxes. The outline is the published Farm Visit Prep List, not invented for this page.</span>
+        </div>
+        <div class="pf__stage">
+          <span class="stageflag">Mockup &middot; stage names and clause refs are the documents&rsquo;</span>
+          <h4 class="mockq">Preparing for a farm visit</h4>
+          <div class="ws__who" role="group" aria-label="Which applies to you">
+            <button class="chip" type="button" aria-pressed="true">I am the host farmer</button>
+            <button class="chip" type="button" aria-pressed="false">I am joining a visit</button>
+            <button class="chip" type="button" aria-pressed="false">I am a consumer member</button>
+          </div>
+          <div class="ws__prog" aria-hidden="true"><span id="ws-bar"></span></div>
+          <p class="ws__stage" id="ws-count">1 of 5 checked &middot; 11 clauses in this pack</p>
+
+          <div class="wsitem">
+            <input type="checkbox" id="ws-1" checked>
+            <label for="ws-1"><b>Annual membership is paid and current</b>
+              <span>&sect;2.1 &middot; R100 farmer &amp; consumer &middot; only paid-up members are eligible for an assessment</span></label>
+          </div>
+          <div class="wsitem">
+            <input type="checkbox" id="ws-2">
+            <label for="ws-2"><b>You know your turnover band and the fee it puts you in</b>
+              <span>&sect;2.3 &middot; six bands, R1 500&ndash;R8 000 initial, R900&ndash;R8 000 renewal &middot; turnover is self-declared and peer-reviewed</span></label>
+          </div>
+          <div class="wsitem">
+            <input type="checkbox" id="ws-3">
+            <label for="ws-3"><b>Transport and catering are budgeted separately</b>
+              <span>&sect;2.3 AA rate per km &middot; &sect;2.4 R30 member / R50 non-member per visit</span></label>
+          </div>
+          <div class="wsitem">
+            <input type="checkbox" id="ws-4">
+            <label for="ws-4"><b>Inputs and soil amendments are recorded, with their source</b>
+              <span>Appendix 2 &middot; manure, mulch, cardboard, wood &mdash; each with its condition. &ldquo;Where did it come from?&rdquo; is the question the assessor will ask.</span></label>
+          </div>
+          <div class="wsitem">
+            <input type="checkbox" id="ws-5">
+            <label for="ws-5"><b>Contamination risks identified on the farm</b>
+              <span>Farm Visit Prep List, farm walkabout stage: land history, water, neighbours, spraying</span></label>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.8rem;align-items:center">
+            <button class="mockbtn" type="button" disabled>Generate my visit pack</button>
+            <span class="tiny muted">Clauses in this pack: 11 &middot; last verified against the corpus 2026-10-22</span>
+          </div>
+        </div>
+        <div class="pf__note">
+          <div><b>Where the links live</b><p>On every line. A checklist item without its clause is an opinion; with it, it is a rule.</p></div>
+          <div><b>Where history lives</b><p>In the visitor's tick state, and in a visit pack they can print. The group's record, not the visitor's scrollback.</p></div>
+          <div><b>Cost to build</b><p>Medium: a clause taxonomy per situation, tick state, and a print view. No retrieval, no model, no prompt &mdash; which is also the point.</p></div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict__box verdict__box--for">
+          <h4>Strongest case for it</h4>
+          <ul>
+            <li>The group's own artefact genre is the checklist: two of the eight published documents are blank checklists and a third is this prep list. This shape speaks the group's language.</li>
+            <li>It cannot omit a section, because the sections are the interface. G3 is structurally impossible here.</li>
+            <li>It has no model in the path, so it cannot hallucinate, refuse, or rate-limit. It works offline, printed.</li>
+          </ul>
+        </div>
+        <div class="verdict__box verdict__box--against">
+          <h4>What kills it</h4>
+          <ul>
+            <li>It cannot answer a question. The visitor with an unusual question &mdash; the one the chat exists for &mdash; is funnelled into a category that does not fit.</li>
+            <li>It front-loads a taxonomy before the visitor knows what they are looking for, which is the failure mode of every government website.</li>
+            <li>It is a different product (guidance), not a replacement for <code>/ask/</code>. As such it competes for the same engineering budget.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------
+         Option E — the desk
+         ------------------------------------------------------------------ -->
+    <div class="option" id="opt-e">
+      <div class="option__head">
+        <span class="option__letter" aria-hidden="true">E</span>
+        <h3 style="margin:0">The desk &mdash; questions on the left, evidence on the right</h3>
+        <span class="pill">Citations accumulate</span>
+      </div>
+      <p class="option__thesis">
+        Still conversational, but the conversation is reduced to one line per exchange, and
+        the citations accumulate as cards you can pin. What you leave with is a set of clauses,
+        not a transcript. This is the shape for the farmer who has to justify an input to a
+        neighbour, a retailer or the committee.
+      </p>
+
+      <div class="pf">
+        <div class="pf__bar">
+          <b>/ask/</b>
+          <span>Pin an evidence card. The tray keeps the set you are building.</span>
+        </div>
+        <div class="pf__stage pf__stage--dark">
+          <span class="stageflag">Mockup &middot; quotes verbatim, prose written for this page</span>
+          <div class="desk">
+            <div class="desk__col">
+              <p class="desk__label">Your questions</p>
+              <div class="askline">
+                <input class="mockinput" type="text" value="Do I need to know where my horse manure comes from?" aria-label="Your question">
+                <button class="mockbtn" type="button" disabled>Ask</button>
+              </div>
+              <ul class="asked">
+                <li><b>Do I need to know where my horse manure comes from?</b>
+                  Yes &mdash; the source decides the rule. <span class="cite" style="padding:0.05rem 0.35rem">2 clauses</span></li>
+                <li><b>What is the yearly cost to get certified?</b>
+                  Four sections, all on the desk. <span class="cite" style="padding:0.05rem 0.35rem">4 clauses</span></li>
+                <li style="border-style:dashed;background:transparent"><b>Do I need EU certification to export?</b>
+                  Refused &mdash; nothing in the four documents answers it. Sent to the administrator.</li>
+              </ul>
+              <p class="tiny" style="margin:0.9rem 0 0;color:rgb(253 251 247 / 0.55)">
+                The desk keeps your pins until you close the tab. Keeping them across visits
+                is a table, and a decision about whether a stored set of clauses is a record
+                the group has to stand behind.
+              </p>
+            </div>
+            <div class="desk__col">
+              <p class="desk__label">Evidence desk &mdash; 3 of 4 pinned</p>
+              <div class="evidence">
+                <div class="evcard">
+                  <b>Appendix 2 &middot; p.76</b>
+                  <span class="evq">Farmyard manure, slurry and urine &mdash; shall not constitute the main source of nitrogen&hellip; shall not be from conventional intensive livestock production systems without prior permission&hellip; Forbidden if from factory farming origin.</span>
+                  <div class="evcard__foot">
+                    <a class="doclink" href="#needs">SAOSO v2.1 &rarr;</a>
+                    <button class="pinbtn" type="button" aria-pressed="true">Pinned</button>
+                  </div>
+                </div>
+                <div class="evcard">
+                  <b>Appendix 2 &middot; p.76</b>
+                  <span class="evq">Manure applications should not be the primary source of nitrogen. See Appendix 6 for 170 kg nitrogen per hectare per year.</span>
+                  <div class="evcard__foot">
+                    <a class="doclink" href="#needs">SAOSO v2.1 &rarr;</a>
+                    <button class="pinbtn" type="button" aria-pressed="true">Pinned</button>
+                  </div>
+                </div>
+                <div class="evcard">
+                  <b>&sect;2.1 &middot; p.1</b>
+                  <span class="evq">Annual Farmer &amp; consumer Membership fee: R 100</span>
+                  <div class="evcard__foot">
+                    <a class="doclink" href="#needs">OPP &rarr;</a>
+                    <button class="pinbtn" type="button" aria-pressed="true">Pinned</button>
+                  </div>
+                </div>
+                <div class="evcard">
+                  <b>&sect;2.3 &middot; p.2</b>
+                  <span class="evq">Initial certification fee R1 500 below R250 000 turnover &hellip; above R5 000 000, R8 000. Fees are payable prior to the farm assessment visit.</span>
+                  <div class="evcard__foot">
+                    <a class="doclink" href="#needs">OPP &rarr;</a>
+                    <button class="pinbtn" type="button" aria-pressed="false">Pin</button>
+                  </div>
+                </div>
+              </div>
+              <div class="desk__tray" id="desk-tray">
+                <b>Your set:</b> 3 clauses. Copyable as the citation list for a FORM.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pf__note">
+          <div><b>Where the links live</b><p>On every evidence card, as the document the quote came from. A card without a link is not allowed on the desk.</p></div>
+          <div><b>Where history lives</b><p>In the desk itself: a set you can keep, print, or hand to the assessor. Deliberately not a public archive.</p></div>
+          <div><b>Cost to build</b><p>Low-medium: the citations already exist; a pin is client state. Persisting a set needs a table. The two-pane layout is the expensive part at 390 px.</p></div>
+        </div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict__box verdict__box--for">
+          <h4>Strongest case for it</h4>
+          <ul>
+            <li>It treats the citation as the deliverable, which is what the group's process actually consumes.</li>
+            <li>It keeps the chat's best property (ask in your own words) while removing the scrollback that hides the evidence.</li>
+            <li>A pinned set gives us a measurable outcome: &ldquo;visitors who left with three or more clauses&rdquo;.</li>
+          </ul>
+        </div>
+        <div class="verdict__box verdict__box--against">
+          <h4>What kills it</h4>
+          <ul>
+            <li>A pinned list of clauses reads like a verdict. That is exactly the line the disclaimer forbids &mdash; the desk edges towards certifying.</li>
+            <li>Two panes at 390 px collapse into a long scroll, and the desk ends up below the fold.</li>
+            <li>It assumes a visitor who is assembling evidence. Most are not; they want one sentence.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 4 — what it costs
+     ====================================================================== -->
+<section id="needs" class="section--warm">
+  <div class="wrap">
+    <p class="eyebrow">Part 4 &middot; What it costs</p>
+    <h2>Each shape, priced in things that do not exist yet</h2>
+    <p style="max-width:62rem;color:var(--muted)">
+      Not effort estimates &mdash; dependencies. A shape that needs three new tables is a
+      different decision from one that needs one field.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dependency</th>
+            <th>0 &middot; thread</th>
+            <th>A &middot; board</th>
+            <th>B &middot; concordance</th>
+            <th>C &middot; answer page</th>
+            <th>D &middot; worksheet</th>
+            <th>E &middot; desk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A document <code>code</code> on a citation</td>
+            <td>No &mdash; chips only</td>
+            <td>Yes</td>
+            <td>Not needed</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td>Inline PDF serving (or an HTML clause page)</td>
+            <td>No</td>
+            <td>Yes, to land on p.76</td>
+            <td>Yes &mdash; and more: the browser</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td>An answer that outlives the 1-hour cache</td>
+            <td>No</td>
+            <td>Yes &mdash; a content table</td>
+            <td>Per clause, so also a table</td>
+            <td>Yes &mdash; the same table</td>
+            <td>No &mdash; the list is the content</td>
+            <td>Client state only</td>
+          </tr>
+          <tr>
+            <td>A publish-and-approve flag on a question</td>
+            <td>No</td>
+            <td><strong>Yes</strong> (POPIA)</td>
+            <td>Yes, aggregated</td>
+            <td>Yes</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Clustering &ldquo;same question, other words&rdquo;</td>
+            <td>No</td>
+            <td><strong>Yes</strong> &mdash; for the counts</td>
+            <td>No</td>
+            <td>Yes, for &ldquo;next to this one&rdquo;</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>A hand-authored clause taxonomy</td>
+            <td>No</td>
+            <td>A category per card</td>
+            <td>No &mdash; the TOC is the taxonomy</td>
+            <td>No</td>
+            <td><strong>Yes</strong> &mdash; the whole cost</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>New routes</td>
+            <td>0</td>
+            <td>1&ndash;2</td>
+            <td>1&ndash;4 (documents become pages)</td>
+            <td>1 + slug space</td>
+            <td>1</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>Is the model in the path?</td>
+            <td>Yes</td>
+            <td>Yes, for new questions</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td><strong>No</strong></td>
+            <td>Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <p><strong>The cheapest real change is not a rebuild.</strong> Every shape except the
+      one we ship needs the same first thing &mdash; a way to open a document at a page &mdash;
+      and four of the five also need a citation to know which document it is. Those two are
+      worth doing whichever shape wins, and neither is a shape decision.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 5 — principles
+     ====================================================================== -->
+<section id="principles">
+  <div class="wrap">
+    <p class="eyebrow">Part 5 &middot; Principles, and where they disagree</p>
+    <h2>Four of our own rules pull in different directions</h2>
+    <p style="max-width:62rem;color:var(--muted)">
+      The repo's principles are the literature of record here, because they were written
+      against this product. Each row says what the principle says, which shape it favours,
+      and whether it actually holds in this case. Where they conflict, I say how I broke the tie.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Principle</th><th>What it says</th><th>Favours</th><th>Does it hold here?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>The refusal is the claim</strong><br><span class="tiny muted">DESIGN &sect;7.9, D17</span></td>
+            <td>A refusal is a boundary drawn confidently, never an error. Both states are always shown together.</td>
+            <td>0, A, C</td>
+            <td><strong>Holds, and it is decisive.</strong> A and C both give refusal a permanent object (a Waiting card, a gap page) instead of a transient bubble. B, D and E have nowhere honest to put a refusal &mdash; D cannot refuse at all, because it has no model.</td>
+          </tr>
+          <tr>
+            <td><strong>Code encodes process; data encodes the standard</strong><br><span class="tiny muted">AGENTS.md, spec &sect;4.5</span></td>
+            <td>A retarget to another standard or PGS group must not require a migration.</td>
+            <td>B, D</td>
+            <td><strong>Holds for B, not for D.</strong> B's tree comes from the chunks. D's taxonomy would be hand-authored per situation &mdash; a second PGS group would need a second taxonomy, which is exactly the migration the principle forbids.</td>
+          </tr>
+          <tr>
+            <td><strong>Thin views, one owner per service</strong><br><span class="tiny muted">build_principles.md &sect;II</span></td>
+            <td>A view validates, calls one service, renders.</td>
+            <td>0, C</td>
+            <td><strong>Holds for all five, but only C adds a <em>page-shaped</em> service.</strong> A board and a concordance need query objects with their own rules (what is published, what is blank, what is stale) &mdash; that is a new service module, not a template change.</td>
+          </tr>
+          <tr>
+            <td><strong>No unsupported certification claims</strong><br><span class="tiny muted">test_claim_discipline.py</span></td>
+            <td>No seal, no farm status, no implied certification; membership is never certification.</td>
+            <td>0, B, D</td>
+            <td><strong>Holds everywhere, but E is the riskiest.</strong> A pinned clause set is not a claim &mdash; until someone prints it and hands it to a retailer. A and C need a per-card disclaimer that survives being screenshotted.</td>
+          </tr>
+          <tr>
+            <td><strong>Offline-first is for the assessor PWA only</strong><br><span class="tiny muted">AGENTS.md</span></td>
+            <td>The portal and the chatbot are online surfaces.</td>
+            <td>D, in part</td>
+            <td><strong>D is the only shape that degrades usefully with no signal at all</strong> &mdash; it is a list, and a printed list is a legitimate artefact. That is a real, asymmetric advantage in rural use, and it is the strongest argument for building D <em>alongside</em> whatever wins here.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2" style="margin-top:1.5rem">
+      <div class="card">
+        <p class="card__kicker">External principles I am applying &mdash; from memory, not from a checked source</p>
+        <ul>
+          <li><strong>Recognition over recall</strong> (Nielsen's heuristics): show the options rather than require the user to remember them. Favours A and B over a blank composer; cuts against E, which requires you to remember what you pinned.</li>
+          <li><strong>Known-item vs exploratory search</strong> (Morville &amp; Callander): a reader either knows what they want or is browsing. Here the visitor usually does <em>not</em> know whether their question is a known item &mdash; which is why I do not recommend B alone.</li>
+          <li><strong>Natural-language interfaces win when the input space is unbounded</strong> and the user has no vocabulary. That is this audience, and it is the strongest surviving argument for keeping a composer.</li>
+        </ul>
+        <p class="tiny muted" style="margin-bottom:0">
+          Flagged deliberately: these three are recalled, not verified against the source texts.
+          The repo's own principles above are the ones I would defend in a review.
+        </p>
+      </div>
+      <div class="card">
+        <p class="card__kicker">Where the principles disagree, and the tie-break</p>
+        <ul>
+          <li><strong>&ldquo;Data, not code&rdquo; says B. &ldquo;Refusal is the claim&rdquo; says A.</strong> Tie-break: a concordance is a better <em>library</em> and a worse <em>assistant</em>, and the surface is called <code>/ask/</code>.</li>
+          <li><strong>&ldquo;Indexable content&rdquo; says C. &ldquo;No unsupported claims&rdquo; says be careful.</strong> Tie-break: C is safe if a page carries the clause and the &ldquo;what this does not cover&rdquo; block &mdash; the claim is the passage, not the prose.</li>
+          <li><strong>&ldquo;Transparency&rdquo; (the OPP) says publish the questions. &ldquo;POPIA&rdquo; says do not.</strong> Tie-break: publish what an administrator has approved and what names no third party. That is a flag on a row, not a query over transcripts.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 6 — comparison
+     ====================================================================== -->
+<section id="matrix" class="section--sage">
+  <div class="wrap">
+    <p class="eyebrow">Part 6 &middot; Comparison</p>
+    <h2>Unweighted, with the reason in the cell</h2>
+    <p style="max-width:62rem;color:var(--muted)">
+      No scores. A weighted matrix over invented numbers is precision theatre; the reader
+      supplies the weights.
+    </p>
+    <div class="table-wrap">
+      <table class="compact">
+        <thead>
+          <tr>
+            <th style="min-width:12rem">Situation</th>
+            <th>0 thread</th>
+            <th>A board</th>
+            <th>B concordance</th>
+            <th>C answer page</th>
+            <th>D worksheet</th>
+            <th>E desk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Asks in their own words, no vocabulary</strong></td>
+            <td><span class="pill">best</span> no vocabulary needed</td>
+            <td>needs a match or a form</td>
+            <td>fails &mdash; no heading is called &ldquo;cardboard&rdquo;</td>
+            <td>good, once a page exists</td>
+            <td>fails &mdash; must pick a situation first</td>
+            <td><span class="pill">best</span> composer kept</td>
+          </tr>
+          <tr>
+            <td><strong>Asks something already asked</strong></td>
+            <td>re-generates it; the cache lasts an hour</td>
+            <td><span class="pill">best</span> it is on the page</td>
+            <td>shows &ldquo;asked 6 times&rdquo; on the clause</td>
+            <td>one page, if they find it</td>
+            <td>it is a line on the list</td>
+            <td>it is a line in their list</td>
+          </tr>
+          <tr>
+            <td><strong>Must cite the clause</strong></td>
+            <td>chip expands, goes nowhere</td>
+            <td>locator on every card</td>
+            <td><span class="pill">best</span> they are in it</td>
+            <td>citable block, per page</td>
+            <td>clause per line</td>
+            <td>a pinnable set</td>
+          </tr>
+          <tr>
+            <td><strong>Question spans four sections (fees)</strong></td>
+            <td>omits &sect;2.1 today (G3)</td>
+            <td>&ldquo;four things&rdquo; on one card</td>
+            <td>sees the siblings</td>
+            <td>&ldquo;clauses near this answer&rdquo;</td>
+            <td><span class="pill">best</span> all four enumerated</td>
+            <td>all four pinnable</td>
+          </tr>
+          <tr>
+            <td><strong>Question the documents cannot answer</strong></td>
+            <td>warm refusal, then gone</td>
+            <td><span class="pill">best</span> a permanent Waiting card</td>
+            <td>no place to put it</td>
+            <td>a gap page, needs <code>noindex</code></td>
+            <td>it has no question input</td>
+            <td>refusal in the list, one line</td>
+          </tr>
+          <tr>
+            <td><strong>Comes back a week later</strong></td>
+            <td>the session may still be there; citations not re-rendered</td>
+            <td>browser history + board</td>
+            <td>the same section</td>
+            <td><span class="pill">best</span> a URL</td>
+            <td>a printed pack</td>
+            <td>a lost desk, unless persisted</td>
+          </tr>
+          <tr>
+            <td><strong>390 px phone</strong></td>
+            <td><span class="pill">best</span> one column by nature</td>
+            <td>cards stack cleanly</td>
+            <td>tree above pane; long</td>
+            <td><span class="pill">best</span> a document is a column</td>
+            <td>clean, long</td>
+            <td>two panes collapse badly</td>
+          </tr>
+          <tr>
+            <td><strong>Claim-discipline risk</strong></td>
+            <td>low &mdash; refusal is visible</td>
+            <td>medium &mdash; a card can read as a verdict</td>
+            <td>low</td>
+            <td>medium &mdash; a permanent generated claim</td>
+            <td>low &mdash; quoted, not asserted</td>
+            <td>highest &mdash; a pinnable set looks like a ruling</td>
+          </tr>
+          <tr>
+            <td><strong>Effect on the home page's dark band</strong></td>
+            <td>unchanged</td>
+            <td>band becomes a list preview</td>
+            <td>unchanged</td>
+            <td>band links to answers</td>
+            <td>band becomes &ldquo;prepare&rdquo;</td>
+            <td>unchanged</td>
+          </tr>
+          <tr>
+            <td><strong>What it does to our 94 tests</strong></td>
+            <td>are the 94</td>
+            <td>additive &mdash; the window stays as the composer</td>
+            <td>replaces the surface; the service survives</td>
+            <td>additive</td>
+            <td>orthogonal, nothing breaks</td>
+            <td>additive</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 7 — recommendation
+     ====================================================================== -->
+<section id="recommend" class="section--dark">
+  <div class="wrap">
+    <p class="eyebrow">Part 7 &middot; Recommendation</p>
+    <h2>A + C: a board of answer pages, with the chat kept as the composer</h2>
+
+    <p class="lede" style="max-width:62rem">
+      <strong>Make <code>/ask/</code> a board of answered questions (A), where each answer is
+      its own page (C), each page carries its clauses as links (A&rsquo;s locator + C&rsquo;s
+      citation block), and the current chat window survives as the thing you use when your
+      question is not on the board yet.</strong>
+    </p>
+
+    <div class="grid-2" style="margin:1.5rem 0">
+      <div class="card">
+        <p class="card__kicker">Why this one</p>
+        <ol style="margin-bottom:0">
+          <li><strong>It answers the actual complaint.</strong> A chat makes an answer unique, transient and unfollowable. Every one of those three is a defect of the <em>form</em>, and each is fixed by one half of the pair: the board fixes transience, the page fixes followability, the composer keeps the free-form question.</li>
+          <li><strong>It is the cheapest honest version.</strong> <code>EscalatedQuery</code> already holds question, reason, status, answer and answered-by &mdash; the board's row is that model, minus the refusal-only constraint, plus a publish flag. The answer page is the same row with a slug. That is one table and one flag, not a new subsystem.</li>
+          <li><strong>It keeps the refusal as the claim.</strong> A Waiting card is a better expression of D17 than a warm bubble, because it persists and it can be counted.</li>
+          <li><strong>It closes two open items on the way past.</strong> G6 (the escalation answer path) needs exactly this row to exist; and the human answer becomes one of the OPP's three voices rather than a dead end.</li>
+          <li><strong>It does not throw away the 94 tests.</strong> The thread becomes the <em>result view</em> of a new question. The HTMX path, the audit, the rate limit and the prompt are untouched.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <p class="card__kicker">The order of work</p>
+        <ol style="margin-bottom:0">
+          <li><strong>Two prerequisites, whichever shape wins:</strong> a <code>code</code> on <code>Citation</code>, and an inline way to open a document at its printed page. Do these first; they are small and every shape wants them.</li>
+          <li><strong>Seed the board from what we already have.</strong> The nine-question probe suite and the UAT scenarios are a starting set of real questions with real citations. A board of nine honest cards beats a board of none.</li>
+          <li><strong>Add the publish flag and the admin action</strong> &mdash; approve a question, edit the answer, attach the clauses. Do not publish raw transcripts under any circumstance.</li>
+          <li><strong>Then the page</strong> (C), because the board needs somewhere to put a card's &ldquo;read the whole thing&rdquo;.</li>
+          <li><strong>Then decide about D separately.</strong> It is the only shape that works with no signal and no model, and the group already publishes its artefact. It is a legitimate second feature, not a competitor to this one.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>What would change my mind, stated so it can be tested:</strong></p>
+      <ul style="margin-bottom:0">
+        <li><strong>If most questions are novel.</strong> If the transcripts show more than roughly half of real questions are not variants of an existing one, the board is a form with decoration and the composer is the product. Nobody has measured this yet &mdash; telemetry is P2.5&ndash;P2.8 in <code>CORPUS_CANONICAL_FORMAT_PLAN.md</code>, and it should be measured <em>before</em> the board is built.</li>
+        <li><strong>If the group will not staff curation.</strong> An uncurated board is worse than a chat, because it looks authoritative and is stale. If nobody will approve cards, choose C alone (answer pages without a board) or B.</li>
+        <li><strong>If POPIA advice forbids publishing visitor questions.</strong> Then A collapses and the same content ships as C with anonymised, administrator-written questions.</li>
+        <li><strong>If the committee wants the standard readable as a document</strong> &mdash; a real, stated need after a certification decision &mdash; then B stops being a nice-to-have and becomes the surface, with the composer as a search box on top of it.</li>
+      </ul>
+    </div>
+
+    <p style="margin-bottom:0;font-size:0.88rem;color:rgb(253 251 247 / 0.75)">
+      <strong>What I am not recommending:</strong> deleting the chat (it is the only thing that
+      handles an unexpected question), making the whole standard browsable before we can link a
+      citation to anything, or building a worksheet taxonomy that would have to be rewritten for
+      the next PGS group.
+    </p>
+  </div>
+</section>
+
+<!-- ======================================================================
+     Part 8 — your decision
+     ====================================================================== -->
+<section id="decide">
+  <div class="wrap wrap--narrow">
+    <p class="eyebrow">Part 8 &middot; Your decision</p>
+    <h2>Pick one, or say what the hybrid should be</h2>
+    <p>
+      Saved in this browser only (<code>localStorage</code>). The export produces a markdown
+      row shaped for <code>PGS_PLATFORM_SPEC.md</code> &sect;18.3, plus your notes. Nothing is
+      sent anywhere; this page makes no network request.
+    </p>
+
+    <div class="decision" role="radiogroup" aria-label="Which shape should /ask/ be">
+      <label class="opt">
+        <input type="radio" name="decision" value="0">
+        <span><b>0 &mdash; Keep the thread as it is</b><span>Spend the next slice on G3&ndash;G7 and telemetry instead of shape. Revisit when the transcripts show what people ask.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="A">
+        <span><b>A &mdash; The answered-questions board</b><span>History is the page; new questions become Waiting cards until a person answers them.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="B">
+        <span><b>B &mdash; The concordance</b><span>The four documents become the navigation; answers pin to the clause the reader is already on.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="C">
+        <span><b>C &mdash; The answer page</b><span>One question, one URL, clauses in full, &ldquo;what this does not cover&rdquo;, copyable citation.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="D">
+        <span><b>D &mdash; The worksheet</b><span>No composer; the published prep-list stages become a tickable clause checklist that prints.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="E">
+        <span><b>E &mdash; The desk</b><span>Conversation stays, scrollback goes; citations accumulate as pinnable evidence cards.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="A+C">
+        <span><b>A + C &mdash; the recommendation</b><span>A board of answer pages, with the current thread kept as the composer for new questions.</span></span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="decision" value="other">
+        <span><b>Something else</b><span>Say it in the notes; name which pieces you want from which option.</span></span>
+      </label>
+    </div>
+
+    <div class="notes">
+      <label for="notes-box" style="font-weight:700;color:var(--forestDark)">Notes, conditions, and what should happen first</label>
+      <textarea id="notes-box" placeholder="What did you check? Which piece would you take from a shape you did not pick? What must be true before this is built?"></textarea>
+      <div class="notes__actions">
+        <button class="btn" id="export-notes" type="button">Export decision as markdown</button>
+        <button class="btn btn--ghost" id="clear-notes" type="button">Clear</button>
+        <span class="notes__status" id="notes-status" role="status">Saved locally as you type.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <strong>Outeniqua PGS &middot; five shapes for <code>/ask/</code>.</strong>
+      Self-contained decision artifact. Sources read while writing it:
+      <code>core/services/_chatbot.py</code>, <code>core/views/_chatbot.py</code>,
+      <code>core/models/_chat.py</code>, <code>core/views/_documents.py</code>,
+      <code>knowledge/services.py</code>, <code>knowledge/tables.py</code>,
+      <code>CHAT_ANSWER_COVERAGE_PRD.md</code> &sect;5&ndash;&sect;7, and the printed TOCs and
+      fee tables of SAOSO v2.1 and the OPP.
+    </p>
+    <p>
+      Every quotation of a document on this page is verbatim from the shipped PDFs. The prose
+      around the quotations is written for this page and is not recorded model output.
+      Membership is not certification, and no certification status is published here.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* --- Option A: filter the board ------------------------------------- */
+  var boardSearch = document.getElementById("board-search");
+  var chips = Array.prototype.slice.call(document.querySelectorAll("#board-chips .chip"));
+  var cards = Array.prototype.slice.call(document.querySelectorAll("#board-grid .qcard"));
+  var activeCat = "all";
+
+  function applyBoardFilter() {
+    var term = (boardSearch && boardSearch.value || "").trim().toLowerCase();
+    cards.forEach(function (card) {
+      var cats = card.getAttribute("data-cat") || "";
+      var text = (card.textContent || "").toLowerCase();
+      var catOk = activeCat === "all" || cats.indexOf(activeCat) !== -1;
+      var termOk = !term || text.indexOf(term) !== -1;
+      card.hidden = !(catOk && termOk);
+    });
+  }
+
+  if (boardSearch) {
+    boardSearch.addEventListener("input", applyBoardFilter);
+  }
+
+  chips.forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      activeCat = chip.getAttribute("data-cat");
+      chips.forEach(function (other) {
+        other.setAttribute("aria-pressed", String(other === chip));
+      });
+      applyBoardFilter();
+    });
+  });
+
+  /* --- Option B: the section tree ------------------------------------- */
+  var panes = {
+    animals: [
+      "<p class=\"conc__crumb\">SAOSO v2.1 &rsaquo; Section B &rsaquo; 5 Animal Husbandry</p>",
+      "<div class=\"conc__answer\"><b>Where the manure answer actually comes from</b>",
+      "The source decides the rule, and the rule is printed in Appendix 2 &mdash; not here. ",
+      "<a class=\"doclink\" href=\"#needs\">Appendix 2 &middot; p.76 &rarr;</a></div>",
+      "<p><strong>5. Animal Husbandry</strong> sets the housing and feed rules that decide whether ",
+      "manure is even the question. The substance rule lives in the appendix.</p>",
+      "<div class=\"conc__row\"><b>5.1 Animal Management</b><span class=\"tiny muted\">5.1.9 &mdash; a minimum daily rest period of 8 continuous hours for laying hens without artificial light.</span></div>",
+      "<div class=\"conc__row\"><b>5.5 Animal Nutrition</b><span class=\"tiny muted\">5.5.1 &mdash; animals shall be fed organic feed; 5.5.3 &mdash; for non-ruminants, 50% of feed must come from the farm unit or the region.</span></div>"
+    ].join(""),
+    app2: [
+      "<p class=\"conc__crumb\">SAOSO v2.1 &rsaquo; Appendix 2 &rsaquo; Fertilizers, conditioners and soil conditioners</p>",
+      "<div class=\"conc__answer\"><b>Answer, pinned to the row that governs it</b>",
+      "Yes, the source decides the rule: extensive is fine; intensive or conventional needs prior ",
+      "permission and composting; factory-farming origin is forbidden.</div>",
+      "<p class=\"tiny muted\" style=\"margin-bottom:0.35rem\">Printed p.76 &mdash; two rows of 30 reviewed rows.</p>",
+      "<div class=\"conc__row\"><b>Farmyard manure, slurry and urine</b><span><mark class=\"hl\">Shall not constitute the main source of nitrogen</mark> in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production systems without prior permission from the control body. Coming from extensive livestock farming. <mark class=\"hl\">Forbidden if from factory farming origin.</mark></span></div>",
+      "<div class=\"conc__row\"><b>Farmyard manure, slurry and urine (cont.)</b><span>Manure applications should not be the primary source of nitrogen. See Section B &ndash; Appendix 6 for the density of livestock for the equivalent of 170 Kg nitrogen per hectare per year.</span></div>",
+      "<div class=\"conc__row\"><b>Nearby rows</b><span class=\"tiny muted\">Guano &middot; Vermicastings &middot; Blood meal &middot; Crop residues and plant materials, mulch, green manure, straw</span></div>"
+    ].join(""),
+    blank: [
+      "<p class=\"conc__crumb\">SAOSO v2.1 &rsaquo; Section B &rsaquo; 10&ndash;19</p>",
+      "<div class=\"conc__answer\"><b>The tree can say something no chat can</b>",
+      "Ten to nineteen are left blank in the standard to facilitate future enterprises. A reader ",
+      "browsing the standard learns that the gap is deliberate. A reader asking a question never will.</div>"
+    ].join("")
+  };
+
+  var treeButtons = Array.prototype.slice.call(document.querySelectorAll(".treenode"));
+  var pane = document.getElementById("conc-pane");
+
+  function genericPane(label, page, note) {
+    return [
+      "<p class=\"conc__crumb\">SAOSO v2.1 &rsaquo; Section B &rsaquo; ", label, "</p>",
+      "<p class=\"tiny muted\" style=\"margin-bottom:0.5rem\">Printed p.", page,
+      " &mdash; this mock renders one section. In the real thing the chunk text is already in the database, so the page is a render, not a PDF extract.</p>",
+      "<div class=\"conc__row\"><b>", label, "</b><span class=\"tiny muted\">", note, "</span></div>",
+      "<p class=\"tiny muted\" style=\"margin-bottom:0\">Substance rules for inputs are in <a class=\"doclink\" href=\"#needs\">Appendix 2 &middot; p.76</a>.</p>"
+    ].join("");
+  }
+
+  var genericSections = {
+    definitions: ["1 Definitions", "22", "The vocabulary the rest of the standard uses."],
+    ecosystems: ["2 Organic Ecosystems", "30", "Land, water, biodiversity and the farm as a system."],
+    general: ["3 General Requirements", "33", "Applies to crop production and animal husbandry alike."],
+    crops: ["4 Crop Production", "34", "Seeds, fertility, rotation, protection, contamination risks."],
+    wild: ["6 Wild Harvesting", "52", "Harvest areas, sustainability, separation."],
+    bees: ["7 Bee Keeping", "53", "Hives, forage, treatments, harvest."],
+    mushroom: ["8 Mushroom Production", "56", "Substrate, spawn, hygiene."],
+    aqua: ["9 Aquaculture", "57", "Water, feed, stocking, effluent."],
+    processing: ["20 Processing Handling", "60", "Handling, ingredients, packaging, transport."],
+    wine: ["21 Wine Making", "64", "Additives and processes specific to wine."],
+    labels: ["22 Labelling", "65", "What a label may and may not say."],
+    social: ["23 Social Justice", "67", "Workers, fairness, the fourth IFOAM principle."],
+    app1: ["Appendix 1", "70", "Criteria for evaluating inputs, additives and processing aids."],
+    app3: ["Appendix 3", "79", "Crop protectants and growth regulators."],
+    app4: ["Appendix 4", "81", "Approved additives and processing aids."]
+  };
+
+  function showSection(key) {
+    if (!pane) { return; }
+    if (panes[key]) {
+      pane.innerHTML = panes[key];
+    } else if (genericSections[key]) {
+      pane.innerHTML = genericPane(genericSections[key][0], genericSections[key][1], genericSections[key][2]);
+    }
+    treeButtons.forEach(function (button) {
+      button.setAttribute("aria-current", String(button.getAttribute("data-sec") === key));
+    });
+  }
+
+  treeButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      showSection(button.getAttribute("data-sec"));
+    });
+  });
+
+  var concAsk = document.getElementById("conc-ask");
+  var concGo = document.getElementById("conc-go");
+  if (concGo) {
+    concGo.addEventListener("click", function () {
+      showSection("app2");
+      if (pane) { pane.scrollTop = 0; }
+      if (concAsk) { concAsk.blur(); }
+    });
+  }
+  if (concAsk) {
+    concAsk.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (concGo) { concGo.click(); }
+      }
+    });
+  }
+
+  /* --- Option D: the worksheet ---------------------------------------- */
+  var wsItems = Array.prototype.slice.call(document.querySelectorAll(".wsitem input[type=checkbox]"));
+  var wsBar = document.getElementById("ws-bar");
+  var wsCount = document.getElementById("ws-count");
+  /* The pack is 11 clauses; these five are the ones a visitor must confirm by hand. */
+  var WS_CLAUSES = 11;
+
+  function updateWorksheet() {
+    var done = wsItems.filter(function (box) { return box.checked; }).length;
+    if (wsBar) { wsBar.style.width = (wsItems.length ? (done / wsItems.length) * 100 : 0) + "%"; }
+    if (wsCount) {
+      wsCount.textContent = done + " of " + wsItems.length + " checked \u00b7 " + WS_CLAUSES + " clauses in this pack";
+    }
+  }
+
+  wsItems.forEach(function (box) { box.addEventListener("change", updateWorksheet); });
+  updateWorksheet();
+
+  /* --- Option E: the evidence desk ------------------------------------ */
+  var pins = Array.prototype.slice.call(document.querySelectorAll(".pinbtn"));
+  var tray = document.getElementById("desk-tray");
+
+  function updateTray() {
+    if (!tray) { return; }
+    var pinned = document.querySelectorAll(".pinbtn[aria-pressed=true]").length;
+    tray.innerHTML = "<b>Your set:</b> " + pinned +
+      (pinned === 1 ? " clause" : " clauses") +
+      ". Copyable as the citation list for a FORM.";
+  }
+
+  pins.forEach(function (pin) {
+    pin.addEventListener("click", function () {
+      var on = pin.getAttribute("aria-pressed") === "true";
+      pin.setAttribute("aria-pressed", String(!on));
+      pin.textContent = on ? "Pin" : "Pinned";
+      updateTray();
+    });
+  });
+  updateTray();
+
+  /* --- Part 8: the decision ------------------------------------------- */
+  var KEY_DECISION = "pgs-d61-ask-decision";
+  var KEY_NOTES = "pgs-d61-ask-notes";
+  var radios = Array.prototype.slice.call(document.querySelectorAll("input[name=decision]"));
+  var box = document.getElementById("notes-box");
+  var status = document.getElementById("notes-status");
+  var exportButton = document.getElementById("export-notes");
+  var clearButton = document.getElementById("clear-notes");
+  var printButton = document.getElementById("print-page");
+  var timer = null;
+
+  function setStatus(message) {
+    if (status) { status.textContent = message; }
+  }
+
+  function save() {
+    try {
+      var chosen = "";
+      radios.forEach(function (radio) { if (radio.checked) { chosen = radio.value; } });
+      window.localStorage.setItem(KEY_DECISION, chosen);
+      if (box) { window.localStorage.setItem(KEY_NOTES, box.value); }
+      setStatus("Saved locally.");
+    } catch (error) {
+      setStatus("Could not save locally; the export still works.");
+    }
+  }
+
+  try {
+    var savedDecision = window.localStorage.getItem(KEY_DECISION) || "";
+    radios.forEach(function (radio) {
+      radio.checked = savedDecision !== "" && radio.value === savedDecision;
+    });
+    if (box) { box.value = window.localStorage.getItem(KEY_NOTES) || ""; }
+  } catch (error) {
+    setStatus("Local storage is unavailable; the decision will not persist.");
+  }
+
+  radios.forEach(function (radio) { radio.addEventListener("change", save); });
+
+  if (box) {
+    box.addEventListener("input", function () {
+      window.clearTimeout(timer);
+      setStatus("Saving\u2026");
+      timer = window.setTimeout(save, 250);
+    });
+  }
+
+  function exportMarkdown() {
+    var chosen = "";
+    radios.forEach(function (radio) { if (radio.checked) { chosen = radio.value; } });
+    var note = box ? box.value.trim() : "";
+    var text = [
+      "# Decision \u2014 the /ask/ surface",
+      "",
+      "Source: product/design/d61_ask_interface_options.html",
+      "Date: " + new Date().toISOString().slice(0, 10),
+      "",
+      "## Row for PGS_PLATFORM_SPEC.md \u00a718.3",
+      "",
+      "| D61 (provisional \u2014 check the spec before inserting) | What should the /ask/ surface be? | **" +
+        (chosen || "(no choice recorded)") + "** \u2014 " +
+        (note || "(no reason recorded)") + " |",
+      "",
+      "## Notes",
+      "",
+      note || "_No notes._",
+      ""
+    ].join("\n");
+    var blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "pgs-d61-ask-surface-decision.md";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setStatus("Exported.");
+  }
+
+  if (exportButton) { exportButton.addEventListener("click", exportMarkdown); }
+
+  if (clearButton) {
+    clearButton.addEventListener("click", function () {
+      radios.forEach(function (radio) { radio.checked = false; });
+      if (box) { box.value = ""; }
+      try {
+        window.localStorage.removeItem(KEY_DECISION);
+        window.localStorage.removeItem(KEY_NOTES);
+      } catch (error) {
+        /* storage unavailable; the controls are already empty */
+      }
+      setStatus("Cleared.");
+    });
+  }
+
+  if (printButton) {
+    printButton.addEventListener("click", function () { window.print(); });
+  }
+})();
+</script>
+</body>
+</html>

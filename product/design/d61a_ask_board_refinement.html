@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Option A, refinement 1 — ask first, board below</title>
+<style>
+  /* ----------------------------------------------------------------------
+     Self-contained prototype. No CDN, no external font, no build step, no
+     network request. Palette from product/design/d61_ask_interface_options.html
+     (DESIGN.md §2).
+     ---------------------------------------------------------------------- */
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+  }
+
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(1.9rem, 4vw, 2.9rem); line-height: 1.1; margin: 0 0 0.85rem; }
+  h2 { font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.15; margin: 0 0 0.6rem; }
+  h3 { font-size: 1.15rem; line-height: 1.25; margin: 0 0 0.45rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.2rem; }
+  li { margin-bottom: 0.35rem; }
+  code {
+    padding: 0.08rem 0.34rem;
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    background: var(--sageLight);
+    color: var(--forestDark);
+    font-family: var(--mono);
+    font-size: 0.86em;
+    overflow-wrap: anywhere;
+  }
+  a { color: var(--ochreDark); }
+  a:hover { color: var(--forestDark); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem; }
+  .wrap--narrow { max-width: 780px; }
+
+  /* --- Shell ---------------------------------------------------------- */
+  .bar {
+    position: sticky; top: 0; z-index: 30;
+    border-bottom: 1px solid var(--sand);
+    background: rgb(253 251 247 / 0.96);
+    backdrop-filter: blur(8px);
+  }
+  .bar__inner {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+    align-items: center; justify-content: space-between;
+    max-width: 1080px; margin: 0 auto; padding: 0.55rem 1.25rem;
+  }
+  .bar__brand { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ochreDark); }
+  .bar__right { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .bar__link { font-size: 0.76rem; color: var(--muted); text-decoration: none; }
+  .bar__link:hover { color: var(--ochreDark); text-decoration: underline; }
+  .bar__print {
+    min-height: 44px; padding: 0.3rem 0.85rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--creamWarm); color: var(--forestDark);
+    font: inherit; font-size: 0.74rem; cursor: pointer;
+  }
+  .bar__print:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  header.head { padding: 2.2rem 0 1.6rem; border-bottom: 1px solid var(--sand); }
+  .eyebrow {
+    margin: 0 0 0.5rem; color: var(--ochreDark);
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+  }
+  .lede { max-width: 44rem; color: var(--muted); font-size: 1rem; }
+  .tag {
+    display: inline-block; padding: 0.1rem 0.5rem;
+    border: 1px solid var(--ochre); border-radius: 999px;
+    background: var(--ochreLight); color: var(--ochreDark);
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .tag--muted { border-color: var(--sand); background: var(--creamWarm); color: var(--muted); }
+  .tag--new { border-color: var(--forest); background: var(--forest); color: var(--cream); }
+
+  main section { padding: 2rem 0; border-bottom: 1px solid var(--sand); }
+  main section:last-of-type { border-bottom: 0; }
+  .section--warm { background: var(--creamWarm); }
+  .section--sage { background: var(--sageLight); }
+
+  /* --- The ask panel (the primary thing on the page) ------------------- */
+  .askpanel {
+    padding: 1.35rem 1.4rem 1.5rem;
+    border: 1px solid var(--sand);
+    border-left: 4px solid var(--ochre);
+    border-radius: var(--radius);
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .askpanel h2 { margin-bottom: 0.25rem; }
+  .askpanel__hint { margin: 0 0 1rem; color: var(--muted); font-size: 0.85rem; }
+
+  .composer { display: grid; gap: 0.6rem; }
+  .composer__row { display: grid; grid-template-columns: 1fr; gap: 0.6rem; }
+  .composer textarea {
+    width: 100%;
+    min-height: 5.5rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .composer textarea::placeholder { color: rgb(107 102 93 / 0.75); }
+  .composer textarea:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; border-color: var(--ochre); }
+
+  .composer__foot {
+    display: flex; flex-wrap: wrap; gap: 0.6rem 1rem;
+    align-items: center; justify-content: space-between;
+  }
+  .counter { color: var(--muted); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+  .btn {
+    min-height: 44px; padding: 0.5rem 1.3rem;
+    border: 1px solid var(--ochre); border-radius: 999px;
+    background: var(--ochre); color: #fff;
+    font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+  }
+  .btn:hover { background: var(--ochreDark); border-color: var(--ochreDark); }
+  .btn:focus-visible { outline: 2px solid var(--forestDark); outline-offset: 2px; }
+  .btn--ghost {
+    background: var(--cream); color: var(--forestDark); border-color: var(--sand);
+    font-weight: 600;
+  }
+  .btn--ghost:hover { background: var(--sageLight); border-color: var(--forest); }
+  .btn--small { min-height: 40px; padding: 0.3rem 0.8rem; font-size: 0.76rem; }
+
+  /* The consent control. It is a promise, so it gets room, not a 12px label. */
+  .consent {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr;
+    gap: 0.65rem;
+    align-items: start;
+    margin-top: 0.3rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--creamWarm);
+    cursor: pointer;
+  }
+  .consent input { width: 1.25rem; height: 1.25rem; margin: 0.15rem 0 0; accent-color: var(--forest); }
+  .consent input:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  .consent b { display: block; color: var(--forestDark); font-size: 0.9rem; }
+  .consent span { display: block; color: var(--muted); font-size: 0.79rem; line-height: 1.5; }
+  .consent:has(input:checked) { border-color: var(--forest); background: var(--sageLight); }
+
+  .examples { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.85rem 0 0; }
+  .examples__label { color: var(--muted); font-size: 0.74rem; }
+  .example {
+    min-height: 40px; padding: 0.3rem 0.7rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--forestDark);
+    font: inherit; font-size: 0.75rem; cursor: pointer;
+  }
+  .example:hover { border-color: var(--ochre); background: var(--ochreLight); }
+  .example:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  .similar {
+    display: none;
+    margin: 0.7rem 0 0;
+    padding: 0.6rem 0.75rem;
+    border: 1px dashed var(--ochre);
+    border-radius: 8px;
+    background: var(--ochreLight);
+    font-size: 0.8rem;
+  }
+  .similar[data-show="true"] { display: block; }
+  .similar b { color: var(--ochreDark); }
+
+  /* --- The answer that arrives under the input ------------------------ */
+  .reply {
+    margin: 1rem 0 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--creamWarm);
+  }
+  .reply[hidden] { display: none; }
+  .reply__q {
+    margin: 0 0 0.5rem;
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    color: var(--forestDark);
+  }
+  .reply__a { margin: 0 0 0.75rem; font-size: 0.9rem; }
+  .reply__cites { display: grid; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .cite-card {
+    padding: 0.55rem 0.7rem;
+    border-left: 2px solid var(--ochre);
+    border-radius: 0 6px 6px 0;
+    background: var(--cream);
+    font-size: 0.79rem;
+    line-height: 1.55;
+  }
+  .cite-card__src {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.75rem;
+    align-items: center; justify-content: space-between;
+    margin-top: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--ochreDark);
+  }
+  .cite-card__src a { color: var(--ochreDark); }
+
+  .reply__gap {
+    margin: 0 0 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px dashed var(--sand);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.79rem;
+    color: var(--muted);
+  }
+  .reply__gap b { color: var(--forestDark); }
+
+  .reply--refusal { border-color: rgb(184 123 46 / 0.45); background: var(--warmDark); color: var(--ochreLight); }
+  .reply--refusal .reply__q { color: #fff; }
+  .reply--refusal .reply__a, .reply--refusal .reply__gap { color: rgb(249 241 226 / 0.9); }
+  .reply--refusal .reply__gap { border-color: rgb(249 241 226 / 0.28); background: rgb(249 241 226 / 0.06); }
+  .reply--refusal .reply__gap b { color: #fff; }
+  .reply__proto {
+    margin: 0.5rem 0 0;
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-style: italic;
+  }
+  .reply--refusal .reply__proto { color: rgb(249 241 226 / 0.62); }
+
+  .saved {
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.6rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .saved--on { background: var(--forest); color: var(--cream); }
+  .saved--off { background: var(--sageLight); color: var(--forestDark); border: 1px solid var(--sand); }
+  .saved a { color: inherit; text-decoration: underline; }
+  .saved a:hover { color: inherit; }
+
+  /* --- Design notes --------------------------------------------------- */
+  .notes3 { display: grid; gap: 0.85rem; margin-top: 1.5rem; }
+  .note {
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .note__k {
+    margin: 0 0 0.25rem;
+    color: var(--ochreDark);
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note p { font-size: 0.83rem; color: var(--muted); }
+  .note b { color: var(--forestDark); }
+
+  /* --- The board ------------------------------------------------------ */
+  .board__head { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; justify-content: space-between; }
+  .board__count { margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .board__controls { display: grid; gap: 0.6rem; margin: 0.9rem 0 1rem; }
+  .board__search {
+    width: 100%; min-height: 44px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--sand); border-radius: 8px;
+    background: var(--cream); color: var(--charcoal);
+    font: inherit; font-size: 0.85rem;
+  }
+  .board__search:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    min-height: 44px; padding: 0.3rem 0.75rem;
+    border: 1px solid var(--sand); border-radius: 999px;
+    background: var(--cream); color: var(--muted);
+    font: inherit; font-size: 0.75rem; cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: var(--cream); font-weight: 700; }
+  .chip:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+  .board__grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  .qcard {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    background: var(--cream);
+  }
+  .qcard[hidden] { display: none; }
+  .qcard--new { border-color: var(--ochre); box-shadow: 0 0 0 2px rgb(184 123 46 / 0.35); }
+  .qcard__q { margin: 0 0 0.35rem; font-family: var(--serif); font-size: 0.97rem; color: var(--forestDark); }
+  .qcard__a { margin: 0 0 0.55rem; font-size: 0.82rem; }
+  .qcard__meta { display: flex; flex-wrap: wrap; gap: 0.4rem 0.75rem; align-items: center; font-size: 0.7rem; color: var(--muted); }
+  .qcard__meta a { color: var(--ochreDark); font-family: var(--mono); font-size: 0.7rem; }
+  .qcard--pending { border-left: 4px solid var(--ochre); background: var(--warmDark); }
+  .qcard--pending .qcard__q { color: var(--ochreLight); }
+  .qcard--pending .qcard__a, .qcard--pending .qcard__meta { color: rgb(249 241 226 / 0.82); }
+  .board__empty { margin: 0; padding: 0.9rem 1rem; border: 1px dashed var(--sand); border-radius: 10px; color: var(--muted); font-size: 0.85rem; }
+  .board__empty[hidden] { display: none; }
+
+  /* --- Behaviour table ------------------------------------------------ */
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th, td { padding: 0.65rem 0.7rem; border-bottom: 1px solid var(--sand); text-align: left; vertical-align: top; }
+  th { background: var(--cream); color: var(--forestDark); font-size: 0.67rem; letter-spacing: 0.08em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--sand); border-radius: 10px; background: var(--cream); margin-top: 0.9rem; }
+
+  .callout {
+    margin: 1.25rem 0 0;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--sand);
+    border-left: 4px solid var(--ochre);
+    border-radius: 8px;
+    background: var(--cream);
+    font-size: 0.85rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  footer { padding: 1.8rem 0 2.5rem; background: var(--forestDeep); color: rgb(253 251 247 / 0.74); font-size: 0.77rem; }
+  footer p:last-child { margin-bottom: 0; }
+  footer strong { color: var(--cream); }
+
+  @media (max-width: 600px) {
+    /* The header's eyebrow already says which prototype this is; repeating it in the
+       bar costs a row on a 390 px screen. */
+    .bar__brand { display: none; }
+    .bar__inner { justify-content: space-between; }
+  }
+
+  @media (min-width: 760px) {
+    .composer__row { grid-template-columns: 1fr auto; align-items: start; }
+    /* The button sits beside the first line of the field, not stretched to the field's
+       full height: a 90 px ochre lozenge reads as a shape, not as a button. */
+    .composer__row .btn { min-width: 6.5rem; height: 3.4rem; }
+    .notes3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .board__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    main section { padding: 2.6rem 0; }
+    .askpanel { padding: 1.6rem 1.8rem 1.8rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  @media print {
+    .bar, .examples, .composer__row, .composer__meta, .consent, .board__controls, .btn, .example { display: none !important; }
+    body { background: #fff; color: #000; font-size: 10.5pt; }
+    footer, .reply--refusal, .qcard--pending { background: #fff !important; color: #000 !important; }
+    footer *, .reply--refusal *, .qcard--pending * { color: #000 !important; }
+    .askpanel, .qcard, .note, .reply, .cite-card { box-shadow: none !important; break-inside: avoid; }
+    main section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">Option A &middot; refinement 1</span>
+    <div class="bar__right">
+      <a class="bar__link" href="d61_ask_interface_options.html">&larr; All five shapes</a>
+      <button class="bar__print" id="print-page" type="button">Print</button>
+    </div>
+  </div>
+</div>
+
+<header class="head">
+  <div class="wrap">
+    <p class="eyebrow">Option A &middot; refinement 1</p>
+    <h1>Ask first. The board is underneath.</h1>
+    <p class="lede">
+      The question field is the primary thing on the page, and &ldquo;questions we have
+      answered&rdquo; sits below it as the library you scroll into. The consent checkbox is the
+      one new control: a visitor decides whether their question joins the public database.
+    </p>
+    <p class="lede" style="margin-bottom:0">
+      <span class="tag">Try it</span> type a question and press Ask &mdash; or use the
+      example chips. Tick the box before you ask and watch where the card lands.
+    </p>
+  </div>
+</header>
+
+<main>
+
+<!-- ======================================================================
+     The ask panel
+     ====================================================================== -->
+<section class="section--warm" id="ask">
+  <div class="wrap">
+    <div class="askpanel">
+      <h2>Ask about the standard</h2>
+      <p class="askpanel__hint">
+        The SAOSO Standard, our Principles, Policies and Procedures, the Basic Production
+        Principles and the certification landscape. Nothing else.
+      </p>
+
+      <form class="composer" id="composer" novalidate>
+        <label class="visually-hidden" for="question" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Your question</label>
+        <div class="composer__row">
+          <textarea id="question" placeholder="Do I need to know where my horse manure comes from?" maxlength="500"></textarea>
+          <button class="btn" id="send" type="submit">Ask</button>
+        </div>
+
+        <div class="composer__meta">
+          <span class="counter" id="counter">0 / 500</span>
+          <span class="counter" style="margin-left:0.6rem">Press Enter to send &middot; Shift+Enter for a new line</span>
+        </div>
+
+        <label class="consent" for="publish">
+          <input type="checkbox" id="publish">
+          <span>
+            <b>Add this question to the public questions database</b>
+            <span>
+              Other visitors will see the question and the answer, without your name.
+              Don&rsquo;t include anyone else&rsquo;s name or farm. An administrator reads it
+              before it appears.
+            </span>
+          </span>
+        </label>
+
+        <div class="similar" id="similar" data-show="false" aria-live="polite"></div>
+
+        <div class="examples">
+          <span class="examples__label">Try:</span>
+          <button class="example" type="button" data-q="Do I need to know where my horse manure comes from?">manure</button>
+          <button class="example" type="button" data-q="Can I use cardboard from my neighbour?">cardboard</button>
+          <button class="example" type="button" data-q="What is the yearly cost to get certified, including the farm visit?">the fee question</button>
+          <button class="example" type="button" data-q="Do I need EU organic certification to export to Germany?">a refusal</button>
+        </div>
+      </form>
+
+      <!-- The answer lands here, directly under the composer. -->
+      <div class="reply" id="reply" hidden aria-live="polite"></div>
+    </div>
+
+    <div class="notes3">
+      <div class="note">
+        <p class="note__k">Why the input is first</p>
+        <p>
+          The board is the library, but the page is called <em>ask</em>. A visitor with a
+          question in their head should not have to scroll past six cards to find the box.
+          <b>The library is the payoff, not the entry point.</b>
+        </p>
+      </div>
+      <div class="note">
+        <p class="note__k">Why the box is opt-in</p>
+        <p>
+          D59 says we may <em>keep</em> a transcript, not that we may <em>publish</em> it, and a
+          question is free text from a public form. Unticked is the honest default:
+          <b>silence is not consent.</b>
+        </p>
+      </div>
+      <div class="note">
+        <p class="note__k">What the promise costs</p>
+        <p>
+          The label says <em>&ldquo;an administrator reads it before it appears&rdquo;</em>, so the
+          card lands as <b>awaiting review</b>, not live. A one-step publish would be simpler
+          and would put unread visitor text on a public page.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     The board
+     ====================================================================== -->
+<section class="section--sage" id="board">
+  <div class="wrap">
+    <div class="board__head">
+      <h2 style="margin:0">Questions we have answered</h2>
+      <p class="board__count" id="board-count">6 questions &middot; 4 topics</p>
+    </div>
+
+    <div class="board__controls">
+      <input class="board__search" id="board-search" type="search" placeholder="Filter by word &mdash; try &ldquo;manure&rdquo; or &ldquo;fee&rdquo;" aria-label="Filter answered questions">
+      <div class="chips" id="board-chips">
+        <button class="chip" type="button" data-cat="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-cat="inputs" aria-pressed="false">Inputs</button>
+        <button class="chip" type="button" data-cat="animals" aria-pressed="false">Animals</button>
+        <button class="chip" type="button" data-cat="money" aria-pressed="false">Money</button>
+        <button class="chip" type="button" data-cat="waiting" aria-pressed="false">Waiting</button>
+      </div>
+    </div>
+
+    <div class="board__grid" id="board-grid">
+      <article class="qcard" id="card-manure" data-cat="animals inputs" data-text="manure horse muck compost intensive factory farming nitrogen source">
+        <p class="qcard__q">Do I need to know where my horse manure comes from?</p>
+        <p class="qcard__a">Yes &mdash; the source decides the rule. Extensive livestock farming is fine; intensive or conventional needs permission and composting; factory-farming origin is forbidden.</p>
+        <p class="qcard__meta">
+          <span class="tag tag--muted">Animals</span>
+          <a href="#ask">Appendix 2 &middot; p.76</a>
+          <span>asked 6 times</span>
+          <span>checked 2026-10-22</span>
+        </p>
+      </article>
+
+      <article class="qcard" id="card-cardboard" data-cat="inputs" data-text="cardboard neighbour mulch contaminants compost input box">
+        <p class="qcard__q">Can I use cardboard from my neighbour?</p>
+        <p class="qcard__a">The standard does not name cardboard. It governs it as a biodegradable by-product: free of significant contaminants, or composted first.</p>
+        <p class="qcard__meta">
+          <span class="tag tag--muted">Inputs</span>
+          <a href="#ask">Appendix 2 &middot; p.76</a>
+          <span>asked 14 times</span>
+          <span>checked 2026-10-22</span>
+        </p>
+      </article>
+
+      <article class="qcard" id="card-fee" data-cat="money" data-text="cost fee yearly certified farm visit membership r100 assessment turnover transport catering">
+        <p class="qcard__q">What is the yearly cost to get certified, including the farm visit?</p>
+        <p class="qcard__a">Four things, and you need all four: R100 membership, the turnover-band assessment fee, per-visit catering, and the seal licence if you sell with it.</p>
+        <p class="qcard__meta">
+          <span class="tag tag--muted">Money</span>
+          <a href="#ask">OPP &sect;2.1&ndash;&sect;2.5 &middot; pp.1&ndash;3</a>
+          <span>asked 21 times</span>
+          <span>checked 2026-10-22</span>
+        </p>
+      </article>
+
+      <article class="qcard" id="card-ducks" data-cat="animals" data-text="ducks bedding compost organic feed pass poultry">
+        <p class="qcard__q">If my ducks are not fed organic food and I compost their bedding, will I still pass?</p>
+        <p class="qcard__a">Conditional: the bedding material and the compost both have to satisfy Appendix 2, and the feed has to meet S5.5 &mdash; 5.5.1 requires that animals are fed organic feed.</p>
+        <p class="qcard__meta">
+          <span class="tag tag--muted">Animals</span>
+          <a href="#ask">S5.5.1 &middot; p.47</a>
+          <span>asked 3 times</span>
+          <span>checked 2026-10-22</span>
+        </p>
+      </article>
+
+      <article class="qcard" id="card-straw" data-cat="inputs" data-text="straw mulch wood chips sawdust treated input">
+        <p class="qcard__q">Can I use straw mulch, and does it have to be untreated?</p>
+        <p class="qcard__a">Straw is listed with crop residues and plant materials, with no condition attached in that row. The &ldquo;untreated&rdquo; condition belongs to wood, bark and sawdust &mdash; not to straw.</p>
+        <p class="qcard__meta">
+          <span class="tag tag--muted">Inputs</span>
+          <a href="#ask">Appendix 2 &middot; p.76</a>
+          <span>asked 8 times</span>
+          <span>checked 2026-10-22</span>
+        </p>
+      </article>
+
+      <article class="qcard qcard--pending" id="card-export" data-cat="waiting" data-text="export germany eu equivalence foreign market sell abroad certification">
+        <p class="qcard__q">Do I need EU organic certification to export to Germany?</p>
+        <p class="qcard__a">Not answered from the documents. This question is with the administrator &mdash; it is a gap in what we publish, and it stays visible until a person answers it.</p>
+        <p class="qcard__meta">
+          <span class="tag">Waiting</span>
+          <span>asked 2 times &middot; escalated 2026-10-20</span>
+        </p>
+      </article>
+    </div>
+
+    <p class="board__empty" id="board-empty" hidden>No card matches that filter.</p>
+  </div>
+</section>
+
+<!-- ======================================================================
+     The behaviour matrix
+     ====================================================================== -->
+<section id="behaviour">
+  <div class="wrap wrap--narrow">
+    <p class="eyebrow">What the checkbox does</p>
+    <h2>Four states, two columns</h2>
+    <p style="color:var(--muted);font-size:0.9rem">
+      The control only makes sense if it behaves predictably in all four states. This is the
+      whole contract, and it is what a test would pin.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>State</th><th>Box ticked</th><th>Box not ticked</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Grounded answer</strong></td>
+            <td>The answer shows under the input <em>and</em> a card is added to the board, marked <strong>awaiting review</strong> until an administrator has read it.</td>
+            <td>The answer shows under the input. Nothing is published; the transcript is kept privately (D59).</td>
+          </tr>
+          <tr>
+            <td><strong>Refusal</strong></td>
+            <td>A <strong>Waiting</strong> card is added &mdash; the gap becomes visible, and other visitors stop asking the same unanswerable question.</td>
+            <td>An <code>EscalatedQuery</code> is created for the administrator. The visitor sees the refusal only.</td>
+          </tr>
+          <tr>
+            <td><strong>Already on the board</strong></td>
+            <td>The existing card's &ldquo;asked N times&rdquo; goes up. No duplicate is added.</td>
+            <td>Nothing changes on the board; the visitor still gets a fresh answer.</td>
+          </tr>
+          <tr>
+            <td><strong>The administrator rejects it</strong></td>
+            <td>The card is removed. The answer already shown is unaffected &mdash; it never depended on the card.</td>
+            <td>Not applicable.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p>
+        <strong>The open question this raises.</strong> If a visitor ticks the box and the
+        question is a <em>duplicate</em>, should they be told? Telling them is honest and stops
+        the count inflating &mdash; but it also reads as &ldquo;your question doesn&rsquo;t
+        matter&rdquo;. The prototype does neither silently: it shows the existing card and still
+        answers the question in full.
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <strong>Option A &middot; refinement 1 &middot; ask first, board below.</strong>
+      Self-contained prototype: no CDN, no build step, no network request.
+    </p>
+    <p>
+      Quotations of the SAOSO v2.1 and OPP text are verbatim. The connecting answer prose is
+      written for this prototype and is not recorded model output. Membership is not
+      certification, and no certification status is published here.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var MAX = 500;
+
+  var field = document.getElementById("question");
+  var send = document.getElementById("send");
+  var form = document.getElementById("composer");
+  var counter = document.getElementById("counter");
+  var publish = document.getElementById("publish");
+  var similar = document.getElementById("similar");
+  var reply = document.getElementById("reply");
+  var boardSearch = document.getElementById("board-search");
+  var boardCount = document.getElementById("board-count");
+  var boardEmpty = document.getElementById("board-empty");
+  var grid = document.getElementById("board-grid");
+  var chips = Array.prototype.slice.call(document.querySelectorAll("#board-chips .chip"));
+  var activeCat = "all";
+
+  /* --- Scripted answers ------------------------------------------------
+     Real citations, verbatim. The prose is written for this prototype; see the
+     footer. Each entry is what the model would return for that question.
+     ------------------------------------------------------------------- */
+  var ANSWERS = [
+    {
+      match: ["manure", "horse", "muck", "slurry"],
+      card: "card-manure",
+      category: "animals",
+      text: "Yes. The source decides which rule applies: manure from extensive livestock farming may be used, manure from intensive or conventional systems needs the control body's prior permission and must be composted, and factory-farming origin is forbidden. In every case it must not be the main source of nitrogen, and there is a stocking density ceiling of 170 kg nitrogen per hectare per year.",
+      cites: [
+        {
+          quote: "Farmyard manure, slurry and urine — shall not constitute the main source of nitrogen… shall not be from conventional intensive livestock production systems without prior permission from the control body… Forbidden if from factory farming origin.",
+          ref: "Appendix 2 · p.76",
+          title: "SAOSO v2.1"
+        },
+        {
+          quote: "Manure applications should not be the primary source of nitrogen. See Section B — Appendix 6 for the density of livestock for the equivalent of 170 Kg nitrogen per hectare per year.",
+          ref: "Appendix 2 · p.76",
+          title: "SAOSO v2.1"
+        }
+      ],
+      gap: "This does not tell you whether <em>your</em> supply qualifies. The standard sets the test; your records answer it."
+    },
+    {
+      match: ["cardboard", "card board", "box"],
+      card: "card-cardboard",
+      category: "inputs",
+      text: "The standard does not name cardboard. It governs it as a biodegradable processing by-product, which is permitted only if it is free of significant contaminants, or composted before it comes onto organic land and then confirmed free of significant contaminants. In practice you must be able to say what the cardboard is, what was on it, and where it was stored.",
+      cites: [
+        {
+          quote: "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing — Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants",
+          ref: "Appendix 2 · p.76",
+          title: "SAOSO v2.1"
+        }
+      ],
+      gap: "This does not cover the record-keeping duty for inputs (S20.1.1), and it does not decide whether your neighbour's cardboard is contaminated."
+    },
+    {
+      match: ["cost", "fee", "fees", "price", "yearly", "visit", "r100", "pay", "how much"],
+      card: "card-fee",
+      category: "money",
+      text: "Four separate amounts, and you need all four: R100 annual membership per farmer or consumer; the assessment fee, which follows your self-declared annual turnover across six bands from R1 500 (below R250 000) to R8 000 (above R5 000 000), plus the administrator's transport at the AA rate; R30 per visit towards catering as a member (R50 as a non-member); and, once certified, R500 per annum per farm to license the seal. Fees are payable before the assessment visit, and only paid-up members are eligible for one.",
+      cites: [
+        { quote: "Annual Farmer & consumer Membership fee: R 100", ref: "§2.1 · p.1", title: "OPP" },
+        { quote: "Below R 250,000 — 1,500 — 900 … Above R 5,000,000 — 8,000 — 8,000. Fees are per farm assessment visit. Transport costs for the PGS administrator are charged separately at cost (AA rate). Annual turnover is self-declared by the farmer and subject to peer review.", ref: "§2.3 · p.2", title: "OPP" },
+        { quote: "Members contribute R30 per visit toward catering. Non-members contribute R50 per visit, inclusive of snacks.", ref: "§2.4 · p.3", title: "OPP" },
+        { quote: "The licensing fee is R500 per annum per farm.", ref: "§2.5 · p.3", title: "OPP" }
+      ],
+      gap: "The standard sets the fees; it does not tell you which band you are in. Turnover is self-declared and peer-reviewed, never computed for you."
+    },
+    {
+      match: ["straw", "mulch"],
+      card: "card-straw",
+      category: "inputs",
+      text: "Straw sits in the row for crop residues and plant materials, and that row carries no condition. The \u201conly if not chemically treated\u201d condition belongs to wood, bark, sawdust and wood ash \u2014 a different row. So the \u201cstraw must be untreated\u201d rule you may have heard is not the straw rule.",
+      cites: [
+        {
+          quote: "Crop residues and plant materials, mulch, green manure, straw",
+          ref: "Appendix 2 \u00b7 p.76",
+          title: "SAOSO v2.1"
+        },
+        {
+          quote: "Wood, bark, sawdust, wood shavings, wood ash, wood charcoal \u2014 Only if not chemically treated",
+          ref: "Appendix 2 \u00b7 p.76",
+          title: "SAOSO v2.1"
+        }
+      ],
+      gap: "This answers the input rule, not the residue question. Whether your supplier's straw carries herbicide residue is something Appendix 2 does not test for."
+    },
+    {
+      match: ["ash", "charcoal", "sawdust", "wood chip", "bark", "shaving"],
+      card: null,
+      category: "inputs",
+      text: "Wood ash, charcoal, bark, sawdust and wood shavings are permitted, but only if the wood was not chemically treated. The condition attaches to the wood, not to the ash: treated timber burned in a stove gives you treated ash. If you cannot say the timber was untreated, the answer is no.",
+      cites: [
+        {
+          quote: "Wood, bark, sawdust, wood shavings, wood ash, wood charcoal \u2014 Only if not chemically treated",
+          ref: "Appendix 2 \u00b7 p.76",
+          title: "SAOSO v2.1"
+        }
+      ],
+      gap: "The standard names treated wood as the disqualifier. It does not name paints, varnishes or preservatives separately, so \u201cchemically treated\u201d is the wording you have to satisfy."
+    },
+    {
+      match: ["export", "germany", "eu", "equivalen", "abroad", "foreign"],
+      card: "card-export",
+      category: "waiting",
+      refusal: true,
+      text: "I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents.",
+      cites: [],
+      gap: "This question is <b>with the administrator</b>. It stays visible on the board as a Waiting card, so the gap in what we publish is counted rather than forgotten."
+    }
+  ];
+
+  var FALLBACK = {
+    refusal: true,
+    prototype: true,
+    card: null,
+    category: "waiting",
+    text: "I cannot find a definitive answer in the SAOSO standard or the Outeniqua PGS documents.",
+    cites: [],
+    gap: "The question has been sent to the administrator. If you ticked the box, it also appears on the board as a Waiting card, so the next person sees that it is a known gap."
+  };
+
+  function matchAnswer(question) {
+    var q = question.toLowerCase();
+    var best = null;
+    ANSWERS.forEach(function (entry) {
+      entry.match.forEach(function (word) {
+        if (q.indexOf(word) !== -1 && (!best || word.length > best.word.length)) {
+          best = { entry: entry, word: word };
+        }
+      });
+    });
+    return best ? best.entry : FALLBACK;
+  }
+
+  /* --- The "already on the board" hint -------------------------------- */
+  var HINTS = [
+    { words: ["manure", "horse", "muck"], card: "card-manure", label: "Do I need to know where my horse manure comes from?" },
+    { words: ["cardboard", "card board", "box"], card: "card-cardboard", label: "Can I use cardboard from my neighbour?" },
+    { words: ["cost", "fee", "fees", "price", "yearly", "r100"], card: "card-fee", label: "What is the yearly cost to get certified, including the farm visit?" },
+    { words: ["straw", "mulch", "sawdust", "wood"], card: "card-straw", label: "Can I use straw mulch, and does it have to be untreated?" },
+    { words: ["duck", "bedding", "poultry"], card: "card-ducks", label: "If my ducks are not fed organic food and I compost their bedding, will I still pass?" },
+    { words: ["export", "germany", "eu"], card: "card-export", label: "Do I need EU organic certification to export to Germany?" }
+  ];
+
+  function findHint(question) {
+    var q = question.toLowerCase();
+    var found = null;
+    HINTS.forEach(function (hint) {
+      hint.words.forEach(function (word) {
+        if (q.indexOf(word) !== -1) { found = hint; }
+      });
+    });
+    return found;
+  }
+
+  function updateHint() {
+    var hint = findHint(field.value);
+    if (!hint || field.value.trim().length < 4) {
+      similar.setAttribute("data-show", "false");
+      similar.innerHTML = "";
+      return;
+    }
+    var card = document.getElementById(hint.card);
+    var pending = card && card.classList.contains("qcard--pending");
+    similar.setAttribute("data-show", "true");
+    similar.innerHTML = pending
+      ? "<b>Already on the board, still waiting for an answer:</b> " + hint.label +
+        ". Asking again adds your voice to the count."
+      : "<b>Already answered:</b> \u201c" + hint.label + "\u201d" +
+        " \u2014 <a href=\"#board\" data-jump=\"" + hint.card + "\">read that card</a>. " +
+        "Asking it again still works, and it counts.";
+  }
+
+  field.addEventListener("input", function () {
+    counter.textContent = field.value.length + " / " + MAX;
+    updateHint();
+  });
+
+  similar.addEventListener("click", function (event) {
+    var link = event.target.closest("[data-jump]");
+    if (!link) { return; }
+    event.preventDefault();
+    var card = document.getElementById(link.getAttribute("data-jump"));
+    if (!card) { return; }
+    card.scrollIntoView({ block: "center" });
+    card.classList.add("qcard--new");
+    window.setTimeout(function () { card.classList.remove("qcard--new"); }, 2200);
+  });
+
+  document.querySelectorAll(".example").forEach(function (button) {
+    button.addEventListener("click", function () {
+      field.value = button.getAttribute("data-q");
+      counter.textContent = field.value.length + " / " + MAX;
+      updateHint();
+      field.focus();
+    });
+  });
+
+  /* --- Submitting ----------------------------------------------------- */
+  function esc(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function citationHtml(cite) {
+    return (
+      "<div class=\"cite-card\">" + esc(cite.quote) +
+      "<div class=\"cite-card__src\"><span>" + esc(cite.title) + " &middot; " + esc(cite.ref) + "</span>" +
+      "<a href=\"#board\">Open the document &rarr;</a></div></div>"
+    );
+  }
+
+  function renderReply(question, answer, added) {
+    reply.hidden = false;
+    reply.className = "reply" + (answer.refusal ? " reply--refusal" : "");
+    var html = "<p class=\"reply__q\">" + esc(question) + "</p>";
+    html += "<p class=\"reply__a\">" + answer.text + "</p>";
+    if (answer.cites.length) {
+      html += "<div class=\"reply__cites\">" + answer.cites.map(citationHtml).join("") + "</div>";
+    }
+    if (answer.gap) {
+      html += "<p class=\"reply__gap\"><b>" + (answer.refusal ? "What happens next" : "What this answer does not cover") + "</b> &mdash; " + answer.gap + "</p>";
+    }
+    if (answer.prototype) {
+      html += "<p class=\"reply__proto\">Prototype note: only seven questions are scripted here, so anything else shows the refusal path \u2014 which is what the product does when the documents do not answer the question.</p>";
+    }
+    if (publish.checked && added) {
+      html += "<p class=\"saved saved--on\">" +
+        (answer.refusal
+          ? "&#10003; Added to the public questions database as a Waiting card"
+          : "&#10003; Added to the public questions database &mdash; awaiting review") +
+        " <a href=\"#board\" data-jump=\"" + added.id + "\">See your question &darr;</a></p>";
+    } else if (publish.checked && !added) {
+      html += "<p class=\"saved saved--off\">Already on the board &mdash; your ask was added to that card&rsquo;s count. No duplicate was created.</p>";
+    } else {
+      html += "<p class=\"saved saved--off\">Not added to the public database. This exchange is kept privately and is not shown to other visitors.</p>";
+    }
+    reply.innerHTML = html;
+    reply.scrollIntoView({ block: "nearest" });
+  }
+
+  function insertCard(question, answer) {
+    var card = document.createElement("article");
+    card.className = "qcard qcard--new" + (answer.refusal ? " qcard--pending" : "");
+    card.id = "card-user-" + Date.now();
+    card.setAttribute("data-cat", answer.category);
+    card.setAttribute("data-text", question.toLowerCase());
+    var firstCite = answer.cites.length ? answer.cites[0].ref : "";
+    card.innerHTML =
+      "<p class=\"qcard__q\">" + esc(question) + "</p>" +
+      "<p class=\"qcard__a\">" +
+        (answer.refusal
+          ? "Not answered from the documents. With the administrator &mdash; a known gap, counted rather than forgotten."
+          : answer.text) +
+      "</p>" +
+      "<p class=\"qcard__meta\">" +
+        "<span class=\"tag tag--new\">Awaiting review</span>" +
+        "<span class=\"tag tag--muted\">" + (answer.category === "money" ? "Money" : answer.category === "animals" ? "Animals" : answer.category === "inputs" ? "Inputs" : "Waiting") + "</span>" +
+        (firstCite ? "<a href=\"#board\">" + esc(firstCite) + "</a>" : "") +
+        "<span>asked 1 time</span><span>just now</span>" +
+      "</p>";
+    grid.insertBefore(card, grid.firstChild);
+    return card;
+  }
+
+  function bumpCard(card) {
+    var spans = card.querySelectorAll(".qcard__meta span");
+    for (var i = 0; i < spans.length; i += 1) {
+      var text = spans[i].textContent || "";
+      var m = /^asked (\d+) time(s?)(.*)$/.exec(text);
+      if (m) {
+        var n = parseInt(m[1], 10) + 1;
+        spans[i].textContent = "asked " + n + " time" + (n === 1 ? "" : "s") + m[3];
+        break;
+      }
+    }
+    card.classList.add("qcard--new");
+    window.setTimeout(function () { card.classList.remove("qcard--new"); }, 2400);
+  }
+
+  function applyFilter() {
+    var term = (boardSearch.value || "").trim().toLowerCase();
+    var cards = Array.prototype.slice.call(grid.querySelectorAll(".qcard"));
+    var shown = 0;
+    cards.forEach(function (card) {
+      var cats = card.getAttribute("data-cat") || "";
+      var text = (card.textContent || "").toLowerCase();
+      var catOk = activeCat === "all" || cats.indexOf(activeCat) !== -1;
+      var termOk = !term || text.indexOf(term) !== -1;
+      card.hidden = !(catOk && termOk);
+      if (!card.hidden) { shown += 1; }
+    });
+    boardEmpty.hidden = shown !== 0;
+    boardCount.textContent = shown + (shown === 1 ? " question" : " questions") +
+      (activeCat === "all" ? " \u00b7 4 topics" : "");
+  }
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var question = field.value.trim();
+    if (question.length < 4) {
+      field.focus();
+      return;
+    }
+    var answer = matchAnswer(question);
+    var added = null;
+
+    if (publish.checked) {
+      var existing = answer.card ? document.getElementById(answer.card) : null;
+      if (existing) {
+        bumpCard(existing);
+        added = null;
+      } else {
+        added = insertCard(question, answer);
+      }
+    }
+
+    renderReply(question, answer, added);
+    activeCat = "all";
+    chips.forEach(function (chip) {
+      chip.setAttribute("aria-pressed", String(chip.getAttribute("data-cat") === "all"));
+    });
+    boardSearch.value = "";
+    applyFilter();
+  });
+
+  /* Enter sends, Shift+Enter is a new line — the opposite of a textarea's default,
+     so the hint above says so. */
+  field.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      send.click();
+    }
+  });
+
+  /* --- Board filtering ------------------------------------------------ */
+  chips.forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      activeCat = chip.getAttribute("data-cat");
+      chips.forEach(function (other) {
+        other.setAttribute("aria-pressed", String(other === chip));
+      });
+      applyFilter();
+    });
+  });
+
+  boardSearch.addEventListener("input", applyFilter);
+
+  reply.addEventListener("click", function (event) {
+    var link = event.target.closest("[data-jump]");
+    if (!link) { return; }
+    event.preventDefault();
+    var card = document.getElementById(link.getAttribute("data-jump"));
+    if (!card) { return; }
+    card.scrollIntoView({ block: "center" });
+    card.classList.add("qcard--new");
+    window.setTimeout(function () { card.classList.remove("qcard--new"); }, 2200);
+  });
+
+  document.getElementById("print-page").addEventListener("click", function () {
+    window.print();
+  });
+
+  applyFilter();
+})();
+</script>
+</body>
+</html>
