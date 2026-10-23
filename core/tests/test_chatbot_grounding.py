@@ -21,6 +21,7 @@ import pytest
 
 from core.models import ChatMessage, EscalatedQuery
 from core.services._chatbot import (
+    PROMPT_VERSION,
     REFUSAL,
     RETRIEVAL_LIMIT,
     SYSTEM_PROMPT,
@@ -812,3 +813,108 @@ def test_a_paraphrase_of_a_reviewed_example_is_still_refused(chat_standard_set):
     )
     assert citations == []
     assert problems == ("general-principles: the quote is not in the cited chunk",)
+
+
+# --- P2.5a: the turn records what it claimed, and what refused it ------------
+#
+# G9 was a refusal on the live site that was indistinguishable from a coverage gap:
+# `EscalatedQuery.reason` said `CITATION_AUDIT`, the retrieved chunks were stored, and
+# the citation the model actually returned was gone. Diagnosing it needed a re-ask of the
+# model against the box's database (`scripts/why_refused.py`), which is a measurement
+# nobody can reproduce later. These tests pin the record instead.
+
+def test_a_grounded_answer_records_what_it_claimed(
+    chat_session, chat_corpus, fake_chat_model, chat_cache
+):
+    model = fake_chat_model(reply=_grounded_reply())
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+    message = ChatMessage.objects.get(pk=out.message_id)
+
+    assert message.prompt_version == PROMPT_VERSION
+    assert message.corpus_fingerprint, "an answer must be attributable to a corpus"
+    assert message.refusal_checks == []
+    assert message.citations["accepted"], "the citation the visitor saw must be stored"
+    accepted = message.citations["accepted"][0]
+    assert accepted["section_ref"] == "S20.1.1"
+    assert accepted["quote"] and accepted["document"]
+    assert message.citations["raw"][0]["section_ref"] == "S20.1.1"
+
+    assert message.grounding, "the passages it stood on must be recorded"
+    assert {"locator", "page", "heading_path", "document", "text_sha"} <= set(
+        message.grounding[0]
+    )
+
+
+def test_a_refused_citation_records_which_check_fired(
+    chat_session, chat_corpus, fake_chat_model, chat_cache
+):
+    """`CITATION_AUDIT` alone cannot tell a prompt defect from a corpus defect."""
+    model = fake_chat_model(
+        reply=_grounded_reply(
+            citations=(
+                {
+                    "section_ref": "S20.1.1",
+                    "quote": "a sentence the passage does not contain anywhere at all",
+                },
+            )
+        )
+    )
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+    message = ChatMessage.objects.get(pk=out.message_id)
+
+    assert out.insufficient_context
+    assert message.refusal_checks, "the refusal must say which check refused it"
+    assert "not in the cited chunk" in message.refusal_checks[0]
+    assert message.citations["accepted"] == []
+    assert message.citations["raw"][0]["quote"].startswith("a sentence the passage")
+    assert message.prompt_version == PROMPT_VERSION
+    assert EscalatedQuery.objects.get(pk=out.escalated_query_id).reason == (
+        EscalatedQuery.Reason.CITATION_AUDIT
+    )
+
+
+def test_the_grounding_snapshot_survives_a_corpus_rebuild(
+    chat_session, chat_corpus, fake_chat_model, chat_cache
+):
+    """`--force` deletes the chunks and takes the M2M rows with them.
+
+    D59 keeps transcripts indefinitely; a routine re-ingest must not erase what they
+    stood on. This simulates the rebuild by deleting every chunk, which is what the
+    ingest transaction does to a document's chunks.
+    """
+    from knowledge.models import DocumentChunk
+
+    model = fake_chat_model(reply=_grounded_reply())
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+    message = ChatMessage.objects.get(pk=out.message_id)
+    assert message.retrieved_chunks.exists()
+    before = [entry["locator"] for entry in message.grounding]
+    assert before, (
+        "an empty snapshot would make this test pass by comparing [] with [] — the "
+        "exact defect it exists to catch (build_principles §VIII)"
+    )
+
+    DocumentChunk.objects.all().delete()
+    message.refresh_from_db()
+
+    assert message.retrieved_chunks.count() == 0, "the M2M is expected to cascade"
+    assert [entry["locator"] for entry in message.grounding] == before
+
+
+def test_a_cached_answer_still_records_its_citations(
+    chat_session, chat_corpus, fake_chat_model, chat_cache
+):
+    """The cache must not turn the second turn into evidence-free history."""
+    question = "What does the standard require for traceability?"
+    model = fake_chat_model(reply=_grounded_reply())
+
+    _ask(chat_session, question, model)
+    second = _ask(chat_session, question, model)
+
+    assert second.cached is True
+    assert len(model.calls) == 1
+    message = ChatMessage.objects.get(pk=second.message_id)
+    assert message.citations["accepted"][0]["section_ref"] == "S20.1.1"
+    assert message.grounding

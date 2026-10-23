@@ -14,10 +14,13 @@ Three models, and each carries a decision rather than a default:
   kept when that visitor creates an account (SPEC §3.1 — a public visitor graduates,
   they do not start over).
 - **`ChatMessage`** stores both sides of every exchange, what it cost (`tokens`,
-  `latency_ms`, `model`) and the chunks it was grounded on. The M2M is **all** the
-  retrieved chunks, not only the cited ones: when a refusal is reviewed, the useful
-  question is "what did the retriever give the model?", and storing only citations
-  hides it.
+  `latency_ms`, `model`), the chunks it was grounded on, and — since P2.5a — what it
+  **claimed** (`citations`), which check refused it (`refusal_checks`) and a grounding
+  **snapshot** that outlives the chunks. The M2M is **all** the retrieved chunks, not only
+  the cited ones: when a refusal is reviewed, one useful question is "what did the
+  retriever give the model?", and storing only citations hides it. The other useful
+  question is "what did the model say it cited, and which check rejected it?" — G9 was
+  that question, and nothing could answer it (`CHAT_ANSWER_COVERAGE_PRD.md` §G9).
 - **`EscalatedQuery`** is the refusal made followable. A refusal is not an error
   state — it is the product's central claim (SPEC §13) — so it produces a row an
   administrator can answer, with the question preserved even if the message is
@@ -135,6 +138,57 @@ class ChatMessage(models.Model):
         blank=True,
         related_name="chat_messages",
         help_text="Everything the retriever supplied, cited or not.",
+    )
+
+    # --- P2.5 + P2.5a: the answer becomes attributable *and* auditable ---------
+    #
+    # P2.5 records which contract and which corpus produced a row. P2.5a records what
+    # the row claimed and which check refused it. Without the first, a stored answer
+    # cannot be attributed after a re-ingest; without the second, a refusal on the live
+    # surface is indistinguishable from a gap in the corpus — which is what G9 was, and
+    # why it took a re-ask of the model to diagnose.
+
+    prompt_version = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text="The `PROMPT_VERSION` this turn was produced under.",
+    )
+    corpus_fingerprint = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text=(
+            "The corpus it was grounded on — the same fingerprint the answer cache "
+            "uses, so two corpora cannot produce indistinguishable rows."
+        ),
+    )
+    citations = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "`{'raw': [...], 'accepted': [...]}`. `raw` is what the model returned, "
+            "verbatim and in order; `accepted` is what the audit verified and the "
+            "visitor was shown. Empty on a user message."
+        ),
+    )
+    refusal_checks = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "The citation audit's `problems` — empty unless it refused. The distinction "
+            "that matters: 'not present in the retrieved set' is a prompt-contract "
+            "defect, 'the quote is not in the cited chunk' is a corpus defect."
+        ),
+    )
+    grounding = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "A snapshot of the supplied passages (locator, page, heading, text sha). "
+            "`--force` re-ingest drops the `retrieved_chunks` links, so the M2M cannot "
+            "be the record of what an answer stood on."
+        ),
     )
 
     class Meta:

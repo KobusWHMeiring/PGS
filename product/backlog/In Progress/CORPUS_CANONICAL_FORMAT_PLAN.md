@@ -1,7 +1,7 @@
 # Corpus Canonical Format — Implementation Plan
 
-**Status:** In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; P2 (including the chat-telemetry
-sub-tasks P2.5–P2.8) is the next task
+**Status:** In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.5 and P2.5a landed 2026-10-22**
+(migration `core/0006`, read side `scripts/why_refused.py`); P2–P2.4 and P2.6–P2.8 remain
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment
 **Last Updated:** 2026-10-22
 **PRD:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, extended by section 8)
@@ -190,7 +190,7 @@ stale corpus is worse than a reported one. Records the outcome in the deploy out
 **Gate:** stale fixture → `corpus_check` exits 1 naming the document; `--apply` makes it exit 0;
 `deploy.sh` unchanged in exit status when `corpus_check` fails.
 
-**P2.5 — Answers become attributable.** Two fields on `ChatMessage`, written with the
+**P2.5 — Answers become attributable.** *(Built 2026-10-22 with P2.5a, migration `core/0006`; the read side is `scripts/why_refused.py`.)* Two fields on `ChatMessage`, written with the
 assistant row: `prompt_version` (the `PROMPT_VERSION` under which it was produced) and
 `corpus_fingerprint` (the same fingerprint the answer cache uses, so a stored answer can be
 tied to the exact corpus that produced it). Additive migration `core/0006`.
@@ -202,8 +202,8 @@ contract that no longer exists — which is the difference between a fix and a g
 *Fails if:* a stored assistant row has an empty `prompt_version`; or two corpora produce
 rows indistinguishable by `corpus_fingerprint`.
 
-**P2.5a — store what was *claimed*, not only what was supplied.** *(added 2026-10-22 from
-G9 — `CHAT_ANSWER_COVERAGE_PRD.md`. P2.5 makes an answer attributable; this makes it
+**P2.5a — store what was *claimed*, not only what was supplied.** *(built 2026-10-22;
+added from G9 — `CHAT_ANSWER_COVERAGE_PRD.md`. P2.5 makes an answer attributable; this makes it
 auditable.)* Three additions, one migration (`core/0006`, together with P2.5):
 
 1. **`citations` JSON on the assistant row** — the raw citations the model returned *and*

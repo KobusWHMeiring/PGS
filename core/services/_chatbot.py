@@ -808,12 +808,67 @@ def _corpus_fingerprint(standard_set: StandardSet) -> str:
     ).hexdigest()[:32]
 
 
-def _cache_key(question: str, standard_set: StandardSet) -> str:
+def _cache_key(
+    question: str, standard_set: StandardSet, fingerprint: str | None = None
+) -> str:
     digest = hashlib.sha256(normalise_question(question).encode()).hexdigest()[:32]
     return (
         f"chat:answer:{PROMPT_VERSION}:{standard_set.pk}:"
-        f"{_corpus_fingerprint(standard_set)}:{digest}"
+        f"{fingerprint or _corpus_fingerprint(standard_set)}:{digest}"
     )
+
+
+def _grounding_snapshot(chunks: Sequence[RetrievedChunk]) -> list[dict]:
+    """What an answer stood on, in a form that outlives the chunks themselves.
+
+    `retrieved_chunks` is the joinable record while the corpus exists; `--force`
+    re-ingest deletes the chunks and takes the M2M rows with them, so a corpus rebuild
+    erases the evidence for every answer already given. The transcript is kept
+    indefinitely (D59), so the grounds for it must be too.
+
+    The text sha is what makes this a record rather than a label: it lets a reviewer
+    tell "the same locator, text changed" from "the same passage" without storing the
+    passage a second time (the corpus owns the text).
+    """
+    return [
+        {
+            "locator": locator_of(chunk),
+            "page": chunk.page,
+            "heading_path": chunk.heading_path,
+            "document": chunk.document_title,
+            "text_sha": hashlib.sha256((chunk.text or "").encode()).hexdigest()[:16],
+        }
+        for chunk in chunks
+    ]
+
+
+def _citation_record(
+    raw_citations: Sequence[object], accepted: Sequence[Citation]
+) -> dict:
+    """The citations as returned, and as shown — in one field, with no guesswork.
+
+    `raw` is kept verbatim, unsanitised: it is the model's output and the evidence of
+    what it did. `accepted` is the audited subset, carrying the document and page that
+    the audit attached from the chunk rather than from the model.
+
+    Deliberately *not* matched pairwise. The audit normalises a locator before lookup
+    (`§4.2` vs `4.2`), so deciding which raw citation corresponds to which accepted one
+    would be a heuristic — and a heuristic in the evidence trail is worse than two lists.
+    """
+    return {
+        "raw": [item for item in raw_citations if isinstance(item, dict)][:20],
+        "accepted": [
+            {
+                "section_ref": citation.section_ref,
+                "sub_ref": citation.sub_ref,
+                "page": citation.page,
+                "document": citation.document,
+                "quote": citation.quote,
+            }
+            for citation in accepted
+        ],
+    }
+
 
 
 def _reply_to_json(reply: ModelReply) -> dict:
@@ -1078,6 +1133,8 @@ def _as_refusal(
     latency_ms: int,
     reply: ModelReply | None,
     cached: bool,
+    fingerprint: str = "",
+    problems: Sequence[str] = (),
 ) -> GroundedAnswer:
     """Write the refusal and its escalation in one transaction."""
     with transaction.atomic():
@@ -1091,6 +1148,14 @@ def _as_refusal(
             completion_tokens=(
                 0 if cached else (reply.completion_tokens if reply else None)
             ),
+            prompt_version=PROMPT_VERSION,
+            corpus_fingerprint=fingerprint,
+            # Kept on a refusal: a refused citation is the evidence for *which* check
+            # fired, and `CITATION_AUDIT` alone cannot tell a prompt defect from a
+            # corpus one (G9). `accepted` is empty by definition here.
+            citations=_citation_record(reply.citations if reply else (), ()),
+            refusal_checks=list(problems)[:20],
+            grounding=_grounding_snapshot(chunks),
         )
         assistant.retrieved_chunks.set([chunk.chunk_id for chunk in chunks])
         escalation = EscalatedQuery.objects.create(
@@ -1145,6 +1210,9 @@ def answer_question(
     check_rate_limit(ip_hash, now=now)
 
     session = get_session(session_uuid)
+    # Read once, before anything can return: a refusal has to record the corpus it was
+    # grounded on too, and the `not chunks` branch returns before the cache key exists.
+    fingerprint = _corpus_fingerprint(session.standard_set)
     history = _history_for(session)
     user_message = ChatMessage.objects.create(
         session=session,
@@ -1164,6 +1232,7 @@ def answer_question(
         return _as_refusal(
             session=session,
             user_message=user_message,
+            fingerprint=fingerprint,
             question=text,
             chunks=chunks,
             reason=EscalatedQuery.Reason.INSUFFICIENT_CONTEXT,
@@ -1172,7 +1241,7 @@ def answer_question(
             cached=False,
         )
 
-    cache_key = _cache_key(text, session.standard_set)
+    cache_key = _cache_key(text, session.standard_set, fingerprint)
     cached_payload = cache.get(cache_key)
     cached = cached_payload is not None
     reply: ModelReply
@@ -1199,6 +1268,8 @@ def answer_question(
         return _as_refusal(
             session=session,
             user_message=user_message,
+            fingerprint=fingerprint,
+            problems=problems,
             question=text,
             chunks=chunks,
             reason=EscalatedQuery.Reason.INSUFFICIENT_CONTEXT,
@@ -1213,6 +1284,8 @@ def answer_question(
         return _as_refusal(
             session=session,
             user_message=user_message,
+            fingerprint=fingerprint,
+            problems=problems,
             question=text,
             chunks=chunks,
             reason=EscalatedQuery.Reason.NO_CITATIONS,
@@ -1234,6 +1307,8 @@ def answer_question(
         return _as_refusal(
             session=session,
             user_message=user_message,
+            fingerprint=fingerprint,
+            problems=problems,
             question=text,
             chunks=chunks,
             reason=EscalatedQuery.Reason.CITATION_AUDIT,
@@ -1245,6 +1320,8 @@ def answer_question(
         return _as_refusal(
             session=session,
             user_message=user_message,
+            fingerprint=fingerprint,
+            problems=problems,
             question=text,
             chunks=chunks,
             reason=EscalatedQuery.Reason.NO_CITATIONS,
@@ -1260,6 +1337,8 @@ def answer_question(
         return _as_refusal(
             session=session,
             user_message=user_message,
+            fingerprint=fingerprint,
+            problems=problems,
             question=text,
             chunks=chunks,
             reason=EscalatedQuery.Reason.NO_CITATIONS,
@@ -1290,6 +1369,11 @@ def answer_question(
             model=reply.model,
             prompt_tokens=(0 if cached else reply.prompt_tokens),
             completion_tokens=(0 if cached else reply.completion_tokens),
+            prompt_version=PROMPT_VERSION,
+            corpus_fingerprint=fingerprint,
+            citations=_citation_record(reply.citations, citations),
+            refusal_checks=[],
+            grounding=_grounding_snapshot(chunks),
         )
         assistant.retrieved_chunks.set([chunk.chunk_id for chunk in chunks])
 

@@ -18,6 +18,9 @@ Run it on the box with the deployment environment sourced:
     set -a; . ./.env; set +a
     venv/bin/python scripts/why_refused.py borax
 
+Run `manage.py migrate` first on a dev box: the gate migrates `pgs_verify`, so `pgs` can
+sit a migration behind and this will fail with `UndefinedColumn` after a model change.
+
 Reading it:
 
     corpus*0        the live text does not contain the word at all — a corpus defect,
@@ -25,6 +28,11 @@ Reading it:
     INSUFFICIENT_CONTEXT  it was retrieved, and the model still judged the set unusable
     CITATION_AUDIT  the model answered, and its quote did not verify against the text
     NO_CITATIONS    the model answered without citing — grounding, not retrieval
+
+Since P2.5a the turn itself carries the evidence, so the `!` lines below are the failing
+checks verbatim: `not present in the retrieved set` is a prompt-contract defect, `the
+quote is not in the cited chunk` is a corpus defect. Before P2.5a that distinction was
+thrown away, and G9 had to be diagnosed by re-asking the model.
 """
 
 from __future__ import annotations
@@ -82,6 +90,22 @@ def main(argv: list[str]) -> int:
         print(f"   #{message.id} {message.content[:70]!r}")
         refs = _refs(message)
         print(f"        retrieved({len(refs)}): {refs}")
+        raw = [entry.get("section_ref") for entry in (message.citations or {}).get("raw", [])]
+        audited = [
+            entry.get("section_ref") for entry in (message.citations or {}).get("accepted", [])
+        ]
+        if raw:
+            print(f"        cited raw: {raw}")
+        if raw and audited != raw:
+            print(f"        audited:   {audited}")
+        for problem in message.refusal_checks or []:
+            print(f"        ! {problem}")
+        if message.prompt_version:
+            print(
+                f"        {message.prompt_version} / corpus "
+                f"{(message.corpus_fingerprint or '?')[:8]} / snapshot "
+                f"{len(message.grounding or [])}"
+            )
     return 0
 
 
