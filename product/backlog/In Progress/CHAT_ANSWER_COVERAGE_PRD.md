@@ -389,6 +389,10 @@ removing `LOCATOR:` fails the prompt test.
 borate, which is chemically known as borax, can be used as a trace element… restricted to
 where a deficiency is documented"* with **2 raw, 2 audited, `AUDIT: grounded`**.
 
+**Verified live, 2026-10-22.** After deploying `70ae120` the product owner reports `/ask/`
+answering the borax question as expected (sodium borate, restricted to a documented
+deficiency, citing Appendix 2). The refusal that started this — identical sentence to a coverage gap — is gone.
+
 **Residual risk, recorded rather than absorbed.** The model is stochastic, so one green run
 proves the format is no longer an obstacle, not that the class is gone. A different decoration
 (the page number instead of the title, the version alone) would still refuse until the

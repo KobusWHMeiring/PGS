@@ -170,6 +170,30 @@ so it is page splitting, not a different text of record.
 P7.4 the box serves the PDF extraction for all four, so `uat_seed --check` still reports
 `corpus present` as blocking.
 
+## 4c. Third redeploy, 2026-10-22 — the chat fix (`70ae120`)
+
+Deployed `f4e8907` → `6993a1b`. The product owner reports `/ask/` answering the borax
+question as expected: sodium borate as a trace element, restricted to a documented
+deficiency, citing Appendix 2.
+
+**Why this one needed a live check rather than a green gate.** G9's refusal was
+indistinguishable from a coverage gap on the screen — same sentence, same escalation link —
+because the model *found* the answer and the citation was rejected. No test in the gate
+could have caught it (it was the prompt's own formatting), and the gate was green at 808
+throughout. The only proof is the live surface answering.
+
+**Not yet proven, and recorded rather than assumed:**
+
+- The **five fresh sessions** G9 sets as its acceptance test. One green run shows the
+  format is no longer an obstacle; it does not show the class is gone, because a citation
+  carrying a different decoration (the page number rather than the document title) would
+  still be refused.
+- The two **regression questions**: `can i use cardboard as mulch?` (must say the standard
+  does not name it, not refuse) and the horse-manure question (must still answer).
+- Both are hard to run today for an unrelated reason: `/ask/` has no way to start a new
+  conversation, so each "fresh" question needs the cookie cleared. That is `todo.md`.
+
+
 ## 5. Operating notes
 
 - **Redeploy:** `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh`. The gate runs
