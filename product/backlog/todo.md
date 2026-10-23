@@ -30,6 +30,10 @@ the generated index's "To Do" section.
 - [ ] Publish the administrator's email/phone on `/contact/` (currently `contact details to
       confirm` chips). Needed for the escalation path either way
       (`Refinement/ESCALATION_ANSWER_PATH_PRD.md`).
+- [ ] **A way to start a new conversation on `/ask/`.** The thread is keyed by a cookie
+      (`ChatSession.public_uuid`) and neither the panel nor the view offers a reset, so a
+      visitor's only recourse is deleting cookies. Found 2026-10-22 while re-testing a refusal —
+      which it made harder, because you cannot ask a fresh question without clearing them.
 - [ ] **Set a retention schedule for public chat transcripts** (D59: kept indefinitely until
       then). Public questions can contain personal data about a third party; the group already has
       a POPIA retention schedule for assessment records. Revisit at MVP 2 registry work at the
