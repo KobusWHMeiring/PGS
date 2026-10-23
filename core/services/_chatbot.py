@@ -34,6 +34,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -50,6 +51,7 @@ from knowledge.models import DocumentChunk, StandardSet
 from knowledge.services import (
     RetrievedChunk,
     RetrievalResult,
+    chunks_by_id,
     search_terms,
 )
 
@@ -102,6 +104,9 @@ MODEL_DEFAULT = "gemini-2.5-flash"
 MODEL_TIMEOUT_MS = 30_000
 MAX_ANSWER_CHARS = 6000
 MAX_CITATIONS = 8
+#: How many of the previous answer's clauses a follow-up may carry back into
+#: retrieval. The audited citations, not the eight supplied passages.
+CARRIED_CITATIONS = 2
 
 #: How much of the model's reply is accepted verbatim. A cap *below* the JSON's natural
 #: size truncates the payload mid-string, and the failure surfaces as "Gemini returned
@@ -121,11 +126,14 @@ MAX_OUTPUT_TOKENS_CEILING = 4096
 #: `d49-2` (2026-10-22): the budget is now really eight passages — `CHAT_RETRIEVAL_LIMIT`
 #: had stayed at five because D49 raised the fallback constant instead of the setting, so
 #: every cached answer was produced against a five-passage set (`testing_hazards.md` §2.7).
+#: `d49-4` (2026-10-23): stage 1 of the follow-up decision. When the previous turn is
+#: carried into retrieval, the prompt says so and forbids citing anything not supplied —
+#: a conversation-aware answer has to be told that the conversation is not evidence.
 #: `d49-3` (2026-10-22): each passage now prints its locator on its own `LOCATOR:` line.
 #: The old header glued locator and document together (`[6] Appendix 2 — SAOSO Standard …
 #: v2.1, page 77`), and the model copied the whole line as `section_ref`, which the audit
 #: refused as "not present in the retrieved set" — a refusal that hid a correct answer.
-PROMPT_VERSION = "d49-3"
+PROMPT_VERSION = "d49-4"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -337,11 +345,14 @@ def default_retrieval(
     standard_set: StandardSet,
     *,
     limit: int | None = None,
+    context_query: str = "",
 ) -> RetrievalResult:
     """Retrieve the passages a question is answered from.
 
-    In:  the visitor's question, the corpus to search, and optionally an explicit
-         `limit` (used by the probe's `--limit` when comparing budgets).
+    In:  the visitor's question; the corpus to search; optionally an explicit `limit`
+         (used by the probe's `--limit` when comparing budgets); `context_query` — the
+         previous question, when this turn continues it. The caller decides that
+         (`answer_question` uses `looks_like_follow_up`); retrieval does not guess.
     Out: a `RetrievalResult`; `limit` defaults to `chat_retrieval_limit()`.
 
     This is the single retrieval path: `answer_question()` calls it, and
@@ -352,6 +363,7 @@ def default_retrieval(
         standard_set=standard_set,
         question=question,
         limit=chat_retrieval_limit() if limit is None else limit,
+        context_query=context_query,
     )
 
 
@@ -535,6 +547,115 @@ def significant_terms(question: str) -> list[str]:
         seen.add(token)
         tokens.append(token)
     return tokens
+
+
+#: Openers that only make sense as a continuation. Matched against the question's
+#: leading words with punctuation removed, so `why?` and `and for goats?` both land.
+FOLLOW_UP_OPENERS = (
+    "and ",
+    "also ",
+    "but ",
+    "then ",
+    "so ",
+    "why ",
+    "what about",
+    "what if",
+    "how about",
+    "does that",
+    "does it",
+    "do that",
+    "is that",
+    "is it",
+    "can that",
+    "can it",
+    "would that",
+    "will that",
+    "should that",
+)
+
+#: Pronouns and demonstratives. A short question containing one of these is pointing at
+#: the previous answer; a long one has its own subject and merely uses the word.
+FOLLOW_UP_ANAPHORS = frozenset(
+    {"it", "its", "that", "this", "they", "them", "those", "these", "same"}
+)
+
+#: An anaphor is only evidence while the question is short. Twelve words is a sentence.
+FOLLOW_UP_MAX_WORDS = 12
+
+#: "Short" for the shared-term rule. Six content words is a noun phrase with a verb.
+FOLLOW_UP_MAX_TERMS = 6
+
+#: A shared word shorter than this is a verb or a preposition-like filler ("use", "get"),
+#: not the subject of the question. Without it "Can I use KNF preparations?" reads as a
+#: follow-up of "Can I use cardboard?" purely on the word "use".
+FOLLOW_UP_MIN_SHARED = 4
+
+
+def _words(text: str) -> list[str]:
+    """Lowercased alphanumeric tokens, punctuation dropped."""
+    return re.findall(r"[a-z0-9]+", (text or "").lower())
+
+
+def _content_words(text: str) -> list[str]:
+    """The tokens that carry subject matter: `_words` without English function words."""
+    return [word for word in _words(text) if word not in _STOPWORDS]
+
+
+def looks_like_follow_up(question: str, parent_question: str) -> bool:
+    """Does `question` continue `parent_question`, or is it a new question?
+
+    In:  the question just typed; the previous *user* question in the conversation
+         (empty when there is none).
+    Out: True when the question cannot stand on its own.
+    Fails: never. **It fails closed** — anything it cannot recognise is a new question,
+         which is exactly the behaviour before stage 1, so a wrong answer costs nothing
+         and a right one is the only way to gain.
+
+    Why a heuristic instead of the visitor's choice: they know least about what they are
+    asking at the moment they would have to choose. Two mistakes are possible here and
+    they are not equal. A missed follow-up falls back to today's behaviour. A false
+    positive carries one stale subject into retrieval, which is why the context arm
+    `search_terms` adds is capped at two passages and displaces the weakest match
+    rather than splitting the budget.
+
+    The three signals, in order, and the reasons for each:
+
+    1. **An opener** — `what if`, `and`, `why`. The strongest single signal, because the
+       phrase is incomplete by construction.
+    2. **An anaphor in a short question** — `it`, `that`, `those`. Something outside the
+       sentence is the subject.
+    3. **Short and sharing a distinctive word** — "does manure apply to goats too?".
+       Length is part of the test: a long question has enough of its own subject that
+       overlap is topical, not referential.
+    """
+    normalised = normalise_question(question)
+    if not parent_question or not normalised:
+        return False
+
+    # Asking the same question twice is not a follow-up: it is the same question, and
+    # treating it as a follow-up would key it to its own history and miss the cache the
+    # repeat exists to hit. A follow-up has to add something.
+    if normalised == normalise_question(parent_question):
+        return False
+
+    words = _words(normalised)
+    if not words:
+        return False
+
+    if (" ".join(words) + " ").startswith(FOLLOW_UP_OPENERS):
+        return True
+
+    if len(words) <= FOLLOW_UP_MAX_WORDS and any(word in FOLLOW_UP_ANAPHORS for word in words):
+        return True
+
+    content = _content_words(normalised)
+    if len(content) > FOLLOW_UP_MAX_TERMS:
+        return False
+
+    parent_words = set(_content_words(parent_question))
+    return any(
+        word in parent_words and len(word) >= FOLLOW_UP_MIN_SHARED for word in content
+    )
 
 
 def build_retrieval_query(question: str) -> str:
@@ -809,9 +930,33 @@ def _corpus_fingerprint(standard_set: StandardSet) -> str:
 
 
 def _cache_key(
-    question: str, standard_set: StandardSet, fingerprint: str | None = None
+    question: str,
+    standard_set: StandardSet,
+    fingerprint: str | None = None,
+    history_digest: str = "",
 ) -> str:
-    digest = hashlib.sha256(normalise_question(question).encode()).hexdigest()[:32]
+    """The cache key: contract, corpus, question, and the conversation that shaped it.
+
+    `history_digest` is set for a **follow-up** — a turn whose retrieval and prompt both
+    depend on the previous exchange — and empty otherwise. That is deliberately narrower
+    than "history exists":
+
+    * A first question has no history at all, which is the case the cache exists for:
+      many visitors, one question.
+    * A standalone question in an existing conversation still receives the bounded
+      history in its prompt (D2, `CHAT_HISTORY_MESSAGES`), so its reply *may* differ from
+      another visitor's. That residual predates stage 1 and is not made worse by it: the
+      prompt now says the earlier turns resolve references and may not be cited, and a
+      standalone turn inherits no passages. Keying it on the history would remove the
+      cache hit for the common "ask it again to re-read it" case and break three tests
+      that pin the property deliberately.
+    * A follow-up's answer genuinely *is* derived from its parent, so it cannot be shared
+      with a different conversation. That is the leak this closes.
+    """
+    material = normalise_question(question)
+    if history_digest:
+        material = f"{history_digest}\x00{material}"
+    digest = hashlib.sha256(material.encode()).hexdigest()[:32]
     return (
         f"chat:answer:{PROMPT_VERSION}:{standard_set.pk}:"
         f"{fingerprint or _corpus_fingerprint(standard_set)}:{digest}"
@@ -864,6 +1009,11 @@ def _citation_record(
                 "page": citation.page,
                 "document": citation.document,
                 "quote": citation.quote,
+                # Recorded so a follow-up can carry the previous answer's clauses back
+                # into retrieval, and so the trace console can show which passage an
+                # accepted citation actually named. Rows written before this carry no
+                # `chunk_id`, and a follow-up simply inherits nothing from them.
+                "chunk_id": citation.chunk_id,
             }
             for citation in accepted
         ],
@@ -955,8 +1105,15 @@ def build_prompt(
     conversation = "\n".join(
         f"{message.role.title()}: {message.content}" for message in history
     )
+    # Stage 1: a conversation is not evidence. Without this line the model treats the
+    # earlier turns as answer material and cites a clause the audit never saw; with it,
+    # the earlier turns resolve the reference and the supplied passages carry the claim.
+    # Conditional wording, not an assertion: the visitor's second question may well be a
+    # new subject, and one prompt has to serve both.
     history_block = (
         f"Conversation so far (for context only):\n{conversation}\n\n"
+        "If the latest message is a follow-up, use the earlier turns only to resolve "
+        "what it refers to. Do not cite a passage that is not supplied below.\n\n"
         if conversation
         else ""
     )
@@ -1123,6 +1280,88 @@ def _history_for(session: ChatSession) -> list[ChatMessage]:
     )[::-1]
 
 
+def _last_user_question(history: Sequence[ChatMessage]) -> str:
+    """The previous question in this conversation, or "".
+
+    `history` is ordered oldest first and excludes the question being asked (it is read
+    before the user message is written), so the last USER row is the parent turn.
+    """
+    for message in reversed(list(history)):
+        if message.role == ChatMessage.Role.USER:
+            return message.content
+    return ""
+
+
+def _last_assistant_message(history: Sequence[ChatMessage]) -> ChatMessage | None:
+    """The previous answer, or None. This is what a follow-up inherits citations from."""
+    for message in reversed(list(history)):
+        if message.role == ChatMessage.Role.ASSISTANT:
+            return message
+    return None
+
+
+def _carried_chunk_ids(message: ChatMessage | None) -> tuple[int, ...]:
+    """The chunks the previous answer actually cited, in order.
+
+    Read from `citations.accepted`, which is the audited subset — not `retrieved_chunks`,
+    which is everything the retriever supplied. Carrying all eight would be the "seeded
+    retrieval" mistake: the previous subject would take the budget back. Rows written
+    before `chunk_id` was recorded simply carry nothing.
+    """
+    if message is None:
+        return ()
+    accepted = (message.citations or {}).get("accepted") or []
+    ids = [entry.get("chunk_id") for entry in accepted if isinstance(entry, dict)]
+    return tuple(cid for cid in ids if isinstance(cid, int))[:CARRIED_CITATIONS]
+
+
+def _with_carried_citations(
+    chunks: Sequence[RetrievedChunk],
+    carried_ids: Sequence[int],
+    standard_set: StandardSet,
+    *,
+    budget: int | None = None,
+) -> tuple[RetrievedChunk, ...]:
+    """Add the previous answer's clauses to this turn's set, displacing the tail.
+
+    In:  the passages this turn's question retrieved; chunk ids carried from the parent
+         answer; the corpus boundary; `budget` — the passage count to hold to, defaulting
+         to the product's own. The probe passes its `--limit` so the instrument measures
+         the budget it claims to measure (`testing_hazards.md` §2.7).
+    Out: a tuple of at most `chat_retrieval_limit()` passages.
+    Side Effects: one query, and only when a carried id is genuinely missing.
+
+    The tail is displaced rather than the budget split, for the same reason the context
+    arm is capped: the new question has already been ranked on its own merits, and the
+    previous turn may only take seats the new turn could not fill. The common case costs
+    nothing — the parent's clause is usually already in the set.
+    """
+    present = {chunk.chunk_id for chunk in chunks}
+    wanted = [cid for cid in carried_ids if cid not in present]
+    if not wanted:
+        return tuple(chunks)
+    extra = chunks_by_id(wanted, standard_set=standard_set)
+    if not extra:
+        return tuple(chunks)
+    keep = max(0, (chat_retrieval_limit() if budget is None else budget) - len(extra))
+    return tuple(chunks)[:keep] + tuple(extra)
+
+
+def _history_digest(history: Sequence[ChatMessage]) -> str:
+    """A short, stable description of the conversation a reply was produced under.
+
+    Part of the answer-cache key. The prompt has carried history since D2, so two
+    visitors asking the same question with different conversations were already sharing
+    one cached reply; once a follow-up's answer *depends* on its parent, that is a
+    cross-conversation leak rather than a stale answer. Empty for a first question, so
+    the common case keeps its cache.
+    """
+    if not history:
+        return ""
+    joined = "\n".join(f"{message.role}:{message.content}" for message in history)
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
+
+
 def _as_refusal(
     *,
     session: ChatSession,
@@ -1188,14 +1427,17 @@ def answer_question(
     *,
     ip_hash: str = "",
     provider: ChatModel | None = None,
-    retrieval: Callable[[str, StandardSet], RetrievalResult] | None = None,
+    retrieval: Callable[..., RetrievalResult] | None = None,
     now: float | None = None,
 ) -> GroundedAnswer:
     """Answer one question from the session's corpus, or refuse.
 
     In:  `session_uuid`; `question` (non-empty, <= `CHAT_MAX_QUESTION_CHARS`);
          `ip_hash` for the per-IP budget; `provider`/`retrieval` for tests; `now` for
-         the rate-limit clock.
+         the rate-limit clock. A `retrieval` stand-in must accept the keyword
+         `context_query` — it is `""` for a standalone question and the previous
+         question's lexical query for a follow-up, and a fake that ignores it is
+         testing a path the product no longer has (`testing_hazards.md` §2.7).
     Out: a `GroundedAnswer`. `text` is a grounded answer or exactly `REFUSAL`.
     Side Effects: writes a USER and an ASSISTANT `ChatMessage`; on an ungrounded
          result writes one `EscalatedQuery`; may call Gemini once.
@@ -1214,6 +1456,21 @@ def answer_question(
     # grounded on too, and the `not chunks` branch returns before the cache key exists.
     fingerprint = _corpus_fingerprint(session.standard_set)
     history = _history_for(session)
+    # Stage 1 of the follow-up decision. Two things travel from the previous turn into
+    # this one, and both are opt-in on evidence rather than assumed:
+    #   * `context_query` — the previous question, fused in by `search_terms` so the
+    #     fragment's own words are not the only description of the subject;
+    #   * `carried_ids` — the clauses the previous answer was *allowed* to cite, so the
+    #     audit can accept a follow-up quoting the passage the visitor just read.
+    # A standalone question gets neither, and is answered exactly as it was before.
+    parent_question = _last_user_question(history)
+    parent_answer = _last_assistant_message(history)
+    follows_on = bool(parent_question) and looks_like_follow_up(text, parent_question)
+    # A *lexical* query, not a sentence: `search_terms` hands it to
+    # `websearch_to_tsquery`, which ANDs words, so a natural question would match
+    # nothing. `build_retrieval_query` is the existing OR-joiner for this case.
+    context_query = build_retrieval_query(parent_question) if follows_on else ""
+    carried_ids = _carried_chunk_ids(parent_answer) if follows_on else ()
     user_message = ChatMessage.objects.create(
         session=session,
         role=ChatMessage.Role.USER,
@@ -1222,8 +1479,10 @@ def answer_question(
 
     started = time.monotonic()
     retrieve = retrieval or default_retrieval
-    result: RetrievalResult = retrieve(text, session.standard_set)
-    chunks = tuple(result.chunks)
+    result: RetrievalResult = retrieve(
+        text, session.standard_set, context_query=context_query
+    )
+    chunks = _with_carried_citations(result.chunks, carried_ids, session.standard_set)
 
     # Nothing retrieved means there is nothing to ground on. Calling the model here
     # would invite it to answer from memory â€” the exact failure the feature forbids.
@@ -1241,7 +1500,16 @@ def answer_question(
             cached=False,
         )
 
-    cache_key = _cache_key(text, session.standard_set, fingerprint)
+    # Keyed on the conversation *only when the answer was derived from it*. A
+    # standalone question keeps its plain key, so re-asking it in the same session (or
+    # in any other) is still a cache hit — a product property three tests pin. The
+    # residual is stated where it belongs, in `_cache_key`'s docstring.
+    cache_key = _cache_key(
+        text,
+        session.standard_set,
+        fingerprint,
+        _history_digest(history) if follows_on else "",
+    )
     cached_payload = cache.get(cache_key)
     cached = cached_payload is not None
     reply: ModelReply

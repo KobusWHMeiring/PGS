@@ -107,9 +107,10 @@ def test_default_retrieval_passes_the_shipped_budget(chat_standard_set, monkeypa
 
     seen: dict[str, object] = {}
 
-    def spy(terms, *, standard_set, limit, question):
+    def spy(terms, *, standard_set, limit, question, context_query=""):
         seen["terms"] = terms
         seen["limit"] = limit
+        seen["context_query"] = context_query
         return _chatbot.RetrievalResult(
             query=question,
             standard_set_id=standard_set.pk,
@@ -123,6 +124,9 @@ def test_default_retrieval_passes_the_shipped_budget(chat_standard_set, monkeypa
 
     assert seen["limit"] == 3
     assert seen["terms"] == ["sign"]
+    # Stage 1: the arm is passed through and is empty for a first question, so this
+    # path still retrieves what it retrieved before.
+    assert seen["context_query"] == ""
 
 
 def test_the_refusal_is_the_d17_wording():

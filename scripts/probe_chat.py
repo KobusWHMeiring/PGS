@@ -146,6 +146,113 @@ def probe(question: str, *, chunks_only: bool = False, limit: int | None = None)
         print("  AUDIT: grounded")
 
 
+def _show_chunks(title, chunks, *, carried_ids):
+    """Print one retrieval set, marking the passage the parent answer cited."""
+    print(f"  {title} ({len(chunks)} passages)")
+    present = {chunk.chunk_id for chunk in chunks}
+    for position, chunk in enumerate(chunks, start=1):
+        locator = chunk.section_ref or chunk.anchor or f"p.{chunk.page}"
+        arms = []
+        if chunk.lexical_rank is not None:
+            arms.append(f"lex{chunk.lexical_rank}")
+        if chunk.vector_rank is not None:
+            arms.append(f"vec{chunk.vector_rank}")
+        marker = "  <== the parent answer cited this" if chunk.chunk_id in carried_ids else ""
+        label = ",".join(arms) or "?"
+        text = " ".join((chunk.text or "").split())[:80]
+        print(f"    {position}. {locator:<16} [{label:<8}] {text}{marker}")
+    return present
+
+
+def _answer(question, chunks, standard_set, model):
+    """Ask the model, audit it, print it. Returns the accepted chunk ids."""
+    from core.services._chatbot import UpstreamModelError, audit_citations
+
+    try:
+        reply = model.answer(question=question, chunks=chunks, history=[])
+    except UpstreamModelError as error:
+        print(f"  -> UPSTREAM ERROR, no answer invented: {error}")
+        return ()
+    citations, problems = audit_citations(
+        reply.citations, chunks, standard_set_id=standard_set.pk
+    )
+    print(f"  ANSWER: {' '.join((reply.answer or '(empty)').split())[:400]}")
+    print(f"  citations: {len(reply.citations)} raw, {len(citations)} audited")
+    for citation in citations:
+        print(f"    ok  {citation.locator} | {' '.join(citation.quote.split())[:100]}")
+    if problems:
+        print("  AUDIT: REFUSED")
+        for problem in problems:
+            print(f"    ! {problem}")
+    elif reply.insufficient_context or not citations or not reply.answer.strip():
+        print("  AUDIT: would refuse (insufficient_context / no citation / empty)")
+    else:
+        print("  AUDIT: grounded")
+    return tuple(citation.chunk_id for citation in citations)
+
+
+def probe_follow_up(parent: str, follow_up: str, *, limit: int | None = None) -> None:
+    """Measure one follow-up twice: as the product answers it before stage 1, and after.
+
+    The product's path is mirrored exactly, not approximated:
+    `default_retrieval` for retrieval, `build_retrieval_query` for the context arm,
+    `_with_carried_citations` for the inheritance, and `audit_citations` for the verdict.
+
+    Writes no rows. The answer cache is bypassed by calling the provider directly, so
+    two runs of the same pair are comparable.
+    """
+    from core.services._chatbot import (
+        GeminiChatModel,
+        _with_carried_citations,
+        build_retrieval_query,
+        chat_retrieval_limit,
+        default_retrieval,
+        default_standard_set,
+    )
+
+    budget = chat_retrieval_limit() if limit is None else limit
+    standard_set = default_standard_set()
+    model = GeminiChatModel()
+    print()
+    print("=" * 78)
+    print(f"FOLLOW-UP PROBE  (budget {budget})")
+
+    print()
+    print(f"PARENT: {parent}")
+    parent_result = default_retrieval(parent, standard_set, limit=budget)
+    _show_chunks("parent retrieval", parent_result.chunks, carried_ids=())
+    carried_ids = _answer(parent, parent_result.chunks, standard_set, model)
+    unique_carried = sorted(set(carried_ids))
+    print(f"  CARRIED into the follow-up: {len(unique_carried)} clause(s) {unique_carried}")
+
+    print()
+    print(f"FOLLOW-UP: {follow_up}")
+
+    print()
+    print("--- A. before stage 1: the fragment alone")
+    plain = default_retrieval(follow_up, standard_set, limit=budget)
+    present = _show_chunks("retrieval", plain.chunks, carried_ids=set(carried_ids))
+    print(f"  parent's cited clause present: {'YES' if set(carried_ids) & present else 'NO'}")
+    _answer(follow_up, plain.chunks, standard_set, model)
+
+    print()
+    print("--- B. stage 1: context arm + the parent's cited clause")
+    context_query = build_retrieval_query(parent)
+    print(f"  context query: {context_query!r}")
+    stage = default_retrieval(
+        follow_up, standard_set, limit=budget, context_query=context_query
+    )
+    from_context = {chunk.chunk_id for chunk in stage.chunks} & set(carried_ids)
+    merged = _with_carried_citations(stage.chunks, carried_ids, standard_set, budget=budget)
+    present = _show_chunks("retrieval", merged, carried_ids=set(carried_ids))
+    print(f"  parent's cited clause present: {'YES' if set(carried_ids) & present else 'NO'}")
+    if from_context:
+        print("  supplied by the context arm (the parent's words matched the clause)")
+    elif set(carried_ids) & present:
+        print("  supplied by the carried citation (the parent's words did not match)")
+    _answer(follow_up, merged, standard_set, model)
+
+
 def build_parser() -> argparse.ArgumentParser:
     """The CLI. Built per call so `--limit`'s default is read when it is built.
 
@@ -167,6 +274,15 @@ def build_parser() -> argparse.ArgumentParser:
         default=chat_retrieval_limit(),
         help="passages to retrieve (default: settings.CHAT_RETRIEVAL_LIMIT)",
     )
+    parser.add_argument(
+        "--follow-up",
+        nargs=2,
+        metavar=("PARENT", "FOLLOW_UP"),
+        help=(
+            "measure one follow-up before and after stage 1: the parent question, then "
+            "the follow-up. Runs three model calls and writes no rows."
+        ),
+    )
     return parser
 
 
@@ -178,6 +294,11 @@ def main() -> int:
     django.setup()
 
     args = build_parser().parse_args()
+
+    if args.follow_up:
+        parent, follow_up = args.follow_up
+        probe_follow_up(parent, follow_up, limit=args.limit)
+        return 0
 
     questions = [" ".join(args.question)] if args.question else list(SUITE)
     for question in questions:

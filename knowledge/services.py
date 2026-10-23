@@ -48,6 +48,11 @@ logger = logging.getLogger(__name__)
 #: top ranks; 60 is the value the spec fixes, so it is not tuned here.
 RRF_K = 60
 
+#: How many passages a follow-up's *context* arm may carry into the set. Two is enough to
+#: restore the clause the previous turn found; more would let the old subject crowd out
+#: the new one. It is also capped at a quarter of the budget, and never used below four.
+CONTEXT_SEATS = 2
+
 #: How many candidates each arm contributes before fusion. Generous on purpose: RRF can
 #: only promote what an arm returned, so this bounds recall.
 FUSED_CANDIDATES = 20
@@ -191,6 +196,62 @@ def vector_search(vector: list[float], *, standard_set: StandardSet, limit: int)
     )
 
 
+def _retrieved_from_row(
+    chunk,
+    *,
+    score: float = 0.0,
+    lexical_rank: int | None = None,
+    vector_rank: int | None = None,
+) -> RetrievedChunk:
+    """One stored chunk as the caller sees it.
+
+    The single place the mapping lives: `search()` and `chunks_by_id()` both build
+    `RetrievedChunk`s, and a second copy of these eight fields is a citation that renders
+    differently depending on which path produced it.
+    """
+    return RetrievedChunk(
+        chunk_id=chunk.pk,
+        document_title=chunk.document.title,
+        document_version=chunk.document.version,
+        section_ref=chunk.section_ref,
+        heading_path=chunk.heading_path,
+        page=chunk.page,
+        anchor=chunk.anchor,
+        text=chunk.text,
+        score=score,
+        lexical_rank=lexical_rank,
+        vector_rank=vector_rank,
+        standard_set_id=chunk.document.standard_set_id,
+        sub_refs=tuple(chunk.sub_refs or ()),
+    )
+
+
+def chunks_by_id(ids, *, standard_set: StandardSet) -> list[RetrievedChunk]:
+    """Fetch stored chunks by id, in the order asked for, scoped to one set.
+
+    In:  `ids` — chunk ids, in the order the caller wants them; `standard_set` — the
+         corpus boundary.
+    Out: the passages that exist **and belong to that set**, in the requested order.
+         Unknown ids and foreign ids are dropped silently; a carried citation that does
+         not exist cannot be cited, and one from another standard must never be.
+    Side Effects: one query.
+    Fails: never; an empty list is the answer to an empty request.
+
+    `score` is 0.0 by construction: these passages were not ranked this turn, they were
+    carried, so a score would invite a comparison that means nothing.
+    """
+    wanted = list(dict.fromkeys(cid for cid in ids if isinstance(cid, int)))
+    if not wanted:
+        return []
+    rows = {
+        chunk.pk: chunk
+        for chunk in DocumentChunk.objects.filter(
+            pk__in=wanted, document__standard_set=standard_set
+        ).select_related("document")
+    }
+    return [_retrieved_from_row(rows[cid]) for cid in wanted if cid in rows]
+
+
 def search(
     query: str,
     *,
@@ -273,20 +334,11 @@ def search(
         .select_related("document")   # §VI: one query, not one per citation
     }
     chunks = tuple(
-        RetrievedChunk(
-            chunk_id=chunk_id,
-            document_title=rows[chunk_id].document.title,
-            document_version=rows[chunk_id].document.version,
-            section_ref=rows[chunk_id].section_ref,
-            heading_path=rows[chunk_id].heading_path,
-            page=rows[chunk_id].page,
-            anchor=rows[chunk_id].anchor,
-            text=rows[chunk_id].text,
+        _retrieved_from_row(
+            rows[chunk_id],
             score=score,
             lexical_rank=lex_ranks.get(chunk_id),
             vector_rank=vec_ranks.get(chunk_id),
-            standard_set_id=rows[chunk_id].document.standard_set_id,
-            sub_refs=tuple(rows[chunk_id].sub_refs or ()),
         )
         for chunk_id, score in top
         if chunk_id in rows
@@ -328,6 +380,7 @@ def search_terms(
     candidates: int = FUSED_CANDIDATES,
     provider=None,
     question: str = "",
+    context_query: str = "",
 ) -> RetrievalResult:
     """Search a question's significant terms, rarest first, then the OR fallback.
 
@@ -335,6 +388,11 @@ def search_terms(
          `limit`; `candidates`; `provider`; `question` — the visitor's wording, when the
          caller has it. It is embedded for the semantic arm, and it is the *only* query
          used when the corpus does not contain one of the terms (see below).
+         `context_query` — a **lexical query** (terms joined by OR, not a sentence; the
+         caller builds it with `build_retrieval_query`) from the previous question, when
+         it has decided this turn is a follow-up. It is searched lexically and fused in
+         last, so a follow-up keeps the new subject's ranking and regains the old one's
+         clause. Handing it a natural question would AND its words and match nothing.
     Out: a `RetrievalResult` whose chunks are the rare-term results first, then the
          broader OR results, de-duplicated and truncated to `limit`.
 
@@ -476,6 +534,57 @@ def search_terms(
         merged.append(chunk)
 
     warnings = tuple(dict.fromkeys((*primary.warnings, *fallback.warnings)))
+
+    # The context arm, when the caller says this turn continues the last one. It runs
+    # *after* the new question has been ranked, and it displaces the weakest fragment
+    # match rather than splitting the budget: the new subject keeps its seats, and the
+    # previous turn can only take back what the new turn could not fill. Measured need:
+    # a follow-up is searched as its fragment, so the clause the previous answer cited
+    # is usually absent, and the audit then refuses the model's faithful citation.
+    context = context_query.strip()
+    if context and context != (question or "").strip():
+        seats = min(CONTEXT_SEATS, max(0, limit // 4))
+        if seats:
+            # The same rule this module already applies to a question: the rarest known
+            # word carries it. Measured 2026-10-23 on the shipped corpus: OR-ing the
+            # previous question ran `use` and pulled Appendix 1's "natural non-renewable
+            # resources" into a compost follow-up. One rare term cannot do that.
+            context_terms = [term.strip() for term in context.split(" OR ") if term.strip()]
+            context_frequency = {
+                term: document_frequency(term, standard_set=standard_set)
+                for term in context_terms
+            }
+            known_context = [term for term in context_terms if context_frequency[term] > 0]
+            rarest = (
+                min(
+                    known_context,
+                    key=lambda term: (context_frequency[term], context_terms.index(term)),
+                )
+                if known_context
+                else ""
+            )
+            carried = search(
+                rarest,
+                standard_set=standard_set,
+                limit=seats,
+                candidates=candidates,
+                provider=provider,
+                use_vector=False,
+            ) if rarest else RetrievalResult(
+                query=context,
+                standard_set_id=getattr(standard_set, "pk", None),
+                warnings=(
+                    "the previous question's terms are all absent from the corpus, so "
+                    "the context arm searched nothing",
+                ),
+            )
+            incoming = [c for c in carried.chunks if c.chunk_id not in seen][:seats]
+            if incoming:
+                merged = merged[: max(0, limit - len(incoming))]
+                seen = {chunk.chunk_id for chunk in merged}
+                merged.extend(c for c in incoming if c.chunk_id not in seen)
+            warnings = tuple(dict.fromkeys((*warnings, *carried.warnings)))
+
     return RetrievalResult(
         query=question or " OR ".join(cleaned),
         standard_set_id=getattr(standard_set, "pk", None),
@@ -499,6 +608,7 @@ def _has_credentials(provider) -> bool:
 
 
 __all__ = [
+    "CONTEXT_SEATS",
     "DEFAULT_LIMIT",
     "FUSED_CANDIDATES",
     "RRF_K",
@@ -506,6 +616,7 @@ __all__ = [
     "Retained",
     "RetrievalResult",
     "RetrievedChunk",
+    "chunks_by_id",
     "document_frequency",
     "fuse",
     "lexical_search",

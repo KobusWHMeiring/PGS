@@ -34,6 +34,7 @@ from knowledge.tests.page_fixtures import stub_ingest_extraction
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.services import (
     DEFAULT_LIMIT,
+    chunks_by_id,
     FUSED_CANDIDATES,
     RRF_K,
     Retained,
@@ -518,3 +519,120 @@ def test_a_question_about_an_unknown_material_gives_the_semantic_arm_the_budget(
     assert decoy.pk in ids, "the hedge chunk was expected; this test would pass vacuously"
     assert in_set.pk in ids, "the proxy word crowded the semantic result out of the budget"
     assert "cardboard" in " ".join(result.warnings)
+
+
+# --- Stage 1 of the follow-up decision: the context arm ---------------------
+#
+# Two mechanisms, for two different failures, and both are tested here or in
+# `core/tests/test_follow_up.py`:
+#
+#   * The **context arm** below. The parent's *words* reach the clause the fragment
+#     missed. "what if I compost it first?" loses "manure"; the parent question has it.
+#   * The **carried citation** (`chunks_by_id`). The parent's words are *not* in the
+#     clause either — the standard never says "cardboard" — so the only thing that can
+#     put that row back is the passage the previous answer was allowed to cite.
+
+
+@pytest.fixture
+def follow_up_corpus(db):
+    """A corpus where the fragment alone cannot reach the clause the parent found.
+
+    `compost` occurs in both distractor chunks and nowhere in the substance row; the
+    fragment is searched as `compost` alone, so the row that governs it is not returned.
+    The parent question says `manure`, which the row does contain — which is exactly the
+    case the arm exists for.
+    """
+    corpus = StandardSet.objects.create(code="follow-up", label="Follow-up", is_default=True)
+    document = StandardDocument.objects.create(
+        standard_set=corpus, kind="STANDARD", issuing_body="SAOSO",
+        title="SAOSO Standard", version="2.1", source_file="saoso.pdf",
+        sha256="3" * 64, section_scheme="saoso",
+    )
+    distractor_a = make_chunk(document, ref="S4", text="Compost compost compost.", page=34)
+    distractor_b = make_chunk(
+        document, ref="S23", text="Compost and social justice.", page=67
+    )
+    manure = make_chunk(
+        document,
+        ref="Appendix 2",
+        text=(
+            "Farmyard manure, slurry and urine — shall not constitute the main source of "
+            "nitrogen in the absence of complimentary and additional nitrogen generating "
+            "practices on farm and shall not be from conventional intensive livestock "
+            "production systems without prior permission from the control body"
+        ),
+        page=76,
+    )
+    return corpus, manure, (distractor_a, distractor_b)
+
+
+def test_the_context_arm_finds_the_clause_the_fragment_lost(follow_up_corpus):
+    corpus, manure, _ = follow_up_corpus
+    fragment = search_terms(["compost"], standard_set=corpus, question="compost", limit=1)
+    assert manure.pk not in [chunk.chunk_id for chunk in fragment.chunks]
+
+    carried = search_terms(
+        ["compost"],
+        standard_set=corpus,
+        question="what if I compost it first?",
+        limit=8,
+        context_query="horse OR manure",
+    )
+
+    assert manure.pk in [chunk.chunk_id for chunk in carried.chunks]
+
+
+def test_the_context_arm_never_exceeds_the_budget(follow_up_corpus):
+    corpus = follow_up_corpus[0]
+    result = search_terms(
+        ["compost"],
+        standard_set=corpus,
+        question="what if I compost it first?",
+        limit=4,
+        context_query="horse OR manure",
+    )
+    assert len(result.chunks) <= 4
+
+
+def test_no_context_query_changes_nothing(follow_up_corpus):
+    """A new question must retrieve exactly what it retrieved before stage 1."""
+    corpus = follow_up_corpus[0]
+    plain = search_terms(["compost"], standard_set=corpus, question="compost", limit=4)
+    blank = search_terms(
+        ["compost"], standard_set=corpus, question="compost", limit=4, context_query=""
+    )
+    assert [c.chunk_id for c in plain.chunks] == [c.chunk_id for c in blank.chunks]
+
+
+# --- Carrying a parent's cited passages -------------------------------------
+
+
+def test_carrying_a_citation_is_scoped_to_the_set(follow_up_corpus):
+    corpus, manure, _ = follow_up_corpus
+    other = StandardSet.objects.create(code="other-set", label="Other")
+    other_document = StandardDocument.objects.create(
+        standard_set=other, kind="SOP", issuing_body="Other", title="Other procedures",
+        version="1", source_file="other.pdf", sha256="4" * 64, section_scheme="opp",
+    )
+    foreign = make_chunk(
+        other_document, ref="§4.2", text="Farmyard manure, slurry and urine"
+    )
+
+    carried = chunks_by_id([manure.pk, foreign.pk], standard_set=corpus)
+
+    assert [chunk.chunk_id for chunk in carried] == [manure.pk], (
+        "a carried passage from another corpus must be dropped, not trusted"
+    )
+
+
+def test_carrying_returns_the_passages_in_the_order_asked_for(follow_up_corpus):
+    corpus, manure, distractors = follow_up_corpus
+    ordered = [distractors[1].pk, manure.pk]
+    carried = chunks_by_id(ordered, standard_set=corpus)
+    assert [chunk.chunk_id for chunk in carried] == ordered
+
+
+def test_carrying_a_missing_id_returns_nothing_for_it(follow_up_corpus):
+    corpus, manure, _ = follow_up_corpus
+    carried = chunks_by_id([manure.pk, 999999], standard_set=corpus)
+    assert [chunk.chunk_id for chunk in carried] == [manure.pk]
