@@ -36,6 +36,11 @@ from pathlib import Path
 import django
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if not (REPO_ROOT / "manage.py").exists():
+    # Copied out of the tree to run on the box (`git show origin/main:... > /tmp/x.py`):
+    # `parents[1]` is then `/tmp`'s parent, not the project. Fall back to the working
+    # directory, which is what `cd ~/apps/pgs` establishes.
+    REPO_ROOT = Path.cwd()
 sys.path.insert(0, str(REPO_ROOT))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pgs.settings")
 django.setup()
