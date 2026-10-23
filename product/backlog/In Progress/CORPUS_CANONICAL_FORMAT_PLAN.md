@@ -202,6 +202,41 @@ contract that no longer exists — which is the difference between a fix and a g
 *Fails if:* a stored assistant row has an empty `prompt_version`; or two corpora produce
 rows indistinguishable by `corpus_fingerprint`.
 
+**P2.5a — store what was *claimed*, not only what was supplied.** *(added 2026-10-22 from
+G9 — `CHAT_ANSWER_COVERAGE_PRD.md`. P2.5 makes an answer attributable; this makes it
+auditable.)* Three additions, one migration (`core/0006`, together with P2.5):
+
+1. **`citations` JSON on the assistant row** — the raw citations the model returned *and*
+   the audited subset that was accepted, each with locator, page, quote and document.
+   Without it the visible claim is not stored at all: `ChatMessage` keeps the answer text,
+   so "it said sodium borate is permitted, and here is the quote it used" cannot be
+   re-checked later. It also makes P2.6's own metric — *"answers whose citations all come
+   from one document"* — computable, which it currently is not: `retrieved_chunks` is
+   every chunk **supplied**, not the ones cited.
+2. **`refusal_checks` JSON on the refusal path** — the `problems` tuple from
+   `audit_citations`, not just the coarse `reason`. G9 turned on exactly this distinction:
+   `not present in the retrieved set` is a **prompt-contract** defect, while `the quote is
+   not in the cited chunk` is a **corpus/extraction** defect. `CITATION_AUDIT` alone cannot
+   tell them apart, and a reviewer who cannot tell them apart fixes the wrong layer.
+3. **A grounding snapshot that survives re-ingest.** The `retrieved_chunks` M2M cascades
+   when `--force` re-ingests a document (that is what the flag documents itself as doing),
+   so rebuilding the corpus erases what every past answer stood on — which contradicts
+   D59's "keep transcripts indefinitely": the question survives, the answer survives, and
+   the grounds for it are gone. Store a JSON snapshot beside the M2M (locator, page,
+   heading_path, chunk sha and a quote sha), so the FK serves joins while the chunks exist
+   and the snapshot serves the record when they do not. **We destroyed today's evidence
+   ourselves** by rebuilding the corpus before this existed.
+
+*Deliberately not stored:* the rendered prompt (reproducible from `prompt_version` +
+`question` + chunks, and storing it invites reading a template as a historical fact), and
+chunk text (the corpus owns that; a copy under `ChatMessage` would go stale in a second
+place). Cost: ≤6 KB per turn. No new personal data — the question, `ip_hash` and
+`user_agent` are already there, and D59/P2.8 already owns the retention question.
+
+*Fails if:* a `CITATION_AUDIT` refusal has an empty `refusal_checks`; a `--force` re-ingest
+leaves an assistant row whose grounding snapshot is empty; or `chat_review` reports a
+citation metric that had to fall back to `retrieved_chunks` to compute.
+
 **P2.6 — `manage.py chat_review`: read-only, weekly.** A window (default 30 days), markdown
 out, no writes:
 

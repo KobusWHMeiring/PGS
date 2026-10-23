@@ -395,6 +395,10 @@ proves the format is no longer an obstacle, not that the class is gone. A differ
 `LOCATOR:` line is the habit — five fresh sessions on the box is the acceptance test, the same
 rule G8's closure used.
 
+**Feeds:** `CORPUS_CANONICAL_FORMAT_PLAN.md` **P2.5a** — the three records this
+investigation had to reconstruct by re-asking the model (`citations`, `refusal_checks`,
+and a grounding snapshot that survives `--force`).
+
 **Blocks:** nothing now. It refused a correct answer on a live public surface for as long as
 the box held the refreshed corpus — hours, not days, because the corpus only reached the box
 today. It would have been invisible forever without `why_refused.py`.
