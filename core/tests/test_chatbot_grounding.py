@@ -641,6 +641,104 @@ def test_a_reviewed_table_row_is_one_citable_passage(chat_corpus, chat_standard_
     assert citations[0].page == 76
 
 
+# --- The locator a model actually copies (2026-10-22, live on /ask/) ---------
+#
+# The passage header used to read `[6] Appendix 2 — SAOSO Standard for Organic
+# Production and Processing v2.1, page 77`: locator and document glued together with an
+# em dash. Asked "can i use borax powder?" on the live site, the model answered
+# correctly, quoted the Appendix 2 trace-elements row verbatim, and set `section_ref` to
+# that whole header. The audit looked for a locator it had never been given, refused, and
+# the visitor was told "I cannot find a definitive answer". `why_refused.py` on the box:
+#
+#     citations: 1 raw, 0 audited
+#     AUDIT: REFUSED
+#       ! Appendix 2 — SAOSO Standard … v2.1: not present in the retrieved set
+#
+# Two defences, and the cause is the first one: the prompt now prints `LOCATOR:` on its
+# own line, and the audit treats everything from a dash on as decoration.
+
+
+def test_a_passage_prints_its_locator_on_its_own_line(chat_corpus, chat_standard_set):
+    """The locator must not share a line with the document it belongs to."""
+    prompt = _prompt_for(chat_corpus.fee, chat_standard_set)
+    header = next(line for line in prompt.splitlines() if line.startswith("[1]"))
+
+    assert header.startswith("[1] LOCATOR: "), header
+    assert chat_corpus.fee.document.title not in header, (
+        "the document title is metadata, and sharing the line invited the model to cite it"
+    )
+    assert f"Document: {chat_corpus.fee.document.title}" in prompt
+
+
+def test_the_system_prompt_says_which_value_is_the_address():
+    lowered = SYSTEM_PROMPT.lower()
+    assert "locator:" in lowered
+    assert "nothing else" in lowered
+    assert "never the document title" in lowered
+
+
+def test_a_locator_decorated_with_the_document_label_still_audits(
+    chat_corpus, chat_standard_set
+):
+    """The live borax citation, verbatim: it must be accepted, not refused."""
+    chunk = chat_corpus.fee
+    decorated = f"{chunk.section_ref} — {chunk.document.title} v{chunk.document.version}"
+
+    citations, problems = audit_citations(
+        [{"section_ref": decorated, "quote": chunk.text[:60].strip()}],
+        [_retrieved_from_stored(chunk, chat_standard_set)],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    assert problems == ()
+    assert citations[0].section_ref == chunk.section_ref, (
+        "the citation must resolve to the stored locator, not echo the decoration"
+    )
+
+
+def test_a_decorated_locator_that_is_ambiguous_still_refuses(chat_corpus, chat_standard_set):
+    """Stripping the label widens format tolerance, never identity.
+
+    `4.2` and `§4.2` are the same address spelled two ways, so the key unites them — and
+    the audit refuses to resolve a citation through a key that two stored locators
+    produce. The decoration strip must not reopen that: the live failure must be fixed
+    for a bare locator without ever making an ambiguous one acceptable.
+    """
+    from knowledge.models import DocumentChunk
+
+    plain = DocumentChunk.objects.create(
+        document=chat_corpus.document,
+        section_ref="4.2",
+        heading_path="4.2 Fees",
+        page=30,
+        text="Fees are payable in February each year.",
+    )
+    signed = DocumentChunk.objects.create(
+        document=chat_corpus.document,
+        section_ref="§4.2",
+        heading_path="§4.2 Fees (second printing)",
+        page=31,
+        text="Fees are payable in February each year.",
+    )
+
+    citations, problems = audit_citations(
+        [
+            {
+                "section_ref": f"{plain.section_ref} — {plain.document.title}",
+                "quote": plain.text,
+            }
+        ],
+        [
+            _retrieved_from_stored(plain, chat_standard_set),
+            _retrieved_from_stored(signed, chat_standard_set),
+        ],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    assert citations == []
+    assert any("ambiguous" in problem for problem in problems), problems
+
+
 # --- The corpus artefact (D53): ten reviewed examples, audited end to end -----
 #
 # The BPP is ingested from its reviewed artefact (`knowledge/corpus/bpp.md`), then each

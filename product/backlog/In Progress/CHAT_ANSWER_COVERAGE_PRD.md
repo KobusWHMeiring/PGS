@@ -343,6 +343,62 @@ measured against the five-run rule above.
 and by the same rule likely Scenarios 2, 3, 9 and 10 — all five are chat scenarios and all
 five are unsigned.
 
+### G9. The model cites the passage header, and the audit refuses a correct answer
+
+**Found 2026-10-22 on the live site**, the day the corpus was rebuilt: *"can i use borax
+powder?"* answered *"I cannot find a definitive answer in the SAOSO standard or the Outeniqua
+PGS documents."* The answer exists — SAOSO Appendix 2 lists **sodium borate** as a trace
+element, restricted to documented deficiency — and the product had found it.
+
+**Located with `scripts/why_refused.py` (written for this), not by guessing:**
+
+```
+corpus*1  'borate'        -> the live corpus has the row, in full
+retrieved(8): 6 of 8 are Appendix 2   -> retrieval reached it
+#1/#2  CITATION_AUDIT     -> the model answered, the audit refused the citation
+```
+
+Then `probe_chat.py` on the box named the refusal exactly:
+
+```
+citations: 1 raw, 0 audited
+  raw  Appendix 2 — SAOSO Standard for Organic Production and Processing v2.1 | Trace elements, …
+AUDIT: REFUSED
+  ! Appendix 2 — SAOSO Standard … v2.1: not present in the retrieved set
+```
+
+**Cause, and it is not the model's.** `build_prompt` printed each passage as
+`[6] Appendix 2 — SAOSO Standard for Organic Production and Processing v2.1, page 77`, gluing
+locator and document label together with an em dash while rule 2 said *"cite the exact locator
+printed for that passage"*. The model copied the header; the audit had never been given that
+string. Not corpus, not retrieval, not the cache (the key carries a corpus fingerprint, so no
+pre-refresh reply can be served — and the count moved 363 → 364 anyway). Non-deterministic
+too: the dev box answered the same question with 2 audited citations on the same day.
+
+**Fixed on both sides, because the formatting must not be able to hide an answer again.**
+`d49-3`: each passage prints `LOCATOR:` on its own line with `Document:` beneath, rule 2 says
+`section_ref` is the value after `LOCATOR:` and *nothing else*, and `_normalise_ref` treats
+everything from a dash on as decoration. That last part is format tolerance, **not** a looser
+audit: the key must still resolve to exactly one stored locator, the quote must still be a
+substring of that chunk, and `sub_ref` must still exist — `test_a_decorated_locator_that_is_
+ambiguous_still_refuses` pins that a two-locator key still refuses. Guards were broken and
+watched go red before being trusted: removing the decoration strip fails both audit tests,
+removing `LOCATOR:` fails the prompt test.
+
+**Verified:** gate 808 green; `probe_chat "can i use borax powder?"` now returns *"sodium
+borate, which is chemically known as borax, can be used as a trace element… restricted to
+where a deficiency is documented"* with **2 raw, 2 audited, `AUDIT: grounded`**.
+
+**Residual risk, recorded rather than absorbed.** The model is stochastic, so one green run
+proves the format is no longer an obstacle, not that the class is gone. A different decoration
+(the page number instead of the title, the version alone) would still refuse until the
+`LOCATOR:` line is the habit — five fresh sessions on the box is the acceptance test, the same
+rule G8's closure used.
+
+**Blocks:** nothing now. It refused a correct answer on a live public surface for as long as
+the box held the refreshed corpus — hours, not days, because the corpus only reached the box
+today. It would have been invisible forever without `why_refused.py`.
+
 ## 8. Deployment note
 
 `ingest_standard` is a no-op when the PDF's sha256 is already stored, so **shipping this

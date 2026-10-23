@@ -121,7 +121,11 @@ MAX_OUTPUT_TOKENS_CEILING = 4096
 #: `d49-2` (2026-10-22): the budget is now really eight passages — `CHAT_RETRIEVAL_LIMIT`
 #: had stayed at five because D49 raised the fallback constant instead of the setting, so
 #: every cached answer was produced against a five-passage set (`testing_hazards.md` §2.7).
-PROMPT_VERSION = "d49-2"
+#: `d49-3` (2026-10-22): each passage now prints its locator on its own `LOCATOR:` line.
+#: The old header glued locator and document together (`[6] Appendix 2 — SAOSO Standard …
+#: v2.1, page 77`), and the model copied the whole line as `section_ref`, which the audit
+#: refused as "not present in the retrieved set" — a refusal that hid a correct answer.
+PROMPT_VERSION = "d49-3"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -134,7 +138,9 @@ organic farming elsewhere.
 2. Every assertion must be traceable to a supplied passage. Copy the words you \
 quote character-for-character from that passage into `quote`: do not paraphrase, \
 summarise, correct spelling, or join two passages with an ellipsis (`...`). Cite \
-the exact locator printed for that passage.
+the exact locator printed for that passage: `section_ref` is the value after \
+`LOCATOR:` on that passage and **nothing else** — never the document title, its \
+version or the page number, which are metadata and are not part of the address.
 3. One citation is ONE contiguous excerpt from ONE numbered passage. `quote` must \
 be a single unbroken span copied from that passage: never use `...`, `[…]`, or any \
 other omission marker; never stitch together sentences that are not adjacent on the \
@@ -586,8 +592,20 @@ def _normalise_ref(value: str) -> str:
     it, so two different addresses can never collapse into one citation. The `S`
     prefix is deliberately *not* stripped — D14 stores it because `1.1.1` exists in
     both Section A and Section B, and conflating them would be a wrong citation.
+
+    **The document label is stripped, not the substance.** The prompt used to print a
+    passage's locator joined to its document (`Appendix 2 — SAOSO Standard … v2.1,
+    page 77`), and the model cited that whole string. The audit resolved only bare
+    locators, refused, and turned a correct, properly quoted answer into "I cannot
+    find a definitive answer" on the live site (2026-10-22). The prompt now prints a
+    `LOCATOR:` line, and this is the belt to that braces: everything from a dash on is
+    decoration, never identity. It does not weaken anything — the key still has to
+    resolve to exactly one stored locator, the quote still has to be a substring of
+    that chunk, and the `sub_ref` still has to exist.
     """
     text = " ".join((value or "").split()).lower()
+    for separator in ("\u2014", "\u2013", " | "):
+        text = text.split(separator, 1)[0]
     text = text.replace("§", "")
     if text.startswith("section "):
         text = text[len("section ") :]
@@ -853,10 +871,13 @@ def build_prompt(
     """Render the passages and the bounded conversation window.
 
     The locator on each passage is the *only* citation the model may use; it is what
-    `audit_citations` will accept. Sub-references are listed explicitly so a model
-    does not have to guess at a depth (Â§4.5: depth three exists, depth four does not),
-    and a passage with none says so, so the model omits `sub_ref` rather than
-    inventing one from a heading (D47).
+    `audit_citations` will accept. It prints on its own `LOCATOR:` line because the
+    previous header joined it to the document label with an em dash
+    (`[6] Appendix 2 — SAOSO Standard … v2.1, page 77`) and the model cited the whole
+    line, which the audit could not resolve — live on /ask/, 2026-10-22. Sub-references
+    are listed explicitly so a model does not have to guess at a depth (Â§4.5: depth
+    three exists, depth four does not), and a passage with none says so, so the model
+    omits `sub_ref` rather than inventing one from a heading (D47).
     """
     blocks: list[str] = []
     for index, chunk in enumerate(chunks, start=1):
@@ -872,7 +893,8 @@ def build_prompt(
             else "\nNumbered sub-clauses available: none — omit `sub_ref` for this passage."
         )
         blocks.append(
-            f"[{index}] {locator} â€” {document}{page}{sub_line}\n{chunk.text}"
+            f"[{index}] LOCATOR: {locator}\n"
+            f"Document: {document}{page}{sub_line}\n{chunk.text}"
         )
 
     conversation = "\n".join(
