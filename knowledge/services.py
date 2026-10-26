@@ -101,6 +101,10 @@ class RetrievedChunk:
     #: scope after retrieval (D3) without a second query, and so a citation audit
     #: cannot accept a foreign chunk from a buggy retriever.
     standard_set_id: int | None = None
+    #: The file the corpus was ingested from, e.g. `pgs_docs/saoso-version-2.1-2026.pdf`.
+    #: Carried so a *caller* can map a chunk to whatever public address that document has —
+    #: `knowledge` does not know what a URL is, and must not learn (`build_principles.md` §I).
+    document_source_file: str = ""
     #: `[{"ref", "start", "end"}]` as stored. A citation's `sub_ref` must appear here;
     #: depth is never inferred (D15/D43).
     sub_refs: tuple[dict, ...] = ()
@@ -222,6 +226,7 @@ def _retrieved_from_row(
         lexical_rank=lexical_rank,
         vector_rank=vector_rank,
         standard_set_id=chunk.document.standard_set_id,
+        document_source_file=chunk.document.source_file,
         sub_refs=tuple(chunk.sub_refs or ()),
     )
 

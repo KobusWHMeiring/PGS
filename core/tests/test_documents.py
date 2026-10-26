@@ -32,6 +32,7 @@ import hashlib
 from pathlib import Path
 
 import pytest
+from django.conf import settings
 from django.core.management import call_command
 from django.test import Client
 
@@ -75,6 +76,25 @@ def test_the_list_is_eight_documents_and_has_the_right_sources():
     assert len(DOCUMENTS) == 8, f"expected 8 published documents, found {len(DOCUMENTS)}"
     for spec in DOCUMENTS:
         assert (DOCS_SOURCE / spec.source).is_file(), f"{spec.code}: missing {spec.source}"
+
+
+def test_the_recorded_source_is_the_path_a_citation_joins_on(published):
+    """`source_path` must equal the corpus's `source_file`, or no citation is clickable.
+
+    The absolute path `source.as_posix()` used to record is wrong twice over: it differs per
+    machine, and it can never equal `StandardDocument.source_file` (`pgs_docs/<file>.pdf`),
+    which is the only join between a stored chunk and a public address. Asserted against the
+    published row the seed wrote, not against a literal, so the constant and the seed cannot
+    drift apart silently.
+    """
+    from core.services._documents import DOCUMENTS, DOCS_SOURCE_DIR, public_codes_by_source
+
+    row = PublicDocument.objects.get(code="saoso-standard-v2.1")
+    expected = (DOCS_SOURCE_DIR / DOCUMENTS[0].source).resolve()
+    repo_relative = expected.relative_to(Path(settings.BASE_DIR).resolve()).as_posix()
+
+    assert row.source_path == repo_relative
+    assert public_codes_by_source()[repo_relative] == "saoso-standard-v2.1"
 
 
 def test_publish_is_idempotent(published):

@@ -30,8 +30,8 @@ from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render
 
 from core.models import PublicDocument
-from core.services._documents import absolute_path, documents_context
-from core.services._public import public_context
+from core.services._documents import absolute_path, documents_context, reader_for
+from core.services._public import Page, chrome_context, public_context
 
 logger = logging.getLogger(__name__)
 
@@ -73,3 +73,32 @@ def document_file(request, code: str):
         filename=document.download_name,
     )
     return response
+
+
+def document_reader(request, code: str):
+    """The ingested text of one published document, searchable and anchorable.
+
+    Unpublished and unknown codes are the same 404, for the same reason the download is:
+    `is_published` is the only gate, and a citation is not an exception to it.
+    """
+    document = get_object_or_404(PublicDocument.objects.published(), code=code)
+    reader = reader_for(document, request.GET.get("q", ""))
+    page = Page(
+        key="document-reader",
+        title=f"{document.title} — the text, as we ingested it",
+        description=(
+            f"The text of {document.title} that the assistant answers from, with the "
+            "passages a citation names."
+        ),
+        eyebrow="The documents",
+        heading=document.title,
+        lede=(
+            "This is the text we ingested, passage by passage. Search it, or follow a "
+            "citation straight to the clause it quotes."
+        ),
+    )
+    return render(
+        request,
+        "public/document_reader.html",
+        chrome_context(page) | {"reader": reader},
+    )

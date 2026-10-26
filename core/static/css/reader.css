@@ -1,0 +1,268 @@
+/* ==========================================================================
+   reader.css — /documents/<code>/read/, the surface a citation lands on.
+
+   Loaded only on the reader (`{% block extra_css %}`), not by base.html: site.css is
+   21.9 KB of a 30 KB file cap (§II), and this is the one page a visitor arrives at from
+   a citation rather than from the nav.
+
+   Styling consequences that are not decoration:
+
+     * `.passage:target` is the whole point of the page. A reader following a citation
+       must be able to see *where the clause is* without losing the passages around it,
+       so the target is marked with ground and a rule, never with a colour that hides
+       the text it just arrived at.
+     * the contents list is a reading aid, so it stays tappable at 390 px (§IV, ≥44 px)
+       and scrolls independently of the text.
+     * nothing here styles a *claim*: a search hit is marked with `<mark>` because the
+       reader typed the word, not because the page is endorsing it.
+   ========================================================================== */
+
+.reader {
+  max-width: var(--container-max);
+}
+
+/* --- Search --------------------------------------------------------------- */
+
+.reader__search {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-creamWarm);
+}
+
+.reader__search-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--brand-forestDark);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reader__search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reader__input {
+  flex: 1 1 16rem;
+  min-height: 2.75rem; /* 44 px — DESIGN rule 5 */
+  padding: 0 0.75rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-xs);
+  background-color: var(--brand-cream);
+  color: var(--brand-charcoal);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+.reader__search-row .btn {
+  min-height: 2.75rem;
+}
+
+.reader__search-note {
+  margin: 0.75rem 0 0;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+.reader__no-hits {
+  margin-bottom: 2rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--brand-ochre);
+  background-color: var(--brand-ochreLight);
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+}
+
+/* --- Search hits ---------------------------------------------------------- */
+
+.reader__hits {
+  margin: 0 0 2.5rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.reader__hit {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+}
+
+.reader__hit-locator {
+  display: inline-block;
+  min-height: 1.5rem;
+  color: var(--brand-ochreInk);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+
+.reader__hit-locator:hover {
+  color: var(--brand-ochreDark);
+  text-decoration: underline;
+}
+
+.reader__hit-text {
+  margin: 0.35rem 0 0;
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.reader__hit-text mark {
+  padding: 0 0.15em;
+  border-radius: 2px;
+  background-color: var(--brand-ochreLight);
+  color: var(--brand-charcoal);
+  font-weight: 700;
+}
+
+/* --- Body: contents + passages ------------------------------------------- */
+
+.reader__body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 900px) {
+  .reader__body {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .reader__contents {
+    position: sticky;
+    top: calc(var(--header-height) + 1rem);
+    max-height: calc(100vh - var(--header-height) - 2rem);
+    overflow-y: auto;
+  }
+}
+
+.reader__contents {
+  padding: 1rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-creamWarm);
+}
+
+.reader__contents-title {
+  margin: 0 0 0.5rem;
+  color: var(--brand-forestDark);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reader__contents-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.reader__contents-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.reader__contents-link {
+  display: block;
+  min-height: 2.75rem; /* 44 px: this is the phone's table of contents */
+  padding: 0.6rem 0;
+  color: var(--brand-charcoal);
+  font-size: var(--text-xs);
+  text-decoration: none;
+}
+
+.reader__contents-link:hover {
+  color: var(--brand-ochreInk);
+  text-decoration: underline;
+}
+
+.reader__page {
+  flex: none;
+  color: var(--brand-muted);
+  font-size: var(--text-nano);
+  white-space: nowrap;
+}
+
+/* --- Passages ------------------------------------------------------------- */
+
+.reader__passages {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.passage {
+  padding: 0.25rem 0 0.25rem 0;
+  border-left: 3px solid transparent;
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+.passage:target {
+  border-left-color: var(--brand-ochre);
+  background-color: var(--brand-ochreLight);
+  padding-left: 0.85rem;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+}
+
+.passage__locator {
+  margin: 0 0 0.25rem;
+  color: var(--brand-ochreInk);
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-micro);
+  letter-spacing: 0.02em;
+}
+
+.passage__text {
+  margin: 0;
+  max-width: var(--container-prose);
+  color: var(--brand-charcoal);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+/* --- Missing text, provenance -------------------------------------------- */
+
+.reader__missing {
+  max-width: var(--container-narrow);
+  padding: 1.5rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-creamWarm);
+}
+
+.reader__missing h2 {
+  margin-top: 0;
+  color: var(--brand-forestDark);
+  font-size: var(--text-xl);
+}
+
+.reader__missing p {
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.reader__provenance {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--brand-sand);
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}

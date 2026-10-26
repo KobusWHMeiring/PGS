@@ -238,6 +238,23 @@ PAGES: dict[str, Page] = {
 }
 
 
+def chrome_context(page: Page) -> dict:
+    """The chrome for a page whose `Page` is built per request.
+
+    `/ask/<slug>/` and `/documents/<code>/read/` have no entry in `PAGES` — they are rows,
+    not routes — but they still need the nav, the footer and the fee figures every public
+    page reads. Passing a `Page` instance keeps one shape for `base.html`'s `og:` tags.
+    """
+    return {
+        "page": page,
+        "nav": NAV,
+        "pages": PAGES,
+        "membership_farmer_cents": MEMBERSHIP_FARMER_CENTS,
+        "membership_pgs_sa_cents": MEMBERSHIP_PGS_SA_CENTS,
+        "fee_bands": FEE_BANDS,
+    }
+
+
 def public_context(page_key: str) -> dict:
     """The context every public template is rendered with.
 
@@ -252,11 +269,4 @@ def public_context(page_key: str) -> dict:
     page and the fee table on `/become-a-member/` must never disagree — they read the
     same constant, and `core/tests/test_public.py` asserts that.
     """
-    return {
-        "page": PAGES[page_key],
-        "nav": NAV,
-        "pages": PAGES,
-        "membership_farmer_cents": MEMBERSHIP_FARMER_CENTS,
-        "membership_pgs_sa_cents": MEMBERSHIP_PGS_SA_CENTS,
-        "fee_bands": FEE_BANDS,
-    }
+    return chrome_context(PAGES[page_key])

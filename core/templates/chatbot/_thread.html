@@ -39,6 +39,17 @@ that cannot be checked.
                 <p class="cite-source">
                   {{ citation.document }}{% if citation.page %} · p. {{ citation.page }}{% endif %}
                 </p>
+                {% if citation.read_url %}
+                  {% comment %} The clause is the deliverable: the chip expands to a quote, and
+                     the quote opens the text we ingested at the passage it came from. Absent
+                     when the group does not publish the document the clause came from — a link
+                     to nowhere is worse than plain text. {% endcomment %}
+                  <p class="cite-source">
+                    <a class="cite__read" href="{{ citation.read_url }}">
+                      Read it in {{ citation.document }} &rarr;
+                    </a>
+                  </p>
+                {% endif %}
               </details>
             {% endfor %}
           </div>

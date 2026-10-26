@@ -38,16 +38,19 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Callable, Protocol, Sequence
+from typing import Callable, Mapping, Protocol, Sequence
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Max
+from django.urls import reverse
 
 from core.models import ChatMessage, ChatSession, EscalatedQuery, User
+from core.services._documents import public_codes_by_source
 from knowledge.models import DocumentChunk, StandardSet
+from knowledge.reading import reading_anchor
 from knowledge.services import (
     RetrievedChunk,
     RetrievalResult,
@@ -276,6 +279,28 @@ class Citation:
     anchor: str = ""
     heading_path: str = ""
     document: str = ""
+    #: The public document's URL code (`PublicDocument.code`), resolved by the caller through
+    #: provenance rather than guessed from the title. Empty when the group does not publish the
+    #: document the clause came from — and then a template renders text, never a dead link.
+    document_code: str = ""
+    #: The fragment the reader lands on, derived from the same section reference the citation
+    #: shows (`knowledge.reading.reading_anchor`), so it survives a `--force` re-ingest.
+    reading_anchor: str = ""
+
+    @property
+    def read_url(self) -> str:
+        """The reader URL this citation lands on, or "" when its document is not published.
+
+        A property rather than a `reverse()` in a template: `_thread.html` and the answer page
+        both render a citation, and two call sites assembling one URL is two things to keep
+        in step. The failure mode is silent — a link that 200s on the wrong document.
+        """
+        if not self.document_code:
+            return ""
+        return (
+            reverse("core:document_reader", kwargs={"code": self.document_code})
+            + f"#{self.reading_anchor}"
+        )
 
     @property
     def locator(self) -> str:
@@ -791,6 +816,7 @@ def audit_citations(
     chunks: Sequence[RetrievedChunk],
     *,
     standard_set_id: int | None,
+    document_codes: Mapping[str, str] | None = None,
 ) -> tuple[list[Citation], tuple[str, ...]]:
     """Validate the model's citations against the retrieved chunks.
 
@@ -896,6 +922,10 @@ def audit_citations(
                         else ""
                     )
                 ),
+                document_code=(document_codes or {}).get(matched.document_source_file, ""),
+                reading_anchor=reading_anchor(
+                    matched.section_ref, matched.anchor, matched.heading_path
+                ),
             )
         )
 
@@ -987,6 +1017,36 @@ def _grounding_snapshot(chunks: Sequence[RetrievedChunk]) -> list[dict]:
     ]
 
 
+def citation_records(citations: Sequence[Citation]) -> list[dict]:
+    """The accepted citations in the shape `_citation_record` stores them.
+
+    One shape, two callers: the transcript's evidence trail and the board's card. A card and a
+    turn must not disagree about what was cited, and two list comprehensions that drift apart
+    would disagree silently.
+
+    `document_code` and `reading_anchor` are stored **in** the snapshot rather than resolved at
+    render time: a card outlives a `--force` re-ingest, and a page that silently re-resolved a
+    citation after the corpus changed would be a claim nobody could audit.
+    """
+    return [
+        {
+            "section_ref": citation.section_ref,
+            "sub_ref": citation.sub_ref,
+            "page": citation.page,
+            "document": citation.document,
+            "quote": citation.quote,
+            # Recorded so a follow-up can carry the previous answer's clauses back into
+            # retrieval, and so the trace console can show which passage an accepted
+            # citation actually named. Rows written before this carry no `chunk_id`, and a
+            # follow-up simply inherits nothing from them.
+            "chunk_id": citation.chunk_id,
+            "document_code": citation.document_code,
+            "reading_anchor": citation.reading_anchor,
+        }
+        for citation in citations
+    ]
+
+
 def _citation_record(
     raw_citations: Sequence[object], accepted: Sequence[Citation]
 ) -> dict:
@@ -1002,23 +1062,8 @@ def _citation_record(
     """
     return {
         "raw": [item for item in raw_citations if isinstance(item, dict)][:20],
-        "accepted": [
-            {
-                "section_ref": citation.section_ref,
-                "sub_ref": citation.sub_ref,
-                "page": citation.page,
-                "document": citation.document,
-                "quote": citation.quote,
-                # Recorded so a follow-up can carry the previous answer's clauses back
-                # into retrieval, and so the trace console can show which passage an
-                # accepted citation actually named. Rows written before this carry no
-                # `chunk_id`, and a follow-up simply inherits nothing from them.
-                "chunk_id": citation.chunk_id,
-            }
-            for citation in accepted
-        ],
+        "accepted": citation_records(accepted),
     }
-
 
 
 def _reply_to_json(reply: ModelReply) -> dict:
@@ -1528,6 +1573,9 @@ def answer_question(
         reply.citations,
         chunks,
         standard_set_id=session.standard_set_id,
+        # Resolved once per turn: `is_published` is consulted, so a citation can only link to
+        # a document the group actually publishes.
+        document_codes=public_codes_by_source(),
     )
 
     # Every branch below is a refusal. The flags are deliberately separate so the

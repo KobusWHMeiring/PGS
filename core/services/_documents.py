@@ -36,6 +36,15 @@ from django.conf import settings
 from django.db import transaction
 
 from core.models import PublicDocument
+from knowledge.models import StandardDocument
+from knowledge.reading import (
+    ReadingEntry,
+    SearchHit,
+    contents,
+    reading_chunks,
+    search_in_document,
+    unique_anchors,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +198,25 @@ def published_documents() -> list[PublicDocument]:
     return list(PublicDocument.objects.published())
 
 
+def public_codes_by_source() -> dict[str, str]:
+    """In: nothing. Out: `{source_file: code}` for the published documents. One query.
+
+    The join that makes a citation clickable without a migration: `PublicDocument.source_path`
+    and `StandardDocument.source_file` both hold `pgs_docs/<file>.pdf`, because the publish
+    seed and the ingest read the same filenames — `source_path` exists precisely so a
+    published file can be traced to the shipped document.
+
+    A corpus document with no published twin is simply absent from the mapping, and a
+    citation from it renders as text rather than as a link to nowhere. Only **published**
+    documents are listed: `is_published` is the only gate, and a citation is not an exception
+    to it.
+    """
+    return {
+        document.source_path: document.code
+        for document in PublicDocument.objects.published().exclude(source_path="")
+    }
+
+
 def documents_context() -> dict:
     """The context fragment every page that carries the list needs.
 
@@ -196,6 +224,95 @@ def documents_context() -> dict:
     Fails: never deliberately.
     """
     return {"documents": published_documents()}
+
+
+@dataclass(frozen=True)
+class ReaderPassage:
+    """One passage as the reader renders it. `text` is the stored chunk, unmodified."""
+
+    anchor: str
+    locator: str
+    page: int | None
+    heading_path: str
+    text: str
+
+
+@dataclass(frozen=True)
+class Reader:
+    """Everything `/documents/<code>/read/` renders. A dataclass, so a test can assert it."""
+
+    document: PublicDocument
+    corpus: StandardDocument | None
+    passages: tuple[ReaderPassage, ...]
+    contents: tuple[ReadingEntry, ...]
+    hits: tuple[SearchHit, ...]
+    query: str
+
+
+def corpus_for(document: PublicDocument) -> StandardDocument | None:
+    """In: a published document. Out: the ingested twin, or None. One query.
+
+    The join is provenance, not guesswork: `source_path` and `source_file` both hold
+    `pgs_docs/<file>.pdf` because the publish seed and the ingest read the same filenames.
+    When a document exists in two corpora the deployed default wins, so the reader shows the
+    text the assistant is actually answering from.
+    """
+    return (
+        StandardDocument.objects.filter(source_file=document.source_path)
+        .select_related("standard_set")
+        .order_by("-standard_set__is_default", "id")
+        .first()
+    )
+
+
+def reader_for(document: PublicDocument, query: str = "") -> Reader:
+    """In: a published document and what the reader searched for. Out: a `Reader`.
+
+    In:  `query` — free text from the search box; empty for the plain view.
+    Out: passages in document order, the contents list, and any search hits.
+    Side effects: at most three queries.
+    Fails: never. A published document whose text has not been ingested returns
+        `corpus=None`; the view renders an explanation, because a citation pointing here
+        must not 404.
+    """
+    document_row = corpus_for(document)
+    if document_row is None:
+        return Reader(document, None, (), (), (), query.strip())
+    pairs = unique_anchors(reading_chunks(document_row))
+    passages = tuple(
+        ReaderPassage(
+            anchor=anchor,
+            locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
+            page=chunk.page,
+            heading_path=chunk.heading_path,
+            text=chunk.text,
+        )
+        for chunk, anchor in pairs
+    )
+    return Reader(
+        document=document,
+        corpus=document_row,
+        passages=passages,
+        contents=tuple(contents(document_row)),
+        hits=tuple(search_in_document(document_row, query)) if query.strip() else (),
+        query=query.strip(),
+    )
+
+
+def _recorded_source(source: Path) -> str:
+    """The path as `source_path` records it: repository-relative whenever it can be.
+
+    Absolute would be wrong in two ways. It differs per machine, so the provenance column
+    would say something different on every deployment; and it would never equal
+    `StandardDocument.source_file`, which is the *join a citation uses* to find its public
+    address (`public_codes_by_source`). The field's own help text has always promised
+    `pgs_docs/<file>.pdf`, and that is what this returns — `ingest._relative_source` does the
+    same thing for the corpus side, because the two must agree for a citation to be clickable.
+    """
+    try:
+        return source.resolve().relative_to(Path(settings.BASE_DIR).resolve()).as_posix()
+    except ValueError:  # a `--source-dir` outside the tree; keep the trace we can
+        return source.resolve().as_posix()
 
 
 def _destination(source: Path, destination: Path) -> bool:
@@ -256,7 +373,7 @@ def publish_documents(source_dir: Path | None = None) -> PublishResult:
             "note": spec.note,
             "file_path": relative,
             "content_type": "application/pdf",
-            "source_path": source.as_posix(),
+            "source_path": _recorded_source(source),
             "download_name": spec.download_name,
             "display_order": spec.display_order,
         }

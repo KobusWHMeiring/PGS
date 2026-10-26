@@ -45,6 +45,19 @@ def reading_chunks(document: StandardDocument) -> list[DocumentChunk]:
     return list(document.chunks.order_by("id"))
 
 
+def _slugify_locator(text: str) -> str:
+    """A locator as a fragment: `S20.1.1` → `s20-1-1`, `§4.5(2)(c)` → `4-5-2-c`.
+
+    Django's `slugify` *deletes* a dot rather than replacing it, so a bare pass would turn
+    `S20.1.1` into `s2011` — unreadable in a URL a reader may edit by hand, and colliding with
+    `S20.11`. Punctuation that separates parts of a reference becomes a hyphen; everything else
+    goes through `slugify` as usual.
+    """
+    separated = re.sub(r"[.()\[\]/\\]+", "-", text)
+    separated = separated.replace("§", "")
+    return slugify(separated, allow_unicode=False)[:MAX_ANCHOR_CHARS].strip("-_")
+
+
 def reading_anchor(
     section_ref: str | None, anchor: str = "", heading_path: str = ""
 ) -> str:
@@ -53,14 +66,10 @@ def reading_anchor(
     `section_ref` first because it is what a citation quotes and what survives a rebuild.
     Falls back to the content-derived `anchor` and then to the last heading of the trail, so
     no chunk is unreachable — the ingest only guarantees one of the three is set.
-
-    A slug that would start with a digit is prefixed with `s`: an HTML id may start with one,
-    but a CSS `:target` selector and a fragment a person edits by hand both behave better
-    when it does not.
     """
     for candidate in (section_ref, anchor, heading_path.split(" > ")[-1]):
         if candidate and candidate.strip():
-            slug = slugify(candidate, allow_unicode=False)[:MAX_ANCHOR_CHARS].strip("-_")
+            slug = _slugify_locator(candidate)
             if slug:
                 return slug
     return "passage"

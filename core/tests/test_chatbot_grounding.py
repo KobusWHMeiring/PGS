@@ -922,3 +922,72 @@ def test_a_cached_answer_still_records_its_citations(
     message = ChatMessage.objects.get(pk=second.message_id)
     assert message.citations["accepted"][0]["section_ref"] == "S20.1.1"
     assert message.grounding
+
+
+# --- A2: a citation knows the public document it came from -------------------
+
+
+@pytest.fixture
+def published_saoso(db):
+    """The published row whose `source_path` matches the ingested document's `source_file`.
+
+    That equality is the whole join: the publish seed and the ingest read the same
+    `pgs_docs/` filenames, and `source_path` exists so a published file can be traced to the
+    shipped document. No mapping table, and nothing to migrate.
+    """
+    from core.models import PublicDocument
+
+    return PublicDocument.objects.create(
+        code="saoso-standard-v2.1",
+        title="SAOSO Organic Standard v2.1",
+        file_path="public/documents/saoso-standard-v2.1.pdf",
+        source_path="pgs_docs/saoso-version-2.1-2026.pdf",
+        is_published=True,
+    )
+
+
+def test_a_citation_knows_the_public_document_it_came_from(
+    chat_session, chat_corpus, fake_chat_model, published_saoso
+):
+    model = fake_chat_model(reply=_grounded_reply())
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    citation = out.citations[0]
+    assert citation.document_code == "saoso-standard-v2.1"
+    assert citation.reading_anchor == "s20-1-1"
+    assert citation.read_url == "/documents/saoso-standard-v2.1/read/#s20-1-1"
+
+
+def test_a_corpus_document_with_no_published_twin_carries_no_code(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """The link must be **absent**, not broken.
+
+    A corpus may be ingested from a document the group does not publish. The citation is
+    still showable — the quote is the evidence — but a link to nowhere is worse than plain
+    text, so `read_url` is empty and the template renders no anchor tag.
+    """
+    model = fake_chat_model(reply=_grounded_reply())
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert out.citations[0].document_code == ""
+    assert out.citations[0].read_url == ""
+
+
+def test_the_stored_citation_can_still_link_after_a_re_ingest(
+    chat_session, chat_corpus, fake_chat_model, published_saoso
+):
+    """A card outlives the corpus, so the code and the anchor go into the snapshot.
+
+    Resolving them at render time would let a page silently re-point a citation after a
+    rebuild — a claim nobody can audit (P2.5a's reasoning, applied to the board).
+    """
+    model = fake_chat_model(reply=_grounded_reply())
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+    stored = ChatMessage.objects.get(pk=out.message_id).citations["accepted"][0]
+
+    assert stored["document_code"] == "saoso-standard-v2.1"
+    assert stored["reading_anchor"] == "s20-1-1"

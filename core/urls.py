@@ -14,7 +14,7 @@ shape now is what makes the MVP 2 cutover a redirect table rather than a rewrite
 
 from django.urls import path
 
-from core.views._documents import document_file, documents
+from core.views._documents import document_file, document_reader, documents
 from core.views._health import health
 from core.views._uat import console as uat_console, run as uat_run
 from core.views._public import (
@@ -42,6 +42,10 @@ urlpatterns = [
     # table, and D22's dossiers must be unreachable by construction (they are not rows).
     path("documents/", documents, name="documents"),
     path("documents/<str:code>/", document_file, name="document_file"),
+    # The reader: the text we ingested, at the code a citation names. Deliberately not a PDF
+    # fragment — `document_file` streams with `as_attachment=True`, so a `#page=` fragment has
+    # no viewer to land in — and deliberately not under `/media/` (§VI).
+    path("documents/<str:code>/read/", document_reader, name="document_reader"),
     path("become-a-member/", become_a_member, name="become_a_member"),
     # The grounded assistant. `/ask/` is the real surface; the home page's showcase
     # is an illustration of it, not a second implementation.

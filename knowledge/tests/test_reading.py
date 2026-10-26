@@ -72,7 +72,7 @@ def document(db) -> StandardDocument:
 
 def test_anchors_are_stable_unique_and_url_safe(document):
     anchors = [anchor for _chunk, anchor in unique_anchors(reading_chunks(document))]
-    assert anchors == ["appendix-2", "appendix-21", "straw-mulch"]
+    assert anchors == ["appendix-2", "appendix-2-1", "straw-mulch"]
     assert len(anchors) == len(set(anchors)), "two chunks share an anchor"
     assert all(anchor == anchor.lower() for anchor in anchors)
 
@@ -91,7 +91,7 @@ def test_a_repeated_reference_keeps_the_plain_anchor_first(document):
     chunk.save(update_fields=["section_ref", "anchor", "heading_path"])
 
     anchors = [anchor for _chunk, anchor in unique_anchors(reading_chunks(document))]
-    assert anchors[:2] == ["appendix-2", "appendix-21"]
+    assert anchors[:2] == ["appendix-2", "appendix-2-1"]
     assert anchors[2] == "appendix-2-2"
     assert reading_anchor(None, "", "APPENDICES > Appendix 2") == "appendix-2"
 
@@ -138,7 +138,7 @@ def test_search_falls_back_to_any_of_the_words(document):
         )
     ).exists(), "the AND pass found a row, so this test would not prove the fallback ran"
     assert search_in_document(document, "cardboard sawdust")
-    assert search_in_document(document, "cardboard sawdust")[0].anchor == "appendix-21"
+    assert search_in_document(document, "cardboard sawdust")[0].anchor == "appendix-2-1"
 
 
 def test_an_empty_query_searches_nothing(document):

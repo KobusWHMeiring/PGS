@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+  The reader — where a citation lands. The product owner's decision (2026-10-23): a citation
+  opens the text we ingested, not a PDF page. The PDF is streamed as an attachment, so a
+  `#page=` fragment has no viewer to land in; and the text is already in `DocumentChunk`, so
+  a reader can *find* a quotation here in a way they can only hope for in a PDF viewer.
+
+  **This page renders the document's own words and nothing else.** It is deliberately absent
+  from `PUBLIC_URLS` (`core/tests/test_public.py`) because the corpus contains words the claim
+  sweep forbids the *group* to use — "biodynamic" appears in SAOSO, "pasture raised" in the
+  OPP. Quoting is not claiming; `test_claim_discipline.py` carries the exemption, its reason,
+  and a test that proves the exemption is load-bearing rather than a convenience.
+{% endcomment %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/reader.css' %}">
+{% endblock %}
+
+{% block content %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section section--reader">
+    <div class="container reader">
+
+      {% if not reader.corpus %}
+        <div class="reader__missing">
+          <h2 class="serif-title">We have not published the text of this document yet</h2>
+          <p>
+            This document is published as a file, and its text has not been ingested on this
+            deployment — so a citation from it cannot open here. The file itself is complete.
+          </p>
+          <p>
+            <a class="btn btn--forest"
+               href="{% url 'core:document_file' code=reader.document.code %}">
+              Open {{ reader.document.title }}
+            </a>
+          </p>
+        </div>
+      {% else %}
+        <form class="reader__search" method="get" role="search"
+              action="{% url 'core:document_reader' code=reader.document.code %}">
+          <label class="reader__search-label" for="reader-q">Search this document</label>
+          <div class="reader__search-row">
+            <input class="reader__input" id="reader-q" type="search" name="q"
+                   value="{{ reader.query }}" autocomplete="off"
+                   placeholder="e.g. contaminants, manure, seal licence">
+            <button class="btn btn--ochre" type="submit">Search</button>
+          </div>
+          {% if reader.query %}
+            <p class="reader__search-note">
+              {{ reader.hits|length }} passage{{ reader.hits|length|pluralize }} matching
+              &ldquo;{{ reader.query }}&rdquo; &middot;
+              <a href="{% url 'core:document_reader' code=reader.document.code %}">clear</a>
+            </p>
+          {% endif %}
+        </form>
+
+        {% if reader.hits %}
+          <ol class="reader__hits">
+            {% for hit in reader.hits %}
+              <li class="reader__hit">
+                <a class="reader__hit-locator" href="#{{ hit.anchor }}">
+                  {{ hit.locator }}{% if hit.page %} &middot; p. {{ hit.page }}{% endif %}
+                </a>
+                <p class="reader__hit-text">&hellip;{{ hit.before }}<mark>{{ hit.hit }}</mark>{{ hit.after }}&hellip;</p>
+              </li>
+            {% endfor %}
+          </ol>
+        {% elif reader.query %}
+          <p class="reader__no-hits">
+            No passage in this document matches &ldquo;{{ reader.query }}&rdquo;. That is
+            usually the answer to a question the documents cannot settle.
+          </p>
+        {% endif %}
+
+        <div class="reader__body">
+          <nav class="reader__contents" aria-label="Contents">
+            <p class="reader__contents-title">Contents</p>
+            <ol class="reader__contents-list">
+              {% for entry in reader.contents %}
+                <li>
+                  <a class="reader__contents-link" href="#{{ entry.anchor }}">{{ entry.locator }}</a>
+                  {% if entry.page %}<span class="reader__page">p. {{ entry.page }}</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ol>
+          </nav>
+
+          <div class="reader__passages">
+            {% for passage in reader.passages %}
+              <article class="passage" id="{{ passage.anchor }}">
+                <p class="passage__locator">
+                  {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
+                </p>
+                <p class="passage__text">{{ passage.text|linebreaksbr }}</p>
+              </article>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <p class="reader__provenance">
+        Text ingested from
+        <a href="{% url 'core:document_file' code=reader.document.code %}">{{ reader.document.title }}</a>.
+        Every passage above is the document's own words, reproduced without editing. The
+        assistant answers only from text like this.
+      </p>
+    </div>
+  </section>
+{% endblock %}

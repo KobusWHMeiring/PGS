@@ -12,6 +12,8 @@
   <meta property="og:title" content="{{ page.title }}">
   <meta property="og:description" content="{{ page.description }}">
 
+  {% block head_extra %}{% endblock %}
+
   {% comment %} A favicon generated from the sprout mark. The real SVG is an open designer
      item (DESIGN.md §11.5); a PNG referenced as image/png is valid until then. {% endcomment %}
   <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">

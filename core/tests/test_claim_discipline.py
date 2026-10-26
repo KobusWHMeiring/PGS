@@ -21,6 +21,8 @@ UAT Scenario 8, and no test here replaces it. Read
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from django.core.management import call_command
 from django.test import Client
@@ -177,3 +179,102 @@ def test_nothing_is_pending_on_a_public_route(client: Client, url: str):
         f"{url} still claims something is 'Publishing soon' — C2 published every "
         "document in `core/services/_documents.DOCUMENTS`"
     )
+
+
+# --- The reader: quoting a document is not making a claim -------------------
+
+
+#: Routes that reproduce a document's own words. They are exempt from the term sweep, and they
+#: are not exempt in spirit: the sweep asks whether *the group* makes an unsupported claim, and
+#: a quotation is not a claim. Every entry names its reason, and
+#: `test_the_exemption_is_necessary` proves the exemption is load-bearing rather than a
+#: convenience. Measured on the shipped PDFs, not assumed:
+#:
+#:     pdftotext pgs_docs/saoso-version-2.1-2026.pdf - | grep -ic biodynamic   → 5
+#:     pdftotext "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf" - \
+#:         | grep -ic "pasture.raised"                                          → 3
+VERBATIM_ROUTES: dict[str, str] = {
+    "/documents/saoso-standard-v2.1/read/": (
+        "SAOSO v2.1 prints 'biodynamic' five times and the OPP prints 'pasture raised'. Both "
+        "are in FORBIDDEN. Reproducing a standard is not endorsing it — and a reader checking "
+        "a quotation must be able to see the document's own words."
+    ),
+}
+
+
+@pytest.fixture
+def ingested_saoso(public_surface):
+    """The corpus document behind the published `/documents/saoso-standard-v2.1/` row.
+
+    `public_surface` has already run `seed_deployment` and `publish_documents`, so the public
+    row exists with a repo-relative `source_path`. This fixture adds the ingested twin whose
+    `source_file` matches it — the join the reader resolves — and one passage that uses the
+    word the sweep forbids.
+    """
+    from knowledge.models import DocumentChunk, StandardDocument, StandardSet
+
+    corpus = StandardSet.objects.get(is_default=True)
+    document = StandardDocument.objects.get_or_create(
+        standard_set=corpus,
+        source_file="pgs_docs/saoso-version-2.1-2026.pdf",
+        defaults={
+            "kind": StandardDocument.Kind.STANDARD,
+            "issuing_body": "SAOSO",
+            "title": "SAOSO Standard for Organic Production and Processing",
+            "version": "2.1",
+            "sha256": "b" * 64,
+            "section_scheme": "saoso",
+        },
+    )[0]
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S5.6.1",
+        heading_path="LIVESTOCK > Biodynamic preparations",
+        page=31,
+        text=(
+            "Biodynamic preparations may be used where they are produced from substances "
+            "listed in Appendix 2."
+        ),
+    )
+    return document
+
+
+def test_the_exemption_list_has_a_reason_per_route():
+    """A guard against the guard: an empty exemption list exempts nothing and hides why."""
+    assert VERBATIM_ROUTES, "an empty exemption list is a list that exempts nothing"
+    assert all(reason.strip() for reason in VERBATIM_ROUTES.values())
+    for url in VERBATIM_ROUTES:
+        assert url not in PUBLIC_URLS, (
+            f"{url} is exempt *and* swept — the exemption would be doing nothing, and the "
+            "sweep would fail on the document's own words"
+        )
+
+
+def test_the_exemption_is_necessary(client: Client, ingested_saoso):
+    """Prove the guard can fail: the reader *does* render a forbidden term.
+
+    Without this, the exemption is indistinguishable from a route that happens to be clean,
+    and the next person deletes it without noticing what it protected.
+    """
+    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode().lower()
+    assert "biodynamic" in body, "the fixture passage is missing, so this proves nothing"
+
+
+def test_the_reader_adds_no_claim_of_its_own(client: Client, ingested_saoso):
+    """Strip the document's words; sweep what is left — the group's own copy.
+
+    This is the half of the sweep the exemption must not lose. The head, the search box, the
+    contents list and the provenance line are the group speaking, and none of them may make a
+    certification claim or render a seal.
+    """
+    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode().lower()
+    our_words = re.sub(r'<article class="passage".*?</article>', "", body, flags=re.S)
+    our_words = re.sub(r'<p class="reader__hit-text">.*?</p>', "", our_words, flags=re.S)
+
+    for term in FORBIDDEN:
+        assert term not in our_words, f"{term!r} appears in the reader's own copy"
+
+    from core.models import Seal
+
+    for label in Seal.objects.values_list("label", flat=True):
+        assert label.lower() not in our_words, f"seal {label!r} rendered on the reader"
