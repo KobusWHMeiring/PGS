@@ -1,7 +1,8 @@
 # PRD — The ask surface, second shape (board + answer pages)
 
 **Status:** In Progress — shape decided (**D62**); follow-up stage 1 landed (**D63**);
-the board, the answer pages and the trace console are not built.
+**the board, the answer pages and the citation's document reader are built (2026-10-23)**;
+the trace console and the wider-reading tier are not.
 **Opened:** 2026-10-23
 **Decision record:** `PGS_PLATFORM_SPEC.md` §18.3 D62 and D63.
 **Prototypes:** `product/design/d61_ask_interface_options.html` (five shapes),
@@ -81,6 +82,35 @@ Live measurement, shipped corpus (366 chunks), four parent → follow-up pairs:
 The second row is the argument: the answer was **grounded and wrong**. The audit passes a
 faithful citation to the wrong clause. That is the class a retrieval-only fix cannot catch.
 
+## 4a. What landed on 2026-10-23
+
+Built, tested and measured in one slice (`ASK_SURFACE_PLAN.md`). **The citation does not link
+to a PDF page** — the product owner's decision: `document_file()` streams with
+`as_attachment=True`, so a `#page=76` fragment has no viewer to land in, and the text is
+already in `DocumentChunk`. A citation now opens a rendered, searchable **reader** of the
+ingested document, anchored on the section reference the citation already carries.
+
+| # | Was "not built" | Now |
+|---|---|---|
+| 1 | The board | `PublicQuestion` (a table with a publish flag, not the cache), the composer-first layout, the topic filter, the Waiting state and the admin publish/reject actions |
+| 2 | The answer page | `/ask/<slug>/` with the clause in full, *what this answer does not cover* (required), *questions next to this one*, a copyable citation and `noindex` on a gap page |
+| 3 | The consent control | `publish` on the question form, unticked by default, with the promise the `AWAITING` state keeps |
+| 4 | The two prerequisites | `Citation.document_code` + `reading_anchor` (resolved through `source_path == source_file`, no migration) and `/documents/<code>/read/` — search, contents, anchors, `:target` highlight |
+| 5 | The trace console | **still not built** (it needs arm/rank/score on `grounding`; see §4) |
+| 6 | The wider-reading tier | **still not built** — no documents behind it |
+| 7 | The stage-2 rewrite | **still not bought** |
+
+Two findings that changed the work:
+
+* **`publish_documents` recorded an absolute path** in `PublicDocument.source_path`, so it could
+  never equal `StandardDocument.source_file` and no citation would have been clickable on a
+  second machine. It records the repository-relative path, and a test asserts the join.
+* **Verbatim corpus text cannot satisfy the claim sweep, and must not be made to.** SAOSO prints
+  "biodynamic" five times and the OPP prints "pasture raised" — both in `FORBIDDEN`. The reader
+  (and an answer page's clause block) are therefore outside `PUBLIC_URLS`, with the reason
+  recorded and three tests keeping the exemption honest, including one that proves the
+  exemption is necessary.
+
 ## 4. What is not built
 
 1. **The board** — a publishable-question table (question, answer, citations, category,
@@ -122,18 +152,21 @@ faithful citation to the wrong clause. That is the class a retrieval-only fix ca
 
 | # | Question | Blocks |
 |---|---|---|
-| 1 | **May a visitor's question be published?** A question is free text from a public form, and D59 only settles retaining it. What is the consent wording, and what happens to a question naming a third party? | The board, in full |
+| 1 | **May a visitor's question be published?** A question is free text from a public form, and D59 only settles retaining it. What is the consent wording, and what happens to a question naming a third party? | **Shipped on the conservative default (D64), awaiting confirmation:** opt-in, unticked, `AWAITING` until a person edits and approves. The edit is the redaction mechanism. |
 | 2 | **What is the wider-reading tier pointed at?** KNF, JADAM, JMF, INF and Japanese Natural Farming have no documents in this repo. A tier that lists names with nothing behind them is decoration. | The source scope control |
-| 3 | **Who curates, and how often is a card re-checked?** A card is a claim; a stale one is a claim we have stopped checking. | The board, after launch |
-| 4 | **Does the answer page publish generated prose at a permanent URL?** If yes, the *"what this does not cover"* block is mandatory, not optional. | The answer page |
+| 3 | **Who curates, and how often is a card re-checked?** A card is a claim; a stale one is a claim we have stopped checking. | **Shipped on the default (D66):** the administrator, on re-approval, which bumps `checked_at`; the date is printed on every page. No automatic re-check. |
+| 4 | **Does the answer page publish generated prose at a permanent URL?** If yes, the *"what this does not cover"* block is mandatory, not optional. | **Shipped on the default (D65):** yes, only for an approved card, with the block required by a test, `checked <date>` on the page and `noindex` on a gap page. |
 | 5 | **Is the straw follow-up a prompt defect or a corpus one?** The model answers about wood because *"untreated"* is the wood row's condition. | The next prompt iteration |
 
 ## 7. Definition of done
 
-- [ ] The board ships with approved-only cards, and a Waiting list that is visible.
-- [ ] An answer page exists with a stable slug, the clause in full, and a copyable citation.
-- [ ] Following a citation opens the document at the printed page.
+- [x] The board ships with approved-only cards, and a Waiting list that is visible.
+- [x] An answer page exists with a stable slug, the clause in full, and a copyable citation.
+- [x] Following a citation opens the document at the passage it quotes (the ingested text,
+      not a PDF page — see §4a).
 - [ ] The trace console rebuilds a stored turn's prompt and shows the audit's reason.
 - [ ] UAT signed by the product owner (`tests/uat/ask_surface_uat.md`). **Tests passing is
-      not completion for a surface a human must judge.**
-- [ ] The claim-discipline sweep still passes on every new route.
+      not completion for a surface a human must judge.** Seven scenarios are drafted; none is
+      signed.
+- [x] The claim-discipline sweep still passes on every new route — and the two routes it is
+      right not to cover carry a recorded reason and their own sweeps.

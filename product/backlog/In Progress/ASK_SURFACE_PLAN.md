@@ -15,6 +15,28 @@ semantic CSS (no build step, no CDN), HTMX already vendored for `/ask/`.
 
 **UAT:** `tests/uat/ask_surface_uat.md` — drafted before implementation.
 
+**Status (2026-10-23):** Tasks A1–A2, B1–B4, C1–C4, D1–D2 **built**; the gate is green at
+**896 tests** (from 845), `lint-imports` kept, and `tests/e2e` green at 49. Tasks **E1–E2** are
+part-done: the gate and the browser suite ran, the reader's page weight is **not yet measured**
+(it needs the deployed corpus), and the UAT is drafted but unsigned. Three deviations from the
+plan as written, each made while building and each recorded here rather than quietly:
+
+1. **`published()` is wider than `APPROVED`.** Publishing a *question* is one act and answering
+   it is another: an administrator who publishes a refusal creates a **gap page** (`status =
+   WAITING` plus a slug), because a visible gap is the product's argument (D62) and a reviewed
+   gap is as publishable as a reviewed answer. `is_published` therefore means "a person
+   published this", not "it has an answer".
+2. **A pre-existing defect had to be fixed first.** `publish_documents` recorded
+   `PublicDocument.source_path` as an **absolute** path, so it could never equal
+   `StandardDocument.source_file` and no citation would have been clickable on a second
+   machine. It records the repository-relative path now, and
+   `core/tests/test_documents.test_the_recorded_source_is_the_path_a_citation_joins_on` asserts
+   the value the *command* writes rather than a literal (`testing_hazards.md` §1.32).
+3. **The answer page got its own claim sweep.** It quotes the corpus in its clause block, so it
+   is outside `PUBLIC_URLS` for the same reason the reader is; the sweep strips the
+   `<blockquote>` and asserts the quotation really does trip the forbidden list, so the strip
+   cannot pass vacuously.
+
 ---
 
 ## 0. Scope, and what is deliberately out
@@ -1210,10 +1232,19 @@ Append to `core/models/_chat.py` (the module docstring gains a fourth bullet: th
 
 ```python
 class PublicQuestionQuerySet(models.QuerySet):
-    """`published()` is the only filter a public view may use."""
+    """`published()` is the only filter a public view may use.
+
+    Published means **a person published this question** — a slug exists and an administrator
+    approved it. Deliberately wider than "answered": a refusal the group is willing to show is
+    the most honest row on the board, and it is published by the same act, with the same review,
+    as an answer (see the status note above, deviation 1).
+    """
 
     def published(self) -> PublicQuestionQuerySet:
-        return self.filter(status=PublicQuestion.Status.APPROVED)
+        return self.filter(
+            slug__isnull=False,
+            status__in=[PublicQuestion.Status.APPROVED, PublicQuestion.Status.WAITING],
+        )
 
 
 class PublicQuestion(models.Model):
@@ -1603,7 +1634,10 @@ def approve(
             setattr(card, field, value)
     if not card.slug:
         card.slug = _slug_for(card.question)
-    card.status = PublicQuestion.Status.APPROVED
+    # Publishing is one act; *answering* is a different one.
+    card.status = (
+        PublicQuestion.Status.APPROVED if card.answer.strip() else PublicQuestion.Status.WAITING
+    )
     card.approved_by = user
     card.approved_at = card.approved_at or timezone.now()
     card.checked_at = timezone.localdate()

@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-23 10:16
+> Generated: 2026-10-26 19:52
 
 ## Ready (up next)
 
@@ -10,6 +10,7 @@
 
 ## In Progress
 
+- **The ask board, the answer page and the document reader — Implementation Plan** - `In Progress\ASK_SURFACE_PLAN.md` - Status: no status
 - **PRD — The ask surface, second shape (board + answer pages)** - `In Progress\ASK_SURFACE_PRD.md` - Status: In Progress — shape decided (**D62**); follow-up stage 1 landed (**D63**);
 - **PRD: Chat answer coverage — governing rules, table rows, and the gaps left** - `In Progress\CHAT_ANSWER_COVERAGE_PRD.md` - Status: In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
 - **Corpus Canonical Format — Implementation Plan** - `In Progress\CORPUS_CANONICAL_FORMAT_PLAN.md` - Status: In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.5 and P2.5a landed 2026-10-22

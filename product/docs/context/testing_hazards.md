@@ -1281,6 +1281,32 @@ non-public WordPress media API.
 
 ---
 
+### 1.32 A fixture that supplies the value the code is supposed to produce proves nothing
+
+A test for a *join* built both sides of the join by hand, with the value the code was meant to
+write. It passed, so the join looked exercised. The production code wrote a different value —
+an absolute path instead of a repository-relative one — so the join would never have matched on
+any second machine, and the only reason nobody noticed is that the fixture and the assertion
+agreed with each other.
+
+Evidence:
+    # the reader tests built it by hand
+    source_path="pgs_docs/saoso-version-2.1-2026.pdf"      # a literal, not the code's output
+    # what `publish_documents` actually wrote, before the fix
+    >>> PublicDocument.objects.get(code="saoso-standard-v2.1").source_path
+    'C:/Users/Kobus Meiring/Documents/Dev/pgs/pgs_docs/saoso-version-2.1-2026.pdf'
+
+Consequence: a provenance column that differs per machine, and a citation that can never be
+clicked. Both sides look right in isolation; only the *code path* shows the mismatch. The same
+shape covers any "these two fields must be equal" guarantee: `X.field == Y.field` is a claim
+about two writers, so at least one side must come from its real writer.
+
+Rule: when a test asserts that two stored values are equal, produce at least one of them through
+the code that writes it — `call_command("publish_documents")`, `ingest_standard(...)`, the
+service under test — and assert against *that*. A literal is acceptable only for the side that
+is genuinely constant (a spec string), and then say so in the docstring. Added 2026-10-23 with
+`core/tests/test_documents.test_the_recorded_source_is_the_path_a_citation_joins_on`.
+
 ## 5. Template for a new entry
 
 ```markdown
