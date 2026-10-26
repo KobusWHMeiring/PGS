@@ -37,8 +37,10 @@ this session built it (`product/backlog/In Progress/ASK_SURFACE_PLAN.md`, PRD §
 - **Not built, deliberately:** the trace console (needs arm/rank on `grounding`), the
   wider-reading tier (no documents behind it), the stage-2 follow-up rewrite.
 - **UAT is drafted and unsigned:** `tests/uat/ask_surface_uat.md` — seven judgement scenarios.
-  The reader's page weight on the real corpus is still unmeasured; measure it on the box before
-  believing the reader is light enough for a farm connection.
+- **The reader is measured, not assumed:** on the real SAOSO corpus it renders 333 KB raw /
+  **61.6 KB gzipped** in 4 queries (319 passages); the PDF is 192 KB. Raw, the page is *bigger*
+  than the file — on the wire, with nginx gzip on text/html, it is ~3× lighter. A search adds
+  one query.
 
 ---
 

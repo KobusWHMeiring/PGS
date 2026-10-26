@@ -17,8 +17,16 @@ semantic CSS (no build step, no CDN), HTMX already vendored for `/ask/`.
 
 **Status (2026-10-23):** Tasks A1–A2, B1–B4, C1–C4, D1–D2 **built**; the gate is green at
 **896 tests** (from 845), `lint-imports` kept, and `tests/e2e` green at 49. Tasks **E1–E2** are
-part-done: the gate and the browser suite ran, the reader's page weight is **not yet measured**
-(it needs the deployed corpus), and the UAT is drafted but unsigned. Three deviations from the
+part-done: the gate and the browser suite ran, the reader is **measured** (below), and the UAT is
+drafted but unsigned.
+
+**Measured (2026-10-23, real SAOSO corpus, `_scratch/measure_reader.py`):** the reader renders
+**333,481 bytes raw / 61,647 gzipped**, **319 passages**, **4 queries**; a search adds one query
+and returned 14 hits for "manure". The PDF is 192 KB, so **the raw page is larger than the file
+it replaces** — the honest comparison is on the wire, where `deploy/nginx.conf` gzips text/html
+and the reader is ~3× lighter. E1.3's gate passes with room, so there is no reason to split the
+reader by chapter; the raw size is recorded here precisely so that "it is lighter" is a measured
+claim and not an assumption. Three deviations from the
 plan as written, each made while building and each recorded here rather than quietly:
 
 1. **`published()` is wider than `APPROVED`.** Publishing a *question* is one act and answering
