@@ -265,3 +265,183 @@ class EscalatedQuery(models.Model):
     @property
     def is_open(self) -> bool:
         return self.status == self.Status.OPEN
+
+
+class PublicQuestionQuerySet(models.QuerySet):
+    """`published()` is the only filter a public view may use.
+
+    Published means **a person published this question** — a slug exists and an administrator
+    approved it. That is deliberately wider than "answered": a refusal the group is willing to
+    show is the most honest row on the board, and it is published by the same act, with the same
+    review, as an answer (D62/D64).
+    """
+
+    def published(self) -> PublicQuestionQuerySet:
+        return self.filter(
+            slug__isnull=False,
+            status__in=[PublicQuestion.Status.APPROVED, PublicQuestion.Status.WAITING],
+        )
+
+
+class PublicQuestion(models.Model):
+    """A question and its answer, kept because a person approved publishing it (D62).
+
+    This is the board's **content store**, and it is not the answer cache: a cache entry is
+    keyed on a normalised question, lives an hour and is not a record. A card is asked many
+    times, checked on a date, approved by a named person, and reachable at a permalink.
+
+    **`question` is the published wording, not the visitor's.** The administrator edits it
+    before approving — that edit is where a third party's name comes out (D64). The original
+    stays in `ChatMessage`, where D59 already governs its retention.
+
+    `status` starts at `AWAITING` and only a person moves it. `REJECTED` hides rather than
+    deletes, so "we decided not to publish this" stays answerable later; the `ask_count` on a
+    rejected card keeps the demand behind that decision visible.
+
+    The slug is **NULL until approval**, and generated from the *edited* question at that
+    moment: a slug built at ask time would carry the third party's name into a public URL even
+    after the administrator removed it from the text.
+    """
+
+    class Status(models.TextChoices):
+        AWAITING = "AWAITING", "Awaiting review"
+        APPROVED = "APPROVED", "Published"
+        WAITING = "WAITING", "Waiting on a person"
+        REJECTED = "REJECTED", "Not published"
+
+    slug = models.SlugField(
+        max_length=120,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="The public address, generated at approval from the edited question.",
+    )
+    question = models.TextField(help_text="The published wording, edited before approval.")
+    asked_key = models.CharField(
+        max_length=64,
+        db_index=True,
+        help_text=(
+            "sha256 of the normalised question as the visitor typed it — the dedupe key. "
+            "Separate from `question` because an administrator edits that one, and two "
+            "visitors asking the same thing must not diverge when the wording is redacted."
+        ),
+    )
+    answer = models.TextField(blank=True, default="")
+    covers = models.TextField(
+        blank=True,
+        default="",
+        help_text=(
+            "What this answer does not cover, one item per line. The answer page requires it: "
+            "an answer that states its boundary is the honest counterpart to a grounded quote."
+        ),
+    )
+    citations = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "The accepted citations as they were shown — document_code, reading_anchor, "
+            "section_ref, sub_ref, page, quote, document. A snapshot, not a lookup: the corpus "
+            "can be re-ingested and this page must still say what was claimed."
+        ),
+    )
+    topic = models.CharField(
+        max_length=60,
+        blank=True,
+        default="",
+        help_text=(
+            "The board's filter chip, e.g. 'Inputs', 'Animals', 'Money'. Free text, not a "
+            "choice list: adding a topic must not require a migration (build_principles §I)."
+        ),
+    )
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.AWAITING,
+        help_text="Only a person moves this. The public board reads APPROVED only.",
+    )
+    ask_count = models.PositiveIntegerField(
+        default=1,
+        help_text="How many times this question has been asked. Incremented, never recomputed.",
+    )
+    #: `auto_now` is deliberately not used: it would bump on an approval edit and report a false
+    #: "last asked" date. The service writes it when a visitor actually asks.
+    first_asked_at = models.DateTimeField(auto_now_add=True)
+    last_asked_at = models.DateTimeField(db_index=True)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="approved_questions",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    checked_at = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When a person last verified the answer against the documents (D66).",
+    )
+    escalated_query = models.ForeignKey(
+        EscalatedQuery,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="published_questions",
+        help_text="Set on a Waiting card: the gap this question exposed.",
+    )
+
+    objects = PublicQuestionQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["-last_asked_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "-last_asked_at"], name="ask_card_status_recent"),
+            models.Index(fields=["topic"], name="ask_card_topic"),
+        ]
+        verbose_name = "public question"
+        verbose_name_plural = "public questions"
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.question[:56]} ({self.status})"
+
+    @property
+    def is_published(self) -> bool:
+        """True when a person published this question — answered or not.
+
+        A `WAITING` card with a slug is a *gap page*: the group publishes the question and says
+        the documents do not answer it. Without a slug it is still only a queue entry, visible
+        to the administrator and to nobody else.
+        """
+        return self.slug is not None and self.status in {self.Status.APPROVED, self.Status.WAITING}
+
+    @property
+    def noindex(self) -> bool:
+        """True unless the page is a published *answer*.
+
+        A gap page stays reachable — it is where a Waiting card points — but it must not be
+        indexed: a search result for a question the documents cannot answer is a promise we
+        break.
+        """
+        return self.status != self.Status.APPROVED
+
+    @property
+    def summary(self) -> str:
+        """The card's one-line summary: the answer's first sentence, capped.
+
+        A property rather than a template filter chain: the board shows it and the answer page
+        does not, and "everything up to the first full stop" is a boundary rule that belongs
+        with the data (build_principles.md §II — no logic in templates).
+        """
+        text = " ".join((self.answer or "").split())
+        if not text:
+            return ""
+        stop = text.find(". ")
+        if 0 < stop < 160:
+            return text[: stop + 1]
+        if len(text) <= 160:
+            return text
+        return text[:157].rstrip() + "…"
+
+    @property
+    def covers_items(self) -> list[str]:
+        """`covers` as the list the page renders. A template never splits a string."""
+        return [line.strip() for line in (self.covers or "").splitlines() if line.strip()]

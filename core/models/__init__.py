@@ -9,14 +9,14 @@ Slices (see MVP0_PLAN_V2.md §2):
     _core.py           User, UserRole, Role, Language
     _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _public.py         PublicDocument (the files the group publishes, D22)
-    _chat.py           ChatSession, ChatMessage, ChatCitation
+    _chat.py           ChatSession, ChatMessage, EscalatedQuery, PublicQuestion
 
 Keep each slice under the 30 KB cap (build_principles.md). When a slice
 approaches it, cut a new slice along a domain seam — do not grow the file.
 """
 
 from core.models._certification import Category, Seal
-from core.models._chat import ChatMessage, ChatSession, EscalatedQuery
+from core.models._chat import ChatMessage, ChatSession, EscalatedQuery, PublicQuestion
 from core.models._core import (
     ASSESSOR_CAPABILITY,
     Language,
@@ -34,6 +34,7 @@ __all__ = [
     "EscalatedQuery",
     "Language",
     "PublicDocument",
+    "PublicQuestion",
     "Role",
     "Seal",
     "User",

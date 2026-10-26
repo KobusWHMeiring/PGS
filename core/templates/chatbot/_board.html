@@ -1,0 +1,83 @@
+{% load i18n %}
+{% comment %}
+  The board — the questions a person published (D62). It sits *below* the composer: the page
+  is called *ask*, so a visitor with a question in their head must not scroll past the library
+  to find the box.
+
+  No logic lives here beyond `{% if %}`: counts, topics and cards arrive from
+  `core.services._ask.board_context`, and the one-line summary is a model property. A card is a
+  link only when `card.slug` exists, which is exactly when an administrator published it.
+
+  The waiting copy is deliberately warm, never an error (DESIGN §7.9): a gap in what we publish
+  is the product being honest, not the product being broken.
+{% endcomment %}
+<div class="board">
+  <div class="board__head">
+    <h2 class="serif-title board__title" id="questions">Questions we have answered</h2>
+    <p class="board__count">
+      {{ board.card_count }} question{{ board.card_count|pluralize }} published
+      {% if board.waiting_count %}
+        &middot; {{ board.waiting_count }} waiting on a person
+      {% endif %}
+    </p>
+  </div>
+
+  {% if board.topics %}
+    <nav class="board__filters" aria-label="Filter questions by topic">
+      <a class="chip {% if not board.topic %}chip--active{% endif %}" href="{% url 'core:ask' %}#questions">All</a>
+      {% for topic in board.topics %}
+        <a class="chip {% if board.topic == topic %}chip--active{% endif %}"
+           href="{% url 'core:ask' %}?topic={{ topic|urlencode }}#questions">{{ topic }}</a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+
+  {% if board.cards %}
+    <ol class="board__list">
+      {% for card in board.cards %}
+        <li class="card {% if card.status == 'WAITING' %}card--waiting{% endif %}">
+          <h3 class="card__question">
+            <a class="card__link" href="{% url 'core:ask_answer' slug=card.slug %}">{{ card.question }}</a>
+          </h3>
+          {% if card.status == 'WAITING' %}
+            <p class="card__summary">
+              The documents do not answer this. It is with the administrator — it stays here,
+              visible, until a person answers it.
+            </p>
+            <p class="card__meta">
+              <span class="card__topic">Waiting</span>
+              asked {{ card.ask_count }} time{{ card.ask_count|pluralize }}
+              {% if card.first_asked_at %} &middot; raised {{ card.first_asked_at|date:"j M Y" }}{% endif %}
+            </p>
+          {% else %}
+            <p class="card__summary">{{ card.summary }}</p>
+            <p class="card__meta">
+              {% if card.topic %}<span class="card__topic">{{ card.topic }}</span>{% endif %}
+              {% for citation in card.citations|slice:":1" %}
+                {{ citation.document }}{% if citation.section_ref %} &middot; {{ citation.section_ref }}{% endif %}{% if citation.page %} &middot; p. {{ citation.page }}{% endif %}
+              {% endfor %}
+              &middot; asked {{ card.ask_count }} time{{ card.ask_count|pluralize }}
+              {% if card.checked_at %} &middot; checked {{ card.checked_at|date:"j M Y" }}{% endif %}
+            </p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="board__empty">
+      {% if board.topic %}
+        No published question matches that topic.
+        <a href="{% url 'core:ask' %}#questions">Show all questions</a>.
+      {% else %}
+        No questions have been published yet. The first one asked with the box ticked, and read
+        by the administrator, appears here.
+      {% endif %}
+    </p>
+  {% endif %}
+
+  <p class="board__note">
+    Every answer above quotes the passage it came from, and says what it does not cover.
+    <strong>Membership is not certification</strong> — the group publishes no certification
+    status on this page.
+  </p>
+</div>

@@ -42,6 +42,18 @@ JavaScript that a visitor reading the fees page should not download.
           {% csrf_token %}
           <label class="visually-hidden" for="id_question">{{ form.question.label }}</label>
           {{ form.question }}
+
+          {% comment %} D64 — the consent control. Unticked is the honest default: silence is
+             not consent. The help text is the promise the card's `AWAITING` state has to keep,
+             so the two ship together. {% endcomment %}
+          <div class="chat-form__consent">
+            {{ form.publish }}
+            <label class="chat-form__consent-label" for="{{ form.publish.id_for_label }}">
+              {{ form.publish.label }}
+            </label>
+            <p class="chat-form__consent-note">{{ form.publish.help_text }}</p>
+          </div>
+
           <button class="btn btn--ochre chat__send" id="chat-send" type="submit">
             Ask
           </button>
@@ -74,6 +86,15 @@ JavaScript that a visitor reading the fees page should not download.
         </p>
       </aside>
 
+    </div>
+  </section>
+
+  {% comment %} The library sits below the composer (D62): a visitor with a question does not
+     scroll past it to find the box, and the board is the payoff rather than the entry point.
+     A light band, because the dark `/ask/` band is the moment and there is only ever one. {% endcomment %}
+  <section class="section section--board">
+    <div class="container">
+      {% include "chatbot/_board.html" %}
     </div>
   </section>
 {% endblock %}

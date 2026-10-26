@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import logging
 
+from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from ipware import get_client_ip
@@ -42,7 +43,8 @@ from core.services._chatbot import (
     get_session,
     start_session,
 )
-from core.services._public import public_context
+from core.services._ask import answer_page, board_context, record_public_question
+from core.services._public import Page, chrome_context, public_context
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +117,14 @@ def ask(request):
                     form.cleaned_data["question"],
                     ip_hash=session.ip_hash,
                 )
+                # D64: consent is opt-in and this only ever writes an *unpublished* card. The
+                # service runs after the answer is committed, so a board failure cannot cost
+                # the visitor their answer — and it is not swallowed, because a card nobody
+                # sees is a promise the consent label made and the code did not keep.
+                if form.cleaned_data.get("publish"):
+                    record_public_question(
+                        question=form.cleaned_data["question"], answer=answer
+                    )
             except ChatConfigurationError:
                 logger.error("chatbot: no default StandardSet is seeded")
                 error, status = CONFIGURATION_MESSAGE, 503
@@ -141,6 +151,7 @@ def ask(request):
     messages = list(session.messages.all()) if session is not None else []
     context = public_context("ask") | {
         "form": form,
+        "board": board_context(request.GET.get("topic", "")),
         "session": session,
         "messages": messages,
         "answer": answer,
@@ -157,3 +168,32 @@ def ask(request):
     if retry_after is not None:
         response["Retry-After"] = str(retry_after)
     return response
+
+
+def ask_answer(request, slug: str):
+    """One published card as a page. Unknown, awaiting and rejected are the same 404.
+
+    A 200 for an unapproved card would put unread visitor text at a public URL the moment
+    someone guessed the slug, and the consent label says an administrator reads it first.
+    """
+    page = answer_page(slug)
+    if page is None:
+        raise Http404("No such answer")
+    return render(
+        request,
+        "chatbot/answer_page.html",
+        chrome_context(
+            Page(
+                key="ask-answer",
+                title=f"{page.card.question} — Outeniqua PGS",
+                # The answer's own summary, not the citation: a meta description is the
+                # group speaking, and the clause is the document speaking (see
+                # `test_claim_discipline.test_the_answer_page_makes_no_claim_of_its_own`).
+                description=page.card.summary or page.card.question,
+                eyebrow="Questions we have answered",
+                heading=page.card.question,
+                lede="",
+            )
+        )
+        | {"answer": page, "refusal": REFUSAL},
+    )

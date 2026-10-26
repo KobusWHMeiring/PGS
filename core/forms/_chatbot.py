@@ -44,3 +44,18 @@ class QuestionForm(forms.Form):
             }
         ),
     )
+
+    #: The consent control (D64). Unticked is the honest default — silence is not consent —
+    #: and the help text is the console's promise, so it ships with the control rather than in
+    #: a separate copy edit: the card lands as *awaiting review* precisely because this says an
+    #: administrator reads it first.
+    publish = forms.BooleanField(
+        required=False,
+        label="Add this question to the public questions database",
+        help_text=(
+            "Other visitors will see the question and the answer, without your name. "
+            "Don't include anyone else's name or farm. An administrator reads it before "
+            "it appears."
+        ),
+        widget=forms.CheckboxInput(attrs={"class": "chat-form__checkbox"}),
+    )

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+  An answer at a permanent URL (D62/C, shipped on the conservative defaults D64–D66).
+
+  The page exists to make an answer *quotable*: the clause in full, what the answer does not
+  cover, the questions next to it, and a citation block that survives being pasted into a
+  message. Three rules are load-bearing:
+
+  * **`noindex` unless it is a published answer.** A Waiting card's gap page stays reachable —
+    it is where the card points — but a search result for a question the documents cannot
+    answer is a promise we break.
+  * **"What this answer does not cover" is required**, not optional (D65). An answer that
+    states its boundary is the honest counterpart to a grounded quote, and a page without one
+    fails `test_ask_answer_page.py` rather than a reviewer's judgement.
+  * **The citation is text, not a widget.** The copy button is an enhancement; the text is the
+    feature, so it is selectable with JavaScript disabled.
+
+  Membership-is-not-certification appears here because this page lists answers, and the OPP
+  requires the statement anywhere the group's status could be implied.
+{% endcomment %}
+
+{% block head_extra %}
+  {% if answer.card.noindex %}<meta name="robots" content="noindex, follow">{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/chat.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+  <section class="section section--answer">
+    <div class="container answer">
+
+      <p class="eyebrow">{{ page.eyebrow }}</p>
+      <h1 class="serif-title answer__question">{{ answer.card.question }}</h1>
+
+      <p class="answer__meta">
+        {% if answer.card.topic %}<span class="card__topic">{{ answer.card.topic }}</span>{% endif %}
+        asked {{ answer.card.ask_count }} time{{ answer.card.ask_count|pluralize }}
+        {% if answer.card.checked_at %} &middot; checked {{ answer.card.checked_at|date:"j M Y" }}{% endif %}
+      </p>
+
+      {% if answer.gap %}
+        <div class="answer__gap">
+          <p class="answer__gap-lead">
+            The documents we publish do not answer this.
+          </p>
+          <p>
+            This question is with the administrator. It stays on the
+            <a href="{% url 'core:ask' %}#questions">questions we have answered</a> board,
+            visible, until a person answers it — because a gap in what we publish is something
+            the group would rather show than hide.
+          </p>
+          <p>
+            <a class="btn btn--forest" href="{% url 'core:contact' %}">Ask the administrator directly</a>
+          </p>
+        </div>
+      {% else %}
+        <p class="answer__text">{{ answer.card.answer|linebreaksbr }}</p>
+
+        {% if answer.citations %}
+          <h2 class="answer__h">The clause it comes from</h2>
+          {% for citation in answer.citations %}
+            <figure class="answer__clause">
+              <blockquote class="answer__quote">{{ citation.quote }}</blockquote>
+              <figcaption class="answer__source">
+                {{ citation.document }}
+                {% if citation.section_ref %} &middot; {{ citation.section_ref }}{% endif %}
+                {% if citation.page %} &middot; printed p. {{ citation.page }}{% endif %}
+                {% if citation.document_code and citation.reading_anchor %}
+                  &middot;
+                  <a class="answer__read"
+                     href="{% url 'core:document_reader' code=citation.document_code %}#{{ citation.reading_anchor }}">
+                    Read it in the document &rarr;
+                  </a>
+                {% endif %}
+              </figcaption>
+            </figure>
+          {% endfor %}
+        {% endif %}
+
+        {% if answer.card.covers_items %}
+          <h2 class="answer__h">What this answer does not cover</h2>
+          <ul class="answer__covers">
+            {% for item in answer.card.covers_items %}<li>{{ item }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      {% endif %}
+
+      {% if answer.neighbours %}
+        <h2 class="answer__h">Questions next to this one</h2>
+        <ul class="answer__next">
+          {% for other in answer.neighbours %}
+            <li>
+              <a href="{% url 'core:ask_answer' slug=other.slug %}">{{ other.question }}</a>
+              {% if other.status == 'WAITING' %}
+                <span class="answer__next-note">— with the administrator</span>
+              {% elif other.topic %}
+                <span class="answer__next-note">— {{ other.topic }}</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if answer.cite_text %}
+        <h2 class="answer__h">Cite this answer</h2>
+        <p class="answer__cite" id="cite-text">{{ answer.cite_text }}</p>
+        <button class="btn btn--forest btn--compact" type="button"
+                data-copy-target="#cite-text" data-copy-label="Copy citation">
+          Copy citation
+        </button>
+      {% endif %}
+
+      <p class="answer__provenance">
+        {% if answer.card.checked_at %}Read from the documents on
+          {{ answer.card.checked_at|date:"j M Y" }}.{% endif %}
+        This page explains what the documents say. It is not a certification decision.
+        <strong>Membership is not certification</strong>, and the group publishes no
+        certification status on this page.
+      </p>
+    </div>
+  </section>
+{% endblock %}

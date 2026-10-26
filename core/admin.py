@@ -9,11 +9,14 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 
+from core.services._ask import approve, reject
+
 from core.models import (
     Category,
     ChatMessage,
     ChatSession,
     EscalatedQuery,
+    PublicQuestion,
     Seal,
     User,
     UserRole,
@@ -161,3 +164,68 @@ class EscalatedQueryAdmin(admin.ModelAdmin):
                 obj.answered_by = request.user
             obj.status = EscalatedQuery.Status.ANSWERED
         super().save_model(request, obj, form, change)
+
+
+# --- The ask board (D62, D64–D66) -------------------------------------------
+#
+# This is the only place a card is published. Two things the form must make possible, because
+# the consent label promises them: **editing the question before approval** (that is where a
+# third party's name comes out) and **writing what the answer does not cover** (the page
+# requires it). The two actions are the reviewer's normal path; the change form is the
+# deliberate one.
+
+
+@admin.register(PublicQuestion)
+class PublicQuestionAdmin(admin.ModelAdmin):
+    list_display = ("question", "status", "topic", "ask_count", "checked_at", "approved_at")
+    list_filter = ("status", "topic")
+    search_fields = ("question", "answer")
+    readonly_fields = (
+        "asked_key",
+        "ask_count",
+        "first_asked_at",
+        "last_asked_at",
+        "approved_by",
+        "approved_at",
+    )
+    date_hierarchy = "last_asked_at"
+    actions = ("publish_cards", "reject_cards")
+
+    fieldsets = (
+        (
+            "The published question",
+            {
+                "fields": ("question", "topic", "status"),
+                "description": (
+                    "Edit the wording before publishing. A question is free text from a public "
+                    "form: remove anyone else's name or farm here, not after it is live."
+                ),
+            },
+        ),
+        ("The answer", {"fields": ("answer", "covers", "citations")}),
+        (
+            "Review",
+            {
+                "fields": (
+                    "checked_at",
+                    "approved_by",
+                    "approved_at",
+                    "ask_count",
+                    "first_asked_at",
+                    "last_asked_at",
+                    "escalated_query",
+                    "asked_key",
+                )
+            },
+        ),
+    )
+
+    @admin.action(description="Publish the selected questions")
+    def publish_cards(self, request, queryset):
+        for card in queryset:
+            approve(card.pk, user=request.user)
+
+    @admin.action(description="Do not publish the selected questions")
+    def reject_cards(self, request, queryset):
+        for card in queryset:
+            reject(card.pk, user=request.user)

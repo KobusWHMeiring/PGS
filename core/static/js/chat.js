@@ -8,7 +8,10 @@
  *   3. let Enter send and Shift+Enter insert a newline;
  *   4. let a 429 or 503 swap its explanation into the thread. HTMX ignores non-2xx
  *      responses by default, which would leave the visitor staring at a page that
- *      silently did nothing.
+ *      silently did nothing;
+ *   5. copy an answer page's citation, and do nothing at all when the Clipboard API is
+ *      unavailable — the citation is already selectable text, so a broken button is
+ *      worse than no button.
  *
  * No build step, no module loader, no framework (build_principles.md §IV). If this
  * file fails to load, the form still posts and the server still renders a full page.
@@ -203,5 +206,35 @@
         scrollToLatest();
       }
     }
+  });
+
+  // --- Copy the citation (answer pages) -------------------------------------
+  //
+  // Progressive enhancement only: the citation is a normal, selectable paragraph and this
+  // button is a convenience. When `navigator.clipboard` is missing (an older browser, a
+  // non-secure origin), the handler returns silently rather than falling back to
+  // `execCommand` or an alert — a button that reports failure on a farm phone is worse
+  // than a button that is simply inert.
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest("[data-copy-target]");
+    if (!button || !navigator.clipboard || !navigator.clipboard.writeText) {
+      return;
+    }
+    var source = document.querySelector(button.getAttribute("data-copy-target"));
+    if (!source) {
+      return;
+    }
+    var label = button.getAttribute("data-copy-label") || button.textContent;
+    navigator.clipboard.writeText(source.textContent.trim()).then(
+      function () {
+        button.textContent = "Copied";
+        window.setTimeout(function () {
+          button.textContent = label;
+        }, 2000);
+      },
+      function () {
+        /* Refused permission: leave the button alone. The text is still selectable. */
+      }
+    );
   });
 })();

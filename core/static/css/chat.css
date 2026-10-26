@@ -434,3 +434,358 @@
 .chat__body--thread {
   scroll-margin-top: 5.5rem;
 }
+
+/* --- The consent control (D64) -------------------------------------------- */
+/* Unticked is the honest default. It sits under the textarea and above the button, because a
+   checkbox after the button reads as an afterthought and its help text is the promise the
+   card's *awaiting review* state has to keep. */
+
+.chat-form__consent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.6rem;
+  align-items: start;
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(var(--brand-cream-rgb) / 0.25);
+  border-radius: var(--radius-sm);
+  background-color: rgb(var(--brand-cream-rgb) / 0.06);
+}
+
+.chat-form__checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--brand-ochre);
+}
+
+.chat-form__consent-label {
+  color: var(--brand-cream);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat-form__consent-note {
+  grid-column: 2;
+  margin: 0;
+  color: var(--brand-ochreLight);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+/* --- The board (D62) ------------------------------------------------------ */
+/* A light band under the dark ask section. Cards are the library: the unit of value is a
+   grounded passage, so a card's job is to get a reader to its page in one tap. A Waiting card
+   is warm-tinted, never red — the same rule as a refusal bubble, because it is the same claim.
+   The waiting tint uses the left rule rather than a different ground: a band carries one of the
+   four grounds and a card is not a band (DESIGN §3). */
+
+.section--board {
+  background-color: var(--brand-creamWarm);
+}
+
+.board__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.board__title {
+  margin: 0;
+  color: var(--brand-forestDark);
+  font-size: var(--text-2xl);
+}
+
+.board__count {
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+.board__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem; /* 44 px — DESIGN rule 5 */
+  padding: 0 0.9rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-cream);
+  color: var(--brand-charcoal);
+  font-size: var(--text-xs);
+  text-decoration: none;
+  transition: colors 150ms;
+}
+
+.chip:hover {
+  border-color: var(--brand-ochre);
+  color: var(--brand-ochreInk);
+}
+
+.chip--active {
+  border-color: var(--brand-forest);
+  background-color: var(--brand-forest);
+  color: var(--brand-cream);
+}
+
+.board__list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 860px) {
+  .board__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.card {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--brand-sand);
+  border-left: 3px solid var(--brand-ochre);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+}
+
+.card--waiting {
+  border-left-color: var(--brand-warmDark);
+  background-color: var(--brand-ochreLight);
+}
+
+.card__question {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.card__link {
+  color: var(--brand-forestDark);
+  text-decoration: none;
+}
+
+.card__link:hover,
+.card__link:focus-visible {
+  color: var(--brand-ochreInk);
+  text-decoration: underline;
+}
+
+.card__summary {
+  margin: 0 0 0.6rem;
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+}
+
+.card__topic {
+  padding: 0 0.45rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-sageLight);
+  color: var(--brand-forestDark);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.board__empty {
+  padding: 1rem;
+  border: 1px dashed var(--brand-sand);
+  border-radius: var(--radius-sm);
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+}
+
+.board__note {
+  margin: 1.5rem 0 0;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+/* --- The answer page (D62/C) ---------------------------------------------- */
+/* One question, one URL. The page is a *reading* surface, so it borrows the reader's
+   measure (a prose column) rather than the board's grid. The clause block is the
+   deliverable, which is why it is a quoted figure with its own source line and not a
+   chip that expands. */
+
+.section--answer {
+  background-color: var(--brand-cream);
+}
+
+.answer {
+  max-width: var(--container-prose);
+}
+
+.answer__question {
+  margin: 0.25rem 0 0.5rem;
+  color: var(--brand-forestDark);
+  font-size: var(--text-3xl);
+  line-height: var(--leading-title);
+}
+
+.answer__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0 0 1.75rem;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+.answer__text {
+  margin: 0 0 1.75rem;
+  color: var(--brand-charcoal);
+  font-size: var(--text-lg);
+  line-height: var(--leading-body);
+}
+
+.answer__h {
+  margin: 2rem 0 0.6rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-sans);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.answer__clause {
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--brand-sand);
+  border-left: 3px solid var(--brand-ochre);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-creamWarm);
+}
+
+.answer__quote {
+  margin: 0 0 0.6rem;
+  color: var(--brand-charcoal);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  line-height: 1.6;
+}
+
+.answer__source {
+  color: var(--brand-muted);
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-micro);
+}
+
+.answer__read {
+  color: var(--brand-ochreInk);
+  text-decoration: none;
+}
+
+.answer__read:hover {
+  color: var(--brand-ochreDark);
+  text-decoration: underline;
+}
+
+.answer__covers {
+  margin: 0 0 1.75rem;
+  padding-left: 1.1rem;
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.answer__covers li {
+  margin-bottom: 0.35rem;
+}
+
+.answer__next {
+  margin: 0 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.answer__next li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.answer__next a {
+  color: var(--brand-forestDark);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.answer__next a:hover {
+  color: var(--brand-ochreInk);
+  text-decoration: underline;
+}
+
+.answer__next-note {
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+}
+
+.answer__cite {
+  margin: 0 0 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-creamWarm);
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.answer__gap {
+  margin: 0 0 2rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--brand-sand);
+  border-left: 3px solid var(--brand-warmDark);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-ochreLight);
+}
+
+.answer__gap-lead {
+  margin: 0 0 0.5rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+}
+
+.answer__gap p {
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.answer__provenance {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--brand-sand);
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}

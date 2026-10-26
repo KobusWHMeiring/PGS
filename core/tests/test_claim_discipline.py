@@ -278,3 +278,72 @@ def test_the_reader_adds_no_claim_of_its_own(client: Client, ingested_saoso):
 
     for label in Seal.objects.values_list("label", flat=True):
         assert label.lower() not in our_words, f"seal {label!r} rendered on the reader"
+
+
+@pytest.fixture
+def published_answer(public_surface, django_user_model):
+    """A published card whose *quoted clause* uses a forbidden term.
+
+    The same rule as the reader, on a different surface: the answer page reproduces the
+    document's own words in its clause block, and those words may include "biodynamic" or
+    "pasture raised". The page is therefore not in `PUBLIC_URLS` either — it is a row, not a
+    route — and the sweep below is applied to everything *except* the quotation.
+    """
+    from django.utils import timezone
+
+    from core.models import PublicQuestion
+    from core.services._ask import approve
+
+    user = django_user_model.objects.create_user(username="claims-reviewer", password="x")
+    card = PublicQuestion.objects.create(
+        question="May I use preparations I make myself?",
+        asked_key="k-claims",
+        answer=(
+            "The standard permits them only where their ingredients are listed in Appendix 2. "
+            "The preparation's name does not make it permitted; its ingredients do."
+        ),
+        topic="Inputs",
+        citations=[
+            {
+                "section_ref": "S5.6.1",
+                "sub_ref": None,
+                "page": 31,
+                "document": "SAOSO Standard v2.1",
+                "quote": "Biodynamic preparations may be used where they are produced from "
+                "substances listed in Appendix 2.",
+                "chunk_id": 1,
+                "document_code": "saoso-standard-v2.1",
+                "reading_anchor": "s5-6-1",
+            }
+        ],
+        last_asked_at=timezone.now(),
+    )
+    return approve(card.pk, user=user, topic="Inputs")
+
+
+def test_quoting_a_document_on_an_answer_page_is_not_a_claim(
+    client: Client, published_answer
+):
+    """Prove the answer page's quotation really does trip the term list.
+
+    Without this, the strip below could pass because the fixture never contained a forbidden
+    term — the guard-the-guard shape in `testing_hazards.md` §1.6.
+    """
+    body = client.get(f"/ask/{published_answer.slug}/").content.decode().lower()
+    assert "biodynamic" in body
+
+
+def test_the_answer_page_makes_no_claim_of_its_own(client: Client, published_answer):
+    """The group's copy and the reviewed answer prose are swept; the clause is not.
+
+    The answer text *is* something the group stands behind at a permanent URL (D65), so it is
+    swept. The blockquote is the document speaking, so it is not — and stripping it is what
+    makes this test able to fail on a real overclaim instead of failing on the standard's own
+    vocabulary.
+    """
+    body = client.get(f"/ask/{published_answer.slug}/").content.decode().lower()
+    our_words = re.sub(r'<blockquote class="answer__quote">.*?</blockquote>', "", body, flags=re.S)
+    our_words = re.sub(r'<p class="answer__cite".*?</p>', "", our_words, flags=re.S)
+
+    for term in FORBIDDEN + UNSOURCED:
+        assert term not in our_words, f"{term!r} appears on a published answer page"

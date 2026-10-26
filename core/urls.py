@@ -25,7 +25,7 @@ from core.views._public import (
     members,
     organics,
 )
-from core.views._chatbot import ask
+from core.views._chatbot import ask, ask_answer
 
 app_name = "core"
 
@@ -50,6 +50,9 @@ urlpatterns = [
     # The grounded assistant. `/ask/` is the real surface; the home page's showcase
     # is an illustration of it, not a second implementation.
     path("ask/", ask, name="ask"),
+    # One question, one URL (D62/C). After `/ask/` so the composer is never shadowed, and a
+    # `<slug:…>` converter never matches the empty string.
+    path("ask/<slug:slug>/", ask_answer, name="ask_answer"),
     path("contact/", contact, name="contact"),
     # The UAT console: staff-only, and deliberately **not** in `_public.PAGES`, so the
     # public sweeps (claim discipline, the Playwright route list) do not treat it as a
