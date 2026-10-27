@@ -1,7 +1,10 @@
 # The Concordance — Implementation Plan
 
 **Status:** Ready — every decision closed (`PGS_PLATFORM_SPEC.md` §18.3 **D68**, 2026-10-27).
-Nothing built yet beyond the flat reader that ships today.
+Nothing built yet beyond the flat reader that ships today. **Start at Task 1.**
+**Read first:** §0.1 (the two tasks that touch files a concurrent session was editing — those are
+now committed, so re-check `git status --short core/` anyway), §0.2 (this machine's
+`PublicDocument` rows need `publish_documents` before anything is measurable), §0.4 (the dry run).
 **Owner:** Kobus Meiring (Product) · Build
 **PRD:** `CONCORDANCE_PRD.md` (decisions in §7, findings in §10.5–10.8, UAT impact in §11)
 **Decision record:** `product/design/d68_concordance_open_questions.html` (the eight answers)
@@ -79,9 +82,18 @@ Record the number. Every later task must leave it green and strictly larger.
 
 ### 0.4 What was verified before this plan was written
 
-`_scratch/concordance/verify_plan_algorithm.py` runs this plan's own arithmetic against the live
-corpus (366 passages) without touching the repo. It is the reason the numbers below are quoted
-rather than hoped for. Run it yourself before Task 1; it should print the same thing.
+`scripts/probe_concordance.py` (committed, read-only) runs this plan's own arithmetic against the
+live corpus — 366 passages — without touching the repo. It is the reason the numbers below are
+quoted rather than hoped for. Run it before Task 1 and again after Task 4:
+
+```bash
+python scripts/probe_concordance.py --toc     # --toc reads SAOSO's printed TOC from the fixture,
+                                             # because the field does not exist until Task 1
+```
+
+It exits 0 and prints `ambiguous anchors=0`. Before Task 4 it prints nothing different — the probe
+implements the plan's derivation, not the shipped one — so use it to check the *branches and
+titles*, and use Task 4's guard test to prove the anchors.
 
 | Claim | Measured by the dry run |
 |---|---|
@@ -1886,7 +1898,7 @@ Expected: PASS; `No changes detected`; the `knowledge` → `core` contract still
 before/after weight is measurable rather than estimated:
 
 ```bash
-python _scratch/concordance/verify_branches.py   # branches and anchors after the change
+python scripts/probe_concordance.py            # branches, titles, missing sections, anchors
 ```
 Record the new page weight (raw and gzipped) for SAOSO's first branch in the PRD §3, and correct the
 figure there if it differs from the median-branch estimate.
@@ -1913,7 +1925,9 @@ git commit -m "docs(c9): the concordance is built — status, handover, backlog"
 
 - [ ] **Step 5: Hand the UAT over**
 
-`tests/uat/concordance_uat.md`, seven scenarios, each with a `Judgement:` clause. **Tests passing is
+`tests/uat/concordance_uat.md`, seven scenarios, each with a `Judgement:` clause. Preflight it with
+`python manage.py publish_documents` — see §0.2; on a machine where the corpus was never ingested
+the reader shows no text at all, and every judgement would be about a broken page. **Tests passing is
 not completion for a surface a human must judge.** Do not mark this feature done before the
 sign-off table has names in it — and do not ask the reviewer to confirm anything in the *Automated
 coverage* table; that table exists so they do not have to.

@@ -1,10 +1,10 @@
 # PRD: The concordance — the standard on one screen, and a citation that opens a line
 
-**Status:** Refinement — **the questions in §7 are decided** (product owner, 2026-10-27; recorded as
-`PGS_PLATFORM_SPEC.md` §18.3 **D68**). The argument, the options and the eight answers are in
-`product/design/d68_concordance_open_questions.html`. **Planned:** `CONCORDANCE_PLAN.md` (11 tasks,
-with the algorithm dry-run against the live corpus before it was written). **Not built:** nothing
-beyond the reader at `/documents/<code>/read/` exists yet.
+**Status:** Ready — the eight questions in §7 were decided by the product owner on 2026-10-27
+(`PGS_PLATFORM_SPEC.md` §18.3 **D68**), the argument is in
+`product/design/d68_concordance_open_questions.html`, and the work is planned task-by-task in
+`CONCORDANCE_PLAN.md` (11 tasks, its algorithm dry-run against the live corpus). **Nothing is built:**
+nothing beyond the reader at `/documents/<code>/read/` exists yet.
 **Owner:** Product (shape, publication), Build (the derivation in §5)
 **Opened:** 2026-10-27
 **Origin:** the ask-surface UAT, scenario *"Following a citation opens the document at the passage
@@ -167,6 +167,7 @@ because the cost does not disappear when the answer is taken.
 | **7.1** | Does the concordance **replace** the reader's flat view, or is it a second route? | **Replace.** One surface, two states; a second route is two derivations over one document forever. | A template + service change, and the deletion of `contents()`/`ReadingEntry` from `knowledge/reading.py`. |
 | **7.2** | Citation link **copy and behaviour** | **"View this line"**, `target="_blank" rel="noopener"`, with a visually-hidden "(opens in a new tab)". | A template change. A new tab is nearly invisible on a phone; the announcement is the mitigation, and the UAT is where it is judged. |
 | **7.3** | Do **all four** documents get a concordance, or SAOSO + OPP first? | **All four**, which means fixing the certification-landscape artefact first (§10.5) and re-ingesting that one document. | One artefact edit + one re-ingest. The alternative was an allow-list nobody remembers; the reason it was needed is that two of that document's "titles" are a price line and a seal name. |
+| **7.3a** | *(amendment, 2026-10-27 — found while writing the plan)* **There is no landscape artefact to fix.** | **The two titles are reviewed data, not a corpus edit.** `knowledge/corpus/` holds one file — `bpp.md`; D53/D55 record that OPP, SAOSO and landscape are not yet converted, so the landscape is still read by `HeadingParser` at ingest. The plan therefore corrects the two names with `REVIEWED_BRANCH_TITLES` (two entries, keyed by source file and branch, in the `TABLE_ROWS`/`CORPUS_EDITS` idiom, each proved to match a real branch by a test). | Two entries and a test, in the slice. **The alternative — build the landscape artefact properly (the D53 follow-up) — is deliberately out of scope;** if it is taken up later, the reviewed titles delete themselves: where a printed TOC exists it is the source of names, never a hand-written map. |
 | **7.4** | Where does the tree live in the page — sticky left column, or above the pane? | **Sticky column ≥900 px; below that, collapsed to the current branch behind a disclosure.** | Visual, and the UAT's hardest judgement. At 390 px, 22 rows of 44 px is ~968 px of scroll before any clause text. |
 | **7.5** | Do we show the **printed TOC's blank sections** and any appendix divider rows? | **Yes — store the TOC** (`StandardDocument.toc`, the slice's only migration), show the reserved range *10–19*, and **state on the page which printed sections the corpus does not hold** (§10.6). | One nullable field + the `parse_toc()` wiring at ingest, which is not wired today (§10.8). The omission note is not optional. |
 | **7.6** | Does the concordance also become `/documents/<code>/`, or stay at `/read/`? | **Stay at `/read/`.** Citations already point there, and `/documents/<code>/` is a download with an established meaning. | None. A move would be a redirect, a new citation format and a broken-link audit. |
