@@ -83,7 +83,8 @@ def test_a_repeated_reference_keeps_the_plain_anchor_first(document):
 
     Duplicate `section_ref`s are held at zero by the ingest ratchet, but a heading-scheme
     document can repeat a heading across pages, and a citation must still land on the first
-    occurrence rather than on a suffixed one nobody can guess.
+    occurrence rather than on a suffixed one nobody can guess. Later passages are named for
+    their own words, not for their position (`CONCORDANCE_PRD` §10.7).
     """
     chunk = document.chunks.get(anchor="straw-mulch")
     chunk.section_ref = None
@@ -93,7 +94,7 @@ def test_a_repeated_reference_keeps_the_plain_anchor_first(document):
 
     anchors = [anchor for _chunk, anchor in unique_anchors(reading_chunks(document))]
     assert anchors[:2] == ["appendix-2", "appendix-2-1"]
-    assert anchors[2] == "appendix-2-2"
+    assert anchors[2] == "appendix-2-straw-is-listed"
     assert reading_anchor(None, "", "APPENDICES > Appendix 2") == "appendix-2"
 
 

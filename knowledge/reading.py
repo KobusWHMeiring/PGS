@@ -34,6 +34,16 @@ SNIPPET_CHARS = 240
 #: truncated anchor still lands on the right passage — the passages below it are unaffected.
 MAX_ANCHOR_CHARS = 64
 
+#: How much of a passage's own words may appear in its anchor: the first few words, so the anchor
+#: reads like a locator a person can check in the URL (`#appendix-2-wood-bark-and-sawdust`) rather
+#: than a hash, and stays short enough to be one.
+DISAMBIGUATOR_WORDS = 4
+MAX_DISAMBIGUATOR_CHARS = 40
+
+#: A slug that ends on one of these reads like a typo (`…slurry-and`). Dropped from the anchor,
+#: which is a thing a person may read in the address bar.
+TRAILING_CONNECTIVES = {"and", "or", "of", "the", "with", "for", "to"}
+
 
 def reading_chunks(document: StandardDocument) -> list[DocumentChunk]:
     """In: a document. Out: its chunks in document order. Side effects: one query.
@@ -75,20 +85,55 @@ def reading_anchor(
     return "passage"
 
 
-def unique_anchors(chunks: list[DocumentChunk]) -> list[tuple[DocumentChunk, str]]:
-    """In: chunks in order. Out: `(chunk, anchor)` with collisions suffixed `-2`, `-3`…
+def _content_slug(chunk: DocumentChunk) -> str:
+    """A slug of the passage's own words: its content anchor, else its first line, else its heading.
 
-    A suffix is a local disambiguator, not an identity: the *first* chunk with a reference
-    keeps the plain anchor, so a citation's link lands on the passage a reader searching for
-    that reference expects first.
+    The order is deliberate. `anchor` is already content-derived (the ingest sets it for a block the
+    source never numbered), then the printed first line, then the last heading — so the
+    disambiguator is a property of the text in every case, and of the file only when the text is
+    empty. Words, not characters: a 40-character cut leaves `…only-if-not-chemica`, which reads as
+    a typo rather than a locator.
     """
-    seen: dict[str, int] = {}
+    for candidate in (
+        chunk.anchor,
+        (chunk.text or "").split("\n", 1)[0],
+        chunk.heading_path.split(" > ")[-1],
+    ):
+        slug = _slugify_locator(candidate) if candidate and candidate.strip() else ""
+        if slug:
+            words = slug.split("-")[:DISAMBIGUATOR_WORDS]
+            while len(words) > 1 and words[-1] in TRAILING_CONNECTIVES:
+                words.pop()
+            return "-".join(words)[:MAX_DISAMBIGUATOR_CHARS].strip("-")
+    return "passage"
+
+
+def unique_anchors(chunks: list[DocumentChunk]) -> list[tuple[DocumentChunk, str]]:
+    """In: chunks in order. Out: `(chunk, anchor)` with the anchor unique within the document.
+
+    The **first** passage of a shared reference keeps the bare anchor, because that is the anchor
+    every citation shipped before 2026-10-27 carries (`#appendix-2`); later ones are suffixed with
+    a slug of their own words (`#appendix-2-wood-bark-and-sawdust`). The old `-2`, `-3` suffix is
+    gone: it was ingest order wearing a locator's clothes (`build_principles.md` §I).
+
+    A numeric suffix survives only as a last resort, when two passages begin with the same words —
+    and then the anchor is still stable for unchanged text.
+    """
+    used: set[str] = set()
     pairs: list[tuple[DocumentChunk, str]] = []
     for chunk in chunks:
         base = reading_anchor(chunk.section_ref, chunk.anchor, chunk.heading_path)
-        count = seen.get(base, 0) + 1
-        seen[base] = count
-        pairs.append((chunk, base if count == 1 else f"{base}-{count}"))
+        if base not in used:
+            used.add(base)
+            pairs.append((chunk, base))
+            continue
+        candidate = f"{base}-{_content_slug(chunk)}"
+        attempt = 1
+        while candidate in used:
+            attempt += 1
+            candidate = f"{base}-{attempt}"
+        used.add(candidate)
+        pairs.append((chunk, candidate))
     return pairs
 
 
