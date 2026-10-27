@@ -34,6 +34,7 @@ from typing import NamedTuple
 
 from django.conf import settings
 from django.db import transaction
+from django.urls import reverse
 
 from core.models import PublicDocument
 from knowledge.concordance import ConcordanceSection, build_concordance
@@ -256,6 +257,21 @@ class Reader:
     hits: tuple[SearchHit, ...]
     query: str
     section: str
+
+    @property
+    def title(self) -> str:
+        """The document and the open branch — what a `<title>` says, and what a search result
+        shows. A branch page is about a section, not about the whole document."""
+        if self.selected is None:
+            return self.document.title
+        return f"{self.document.title} — {self.selected.title}"
+
+    @property
+    def canonical_path(self) -> str:
+        """The one address for this branch. The `?section=` form, because the branch has to
+        travel in the query string: a browser never sends the fragment to the server (§6.4)."""
+        base = reverse("core:document_reader", kwargs={"code": self.document.code})
+        return f"{base}?section={self.selected.anchor}" if self.selected else base
 
 
 def corpus_for(document: PublicDocument) -> StandardDocument | None:

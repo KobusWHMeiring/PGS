@@ -17,6 +17,10 @@
   <link rel="stylesheet" href="{% static 'css/reader.css' %}">
 {% endblock %}
 
+{% block head_extra %}
+  <link rel="canonical" href="{{ canonical }}">
+{% endblock %}
+
 {% block content %}
   {% include "public/_page_head.html" %}
 

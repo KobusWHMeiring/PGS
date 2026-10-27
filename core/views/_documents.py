@@ -76,29 +76,38 @@ def document_file(request, code: str):
 
 
 def document_reader(request, code: str):
-    """The ingested text of one published document, searchable and anchorable.
+    """The concordance: the document's structure as navigation, one branch open.
 
     Unpublished and unknown codes are the same 404, for the same reason the download is:
     `is_published` is the only gate, and a citation is not an exception to it.
     """
     document = get_object_or_404(PublicDocument.objects.published(), code=code)
-    reader = reader_for(document, request.GET.get("q", ""))
+    reader = reader_for(
+        document,
+        request.GET.get("q", ""),
+        request.GET.get("section", ""),
+    )
     page = Page(
         key="document-reader",
-        title=f"{document.title} — the text, as we ingested it",
+        title=reader.title,
         description=(
-            f"The text of {document.title} that the assistant answers from, with the "
-            "passages a citation names."
+            f"{reader.document.title}, as we ingested it — the branch a citation names, "
+            "with the passages it quotes."
         ),
         eyebrow="The documents",
         heading=document.title,
         lede=(
-            "This is the text we ingested, passage by passage. Search it, or follow a "
-            "citation straight to the clause it quotes."
+            "The standard's own structure, section by section, as we ingested it. Choose a "
+            "section, search the whole document, or follow a citation straight to the line "
+            "it quotes."
         ),
     )
     return render(
         request,
         "public/document_reader.html",
-        chrome_context(page) | {"reader": reader},
+        chrome_context(page)
+        | {
+            "reader": reader,
+            "canonical": request.build_absolute_uri(reader.canonical_path),
+        },
     )

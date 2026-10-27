@@ -308,3 +308,26 @@ def test_only_the_open_branch_is_returned(seeded_documents):
 
     assert len(reader.sections) == 2
     assert [p.locator for p in reader.passages] == ["Appendix 2"]
+
+
+# --- The route: a branch names itself ----------------------------------------
+
+
+def test_a_branch_is_in_the_title_and_canonical_link(client, seeded_documents):
+    """D68 §7.7: the standard's own words at a stable address are the one surface where SEO is
+    honest — so a branch says which branch it is, and names one address for itself."""
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=appendix-2").content.decode()
+
+    assert "<title>SAOSO Organic Standard v2.1 — Appendix 2" in body
+    assert 'rel="canonical"' in body
+    assert (
+        'href="http://testserver/documents/saoso-standard-v2.1/read/?section=appendix-2"'
+        in body
+    )
+
+
+def test_the_page_renders_one_branch_and_says_nothing_about_the_others(client, seeded_documents):
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=appendix-2").content.decode()
+
+    assert "free of significant contaminants" in body
+    assert "Wood, bark and sawdust" not in body
