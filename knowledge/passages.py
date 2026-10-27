@@ -97,6 +97,23 @@ class Term:
 
     text: str
     kind: str = "term"
+    #: The id a glossary link lands on (`term-acb`), set by the reader for the glossary branch only.
+    #: Empty elsewhere, so a term-shaped line in another branch is never a link target.
+    anchor: str = ""
+
+
+@dataclass(frozen=True)
+class RowHeading:
+    """A reviewed table row's substance cell (`Guano`, `Wood, bark, sawdust…`).
+
+    Deliberately not a `Term`: a term is a glossary headword and a row heading is an entry in a
+    table, and the two must not carry the same weight on the page (D70.1). It exists so a row with
+    no condition still reads as an *entry* rather than as body text, which is what the appendix
+    looked like before.
+    """
+
+    text: str
+    kind: str = "row"
 
 
 @dataclass(frozen=True)
@@ -118,7 +135,7 @@ class ListBlock:
     kind: str = "list"
 
 
-Block = Paragraph | Heading | Term | ListBlock
+Block = Paragraph | Heading | Term | RowHeading | ListBlock
 
 
 @dataclass
@@ -481,6 +498,37 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
     return tuple(blocks)
 
 
+def row_blocks(text: str) -> tuple[Block, ...]:
+    """In: one reviewed row's stored text (`TableRow.text`). Out: the blocks the reader renders.
+
+    In:  `text` — the substance cell, then the condition, its paragraphs separated by a blank line
+         (that is how `TableRow.text` is written, and the double-spaced-body rule that governs
+         `passage_blocks` must not apply here: a curated row's paragraph breaks are deliberate).
+    Out: `RowHeading(substance)`, then one `Paragraph` per non-empty condition paragraph; `()` for
+         empty input; **no paragraph at all** when the condition cell is empty, because the paper's
+         silence is not a condition (the prompt's rule, and the reason this function exists).
+    Side effects: none.
+    Fails: never. `passage_blocks()` is not consulted and its behaviour is unchanged.
+    """
+    lines = [line.strip() for line in (text or "").splitlines()]
+    if not any(lines):
+        return ()
+
+    first = lines.index(next(line for line in lines if line))
+    blocks: list[Block] = [RowHeading(_collapse(lines[first]))]
+    paragraph: list[str] = []
+    for line in lines[first + 1 :]:
+        if line:
+            paragraph.append(line)
+            continue
+        if paragraph:
+            blocks.append(Paragraph(_collapse(" ".join(paragraph))))
+            paragraph = []
+    if paragraph:
+        blocks.append(Paragraph(_collapse(" ".join(paragraph))))
+    return tuple(blocks)
+
+
 def flatten(blocks: tuple[Block, ...] | list[Block]) -> str:
     """Out: the blocks' text in document order, markers included. The lossless check.
 
@@ -506,7 +554,9 @@ __all__ = [
     "ListBlock",
     "ListItem",
     "Paragraph",
+    "RowHeading",
     "Term",
     "flatten",
     "passage_blocks",
+    "row_blocks",
 ]
