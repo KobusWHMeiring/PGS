@@ -161,6 +161,25 @@ was thinking. Both of those are worse than an explanation.
 
 ---
 
+## Scenario 8 — A clause reads as the document prints it
+
+**Setup:** open `/documents/saoso-standard-v2.1/read/?section=s5-1-3` (Animal Husbandry, the
+conditions in 5.1.3). Then open `?section=s8-1` (Mushroom Production), which has a list inside a
+list.
+
+**Expected:** 5.1.3's conditions read as a lettered list — `a.` to `f.`, each condition a row, a
+wrapped condition continuing under its own marker — and the sentences before and after read as
+paragraphs rather than as a ladder of lines. In 8.1, the roman `i.`/`ii.` sits *inside* item `a`.
+The page's note at the foot says the words and punctuation are the document's and that line breaks
+are reflowed.
+
+**Judgement:** *Does this read as a reproduction of the paper, or as a machine's attempt at one?*
+The markers are the browser's list markers, not characters added to the text — the corpus prints a
+bare `a` — and whether that reads as honest is a human call. A reader who has the PDF open should be
+able to follow the same clause in both without losing their place.
+
+---
+
 ## Sign-off
 
 | Role | Name | Date | Result | Notes |

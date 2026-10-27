@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-27 13:08
+> Generated: 2026-10-27 14:02
 
 ## Ready (up next)
 
@@ -21,6 +21,8 @@
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
 - **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: two items left, both human gates** — the VPS restore rehearsal and the missing UAT seats. `f4e8907` deployed and the corpus was rebuilt with `--force` on 2026-10-22 (364 chunks, all embedded, `lexical_only=False`); committee confirmation of no-claims left for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 - **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plans A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19, and **D (D1–D5, chatbot)** landed with it, so every sub-plan except the deferred C3 is built. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. **Closing MVP 0 is now an enumerated list, not a judgement call** — `MVP0_PLAN_V2.md` §4.1 (audited 2026-10-22): two engineering items, three human gates, one fix in flight. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
+- **Passage layout — Implementation Plan** - `In Progress\PASSAGE_LAYOUT_PLAN.md` - Status: **In Progress** — all six tasks landed 2026-10-27; UAT Scenario 8 unsigned. Implementation
+- **PRD: Passage layout — the document's lists, rendered as lists** - `In Progress\PASSAGE_LAYOUT_PRD.md` - Status: **In Progress** — built 2026-10-27 (the display-only option A, chosen by the product
 - **PRD: UAT sign-off tooling — an HTML judgement surface with the data already loaded** - `In Progress\UAT_SIGN_OFF_TOOLING_PRD.md` - Status: **Slice 1 BUILT 2026-10-22** — moved to `In Progress/`. 768 tests green, artefact driven
 - **Deployment: organicguarantee.africa on the homtini VPS** - `In Progress\VPS_DEPLOYMENT.md` - Status: In Progress — **redeploy path exercised 2026-10-22** (six runs; four deploy-blocking defects found and
 

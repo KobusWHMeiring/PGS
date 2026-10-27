@@ -91,6 +91,17 @@ that table.
 
 ---
 
+## 0d. 2026-10-27 — a passage is laid out as the document prints it
+
+The reader now renders each passage as blocks: paragraphs with their hard wraps joined, the
+printed headings, and **real lists** — `a.`–`f.` for SAOSO's conditions, with the roman sub-list
+nested inside its item (`S8.1`). The marker is a CSS list marker, never text: the corpus prints a
+bare `a`, and `flatten(blocks)` reproduces every chunk of the shipped SAOSO exactly (a guard in
+`knowledge/tests/test_passages.py`). Stored text, retrieval, anchors and the citation audit are
+untouched — this is display-only (`PASSAGE_LAYOUT_PRD.md`). **UAT Scenario 8 is unsigned.**
+
+---
+
 ## 0. The one thing to know first
 
 **The standards corpus, the public site and the grounded chatbot all exist.** `knowledge/`
