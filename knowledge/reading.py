@@ -183,6 +183,28 @@ def strip_overlap(previous: str | None, text: str) -> str:
     return text
 
 
+def branch_texts(pairs: Sequence[tuple[DocumentChunk, str]]) -> list[str]:
+    """In: one branch's `(chunk, anchor)` pairs in printed order. Out: its displayed text per passage.
+
+    The only difference from the stored text is the **chunk overlap**, trimmed where the passage
+    above already printed those words (`strip_overlap`). Retrieval needs the overlap; a reader does
+    not, and `S1` printed the previous chunk's tail again at the top of the next.
+
+    One expression, one place: the reader renders it and `scripts/probe_reader_structure.py`
+    measures the same list, because a probe that rebuilds it is a probe that can disagree with the
+    page (the §21 lesson).
+    """
+    texts: list[str] = []
+    previous: DocumentChunk | None = None
+    for chunk, _anchor in pairs:
+        text = chunk.text
+        if previous is not None and previous.section_ref == chunk.section_ref:
+            text = strip_overlap(previous.text, text)
+        texts.append(text)
+        previous = chunk
+    return texts
+
+
 def passage_locator(chunk: DocumentChunk) -> str:
     """The one expression for what a passage prints as its locator.
 

@@ -42,6 +42,7 @@ from knowledge.models import StandardDocument
 from knowledge.passages import passage_blocks, row_blocks
 from knowledge.reading import (
     SearchHit,
+    branch_texts,
     passage_locator,
     printed_locators,
     reading_chunks,
@@ -339,25 +340,6 @@ def _select_section(
     return sections[0]
 
 
-def _branch_texts(pairs) -> list[str]:
-    """One branch's displayed text per passage, chunk overlaps trimmed.
-
-    Adjacent chunks of one printed section overlap on purpose, so retrieval can see both sides of a
-    boundary. A reader must not: `S1`'s eight chunks repeat 21–57 words at five boundaries, and the
-    definitions page printed the previous chunk's tail again at the top of the next one. The stored
-    text is untouched; only what a page renders is trimmed.
-    """
-    texts: list[str] = []
-    previous: DocumentChunk | None = None
-    for chunk, _anchor in pairs:
-        text = chunk.text
-        if previous is not None and previous.section_ref == chunk.section_ref:
-            text = strip_overlap(previous.text, text)
-        texts.append(text)
-        previous = chunk
-    return texts
-
-
 def reader_for(document: PublicDocument, query: str = "", section: str = "") -> Reader:
     """In: a published document, what the reader searched for, and which branch. Out: a `Reader`.
 
@@ -396,7 +378,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # boundaries, and the definitions page printed the previous chunk's tail again at the top
     # of the next one. The stored text is untouched; only what this page renders is trimmed.
     branch_pairs = selected.passages if selected is not None else ()
-    texts = _branch_texts(branch_pairs)
+    texts = branch_texts(branch_pairs)
 
     # The reviewed structure is looked up against the text that is about to be rendered, so a
     # corpus that no longer matches the reviewed rows falls back to today's page instead of
@@ -421,7 +403,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     if glossary_section is not None:
         glossary_blocks = [
             block
-            for text in _branch_texts(glossary_section.passages)
+            for text in branch_texts(glossary_section.passages)
             for block in passage_blocks(text)
         ]
         terms = {

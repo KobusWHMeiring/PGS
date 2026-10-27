@@ -1,37 +1,29 @@
-"""Probe the reader's structure against the corpus in this database.
+"""What the reader actually renders, measured on the corpus in the database.
 
-Read-only. Prints what `product/backlog/Refinement/READER_STRUCTURE_PRD.md` claims, so the claims
-can be checked before Task 1 is started and again after it lands:
+Read-only: no writes, no network, no model calls. It exists to answer three questions with numbers
+instead of impressions, and every number it prints comes from the **shipped** code:
 
-1. **A table branch as rows** — how many reviewed rows, how many print no condition, how many print
-   the same locator as the row above, and whether each divider the PRD proposes is really on the
-   printed page above the row it names (read from the committed page fixtures, so this needs no PDF
-   reader — D57).
-2. **Locator runs** — printed locator lines today against one per run, per document.
-3. **References** — every `Section <part> – <n>` and `Appendi(x|ces) <n>` in the text, what it would
-   resolve to, and which ones are ambiguous or point into a part the corpus does not hold.
-4. **Glossary candidates** — the `Term` blocks in `S1`, how often each occurs elsewhere, and how many
-   are prose rather than headwords. This is the list §5.1 says must be reviewed by a human, so the
-   probe prints it rather than deciding it.
+1. **Does Appendix 2 read as the paper's table?** The reviewed rows, the cells the paper leaves
+   empty, the dividers and where they sit relative to the row they name, and the pages the column
+   headers are printed on.
+2. **How many locator lines does one-per-run save?** Per document, then for the whole corpus.
+3. **Which references resolve, and which cannot be decided?** Every printed mention, its target, and
+   the ambiguous ones named. Plus the glossary: how many headwords the document defines.
 
-Usage:
-    python scripts/probe_reader_structure.py                 # every ingested document
-    python scripts/probe_reader_structure.py --doc saoso     # one
+**It imports the product's rules rather than re-implementing them.** The first version of this
+script held its own copy of the proposed dividers, its own locator comparison and its own three
+reference resolvers — and a copy is free to stay right while the product goes wrong, which is exactly
+how `probe_chat.py` came to report a grounded answer for a question `/ask/` refuses (§21, G8). There
+is one implementation, in `knowledge/`, and this prints what it says.
 
-Before running it on a developer machine:
-
-    python manage.py ingest_standard --doc saoso \\
-        --file pgs_docs/saoso-version-2.1-2026.pdf --no-embed   # if the corpus is empty
-
-Two things this does **not** establish: how the page *looks* with the dividers in it, and whether a
-reader trusts it. Those are `tests/uat/concordance_uat.md` Scenarios 9–11.
+    python scripts/probe_reader_structure.py            # every document in the database
+    python scripts/probe_reader_structure.py --doc saoso
 """
 
 from __future__ import annotations
 
 import argparse
 import os
-import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -45,42 +37,20 @@ import django  # noqa: E402
 django.setup()
 
 from knowledge.concordance import build_concordance  # noqa: E402
+from knowledge.glossary import GLOSSARY_BRANCH, glossary_entries, with_term_anchors  # noqa: E402
 from knowledge.models import StandardDocument  # noqa: E402
 from knowledge.passages import passage_blocks  # noqa: E402
-from knowledge.tables import TABLE_ROWS  # noqa: E402
+from knowledge.reading import branch_texts, passage_locator, printed_locators  # noqa: E402
+from knowledge.references import build_reference_index, matches  # noqa: E402
+from knowledge.tables import TABLE_SECTIONS, rows_for  # noqa: E402
 from knowledge.tests.page_fixtures import MANIFEST, pages  # noqa: E402
-
-#: The dividers the PRD proposes for Appendix 2, measured against `-table` output on PDF pp. 77–79.
-#: `(before_row, printed text, kind)` — kept here so the probe can falsify the table before the data
-#: exists in `knowledge/tables.py`.
-PROPOSED_DIVIDERS = {
-    "Appendix 2": (
-        (0, "I. PLANT AND ANIMAL ORIGIN", "part"),
-        (1, "South African specific", "qualifier"),
-        (3, "South African specific", "qualifier"),
-        (14, "South African specific", "qualifier"),
-        (15, "II. MINERAL ORIGIN", "part"),
-        (26, "III. MICROBIOLOGICAL", "part"),
-        (28, "IV. OTHERS", "part"),
-    ),
-}
-
-COLUMN_HEADERS = {
-    "Appendix 2": ("SUBSTANCES DESCRIPTION, COMPOSITIONAL", "CONDITIONS FOR USE"),
-}
-
-SECTION_PART = re.compile(r"Section\s+([A-Z])\s*(?:[^\w\s]{1,3}\s*)?(\d{1,2})(?:\.(\d+))?")
-#: `Section 4.6.2`, `section 5.7` — the paper also cites a section with no part letter. Printed in a
-#: Part-B passage, an unqualified "Section n" means a section of the part it appears in, so the part
-#: is not guessed: it is the part of the branch the passage belongs to (the TOC says which).
-SECTION_BARE = re.compile(r"Section\s+(\d{1,2})(?:\.(\d+))*", re.IGNORECASE)
-APPENDIX = re.compile(r"Appendi(?:x|ces)\s+(\d{1,2})([a-z])?(\s+[A-Z][^.;\n]{0,60})?")
 
 #: Which fixture pages hold which document, so the printed page can be located without a reader.
 DOC_KEYS = {
     "saoso-version-2.1-2026.pdf": "saoso",
     "Outeniqua pgs principles, policies and procedures 2026.pdf": "opp",
     "Basic Production Principles_ENG_PRINT.pdf": "bpp",
+    "PGS Certification Landscape_Final.pdf": "landscape",
     "PGS Certification landscape_Final.pdf": "landscape",
 }
 
@@ -93,21 +63,18 @@ def head(title: str) -> None:
     print(f"\n{'=' * 78}\n{title}\n{'=' * 78}")
 
 
-def probe_table(doc: StandardDocument) -> None:
-    """§1.1 and §3.1: the rows, the empty cells, the repeated locators, the dividers."""
-    concordance = build_concordance(doc)
-    doc_key = DOC_KEYS.get(Path(doc.source_file).name)
-    # `-table` where the fixtures have it: `-layout` prints a centred qualifier on the same text
-    # line as the row beside it, so "the next thing after the divider" is only readable row by row
-    # in the row-aligned extraction (the same reason `TABLE_ROWS` was verified with `-table`).
+def probe_table(document: StandardDocument) -> None:
+    """The rows, the empty cells, the dividers' adjacency and the header pages."""
+    concordance = build_concordance(document)
+    doc_key = DOC_KEYS.get(Path(document.source_file).name)
     mode = "table" if doc_key and f"{doc_key}.table" in MANIFEST["pages"] else "layout"
     printed = pages(doc_key, mode) if doc_key else []
 
     for section in concordance.sections:
-        rows = TABLE_ROWS.get(section.key)
+        rows = rows_for(section.key)
         if not rows:
             continue
-        head(f"{doc.source_file.split('/')[-1]} · {section.key} ({len(rows)} reviewed rows)")
+        head(f"{Path(document.source_file).name} · {section.key} ({len(rows)} reviewed rows)")
 
         empty = [row.substance for row in rows if not row.condition]
         print(f"rows with no printed condition : {len(empty)} of {len(rows)}")
@@ -115,220 +82,137 @@ def probe_table(doc: StandardDocument) -> None:
             print(f"    - {substance[:60]}")
         if len(empty) > 6:
             print(f"    … and {len(empty) - 6} more")
+        print(f"printed pages                  : {sorted({row.page for row in rows})}")
 
-        keys = [(chunk.section_ref or chunk.anchor, chunk.page) for chunk, _a in section.passages]
-        repeats = sum(1 for before, after in zip(keys, keys[1:]) if before == after)
-        runs = sum(1 for before, after in zip(keys, keys[1:]) if before != after) + 1
-        print(f"locator lines today            : {len(keys)}")
-        print(f"… printed once per run         : {runs}  (suppressed: {repeats})")
-        print(f"printed pages                  : {sorted({chunk.page for chunk, _a in section.passages})}")
-
-        dividers = PROPOSED_DIVIDERS.get(section.key, ())
-        print()
-        print(f"dividers proposed              : {len(dividers)}")
-        if not printed:
-            print("  no committed page fixtures for this document — order not checked")
+        structure = TABLE_SECTIONS.get(section.key)
+        if structure is None:
+            print("no reviewed structure — the branch renders as plain passages")
             continue
 
-        # Line-based, because the claim is adjacency: the printed row starts on the next line
-        # after the divider. The first 25 characters of a substance are enough to tell one row
-        # from another here — except rows 0 and 1, which print the same substance cell twice (the
-        # point of the qualifier between them), so `matched` means "a row that reads like this".
-        for before, divider, kind in dividers:
-            needle = " ".join(rows[before].substance.split())[:25]
-            hits = []
+        print(f"\nlegend                         : {structure.legend[:60]}…")
+        print(f"columns                        : {structure.columns[0]} · {structure.columns[1]}")
+        print(f"dividers                       : {len(structure.dividers)}")
+
+        if not printed:
+            print("  no committed page fixtures for this document — adjacency not checked")
+            continue
+
+        # Line-based, because the claim is adjacency: the printed row starts on the next line after
+        # the divider. The first 25 characters of a substance tell one row from another here, except
+        # rows 0 and 1, which print the same substance twice on purpose.
+        for divider in structure.dividers:
+            row = rows[divider.before_row]
+            needle = squash(row.substance)[:25]
+            found_at = None
             for number, page in enumerate(printed, 1):
                 lines = page.splitlines()
                 for index, line in enumerate(lines):
-                    if divider not in squash(line):
+                    if divider.text not in squash(line):
                         continue
                     following = next(
                         (squash(other) for other in lines[index + 1 :] if other.strip()), ""
                     )
-                    hits.append((number, following.startswith(needle), following[:44]))
-            resolved = [hit for hit in hits if hit[1]]
-            where = f"PDF p{resolved[0][0]}" if resolved else "NOT FOUND"
-            state = "immediately above" if resolved else f"seen {len(hits)}x, none followed by the row"
+                    if following.startswith(needle):
+                        found_at = number
+                        break
+                if found_at:
+                    break
+            where = f"PDF p{found_at}" if found_at else "NOT FOUND"
+            state = "immediately above" if found_at else "NOT above the row it names"
             print(
-                f"  row {before:2} ({kind:9}) {divider[:30]!r:34} {where:10} {state:38} "
-                f"{rows[before].substance[:30]!r}"
+                f"  row {divider.before_row:2} ({divider.kind:9}) {divider.text[:30]!r:34} "
+                f"{where:9} {state}"
             )
 
-        for header in COLUMN_HEADERS.get(section.key, ()):
-            found = [n + 1 for n, page in enumerate(printed) if header in page]
-            print(f"\ncolumn header {header[:44]!r}: PDF pages {found or 'NOT FOUND'}")
+        for column in structure.columns:
+            # The paper prints the header in capitals and wraps it across lines, so the case-
+            # sensitive first word is what locates it: prose prints the same words in lower case.
+            word = column.split()[0].upper()
+            found = [n + 1 for n, page in enumerate(printed) if word in page]
+            print(f"  column {column[:38]!r:42} {word} on PDF pages {found or 'NONE'}")
 
 
 def probe_locators(documents: list[StandardDocument]) -> None:
-    """§1.2: the printed locator lines, today and after one-per-run."""
+    """The printed locator lines before and after one-per-run, per document and in total."""
     head("Locator runs")
-    print(f"  {'document':46} {'passages':>8} {'today':>6} {'after':>6} {'-':>4}")
-    total = runs = 0
-    for doc in documents:
-        concordance = build_concordance(doc)
-        count = run_count = 0
+    print(f"  {'document':46} {'passages':>8} {'today':>6} {'printed':>7} {'-':>4}")
+    total = printed = 0
+    for document in documents:
+        concordance = build_concordance(document)
+        passages = runs = 0
         for section in concordance.sections:
-            previous = None
-            for chunk, _anchor in section.passages:
-                key = (chunk.section_ref or chunk.anchor or chunk.heading_path, chunk.page)
-                count += 1
-                if key != previous:
-                    run_count += 1
-                previous = key
-        total += count
-        runs += run_count
+            rows = [(passage_locator(chunk), chunk.page) for chunk, _anchor in section.passages]
+            passages += len(rows)
+            runs += sum(printed_locators(rows))
+        total += passages
+        printed += runs
         print(
-            f"  {Path(doc.source_file).name[:46]:46} {count:8} {count:6} {run_count:6} "
-            f"{count - run_count:4}"
+            f"  {Path(document.source_file).name[:46]:46} {passages:8} {passages:6} {runs:7} "
+            f"{passages - runs:4}"
         )
-    print(f"  {'ALL':46} {total:8} {total:6} {runs:6} {total - runs:4}")
+    print(f"  {'ALL':46} {total:8} {total:6} {printed:7} {total - printed:4}")
 
 
-def resolve_section(doc: StandardDocument, keys: set[str], part: str, label: str) -> str:
-    """Part B + label n -> `S<n>`; Part A -> the missing note; anything else -> nothing."""
-    entry = next(
-        (
-            row
-            for row in (doc.toc or [])
-            if row.get("part") == part and row.get("label") == str(label)
-        ),
-        None,
-    )
-    if entry is None:
-        return "NO TOC ENTRY"
-    if part == "B":
-        return f"S{label}" if f"S{label}" in keys else "MISSING BRANCH"
-    return f"Part {part} is printed and NOT in the corpus"
-
-
-def resolve_bare_section(doc: StandardDocument, keys: set[str], number: str, parent_part: str) -> str:
-    """An unqualified `Section n` inside a passage: the same part, section `n`.
-
-    In:  `number` — the printed section number; `parent_part` — the TOC part the passage is in, or
-         "" when the document has no TOC.
-    Out: `S<n>` when that branch exists; otherwise a stated reason, never a guess.
-    """
-    if not parent_part:
-        return "NO PART (document has no TOC) — undecidable"
-    if parent_part != "B":
-        return f"inside Part {parent_part}: nothing to link"
-    return f"S{number}" if f"S{number}" in keys else "MISSING BRANCH"
-
-
-def resolve_appendix(keys: set[str], titles: dict[str, str], number: str, letter: str, words: str) -> str:
-    candidates = [
-        key
-        for key in keys
-        if re.fullmatch(rf"Appendix {number}[a-z]?|Appendix {number}\. Table \d", key)
-    ]
-    if letter:
-        exact = f"Appendix {number}{letter}"
-        return exact if exact in keys else "MISSING BRANCH"
-    if len(candidates) == 1:
-        return candidates[0]
-    if not candidates:
-        return "NO BRANCH"
-    tokens = [token.strip(",.").lower() for token in words.split()][:4]
-    for key in candidates:
-        if tokens and all(token in titles[key].lower() for token in tokens):
-            return key
-    return f"AMBIGUOUS {candidates}"
-
-
-def probe_references(doc: StandardDocument) -> None:
-    """§1.3 and §4.2: every reference, where it would go, and which ones cannot be decided."""
-    head(f"References · {Path(doc.source_file).name}")
-    concordance = build_concordance(doc)
-    keys = {section.key for section in concordance.sections}
-    titles = {section.key: section.title for section in concordance.sections}
-
-    #: `S<n>` -> the TOC part the branch was named from, so an unqualified `Section n` can be
-    #: resolved inside the part it is printed in rather than guessed.
-    part_by_key = {
-        f"S{entry['label']}": entry.get("part", "")
-        for entry in (doc.toc or [])
-        if entry.get("kind") == "CLAUSE"
+def probe_references(document: StandardDocument) -> None:
+    """Every mention, where it goes, and the ones that cannot be decided."""
+    head(f"References · {Path(document.source_file).name}")
+    concordance = build_concordance(document)
+    index = build_reference_index(document, concordance.sections)
+    branch_of = {
+        chunk.pk: section.key for section in concordance.sections for chunk, _anchor in section.passages
     }
 
-    sections: Counter = Counter()
-    bare_sections: Counter = Counter()
-    appendices: Counter = Counter()
+    linked: Counter = Counter()
+    plain: Counter = Counter()
+    total = 0
     for section in concordance.sections:
         for chunk, _anchor in section.passages:
-            text = chunk.text or ""
-            for match in SECTION_PART.finditer(text):
-                printed = squash(match.group(0))
-                target = resolve_section(doc, keys, match.group(1), match.group(2))
-                sections[(printed, target)] += 1
-            for match in SECTION_BARE.finditer(text):
-                printed = squash(match.group(0))
-                target = resolve_bare_section(
-                    doc, keys, match.group(1), part_by_key.get(section.key, "")
-                )
-                bare_sections[(printed, target)] += 1
-            for match in APPENDIX.finditer(text):
-                printed = squash(match.group(0))
-                target = resolve_appendix(
-                    keys, titles, match.group(1), match.group(2), match.group(3) or ""
-                )
-                appendices[(printed, target)] += 1
+            for match in matches(chunk.text or "", index, open_branch=branch_of[chunk.pk]):
+                total += 1
+                if match.branch:
+                    linked[(squash(match.text), match.branch)] += 1
+                elif match.fragment:
+                    linked[(squash(match.text), match.fragment)] += 1
+                else:
+                    plain[(squash(match.text), match.title)] += 1
 
-    print("\nSection <part> – <n>:")
-    for (printed, target), count in sorted(sections.items()):
-        print(f"  {count:2}x {printed[:44]!r:48} -> {target}")
-    print("\nAppendi(x|ces) <n>:")
-    for (printed, target), count in sorted(appendices.items()):
-        print(f"  {count:2}x {printed[:44]!r:48} -> {target}")
-    print("\nSection <n> (no part letter — resolved inside the part it is printed in):")
-    for (printed, target), count in sorted(bare_sections.items()):
-        print(f"  {count:2}x {printed[:44]!r:48} -> {target}")
-
-    # A reference to the branch the passage is already in is a no-op, so the reader does not
-    # link it. Count it, because a rule with no instances is a rule nobody has tested.
-    self_refs = 0
-    for section in concordance.sections:
-        for chunk, _anchor in section.passages:
-            text = chunk.text or ""
-            for match in SECTION_PART.finditer(text):
-                if resolve_section(doc, keys, match.group(1), match.group(2)) == section.key:
-                    self_refs += 1
-            for match in APPENDIX.finditer(text):
-                target = resolve_appendix(
-                    keys, titles, match.group(1), match.group(2), match.group(3) or ""
-                )
-                if target == section.key:
-                    self_refs += 1
-    print()
-    print(f"references to the branch they are printed in: {self_refs}")
+    print(f"  mentions {total} · resolved {sum(linked.values())} · left as text {sum(plain.values())}")
+    print("\nresolved:")
+    for (printed, target), count in sorted(linked.items()):
+        print(f"  {count:2}x {printed[:46]!r:50} -> {target}")
+    print("\nleft as text:")
+    for (printed, title), count in sorted(plain.items()):
+        reason = title or "no target and nothing to say"
+        print(f"  {count:2}x {printed[:46]!r:50} -> {reason[:46]}")
 
 
-def probe_glossary(doc: StandardDocument, everything: list[StandardDocument]) -> None:
-    """§1.4 and §5.1: the candidate terms, their frequency, and the prose the heuristic mistakes."""
-    head("Glossary candidates (S1's Term blocks — review required)")
-    terms = []
-    for chunk in doc.chunks.filter(section_ref="S1").order_by("id"):
-        for block in passage_blocks(chunk.text or ""):
-            if block.kind == "term":
-                terms.append(block.text.strip())
+def probe_glossary(document: StandardDocument) -> None:
+    """The headwords the document defines, as the reader anchors them."""
+    head(f"Glossary · {Path(document.source_file).name}")
+    key = GLOSSARY_BRANCH.get(document.source_file)
+    if key is None:
+        print("  no glossary branch recorded for this document")
+        return
 
-    blob = squash(" ".join((chunk.text or "") for chunk in _all_chunks(everything)))
-    counts = Counter()
-    for term in terms:
-        counts[term] = len(
-            re.findall(rf"(?<![A-Za-z]){re.escape(term)}(?![A-Za-z])", blob)
-        )
+    concordance = build_concordance(document)
+    branch = next((section for section in concordance.sections if section.key == key), None)
+    if branch is None:
+        print(f"  GLOSSARY_BRANCH names {key!r}, which is not a branch of this document")
+        return
 
-    print(f"candidate terms                : {len(terms)}")
-    print(f"occurrences across the corpus  : {sum(counts.values())}")
-    print(f"never used again               : {sum(1 for n in counts.values() if n <= 1)}")
-    print("\nmost frequent (a headword that reads as prose is a false positive):")
-    for term, count in counts.most_common(12):
-        print(f"  {count:3}x  {term}")
+    blocks = [
+        block for text in branch_texts(branch.passages) for block in passage_blocks(text)
+    ]
+    entries = glossary_entries(document.source_file, blocks, branch.anchor)
+    anchored = [
+        block
+        for block in with_term_anchors(blocks)
+        if block.kind == "term" and getattr(block, "anchor", "")
+    ]
 
-
-def _all_chunks(documents: list[StandardDocument]):
-    for doc in documents:
-        yield from doc.chunks.all()
+    print(f"  branch {key} ({branch.title}) · {len(branch.passages)} passages")
+    print(f"  headwords {len(entries)} · ids {len({block.anchor for block in anchored})}")
+    print(f"  first five: {', '.join(entry.term for entry in entries[:5])}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -342,19 +226,24 @@ def main(argv: list[str] | None = None) -> int:
             "no corpus in this database — run `manage.py ingest_standard --doc saoso "
             "--file pgs_docs/saoso-version-2.1-2026.pdf --no-embed` first"
         )
-    by_key = {doc_key: doc for doc in documents for name, doc_key in DOC_KEYS.items() if name in doc.source_file}
+    by_key = {
+        doc_key: document
+        for document in documents
+        for name, doc_key in DOC_KEYS.items()
+        if name in document.source_file
+    }
     if args.doc:
         if args.doc not in by_key:
             raise SystemExit(f"{args.doc!r} is not ingested; have {sorted(by_key)}")
         documents = [by_key[args.doc]]
 
-    for doc in documents:
-        probe_table(doc)
+    for document in documents:
+        probe_table(document)
     probe_locators(documents)
-    for doc in documents:
-        probe_references(doc)
-    if args.doc in (None, "saoso"):
-        probe_glossary(by_key["saoso"], list(StandardDocument.objects.all()))
+    for document in documents:
+        probe_references(document)
+    for document in documents:
+        probe_glossary(document)
 
     print(f"\nfixtures recorded by: {MANIFEST.get('extractor')}")
     print(f"extraction:           {MANIFEST.get('extraction_command')}")
