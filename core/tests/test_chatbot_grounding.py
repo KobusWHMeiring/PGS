@@ -666,13 +666,45 @@ def test_a_reviewed_table_row_is_one_citable_passage(chat_corpus, chat_standard_
 def test_a_passage_prints_its_locator_on_its_own_line(chat_corpus, chat_standard_set):
     """The locator must not share a line with the document it belongs to."""
     prompt = _prompt_for(chat_corpus.fee, chat_standard_set)
-    header = next(line for line in prompt.splitlines() if line.startswith("[1]"))
+    header = next(line for line in prompt.splitlines() if line.startswith("LOCATOR:"))
 
-    assert header.startswith("[1] LOCATOR: "), header
+    assert header.startswith("LOCATOR: "), header
     assert chat_corpus.fee.document.title not in header, (
         "the document title is metadata, and sharing the line invited the model to cite it"
     )
     assert f"Document: {chat_corpus.fee.document.title}" in prompt
+
+
+def test_a_passage_number_is_not_part_of_its_address(chat_corpus, chat_standard_set):
+    """No number may sit near the locator, because the model appends it to the address.
+
+    Measured 2026-10-27, deterministically: `[6] LOCATOR: S2.3.1` → `S6.2.3.1`; `[2]
+    LOCATOR: S1` → `S2` in 3 runs of 3; and `PASSAGE 5` on its own line with locator
+    `S4.8` → `S5` in 2 runs of 3. Moving the number to its own line was not enough, so
+    it is gone: 3 runs of 3 grounded afterwards, 7/7 citations audited. Delete this
+    test and the numbering comes back as a harmless label — it is not harmless.
+    """
+    prompt = _prompt_for(chat_corpus.fee, chat_standard_set)
+
+    assert "LOCATOR: " in prompt
+    assert "PASSAGE" not in prompt, "a passage number is printed where the model reads it"
+    body = [line for line in prompt.split("Passages:", 1)[1].splitlines() if line.strip()]
+    assert body[0].startswith("LOCATOR: "), body[0]
+    assert "not part of any address" in SYSTEM_PROMPT, (
+        "the rule the layout depends on is not stated to the model"
+    )
+
+
+def test_the_system_prompt_forbids_an_item_marker_as_a_sub_ref():
+    """The Appendix 1 refusal: `2.2.` printed in the text is not a stored sub-clause.
+
+    Six recorded refusals are this shape (`2.2`, `2.3`, `3`, `4`, `5`, `6`), all
+    Appendix 1, all on a chunk whose stored sub-clause map is empty — so a correct
+    answer was withheld for an address the audit could not resolve.
+    """
+    lowered = SYSTEM_PROMPT.lower()
+    assert "item marker" in lowered
+    assert "not one of the passage's stored sub-clauses" in lowered
 
 
 def test_the_system_prompt_says_which_value_is_the_address():

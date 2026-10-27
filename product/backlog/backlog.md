@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-26 19:52
+> Generated: 2026-10-27 11:00
 
 ## Ready (up next)
 
@@ -24,6 +24,8 @@
 
 ## Refinement
 
+- **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2 and 5.3 landed the same day** (gate green at 903): the definition question and the silica question both answer now, and the two GM-outcome turns are unchanged on purpose, because they are a copy decision. Remaining: D-2 (now smaller), D-3 (claim scope), D-4 (G3's alias table), D-5 (refusal copy), 5.4–5.8.
+- **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `Refinement\CONCORDANCE_PRD.md` - Status: Refinement — investigating since 2026-10-27. **No decision on the seven questions in
 - **PRD: The escalation answer path — a refusal that can reach a person** - `Refinement\ESCALATION_ANSWER_PATH_PRD.md` - Status: Refinement — design needed, no code written
 - **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
 - **Refinement: The Regenerative Add-On — architecture findings, and what to decide before MVP 2** - `Refinement\REGENERATIVE_ADDON_ARCHITECTURE.md` - Status: Refinement — target shape agreed (A, §2); implementation paused until the standard itself exists. Three decisions are nonetheless time-sensitive (§8), because MVP 1a and MVP 2 will otherwise freeze them by accident.

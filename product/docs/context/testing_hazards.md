@@ -1307,6 +1307,34 @@ service under test — and assert against *that*. A literal is acceptable only f
 is genuinely constant (a spec string), and then say so in the docstring. Added 2026-10-23 with
 `core/tests/test_documents.test_the_recorded_source_is_the_path_a_citation_joins_on`.
 
+### 1.33 The committed page fixtures are not the deployed corpus
+
+The recall-floor tests ingest the **committed extracted pages** (`stub_ingest_extraction`,
+D57 — the gate has no PDF reader), not the bytes the box runs. That is the right seam, and it
+is not the same corpus. The two drift in document frequency, which is exactly the input the
+rare-term chooser reads.
+
+Evidence:
+    # the deployed corpus (pgs DB, 366 chunks)
+    >>> {t: document_frequency(t, standard_set=ss) for t in ("gm", "count", "saving")}
+    {'gm': 1, 'count': 1, 'saving': 0}
+    # the fixture corpus the same question ran against in `knowledge/tests`
+    DF: {'definition': 16, 'genetically': 11, 'modified': 3, 'selective': 11,
+         'seed': 13, 'saving': 0, 'count': 1, 'gm': 0}
+
+Consequence: a test written to prove a retrieval fix kept passing with half the fix removed,
+because in the fixture corpus the key happened to land on the right page anyway. It was found
+by breaking the code on purpose — the fix had *two* halves and only one was load-bearing
+under the fixtures. Had it been left green, the next agent would have read a passing test as
+proof of a property the real corpus does not have.
+
+Rule: a retrieval test that names a word must assert the **mechanism** (which query was
+searched, which chunks each bet returned), not only the chunk that came back. Where document
+frequency is the input, state the fixture's df in the docstring and say which claim the test
+does *not* support; the deployed corpus's df is measured with `scripts/probe_chat.py`, which
+prints it per question. Added 2026-10-27 with
+`knowledge/tests/test_retrieval.test_an_unknown_word_hedges_two_bets`.
+
 ## 5. Template for a new entry
 
 ```markdown

@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from typing import Mapping
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import F
@@ -67,9 +68,49 @@ DEFAULT_LIMIT = 5
 #: enough for the semantic arm's best clauses and leaves the rare-term arm five.
 SEMANTIC_SEATS = 3
 
+#: Words that name the *asking* rather than the subject: the verbs and furniture of an
+#: everyday question ("can I **use**…", "does it **count** as…", "will I **pass**?").
+#: Document frequency makes them look rare and therefore topical — `count` occurs in one
+#: chunk, so it beat `genetically modified` on 2026-10-27 and the definitions page never
+#: reached the model. They stay in the query (the OR arm keeps every word for recall);
+#: they are never chosen as *the* lexical key, which is a claim about what the question
+#: is about. Same insight as `_chatbot.FOLLOW_UP_MIN_SHARED`, applied to the chooser.
+FILLER_TERMS = frozenset(
+    """apply applied buy buys count counts get gets got grow grows growing keep keeps
+    know knows make makes making need needs pass passes purchase purchased use used
+    using want wants""".split()
+)
+
 #: The generated `search_vector` was built with `config="english"` (B1). The query must
 #: use the same configuration or the tsquery lexemes will not match the stored ones.
 SEARCH_CONFIG = "english"
+
+
+def lexical_key(terms: list[str], frequencies: Mapping[str, int]) -> str:
+    """The word the rare-term arm searches: the rarest word that names the subject.
+
+    In:  the question's terms, in the order asked; each term's document frequency.
+    Out: one term to search, or "" when nothing in the question occurs in the corpus.
+    Fails: never.
+
+    Two rules, both measured, and they are the whole of the chooser:
+
+    1. **A filler is not a subject.** `FILLER_TERMS` is excluded from the choice; the
+       first term breaks a frequency tie so the same question is deterministic.
+    2. **When every known word is a filler, the old behaviour stands** (`subject or
+       known`) rather than returning nothing: a question made entirely of filler words
+       still has to search for something.
+
+    One chooser, four call sites — the primary arm, the unknown-term hedge's first bet,
+    the follow-up context arm, and `scripts/probe_chat.py`. A private rule in each would
+    drift, and `testing_hazards.md` §2.7 is the receipt for what a drifting instrument
+    costs.
+    """
+    known = [term for term in terms if term and frequencies.get(term, 0) > 0]
+    subject = [term for term in known if term not in FILLER_TERMS] or known
+    if not subject:
+        return ""
+    return sorted(subject, key=lambda term: (frequencies[term], terms.index(term)))[0]
 
 
 @dataclass(frozen=True)
@@ -137,6 +178,11 @@ class RetrievalResult:
     chunks: tuple[RetrievedChunk, ...] = ()
     lexical_only: bool = False
     warnings: tuple[str, ...] = field(default=())
+    #: The word the rare-term arm actually searched (`lexical_key`), or "" when the
+    #: question had nothing searchable. Recorded so the probe prints what the product
+    #: did rather than re-deriving it — the §2.7 defect is an instrument that computes
+    #: its own answer.
+    key: str = ""
 
     @property
     def citations(self) -> list[dict]:
@@ -432,6 +478,14 @@ def search_terms(
 
     The hedge is also the offline path: with no embedding key the semantic arm returns
     nothing, and the two lexical chunks are still better than an empty result set.
+
+    **The hedge is two bets, one seat each** (2026-10-27). A single proxy word is only
+    right while the unknown word is the subject. When it is incidental — `does selective
+    seed *saving* count as GM?` — the words that name the subject are all in the corpus,
+    and searching the rarest one (`count`) instead of them lost the definitions page that
+    answers the question. So the first seat is `lexical_key` (the rarest word that names
+    the subject) and the second is the OR of those words. The proxy bet is unchanged, so
+    the cardboard measurement above still holds.
     """
     cleaned = [term.strip() for term in terms if term and term.strip()]
     if not cleaned:
@@ -451,16 +505,44 @@ def search_terms(
         positive or cleaned,
         key=lambda term: (frequencies.get(term, 0), cleaned.index(term)),
     )
+    key = lexical_key(cleaned, frequencies) or ordered[0]
 
     if question and unknown:
-        hedge = search(
-            ordered[0],
-            standard_set=standard_set,
-            limit=min(2, limit),
-            candidates=candidates,
-            provider=provider,
-            use_vector=False,
-        )
+        # Two seats, two bets about what the unknown word is.
+        #
+        # The hedge used to search one word: the rarest known one, on the theory that it
+        # is the proxy for the subject the corpus cannot name (cardboard -> neighbours).
+        # That holds when the unknown word *is* the subject. It inverts when the unknown
+        # word is incidental and a different word carries the question: on 2026-10-27
+        # `what is the definition of genetically modified? does selective seed saving
+        # count as GM?` lost `saving`, the hedge searched `count` (df 1) and returned the
+        # biodiversity clause, and the definitions page that answers the question was one
+        # OR-query away. So: the rarest known word as one seat, and the OR of the words
+        # that name the subject as the other. Measured on the four unknown-term questions
+        # that exist in the suite: this adds the definitions page and loses nothing.
+        subject_terms = [
+            term
+            for term in cleaned
+            if frequencies[term] > 0 and term not in FILLER_TERMS
+        ]
+        widest = " OR ".join(subject_terms)
+        bets = [key] if not widest or widest == key else [key, widest]
+        seats_each = max(1, min(2, limit) // len(bets))
+        hedge_chunks: list[RetrievedChunk] = []
+        hedge_only = True
+        hedge_warnings: list[str] = []
+        for bet in bets:
+            found = search(
+                bet,
+                standard_set=standard_set,
+                limit=seats_each,
+                candidates=candidates,
+                provider=provider,
+                use_vector=False,
+            )
+            hedge_only = hedge_only and found.lexical_only
+            hedge_warnings.extend(found.warnings)
+            hedge_chunks.extend(found.chunks)
         semantic = search(
             question,
             standard_set=standard_set,
@@ -470,7 +552,7 @@ def search_terms(
         )
         merged: list[RetrievedChunk] = []
         seen: set[int] = set()
-        for chunk in (*hedge.chunks, *semantic.chunks):
+        for chunk in (*hedge_chunks, *semantic.chunks):
             if chunk.chunk_id in seen:
                 continue
             seen.add(chunk.chunk_id)
@@ -481,21 +563,22 @@ def search_terms(
             query=question,
             standard_set_id=getattr(standard_set, "pk", None),
             chunks=tuple(merged),
-            lexical_only=hedge.lexical_only and semantic.lexical_only,
+            lexical_only=hedge_only and semantic.lexical_only,
             warnings=tuple(
                 dict.fromkeys(
                     (
                         f"the corpus does not contain {', '.join(unknown)!r}: the "
                         "question was answered from its meaning, not its words",
-                        *hedge.warnings,
+                        *hedge_warnings,
                         *semantic.warnings,
                     )
                 )
             ),
+            key=key,
         )
 
     primary = search(
-        ordered[0],
+        key,
         standard_set=standard_set,
         limit=limit,
         candidates=candidates,
@@ -559,15 +642,7 @@ def search_terms(
                 term: document_frequency(term, standard_set=standard_set)
                 for term in context_terms
             }
-            known_context = [term for term in context_terms if context_frequency[term] > 0]
-            rarest = (
-                min(
-                    known_context,
-                    key=lambda term: (context_frequency[term], context_terms.index(term)),
-                )
-                if known_context
-                else ""
-            )
+            rarest = lexical_key(context_terms, context_frequency)
             carried = search(
                 rarest,
                 standard_set=standard_set,
@@ -596,6 +671,7 @@ def search_terms(
         chunks=tuple(merged),
         lexical_only=primary.lexical_only and fallback.lexical_only,
         warnings=warnings,
+        key=key,
     )
 
 

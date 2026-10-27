@@ -383,4 +383,4 @@ def test_a_first_question_prompt_gains_nothing(chat_corpus):
 
 def test_the_prompt_version_moved():
     """A prompt change that is not versioned is a cache entry nobody can interpret."""
-    assert PROMPT_VERSION == "d49-4"
+    assert PROMPT_VERSION == "d50-1"

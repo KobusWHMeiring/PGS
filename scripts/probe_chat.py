@@ -60,6 +60,14 @@ SUITE = (
 
 
 def _print_chunks(question: str, chunks, result) -> None:
+    # The word the rare-term arm actually searched, printed because it is a *decision*
+    # (which word names the subject) and a wrong one is invisible in the answer: on
+    # 2026-10-27 `count` stood in for "genetically modified" and the definitions page
+    # never arrived while the refusal blamed the documents. Reported from the result
+    # itself, never re-derived here — an instrument that recomputes its own answer is
+    # the §2.7 defect.
+    if getattr(result, "key", ""):
+        print(f"  key: {result.key!r} — the word the rare-term arm searched")
     print(f"  arms: lexical_only={result.lexical_only}")
     for warning in result.warnings:
         print(f"  warning: {warning}")
@@ -220,6 +228,7 @@ def probe_follow_up(parent: str, follow_up: str, *, limit: int | None = None) ->
     print()
     print(f"PARENT: {parent}")
     parent_result = default_retrieval(parent, standard_set, limit=budget)
+    print(f"  key: {parent_result.key!r}")
     _show_chunks("parent retrieval", parent_result.chunks, carried_ids=())
     carried_ids = _answer(parent, parent_result.chunks, standard_set, model)
     unique_carried = sorted(set(carried_ids))
@@ -231,6 +240,7 @@ def probe_follow_up(parent: str, follow_up: str, *, limit: int | None = None) ->
     print()
     print("--- A. before stage 1: the fragment alone")
     plain = default_retrieval(follow_up, standard_set, limit=budget)
+    print(f"  key: {plain.key!r}")
     present = _show_chunks("retrieval", plain.chunks, carried_ids=set(carried_ids))
     print(f"  parent's cited clause present: {'YES' if set(carried_ids) & present else 'NO'}")
     _answer(follow_up, plain.chunks, standard_set, model)
@@ -242,6 +252,7 @@ def probe_follow_up(parent: str, follow_up: str, *, limit: int | None = None) ->
     stage = default_retrieval(
         follow_up, standard_set, limit=budget, context_query=context_query
     )
+    print(f"  key: {stage.key!r}")
     from_context = {chunk.chunk_id for chunk in stage.chunks} & set(carried_ids)
     merged = _with_carried_citations(stage.chunks, carried_ids, standard_set, budget=budget)
     present = _show_chunks("retrieval", merged, carried_ids=set(carried_ids))

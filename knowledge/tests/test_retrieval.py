@@ -35,11 +35,13 @@ from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.services import (
     DEFAULT_LIMIT,
     chunks_by_id,
+    FILLER_TERMS,
     FUSED_CANDIDATES,
     RRF_K,
     Retained,
     RetrievalResult,
     fuse,
+    lexical_key,
     search,
     search_terms,
     vector_search,
@@ -521,6 +523,136 @@ def test_a_question_about_an_unknown_material_gives_the_semantic_arm_the_budget(
     assert "cardboard" in " ".join(result.warnings)
 
 
+# --- The lexical key is the rarest word that names the *subject* ------------
+#
+# Both defects below were measured on the live surface on 2026-10-27
+# (`CHAT_TRUTHFULNESS_PRD.md` F1): a verb outranked the topic, and a question with one
+# out-of-vocabulary word lost the page that answers it while every known word was
+# already in hand.
+
+
+def test_a_verb_is_never_the_lexical_key(two_sets):
+    """`count` occurs in one chunk, `biodiversity` in two — the verb still loses.
+
+    Document frequency is a proxy for topicality, and it inverts on a verb: "does that
+    count as GM?" made `count` (df 1) the key, and the arm returned §2.1.4 biodiversity
+    reserve for a question about a definition. The tie-break is not the assertion; the
+    *filler* is. Delete `FILLER_TERMS` from `lexical_key` and this test goes red.
+    """
+    first, _second, in_set, _out = two_sets
+    document = in_set.document
+    make_chunk(document, ref="S99.1", text="The operator must count the animals.")
+    make_chunk(document, ref="S99.2", text="Biodiversity is maintained on the farm.")
+    make_chunk(document, ref="S99.3", text="A biodiversity reserve protects habitat.")
+
+    result = search_terms(["biodiversity", "count"], standard_set=first, limit=3)
+
+    assert result.key == "biodiversity", (
+        "a filler verb was chosen as the lexical key: " + repr(result.key)
+    )
+    assert "count" in FILLER_TERMS
+
+
+def test_lexical_key_keeps_a_filler_only_question_searchable(two_sets):
+    """`subject or known`: a question made only of filler words still searches one."""
+    first, _second, in_set, _out = two_sets
+    make_chunk(in_set.document, ref="S99.4", text="The operator must use approved inputs.")
+
+    assert lexical_key(["use"], {"use": 1}) == "use"
+    assert lexical_key(["cardboard"], {"cardboard": 0}) == "", (
+        "a word the corpus does not contain is not a key"
+    )
+
+
+def test_an_unknown_word_hedges_two_bets(two_sets):
+    """The hedge is two seats and two bets, not the rarest word twice.
+
+    The question's subject is `genetically modified organism`; `saving` is absent from the
+    corpus, which used to reduce the whole lexical arm to the rarest known word — `count`
+    — and the page that defines the term never reached the model. The hedge must search
+    the subject's words as well, or the refusal blames the documents for a retrieval bug.
+
+    The corpus is shaped like the real one on purpose: the rarest subject word (`gm`) is
+    in a *different* chunk from the words that carry the question. A key that lands on the
+    right page anyway would let this test pass with the second bet removed.
+    """
+    first, _second, in_set, _out = two_sets
+    document = in_set.document
+    proxy = make_chunk(
+        document,
+        ref="general-principles",
+        text="Any GM seeds or seedlings are expressly forbidden in organic agriculture.",
+    )
+    prohibition = make_chunk(
+        document,
+        ref="S2.3.1",
+        text="The deliberate use of genetically modified material is prohibited.",
+    )
+    definitions = make_chunk(
+        document,
+        ref="S1",
+        text=(
+            "Genetically modified organism: an organism produced through techniques in "
+            "which the genetic material has been altered by genetic engineering."
+        ),
+    )
+    make_chunk(
+        document,
+        ref="S2.1.4",
+        text="The farm must count plants inside a biodiversity reserve.",
+    )
+    question = (
+        "what is the definition of a genetically modified organism? does saving count?"
+    )
+
+    result = search_terms(
+        ["definition", "genetically", "modified", "organism", "saving", "gm", "count"],
+        question=question,
+        standard_set=first,
+        provider=FakeProvider(),
+        limit=4,
+    )
+
+    ids = [chunk.chunk_id for chunk in result.chunks]
+    assert result.key == "gm", (
+        "the rarest subject word is the first bet: " + repr(result.key)
+    )
+    assert proxy.pk in ids, "the proxy bet was not searched; this test would pass vacuously"
+    assert definitions.pk in ids, (
+        "the second bet was not searched: only the proxy word's chunks arrived "
+        f"({[chunk.section_ref for chunk in result.chunks]})"
+    )
+
+
+def test_the_definition_question_reaches_the_definitions_section(saoso_ingested, saoso_set):
+    """The real extracted pages, the real question, the page that answers it (2026-10-27).
+
+    `S1` is SAOSO's own definitions section; it holds both «Genetically Modified
+    Organism (GMO)» and «Genetic Engineering», the second of which excludes natural
+    hybridisation — i.e. the answer to "does selective seed saving count?".
+
+    **This pins the old contract's disappearance, not each half of the fix.** The
+    committed pages and the deployed corpus are not identical (here `gm` has document
+    frequency 0, on the box 1), so with the filler guard removed the key is `count` and
+    with the second bet removed the fixture corpus happens to recover the page anyway.
+    Proved red against the code before this slice; the halves are proved separately by
+    `test_a_verb_is_never_the_lexical_key` and
+    `test_an_unknown_word_hedges_two_bets`.
+    """
+    result = search_terms(
+        ["definition", "genetically", "modified", "selective", "seed", "saving", "count", "gm"],
+        question=(
+            "what is the definition of genetically modified? does selective seed saving "
+            "count as GM?"
+        ),
+        standard_set=saoso_set,
+        limit=8,
+    )
+
+    refs = [chunk.section_ref for chunk in result.chunks]
+    assert "S1" in refs, f"the definitions section never arrived: {refs}"
+
+
 # --- Stage 1 of the follow-up decision: the context arm ---------------------
 #
 # Two mechanisms, for two different failures, and both are tested here or in
@@ -636,3 +768,4 @@ def test_carrying_a_missing_id_returns_nothing_for_it(follow_up_corpus):
     corpus, manure, _ = follow_up_corpus
     carried = chunks_by_id([manure.pk, 999999], standard_set=corpus)
     assert [chunk.chunk_id for chunk in carried] == [manure.pk]
+
