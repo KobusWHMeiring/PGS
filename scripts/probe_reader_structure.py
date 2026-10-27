@@ -1,6 +1,6 @@
 """Probe the reader's structure against the corpus in this database.
 
-Read-only. Prints what `product/backlog/In Progress/READER_STRUCTURE_PRD.md` claims, so the claims
+Read-only. Prints what `product/backlog/Refinement/READER_STRUCTURE_PRD.md` claims, so the claims
 can be checked before Task 1 is started and again after it lands:
 
 1. **A table branch as rows** — how many reviewed rows, how many print no condition, how many print

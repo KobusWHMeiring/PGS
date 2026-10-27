@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-27 18:33
+> Generated: 2026-10-27 18:42
 
 ## Ready (up next)
 
@@ -28,10 +28,10 @@
 
 ## Refinement
 
-- **PRD: The reader's structure — a table reads as a table, and a reference goes somewhere** - `In Progress\READER_STRUCTURE_PRD.md` - Status: **Draft** — the design is agreed in session on 2026-10-27 (product owner: definition-list
 - **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7, 5.8, 5.9 and 5.10 landed the same day** (gate green at 920): every refusal in that conversation answers, the two GM-outcome turns state the rule instead of the verdict, G3 is closed, and a definition citation lands on the definition. Remaining: D-2's re-measure on the box, 5.6 (the follow-up window, needs S6), and the box sweeps.
 - **PRD: The escalation answer path — a refusal that can reach a person** - `Refinement\ESCALATION_ANSWER_PATH_PRD.md` - Status: Refinement — design needed, no code written
 - **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
+- **PRD: The reader's structure — a table reads as a table, and a reference goes somewhere** - `Refinement\READER_STRUCTURE_PRD.md` - Status: **Draft** — the design is agreed in session on 2026-10-27 (product owner: definition-list
 - **Refinement: The Regenerative Add-On — architecture findings, and what to decide before MVP 2** - `Refinement\REGENERATIVE_ADDON_ARCHITECTURE.md` - Status: Refinement — target shape agreed (A, §2); implementation paused until the standard itself exists. Three decisions are nonetheless time-sensitive (§8), because MVP 1a and MVP 2 will otherwise freeze them by accident.
 - **Refinement: SAOSA multi-branch readiness — is this blueprint only for Outeniqua?** - `Refinement\SAOSA_MULTI_BRANCH_READINESS.md` - Status: Refinement — findings recorded 2026-10-19; no build approved. Awaits a product decision on deployment shape (§8) and the four leaks in §5.
 
@@ -139,4 +139,4 @@ points at them instead of pretending they are imminent (D60).
 
 ## Drift (suggested moves)
 
-- `In Progress\READER_STRUCTURE_PRD.md` -> `Refinement\READER_STRUCTURE_PRD.md`
+_none_

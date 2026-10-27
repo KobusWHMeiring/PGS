@@ -150,7 +150,8 @@ is signed; **Scenario 8** is the passage layout. The tooling is the same as §18
    **not** substitute characters (the citation audit checks quotes against the stored text).
 
 **Backlog state.** `In Progress/`: CONCORDANCE (PRD + plan), PASSAGE_LAYOUT (PRD + plan), ASK_SURFACE,
-VPS_DEPLOYMENT, CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `BugFixes/`:
+VPS_DEPLOYMENT, CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `Refinement/`:
+**READER_STRUCTURE_PRD (new in §0f — four questions open, see the section below)**. `BugFixes/`:
 `citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` **half closed in §0f**
 (the glyph loss is fixed; the superscript and the half-title are still open). `ready/`: only the
 MVP 1a pair.
@@ -161,8 +162,10 @@ open and now further behind (the reader's layout is not deployed either).
 
 ## 0f. 2026-10-27 — the corpus keeps its glyphs: `-enc UTF-8`, and the U+FFFD mystery is closed
 
-**This is the most recent slice.** D69. `BugFixes/saoso_text_glyphs_and_boundaries.md` §1 is
-**closed** — and its diagnosis was wrong, which is why it stayed open for a week.
+**This is the most recent slice.** D69, plus the reader-structure PRD that came out of the same
+reading session (last part of this section, and where the next agent starts).
+`BugFixes/saoso_text_glyphs_and_boundaries.md` §1 is **closed** — and its diagnosis was wrong, which
+is why it stayed open for a week.
 
 - **The `�` was never the PDF.** `knowledge/extraction.py` decoded `pdftotext`'s stdout as UTF-8
   with `errors="replace"`; the `pdftotext` on this machine is **Xpdf 4.00**, whose default output
@@ -193,21 +196,34 @@ open and now further behind (the reader's layout is not deployed either).
 
 **Local state.** The dev corpus was re-ingested with `--force` and embeddings (319/30/8/9 chunks,
 **0 U+FFFD**); that dropped the old `ChatMessage.retrieved_chunks` evidence links, as `--force` does.
-Gate **1004 passed / 1 skipped**. The live site is still `206f35f` and needs the same re-ingest
-(P7.4) before any of this is visible there.
+Gate **1004 passed / 1 skipped**; **45 commits ahead of `origin/main`**, nothing pushed. The live
+site is still `206f35f` and needs the same re-ingest (P7.4) before any of this is visible there —
+`uat_seed --check` will keep blocking on the corpus check until it is done.
 
-**Next, and not built: read `product/backlog/In Progress/READER_STRUCTURE_PRD.md` first.** It is the
-slice for the reader's table structure, the repeated locators, in-view cross-references and glossary
-links — **every number in it is measured**, by `scripts/probe_reader_structure.py` (new, read-only;
-run it before Task 1). Three findings that came out of writing it: 19 of Appendix 2's 30 rows print
-no condition at all (that is the "list of standalone inputs"); SAOSO has **10** section references and
-**29** appendix mentions, of which **9** cannot be decided by number alone; and the corpus also prints
-**seven unqualified `Section n`** references, which only resolve inside the part they appear in. The
-PRD's §10 has four open questions for the product owner; the plan is not written until they are
-settled. See also §0e items 1–5 for the rest of the judgement list — item 6 closed for the glyph
-half in §0f.
+### Where the next agent starts: write `READER_STRUCTURE_PLAN.md`
 
----
+**Read `product/backlog/Refinement/READER_STRUCTURE_PRD.md` first** — it is deliberately in
+`Refinement/`, not `Ready/`, because **four questions in its §10 need the product owner's answer
+before a plan can be written** (the empty-condition label's wording; what a bare `Appendix 4` should
+say; whether the glossary term list is reviewed inside this slice; whether the locator prints once
+per run). Session 2026-10-27 agreed the design (SPEC §18.3 **D70**); nobody has answered those four.
+Ask them, move the PRD to `ready/`, then write the plan into `In Progress/READER_STRUCTURE_PLAN.md`
+— the repo's plan convention is one task per unit, each test-first, with the probe's numbers in the
+task that consumes them.
+
+**The measurements are already made, so do not re-litigate them.** `scripts/probe_reader_structure.py`
+is committed and read-only: run it and it prints what the PRD claims. Three findings it produced:
+**19 of Appendix 2's 30 rows print no condition at all** (that is the reviewer's "list of standalone
+inputs" — the paper's silence, rendered as body text); SAOSO has **10 section references and 29
+appendix mentions**, of which **9** cannot be decided by number alone; and the corpus also prints
+**seven unqualified `Section n`** references (`Section 4.6.2`, `section 5.7`), which resolve only
+inside the part they are printed in. `Section A – 2.3` is the trap: it must go to the page's
+"printed sections not in the corpus" note and **never** to `S2`.
+
+Nothing in that slice needs a migration or a re-ingest: it is display-only, which is why it can
+follow the corpus work so cheaply. See also §0e items 1–5 for the rest of the judgement list —
+item 6 closed for the glyph half in §0f.
+
 ---
 
 ## 0. The one thing to know first
