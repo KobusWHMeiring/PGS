@@ -39,6 +39,7 @@ from django.urls import reverse
 from core.models import PublicDocument
 from knowledge.concordance import ConcordanceSection, build_concordance
 from knowledge.models import StandardDocument
+from knowledge.passages import passage_blocks
 from knowledge.reading import (
     SearchHit,
     reading_chunks,
@@ -228,13 +229,19 @@ def documents_context() -> dict:
 
 @dataclass(frozen=True)
 class ReaderPassage:
-    """One passage as the reader renders it. `text` is the stored chunk, unmodified."""
+    """One passage as the reader renders it. `text` is the stored chunk, unmodified.
+
+    `blocks` is the display layout (`knowledge.passages.passage_blocks`): paragraphs, headings and
+    lists, derived per request. The words are the stored words; only whitespace between them is
+    normalised, and flushing the blocks reproduces `text` (the reader's own test asserts it).
+    """
 
     anchor: str
     locator: str
     page: int | None
     heading_path: str
     text: str
+    blocks: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -353,6 +360,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
             page=chunk.page,
             heading_path=chunk.heading_path,
             text=chunk.text,
+            blocks=passage_blocks(chunk.text),
         )
         for chunk, _anchor in (selected.passages if selected is not None else ())
     )

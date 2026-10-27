@@ -141,7 +141,7 @@
                   <p class="passage__locator">
                     {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
                   </p>
-                  <p class="passage__text">{{ passage.text|linebreaksbr }}</p>
+                  {% include "public/_passage_blocks.html" with blocks=passage.blocks %}
                 </article>
               {% empty %}
                 <p class="reader__no-hits">
@@ -158,8 +158,9 @@
       <p class="reader__provenance">
         Text ingested from
         <a href="{% url 'core:document_file' code=reader.document.code %}">{{ reader.document.title }}</a>.
-        Every passage above is the document's own words, reproduced without editing. The
-        assistant answers only from text like this.
+        Every passage above is the document's own words and punctuation; line breaks are
+        reflowed for reading, and the lists are the document's own lists. The assistant answers
+        only from text like this.
       </p>
     </div>
   </section>

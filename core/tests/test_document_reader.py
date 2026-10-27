@@ -94,14 +94,24 @@ def test_the_reader_is_reachable_at_the_published_code(client, seeded_documents)
 def test_the_text_is_the_stored_text_not_a_reformatting(client, seeded_documents):
     """Asserted against the database, not a fixture string.
 
-    A template that rewrapped, truncated or re-flowed the passage would still look right, and
-    the whole point of the surface is that a reader can check a quotation against it.
+    The reader lays a passage out as paragraphs and lists, so the bytes are not contiguous in the
+    HTML — but flattening the rendered blocks must reproduce the stored text exactly, whitespace
+    aside. That is the property that lets a reader check a quotation against this page.
     """
+    import re
+
+    from knowledge.passages import flatten
+
     chunk = DocumentChunk.objects.get(section_ref="Appendix 2")
+    reader = reader_for(PublicDocument.objects.get(code="saoso-standard-v2.1"))
+
+    assert re.sub(r"\s+", " ", flatten(reader.passages[0].blocks)) == re.sub(
+        r"\s+", " ", chunk.text
+    )
 
     body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
 
-    assert chunk.text in body
+    assert "free of significant contaminants" in body
 
 
 def test_every_chunk_has_its_anchor_in_the_tree(seeded_documents):
@@ -423,3 +433,56 @@ def test_a_citation_link_selects_the_branch_and_scrolls_to_the_passage(seeded_do
         "/documents/saoso-standard-v2.1/read/"
         "?section=appendix-2-wood-bark-and-sawdust#appendix-2-wood-bark-and-sawdust"
     )
+
+
+# --- Passage layout: the document's lists, rendered as lists -----------------
+
+
+def test_the_page_renders_a_lettered_clause_as_a_list(client, seeded_documents):
+    """`S5.1.3` prints `a … b …` with no punctuation and a hanging indent; the reader must show a
+    list, with the marker as presentation rather than characters invented in the text."""
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S5.1.3",
+        heading_path="5. ANIMAL HUSBANDRY",
+        page=41,
+        text=(
+            "5.1.3. The operator shall ensure the following conditions:\n\n"
+            "a              Sufficient free movement;\n\n"
+            "b              Space to stand naturally, lie down easily and\n\n"
+            "               nest comfortably;"
+        ),
+    )
+    document.chunk_count = 3
+    document.save(update_fields=["chunk_count"])
+
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=s5-1-3").content.decode()
+
+    assert "passage__list--lower-alpha" in body
+    assert "Sufficient free movement;" in body
+    assert "Space to stand naturally, lie down easily and nest comfortably;" in body
+    assert "a. Sufficient" not in body, "the marker is a list marker, not text added to the document"
+
+
+def test_a_nested_list_is_rendered_inside_its_item(client, seeded_documents):
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S8.1",
+        heading_path="8. MUSHROOM PRODUCTION",
+        page=56,
+        text=(
+            "8.1. Only the following substrates may be used:\n\n"
+            "a  Farmyard manure:\n\n   i. from organic holdings;\n   ii. or satisfying Appendix 2;\n\n"
+            "b  Products of agricultural origin."
+        ),
+    )
+    document.chunk_count = 3
+    document.save(update_fields=["chunk_count"])
+
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=s8-1").content.decode()
+
+    assert "passage__list--lower-roman" in body
+    outer = body.split("passage__list--lower-alpha", 1)[1]
+    assert "passage__list--lower-roman" in outer, "the roman list must be inside the lettered item"

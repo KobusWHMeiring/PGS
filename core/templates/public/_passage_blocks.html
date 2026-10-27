@@ -1,0 +1,28 @@
+{% comment %}
+  One passage's blocks, rendered recursively.
+
+  A passage is the document's own text, so the structure here is the *document's*: paragraphs, the
+  printed headings, and real lists. The marker a reader sees (`a.`) is the browser's list marker, not
+  characters inserted into the text — the corpus prints a bare `a` (`knowledge/passages.py` explains
+  why). Nested lists recurse through this same file.
+
+  Nothing here computes: the blocks arrive from `core.services._documents.ReaderPassage.blocks`.
+{% endcomment %}
+{% for block in blocks %}
+  {% if block.kind == "paragraph" %}
+    <p class="passage__text">{{ block.text }}</p>
+  {% elif block.kind == "heading" %}
+    <p class="passage__heading">{{ block.text }}</p>
+  {% else %}
+    <ol class="passage__list passage__list--{{ block.style }}"{% if block.start != 1 %} start="{{ block.start }}"{% endif %}>
+      {% for item in block.items %}
+        <li class="passage__item">
+          {{ item.text }}
+          {% if item.children %}
+            {% include "public/_passage_blocks.html" with blocks=item.children %}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+{% endfor %}

@@ -340,6 +340,68 @@
   line-height: var(--leading-body);
 }
 
+/* The document's own heading (`1. DEFINITIONS`, `## INTRODUCTION` from the BPP artefact). A <p>,
+   not an <h*>: it is quoted text with a shape, not the page's outline. */
+.passage__heading {
+  margin: 1.25rem 0 0.5rem;
+  color: var(--brand-forestDark);
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: var(--leading-body);
+}
+
+/* A printed list. The marker (`a.`, `1.`, `i.`) is the browser's list marker, never text added to
+   the document; the hanging indent is what makes a wrapped item read as one item. */
+.passage__list {
+  margin: 0.5rem 0 0.5rem 1.4rem;
+  padding-left: 0.4rem;
+  max-width: var(--container-prose);
+}
+
+.passage__list .passage__list {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+/* The printed marker family. The corpus prints a bare `a`; the period a reader sees here is the
+   browser's list marker, which is why it is presentation and not text (knowledge/passages.py). */
+.passage__list--lower-alpha {
+  list-style-type: lower-alpha;
+}
+
+.passage__list--upper-alpha {
+  list-style-type: upper-alpha;
+}
+
+.passage__list--lower-roman {
+  list-style-type: lower-roman;
+}
+
+.passage__list--upper-roman {
+  list-style-type: upper-roman;
+}
+
+.passage__list--decimal {
+  list-style-type: decimal;
+}
+
+.passage__list--disc {
+  list-style-type: disc;
+}
+
+.passage__item {
+  margin: 0.35rem 0;
+  padding-left: 0.15rem;
+  color: var(--brand-charcoal);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.passage__item::marker {
+  color: var(--brand-ochreInk);
+  font-weight: 700;
+}
+
 /* --- Missing text, provenance -------------------------------------------- */
 
 .reader__missing {
