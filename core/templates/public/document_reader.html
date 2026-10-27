@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 {% load static %}
 {% comment %}
-  The reader — where a citation lands. The product owner's decision (2026-10-23): a citation
-  opens the text we ingested, not a PDF page. The PDF is streamed as an attachment, so a
-  `#page=` fragment has no viewer to land in; and the text is already in `DocumentChunk`, so
-  a reader can *find* a quotation here in a way they can only hope for in a PDF viewer.
+  The reader — where a citation lands, and the document's own structure as its navigation
+  (D68). A citation opens the text we ingested, not a PDF page. The PDF is streamed as an
+  attachment, so a `#page=` fragment has no viewer to land in; and the text is already in
+  `DocumentChunk`, so a reader can *find* a quotation here in a way they can only hope for in
+  a PDF viewer.
+
+  One branch is rendered, not all of them: a 319-passage document becomes one section's
+  markup, which is what makes the surface light. The tree is the printed table of contents,
+  including the numbers the standard reserves, and it states which printed sections the
+  corpus does not hold — otherwise the page would claim more than it has (CONCORDANCE_PRD
+  §10.6).
 
   **This page renders the document's own words and nothing else.** It is deliberately absent
   from `PUBLIC_URLS` (`core/tests/test_public.py`) because the corpus contains words the claim
@@ -64,7 +71,7 @@
           <ol class="reader__hits">
             {% for hit in reader.hits %}
               <li class="reader__hit">
-                <a class="reader__hit-locator" href="#{{ hit.anchor }}">
+                <a class="reader__hit-locator" href="?section={{ hit.anchor }}#{{ hit.anchor }}">
                   {{ hit.locator }}{% if hit.page %} &middot; p. {{ hit.page }}{% endif %}
                 </a>
                 <p class="reader__hit-text">&hellip;{{ hit.before }}<mark>{{ hit.hit }}</mark>{{ hit.after }}&hellip;</p>
@@ -79,27 +86,71 @@
         {% endif %}
 
         <div class="reader__body">
-          <nav class="reader__contents" aria-label="Contents">
-            <p class="reader__contents-title">Contents</p>
-            <ol class="reader__contents-list">
-              {% for entry in reader.contents %}
-                <li>
-                  <a class="reader__contents-link" href="#{{ entry.anchor }}">{{ entry.locator }}</a>
-                  {% if entry.page %}<span class="reader__page">p. {{ entry.page }}</span>{% endif %}
-                </li>
-              {% endfor %}
-            </ol>
-          </nav>
+          {% comment %}
+            A `<details>` rather than a CSS-only collapse: it needs no JavaScript, which is what
+            `build_principles.md` §IV requires, and on a phone the closed summary still names
+            the branch the reader is in. The desktop rule in reader.css opens it permanently.
+          {% endcomment %}
+          <details class="reader__tree-details">
+            <summary class="reader__tree-summary">
+              Contents{% if reader.selected %} &mdash; {{ reader.selected.title }}{% endif %}
+            </summary>
+            <nav class="reader__tree" aria-label="Document contents">
+              <p class="reader__tree-title">Contents</p>
+              <ol class="reader__tree-list">
+                {% for branch in reader.sections %}
+                  <li>
+                    {% if branch.reserved %}
+                      <span class="reader__tree-link reader__tree-link--reserved">
+                        <span class="reader__tree-name">{{ branch.title }}</span>
+                      </span>
+                    {% else %}
+                      <a class="reader__tree-link"
+                         href="?section={{ branch.anchor }}#{{ branch.anchor }}"
+                         {% if reader.selected and branch.anchor == reader.selected.anchor %}aria-current="page"{% endif %}>
+                        <span class="reader__tree-name">{{ branch.title }}</span>
+                        {% if branch.page %}<span class="reader__page">p. {{ branch.page }}</span>{% endif %}
+                      </a>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ol>
+
+              {% comment %}
+                A tree presented as "the standard" claims more than the corpus holds: Section A
+                and Appendices A–C are not ingested (§10.6). Saying so is the claim-discipline
+                rule applied to structure instead of words.
+              {% endcomment %}
+              {% if reader.missing %}
+                <p class="reader__tree-note">
+                  Printed sections not in the corpus, and so not shown here:
+                  {% for title in reader.missing %}{{ title }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+                </p>
+              {% endif %}
+            </nav>
+          </details>
 
           <div class="reader__passages">
-            {% for passage in reader.passages %}
-              <article class="passage" id="{{ passage.anchor }}">
-                <p class="passage__locator">
-                  {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
+            {% if reader.selected %}
+              <p class="reader__crumb">
+                {{ reader.document.title }} &rsaquo; {{ reader.selected.title }}
+                {% if reader.selected.page %} &middot; printed p. {{ reader.selected.page }}{% endif %}
+              </p>
+              {% for passage in reader.passages %}
+                <article class="passage" id="{{ passage.anchor }}">
+                  <p class="passage__locator">
+                    {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
+                  </p>
+                  <p class="passage__text">{{ passage.text|linebreaksbr }}</p>
+                </article>
+              {% empty %}
+                <p class="reader__no-hits">
+                  This branch is reserved and blank in the printed standard.
                 </p>
-                <p class="passage__text">{{ passage.text|linebreaksbr }}</p>
-              </article>
-            {% endfor %}
+              {% endfor %}
+            {% else %}
+              <p class="reader__no-hits">This document has no passages to show.</p>
+            {% endif %}
           </div>
         </div>
       {% endif %}

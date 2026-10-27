@@ -214,7 +214,7 @@ def test_search_finds_the_passage_and_marks_the_word(client, seeded_documents):
 
     body = response.content.decode()
 
-    assert '<a class="reader__hit-locator" href="#appendix-2">' in body
+    assert '<a class="reader__hit-locator" href="?section=appendix-2#appendix-2">' in body
     assert "<mark>contaminants</mark>" in body
 
 
@@ -331,3 +331,75 @@ def test_the_page_renders_one_branch_and_says_nothing_about_the_others(client, s
 
     assert "free of significant contaminants" in body
     assert "Wood, bark and sawdust" not in body
+
+
+# --- The template: the tree, the pane, and what is absent --------------------
+
+
+def test_the_tree_marks_the_open_branch(client, seeded_documents):
+    body = client.get(
+        "/documents/saoso-standard-v2.1/read/?section=appendix-2-1"
+    ).content.decode()
+
+    assert 'aria-current="page"' in body
+    current = body.split('aria-current="page"', 1)[0].rsplit("<a", 1)[1]
+    assert "appendix-2-1" in current
+
+
+def test_the_page_states_the_printed_sections_it_does_not_hold(client, seeded_documents):
+    """§10.6: the corpus is 22 of 28 printed sections. A tree presented as "the standard"
+    would claim more than the corpus holds, so the page says what is absent."""
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    document.toc = [
+        {
+            "part": "A",
+            "kind": "CLAUSE",
+            "label": "3",
+            "title": "Minimum Inspection Requirements",
+            "printed_page": 11,
+        }
+    ]
+    document.save(update_fields=["toc"])
+
+    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
+
+    assert "not in the corpus" in body
+    assert "Minimum Inspection Requirements" in body
+
+
+def test_a_reserved_row_is_visible_and_is_not_a_link(client, seeded_documents):
+    """`10 to 19. Left blank…`: a reader can see it, and cannot open it, because it is not text."""
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    document.toc = [
+        {
+            "part": "B",
+            "kind": "RANGE",
+            "label": "10 to 19",
+            "title": "Left blank to facilitate future enterprises",
+            "printed_page": None,
+        }
+    ]
+    document.save(update_fields=["toc"])
+
+    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
+
+    assert "Left blank to facilitate future enterprises" in body
+    assert "reader__tree-link--reserved" in body
+    assert 'href="?section=10-to-19"' not in body
+
+
+def test_a_search_hit_links_to_its_own_passage(client, seeded_documents):
+    body = client.get("/documents/saoso-standard-v2.1/read/?q=sawdust").content.decode()
+
+    assert 'href="?section=appendix-2-1#appendix-2-1"' in body
+
+
+def test_the_selected_branch_is_the_one_rendered_with_its_anchor(client, seeded_documents):
+    """A citation selects a branch; the passage it names must be in the page with its id."""
+    body = client.get(
+        "/documents/saoso-standard-v2.1/read/?section=appendix-2-1"
+    ).content.decode()
+
+    assert 'id="appendix-2-1"' in body
+    assert "Wood, bark and sawdust" in body
+    assert "free of significant contaminants" not in body
