@@ -44,6 +44,7 @@ from knowledge.reading import (
     SearchHit,
     reading_chunks,
     search_in_document,
+    strip_overlap,
     unique_anchors,
 )
 
@@ -229,11 +230,13 @@ def documents_context() -> dict:
 
 @dataclass(frozen=True)
 class ReaderPassage:
-    """One passage as the reader renders it. `text` is the stored chunk, unmodified.
+    """One passage as the reader renders it.
 
+    `text` is the stored chunk with a **leading chunk overlap removed** when the passage above
+    already printed those words (`knowledge.reading.strip_overlap`); nothing else is changed.
     `blocks` is the display layout (`knowledge.passages.passage_blocks`): paragraphs, headings and
     lists, derived per request. The words are the stored words; only whitespace between them is
-    normalised, and flushing the blocks reproduces `text` (the reader's own test asserts it).
+    normalised, and flattening the blocks reproduces `text`.
     """
 
     anchor: str
@@ -353,17 +356,28 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     pairs = {
         chunk.pk: anchor for chunk, anchor in unique_anchors(reading_chunks(document_row))
     }
-    passages = tuple(
-        ReaderPassage(
-            anchor=pairs[chunk.pk],
-            locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
-            page=chunk.page,
-            heading_path=chunk.heading_path,
-            text=chunk.text,
-            blocks=passage_blocks(chunk.text),
+    # Adjacent chunks of one printed section overlap on purpose, so retrieval can see both
+    # sides of a boundary. A reader must not: `S1`'s eight chunks repeat 21–57 words at five
+    # boundaries, and the definitions page printed the previous chunk's tail again at the top
+    # of the next one. The stored text is untouched; only what this page renders is trimmed.
+    rows: list[ReaderPassage] = []
+    previous: DocumentChunk | None = None
+    for chunk, _anchor in (selected.passages if selected is not None else ()):
+        text = chunk.text
+        if previous is not None and previous.section_ref == chunk.section_ref:
+            text = strip_overlap(previous.text, text)
+        rows.append(
+            ReaderPassage(
+                anchor=pairs[chunk.pk],
+                locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
+                page=chunk.page,
+                heading_path=chunk.heading_path,
+                text=text,
+                blocks=passage_blocks(text),
+            )
         )
-        for chunk, _anchor in (selected.passages if selected is not None else ())
-    )
+        previous = chunk
+    passages = tuple(rows)
     return Reader(
         document=document,
         corpus=document_row,

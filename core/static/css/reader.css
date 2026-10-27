@@ -19,14 +19,31 @@
    ========================================================================== */
 
 .reader {
-  max-width: var(--container-max);
+  /* The reader is a working column, not a full-bleed article: a tree on the left and one
+     readable measure of text on the right. The measure is deliberately narrower than
+     `--container-prose` (56 rem) — 38 rem is ~85 characters at 16 px, which is where dense
+     legal text stops being a scan and starts being a swim. */
+  --reader-measure: 38rem;
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+/* A tool page, not a marketing band: the page head above already carries the air. */
+.section--reader {
+  padding-block: 2.5rem 4rem;
+}
+
+@media (max-width: 899px) {
+  .section--reader {
+    padding-block: 1.5rem 3rem;
+  }
 }
 
 /* --- Search --------------------------------------------------------------- */
 
 .reader__search {
   margin-bottom: 2rem;
-  padding: 1rem;
+  padding: 1.1rem 1.25rem 1.25rem;
   border: 1px solid var(--brand-sand);
   border-radius: var(--radius-md);
   background-color: var(--brand-creamWarm);
@@ -34,7 +51,7 @@
 
 .reader__search-label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
   color: var(--brand-forestDark);
   font-size: var(--text-micro);
   font-weight: 700;
@@ -44,12 +61,13 @@
 
 .reader__search-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
 }
 
 .reader__input {
-  flex: 1 1 16rem;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 2.75rem; /* 44 px — DESIGN rule 5 */
   padding: 0 0.75rem;
   border: 1px solid var(--brand-sand);
@@ -61,6 +79,7 @@
 }
 
 .reader__search-row .btn {
+  flex: none;
   min-height: 2.75rem;
 }
 
@@ -90,9 +109,9 @@
 }
 
 .reader__hit {
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--brand-sand);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background-color: var(--brand-cream);
 }
 
@@ -144,9 +163,9 @@
   align-items: center;
   gap: 0.5rem;
   min-height: 2.75rem; /* 44 px — DESIGN rule 5 */
-  padding: 0 0.85rem;
+  padding: 0 1rem;
   border: 1px solid var(--brand-sand);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background-color: var(--brand-creamWarm);
   color: var(--brand-forestDark);
   font-size: var(--text-sm);
@@ -160,7 +179,8 @@
 
 @media (min-width: 900px) {
   .reader__body {
-    grid-template-columns: 16rem minmax(0, 1fr);
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: 2.5rem;
     align-items: start;
   }
 
@@ -206,14 +226,15 @@
 }
 
 .reader__tree {
-  padding: 1rem;
+  padding: 0.9rem 0.75rem 1rem;
   border: 1px solid var(--brand-sand);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background-color: var(--brand-creamWarm);
 }
 
 .reader__tree-title {
   margin: 0 0 0.5rem;
+  padding-inline: 0.6rem;
   color: var(--brand-forestDark);
   font-size: var(--text-micro);
   font-weight: 700;
@@ -244,20 +265,21 @@
 .reader__tree-link {
   display: flex;
   flex: 1 1 auto;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.6rem;
   min-height: 2.75rem; /* 44 px: this is the phone's whole table of contents */
-  padding: 0.4rem 0.5rem;
+  padding: 0.45rem 0.6rem;
   border-radius: var(--radius-xs);
   color: var(--brand-charcoal);
   font-size: var(--text-xs);
+  line-height: 1.35;
   text-decoration: none;
 }
 
 .reader__tree-link:hover {
+  background-color: var(--brand-sageLight);
   color: var(--brand-ochreInk);
-  text-decoration: underline;
 }
 
 /* The open branch is marked with a rule, not a fill: a second ground inside the warm ground
@@ -276,12 +298,13 @@
 }
 
 .reader__tree-link--reserved:hover {
+  background-color: transparent;
   color: var(--brand-muted);
-  text-decoration: none;
 }
 
 .reader__tree-name {
   flex: 1 1 auto;
+  padding-top: 0.1rem;
 }
 
 .reader__tree-note {
@@ -293,74 +316,116 @@
 
 .reader__page {
   flex: none;
+  padding-top: 0.15rem;
   color: var(--brand-muted);
-  font-size: var(--text-nano);
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .reader__crumb {
-  margin: 0;
+  margin: 0 0 1.25rem;
   color: var(--brand-muted);
   font-size: var(--text-micro);
+  letter-spacing: 0.02em;
 }
 
 /* --- Passages ------------------------------------------------------------- */
 
 .reader__passages {
-  display: grid;
-  gap: 1.25rem;
+  display: block;
 }
 
+/* One passage, one clause: a hairline separates the printed clauses so a long branch reads as a
+   sequence of rules rather than one undifferentiated column. */
 .passage {
-  padding: 0.25rem 0 0.25rem 0;
-  border-left: 3px solid transparent;
-  scroll-margin-top: calc(var(--header-height) + 1rem);
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--brand-sand);
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
 }
 
+.reader__crumb + .passage {
+  padding-top: 0.25rem;
+  border-top: 0;
+}
+
+@media (min-width: 900px) {
+  /* A citation lands under the sticky search and tree, not behind them. */
+  .passage {
+    scroll-margin-top: calc(var(--header-height) + 8rem);
+  }
+}
+
+/* The ground and rule bleed to the pane's edges so the arrival reads as a location, not as a
+   coloured sentence. */
 .passage:target {
-  border-left-color: var(--brand-ochre);
+  margin-inline: -0.85rem;
+  padding-inline: 0.85rem;
+  border-radius: var(--radius-xs);
   background-color: var(--brand-ochreLight);
-  padding-left: 0.85rem;
-  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  box-shadow: inset 3px 0 0 var(--brand-ochre);
+}
+
+.reader__crumb + .passage:target {
+  padding-top: 0.85rem;
 }
 
 .passage__locator {
-  margin: 0 0 0.25rem;
-  color: var(--brand-ochreInk);
+  margin: 0 0 0.45rem;
+  color: var(--brand-muted);
   font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
   font-size: var(--text-micro);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
 
 .passage__text {
-  margin: 0;
-  max-width: var(--container-prose);
+  margin: 0 0 0.9rem;
+  max-width: var(--reader-measure);
   color: var(--brand-charcoal);
   font-size: var(--text-base);
   line-height: var(--leading-body);
 }
 
+.passage__text:last-child {
+  margin-bottom: 0;
+}
+
 /* The document's own heading (`1. DEFINITIONS`, `## INTRODUCTION` from the BPP artefact). A <p>,
    not an <h*>: it is quoted text with a shape, not the page's outline. */
 .passage__heading {
-  margin: 1.25rem 0 0.5rem;
+  margin: 1.6rem 0 0.6rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-forestDark);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+/* A glossary term or a printed sub-heading: one step below a section heading, one above the
+   definition it introduces. */
+.passage__term {
+  margin: 1.2rem 0 0.4rem;
+  max-width: var(--reader-measure);
   color: var(--brand-forestDark);
   font-size: var(--text-base);
   font-weight: 700;
-  line-height: var(--leading-body);
+  line-height: var(--leading-tight);
+}
+
+.passage > :first-child {
+  margin-top: 0;
 }
 
 /* A printed list. The marker (`a.`, `1.`, `i.`) is the browser's list marker, never text added to
    the document; the hanging indent is what makes a wrapped item read as one item. */
 .passage__list {
-  margin: 0.5rem 0 0.5rem 1.4rem;
-  padding-left: 0.4rem;
-  max-width: var(--container-prose);
+  margin: 0.9rem 0 0.9rem 1.6rem;
+  padding-left: 0.35rem;
 }
 
 .passage__list .passage__list {
-  margin-top: 0.35rem;
-  margin-bottom: 0.35rem;
+  margin: 0.45rem 0 0.45rem 1.2rem;
 }
 
 /* The printed marker family. The corpus prints a bare `a`; the period a reader sees here is the
@@ -390,8 +455,9 @@
 }
 
 .passage__item {
-  margin: 0.35rem 0;
+  margin: 0.4rem 0;
   padding-left: 0.15rem;
+  max-width: var(--reader-measure);
   color: var(--brand-charcoal);
   font-size: var(--text-base);
   line-height: var(--leading-body);
@@ -425,8 +491,9 @@
 }
 
 .reader__provenance {
-  margin-top: 2.5rem;
-  padding-top: 1rem;
+  max-width: var(--reader-measure);
+  margin-top: 3rem;
+  padding-top: 1.25rem;
   border-top: 1px solid var(--brand-sand);
   color: var(--brand-muted);
   font-size: var(--text-xs);

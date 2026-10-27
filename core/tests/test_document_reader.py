@@ -486,3 +486,50 @@ def test_a_nested_list_is_rendered_inside_its_item(client, seeded_documents):
     assert "passage__list--lower-roman" in body
     outer = body.split("passage__list--lower-alpha", 1)[1]
     assert "passage__list--lower-roman" in outer, "the roman list must be inside the lettered item"
+
+
+def test_a_chunk_overlap_is_printed_only_once(client, seeded_documents):
+    """The chunker overlaps adjacent chunks for retrieval; the reader must not print the repeat.
+
+    Measured on `S1`: eight chunks, five boundaries repeating 21–57 words. The definitions page
+    printed the previous chunk's last paragraph again at the top of the next one.
+    """
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    first = "one two three four five six seven eight alpha beta"
+    DocumentChunk.objects.create(document=document, section_ref="S1", page=22, text=first)
+    DocumentChunk.objects.create(
+        document=document, section_ref="S1", page=22, text="four five six seven eight alpha beta kappa lambda"
+    )
+    document.chunk_count = 4
+    document.save(update_fields=["chunk_count"])
+
+    reader = reader_for(PublicDocument.objects.get(code="saoso-standard-v2.1"), section="s1")
+
+    assert [passage.text for passage in reader.passages] == [first, "kappa lambda"]
+
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=s1").content.decode()
+    assert body.count("four five six seven eight alpha beta") == 1
+
+
+def test_the_page_renders_a_glossary_term_above_its_definition(client, seeded_documents):
+    """`S1` is a glossary: a term on its own line, then the definition. Rendered as one paragraph,
+    the definitions page was a wall of text."""
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S1",
+        page=22,
+        text=(
+            "ACB\n\nAccredited Certification Body. Accredited to ISO 17065.\n\n"
+            "Habitat\n\n"
+            "The area over which a plant or animal species naturally exists."
+        ),
+    )
+    document.chunk_count = 3
+    document.save(update_fields=["chunk_count"])
+
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=s1").content.decode()
+
+    assert '<p class="passage__term">ACB</p>' in body
+    assert '<p class="passage__term">Habitat</p>' in body
+    assert "Accredited Certification Body." in body

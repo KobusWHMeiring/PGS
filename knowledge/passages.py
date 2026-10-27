@@ -83,6 +83,18 @@ class Heading:
 
 
 @dataclass(frozen=True)
+class Term:
+    """A glossary term or a printed sub-heading (`ACB`, `General Principle`, `Buffer Zones`).
+
+    A short standalone line followed by a longer one. Kept distinct from `Heading` so the page can
+    set a term at body size above its definition, while a section title keeps the larger role.
+    """
+
+    text: str
+    kind: str = "term"
+
+
+@dataclass(frozen=True)
 class ListItem:
     """One printed list row: the marker as printed, its text, and any nested lists."""
 
@@ -101,7 +113,7 @@ class ListBlock:
     kind: str = "list"
 
 
-Block = Paragraph | Heading | ListBlock
+Block = Paragraph | Heading | Term | ListBlock
 
 
 @dataclass
@@ -286,6 +298,26 @@ def _mark(line: str) -> _Mark | None:
     )
 
 
+def _is_term(stripped: str, next_line: str, indent: int) -> bool:
+    """A glossary term or a printed sub-heading: short, standalone, followed by prose.
+
+    `ACB` / `General Principle` / `Buffer Zones` all print as one short line before the text they
+    introduce. A centred line is not a term — it is one of the document's labels, handled as a
+    heading when its paragraph flushes. A line that ends a sentence is prose, however short.
+    """
+    if indent >= 10:
+        return False
+    words = stripped.split()
+    if not 1 <= len(words) <= 8 or len(stripped) > 70:
+        return False
+    if not stripped[:1].isupper() or stripped.endswith(_TERMINAL):
+        return False
+    if not next_line or len(next_line) < 30 or not next_line[:1].isupper():
+        return False
+    following = _mark(next_line)
+    return following is None or following.weak
+
+
 def _is_opener(mark: _Mark, *, first: bool) -> bool:
     """A numeric marker on the chunk's first line that titles the section, not a list row.
 
@@ -337,7 +369,18 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
     def flush_paragraph() -> None:
         nonlocal paragraph_indent
         if paragraph:
-            blocks.append(Paragraph(_collapse(" ".join(paragraph))))
+            text = _collapse(" ".join(paragraph))
+            # A single centred line is the document's own heading, not prose: SAOSO centres
+            # `Regional or other exception` and `SOUTH AFRICAN specific` in the middle of a
+            # clause, and they read as headings on the paper. A line indented that far cannot be
+            # body text in a single column.
+            centred = (
+                paragraph_indent is not None
+                and paragraph_indent >= 10
+                and len(text) <= 100
+                and not text.endswith(_TERMINAL)
+            )
+            blocks.append(Heading(text) if centred else Paragraph(text))
             paragraph.clear()
         paragraph_indent = None
 
@@ -371,11 +414,10 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
         while stack:
             close_top()
 
-    for raw in text.splitlines():
-        line = raw.rstrip()
-        if not line.strip():
-            continue
+    lines = [raw.rstrip() for raw in text.splitlines() if raw.strip()]
+    for index, line in enumerate(lines):
         stripped = line.strip()
+        next_line = lines[index + 1].strip() if index + 1 < len(lines) else ""
 
         hash_heading = _HASH_HEADING.match(stripped)
         if hash_heading:
@@ -417,6 +459,10 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
                 item.lines.append(stripped)
                 continue
             close_lists()
+        if _is_term(stripped, next_line, indent):
+            flush_paragraph()
+            blocks.append(Term(stripped))
+            continue
         if paragraph and paragraph_indent is not None and abs(indent - paragraph_indent) >= 6:
             # A centred line (`South African specific`) is its own block, not the tail of the
             # paragraph before it.
@@ -455,6 +501,7 @@ __all__ = [
     "ListBlock",
     "ListItem",
     "Paragraph",
+    "Term",
     "flatten",
     "passage_blocks",
 ]

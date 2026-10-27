@@ -95,6 +95,21 @@ def test_a_section_opener_without_caps_is_also_a_heading():
     assert [block.kind for block in passage_blocks("I. Membership procedure")] == ["heading"]
 
 
+def test_a_glossary_term_is_its_own_block():
+    """`S1` prints a term on one line and its definition under it; the reader must not glue the
+    two into one paragraph, or the definitions page becomes a wall of text."""
+    text = (
+        "ACB\n\nAccredited Certification Body. Accredited to ISO 17065.\n\n"
+        "Acceptable\n\nAcceptable to the authority administering this Standard."
+    )
+
+    blocks = passage_blocks(text)
+
+    assert [block.kind for block in blocks] == ["term", "paragraph", "term", "paragraph"]
+    assert blocks[0].text == "ACB"
+    assert blocks[2].text == "Acceptable"
+
+
 def test_a_title_case_numbered_line_is_a_list_item():
     blocks = passage_blocks(
         "Intro line.\n\n1. Ecosystem Management\nThe PGS maintains habitats."
@@ -176,8 +191,8 @@ def test_a_centred_heading_ends_the_list():
 
     kinds = [block.kind for block in passage_blocks(text)]
 
-    assert kinds == ["list", "paragraph", "paragraph"]
-    assert "South African specific" in passage_blocks(text)[1].text
+    assert kinds == ["list", "heading", "paragraph"]
+    assert passage_blocks(text)[1].text == "South African specific"
 
 
 def test_a_line_starting_with_a_single_space_letter_is_prose():
@@ -251,5 +266,20 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     lists = [block for block in s214 if block.kind == "list"]
     assert len(lists) == 2, "S2.1.4 prints two lettered lists and the second restarts at a"
 
+    s513_blocks = passage_blocks(by_ref["S5.1.3"].text)
+    headings = [block.text for block in s513_blocks if block.kind == "heading"]
+    assert "Regional or other exception" in headings
+    assert "SOUTH AFRICAN specific" in headings
+
+    s1_terms = [
+        block.text
+        for chunk in chunks
+        if chunk.section_ref == "S1"
+        for block in passage_blocks(chunk.text)
+        if block.kind == "term"
+    ]
+    assert {"ACB", "Habitat", "Genetically Modified Organism (GMO)"} <= set(s1_terms)
+
     everything = [block for chunk in chunks for block in passage_blocks(chunk.text)]
     assert sum(1 for block in everything if block.kind == "list") > 60
+    assert sum(1 for block in everything if block.kind == "term") > 100

@@ -13,6 +13,8 @@
     <p class="passage__text">{{ block.text }}</p>
   {% elif block.kind == "heading" %}
     <p class="passage__heading">{{ block.text }}</p>
+  {% elif block.kind == "term" %}
+    <p class="passage__term">{{ block.text }}</p>
   {% else %}
     <ol class="passage__list passage__list--{{ block.style }}"{% if block.start != 1 %} start="{{ block.start }}"{% endif %}>
       {% for item in block.items %}

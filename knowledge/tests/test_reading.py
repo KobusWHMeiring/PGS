@@ -165,3 +165,36 @@ def test_a_search_hit_carries_the_anchor_that_names_its_own_passage(document):
     hits = search_in_document(document, "sawdust")
 
     assert [hit.anchor for hit in hits] == ["appendix-2-wood-bark-and-sawdust"]
+
+
+# --- Chunk overlap is a retrieval feature, not something to read twice ------
+
+
+def test_the_reader_strips_the_overlap_the_chunker_added():
+    """Retrieval wants a shared tail on both chunks; a reader does not.
+
+    `S1` is eight chunks and five of the boundaries repeat 21–57 words, so the definitions
+    rendered as a page where every chunk began with the previous chunk's last paragraph.
+    """
+    from knowledge.reading import strip_overlap
+
+    previous = "one two three four five six seven eight alpha beta"
+    current = "four five six seven eight alpha beta kappa lambda"
+
+    assert strip_overlap(previous, current) == "kappa lambda"
+
+
+def test_a_short_coincidence_is_not_stripped():
+    """Two clauses may both say `must be kept`; six words of agreement is the floor."""
+    from knowledge.reading import strip_overlap
+
+    assert strip_overlap("records must be kept", "must be kept for five years") == (
+        "must be kept for five years"
+    )
+
+
+def test_no_previous_passage_leaves_the_text_alone():
+    from knowledge.reading import strip_overlap
+
+    assert strip_overlap(None, "a  One;") == "a  One;"
+    assert strip_overlap("a  One;", "b  Two;") == "b  Two;"

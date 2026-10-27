@@ -140,6 +140,48 @@ def unique_anchors(chunks: list[DocumentChunk]) -> list[tuple[DocumentChunk, str
     return pairs
 
 
+#: The smallest repeated run the reader treats as chunk overlap. The chunker shares a tail of
+#: up to `OVERLAP_TOKENS` so retrieval sees both sides of a boundary; a reader must not read the
+#: same sentence twice, and a coincidence of fewer words than this is ordinary prose.
+MIN_OVERLAP_WORDS = 6
+
+#: The largest run that is stripped. A guard against a pathological match eating a whole passage.
+MAX_OVERLAP_WORDS = 120
+
+
+def strip_overlap(previous: str | None, text: str) -> str:
+    """In: the previous passage's stored text and this one's. Out: this one, minus a shared head.
+
+    In:  `previous` — the stored text of the passage printed above, or None for the first;
+         `text` — this passage's stored text.
+    Out: `text` with the leading words that repeat `previous`'s tail removed, when the repeat is
+         at least `MIN_OVERLAP_WORDS` long. Untouched otherwise.
+    Side effects: none.
+    Fails: never. A full overlap returns the text unchanged rather than an empty passage.
+
+    Why this exists: the chunker deliberately overlaps adjacent chunks (`knowledge/chunking.py`)
+    so retrieval can see both sides of a boundary. `S1` is eight chunks and five of its
+    boundaries repeat 21–57 words — the definitions page printed the previous chunk's last
+    paragraph again at the top of the next one. That is a retrieval feature leaking into the
+    reading surface; the stored text is untouched.
+    """
+    if not previous or not text:
+        return text
+    before = previous.split()
+    words = list(re.finditer(r"\S+", text))
+    after = [match.group() for match in words]
+    limit = min(len(before), len(after), MAX_OVERLAP_WORDS)
+    for count in range(limit, MIN_OVERLAP_WORDS - 1, -1):
+        if before[-count:] == after[:count]:
+            # Cut at the character offset, not by re-joining words: the remainder's line
+            # structure is what `passage_blocks` reads (a term, a list, a heading), and
+            # `" ".join(...)` would flatten it into one paragraph.
+            if len(words) == count:
+                return text
+            return text[words[count].start() :]
+    return text
+
+
 def reader_anchor_map(document: StandardDocument) -> dict[int, str]:
     """`{chunk pk: anchor}` exactly as the reader renders them, suffixes included.
 
@@ -260,5 +302,6 @@ __all__ = [
     "reading_anchor",
     "reading_chunks",
     "search_in_document",
+    "strip_overlap",
     "unique_anchors",
 ]
