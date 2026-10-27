@@ -31,6 +31,7 @@ pytestmark = pytest.mark.e2e
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 UAT = REPO_ROOT / "tests/uat/mvp0_standards_and_public_site_uat.md"
+ASK_UAT = REPO_ROOT / "tests/uat/ask_surface_uat.md"
 
 
 @pytest.fixture
@@ -118,3 +119,65 @@ def test_the_artefact_does_not_overflow_a_phone(artefact, phone_page):
         "() => document.documentElement.scrollWidth > document.documentElement.clientWidth"
     )
     assert overflow is False
+
+
+# --- A second artefact, and the same script guard ---------------------------
+#
+# The tests above pin one file's *content* (ten cards, one N/A, D44). This one pins the thing
+# that scales: whatever UAT file is next, the page's script must run and the export must be
+# accepted by the write-back. Without it, the §1.30 defect can return the first time a new
+# scenario shape (a table, a nested list, a code block) reaches the markdown renderer.
+
+
+@pytest.fixture
+def ask_artefact(tmp_path):
+    out = tmp_path / "ask.html"
+    code = run_runner(["--file", str(ASK_UAT), "--out", str(out), "--database", "uat_e2e"])
+    assert code == 0, "the runner refused the ask-surface UAT file"
+    return out
+
+
+def test_a_new_uat_file_renders_a_usable_page(ask_artefact, page, console_errors):
+    requests: list[str] = []
+    page.on("request", lambda request: requests.append(request.url))
+
+    page.goto(ask_artefact.as_uri())
+
+    assert page.locator(".card").count() == 7
+    assert page.locator(".judgement").count() == 7
+    assert page.locator("#progress").inner_text() == "0 of 7 judged"
+    assert [url for url in requests if not url.startswith("file://")] == []
+    assert console_errors == []
+
+
+def test_the_ask_uat_exports_a_sign_off_the_writer_accepts(ask_artefact, page, tmp_path):
+    """A judgeable page is not enough: the export must round-trip into the markdown.
+
+    Every scenario gets a result, a name and a date — because the page refuses to export
+    otherwise, and a signature nobody made is worse than no signature.
+    """
+    page.goto(ask_artefact.as_uri())
+
+    page.fill("#me-name", "Kobus Meiring")
+    page.select_option("#me-role", label="Product")
+    page.fill("#me-date", "2026-10-23")
+    page.click("#applyAll")
+
+    for index in range(page.locator(".card").count()):
+        card = page.locator(".card").nth(index)
+        card.locator('.choice[data-v="PASS"]').click()
+        card.locator('[data-k="note"]').fill("Judged on the dev instance.")
+
+    with page.expect_download() as download_info:
+        page.click("#exportBtn")
+    path = tmp_path / "signoff.json"
+    download_info.value.save_as(str(path))
+
+    export = json.loads(path.read_text(encoding="utf-8"))
+    assert export["slug"] == "ask_surface"
+    assert len(export["results"]) == 7
+
+    from scripts.uat_parse import parse_uat
+    from scripts.uat_signoff import validate
+
+    assert validate(parse_uat(ASK_UAT), export) == []
