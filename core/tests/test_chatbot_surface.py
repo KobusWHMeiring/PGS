@@ -75,6 +75,8 @@ def _fragment_for(session_uuid, question, *, refusal=False):
                 page=43,
                 heading_path="Traceability",
                 document="SAOSO Standard v2.1",
+                document_code="saoso-standard-v2.1",
+                reading_anchor="s20-1-1",
             )
         ],
         message_id=assistant.pk,
@@ -220,6 +222,21 @@ def test_a_citation_is_rendered_with_its_quote(client, chat_standard_set, answer
     assert "Traceability is required for every batch" in html, (
         "the quote is the checkable part of a citation"
     )
+
+
+def test_a_citation_opens_the_line_it_quotes_in_a_new_tab(client, chat_standard_set, answering):
+    """D68 §7.2: "View this line" is a place, "Read it in SAOSO" is a file. The hidden suffix is
+    the mitigation for a phone, where a new tab is otherwise invisible."""
+    response = client.post(URL, {"question": "What does the standard require for traceability?"})
+    html = response.content.decode()
+
+    assert "View this line" in html
+    assert 'target="_blank"' in html
+    assert 'rel="noopener"' in html
+    assert "(opens in a new tab)" in html
+    assert (
+        'href="/documents/saoso-standard-v2.1/read/?section=s20-1-1#s20-1-1"' in html
+    ), "the branch must travel in the query string; the fragment only scrolls"
 
 
 # --- Failure modes are honest ----------------------------------------------

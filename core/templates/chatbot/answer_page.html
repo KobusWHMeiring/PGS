@@ -70,9 +70,13 @@
                 {% if citation.page %} &middot; printed p. {{ citation.page }}{% endif %}
                 {% if citation.document_code and citation.reading_anchor %}
                   &middot;
+                  {% comment %} D68 §7.2: "View this line" is a place; "Read it in the
+                     document" described a file. The branch travels in the query string and the
+                     fragment scrolls to the quoted passage (§6.4). {% endcomment %}
                   <a class="answer__read"
-                     href="{% url 'core:document_reader' code=citation.document_code %}#{{ citation.reading_anchor }}">
-                    Read it in the document &rarr;
+                     href="{% url 'core:document_reader' code=citation.document_code %}?section={{ citation.reading_anchor }}#{{ citation.reading_anchor }}"
+                     target="_blank" rel="noopener">
+                    View this line &rarr;<span class="visually-hidden"> in {{ citation.document }} (opens in a new tab)</span>
                   </a>
                 {% endif %}
               </figcaption>

@@ -333,9 +333,12 @@ class Citation:
         """
         if not self.document_code:
             return ""
+        # `?section=` **and** the fragment: a browser never sends the fragment to the server, so
+        # the branch has to be chosen by a query parameter, and the fragment is what scrolls the
+        # reader to the passage itself.
         return (
             reverse("core:document_reader", kwargs={"code": self.document_code})
-            + f"#{self.reading_anchor}"
+            + f"?section={self.reading_anchor}#{self.reading_anchor}"
         )
 
     @property

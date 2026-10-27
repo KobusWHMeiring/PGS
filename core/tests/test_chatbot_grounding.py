@@ -1052,7 +1052,9 @@ def test_a_citation_knows_the_public_document_it_came_from(
     citation = out.citations[0]
     assert citation.document_code == "saoso-standard-v2.1"
     assert citation.reading_anchor == "s20-1-1"
-    assert citation.read_url == "/documents/saoso-standard-v2.1/read/#s20-1-1"
+    assert citation.read_url == (
+        "/documents/saoso-standard-v2.1/read/?section=s20-1-1#s20-1-1"
+    )
 
 
 def test_a_corpus_document_with_no_published_twin_carries_no_code(

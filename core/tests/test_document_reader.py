@@ -163,7 +163,8 @@ def test_a_citation_lands_on_the_definition_itself(client, seeded_documents):
         "s1-genetically-modified-organism-gmo",
     ], "the second chunk shares the locator, so it must be named for its own words"
     assert citations[1].read_url == (
-        "/documents/saoso-standard-v2.1/read/#s1-genetically-modified-organism-gmo"
+        "/documents/saoso-standard-v2.1/read/"
+        "?section=s1-genetically-modified-organism-gmo#s1-genetically-modified-organism-gmo"
     )
 
     # The page renders one branch at a time (D68), so the anchor is asserted where the tree
@@ -403,3 +404,22 @@ def test_the_selected_branch_is_the_one_rendered_with_its_anchor(client, seeded_
     assert 'id="appendix-2-1"' in body
     assert "Wood, bark and sawdust" in body
     assert "free of significant contaminants" not in body
+
+
+def test_a_citation_link_selects_the_branch_and_scrolls_to_the_passage(seeded_documents):
+    """The fragment scrolls, the query parameter selects: a browser never sends the fragment to
+    the server, so both are needed in one link (§6.4)."""
+    from core.services._chatbot import Citation
+
+    citation = Citation(
+        section_ref="Appendix 2.1",
+        quote="Wood",
+        chunk_id=1,
+        document_code="saoso-standard-v2.1",
+        reading_anchor="appendix-2-wood-bark-and-sawdust",
+    )
+
+    assert citation.read_url == (
+        "/documents/saoso-standard-v2.1/read/"
+        "?section=appendix-2-wood-bark-and-sawdust#appendix-2-wood-bark-and-sawdust"
+    )

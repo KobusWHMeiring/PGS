@@ -50,12 +50,14 @@ that cannot be checked.
                 </p>
                 {% if citation.read_url %}
                   {% comment %} The clause is the deliverable: the chip expands to a quote, and
-                     the quote opens the text we ingested at the passage it came from. Absent
+                     the quote opens the text we ingested at the line it came from. Absent
                      when the group does not publish the document the clause came from — a link
-                     to nowhere is worse than plain text. {% endcomment %}
+                     to nowhere is worse than plain text. "View this line" is a place; "Read it
+                     in SAOSO" described a file (D68 §7.2). {% endcomment %}
                   <p class="cite-source">
-                    <a class="cite__read" href="{{ citation.read_url }}">
-                      Read it in {{ citation.document }} &rarr;
+                    <a class="cite__read" href="{{ citation.read_url }}"
+                       target="_blank" rel="noopener">
+                      View this line in {{ citation.document }} &rarr;<span class="visually-hidden"> (opens in a new tab)</span>
                     </a>
                   </p>
                 {% endif %}

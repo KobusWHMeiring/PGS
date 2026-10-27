@@ -83,8 +83,11 @@ def test_a_published_card_has_a_page_with_its_clauses(client, published_card):
 
     assert published_card.question in body
     assert QUOTE in body
-    assert "Read it in the document" in body
-    assert "/documents/saoso-standard-v2.1/read/#appendix-2" in body
+    assert "View this line" in body
+    assert 'target="_blank"' in body
+    assert 'rel="noopener"' in body
+    assert "(opens in a new tab)" in body
+    assert "/documents/saoso-standard-v2.1/read/?section=appendix-2#appendix-2" in body
 
 
 def test_the_page_states_what_the_answer_does_not_cover(client, published_card):
