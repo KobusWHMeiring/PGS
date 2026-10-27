@@ -107,8 +107,8 @@ not. `cost` retrieves §2.3, §2.4, §2.2, §2.5 and `r500` — and `fee`, the w
 actually uses, retrieves **§2.1 at rank 2**. §2.1 is missing because the question says
 "cost" and the OPP says "membership fees" *and* because the chooser threw the topic away.
 G3 is therefore two defects, one of which is F1; the term-expansion half is a separate
-decision (§6 D-4). Do not build sibling-section expansion on the strength of that
-measurement.
+decision (§6 D-4, built as 5.10). Do not build sibling-section expansion on the strength of
+that measurement — it was closed without it.
 
 ### F2. `sub_ref` is supplied for passages that have no sub-clauses, and a good answer is refused
 **Landed 2026-10-27 (rule 5).** With one sentence added to the rule list — *a number the
@@ -375,6 +375,29 @@ Implementation detail worth keeping: the sentence is read from the turn's new
 comparison is how a copy change would have silently removed the contact link and the refusal
 styling — and the surface fixture had to be corrected for exactly that reason (§1.32 shape).
 
+### 5.10 The alias arm — D-4, and G3 closes — **landed 2026-10-27**
+
+`knowledge/aliases.py` holds a reviewed `question word -> the word the corpus uses` table
+(`cost -> fee`), and `search_terms` runs an **alias arm**: the rarest alias word searched
+**alone**, capped at `ALIAS_SEATS = 2`, displacing the tail so the visitor's own vocabulary
+keeps its seats. Alone matters, and it is measured:
+
+```
+search("cost")          -> §2.3, §2.4, pgs-sa, §2.2, §2.5     (§2.1 absent)
+search("fee")           -> §2.3, §2.1, §2.2, §2.4, §2.5      (§2.1 at rank 2)
+search("cost OR fee")   -> §2.3, §2.4, pgs-sa, §2.2, §2.5     (§2.1 absent again)
+```
+
+**G3 is closed by measurement.** The cost question now seats §2.1 and the answer opens with
+it — *"…includes an annual farmer and consumer membership fee of R100, a renewal farm
+assessment visit fee … a licensing fee of R500 …"*, **5 citations, 5 audited, grounded** —
+which is G3's own acceptance criterion, met without the sibling-section expansion that the
+2026-10-22 evidence pointed at. `CHAT_ANSWER_COVERAGE_PRD.md` G3 carries the closure note.
+
+Three tests: the real OPP (a new `opp_ingested` fixture), the synthetic clause the question
+word cannot reach, and a negative case proving an unrelated question gains nothing. The arm
+disabled → two red; restored → green.
+
 ### 5.9 One refusal reason names one finding — **landed 2026-10-27**
 
 `NO_CITATIONS` covered four branches and `INSUFFICIENT_CONTEXT` covered two, so the record
@@ -403,7 +426,7 @@ renders in-document search; this only makes the fragment land on the passage.
 | **D-2** | May the audit drop a `sub_ref` (never the citation) when the chunk has no sub-clause map and the value is an item marker in the chunk's own text? | **Re-measure first** — the prompt rule answered the six recorded cases. If any remain: yes, same shape as D61 (decoration, not identity) |
 | **D-2b** | May an unresolvable locator be replaced by the chunk its quote uniquely matches? | **Record, do not build.** It would have saved three of this PRD's four refusals, and it is stricter than it looks (unique match required) — but it is a relaxation of the address contract and belongs to the product owner, after D-3 |
 | **D-3** | Does the prompt forbid deciding an outcome (organic / not organic), and may a follow-up see its parent's answer prose? | **Approved and built 2026-10-27** (§5.5) — rule 4b, plus a leading-verdict clause after the first version was dodged. Follow-up window (5.6) still wants S6 before narrowing |
-| **D-4** | Does G3 get a seeded alias table (`cost → fee, membership fee`), now that its evidence is shown to rest on a bad key? | **Approved 2026-10-27** — yes, and re-measure G3 *after* 5.1, which has landed. An alias table is data, and G5's "no classifier" still holds |
+| **D-4** | Does G3 get a seeded alias table (`cost → fee, membership fee`), now that its evidence is shown to rest on a bad key? | **Approved and built 2026-10-27** (§5.10) — it closed G3 without sibling-section expansion. An alias table is data, and G5's "no classifier" still holds |
 | **D-5** | May the refusal surface carry a second sentence naming the cause, given D17 fixes the wording? | **Approved 2026-10-27 and built** (§5.7) — one sentence per reason, from the split enum |
 
 ---
@@ -479,7 +502,10 @@ Therefore:
    gate green at 915. **Still to do:** the UAT scenario that reads a `CITATION_AUDIT` refusal
    and a corpus-silent refusal side by side — the two now carry different second sentences,
    which is exactly what a reviewer should judge.
-8. Land 5.8 (anchor) and settle `D-4`; re-measure G3 after 5.1 before building any alias table.
+8. ~~Land 5.8 (anchor) and settle `D-4`; re-measure G3 after 5.1 before building any alias
+   table.~~ **D-4 landed 2026-10-27** (§5.10) and G3 is closed by measurement. 5.8 (the
+   anchor collision, F7) is untouched: eight `§1` chunks still share `#s1`, and it is the
+   cheapest remaining item.
 9. Append whatever cost time to `product/docs/context/testing_hazards.md` — three candidates
    from this slice: *a probe that measures a key the product does not choose* (§2.7's
    sibling); *a refusal reason that covers four branches* is how a sweep mislabels its own

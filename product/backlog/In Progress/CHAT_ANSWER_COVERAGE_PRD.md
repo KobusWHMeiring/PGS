@@ -188,6 +188,22 @@ evidence — the answer is grounded with five citations (§2.3 ×4, §2.5) and n
 §2.1's R100 annual membership fee. Retrieval returns `r500`, §2.3, §2.4, §2.2, `pgs-sa`,
 `saoso-organic-certification`, §2.5 and §4.1; §2.1 is not in the set at eight either.
 
+**Closed 2026-10-27 — and the diagnosis above was wrong twice.** The measurement was made
+through `default_retrieval`, whose lexical key for this question was `get` (document
+frequency 1), so the retrieval set was one chunk of `r500` plus the OR arm; and §2.1 shares
+**no word** with the question at all — the OPP calls it *Membership Fees*, while the
+question says *cost*. So the gap was never "no sibling-section expansion": it was a bad key
+(F1 in `CHAT_TRUTHFULNESS_PRD.md`) plus a missing alias (`cost -> fee`). Both are now in
+`knowledge/services.py` and `knowledge/aliases.py`; the alias arm searches `fee` alone,
+because `cost OR fee` loses §2.1 again (measured). After: §2.1 is seat 8 of 8, and the
+answer opens with *"an annual farmer and consumer membership fee of R100"*, then the
+assessment and licensing fees — **5 citations, 5 audited, grounded**. That is this gap's
+acceptance criterion, met without the sibling-section expansion.
+
+**The lesson worth keeping:** a re-measurement taken through a retrieval path whose key is
+wrong produces an architectural conclusion ("add siblings") for a lexical defect. Check the
+key before believing the shape of a gap.
+
 ### G4. Appendices 3, 4, 6a/6b and 7 are still on the interleaved path
 
 **Symptom.** The same class of defect as Appendix 2 — a condition or limit printed in a

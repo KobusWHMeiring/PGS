@@ -79,6 +79,16 @@ def saoso_ingested(saoso_set, settings, monkeypatch):
     )
 
 
+@pytest.fixture
+def opp_ingested(saoso_set, settings, monkeypatch):
+    """The OPP into the same set shape the deployment uses — one corpus, two documents."""
+    settings.GEMINI_API_KEY = ""
+    stub_ingest_extraction(monkeypatch)
+    return ingest_standard(
+        pdf_path=OPP_PDF, standard_set=saoso_set, doc_key="opp", embed=False
+    )
+
+
 class FakeProvider:
     """A deterministic provider: the vector encodes which marker word is present."""
 
@@ -523,8 +533,7 @@ def test_a_question_about_an_unknown_material_gives_the_semantic_arm_the_budget(
     assert "cardboard" in " ".join(result.warnings)
 
 
-# --- The lexical key is the rarest word that names the *subject* ------------
-#
+# --- The lexical key is the rarest word that names the *subject* ------------#
 # Both defects below were measured on the live surface on 2026-10-27
 # (`CHAT_TRUTHFULNESS_PRD.md` F1): a verb outranked the topic, and a question with one
 # out-of-vocabulary word lost the page that answers it while every known word was
@@ -622,6 +631,59 @@ def test_an_unknown_word_hedges_two_bets(two_sets):
         "the second bet was not searched: only the proxy word's chunks arrived "
         f"({[chunk.section_ref for chunk in result.chunks]})"
     )
+
+
+def test_the_cost_question_reaches_the_membership_fee(opp_ingested, saoso_set):
+    """G3: the question says `cost`, the OPP says `Membership Fees`, and both must answer.
+
+    Measured 2026-10-27 on the shipped corpus: `search("cost")` returns §2.3, §2.4,
+    pgs-sa, §2.2, §2.5 and never §2.1; `search("fee")` puts §2.1 at rank 2. The alias arm
+    searches the second alone, because an OR of the two loses it again.
+    """
+    result = search_terms(
+        ["yearly", "cost", "certified", "including", "farm", "visit"],
+        standard_set=saoso_set,
+        limit=8,
+    )
+
+    refs = [chunk.section_ref for chunk in result.chunks]
+    assert "§2.1" in refs, f"the membership fee never arrived: {refs}"
+    assert "§2.3" in refs, "the alias arm displaced the answer instead of the tail"
+
+
+def test_an_alias_word_finds_the_clause_the_question_word_cannot(two_sets):
+    """The alias arm exists for a clause no word in the question reaches.
+
+    The OR-vs-alone half of this finding (`cost OR fee` loses §2.1, `fee` alone finds it
+    at rank 2) is measured on the real corpus in `knowledge/aliases.py`, and cannot be
+    shown here: the table holds one alias per question word, so OR-ing it is the same
+    query. What this test proves is the arm itself — remove `ALIASES` and it goes red.
+    """
+    first, _second, in_set, _out = two_sets
+    document = in_set.document
+    make_chunk(document, ref="§2.3", text="The assessment cost is set on a sliding scale.")
+    make_chunk(document, ref="§2.4", text="A cost per visit is payable by the participant.")
+    make_chunk(document, ref="§2.5", text="Another cost for the use of a seal.")
+    membership = make_chunk(document, ref="§2.1", text="Membership fees: R100 a year.")
+
+    result = search_terms(["cost"], standard_set=first, limit=4)
+
+    ids = [chunk.chunk_id for chunk in result.chunks]
+    assert membership.pk in ids, (
+        "the alias word was not searched: "
+        f"{[chunk.section_ref for chunk in result.chunks]}"
+    )
+
+
+def test_a_question_with_no_alias_costs_nothing(two_sets):
+    """An unrelated question must not gain the fee section through the alias arm."""
+    first, _second, in_set, _out = two_sets
+    make_chunk(in_set.document, ref="§2.1", text="Membership fees: R100 a year.")
+
+    result = search_terms(["traceability"], standard_set=first, limit=4)
+
+    refs = [chunk.section_ref for chunk in result.chunks]
+    assert "§2.1" not in refs, refs
 
 
 def test_the_definition_question_reaches_the_definitions_section(saoso_ingested, saoso_set):

@@ -40,6 +40,7 @@ from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import F
 from pgvector.django import CosineDistance
 
+from knowledge.aliases import ALIASES
 from knowledge.embedding import EmbeddingError, EmbeddingUnavailable, embed_texts
 from knowledge.models import DocumentChunk, StandardSet
 
@@ -53,6 +54,12 @@ RRF_K = 60
 #: restore the clause the previous turn found; more would let the old subject crowd out
 #: the new one. It is also capped at a quarter of the budget, and never used below four.
 CONTEXT_SEATS = 2
+
+#: How many passages the **alias** arm may add, when a question word is one the corpus
+#: answers under another name (`knowledge/aliases.py`). Two, and it displaces the tail
+#: rather than splitting the budget: the alias arm exists for a clause the question's own
+#: words cannot reach, so it must not demote the ones they did reach.
+ALIAS_SEATS = 2
 
 #: How many candidates each arm contributes before fusion. Generous on purpose: RRF can
 #: only promote what an arm returned, so this bounds recall.
@@ -622,6 +629,37 @@ def search_terms(
         merged.append(chunk)
 
     warnings = tuple(dict.fromkeys((*primary.warnings, *fallback.warnings)))
+
+    # The alias arm: a question word the corpus answers under another name. `cost` vs the
+    # OPP's "Membership Fees" is the measured case (`knowledge/aliases.py`, G3). It runs
+    # after the question's own words have been ranked, and it displaces the tail — the
+    # visitor's vocabulary keeps its seats and the alias can only take what they did not
+    # fill. One word, rarest first, for the same reason the primary arm is one word.
+    alias_terms = [
+        alias for term in cleaned for alias in ALIASES.get(term, ()) if alias not in cleaned
+    ]
+    if alias_terms:
+        alias_frequency = {
+            term: document_frequency(term, standard_set=standard_set)
+            for term in alias_terms
+        }
+        alias_key = lexical_key(alias_terms, alias_frequency)
+        if alias_key:
+            aliased = search(
+                alias_key,
+                standard_set=standard_set,
+                limit=ALIAS_SEATS,
+                candidates=candidates,
+                provider=provider,
+                use_vector=False,
+            )
+            incoming = [
+                chunk for chunk in aliased.chunks if chunk.chunk_id not in seen
+            ][:ALIAS_SEATS]
+            if incoming:
+                merged = merged[: max(0, limit - len(incoming))] + incoming
+                seen = {chunk.chunk_id for chunk in merged}
+            warnings = tuple(dict.fromkeys((*warnings, *aliased.warnings)))
 
     # The context arm, when the caller says this turn continues the last one. It runs
     # *after* the new question has been ranked, and it displaces the weakest fragment
