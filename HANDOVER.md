@@ -196,9 +196,16 @@ open and now further behind (the reader's layout is not deployed either).
 Gate **1004 passed / 1 skipped**. The live site is still `206f35f` and needs the same re-ingest
 (P7.4) before any of this is visible there.
 
-**Next, and not built:** the reader's table structure, the repeated locators, and in-view
-cross-references — findings and options are agreed; see §0e items 1–5 for the rest of the judgement
-list, and note that item 6 is now closed for the glyph half.
+**Next, and not built: read `product/backlog/In Progress/READER_STRUCTURE_PRD.md` first.** It is the
+slice for the reader's table structure, the repeated locators, in-view cross-references and glossary
+links — **every number in it is measured**, by `scripts/probe_reader_structure.py` (new, read-only;
+run it before Task 1). Three findings that came out of writing it: 19 of Appendix 2's 30 rows print
+no condition at all (that is the "list of standalone inputs"); SAOSO has **10** section references and
+**29** appendix mentions, of which **9** cannot be decided by number alone; and the corpus also prints
+**seven unqualified `Section n`** references, which only resolve inside the part they appear in. The
+PRD's §10 has four open questions for the product owner; the plan is not written until they are
+settled. See also §0e items 1–5 for the rest of the judgement list — item 6 closed for the glyph
+half in §0f.
 
 ---
 ---
