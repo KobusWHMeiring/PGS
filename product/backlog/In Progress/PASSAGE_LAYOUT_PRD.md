@@ -122,7 +122,9 @@ claim: *"the words and punctuation are unchanged; line breaks are reflowed for r
 * **Not typography.** No drop caps, no justification, no hyphenation changes; the design system
   already governs the type.
 * **Not tables.** Appendices 1–7 are prose chunks, and Appendix 2 is already one chunk per reviewed
-  row (`knowledge/tables.py`); a table renderer is a different decision.
+  row (`knowledge/tables.py`); a table renderer is a different decision. **Superseded 2026-10-27:**
+  `ready/READER_STRUCTURE_PRD.md` makes that decision (D70.1) — Appendix 2 renders as the paper's
+  table from reviewed structure data. This line is kept as the record of what was out of scope here.
 
 ## 5. Risks
 

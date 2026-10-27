@@ -3,15 +3,15 @@
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
-the answer-coverage session, the budget-and-instrument session and the deployment session — **2026-10-22**.
-**Repo state:** `main`, **78 commits**, tree **clean**, `HEAD == origin/main`.
-`verify.sh` green at **804 tests**; `python -m pytest tests/e2e -q` green at 34 more.
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed** (see §3).
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`**; two commits
-(`fb41a47`, `54ef082`) are pushed and **not yet deployed**. The corpus is the pre-D52/D53
-poppler build — **363 chunks**, 316 SAOSO against Xpdf's 319 — so `uat_seed --check`
-correctly blocks until plan **P7.4** rebuilds it from artefacts. See §22 and
-`product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
+the answer-coverage session, the budget-and-instrument session, the deployment session
+and the reader-structure session — **2026-10-27**.
+**Repo state:** `main`, tree clean, **65 commits ahead of `origin/main`** (see §0g and §3).
+`verify.sh` green at **1138 tests**; `python -m pytest tests/e2e -q` green at 53 more.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **not pushed since `a9fc663`**.
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — thirty-odd commits
+behind, and its corpus is the pre-D52/D53 poppler build (**363 chunks**, 316 SAOSO against Xpdf's
+319), so `uat_seed --check` correctly blocks until plan **P7.4** rebuilds it from artefacts. See §22,
+§0g and `product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
 
 ---
 
@@ -150,11 +150,11 @@ is signed; **Scenario 8** is the passage layout. The tooling is the same as §18
    **not** substitute characters (the citation audit checks quotes against the stored text).
 
 **Backlog state.** `In Progress/`: CONCORDANCE (PRD + plan), PASSAGE_LAYOUT (PRD + plan), ASK_SURFACE,
-VPS_DEPLOYMENT, CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `Refinement/`:
-**READER_STRUCTURE_PRD (new in §0f — four questions open, see the section below)**. `BugFixes/`:
-`citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` **half closed in §0f**
-(the glyph loss is fixed; the superscript and the half-title are still open). `ready/`: only the
-MVP 1a pair.
+**READER_STRUCTURE (PRD now in `ready/`, plan here — built, UAT unsigned)**, VPS_DEPLOYMENT,
+CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `BugFixes/`:
+`citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` half closed in §0f
+(the glyph loss is fixed; the superscript and the half-title are still open). `ready/`: the MVP 1a
+pair and `READER_STRUCTURE_PRD.md`.
 
 **Repo state.** `main`, tree clean, **42 commits ahead of `origin/main`**, nothing pushed or deployed.
 The live site is still `206f35f`, and its corpus predates D52/D53 — §18's two operational items are
@@ -200,16 +200,16 @@ Gate **1004 passed / 1 skipped**; **45 commits ahead of `origin/main`**, nothing
 site is still `206f35f` and needs the same re-ingest (P7.4) before any of this is visible there —
 `uat_seed --check` will keep blocking on the corpus check until it is done.
 
-### Where the next agent starts: write `READER_STRUCTURE_PLAN.md`
+### Where the next agent starts: judge the UAT (§0g)
 
-**Read `product/backlog/Refinement/READER_STRUCTURE_PRD.md` first** — it is deliberately in
-`Refinement/`, not `Ready/`, because **four questions in its §10 need the product owner's answer
-before a plan can be written** (the empty-condition label's wording; what a bare `Appendix 4` should
-say; whether the glossary term list is reviewed inside this slice; whether the locator prints once
-per run). Session 2026-10-27 agreed the design (SPEC §18.3 **D70**); nobody has answered those four.
-Ask them, move the PRD to `ready/`, then write the plan into `In Progress/READER_STRUCTURE_PLAN.md`
-— the repo's plan convention is one task per unit, each test-first, with the probe's numbers in the
-task that consumes them.
+**This was the previous handover's "next start" and it is now built.** The four questions in
+`ready/READER_STRUCTURE_PRD.md` §10 were answered by the product owner on 2026-10-27, the plan in
+`In Progress/READER_STRUCTURE_PLAN.md` was executed the same day, and **the reader is the document's
+own structure** (§0g). What is left is the human judgement: `tests/uat/concordance_uat.md` carries
+eleven scenarios and **none is signed**. Scenarios 9–11 are the ones this slice added.
+
+The rest of this section is kept because its measurements are still the numbers the UAT is judged
+against — run `python scripts/probe_reader_structure.py` and it prints them from the shipped code.
 
 **The measurements are already made, so do not re-litigate them.** `scripts/probe_reader_structure.py`
 is committed and read-only: run it and it prints what the PRD claims. Three findings it produced:
@@ -223,6 +223,50 @@ inside the part they are printed in. `Section A – 2.3` is the trap: it must go
 Nothing in that slice needs a migration or a re-ingest: it is display-only, which is why it can
 follow the corpus work so cheaply. See also §0e items 1–5 for the rest of the judgement list —
 item 6 closed for the glyph half in §0f.
+
+---
+
+## 0g. 2026-10-27 — the reader is the document: a table, references that go somewhere, and a glossary
+
+**All ten tasks of `In Progress/READER_STRUCTURE_PLAN.md` landed.** Gate **1138 passed / 1 skipped**,
+Playwright **53**, `lint-imports` kept, `manage.py check` clean, `uat_seed --check` **ready** (366
+chunks, 0 without a vector, 8 published, Xpdf 4.00). **Nothing pushed, nothing deployed.**
+
+- **Appendix 2 renders as the paper's table** (D70.1): a caption quoting the two printed columns, one
+  legend sentence, four part headings, three `South African specific` qualifiers, and 30 rows whose
+  substance is its own entry — so `Guano` no longer renders at body weight. The 19 rows whose
+  condition cell the paper leaves empty carry a muted `no condition printed`, and no row reads as
+  permission. The structure is reviewed data beside `TABLE_ROWS` (`TABLE_SECTIONS`), and a test proves
+  each of the seven dividers still sits, on the printed page, immediately above the row it names.
+- **A reference goes somewhere, or it says why not** (D70.3): `Appendix 6 Minimum Surface Areas…`
+  opens Appendix 6b in a new tab; `Section 4.6.2` opens `S4`; **`Section A – 2.3` opens the page's own
+  note that Part A is printed and not in the corpus**, never `S2` — a different part. Measured: **39
+  mentions, 30 resolved, 9 left as text**, and all 9 (8 × `Appendix 4`, 1 × bare `Appendix 6`) carry a
+  tooltip naming the parts they could be. The BPP and the landscape resolve nothing, which is correct.
+- **A defined word is a click away** (D70.4/D70.7): the term list is **derived** from `S1`'s rendered
+  blocks minus a reviewed rejection list, so it cannot stale. **69 headwords and 69 ids** on the real
+  corpus; one link per term per passage, and none inside the glossary itself.
+- **One locator per run** (D70.5): **366 → 311** lines (319→273, 30→28, 8→6, 9→4), every passage keeps
+  its `id`, so a citation still lands.
+- **The missing-sections note moved out of the phone disclosure** and carries `id="not-in-corpus"`
+  (D70.6) — a fragment inside a closed `<details>` cannot be scrolled to.
+
+**Page weight, measured the same way before and after** (dev corpus, Django test client, gzip level
+6): Appendix 2 **33 309 → 37 664 B raw (+13.1 %), 5 941 → 6 521 B gzip (+9.8 %)**; `S1` 47 935 →
+49 979 raw (+4.3 %). The PDF of the same appendix is 192 KB. **No new query**: the reader was 3
+queries before this slice and is 3 after it.
+
+**Corrected while building (recorded, not absorbed):** the plan expected **71** glossary headwords and
+the page anchors **69**. `Buffer Zone` and `Homeopathic Treatment` are each the tail of one chunk and
+the head of the next, so the reader's overlap trimming prints them as the last *paragraph* of a
+passage, where the layout finds no following line and does not call them terms. They are not linkable;
+the test asserts their absence. Making them linkable needs the corpus artefact, not view work.
+`READER_STRUCTURE_PLAN.md` §12 has the six signature changes and the three findings.
+
+**The UAT is the only thing left.** `tests/uat/concordance_uat.md` now carries **eleven** scenarios,
+9–11 are new, and **none is signed**: Scenario 9 is the table, 10 the references, 11 the glossary.
+The artefact is regenerated (`product/design/uat/concordance.html`). This feature is not done without
+names in that table.
 
 ---
 

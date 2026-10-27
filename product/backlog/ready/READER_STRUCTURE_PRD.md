@@ -1,8 +1,9 @@
 # PRD: The reader's structure — a table reads as a table, and a reference goes somewhere
 
-**Status:** **Draft** — the design is agreed in session on 2026-10-27 (product owner: definition-list
+**Status:** **Ready** — the design was agreed in session on 2026-10-27 (product owner: definition-list
 shape first, a vision-model extraction only as a fallback; cross-references open in a new tab;
-glossary links in scope). This file is for review **before** `READER_STRUCTURE_PLAN.md` is written.
+glossary links in scope), and the **four questions in §10 are answered** by the product owner on
+2026-10-27. Plan: `product/backlog/In Progress/READER_STRUCTURE_PLAN.md`.
 **Owner:** Product (what the reader may claim) · Build (the two derivations)
 **Opened:** 2026-10-27
 **Origin:** reading `/documents/saoso-standard-v2.1/read/?section=appendix-2` after the glyph fix
@@ -12,8 +13,7 @@ and `ACB` / `Habitat` / `Extensive Farming` in the definitions were plain text.
 **Related:** `CONCORDANCE_PRD.md` §2/§6.3/§10.6–10.7 (the reader and its anchors), D67 (text, not
 PDF), D68 (the tree), D69 (the corpus keeps its glyphs), `PASSAGE_LAYOUT_PRD.md` §3–§4 (**§4's "Not
 tables" is superseded here**), `knowledge/tables.py`, `knowledge/passages.py`, `knowledge/concordance.py`.
-**Plan:** `READER_STRUCTURE_PLAN.md` (not yet written) · **UAT:** `tests/uat/concordance_uat.md` gains
-Scenarios 9–11.
+**Plan:** `product/backlog/In Progress/READER_STRUCTURE_PLAN.md` (written 2026-10-27, after these answers) · **UAT:** `tests/uat/concordance_uat.md` gains Scenarios 9–11.
 
 ---
 
@@ -129,8 +129,14 @@ their definitions — and none of those terms links anywhere. Measured on the ca
 *display heuristic* produces (78 `Term` blocks in `S1`): **196 word-boundary occurrences** elsewhere
 in the four documents, led by `Soil` ×19, `Breeding` ×15 (the corpus prints that headword twice),
 `Synthetic` ×12, `Certification` ×8 and `Accredited` ×6, with **33 of the 78 never occurring again**.
-Most of those are prose the heuristic mistook for a headword. So the term list is **not** derivable
-from the layout: it has to be reviewed data (§5.1), or the reader links `Soil` nineteen times.
+**Correction, measured 2026-10-27 (the same day, before the plan): that ratio was read wrongly.**
+The 78 blocks are **71 distinct headwords**, and they are the glossary — `Soil`, `Breeding` and
+`Synthetic` are defined terms in `S1`; the seven repeats (`Breeding`, `Culture`, `Disinfect`,
+`Habitat`, `High Conservation Value Area`, `Direct Source Organism`, `Nanomaterials`) are the
+**chunk overlap** `PASSAGE_LAYOUT` §3 already trims for display, not the paper printing a headword
+twice. So the list *is* derivable from the layout, and what needs a human is the opposite decision:
+which of them a reader should be **sent to** from elsewhere. That is a linking policy (§5.1), not a
+list to hand-type, and the guard against `Soil` ×19 was always the once-per-passage rule.
 
 ---
 
@@ -146,7 +152,9 @@ words: this slice adds *structure* and *targets*, never text.
 | **D70.2** | A **vision-model extraction of the printed table is the fallback**, not the plan: if the shape is judged insufficient at UAT, the model drafts the table and a human reviews it into `knowledge/tables.py`. Either way it is reviewed data — a model's output cannot become a `DocumentChunk` unreviewed, for the same reason `TABLE_ROWS` was reviewed. | product owner, 2026-10-27 |
 | **D70.3** | An in-text reference to a section, an appendix or a glossary term is a **link that opens in a new tab** (`target="_blank" rel="noopener"`, with a visually-hidden "opens in a new tab"), exactly like a citation's "View this line" — the reader keeps the passage they were reading. | product owner, 2026-10-27 |
 | **D70.4** | **Glossary links are in this slice**, from a reviewed term list, at most one link per term per passage. | product owner, 2026-10-27 |
-| **D70.5** | The locator prints **once per run** — when it differs from the passage above it — and every passage keeps its `id`, so a citation still lands. | proposed here; §10 Q4 |
+| **D70.5** | The locator prints **once per run** — when it differs from the passage above it — and every passage keeps its `id`, so a citation still lands. **Accepted** by the product owner 2026-10-27 (§10 Q4). | product owner, 2026-10-27 |
+| **D70.6** | The **missing-sections note moves out of the phone disclosure** and carries `id="not-in-corpus"`, because `Section A – 2.3` links to it and a fragment inside a closed `<details>` cannot be scrolled to. It is page-level information, not navigation. | recorded here; §10 Q5 |
+| **D70.7** | The glossary term list is **derived** from the glossary branch's `Term` blocks (overlap-trimmed, so no duplicate ids), minus a **reviewed rejection list** recorded as data — not 71 hand-typed strings. `GLOSSARY_BRANCH` names the branch per document, because "which section is the glossary" is a fact about the document. | recorded here; §1.4 correction, §5.1 |
 
 ---
 
@@ -311,20 +319,29 @@ follows.
 
 ## 5. Glossary links
 
-### 5.1 The term list is reviewed data
+### 5.1 The term list is derived, and the review is the rejection list
 
-`knowledge/glossary.py` (new, the same idiom as `tables.py` and `REVIEWED_BRANCH_TITLES`):
+`knowledge/glossary.py` (new, the same idiom as `tables.py` and `REVIEWED_BRANCH_TITLES`), but the
+list itself is **not** typed in: it is derived from the vocabulary the document already has, and the
+human judgement is recorded as *removals*.
 
 ```python
-GLOSSARY: dict[str, tuple[str, ...]] = {
-    "saoso-version-2.1-2026.pdf": ("ACB", "Buffer Zone", "Conversion Period", …),
-}
+#: Which branch is the glossary. Reviewed data: "which section defines this document's words" is a
+#: fact about the document, not something a heuristic should guess.
+GLOSSARY_BRANCH: dict[str, str] = {"pgs_docs/saoso-version-2.1-2026.pdf": "S1"}
+
+#: Headwords the display heuristic finds in the glossary branch that are NOT defined terms. Each
+#: entry must still exist as a `Term` there — a rejection that matches nothing is a stale review
+#: (the `CORPUS_EDITS` "necessary and applied" idiom).
+REJECTED: dict[str, tuple[str, ...]] = {"pgs_docs/saoso-version-2.1-2026.pdf": ()}
 ```
 
-Populated **once** by a probe over `S1`'s `Term` blocks, then read and corrected by a human — because
-the measured heuristic list contains `Soil`, `Breeding` and `Synthetic`, and a wrong entry is a
-wrong link on every page. A test pins the ratio: every entry must occur as a `Term` in `S1`, and
-every term's definition paragraph must be found in `S1`'s text (so a stale entry fails).
+Measured 2026-10-27 before the plan: **78 `Term` blocks in `S1`, 71 distinct**; the seven repeats
+are the chunk overlap, which the reader already trims (`strip_overlap`), so deriving from the
+**rendered, trimmed** blocks yields unique headwords and therefore unique ids. The first review is
+expected to reject **nothing** — the correction in §1.4 — and an empty rejection tuple is
+therefore legitimate; the guards that matter are the provenance test (every derived entry *is* a
+`Term` in the glossary branch) and the once-per-passage link rule, not a count of removals.
 
 ### 5.2 Matching
 
@@ -332,9 +349,13 @@ every term's definition paragraph must be found in `S1`'s text (so a stale entry
   Period` wins over `Conversion`;
 * **at most one link per term per passage** — the first occurrence — so `Soil` ×19 in a branch
   cannot become nineteen links;
+* **no glossary links while the glossary branch is the open branch**: the definitions are on the
+  page already, that is what `?section=s1` is, and 71 self-links would make `S1` the most
+  link-studded page in the product (UAT Scenario 11 judges exactly that);
 * paragraphs and list items only (never a `RowHeading`, `Term` or `Heading`);
-* the target is the passage in `S1` whose text begins with that term, resolved through the reader's
-  own anchors, so a definition link lands on the definition and never on the branch's top.
+* the target is the **definition itself**: each rendered `Term` block in the glossary branch carries
+  `id="term-<slug>"`, and the link is `?section=<glossary branch>#term-<slug>` — one hop, to the
+  definition, never to the branch's top (which is where `?section=s1#s1` would land).
 
 ---
 
@@ -398,15 +419,23 @@ every term's definition paragraph must be found in `S1`'s text (so a stale entry
   `Extensive Farming` or `Conversion Period`, follow the term: does it land on the definition, and
   does the page read normally with the links in it (not link-studded)?
 
-## 10. Open, to settle in review
+## 10. Settled — four answers, 2026-10-27
 
-1. **The empty-condition label.** Recommend a muted `no condition printed` in the row's meta line
-   (scannable, 19 of them) plus the legend sentence, rather than 19 sentences. Is the label's wording
-   acceptable on a public page?
-2. **Bare `Appendix 4` (8 mentions).** Recommend **plain text with a `title` naming both tables**
-   ("Appendix 4 has two tables: …") rather than guessing Table 1. Agreed?
-3. **Glossary scope.** The list will be short (probably 25–45 terms). Do you want to review it in this
-   slice, or ship §3–§4 now and glossary links as a follow-up?
-4. **Once-per-run locators** (D70.5). The `id` stays, so nothing breaks; the visible cost is that a
-   reader who scrolls into the middle of `S5` no longer sees `S5 · printed p. 41` above every clause.
-   Acceptable?
+Answered by the product owner on 2026-10-27, on the recommendations below. They are decisions, so
+they are also in §2 as D70.5–D70.7 and in the spec's D70 row; nothing here is left to the plan.
+
+1. **The empty-condition label: accepted as `no condition printed`.** A muted label in the row's
+   meta line (19 of 30 rows), one legend sentence above the table, and never 19 sentences. It is a
+   statement about the paper, not about permission — `test_claim_discipline.py` sweeps the legend as
+   the group's own copy, so it may not contain a claim word.
+2. **Bare `Appendix 4`: accepted — plain text carrying a `title` naming both tables** ("Appendix 4
+   has two tables: … Table 1, … Table 2"). No guess at Table 1; eight mentions stay text.
+3. **Glossary scope: in this slice** (D70.4), with the term list **derived** from the glossary
+   branch minus reviewed rejections (§5.1, D70.7) rather than hand-typed. Measured: 71 distinct
+   headwords, not the 25–45 estimated here.
+4. **Once-per-run locators: accepted** (D70.5) — `S5` prints its locator once instead of 52 times;
+   every passage keeps its `id`, so a citation still lands. Corpus-wide: 366 lines → **311** (−55),
+   per document 319→273, 30→28, 8→6, 9→4.
+5. **Added while answering: the missing-sections note moves out of the phone disclosure** (D70.6),
+   because `Section A – 2.3` links to it and a fragment inside a closed `<details>` cannot be
+   scrolled to.
