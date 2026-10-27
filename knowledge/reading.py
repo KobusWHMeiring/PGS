@@ -20,6 +20,7 @@ chunks; it does not know what a URL is.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
@@ -180,6 +181,43 @@ def strip_overlap(previous: str | None, text: str) -> str:
                 return text
             return text[words[count].start() :]
     return text
+
+
+def passage_locator(chunk: DocumentChunk) -> str:
+    """The one expression for what a passage prints as its locator.
+
+    In:  a chunk. Out: its `section_ref`, else its `anchor`, else its `heading_path`, else `p<page>`.
+    Side effects: none.
+    Fails: never.
+
+    One expression, one place: `core.services._documents` renders it and
+    `scripts/probe_reader_structure.py` measures it, and a copy in the probe is exactly how
+    `probe_chat` came to report a retrieval limit the product did not have (§21, G8).
+    """
+    return chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}"
+
+
+def printed_locators(rows: Sequence[tuple[str, int | None]]) -> list[bool]:
+    """In: one branch's `(locator, printed page)` pairs in order. Out: whether each line prints.
+
+    In:  `rows` — the locator string and page of every passage of one open branch, in printed
+         order. The page is part of the key because it is part of what the line says: a clause that
+         continues onto the next printed page is a new line to a reader.
+    Out: one boolean per row — True for the first, and wherever the pair differs from the row above.
+         Same length as the input. The passage's `id` is unaffected, so a citation still lands.
+    Side effects: none.
+    Fails: never.
+
+    Why: `Appendix 2` prints its 30 rows on three pages and shares three locators between them, and
+    `S1` shares one between eight; before this the locator printed 366 times over the four documents
+    for 311 runs (`READER_STRUCTURE_PRD` §1.2).
+    """
+    flags: list[bool] = []
+    previous: tuple[str, int | None] | None = None
+    for row in rows:
+        flags.append(row != previous)
+        previous = row
+    return flags
 
 
 def reader_anchor_map(document: StandardDocument) -> dict[int, str]:

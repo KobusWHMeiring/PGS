@@ -42,6 +42,8 @@ from knowledge.models import StandardDocument
 from knowledge.passages import passage_blocks, row_blocks
 from knowledge.reading import (
     SearchHit,
+    passage_locator,
+    printed_locators,
     reading_chunks,
     search_in_document,
     strip_overlap,
@@ -252,6 +254,9 @@ class ReaderPassage:
     dividers: tuple[TableDivider, ...] = ()
     #: What the paper's condition cell says where it says nothing: a label, never a condition.
     note: str = ""
+    #: False when the passage above prints the same locator and page — one line per run, and the
+    #: passage keeps its `id` either way.
+    show_locator: bool = True
 
 
 @dataclass(frozen=True)
@@ -388,13 +393,18 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # One index per request, built from the tree the page already rendered: a reference can only
     # point at a branch that is in it.
     index = build_reference_index(document_row, sections)
+    # One locator per run: 30 Appendix 2 rows share three locator lines, and 52 of `S5`'s clauses
+    # share one. Every passage keeps its id, so a citation still lands on the row it quotes.
+    show_locator = printed_locators(
+        [(passage_locator(chunk), chunk.page) for chunk, _anchor in branch_pairs]
+    )
 
     rows: list[ReaderPassage] = []
     for position, ((chunk, _anchor), text) in enumerate(zip(branch_pairs, texts)):
         rows.append(
             ReaderPassage(
                 anchor=pairs[chunk.pk],
-                locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
+                locator=passage_locator(chunk),
                 page=chunk.page,
                 heading_path=chunk.heading_path,
                 text=text,
@@ -405,6 +415,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
                 ),
                 dividers=structure.dividers[position] if structure is not None else (),
                 note=structure.labels[position] if structure is not None else "",
+                show_locator=show_locator[position],
             )
         )
     passages = tuple(rows)

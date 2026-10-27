@@ -167,9 +167,16 @@
                   {% for divider in passage.dividers %}
                     <p class="passage__divider passage__divider--{{ divider.kind }}">{{ divider.text }}</p>
                   {% endfor %}
-                  <p class="passage__locator">
-                    {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
-                  </p>
+                  {% comment %}
+                    One line per run: the printed reference is the same above 52 of `S5`'s clauses and
+                    above 27 of Appendix 2's rows, so it prints where it changes. Every passage keeps
+                    its `id`, so a citation still lands on the row it quotes.
+                  {% endcomment %}
+                  {% if passage.show_locator %}
+                    <p class="passage__locator">
+                      {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
+                    </p>
+                  {% endif %}
                   {% include "public/_passage_blocks.html" with blocks=passage.blocks %}
                   {% if passage.note %}
                     <p class="passage__note">{{ passage.note }}</p>
