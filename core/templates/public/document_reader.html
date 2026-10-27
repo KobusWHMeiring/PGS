@@ -136,12 +136,40 @@
                 {{ reader.document.title }} &rsaquo; {{ reader.selected.title }}
                 {% if reader.selected.page %} &middot; printed p. {{ reader.selected.page }}{% endif %}
               </p>
+              {% if reader.table %}
+                {% comment %}
+                  A curated appendix is the paper's table, and the paper's table has a caption and a
+                  claim. Both are reviewed data (`knowledge/tables.py`): the caption quotes the two
+                  printed column headers, and the legend is the sentence that answers "why is this a
+                  list of inputs" — including what an empty condition cell means. The label repeats
+                  that once per empty row; this sentence says it once for the table.
+                {% endcomment %}
+                <div class="reader__table-bar">
+                  <p class="reader__table-caption">
+                    <span>{{ reader.table.section.columns.0 }}</span>
+                    <span class="reader__table-join" aria-hidden="true">&middot;</span>
+                    <span>{{ reader.table.section.columns.1 }}</span>
+                  </p>
+                  <p class="reader__table-legend">{{ reader.table.section.legend }}</p>
+                </div>
+              {% endif %}
               {% for passage in reader.passages %}
                 <article class="passage" id="{{ passage.anchor }}">
+                  {% comment %}
+                    The divider the paper prints immediately above this row — a part heading, or a
+                    centred `South African specific` qualifier. It carries no id: it is not text the
+                    standard numbers, so it is not citable.
+                  {% endcomment %}
+                  {% for divider in passage.dividers %}
+                    <p class="passage__divider passage__divider--{{ divider.kind }}">{{ divider.text }}</p>
+                  {% endfor %}
                   <p class="passage__locator">
                     {{ passage.locator }}{% if passage.page %} &middot; printed p. {{ passage.page }}{% endif %}
                   </p>
                   {% include "public/_passage_blocks.html" with blocks=passage.blocks %}
+                  {% if passage.note %}
+                    <p class="passage__note">{{ passage.note }}</p>
+                  {% endif %}
                 </article>
               {% empty %}
                 <p class="reader__no-hits">

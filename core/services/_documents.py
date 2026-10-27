@@ -39,7 +39,7 @@ from django.urls import reverse
 from core.models import PublicDocument
 from knowledge.concordance import ConcordanceSection, build_concordance
 from knowledge.models import StandardDocument
-from knowledge.passages import passage_blocks
+from knowledge.passages import passage_blocks, row_blocks
 from knowledge.reading import (
     SearchHit,
     reading_chunks,
@@ -47,6 +47,7 @@ from knowledge.reading import (
     strip_overlap,
     unique_anchors,
 )
+from knowledge.tables import TableDivider, TableStructure, structure_for
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +246,11 @@ class ReaderPassage:
     heading_path: str
     text: str
     blocks: tuple = ()
+    #: The printed divider(s) the paper puts immediately above this row (`I. PLANT AND ANIMAL
+    #: ORIGIN`, `South African specific`). Empty for a passage that is not a reviewed row.
+    dividers: tuple[TableDivider, ...] = ()
+    #: What the paper's condition cell says where it says nothing: a label, never a condition.
+    note: str = ""
 
 
 @dataclass(frozen=True)
@@ -267,6 +273,9 @@ class Reader:
     hits: tuple[SearchHit, ...]
     query: str
     section: str
+    #: The branch's reviewed structure, when its rows were curated: the printed caption, the
+    #: legend sentence and the dividers (D70.1). None for every other branch.
+    table: TableStructure | None = None
 
     @property
     def title(self) -> str:
@@ -360,12 +369,24 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # sides of a boundary. A reader must not: `S1`'s eight chunks repeat 21–57 words at five
     # boundaries, and the definitions page printed the previous chunk's tail again at the top
     # of the next one. The stored text is untouched; only what this page renders is trimmed.
-    rows: list[ReaderPassage] = []
+    branch_pairs = selected.passages if selected is not None else ()
+    texts: list[str] = []
     previous: DocumentChunk | None = None
-    for chunk, _anchor in (selected.passages if selected is not None else ()):
+    for chunk, _anchor in branch_pairs:
         text = chunk.text
         if previous is not None and previous.section_ref == chunk.section_ref:
             text = strip_overlap(previous.text, text)
+        texts.append(text)
+        previous = chunk
+
+    # The reviewed structure is looked up against the text that is about to be rendered, so a
+    # corpus that no longer matches the reviewed rows falls back to today's page instead of
+    # labelling rows it cannot vouch for (`knowledge.tables.structure_for`).
+    section_ref = branch_pairs[0][0].section_ref if branch_pairs else None
+    structure = structure_for(section_ref, tuple(texts))
+
+    rows: list[ReaderPassage] = []
+    for index, ((chunk, _anchor), text) in enumerate(zip(branch_pairs, texts)):
         rows.append(
             ReaderPassage(
                 anchor=pairs[chunk.pk],
@@ -373,10 +394,11 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
                 page=chunk.page,
                 heading_path=chunk.heading_path,
                 text=text,
-                blocks=passage_blocks(text),
+                blocks=row_blocks(text) if structure is not None else passage_blocks(text),
+                dividers=structure.dividers[index] if structure is not None else (),
+                note=structure.labels[index] if structure is not None else "",
             )
         )
-        previous = chunk
     passages = tuple(rows)
     return Reader(
         document=document,
@@ -388,6 +410,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
         hits=tuple(search_in_document(document_row, query, anchors=pairs)) if query.strip() else (),
         query=query.strip(),
         section=section.strip(),
+        table=structure,
     )
 
 

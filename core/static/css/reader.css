@@ -413,6 +413,82 @@
   line-height: var(--leading-tight);
 }
 
+/* A reviewed table row's substance cell (`Guano`, `Wood, bark, sawdust…`): an entry in the paper's
+   table, one step below a printed heading and above the condition printed beside it. It exists so a
+   row whose condition cell is empty still reads as an entry rather than as body text. */
+.passage__row {
+  margin: 1.1rem 0 0.35rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-forestDark);
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+/* A divider the paper prints inside the table: a part heading at the heading's weight, a centred
+   `South African specific` qualifier at the term's. Both are quoted text with a shape, so neither is
+   an `<h*>`. A hairline above a part is the paper's own break between parts of the table. */
+.passage__divider {
+  max-width: var(--reader-measure);
+  color: var(--brand-forestDark);
+  line-height: var(--leading-tight);
+}
+
+.passage__divider--part {
+  margin: 1.9rem 0 0.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--brand-sand);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.passage__divider--qualifier {
+  margin: 1.4rem 0 0.4rem;
+  color: var(--brand-muted);
+  font-size: var(--text-base);
+  font-style: italic;
+}
+
+/* What the paper's condition cell says where it says nothing. A label, not a sentence: nineteen of
+   them sit in this table, and the legend says the whole thing once. */
+.passage__note {
+  margin: 0.45rem 0 0;
+  max-width: var(--reader-measure);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  letter-spacing: 0.01em;
+}
+
+/* The caption and the claim, once, above the rows. */
+.reader__table-bar {
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.reader__table-caption {
+  margin: 0;
+  max-width: var(--reader-measure);
+  color: var(--brand-forestDark);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reader__table-join {
+  margin: 0 0.4rem;
+  color: var(--brand-muted);
+}
+
+.reader__table-legend {
+  margin: 0.45rem 0 0;
+  max-width: var(--reader-measure);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
+}
+
 .passage > :first-child {
   margin-top: 0;
 }

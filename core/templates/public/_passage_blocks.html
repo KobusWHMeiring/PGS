@@ -6,6 +6,10 @@
   characters inserted into the text — the corpus prints a bare `a` (`knowledge/passages.py` explains
   why). Nested lists recurse through this same file.
 
+  `row` is a reviewed table row's substance cell (`Guano`): an entry in the paper's table, set apart
+  from the condition printed beside it, so a row whose condition cell is empty still reads as an
+  entry and not as prose.
+
   Nothing here computes: the blocks arrive from `core.services._documents.ReaderPassage.blocks`.
 {% endcomment %}
 {% for block in blocks %}
@@ -14,7 +18,9 @@
   {% elif block.kind == "heading" %}
     <p class="passage__heading">{{ block.text }}</p>
   {% elif block.kind == "term" %}
-    <p class="passage__term">{{ block.text }}</p>
+    <p class="passage__term"{% if block.anchor %} id="{{ block.anchor }}"{% endif %}>{{ block.text }}</p>
+  {% elif block.kind == "row" %}
+    <p class="passage__row">{{ block.text }}</p>
   {% else %}
     <ol class="passage__list passage__list--{{ block.style }}"{% if block.start != 1 %} start="{{ block.start }}"{% endif %}>
       {% for item in block.items %}
