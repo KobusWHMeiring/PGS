@@ -2,8 +2,9 @@
 
 **Status:** Refinement — **the questions in §7 are decided** (product owner, 2026-10-27; recorded as
 `PGS_PLATFORM_SPEC.md` §18.3 **D68**). The argument, the options and the eight answers are in
-`product/design/d68_concordance_open_questions.html`. **Not yet planned:** there is no plan, no code,
-and nothing beyond the reader at `/documents/<code>/read/` is live today.
+`product/design/d68_concordance_open_questions.html`. **Planned:** `CONCORDANCE_PLAN.md` (11 tasks,
+with the algorithm dry-run against the live corpus before it was written). **Not built:** nothing
+beyond the reader at `/documents/<code>/read/` exists yet.
 **Owner:** Product (shape, publication), Build (the derivation in §5)
 **Opened:** 2026-10-27
 **Origin:** the ask-surface UAT, scenario *"Following a citation opens the document at the passage
@@ -12,6 +13,7 @@ concordance **in a new tab**, and land on the **section that was selected**.
 **Related:** `ASK_SURFACE_PRD.md` §4a, `PGS_PLATFORM_SPEC.md` §18.3 D62 (option B) and D67 (a
 citation links to text, not a PDF page), `product/design/d61_ask_interface_options.html` option B,
 `CORPUS_CANONICAL_FORMAT_PRD.md` (D53), `knowledge/sections/registry.py`, `knowledge/tables.py`.
+**Plan:** `CONCORDANCE_PLAN.md` · **UAT:** `tests/uat/concordance_uat.md`
 
 ---
 
