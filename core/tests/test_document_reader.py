@@ -15,6 +15,7 @@ import pytest
 
 from core.models import PublicDocument
 from core.services._chatbot import audit_citations
+from core.services._documents import reader_for
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.services import chunks_by_id
 
@@ -103,12 +104,17 @@ def test_the_text_is_the_stored_text_not_a_reformatting(client, seeded_documents
     assert chunk.text in body
 
 
-def test_every_chunk_has_its_anchor_on_the_page(client, seeded_documents):
-    """The anchors are what citations point at, so they are asserted, not assumed."""
-    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
+def test_every_chunk_has_its_anchor_in_the_tree(seeded_documents):
+    """The anchors are what citations point at, so they are asserted, not assumed.
 
-    assert 'id="appendix-2"' in body
-    assert 'id="appendix-2-1"' in body
+    Every branch carries its passages' anchors; only the selected branch is rendered as text.
+    """
+    from core.services._documents import reader_for
+
+    reader = reader_for(PublicDocument.objects.get(code="saoso-standard-v2.1"))
+    anchors = [anchor for section in reader.sections for _chunk, anchor in section.passages]
+
+    assert anchors == ["appendix-2", "appendix-2-1"]
 
 
 def test_a_citation_lands_on_the_definition_itself(client, seeded_documents):
@@ -160,12 +166,11 @@ def test_a_citation_lands_on_the_definition_itself(client, seeded_documents):
         "/documents/saoso-standard-v2.1/read/#s1-genetically-modified-organism-gmo"
     )
 
-    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
-    assert 'id="s1"' in body and 'id="s1-genetically-modified-organism-gmo"' in body
-    gmo_passage = body.split('id="s1-genetically-modified-organism-gmo"', 1)[1]
-    assert "Genetically Modified Organism" in gmo_passage[:400], (
-        "the anchor must be on the passage the citation quotes"
-    )
+    # The page renders one branch at a time (D68), so the anchor is asserted where the tree
+    # puts it; Task 7/8 select the branch through `?section=` and check the rendered page.
+    reader = reader_for(PublicDocument.objects.get(code="saoso-standard-v2.1"), section="s1")
+    anchors = [anchor for section in reader.sections for _chunk, anchor in section.passages]
+    assert "s1" in anchors and "s1-genetically-modified-organism-gmo" in anchors
 
 
 def test_an_unpublished_document_has_no_reader(client, seeded_documents):
@@ -251,3 +256,55 @@ def test_a_citation_to_the_second_row_of_a_table_opens_that_row(client, seeded_d
 
     body = client.get(citation.read_url).content.decode()
     assert 'id="appendix-2-wood-bark-and-sawdust"' in body
+
+
+# --- The concordance: a tree and one open branch -----------------------------
+
+
+def test_the_reader_opens_the_first_branch_when_nothing_selects_one(seeded_documents):
+    """No `?section=`: the document's beginning, not a wall of text."""
+    from core.services._documents import reader_for
+
+    reader = reader_for(PublicDocument.objects.get(code="saoso-standard-v2.1"))
+
+    assert reader.selected is not None
+    assert reader.selected.anchor == reader.sections[0].anchor
+    assert all(p.anchor.startswith("appendix-2") for p in reader.passages)
+
+
+def test_a_citation_anchor_selects_the_branch_that_contains_it(seeded_documents):
+    """A citation names a *passage*; the tree navigates by *section*. The join is the feature."""
+    from core.services._documents import reader_for
+
+    reader = reader_for(
+        PublicDocument.objects.get(code="saoso-standard-v2.1"), section="appendix-2-1"
+    )
+
+    assert reader.selected.key == "Appendix 2.1"
+    assert [p.text for p in reader.passages] == [
+        "Wood, bark and sawdust, only if not chemically treated."
+    ]
+
+
+def test_an_unknown_section_falls_back_rather_than_404ing(seeded_documents):
+    """A stale link must still show the document it names."""
+    from core.services._documents import reader_for
+
+    reader = reader_for(
+        PublicDocument.objects.get(code="saoso-standard-v2.1"), section="no-such-thing"
+    )
+
+    assert reader.selected.key == reader.sections[0].key
+
+
+def test_only_the_open_branch_is_returned(seeded_documents):
+    """The weight reduction is a property of the service, so it is asserted here and not
+    inferred from a page-size measurement."""
+    from core.services._documents import reader_for
+
+    reader = reader_for(
+        PublicDocument.objects.get(code="saoso-standard-v2.1"), section="appendix-2"
+    )
+
+    assert len(reader.sections) == 2
+    assert [p.locator for p in reader.passages] == ["Appendix 2"]

@@ -36,11 +36,10 @@ from django.conf import settings
 from django.db import transaction
 
 from core.models import PublicDocument
+from knowledge.concordance import ConcordanceSection, build_concordance
 from knowledge.models import StandardDocument
 from knowledge.reading import (
-    ReadingEntry,
     SearchHit,
-    contents,
     reading_chunks,
     search_in_document,
     unique_anchors,
@@ -239,14 +238,24 @@ class ReaderPassage:
 
 @dataclass(frozen=True)
 class Reader:
-    """Everything `/documents/<code>/read/` renders. A dataclass, so a test can assert it."""
+    """Everything `/documents/<code>/read/` renders — the concordance.
+
+    One section at a time, with the document's own structure as the navigation: the reader is
+    the standard's table of contents, not a page of text with a list beside it. That is also what
+    makes the page light — only the selected branch is rendered, so a 319-passage document costs
+    one branch's markup instead of 333 KB of it (D68).
+    """
 
     document: PublicDocument
     corpus: StandardDocument | None
+    sections: tuple[ConcordanceSection, ...]
+    selected: ConcordanceSection | None
     passages: tuple[ReaderPassage, ...]
-    contents: tuple[ReadingEntry, ...]
+    #: Printed sections with text that no branch covers — stated on the page (§10.6).
+    missing: tuple[str, ...]
     hits: tuple[SearchHit, ...]
     query: str
+    section: str
 
 
 def corpus_for(document: PublicDocument) -> StandardDocument | None:
@@ -265,37 +274,82 @@ def corpus_for(document: PublicDocument) -> StandardDocument | None:
     )
 
 
-def reader_for(document: PublicDocument, query: str = "") -> Reader:
-    """In: a published document and what the reader searched for. Out: a `Reader`.
+def _select_section(
+    sections: list[ConcordanceSection], wanted: str
+) -> ConcordanceSection | None:
+    """Which branch the reader is on. Accepts a branch anchor **or** any passage anchor.
 
-    In:  `query` — free text from the search box; empty for the plain view.
-    Out: passages in document order, the contents list, and any search hits.
-    Side effects: at most three queries.
-    Fails: never. A published document whose text has not been ingested returns
-        `corpus=None`; the view renders an explanation, because a citation pointing here
-        must not 404.
+    Both are needed and they are not the same thing: the tree navigates by section, while a
+    citation names a passage (`s20-1-1`), and a citation's link must land on the branch that
+    contains that passage. An unknown value falls back to the first branch rather than 404ing —
+    a stale link should still show the reader the document.
+    """
+    if not sections:
+        return None
+    if not wanted:
+        return sections[0]
+    for section in sections:
+        if section.anchor == wanted:
+            return section
+    for section in sections:
+        if any(anchor == wanted for _chunk, anchor in section.passages):
+            return section
+    return sections[0]
+
+
+def reader_for(document: PublicDocument, query: str = "", section: str = "") -> Reader:
+    """In: a published document, what the reader searched for, and which branch. Out: a `Reader`.
+
+    In:  `query` — free text from the search box; `section` — the branch to open, by branch
+         anchor or by any passage anchor (a citation names a passage, not a section).
+    Out: the document's section tree (including reserved rows), the selected branch, that
+         branch's passages, the printed sections the corpus does not hold, and any search hits —
+         searched across the **whole** document, not the open branch, because a reader who
+         searches is looking for where a word is, not whether it is here.
+    Side effects: at most four queries.
+    Fails: never. A published document whose text has not been ingested returns `corpus=None`;
+        the view explains, because a citation pointing here must not 404.
     """
     document_row = corpus_for(document)
     if document_row is None:
-        return Reader(document, None, (), (), (), query.strip())
-    pairs = unique_anchors(reading_chunks(document_row))
+        return Reader(
+            document=document,
+            corpus=None,
+            sections=(),
+            selected=None,
+            passages=(),
+            missing=(),
+            hits=(),
+            query=query.strip(),
+            section=section.strip(),
+        )
+
+    concordance = build_concordance(document_row)
+    sections = list(concordance.sections)
+    selected = _select_section(sections, section.strip())
+    pairs = {
+        chunk.pk: anchor for chunk, anchor in unique_anchors(reading_chunks(document_row))
+    }
     passages = tuple(
         ReaderPassage(
-            anchor=anchor,
+            anchor=pairs[chunk.pk],
             locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
             page=chunk.page,
             heading_path=chunk.heading_path,
             text=chunk.text,
         )
-        for chunk, anchor in pairs
+        for chunk, _anchor in (selected.passages if selected is not None else ())
     )
     return Reader(
         document=document,
         corpus=document_row,
+        sections=tuple(sections),
+        selected=selected,
         passages=passages,
-        contents=tuple(contents(document_row)),
-        hits=tuple(search_in_document(document_row, query)) if query.strip() else (),
+        missing=concordance.missing,
+        hits=tuple(search_in_document(document_row, query, anchors=pairs)) if query.strip() else (),
         query=query.strip(),
+        section=section.strip(),
     )
 
 

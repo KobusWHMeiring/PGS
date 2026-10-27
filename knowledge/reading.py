@@ -156,29 +156,6 @@ def reader_anchor_map(document: StandardDocument) -> dict[int, str]:
 
 
 @dataclass(frozen=True)
-class ReadingEntry:
-    """One line of the reader's contents list."""
-
-    anchor: str
-    locator: str
-    page: int | None
-    heading_path: str
-
-
-def contents(document: StandardDocument) -> list[ReadingEntry]:
-    """In: a document. Out: one entry per chunk, in order. Side effects: one query."""
-    return [
-        ReadingEntry(
-            anchor=anchor,
-            locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
-            page=chunk.page,
-            heading_path=chunk.heading_path,
-        )
-        for chunk, anchor in unique_anchors(reading_chunks(document))
-    ]
-
-
-@dataclass(frozen=True)
 class SearchHit:
     """One in-document search result.
 
@@ -274,10 +251,9 @@ def _hit(chunk: DocumentChunk, words: list[str], anchors: dict[int, str]) -> Sea
 
 __all__ = [
     "MAX_ANCHOR_CHARS",
-    "ReadingEntry",
     "SNIPPET_CHARS",
     "SearchHit",
-    "contents",
+    "reader_anchor_map",
     "reading_anchor",
     "reading_chunks",
     "search_in_document",

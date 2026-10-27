@@ -13,7 +13,6 @@ import pytest
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.reading import (
     SearchHit,
-    contents,
     reader_anchor_map,
     reading_anchor,
     reading_chunks,
@@ -110,14 +109,6 @@ def test_reading_chunks_are_in_document_order(document):
     chunks = reading_chunks(document)
     assert [chunk.pk for chunk in chunks] == sorted(chunk.pk for chunk in chunks)
     assert len(chunks) == document.chunk_count
-
-
-def test_contents_names_every_anchor_once(document):
-    entries = contents(document)
-    assert [entry.anchor for entry in entries] == [
-        anchor for _chunk, anchor in unique_anchors(reading_chunks(document))
-    ]
-    assert all(entry.locator for entry in entries), "an entry with no locator is unreadable"
 
 
 def test_search_finds_a_stored_clause(document):
