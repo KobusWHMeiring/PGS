@@ -25,13 +25,19 @@ about what it does not answer?**
 
 ## Pre-test setup
 
-1. `python manage.py migrate && python manage.py seed_deployment && python manage.py publish_documents`
-2. Ingest the corpus (or confirm it is already ingested): `python manage.py ingest_standard --all`
-   — `GEMINI_API_KEY` must be set, because a grounded answer is needed to produce a real card.
-3. `python manage.py runserver`
-4. Log in to `/admin/` as a user holding **PGS administrator** — the approval step is the point of
-   the board and must be judged by the person who does it.
-5. Have **one** other person available for Scenario 4 (a second reader, not a developer).
+1. Confirm the instance can be judged at all: open **`/uat/`** (staff login) and press the
+   buttons, or run `python manage.py uat_seed --check`. It reports the corpus (chunks and
+   vectors), the published documents and the extraction tool. **If it blocks, stop** — a
+   judgement made against a half-seeded instance is not evidence.
+   (An empty corpus is rebuilt per document, e.g.
+   `python manage.py ingest_standard --doc saoso --file "pgs_docs/saoso-version-2.1-2026.pdf"`;
+   there is no `--all` flag. `GEMINI_API_KEY` must be set, because a grounded answer is what
+   produces a real card.)
+2. Start the instance: `python manage.py runserver`, or use the deployed
+   `https://organicguarantee.africa` after it has this commit.
+3. Log in to `/admin/` as a user holding **PGS administrator** — the approval step is the point
+   of the board and must be judged by the person who does it.
+4. Have **one** other person available for Scenario 4 (a second reader, not a developer).
 
 ---
 
