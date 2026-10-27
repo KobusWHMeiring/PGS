@@ -14,6 +14,7 @@ from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.reading import (
     SearchHit,
     contents,
+    reader_anchor_map,
     reading_anchor,
     reading_chunks,
     search_in_document,
@@ -94,6 +95,14 @@ def test_a_repeated_reference_keeps_the_plain_anchor_first(document):
     assert anchors[:2] == ["appendix-2", "appendix-2-1"]
     assert anchors[2] == "appendix-2-2"
     assert reading_anchor(None, "", "APPENDICES > Appendix 2") == "appendix-2"
+
+
+def test_the_reader_anchor_map_is_what_the_reader_renders(document):
+    """The map a citation uses and the ids the page renders come from one computation."""
+    assert reader_anchor_map(document) == {
+        chunk.pk: anchor
+        for chunk, anchor in unique_anchors(reading_chunks(document))
+    }
 
 
 def test_reading_chunks_are_in_document_order(document):

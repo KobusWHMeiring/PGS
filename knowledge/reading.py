@@ -92,6 +92,24 @@ def unique_anchors(chunks: list[DocumentChunk]) -> list[tuple[DocumentChunk, str
     return pairs
 
 
+def reader_anchor_map(document: StandardDocument) -> dict[int, str]:
+    """`{chunk pk: anchor}` exactly as the reader renders them, suffixes included.
+
+    A citation's fragment must be the *reader's* id for the chunk it quotes, and
+    `reading_anchor` alone cannot produce it: eight SAOSO §1 chunks share `S1`, so the
+    reader disambiguates them (`s1`, `s1-2`, … `s1-8`) and a GMO citation that linked to
+    `#s1` landed at the top of a 21 000-character definitions section instead of on the
+    definition it quoted (2026-10-27, `CHAT_TRUTHFULNESS_PRD.md` F7).
+
+    One query, and the map is per document: the suffix is positional, so it must be
+    computed from the same ordered chunk list the reader uses (`reading_chunks`).
+    """
+    return {
+        chunk.pk: anchor
+        for chunk, anchor in unique_anchors(reading_chunks(document))
+    }
+
+
 @dataclass(frozen=True)
 class ReadingEntry:
     """One line of the reader's contents list."""

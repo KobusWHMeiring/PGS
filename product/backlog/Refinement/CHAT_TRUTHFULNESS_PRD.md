@@ -1,6 +1,6 @@
 # PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites
 
-**Status:** Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7 and 5.9 landed the same day** (gate green at 915): every refusal in that conversation now answers, and the two GM-outcome turns state the rule instead of the verdict. Remaining: D-2 (smaller than it was), D-4 (G3's alias table), 5.4, 5.6 and 5.8.
+**Status:** Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7, 5.8, 5.9 and 5.10 landed the same day** (gate green at 920): every refusal in that conversation answers, the two GM-outcome turns state the rule instead of the verdict, G3 is closed, and a definition citation lands on the definition. Remaining: D-2's re-measure on the box, 5.6 (the follow-up window, needs S6), and the box sweeps.
 **Owner:** Build — grounded chat (sub-plan D)
 **Last Updated:** 2026-10-27
 **MVP:** MVP 0 — defect fix. No new surface, no migration.
@@ -216,11 +216,15 @@ The reasons *are* recorded (`ChatMessage.refusal_checks`, `EscalatedQuery.reason
 nothing in the answer-page/escalation flow, distinguishes the two.
 
 ### F7. One address, eight definitions: the citation link lands at the top of the section
+**Landed 2026-10-27 (5.8).** A GMO citation now links to `#s1-3` — the reader's id for that
+chunk — instead of `#s1`, which is the top of a 21 000-character section. The suffix is
+positional, so the citation and the page must compute it from one ordered chunk list
+(`knowledge.reading.reader_anchor_map`), not from the locator alone.
 
 Every chunk of SAOSO §1 carries `section_ref="S1"` (8 chunks, ~21 000 characters, all
 `reading_anchor='s1'`). A GMO citation therefore links to `/documents/saoso/read/#s1` — the
 top of the definitions, not the definition quoted. `ASK_SURFACE_PRD` §0a advertises
-clickable citations; on this section the click lands several thousand characters early.
+clickable citations; on this section the click landed several thousand characters early.
 Severity is low (right document, right page); it is listed because the fix is cheap and
 because it is the same "an address is not an identity" mistake as F3.
 
@@ -410,11 +414,22 @@ branch, each proved red by reverting the branch; the old test that asserted the 
 reason for the empty-retrieval case was corrected rather than deleted, and it now also
 proves the model is never called.
 
-### 5.8 A citation link that lands on the quoted definition (F7) — small, do last
+### 5.8 A citation that lands on the quoted definition (F7) — **landed 2026-10-27**
 
-Derive the reading anchor from the chunk's own leading headword when `section_ref` repeats
-(`s1-genetically-modified-organism`), rather than from the section alone. The reader already
-renders in-document search; this only makes the fragment land on the passage.
+`knowledge.reading.reader_anchor_map(document)` returns `{chunk pk: anchor}` from the same
+`unique_anchors(reading_chunks(document))` the reader renders, and `audit_citations` uses it
+for `Citation.reading_anchor` (one query per distinct document, falling back to the section
+anchor for a chunk that is not a stored row). Verified on the shipped corpus: the GMO
+definition cites `S1` and now links to **`#s1-3`**, which is the id the page renders for that
+chunk; before, all eight §1 chunks linked to `#s1`.
+
+The test is a property, not a string: two chunks share `S1`, the audit must give them `s1` and
+`s1-2`, and the reader page must render both ids with the quoted text under the second. Put
+the citation back on the section anchor and it goes red.
+
+**The residual:** the suffix is positional, so a re-ingest that inserts a chunk renumbers the
+later ones — the same property `unique_anchors` already had, and why an anchor is stored in
+the answer record rather than only resolved live.
 
 ---
 
@@ -502,10 +517,9 @@ Therefore:
    gate green at 915. **Still to do:** the UAT scenario that reads a `CITATION_AUDIT` refusal
    and a corpus-silent refusal side by side — the two now carry different second sentences,
    which is exactly what a reviewer should judge.
-8. ~~Land 5.8 (anchor) and settle `D-4`; re-measure G3 after 5.1 before building any alias
-   table.~~ **D-4 landed 2026-10-27** (§5.10) and G3 is closed by measurement. 5.8 (the
-   anchor collision, F7) is untouched: eight `§1` chunks still share `#s1`, and it is the
-   cheapest remaining item.
+8. ~~Land 5.8 (anchor) and settle `D-4`~~ **Both landed 2026-10-27** — D-4 as §5.10 (G3
+   closed) and 5.8 as §5.8, gate green at 920. The PRD's own work is done; what is left is
+   the list below and the box.
 9. Append whatever cost time to `product/docs/context/testing_hazards.md` — three candidates
    from this slice: *a probe that measures a key the product does not choose* (§2.7's
    sibling); *a refusal reason that covers four branches* is how a sweep mislabels its own

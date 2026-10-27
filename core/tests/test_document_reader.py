@@ -14,7 +14,9 @@ from __future__ import annotations
 import pytest
 
 from core.models import PublicDocument
+from core.services._chatbot import audit_citations
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
+from knowledge.services import chunks_by_id
 
 pytestmark = pytest.mark.django_db
 
@@ -107,6 +109,60 @@ def test_every_chunk_has_its_anchor_on_the_page(client, seeded_documents):
 
     assert 'id="appendix-2"' in body
     assert 'id="appendix-2-1"' in body
+
+
+def test_a_citation_lands_on_the_definition_itself(client, seeded_documents):
+    """F7: eight SAOSO §1 chunks share `S1`, so the section anchor is not the passage.
+
+    Every definition citation used to link to `#s1` — the top of a 21 000-character
+    section — while the reader renders `s1`, `s1-2`, … for the chunks under it. The
+    citation must use the reader's own id for the chunk it quotes, or the chip opens
+    thousands of characters above its own quote (2026-10-27, `CHAT_TRUTHFULNESS_PRD.md`).
+    """
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    acb = DocumentChunk.objects.create(
+        document=document,
+        section_ref="S1",
+        heading_path="",
+        page=22,
+        text="ACB: Accredited Certification Body, accredited to ISO 17065.",
+    )
+    gmo = DocumentChunk.objects.create(
+        document=document,
+        section_ref="S1",
+        heading_path="",
+        page=22,
+        text=(
+            "Genetically Modified Organism (GMO): an organism produced through techniques "
+            "in which the genetic material has been altered."
+        ),
+    )
+    document.chunk_count = 4
+    document.save(update_fields=["chunk_count"])
+    standard_set = document.standard_set
+
+    citations, problems = audit_citations(
+        [
+            {"section_ref": "S1", "quote": acb.text},
+            {"section_ref": "S1", "quote": gmo.text},
+        ],
+        chunks_by_id([acb.pk, gmo.pk], standard_set=standard_set),
+        standard_set_id=standard_set.pk,
+        document_codes={CORPUS_SOURCE: "saoso-standard-v2.1"},
+    )
+
+    assert problems == ()
+    assert [citation.reading_anchor for citation in citations] == ["s1", "s1-2"], (
+        "the second chunk shares the locator, so it must carry the reader's suffix"
+    )
+    assert citations[1].read_url == "/documents/saoso-standard-v2.1/read/#s1-2"
+
+    body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
+    assert 'id="s1"' in body and 'id="s1-2"' in body
+    gmo_passage = body.split('id="s1-2"', 1)[1]
+    assert "Genetically Modified Organism" in gmo_passage[:400], (
+        "the anchor must be on the passage the citation quotes"
+    )
 
 
 def test_an_unpublished_document_has_no_reader(client, seeded_documents):

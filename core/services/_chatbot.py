@@ -50,7 +50,7 @@ from django.urls import reverse
 from core.models import ChatMessage, ChatSession, EscalatedQuery, User
 from core.services._documents import public_codes_by_source
 from knowledge.models import DocumentChunk, StandardSet
-from knowledge.reading import reading_anchor
+from knowledge.reading import reader_anchor_map, reading_anchor
 from knowledge.services import (
     RetrievedChunk,
     RetrievalResult,
@@ -812,6 +812,38 @@ def _address_book(
     return book
 
 
+def _reader_anchors(chunks: Sequence[RetrievedChunk]) -> dict[int, str]:
+    """`{chunk id: the fragment the reader renders for it}` for the supplied passages.
+
+    In:  the retrieved chunks.
+    Out: one anchor per chunk that is a stored row; empty for a chunk the database does
+         not have (a test double), whose citation falls back to the section anchor.
+    Side Effects: one query, plus one per distinct document — a suffix is positional, so it
+         can only be computed from the document's ordered chunk list, which is what the
+         reader does (`knowledge.reading.reader_anchor_map`).
+
+    Why this exists: eight SAOSO §1 chunks share the locator `S1`, so every citation of a
+    definition linked to `#s1` — the top of a 21 000-character section — while the reader
+    renders `s1-2` … `s1-8` for the rest. A citation chip that opens three thousand
+    characters above its own quote is a link that technically works (F7).
+    """
+    ids = [chunk.chunk_id for chunk in chunks]
+    if not ids:
+        return {}
+    rows = DocumentChunk.objects.filter(pk__in=ids).select_related("document")
+    per_document: dict[int, dict[int, str]] = {}
+    anchors: dict[int, str] = {}
+    for row in rows:
+        mapping = per_document.get(row.document_id)
+        if mapping is None:
+            mapping = reader_anchor_map(row.document)
+            per_document[row.document_id] = mapping
+        anchor = mapping.get(row.pk)
+        if anchor:
+            anchors[row.pk] = anchor
+    return anchors
+
+
 def _sub_ref_names(chunk: RetrievedChunk) -> set[str]:
     return {
         entry.get("ref", "")
@@ -846,8 +878,7 @@ def _resolve_sub_ref(sub_ref: str, names: set[str]) -> str | None:
     return matches[0] if len(matches) == 1 else None
 
 
-def audit_citations(
-    raw_citations: Sequence[dict],
+def audit_citations(    raw_citations: Sequence[dict],
     chunks: Sequence[RetrievedChunk],
     *,
     standard_set_id: int | None,
@@ -884,6 +915,7 @@ def audit_citations(
         return [], ("retrieval returned a chunk from outside the session's corpus",)
 
     book = _address_book(in_scope)
+    anchors = _reader_anchors(in_scope)
 
     seen: set[tuple[str, str | None, str]] = set()
     citations: list[Citation] = []
@@ -958,7 +990,13 @@ def audit_citations(
                     )
                 ),
                 document_code=(document_codes or {}).get(matched.document_source_file, ""),
-                reading_anchor=reading_anchor(
+                # The reader's own id for *this* chunk, not the section's: eight SAOSO §1
+                # chunks share `S1`, so `reading_anchor` alone links every definition to
+                # the top of the section (F7). Falls back to the section anchor when the
+                # chunk is not a stored row (a test double, or a corpus that was
+                # re-ingested under the answer).
+                reading_anchor=anchors.get(matched.chunk_id)
+                or reading_anchor(
                     matched.section_ref, matched.anchor, matched.heading_path
                 ),
             )
