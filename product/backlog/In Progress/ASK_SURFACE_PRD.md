@@ -111,6 +111,26 @@ Two findings that changed the work:
   recorded and three tests keeping the exemption honest, including one that proves the
   exemption is necessary.
 
+### 4b. Found in UAT, 2026-10-27 — the wait was invisible
+
+A real question ("can i use purchased silica for supplementation?") took **40.7 s** and the
+page showed only a dimmed button. The audit then refused the answer, correctly — the model
+invented `Appendix 1` sub-refs `2.2`, `2.3`, `3`, `4`, `5`, `6`, and the all-or-nothing audit
+will not pass a citation it cannot verify.
+
+Two separate findings, and only the first is fixed:
+
+| # | Finding | State |
+|---|---|---|
+| 1 | **Nothing said the assistant was working.** The optimistic user bubble and a 0.6-opacity button were the whole indication. | **Fixed.** The thread now carries a `role="status"` row ("Reading the documents", animated dots that yield to `prefers-reduced-motion`), the send button is `disabled`/`aria-busy` in flight, and after 8 s the row says a long answer can take up to a minute. The aside states the expected latency before the wait rather than after. |
+| 2 | **The model invented sub-clause numbers for Appendix 1.** The audit caught it, but the visitor paid 40 s for a refusal. | **Open**, and it belongs to `CHAT_ANSWER_COVERAGE_PRD` (next to G9): the prompt lists the sub-clauses each passage actually has, so this is a contract violation rather than a corpus gap. |
+
+Measured latency, from `ChatMessage.latency_ms` on the dev instance (n=51): **median 6.3 s,
+mean 7.1 s, max 40.7 s**. The tail is one long generation plus, when the first attempt is cut
+at `CHAT_MAX_OUTPUT_TOKENS`, a single retry at double the cap — two calls, each with a 30 s
+`CHAT_TIMEOUT_MS`, so the honest worst case is about a minute. That is the number the waiting
+row quotes.
+
 ## 4. What is not built
 
 1. **The board** — a publishable-question table (question, answer, citations, category,

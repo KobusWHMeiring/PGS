@@ -154,6 +154,68 @@
   color: rgb(var(--brand-ochreLight-rgb) / 0.92);
 }
 
+/* The waiting state. Muted, never an error and never a spinner pretending to be progress:
+   the row says what is happening, and after 8 s the script replaces the label with a
+   sentence that admits how long a long answer takes. The dots are decorative — a screen
+   reader hears the label only. */
+.chat__bubble--pending {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  background-color: rgb(var(--brand-forest-rgb) / 0.55);
+  border-style: dashed;
+  color: rgb(var(--brand-cream-rgb) / 0.75);
+  font-style: italic;
+}
+
+.chat__pending-dots {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+
+.chat__pending-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background-color: currentColor;
+  animation: chat-pending 1.2s ease-in-out infinite;
+}
+
+.chat__pending-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat__pending-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-pending {
+  0%, 60%, 100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* DESIGN §5: nothing else animates. A visitor who has asked for less motion gets a
+   static label — the text carries the meaning, the dots never do. */
+@media (prefers-reduced-motion: reduce) {
+  .chat__pending-dot {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* A disabled control must still look like a control (§IV: a vanished button reads as a
+   broken page). It dims, says `aria-busy`, and cannot be pressed twice. */
+.chat__send:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
 .chat__bubble strong {
   color: #fff;
   font-weight: 600;

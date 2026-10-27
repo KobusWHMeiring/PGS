@@ -172,3 +172,51 @@ def test_a_question_typed_while_waiting_is_not_erased(composer):
 
     expect(page.locator("#fake-answer")).to_be_visible()
     expect(question).to_have_value("what about compost?")
+
+
+def test_the_waiting_state_is_visible_while_the_answer_is_generated(composer):
+    """A grounded answer is a model call: measured median ~6 s, tail to ~41 s.
+
+    A visitor who sees a dimmed button and nothing else for forty seconds concludes the page
+    is broken. The thread therefore says what is happening, and the send button cannot be
+    pressed twice while it does.
+    """
+    page, posts = composer
+    question = page.locator("#id_question")
+
+    question.fill(QUESTION)
+    question.press("Enter")
+
+    pending = page.locator(".chat__bubble--pending")
+    expect(pending).to_be_visible()
+    expect(pending).to_contain_text("Reading the documents")
+    expect(pending).to_have_attribute("role", "status")
+    assert page.locator("#chat-send").is_disabled(), "a second submit is still possible"
+
+    _fulfil_ok(posts[0])
+
+    expect(page.locator("#fake-answer")).to_be_visible()
+    expect(page.locator(".chat__bubble--pending")).to_have_count(0)
+    assert not page.locator("#chat-send").is_disabled(), "the button stayed disabled"
+
+
+def test_the_waiting_state_admits_how_long_a_long_answer_takes(composer):
+    """The slow path is not a spinner pretending to be progress — it says the number.
+
+    The threshold is read from the form (`data-slow-after`), so this test shortens it rather
+    than sleeping for eight seconds. The copy is the product's own claim about its latency;
+    if the median ever changes, this sentence and `CHAT_TIMEOUT_MS` change together.
+    """
+    page, posts = composer
+    page.eval_on_selector(".chat-form", "el => el.setAttribute('data-slow-after', '150')")
+    question = page.locator("#id_question")
+
+    question.fill(QUESTION)
+    question.press("Enter")
+
+    expect(page.locator(".chat__pending-text")).to_contain_text(
+        "A long answer can take up to a minute", timeout=5000
+    )
+
+    _fulfil_ok(posts[0])
+    expect(page.locator("#fake-answer")).to_be_visible()

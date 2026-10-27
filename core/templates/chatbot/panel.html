@@ -36,9 +36,14 @@ JavaScript that a visitor reading the fees page should not download.
           {% include "chatbot/_thread.html" %}
         </div>
 
+        {% comment %} `data-slow-after` is when the waiting row stops saying "Reading the
+           documents" and admits a long answer can take a minute. It is on the form, not in the
+           script, so a test can shorten it and so the copy and the timing stay in one place. The
+           measured latency is a median of ~6 s with a tail to ~41 s (two model calls when the
+           first is cut at the output cap), which is why the state exists at all. {% endcomment %}
         <form class="chat-form" method="post" action="{% url 'core:ask' %}"
               hx-post="{% url 'core:ask' %}" hx-target="#chat-thread" hx-swap="innerHTML"
-              hx-indicator="#chat-send">
+              hx-indicator="#chat-send" data-slow-after="8000">
           {% csrf_token %}
           <label class="visually-hidden" for="id_question">{{ form.question.label }}</label>
           {{ form.question }}
@@ -80,6 +85,10 @@ JavaScript that a visitor reading the fees page should not download.
             becomes a question a person can answer.
           </li>
         </ul>
+        <p class="chat-aside__note chat-aside__note--timing">
+          An answer usually takes five to ten seconds. A long one can take the better part of
+          a minute: every quotation is checked against the documents before anything is shown.
+        </p>
         <p class="chat-aside__note">
           The assistant is not a certifier. It explains what the documents say; it
           never decides whether a farm or a product is certified.

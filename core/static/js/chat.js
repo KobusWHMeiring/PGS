@@ -11,7 +11,11 @@
  *      silently did nothing;
  *   5. copy an answer page's citation, and do nothing at all when the Clipboard API is
  *      unavailable — the citation is already selectable text, so a broken button is
- *      worse than no button.
+ *      worse than no button;
+ *   6. say that the assistant is working, and how long it may take. A grounded answer is
+ *      a model call: the measured median is ~6 s, a long one is 25–41 s, and the worst
+ *      case is two calls at the 30 s timeout each. A dimmed button is not an answer to
+ *      "is this broken?", so the thread gets a status row and a slow-path sentence.
  *
  * No build step, no module loader, no framework (build_principles.md §IV). If this
  * file fails to load, the form still posts and the server still renders a full page.
@@ -25,7 +29,16 @@
   var sending = false;
   var pendingText = "";
   var pendingRow = null;
+  var pendingAnswer = null;
+  var slowTimer = null;
   var restoreText = "";
+
+  //: When the status row admits this may take a while. Read from the form so a test can
+  //: shorten it; the default matches the copy in `panel.html`.
+  var SLOW_AFTER_MS = 8000;
+  var SLOW_TEXT =
+    "Still reading. A long answer can take up to a minute — the assistant checks every " +
+    "quotation against the documents before it shows you anything.";
 
   function thread() {
     return document.getElementById("chat-thread");
@@ -49,6 +62,74 @@
     node.appendChild(row);
     pendingRow = row;
     scrollToLatest(true);
+  }
+
+  /*
+   * The waiting state. A visitor who asked a question and sees nothing happen for forty
+   * seconds concludes the page is broken; the measured latency is a median of ~6 s with a
+   * long tail (two model calls when the first is cut at the output cap), so the thread says
+   * what is happening and, after a while, that it may take a minute.
+   *
+   * `role="status"` rather than `aria-live="polite"` alone: the row is created *and* its text
+   * changes, and a status region announces both. The dots are decorative and hidden from a
+   * screen reader, because "Reading the documents" is the whole message.
+   */
+  function appendPendingAnswer() {
+    var node = thread();
+    if (!node) {
+      return;
+    }
+    var row = document.createElement("div");
+    row.className = "chat__row";
+    var bubble = document.createElement("div");
+    bubble.className = "chat__bubble chat__bubble--pending";
+    bubble.setAttribute("role", "status");
+    var text = document.createElement("span");
+    text.className = "chat__pending-text";
+    text.textContent = "Reading the documents";
+    var dots = document.createElement("span");
+    dots.className = "chat__pending-dots";
+    dots.setAttribute("aria-hidden", "true");
+    for (var index = 0; index < 3; index += 1) {
+      var dot = document.createElement("span");
+      dot.className = "chat__pending-dot";
+      dots.appendChild(dot);
+    }
+    bubble.appendChild(text);
+    bubble.appendChild(dots);
+    row.appendChild(bubble);
+    node.appendChild(row);
+    pendingAnswer = row;
+    slowTimer = window.setTimeout(function () {
+      var label = node.querySelector(".chat__pending-text");
+      if (label) {
+        label.textContent = SLOW_TEXT;
+      }
+    }, SLOW_AFTER_MS);
+  }
+
+  function clearPendingAnswer() {
+    if (slowTimer) {
+      window.clearTimeout(slowTimer);
+      slowTimer = null;
+    }
+    if (pendingAnswer && pendingAnswer.parentNode) {
+      pendingAnswer.parentNode.removeChild(pendingAnswer);
+    }
+    pendingAnswer = null;
+  }
+
+  function setSendBusy(busy) {
+    var send = document.getElementById("chat-send");
+    if (!send) {
+      return;
+    }
+    send.disabled = busy;
+    if (busy) {
+      send.setAttribute("aria-busy", "true");
+    } else {
+      send.removeAttribute("aria-busy");
+    }
   }
 
   function scrollToLatest(bringIntoView) {
@@ -134,12 +215,20 @@
     // HTMX has already serialised the form by now, so clearing cannot empty the POST.
     sending = true;
     pendingText = text;
+    var slowAfter = Number(elt.getAttribute("data-slow-after"));
+    if (slowAfter > 0) {
+      SLOW_AFTER_MS = slowAfter;
+    }
     appendPendingUserMessage(text);
+    appendPendingAnswer();
+    setSendBusy(true);
     input.value = "";
   });
 
   document.body.addEventListener("htmx:afterRequest", function () {
     sending = false;
+    clearPendingAnswer();
+    setSendBusy(false);
   });
 
   document.body.addEventListener("htmx:beforeSwap", function (event) {
@@ -161,6 +250,11 @@
     if (!event.detail.target || event.detail.target.id !== "chat-thread") {
       return;
     }
+    // The pending row lived inside the swapped element, so it is already gone; the timer
+    // would otherwise rewrite a label that no longer exists, and the button would stay
+    // disabled for the next question.
+    clearPendingAnswer();
+    setSendBusy(false);
     var input = document.getElementById("id_question");
     if (input) {
       // Do not reset the form here: the visitor may have started the next question
@@ -182,6 +276,8 @@
     if (event.detail.xhr.status === 0) {
       // The request never reached the server. Remove the optimistic bubble (it would
       // read as sent) and put the question back so the visitor can retry it.
+      clearPendingAnswer();
+      setSendBusy(false);
       if (pendingRow && pendingRow.parentNode) {
         pendingRow.parentNode.removeChild(pendingRow);
       }
