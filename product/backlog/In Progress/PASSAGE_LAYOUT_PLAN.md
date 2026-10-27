@@ -224,3 +224,18 @@ migration.
    function-scoped ingest.
 6. **The desktop `<details>` rule from the concordance still applies**, and the list markers are CSS
    (`list-style-type`), never text: the corpus prints a bare `a`.
+7. **A centred line became a heading** after the first render: `Regional or other exception` and
+   `SOUTH AFRICAN specific` read as body text while sitting in the middle of the column. The rule is
+   a short block indented ≥10 columns with no terminal punctuation; `S5.1.3` and `S2.1.4` pin it.
+   The guard still passes because a heading keeps its text.
+8. **The definitions page exposed two more faults, both fixed in the same slice.** (a) `S1` is eight
+   chunks with 21–57 repeated words at five boundaries — the chunker's retrieval overlap printed
+   twice. `knowledge.reading.strip_overlap()` trims it **at a character offset**, not by re-joining
+   words: re-joining collapsed the remainder's line structure and the terms stopped parsing (found
+   by looking at the page, not by a test). (b) A glossary term was glued to its definition;
+   `Term` blocks split it (`ACB`, `Habitat`, `Extensive Farming`). The term rule requires the next
+   line to start uppercase, which is what keeps a wrapped sentence a paragraph.
+9. **Still a corpus artefact, not a display one:** `S1`'s last chunk carries the *next* part's
+   half-title (`SECTION B` / `DEFINITIONS, GENERAL PRINCIPLES…`), and a superscript `2` from
+   `weight/m²` sits on its own line (`Factory farming`). Both are in the stored text and belong to
+   the SAOSO artefact review (D53), not to this slice.

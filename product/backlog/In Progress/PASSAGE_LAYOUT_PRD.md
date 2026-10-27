@@ -30,6 +30,12 @@ Measured on the shipped corpus, 2026-10-27:
 | Roman items (`i.`, `ii.`) | 69 |
 | Non-blank lines that are mid-sentence wraps (long, no terminal punctuation) | **25%** |
 
+`S1` — Definitions — shows a fourth problem, and it is the worst of them. The chunker overlaps
+adjacent chunks on purpose so retrieval can see both sides of a boundary; `S1` is **eight chunks and
+five of its boundaries repeat 21–57 words** (measured 2026-10-27). The reader printed chunks as
+separate passages, so the definitions page repeated the previous chunk's last paragraph before
+continuing — and every term (`ACB`, `Habitat`, `Extensive Farming`) was glued to its definition.
+
 Three consequences, all visible in one clause (`S5.1.3`):
 
 1. **HTML collapses the hanging indent** (15 literal spaces) to one, so the marker runs into the
@@ -69,6 +75,7 @@ claim: *"the words and punctuation are unchanged; line breaks are reflowed for r
 |---|---|---|
 | `Paragraph` | `text` | `<p class="passage__text">` |
 | `Heading` | `text` | `<p class="passage__heading">` (the document's own heading, not a page heading) |
+| `Term` | `text` | `<p class="passage__term">` — a glossary term or a printed sub-heading |
 | `ListBlock` | `style` (`lower-alpha`, `decimal`, `upper-alpha`, `lower-roman`, `disc`), `start`, `items` | `<ol class="passage__list passage__list--…">` with `start` when it does not begin at 1 |
 | `ListItem` | `marker` (as printed), `text`, `children` (lists only) | `<li>` plus a nested list when present |
 
@@ -89,7 +96,20 @@ claim: *"the words and punctuation are unchanged; line breaks are reflowed for r
 4. **A printed heading is not a list item.** `1. DEFINITIONS` and `21. WINE MAKING` are headings: a
    numeric marker whose body is on the chunk's first line and is all capitals. A *lettered* marker
    whose body is all capitals (`a  ACB`) is still an item — that is SAOSO's glossary.
-5. **Anything that does not parse is a paragraph.** The formatter never raises and never drops text;
+5. **A centred line is a heading.** SAOSO centres `Regional or other exception` and
+   `SOUTH AFRICAN specific` inside a clause; a short line indented far past the body column cannot
+   be body text, so it renders as the document's heading. `SECTION B` and its part title are a
+   two-line centred block and render the same way.
+6. **A short standalone line followed by prose is a term.** `ACB`, `Habitat`, `General Principle`,
+   `Buffer Zones`: one to eight words, no terminal punctuation, followed by a longer line that
+   starts with a capital. That is what turns the definitions page from a wall of text into a
+   glossary. A wrapped sentence fails the test because its continuation starts lowercase.
+   "South African specific" is centred, so it is a heading, not a term.
+7. **The chunk overlap is removed for display.** `strip_overlap()` trims the words a passage's
+   first line shares with the passage above it (at least six words, same printed section), so a
+   retrieval feature does not leak into the reading surface. The stored text is untouched; only
+   `S1`'s five boundaries are affected today.
+8. **Anything that does not parse is a paragraph.** The formatter never raises and never drops text;
    an unrecognised shape is prose.
 
 ## 4. Non-goals
