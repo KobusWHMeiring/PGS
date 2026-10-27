@@ -150,7 +150,7 @@
     <p class="eyebrow">Outeniqua PGS - user acceptance testing</p>
     <h1>UAT — The ask board, the answer page and the document reader</h1>
     <p>7 scenarios to judge. Read the judgement question, run the scenario in the app, then record what you saw.</p>
-    <div class="meta"><span>Slug <code>ask_surface</code></span><span>Commit <code>31bc4df (clean)</code></span><span>Database <code>pgs</code></span><span>Generated <code>2026-10-27</code></span><span>Source <code>ask_surface_uat.md</code></span></div>
+    <div class="meta"><span>Slug <code>ask_surface</code></span><span>Commit <code>c821405 (modified)</code></span><span>Database <code>pgs</code></span><span>Generated <code>2026-10-27</code></span><span>Source <code>ask_surface_uat.md</code></span></div>
   </div>
 </header>
 
@@ -213,7 +213,7 @@ preflight: ready - no blocking failure</pre>
 
   <div class="panel">
     <h2>Pre-test setup</h2>
-    <div class="prose"><ol><li><code>python manage.py migrate &amp;amp;&amp;amp; python manage.py seed_deployment &amp;amp;&amp;amp; python manage.py publish_documents</code> 2. Ingest the corpus (or confirm it is already ingested): <code>python manage.py ingest_standard --all</code> — <code>GEMINI_API_KEY</code> must be set, because a grounded answer is needed to produce a real card. 3. <code>python manage.py runserver</code> 4. Log in to <code>/admin/</code> as a user holding <strong>PGS administrator</strong> — the approval step is the point of the board and must be judged by the person who does it. 5. Have <strong>one</strong> other person available for Scenario 4 (a second reader, not a developer).</li></ol><p>---</p></div>
+    <div class="prose"><ol><li>Confirm the instance can be judged at all: open <strong><code>/uat/</code></strong> (staff login) and press the buttons, or run <code>python manage.py uat_seed --check</code>. It reports the corpus (chunks and vectors), the published documents and the extraction tool. <strong>If it blocks, stop</strong> — a judgement made against a half-seeded instance is not evidence. (An empty corpus is rebuilt per document, e.g. <code>python manage.py ingest_standard --doc saoso --file "pgs_docs/saoso-version-2.1-2026.pdf"</code>; there is no <code>--all</code> flag. <code>GEMINI_API_KEY</code> must be set, because a grounded answer is what produces a real card.) 2. Start the instance: <code>python manage.py runserver</code>, or use the deployed <code>https://organicguarantee.africa</code> after it has this commit. 3. Log in to <code>/admin/</code> as a user holding <strong>PGS administrator</strong> — the approval step is the point of the board and must be judged by the person who does it. 4. Have <strong>one</strong> other person available for Scenario 4 (a second reader, not a developer).</li></ol><p>---</p></div>
   </div>
 
   <div id="clip" class="clip" hidden></div>
@@ -241,8 +241,8 @@ preflight: ready - no blocking failure</pre>
  "slug": "ask_surface",
  "title": "UAT — The ask board, the answer page and the document reader",
  "environment": {
-  "commit": "31bc4df",
-  "working_tree": "clean",
+  "commit": "c821405",
+  "working_tree": "modified",
   "database": "pgs",
   "generated_on": "2026-10-27"
  },
