@@ -549,8 +549,9 @@ def test_a_failed_embedding_under_force_leaves_the_old_corpus(saoso_pdf, standar
 
 #: Measured on the shipped PDFs (test_reflow.py pins the same numbers beside the pure
 #: function). Literal here because the report is how an operator sees the transform ran:
-#: a no-op that reported nothing would otherwise look like a clean ingest.
-EXPECTED_REFLOW_PAGES = {"saoso": 12, "opp": 4, "bpp": 5, "landscape": 1}
+#: a no-op that reported nothing would otherwise look like a clean ingest. OPP went 4 -> 3
+#: on 2026-10-27 with `-enc UTF-8`: PDF 4 (§3.1's 3-column table) is no longer de-columned.
+EXPECTED_REFLOW_PAGES = {"saoso": 12, "opp": 3, "bpp": 5, "landscape": 1}
 
 
 def flat(text: str) -> str:

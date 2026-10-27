@@ -42,7 +42,10 @@ PDF = REPO_ROOT / "pgs_docs" / "Basic Production Principles_ENG_PRINT.pdf"
 ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "bpp.md"
 
 #: Measured 2026-10-22: five corrections. Raises only with a reason recorded in the PRD.
-MAX_EDITS = 5
+#: 2026-10-27: seven — two private-use Dingbats bullets (U+F06E) that the artefact only
+#: started receiving once the extraction asked for `-enc UTF-8`; before that, Xpdf dropped
+#: them silently, so there was nothing to review (`knowledge/corpus.py`).
+MAX_EDITS = 7
 
 
 @pytest.fixture(scope="module")

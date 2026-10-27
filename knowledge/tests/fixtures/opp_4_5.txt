@@ -41,12 +41,12 @@ This will be done according to the following guidelines:
     1. The member against whom the complaint is levelled
     2. The administrator of the Outeniqua PGS
     3. A committee member of the Outeniqua PGS
-              At least one additional group member or PGSSA member not involved in the
+             ● At least one additional group member or PGSSA member not involved in the
                   complaint.
-              A person deemed competent to record the proceedings.
+             ● A person deemed competent to record the proceedings.
 
                                                                                                                 6
-          The complainant or authorised representative. If this is not possible, [the
+         ● The complainant or authorised representative. If this is not possible, [the
               complainant will be expected to produce a written account of the complaint; in
               such case, the complainant shall accept the outcome of the ruling.
 
@@ -55,7 +55,7 @@ This will be done according to the following guidelines:
     his/her actions, and supply evidence or proof to substantiate his/her reply. If deemed
     necessary, the complainant may be present or be called for his/her response.
 
-5. The meeting will rule on the validity of the complaint, after hearing both parties'
+5. The meeting will rule on the validity of the complaint, after hearing both parties’
     submissions and may rule as follows:
          a. Rejection of complaint: If the complaint is deemed invalid, both parties will be
               informed and the decision recorded. The decision will be communicated in
@@ -65,31 +65,32 @@ This will be done according to the following guidelines:
               implement the appropriate action, and communicate the decision in writing to
               affected parties.
 
-Action:    First warning: If this is the first time a member has transgressed a non-critical
-           requirement, the member will receive a first warning. The warning will be active for
-           one calendar year. Any action not described below in para. (c.) is deemed a non-critical transgression.
-           Second warning: A second warning for a similar transgression during one calendar
-           year will result in cancellation of membership.
-           Serious misconduct: If the transgression is deemed to be serious misconduct,
-           membership will be terminated immediately without a warning.
+Action:     First warning: If this is the first time a member has transgressed a non-critical
+         ●  requirement, the member will receive a first warning. The warning will be active for
+            one calendar year. Any action not described below in para. (c.) is deemed a non-
+         ●  critical transgression.
+         ●  Second warning: A second warning for a similar transgression during one calendar
+            year will result in cancellation of membership.
+            Serious misconduct: If the transgression is deemed to be serious misconduct,
+            membership will be terminated immediately without a warning.
 
 Examples of serious misconduct are:
 
- Public abuse (physical or otherwise) of fellow PGS members and/or customers.
- Any action that brings the PGS into disrepute.
- The use or application of any substance or additive specifically prohibited by the
+● Public abuse (physical or otherwise) of fellow PGS members and/or customers.
+● Any action that brings the PGS into disrepute.
+● The use or application of any substance or additive specifically prohibited by the
 
     SAOSO Standard for Organic Production and Processing or by the Basic Production
     Principles. For example, any production practices that could impact on the organic
     nature of the end product, i.e. the addition of unacceptable inputs, intentional use of
     GMOs, contamination of the product with pollutants, chemicals etc.
- The failure to implement corrective actions marked as critical as required during a
+● The failure to implement corrective actions marked as critical as required during a
     PGS assessment visit.
- Any criminal action as described in the Statutes and Laws of the Republic of South
+● Any criminal action as described in the Statutes and Laws of the Republic of South
     Africa.
- The sale of any un-assessed product bearing our PGS endorsement logo or otherwise
+● The sale of any un-assessed product bearing our PGS endorsement logo or otherwise
     marketed as a PGS endorsed product.
- The sale of any product bearing the logo or registration number of a third-party
+● The sale of any product bearing the logo or registration number of a third-party
     certifier, or otherwise marketed as organic, and found not to be compliant with the
     requirements of the certifying body. Such a transgression will also be reported to the
     relevant certifier.

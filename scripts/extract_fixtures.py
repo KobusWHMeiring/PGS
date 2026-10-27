@@ -88,7 +88,9 @@ LANDSCAPE = "PGS Certification landscape_Final.pdf"
 #: than silently different from what ingest would produce. `+ reflow` is D52: a word
 #: the PDF hyphenated across a line break is rejoined exactly as `ingest_standard`
 #: rejoins it, so the fixture's `post-harvest` is what the parser and the audit see.
-PIPELINE = "pdftotext -layout + de_column + reflow v2"
+#: `+ utf8` (v3) is the `-enc UTF-8` contract: the previous fixtures were Latin-1 decoded
+#: as UTF-8, which is where the corpus's 83 U+FFFD came from.
+PIPELINE = "pdftotext -layout -enc UTF-8 + de_column + reflow v3"
 
 #: Source filename -> `CORPUS_DOCUMENTS` key, so `apply_layout` can consult the
 #: exclusion table for the same document ingest sees.
@@ -433,7 +435,7 @@ def main(argv: list[str] | None = None) -> int:
             "encode the same assumption as the parser they test, which is how v1 passed "
             "its tests while matching zero lines of the real document."
         ),
-        "extraction_command": "pdftotext -layout <pdf> -",
+        "extraction_command": "pdftotext -layout -enc UTF-8 <pdf> -",
         "pipeline": PIPELINE,
         "pipeline_note": (
             "Each page is passed through `knowledge.columns.apply_layout` after "
@@ -448,16 +450,17 @@ def main(argv: list[str] | None = None) -> int:
         "line_endings": "\\n",
         "page_separator": "\\f",
         "encoding_caveat": (
-            "Fixtures are UTF-8. Glyphs the PDFs fail to map to Unicode become U+FFFD "
-            "(REPLACEMENT CHARACTER). This is a fidelity loss in the SOURCE documents, "
-            "not in the extraction: pdftotext -enc Latin1 emits 0xFF and -enc ASCII7 "
-            "emits '-', so the byte is not valid UTF-8 and no encoding recovers the real "
-            "character. Concretely, the OPP's 'Pasture raised is not defined by the SAOSO "
-            "standard <0xFF> details on this forthcoming' carries an en-dash in SPEC §4.3 "
-            "that no extractor produces. Do NOT hand-edit these files to 'fix' it — a "
-            "hand-corrected fixture stops being evidence, which is exactly how v1's parser "
-            "passed its tests while matching nothing in the real document. Assert on text "
-            "that survives extraction, or normalise explicitly in the parser."
+            "Fixtures are UTF-8 because the extraction ASKS for UTF-8 (`-enc UTF-8`). "
+            "Until 2026-10-27 it did not, and this caveat claimed the loss was in the "
+            "source documents — that was wrong, and it cost 83 characters. Xpdf 4.00's "
+            "output encoding defaults to Latin-1, so its stream carries raw 8-bit bytes "
+            "for `°`, `²`, `§`, `é`, `ü` and the en dash; decoding that as UTF-8 with "
+            "errors='replace' turned each into U+FFFD (`ros�` for `rosé`). With the flag, "
+            "all eight shipped PDFs extract with zero U+FFFD — measured 2026-10-27. "
+            "`test_corpus_glyphs.py` now fails if any committed page holds one. Do NOT "
+            "hand-edit these files to 'fix' a glyph: a hand-corrected fixture stops being "
+            "evidence, which is exactly how v1's parser passed its tests while matching "
+            "nothing in the real document. Regenerate instead."
         ),
         "note_on_page_numbers": (
             "MVP0_PLAN_V2.md A10's page ranges are wrong (saoso_part_b pp.60-62 vs p61; "

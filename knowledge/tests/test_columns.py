@@ -111,7 +111,12 @@ PDFS = {
 EXPECTED_TRANSFORMED_PAGES = {
     "bpp": {3, 4, 5, 6, 7, 8, 9, 10},
     "landscape": {2, 3, 4, 5, 6, 7, 8, 9},
-    "opp": {4, 12},  # pdf 11 (§6.5) is excluded: 3-column table, wrong order
+    # pdf 4 (§3.1 committee roles) and pdf 11 (§6.5) are excluded: both are 3-column
+    # tables with two gutters, so a two-band split is column-major by construction. pdf 4
+    # stopped being detected on 2026-10-27 only because the 66 bullets the extraction had
+    # been dropping came back (`-enc UTF-8`, `knowledge/extraction.py`) — it is now an
+    # explicit exclusion, so the accident cannot come back either way.
+    "opp": {12},
     "saoso": set(range(77, 93)) - {79, 81, 82, 83, 85},
 }
 

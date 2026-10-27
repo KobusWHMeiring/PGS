@@ -123,7 +123,7 @@ APPENDIX_2_ROWS: tuple[TableRow, ...] = (
         substance="Farmyard manure, slurry and urine",
         condition=(
             "Manure applications should not be the primary source of nitrogen. See "
-            "Section B \ufffd Appendix 6 Minimum Surface Areas Indoors and Outdoors and "
+            "Section B – Appendix 6 Minimum Surface Areas Indoors and Outdoors and "
             "other Characteristics of Housing in the Different Species and Types of "
             "Production for the density of livestock for the equivalent of 170 Kg "
             "nitrogen per hectare per year."

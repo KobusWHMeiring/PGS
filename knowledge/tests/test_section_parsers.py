@@ -102,7 +102,7 @@ def test_manifest_records_the_layout_pipeline(name):
     the PDF without anyone noticing.
     """
     recorded = MANIFEST["fixtures"][name]
-    assert MANIFEST["pipeline"] == "pdftotext -layout + de_column + reflow v2"
+    assert MANIFEST["pipeline"] == "pdftotext -layout -enc UTF-8 + de_column + reflow v3"
     assert recorded["pipeline"] == MANIFEST["pipeline"]
     start_page, end_page = (int(part) for part in recorded["pages"].split("-"))
     assert sorted(int(page) for page in recorded["raw_page_sha256"]) == list(
@@ -125,10 +125,15 @@ def test_the_two_column_fixtures_were_transformed_and_the_toc_was_not():
     `saoso_toc` (pdf 2-3) contains a detected column page — PDF 2 — that is excluded
     because its right-hand column *is* the printed page numbers. So this is a useful
     negative control: the pipeline ran, and correctly declined.
+
+    `opp_4_1` joined the negative controls on 2026-10-27. OPP PDF 4 is a 3-column table
+    (§3.1) that a two-band split made worse, and it was only ever "detected" because the
+    extraction had been dropping the 66 `●` bullets, §3.2's among them. With `-enc
+    UTF-8` the bullets are back and the page is excluded by name.
     """
     fixtures = MANIFEST["fixtures"]
     assert fixtures["bpp_intro"]["layout_pages"] == [3, 4]
-    assert fixtures["opp_4_1"]["layout_pages"] == [4]
+    assert fixtures["opp_4_1"]["layout_pages"] == []
     assert fixtures["saoso_toc"]["layout_pages"] == []
     assert fixtures["saoso_appendices"]["layout_pages"] == []
 

@@ -426,5 +426,27 @@ CORPUS_EDITS: dict[str, tuple[CorpusEdit, ...]] = {
             replacement="",
             reason="The same repeated strip; see the page-8 entry.",
         ),
+        CorpusEdit(
+            kind="drop",
+            page=5,
+            original="\uf06e",
+            replacement="",
+            reason=(
+                "A private-use glyph (U+F06E): the producer's Dingbats bullet before "
+                "`Planting:`. Nothing in Unicode names it — pdftotext can emit only the "
+                "code the embedded font assigns — so keeping it would put a character in "
+                "the corpus that no reader can see, no search can match and no audit can "
+                "quote. Only the glyph is dropped: `Planting:` is the list item it marks. "
+                "It reached the artefact on 2026-10-27, because before `-enc UTF-8` the "
+                "extraction dropped such glyphs silently and the artefact never held one."
+            ),
+        ),
+        CorpusEdit(
+            kind="drop",
+            page=6,
+            original="\uf06e",
+            replacement="",
+            reason="The second private-use bullet, the same shape; see the page-5 entry.",
+        ),
     ),
 }

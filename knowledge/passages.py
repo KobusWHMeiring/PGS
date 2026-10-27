@@ -51,7 +51,7 @@ from dataclasses import dataclass
 _MARKER = re.compile(
     r"^(?P<indent>[ \t]*)"
     r"(?P<open>\()?"
-    r"(?P<marker>[•‣▪◦*\-–—]|\d{1,3}|[ivxlcdmIVXLCDM]{1,7}|[A-Za-z])"
+    r"(?P<marker>[•‣▪◦●*\-–—]|\d{1,3}|[ivxlcdmIVXLCDM]{1,7}|[A-Za-z])"
     r"(?P<punct>[.)])?"
     r"(?P<gap>[ \t]+)"
     r"(?P<body>\S.*)$"
@@ -61,7 +61,12 @@ _MARKER = re.compile(
 #: corpus that this module removes, and `flatten()` reports the same text, so the guard accounts for it.
 _HASH_HEADING = re.compile(r"^#{1,6}(?:[ \t]+|$)")
 
-_BULLETS = "•‣▪◦*-–—"
+#: The printed bullet shapes the corpus actually holds. `•` is SAOSO's and the landscape's;
+#: `●` is the OPP's — and it only appeared on 2026-10-27, when the extraction started asking
+#: for `-enc UTF-8` and the 66 bullets it had been dropping outright came back
+#: (`knowledge/extraction.py`). An unrecognised marker is not a disaster — the line renders
+#: as a paragraph — but the OPP's lists would read as prose.
+_BULLETS = "•‣▪◦●*-–—"
 _ROMAN_VALUES = {"i": 1, "v": 5, "x": 10, "l": 50, "c": 100, "d": 500, "m": 1000}
 _TERMINAL = (".", ";", "?", "!")
 

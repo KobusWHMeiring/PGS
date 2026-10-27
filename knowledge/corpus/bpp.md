@@ -35,14 +35,14 @@ should not be seen as a substitute, but
 rather as a complimentary framework;
 written in language that all participants
 can understand, in the positive
-spirit of participation and integrity �
+spirit of participation and integrity –
 cornerstones of any PGS.
 ## DEFINITION OF ORGANIC AGRICULTURE
 The PGS operates within the principles
-and guidelines of IFOAM�Organics
+and guidelines of IFOAM–Organics
 International and therefore adopts as
 its definition of organic agriculture:
-"Organic agriculture is a
+“Organic agriculture is a
 production system that
 sustains the health of soils,
 ecosystems and people. It
@@ -56,7 +56,7 @@ and science to benefit the
 shared environment and
 promotes fair relationships
 and a good quality of life for
-all involved."
+all involved.”
 1 Based on Bryanston Market PGS Basic Production Principles (July 2018) and updated by
 PGSSA and SAOSO committee members and sector specialists (August, 2022)
 <!-- page: 4 printed: none -->
@@ -68,14 +68,12 @@ The balanced management and
 maintenance of this system is an
 important factor in organic production.
 Management practice should include:
-a. Sustainable land management2 �
+a. Sustainable land management2 –
 slash and burn practices to make
 land available will not be allowed.
-
 2 Sustainable means: meeting the needs of the present without compromising the ability of future
 generations to meet their own needs; conserving an ecological balance by avoiding depletion or
 destruction of natural resources.(IFOAM: Organics International 3.0)
-
 b. Wetlands and critical breeding
 grounds for birds and animals must
 be protected.
@@ -101,7 +99,7 @@ management system in place. This
 system should include the following:
 a. Mechanisms and practices to
 increase levels of organic matter in
-the soil such as "green manures",
+the soil such as “green manures”,
 mulch, compost, cover crops and
 the addition of animal manure
 (composted)
@@ -568,15 +566,15 @@ on the Standard.
 Refer to the SAOSO Standard for
 guidance on permitted notifiable
 exceptions.
-� PGS South Africa/South African Organic Sector Organisation (SAOSO), 2021
+© PGS South Africa/South African Organic Sector Organisation (SAOSO), 2021
 The production of this document was funded by the South African
 Organic Sector Organisation (SAOSO), PGS South Africa (PGS SA) and
 the Knowledge Hub for Organic Agriculture in Southern Africa (KHSA)
 as part of the global project Knowledge Centre for Organic Agriculture
-in Africa (KCOA), implemented by the Deutsche Gesellschaft f�r
+in Africa (KCOA), implemented by the Deutsche Gesellschaft für
 Internationale Zusammenarbeit (GIZ) GmbH in partnership with in-country organisations on behalf of the German Federal Ministry for
 Economic Cooperation and Development (BMZ).
-To access and understand the document's copyright policy as at 5
+To access and understand the document’s copyright policy as at 5
 October 2022, use this QR code:
 <!-- page: 12 printed: none -->
                    Implemented by:  In cooperation with:

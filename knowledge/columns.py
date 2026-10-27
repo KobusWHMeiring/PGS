@@ -215,6 +215,16 @@ PAGE_LAYOUT_EXCLUSIONS: dict[str, dict[int, str]] = {
         ),
     },
     "opp": {
+        4: (
+            "3-column table (\u00a73.1 committee roles: role | function | duties) where the page "
+            "has two gutters, so a two-band split is column-major by construction: the "
+            "duties column was emitted at the page foot and `Members will be invited to "
+            "take part` lost its own predicate to the bottom of the page. It was detected "
+            "as a column page until 2026-10-27 only because the bullets that open \u00a73.2 "
+            "had been lost by the extraction; with `-enc UTF-8` they are back (\u25cf), the "
+            "band detector stops firing, and the page keeps the printed order. Recorded "
+            "as an exclusion so that accident cannot come back."
+        ),
         11: (
             "3-column table (§6.5 labelling categories): one band where the page has two "
             "gutters, so every character is preserved but the reading order is wrong — "

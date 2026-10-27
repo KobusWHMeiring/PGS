@@ -49,7 +49,12 @@ PDFS = {
 #: went 3 -> 5 because two more wrapped words became adjacent once the gutter stopped
 #: cutting inside the left column. SAOSO and OPP are unchanged, which is the point of
 #: narrowing inside the detected band rather than re-detecting.
-EXPECTED_WRAPS = {"saoso": 12, "opp": 4, "bpp": 5, "landscape": 1}
+#: narrowly inside the detected band rather than re-detecting.
+#: Re-measured 2026-10-27 after the extraction started asking for `-enc UTF-8` (the OPP's
+#: 66 `●` bullets came back): OPP went 4 -> 3, because PDF p4 is no longer de-columned at
+#: all (`knowledge/columns.py` records why a two-band split is wrong for its 3-column
+#: table). SAOSO, BPP and landscape are unchanged.
+EXPECTED_WRAPS = {"saoso": 12, "opp": 3, "bpp": 5, "landscape": 1}
 
 
 @pytest.fixture(scope="module")

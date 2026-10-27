@@ -218,6 +218,24 @@ def test_a_list_starting_later_reports_its_own_start_value():
     assert block.style == "lower-alpha"
 
 
+def test_the_opp_bullet_is_a_list_marker():
+    """`●` (U+25CF) is what the OPP actually prints — 66 times.
+
+    It only reached the corpus on 2026-10-27: the extraction had been dropping the glyph
+    outright (Xpdf writing Latin-1, `knowledge/extraction.py`), so the OPP's `●` lists
+    arrived as bare sentences and every one of them read as prose. A shape this corpus
+    really has belongs in the unit tests, not only in the fixture-level guards.
+    """
+    blocks = passage_blocks(
+        "● Members are required to attend our annual group meeting.\n\n"
+        "● All farmers are to attend at least two other farm visits annually."
+    )
+
+    assert [block.kind for block in blocks] == ["list"]
+    assert blocks[0].style == "disc"
+    assert len(blocks[0].items) == 2
+
+
 def test_the_formatter_never_raises_and_never_drops_text():
     """Adversarial shapes: no marker, stray markers, a marker with no body line following."""
     for text in (
@@ -252,6 +270,13 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
         source = normalise(HASH_HEADING.sub("", chunk.text))
         rendered = normalise(flatten(passage_blocks(chunk.text)))
         assert rendered == source, f"{chunk.section_ref}: the layout changed the text"
+
+    # The store itself: no character the paper prints may be sitting here as U+FFFD. The
+    # fixture guards (`test_corpus_glyphs.py`) prove the extraction keeps its characters;
+    # this proves the *ingest* does, end to end, on the real corpus.
+    assert "\ufffd" not in "".join(chunk.text for chunk in chunks), (
+        "the ingested text holds a replacement character, so a printed glyph was lost"
+    )
 
     by_ref = {chunk.section_ref: chunk for chunk in chunks}
 

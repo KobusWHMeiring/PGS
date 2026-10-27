@@ -15,6 +15,16 @@ verifies anchors and writes the manifest; it no longer owns the extraction.
 `-layout` is not decoration: without it the two-column BPP and landscape interleave
 differently, and the SAOSO footers this parser reads page numbers from move. The flag
 is part of the contract with the fixtures.
+
+`-enc UTF-8` is not decoration either, and it cost this project 83 characters
+(`testing_hazards.md` §1.33). Xpdf 4.00's output encoding defaults to **Latin-1**, so its
+`-layout` stream carries raw 8-bit bytes for every glyph it maps outside ASCII — the degree
+sign in `360°`, the superscript in `100 m²`, the en dash in `Section B – Appendix 6`, the
+`é` in `rosé`. Decoding that stream as UTF-8 (as this module did, with `errors="replace"`)
+turns each one into U+FFFD, and the corpus then quotes a sentence the document does not
+print. Poppler's default happens to be UTF-8, which is exactly why the defect could only
+appear on one of the two builds this repo supports — so the flag is now explicit and the
+decode is strict.
 """
 
 from __future__ import annotations
@@ -36,7 +46,12 @@ from pathlib import Path
 #: poppler at all (`exit 99`), so Appendix 2's verification is Xpdf-4-only.
 PDFTOTEXT = "pdftotext"
 PDFTOTEXT_ENV = "PDFTOTEXT_BIN"
-PDFTOTEXT_ARGS = ("-layout",)
+
+#: The encoding every mode asks the extractor for. Explicit because the two supported builds
+#: disagree by default (Xpdf: Latin-1, poppler: UTF-8), and the decode below is strict.
+PDFTOTEXT_ENCODING = "UTF-8"
+
+PDFTOTEXT_ARGS = ("-layout", "-enc", PDFTOTEXT_ENCODING)
 
 #: The second extraction mode. Xpdf's `-table` aligns cells row by row where `-layout`
 #: leaves a table's condition column vertically offset; measured 2026-10-21 on SAOSO
@@ -44,7 +59,7 @@ PDFTOTEXT_ARGS = ("-layout",)
 #: to ingest free text: the reviewed rows are data, and the golden test checks every cell
 #: against this output. Adding a mode is deliberate — a document must not silently flip
 #: rendering, because the parsers were written against `-layout`.
-PDFTOTEXT_TABLE_ARGS = ("-table",)
+PDFTOTEXT_TABLE_ARGS = ("-table", "-enc", PDFTOTEXT_ENCODING)
 
 #: The third extraction mode: the producer's own content-stream order. It is not the
 #: corpus contract — spacing between text-show operations is lost, so words glue together
@@ -53,7 +68,7 @@ PDFTOTEXT_TABLE_ARGS = ("-table",)
 #: page of the four governed documents (measured 2026-10-22). `scripts/build_corpus.py`
 #: uses it only where it is word-clean, as a per-page fallback for columns that defeat the
 #: geometry (D53).
-PDFTOTEXT_RAW_ARGS = ("-raw",)
+PDFTOTEXT_RAW_ARGS = ("-raw", "-enc", PDFTOTEXT_ENCODING)
 
 _MODES = {"layout": PDFTOTEXT_ARGS, "table": PDFTOTEXT_TABLE_ARGS, "raw": PDFTOTEXT_RAW_ARGS}
 
@@ -85,10 +100,16 @@ def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
 
     In:  `pdf_path` — a path to a PDF; `mode` — `"layout"` (the corpus contract) or
          `"table"` (row-aligned, for reading and verifying a printed table).
-    Out: the text as `pdftotext <mode>` emits it, decoded UTF-8 with replacement.
-    Fails: `ExtractionError` when `pdftotext` is missing or exits non-zero, naming the        file — a missing poppler install must not read as "the document is empty" —
-        and `ValueError` for an unknown mode, so a typo cannot silently fall back to
-        the wrong rendering.
+    Out: the text as `pdftotext <mode> -enc UTF-8` emits it, decoded strictly as UTF-8.
+    Fails: `ExtractionError` when `pdftotext` is missing or exits non-zero, naming the
+        file — a missing poppler install must not read as "the document is empty" —
+        when the build ignores `-enc` and returns bytes that are not UTF-8, and
+        `ValueError` for an unknown mode, so a typo cannot silently fall back to the
+        wrong rendering.
+
+    The decode is strict on purpose. `errors="replace"` looks forgiving and is not: it is
+    how `360°`, `100 m²` and `rosé` became `360�`, `100 m�` and `ros�` in the corpus, with
+    no error anywhere and a passing test suite (§1.33).
     """
     args = _MODES.get(mode)
     if args is None:
@@ -111,7 +132,16 @@ def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
         raise ExtractionError(
             f"`{binary}` failed on {path.name}: {error.stderr!r}"
         ) from error
-    return result.stdout.decode("utf-8", errors="replace")
+    try:
+        return result.stdout.decode(PDFTOTEXT_ENCODING)
+    except UnicodeDecodeError as error:
+        # Loud, and specific about the cause: a build whose `-enc` is ignored (or a
+        # differently-named flag) is the only way to reach this, and the fix is the binary.
+        raise ExtractionError(
+            f"`{binary}` did not return {PDFTOTEXT_ENCODING} on {path.name}: {error}. "
+            "The extraction asks for `-enc UTF-8`; a build that ignores it returns "
+            "Latin-1, and every accented or symbol character then arrives as a raw byte."
+        ) from error
 
 
 def normalise(text: str) -> str:
@@ -145,6 +175,7 @@ __all__ = [
     "ExtractionError",
     "PDFTOTEXT",
     "PDFTOTEXT_ARGS",
+    "PDFTOTEXT_ENCODING",
     "PDFTOTEXT_ENV",
     "PDFTOTEXT_RAW_ARGS",
     "PDFTOTEXT_TABLE_ARGS",
