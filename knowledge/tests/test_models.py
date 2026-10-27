@@ -241,3 +241,32 @@ def test_a_superseded_document_cannot_be_deleted_out_from_under_its_successor():
 
     with pytest.raises(ProtectedError), transaction.atomic():
         new.delete()
+
+
+# --- 6. The printed TOC is data (D68) ----------------------------------------
+
+
+def test_a_document_starts_with_no_stored_toc():
+    """The field is additive: every document ingested before today has no TOC, and the
+    concordance must fall back to headings rather than fail on a missing key."""
+    document = make_document()
+
+    assert document.toc == []
+    assert StandardDocument.objects.get(pk=document.pk).toc == []
+
+
+def test_the_toc_survives_a_round_trip_as_json():
+    """JSONB, not a string: the concordance reads entry["label"], and a serialised blob
+    would make the page's structure a parsing problem."""
+    document = make_document()
+    entry = {
+        "part": None,
+        "kind": "RANGE",
+        "label": "10 to 19",
+        "title": "Left blank to facilitate future enterprises",
+        "printed_page": None,
+    }
+    document.toc = [entry]
+    document.save(update_fields=["toc"])
+
+    assert StandardDocument.objects.get(pk=document.pk).toc == [entry]

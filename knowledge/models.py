@@ -237,6 +237,16 @@ class StandardDocument(models.Model):
             "Data, not code: adding a standard means adding a parser, not a migration."
         ),
     )
+    toc = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "The document's printed table of contents, as a list of "
+            "{part, kind, label, title, printed_page} — the only source of a branch's "
+            "*name* for the concordance (D68). Empty for a document that prints none, "
+            "and for every document ingested before the field existed."
+        ),
+    )
 
     class Meta:
         ordering = ["standard_set__code", "kind", "version"]
