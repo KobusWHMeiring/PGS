@@ -533,3 +533,129 @@ def test_the_page_renders_a_glossary_term_above_its_definition(client, seeded_do
     assert '<p class="passage__term">ACB</p>' in body
     assert '<p class="passage__term">Habitat</p>' in body
     assert "Accredited Certification Body." in body
+
+# --- The table branch: a curated appendix renders as the paper's table --------
+
+
+@pytest.fixture
+def curated_rows(db):
+    """A published document whose Appendix 2 is the **30 reviewed rows**, plus one plain branch.
+
+    The chunks are built by the same function ingest uses (`chunks_for_rows`), so the text under
+    test is the reviewed text — not a hand-written row that would let the renderer pass while the
+    corpus is different (`testing_hazards.md` §1.32).
+    """
+    from knowledge.tables import chunks_for_rows
+
+    corpus = StandardSet.objects.create(code="outeniqua", label="Outeniqua", is_default=True)
+    document = StandardDocument.objects.create(
+        standard_set=corpus,
+        kind=StandardDocument.Kind.STANDARD,
+        issuing_body="SAOSO",
+        title="SAOSO Curated",
+        version="2.1",
+        source_file=CORPUS_SOURCE,
+        sha256="c" * 64,
+        section_scheme="saoso",
+    )
+    for row_chunk in chunks_for_rows("Appendix 2"):
+        DocumentChunk.objects.create(
+            document=document,
+            section_ref=row_chunk.section_ref,
+            heading_path=row_chunk.heading_path,
+            page=row_chunk.page,
+            text=row_chunk.text,
+            token_count=row_chunk.token_count,
+        )
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S5.1.3",
+        heading_path="5. ANIMAL HUSBANDRY",
+        page=41,
+        text="Animals must have access to pasture during the grazing season.",
+    )
+    document.chunk_count = 31
+    document.save(update_fields=["chunk_count"])
+
+    PublicDocument.objects.create(
+        code="saoso-curated",
+        title="SAOSO Curated",
+        file_path="public/documents/saoso-curated.pdf",
+        source_path=CORPUS_SOURCE,
+        is_published=True,
+    )
+    return PublicDocument.objects.get(code="saoso-curated")
+
+
+def test_the_curated_branch_reports_its_structure(curated_rows):
+    """The reader says what the branch is; the page's own sentence is the reviewed one."""
+    from knowledge.tables import TABLE_SECTIONS, TableDivider
+
+    reader = reader_for(curated_rows, "", "appendix-2")
+
+    assert reader.table is not None
+    assert reader.table.section is TABLE_SECTIONS["Appendix 2"]
+    assert reader.table.labels.count("no condition printed") == 19
+    assert reader.passages[15].dividers == (TableDivider(15, "II. MINERAL ORIGIN", "part"),)
+    assert reader.passages[2].dividers == ()
+    assert reader.passages[2].note == "no condition printed"  # Guano
+    assert reader.passages[0].note == ""
+
+
+def test_the_page_prints_the_caption_and_the_legend_once(client, curated_rows):
+    from knowledge.tables import TABLE_SECTIONS
+
+    body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
+    section = TABLE_SECTIONS["Appendix 2"]
+
+    assert body.count(section.legend) == 1
+    assert section.columns[0] in body and section.columns[1] in body
+    assert body.index("reader__table-bar") < body.index('<p class="passage__row">')
+    assert body.count("no condition printed") == 19
+
+
+def test_every_reviewed_row_renders_as_an_entry(client, curated_rows):
+    """The defect this task exists for: `Guano` used to render at body weight, as prose."""
+    reader = reader_for(curated_rows, "", "appendix-2")
+    body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
+
+    assert all(passage.blocks[0].kind == "row" for passage in reader.passages)
+    assert '<p class="passage__row">Guano</p>' in body
+    assert body.count('<p class="passage__row">') == 30
+
+    # The empty condition cell stays empty: the entry is its heading and the label, and no
+    # paragraph was invented between them (silence is not permission).
+    guano = body[body.index('<p class="passage__row">Guano</p>') :]
+    guano = guano[: guano.index("</article>")]
+    assert "passage__text" not in guano
+    assert "no condition printed" in guano
+
+
+def test_the_dividers_render_above_the_rows_they_name(client, curated_rows):
+    body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
+
+    pane = body[body.index("reader__table-bar") :]
+    assert body.count("South African specific") == 3
+    assert pane.index("II. MINERAL ORIGIN") < pane.index("Calcareous and magnesium amendments")
+    assert pane.index("I. PLANT AND ANIMAL ORIGIN") < pane.index("Farmyard manure, slurry and urine")
+
+
+def test_a_branch_without_reviewed_rows_renders_as_before(client, curated_rows):
+    """S5.1.3 is not curated: no caption, no label, and the blocks are `passage_blocks`."""
+    reader = reader_for(curated_rows, "", "s5-1-3")
+
+    assert reader.selected is not None and reader.selected.key == "S5"
+    assert reader.table is None
+    assert all(passage.dividers == () and passage.note == "" for passage in reader.passages)
+    assert reader.passages[0].blocks[0].kind == "paragraph"
+
+    body = client.get("/documents/saoso-curated/read/?section=s5-1-3").content.decode()
+
+    assert "no condition printed" not in body
+    assert "The standard prints this appendix as a table" not in body
+
+
+def test_the_table_costs_no_extra_query(curated_rows, django_assert_num_queries):
+    """Three, the same as before this slice: the structure is derived from data already in hand."""
+    with django_assert_num_queries(3):
+        reader_for(curated_rows, "", "appendix-2")
