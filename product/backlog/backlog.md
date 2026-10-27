@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-27 14:02
+> Generated: 2026-10-27 16:46
 
 ## Ready (up next)
 
@@ -45,6 +45,7 @@ _none_
 ## Bug Fixes
 
 - **Bug: a citation opens the wrong passage when its reference is shared** - `BugFixes\citation_anchor_collision.md` - Status: **Closed 2026-10-27** — fixed and guarded while building the concordance (SPEC §18.3
+- **Bug: SAOSO's extracted text loses glyphs, and one page boundary swallows a part title** - `BugFixes\saoso_text_glyphs_and_boundaries.md` - Status: Open — found 2026-10-27 while reading the definitions branch after the concordance and
 
 ## Done
 
@@ -92,6 +93,12 @@ the generated index's "To Do" section.
       then). Public questions can contain personal data about a third party; the group already has
       a POPIA retention schedule for assessment records. Revisit at MVP 2 registry work at the
       latest. Plan: `CORPUS_CANONICAL_FORMAT_PLAN.md` P2.8.
+- [ ] **SAOSO's text loses glyphs, and `S1` ends with the next part's half-title.** 30 of 366 chunks
+      hold U+FFFD where the paper prints `°`, `²`, `≥`, a bullet, an en dash or `ü`; one superscript
+      `2` sits on its own line and splits the *Factory farming* sentence; the last `S1` chunk carries
+      the `SECTION B` half-title of printed p.30. Found 2026-10-27 reading the definitions branch.
+      This needs the revised artefact and `--force`, not a view change — full evidence and DoD in
+      `BugFixes/saoso_text_glyphs_and_boundaries.md`.
 
 ## Human gates — on the box
 
