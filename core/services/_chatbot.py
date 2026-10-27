@@ -153,7 +153,13 @@ MAX_OUTPUT_TOKENS_CEILING = 8192
 #: refuses a correct, properly quoted answer and the visitor is told the documents are
 #: silent. With the number gone: 3 runs of 3 grounded, 7/7 citations audited, on the
 #: question that had refused every time before (`CHAT_TRUTHFULNESS_PRD.md` F3).
-PROMPT_VERSION = "d50-1"
+#: `d50-2` (2026-10-27): rule 4b — the assistant does not decide an outcome, including with
+#: a leading "No" (D-3). Two accepted answers told a visitor their fruit and their seeds
+#: "would not be considered organic" on the strength of a sentence that prohibits GE *seed*;
+#: the audit cannot see that, because it checks quotes and not entailment. Measured after:
+#: the fruit question declines the verdict, and the seeds question opens with the rule in
+#: 3 runs of 3 (it answered "No, …" in 2 of 2 before the leading-verdict clause).
+PROMPT_VERSION = "d50-2"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -187,6 +193,13 @@ yourself, and do not reason from silence: if no passage mentions the item and no
 passage states a rule that governs it, set `insufficient_context` to true and leave \
 `answer` empty. Silence is not permission: if the passages do not say an item is \
 allowed, say what they require of it, and never that it is allowed.
+4b. Do not decide an outcome. A passage that prohibits an act does not say what follows \
+from it: when a question asks what follows — whether a fruit, a seed or a farm *is* \
+organic — state the rule the passages supply, and say plainly that they do not state \
+the outcome. Never answer whether anything is, becomes or remains organic or \
+certified; that decision belongs to the certification body, not to this assistant. A \
+leading "No" or "Yes" to such a question is that verdict — open with what the passages \
+require instead.
 5. Never invent a section reference, a sub-reference, a page number or a quote. \
 Include `sub_ref` only when the passage lists that exact sub-clause under \
 "Numbered sub-clauses available". If that line says none, or is absent, omit \
@@ -957,6 +970,61 @@ def audit_citations(
     return citations, tuple(problems)
 
 
+#: Words that turn a sentence into a verdict about organic status. Rule 4b forbids the
+#: verdict; this list exists so a reviewer can find the sentences that still make one.
+#: Measured need, 2026-10-27: two accepted answers told a visitor their fruit and their
+#: seeds "would not be considered organic" on the strength of one sentence prohibiting the
+#: *use* of GE seed, and the citation audit passed both — it checks quotes, not entailment.
+OUTCOME_PHRASES = (
+    "considered organic",
+    "is organic",
+    "are organic",
+    "not organic",
+    "become organic",
+    "remains organic",
+    "remain organic",
+    "certified organic",
+    "certified as organic",
+)
+
+
+def outcome_claim_warnings(
+    answer: str, citations: Sequence[Citation]
+) -> tuple[str, ...]:
+    """Sentences that pronounce an outcome their verified quotes do not state.
+
+    In:  the answer as shown; the citations the audit accepted.
+    Out: one advisory string per offending sentence; empty when every outcome sentence is
+         echoed by a quote the audit verified. **Never a reason to refuse** — the strings
+         go to `ChatMessage.review_notes` and the log, and a person reads them.
+
+    Why advisory: an entailment test is a second model call and a threshold, and a check
+    that turns grounded answers into refusals is the failure this feature exists to
+    prevent (`CHAT_TRUTHFULNESS_PRD.md` §5.5).
+
+    Why "an outcome", not "a claim unshared by any quote": the obvious cheap check — every
+    answer sentence must share a content word with a quote — passes the exact answer that
+    motivated this. *"The fruit would not be considered organic"* shares `organic` with
+    *"Any GM seeds or seedlings are expressly forbidden in organic agriculture."* The
+    verdict is the signal, not the vocabulary.
+    """
+    quoted = " ".join((citation.quote or "").lower() for citation in citations)
+    supported = {phrase for phrase in OUTCOME_PHRASES if phrase in quoted}
+    warnings: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+", (answer or "").strip()):
+        lowered = sentence.lower()
+        unsupported = [
+            phrase
+            for phrase in OUTCOME_PHRASES
+            if phrase in lowered and phrase not in supported
+        ]
+        if unsupported:
+            warnings.append(
+                f"states an outcome the quotes do not: {sentence.strip()!r}"
+            )
+    return tuple(warnings)
+
+
 # --- The answer cache -------------------------------------------------------
 
 
@@ -1463,6 +1531,7 @@ def _as_refusal(
             # corpus one (G9). `accepted` is empty by definition here.
             citations=_citation_record(reply.citations if reply else (), ()),
             refusal_checks=list(problems)[:20],
+            refusal_reason=reason,
             grounding=_grounding_snapshot(chunks),
         )
         assistant.retrieved_chunks.set([chunk.chunk_id for chunk in chunks])
@@ -1706,6 +1775,19 @@ def answer_question(
             timeout=int(getattr(settings, "CHAT_ANSWER_CACHE_TTL", ANSWER_CACHE_TTL)),
         )
 
+    # D-3: the audit verified the quotes, not the claims built on them. An outcome verdict
+    # the quotes do not state is recorded for a person, never used to refuse — the refusal
+    # would punish the visitor for a limit of the audit (`§5.5`).
+    review_notes = outcome_claim_warnings(answer_text, citations)
+    if review_notes:
+        logger.warning(
+            "chatbot answer states an outcome its quotes do not",
+            extra={
+                "chat_session": str(session.public_uuid),
+                "chat_review_notes": len(review_notes),
+            },
+        )
+
     with transaction.atomic():
         assistant = ChatMessage.objects.create(
             session=session,
@@ -1719,6 +1801,7 @@ def answer_question(
             corpus_fingerprint=fingerprint,
             citations=_citation_record(reply.citations, citations),
             refusal_checks=[],
+            review_notes=list(review_notes),
             grounding=_grounding_snapshot(chunks),
         )
         assistant.retrieved_chunks.set([chunk.chunk_id for chunk in chunks])
@@ -1745,6 +1828,7 @@ __all__ = [
     "GroundedAnswer",
     "InvalidQuestionError",
     "ModelReply",
+    "OUTCOME_PHRASES",
     "RATE_LIMIT_MESSAGE",
     "REFUSAL",
     "RateLimitedError",
@@ -1754,6 +1838,7 @@ __all__ = [
     "answer_question",
     "attach_user",
     "audit_citations",
+    "outcome_claim_warnings",
     "build_prompt",
     "build_retrieval_query",
     "check_rate_limit",

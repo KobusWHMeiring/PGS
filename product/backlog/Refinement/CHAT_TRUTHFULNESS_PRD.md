@@ -1,6 +1,6 @@
 # PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites
 
-**Status:** Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2 and 5.3 landed the same day** (gate green at 903): the definition question and the silica question both answer now, and the two GM-outcome turns are unchanged on purpose, because they are a copy decision. Remaining: D-2 (now smaller), D-3 (claim scope), D-4 (G3's alias table), D-5 (refusal copy), 5.4–5.8.
+**Status:** Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7 and 5.9 landed the same day** (gate green at 915): every refusal in that conversation now answers, and the two GM-outcome turns state the rule instead of the verdict. Remaining: D-2 (smaller than it was), D-4 (G3's alias table), 5.4, 5.6 and 5.8.
 **Owner:** Build — grounded chat (sub-plan D)
 **Last Updated:** 2026-10-27
 **MVP:** MVP 0 — defect fix. No new surface, no migration.
@@ -324,17 +324,30 @@ the locator (it requires a unique match, and still refuses ambiguity and inventi
 is looser than today, and D47 forbids trimming citations. Record it as `D-2b`; do not build
 it without the product owner.
 
-### 5.5 Claim scope (F4) — decision (`D-3`), then measure before shipping
+### 5.5 Claim scope (F4) — **landed 2026-10-27**
 
-A new rule 4b: *state only what the cited words state; if the question asks what follows from
-a rule, say what the rule requires and that the documents do not state the outcome; never
-decide whether a farm or its produce is organic.* Plus a **server-side signal** for review,
-not enforcement: every answer sentence must share a content word with an accepted quote
-(`Sentence`-level check, recorded in `refusal_checks` as a warning and never a refusal).
+Rule 4b: *state the rule the passages supply, and say plainly that they do not state the
+outcome; never answer whether anything is, becomes or remains organic or certified — that
+decision belongs to the certification body.* The last clause is the one that mattered: with
+only the first two sentences, the model answered *"No, any GM seeds … are expressly
+forbidden"* — a bare verdict word in front of a correct rule, in 2 of 2 runs. With
+*"a leading 'No' or 'Yes' to such a question is that verdict"* added, both questions open with
+the rule, 3 of 3.
 
-Do **not** ship an entailment check that refuses. The 13-question suite plus S5's sample is
-the measurement; a rule that turns grounded answers into refusals is the failure this PRD
-exists to prevent.
+Measured after, on the two turns from the transcript:
+
+> *"… The passages do not explicitly state whether the fruit from GM seeds grown organically
+> would be considered organic, but they do prohibit the use of GM seeds."* — grounded.
+
+**The server-side signal is narrower than planned, and for a measured reason.** The plan was
+"every answer sentence must share a content word with an accepted quote". It was measured and
+it **passes the exact answer it was written for**: *"the fruit would not be considered
+organic"* shares `organic` with *"Any GM seeds or seedlings are expressly forbidden in
+organic agriculture."* So the check looks for an **outcome phrase** instead
+(`considered organic`, `is organic`, `certified as organic`, …) that no accepted quote
+contains, and records it in `ChatMessage.review_notes` — never a refusal. Its blind spot is
+recorded here: a bare *"No, …"* carries no outcome phrase, so it is rule 4b's job, and that
+is the residual stochastic risk.
 
 ### 5.6 Follow-up inheritance (F5) — decision (`D-3`), then measure
 
@@ -348,17 +361,19 @@ Options, to be measured with `probe_follow_up`:
 
 Recommendation: measure 1, and 2 if S6 shows drift in more than a handful of sessions.
 
-### 5.7 Refusal attribution (F6) — decision (`D-5`), then build
+### 5.7 Refusal attribution (F6) — **landed 2026-10-27**
 
-`REFUSAL` stays (D17 is a decision, not an accident) **and** the surface gains one sentence
-that names the class in human words:
+`REFUSAL` stays (D17) and the turn carries one more sentence, per reason, from
+`core/models/_chat.py::REFUSAL_NOTES`. The rule those sentences follow: **none claims the
+documents are silent unless that is what happened** — `CITATION_AUDIT` says *"wording that may
+apply was found, but the citation could not be checked"*, and only `NO_RETRIEVAL` says nothing
+matched. This is the fix that would have stopped the visitor concluding "the standard doesn't
+define GM".
 
-* `CITATION_AUDIT` / `NO_CITATIONS` → *"The assistant found wording that may apply but could
-  not verify its citation, so it was not shown."*
-* `INSUFFICIENT_CONTEXT` / empty retrieval → the documents genuinely do not answer it.
-
-This is the only fix here that changes copy on a public surface, so it needs the product
-owner. It is also the fix that would have stopped the visitor's false conclusion directly.
+Implementation detail worth keeping: the sentence is read from the turn's new
+`refusal_reason`, not by comparing `message.content` to `REFUSAL` in the template. The old
+comparison is how a copy change would have silently removed the contact link and the refusal
+styling — and the surface fixture had to be corrected for exactly that reason (§1.32 shape).
 
 ### 5.9 One refusal reason names one finding — **landed 2026-10-27**
 
@@ -387,9 +402,9 @@ renders in-document search; this only makes the fragment land on the passage.
 | **D-1** | Is the rare-term chooser's filler-guard a stop-list, a phrase-preference rule, or both? | **Both, but the phrase rule is not what fixed turn 4** (measured in §3 F1). The stop-list plus the two-bet hedge is landed; the adjacent-bigram preference is *dropped* — it was measured and it loses on the cost question (`farm visit` displaces `cost`, which is where §2.1 would have come from). Keep the list ≤ 15 words, each justified by a measured question |
 | **D-2** | May the audit drop a `sub_ref` (never the citation) when the chunk has no sub-clause map and the value is an item marker in the chunk's own text? | **Re-measure first** — the prompt rule answered the six recorded cases. If any remain: yes, same shape as D61 (decoration, not identity) |
 | **D-2b** | May an unresolvable locator be replaced by the chunk its quote uniquely matches? | **Record, do not build.** It would have saved three of this PRD's four refusals, and it is stricter than it looks (unique match required) — but it is a relaxation of the address contract and belongs to the product owner, after D-3 |
-| **D-3** | Does the prompt forbid deciding an outcome (organic / not organic), and may a follow-up see its parent's answer prose? | **Approved 2026-10-27** — state the rule, do not decide the outcome. Follow-up window still to be measured (S6) before narrowing |
+| **D-3** | Does the prompt forbid deciding an outcome (organic / not organic), and may a follow-up see its parent's answer prose? | **Approved and built 2026-10-27** (§5.5) — rule 4b, plus a leading-verdict clause after the first version was dodged. Follow-up window (5.6) still wants S6 before narrowing |
 | **D-4** | Does G3 get a seeded alias table (`cost → fee, membership fee`), now that its evidence is shown to rest on a bad key? | **Approved 2026-10-27** — yes, and re-measure G3 *after* 5.1, which has landed. An alias table is data, and G5's "no classifier" still holds |
-| **D-5** | May the refusal surface carry a second sentence naming the cause, given D17 fixes the wording? | **Approved 2026-10-27** — the product owner allows a sentence that names the clause/cause. Build it on the split enum (§5.9): the copy differs per reason, which is why the enum had to land first |
+| **D-5** | May the refusal surface carry a second sentence naming the cause, given D17 fixes the wording? | **Approved 2026-10-27 and built** (§5.7) — one sentence per reason, from the split enum |
 
 ---
 
@@ -456,11 +471,14 @@ Therefore:
 5. **S3 and S4 on the box**, after the deploy and one `ingest`-free restart: the prompt
    changed, the corpus did not, so the only thing to check is the live reply. Close D-2 if
    the six Appendix-1 refusals are gone; do not build `D-2b` without the product owner.
-6. **S5 and S6**: the extract already exists (`_scratch/claim_review_2026-10-27.md`, three
-   accepted answers, two overreaching). Settle D-3 on it; land 5.5 and 5.6; re-measure the
-   suite and confirm the false-refusal rate did not rise.
-7. Settle `D-5`; land 5.7; update `tests/uat/ask_surface_uat.md` with a scenario that reads a
-   `CITATION_AUDIT` refusal and a corpus-silent refusal side by side.
+6. ~~**S5 and S6**: settle D-3 on the extract; land 5.5 and 5.6~~ **5.5 landed 2026-10-27**
+   (§5.5). 5.6 (the follow-up window) is **not** landed: the extract is three answers from
+   one session, which is enough to settle the *rule* and not enough to justify narrowing
+   what a follow-up may see — run S6 on the box first.
+7. ~~Settle `D-5`; land 5.7; update `tests/uat/ask_surface_uat.md`.~~ **5.7 landed** (§5.7),
+   gate green at 915. **Still to do:** the UAT scenario that reads a `CITATION_AUDIT` refusal
+   and a corpus-silent refusal side by side — the two now carry different second sentences,
+   which is exactly what a reviewer should judge.
 8. Land 5.8 (anchor) and settle `D-4`; re-measure G3 after 5.1 before building any alias table.
 9. Append whatever cost time to `product/docs/context/testing_hazards.md` — three candidates
    from this slice: *a probe that measures a key the product does not choose* (§2.7's
@@ -470,17 +488,17 @@ Therefore:
 
 ## 10. Success criteria
 
-- [x] The four questions in §1 are re-probed: **silica answers** (6/6 audited) and **the GM
-      definition answers** (3/3 grounded local); the two GM-outcome turns still answer —
-      within their quotes is D-3's work, and they are unchanged until it is decided.
+- [x] The four questions in §1 are re-probed: **silica answers** (6/6 audited), **the GM
+      definition answers** (3/3 grounded), and the two GM-outcome turns **state the rule and
+      decline the verdict** (3/3 after the leading-verdict clause).
 - [x] `probe_chat.py` prints the chosen lexical key and its df on every run, and no suite
       question's key is a filler word.
-- [ ] The definition question is grounded in **5/5 fresh sessions on the box** (the G8/G9
-      rule: one green run proves the obstacle is gone, not the class).
+- [ ] The four questions are grounded in **5/5 fresh sessions on the box** (the G8/G9 rule:
+      one green run proves the obstacle is gone, not the class).
 - [x] No recorded citation ref in a fresh probe contains the passage index.
-- [x] The gate is green (903 tests); the three new guards were each broken and watched go
-      red — `FILLER_TERMS` removed, the second hedge bet removed, the passage number put
-      back.
+- [x] The gate is green (915 tests); every new guard was broken and watched go red — the
+      filler list, the second hedge bet, the passage number, each new refusal reason, rule
+      4b, the outcome advisory, and the per-reason note.
 - [x] S1, S4, S5 and S6 are run and their counts recorded in §4.1. S2, S3 and S7 remain.
 
 ## 11. Risks & mitigations

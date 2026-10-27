@@ -16,7 +16,14 @@ approaches it, cut a new slice along a domain seam — do not grow the file.
 """
 
 from core.models._certification import Category, Seal
-from core.models._chat import ChatMessage, ChatSession, EscalatedQuery, PublicQuestion
+from core.models._chat import (
+    REFUSAL_NOTES,
+    ChatMessage,
+    ChatSession,
+    EscalatedQuery,
+    EscalationReason,
+    PublicQuestion,
+)
 from core.models._core import (
     ASSESSOR_CAPABILITY,
     Language,
@@ -32,6 +39,8 @@ __all__ = [
     "ChatMessage",
     "ChatSession",
     "EscalatedQuery",
+    "EscalationReason",
+    "REFUSAL_NOTES",
     "Language",
     "PublicDocument",
     "PublicQuestion",

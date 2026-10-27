@@ -20,7 +20,7 @@ import pytest
 from django.test import override_settings
 from django.urls import reverse
 
-from core.models import ChatMessage, ChatSession
+from core.models import ChatMessage, ChatSession, EscalatedQuery, REFUSAL_NOTES
 from core.services._chatbot import (
     CONFIGURATION_MESSAGE,
     REFUSAL,
@@ -48,7 +48,15 @@ def _fragment_for(session_uuid, question, *, refusal=False):
     )
     content = REFUSAL if refusal else "Records must let a product be traced."
     assistant = ChatMessage.objects.create(
-        session=session, role=ChatMessage.Role.ASSISTANT, content=content
+        session=session,
+        role=ChatMessage.Role.ASSISTANT,
+        content=content,
+        # `_as_refusal` records the reason on the turn, and the template reads it: a
+        # refusal written without it renders as an answer and loses the contact link
+        # (the §1.32 hazard — a fixture that omits what the writer sets).
+        refusal_reason=(
+            EscalatedQuery.Reason.CITATION_AUDIT if refusal else ""
+        ),
     )
     if refusal:
         return GroundedAnswer(
@@ -183,6 +191,25 @@ def test_a_refusal_renders_the_contact_link_and_the_boundary(client, chat_standa
     assert REFUSAL in html
     assert "administrator" in html.lower()
     assert reverse("core:contact") in html
+
+
+def test_a_refusal_names_its_cause_and_does_not_blame_the_documents(
+    client, chat_standard_set, refusing
+):
+    """D5: the fixed sentence plus one that says what happened.
+
+    The refusal alone was read as a claim about the corpus — a visitor concluded "the
+    standard doesn't define GM" when the audit had refused a correct answer for an
+    address. `CITATION_AUDIT` must not say the documents are silent.
+    """
+    response = client.post(URL, {"question": "Which fertiliser brand should I buy?"})
+    html = response.content.decode()
+
+    assert REFUSAL_NOTES[EscalatedQuery.Reason.CITATION_AUDIT] in html
+    assert REFUSAL_NOTES[EscalatedQuery.Reason.NO_RETRIEVAL] not in html, (
+        "the wrong reason's sentence was rendered — the note is read from the turn"
+    )
+    assert "chat__bubble__note" in html, "the note is rendered as the explanation, not the refusal"
 
 
 def test_a_citation_is_rendered_with_its_quote(client, chat_standard_set, answering):

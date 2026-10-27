@@ -416,6 +416,51 @@ def test_the_models_own_flag_is_recorded_as_insufficient_context(
     assert _escalation_reason() == EscalatedQuery.Reason.INSUFFICIENT_CONTEXT
 
 
+def test_an_outcome_verdict_is_recorded_for_review_and_still_answered(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """D-3: an outcome the quotes do not state is a note, never a refusal.
+
+    The live answer, verbatim: the quote prohibits the *use* of GM seed and says nothing
+    about the fruit, so the verdict is the assistant's own. Refusing would punish the
+    visitor for a limit of the audit (`CHAT_TRUTHFULNESS_PRD.md` §5.5) — and the audit
+    cannot see it either way: it checks quotes, not entailment.
+    """
+    model = fake_chat_model(
+        reply=_reply(
+            answer="No, the fruit produced from them will not be considered organic."
+        )
+    )
+
+    out = _ask(chat_session, "if my seeds were GMO will the fruit be organic", model)
+
+    assert out.text != REFUSAL, "an advisory check must not turn a grounded answer away"
+    assert out.citations
+    assistant = ChatMessage.objects.filter(role=ChatMessage.Role.ASSISTANT).latest("id")
+    assert assistant.refusal_reason == ""
+    assert assistant.review_notes, "the verdict was not recorded for a person to read"
+    assert "considered organic" in assistant.review_notes[0]
+
+
+def test_a_rule_shaped_answer_gets_no_review_note(chat_session, chat_corpus, fake_chat_model):
+    """The rule itself, quoted, is the answer D-3 wants — and it is not flagged."""
+    model = fake_chat_model(
+        reply=_reply(
+            answer=(
+                "The standard requires traceability for every batch of organic product. "
+                "The passages do not state whether a fruit grown from such seed would "
+                "be organic."
+            )
+        )
+    )
+
+    out = _ask(chat_session, "if my seeds were GMO will the fruit be organic", model)
+
+    assert out.text != REFUSAL, "this test would otherwise pass vacuously"
+    assistant = ChatMessage.objects.filter(role=ChatMessage.Role.ASSISTANT).latest("id")
+    assert assistant.review_notes == [], (assistant.refusal_checks, assistant.review_notes)
+
+
 def test_a_refusal_is_never_cached(chat_session, chat_corpus, fake_chat_model):
     """A genuine refusal is not cached either — one extra call beats a stale refusal."""
     model = fake_chat_model(reply=_reply(insufficient_context=True, citations=()))

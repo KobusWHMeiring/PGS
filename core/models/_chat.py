@@ -97,6 +97,67 @@ class ChatSession(models.Model):
         return self.public_uuid
 
 
+class EscalationReason(models.TextChoices):
+    """Why a turn was not answered. One value names one finding.
+
+    Module level, not nested in `EscalatedQuery`, because `ChatMessage` records it too
+    (a turn's own reason, without a join) and that class is defined first.
+
+    Two of these used to cover more than one thing, and the record could not attribute
+    the refusal it exists to attribute: `NO_CITATIONS` fired on four branches (no
+    citations, empty answer, over `MAX_ANSWER_CHARS`, all duplicates) and
+    `INSUFFICIENT_CONTEXT` on two (nothing retrieved, and the model judging the passages
+    unusable). Split 2026-10-27 — `CHAT_TRUTHFULNESS_PRD.md` §4.1 and §5.9.
+    """
+
+    #: Nothing was retrieved, so the model was never called. A retrieval/key or corpus
+    #: defect — not a coverage gap, which is what it used to imply.
+    NO_RETRIEVAL = "NO_RETRIEVAL", "Nothing retrieved"
+    INSUFFICIENT_CONTEXT = "INSUFFICIENT_CONTEXT", "Insufficient context"
+    NO_CITATIONS = "NO_CITATIONS", "No valid citations"
+    #: The model cited something the audit could not verify — a section that was not
+    #: retrieved, a quote that is not a substring, or an invented `sub_ref`. Kept
+    #: apart from `NO_CITATIONS` because they are different findings: one is a corpus
+    #: gap, the other is a contract violation (`testing_hazards.md` §1.31).
+    CITATION_AUDIT = "CITATION_AUDIT", "Citation audit refused"
+    #: The citations verified and the answer text was blank.
+    EMPTY_ANSWER = "EMPTY_ANSWER", "Empty answer"
+    #: The answer ran past `MAX_ANSWER_CHARS` and was refused rather than truncated.
+    ANSWER_TOO_LONG = "ANSWER_TOO_LONG", "Answer over the length cap"
+    USER_REQUESTED = "USER_REQUESTED", "User requested"
+
+
+#: What the visitor is told *after* the D17 refusal sentence, one line per reason.
+#:
+#: The refusal is fixed wording (D17), and on 2026-10-27 it was read exactly as written:
+#: a visitor concluded "the standard doesn't define GM" when the cause was a citation
+#: address, so the sentence was true about the assistant and misleading about the
+#: documents. D5 approved a second sentence naming the cause; these are those sentences,
+#: and the rule they follow is that **none of them claims the documents are silent unless
+#: that is what happened**. They live on the model because they are the reason enum's own
+#: copy and the thread renders them per message — not a service, not a template.
+REFUSAL_NOTES = {
+    EscalationReason.NO_RETRIEVAL: (
+        "Nothing in the published documents matched this question, so it was not answered."
+    ),
+    EscalationReason.INSUFFICIENT_CONTEXT: (
+        "Passages were found, but none of them answers this question as asked."
+    ),
+    EscalationReason.NO_CITATIONS: (
+        "An answer came back with no passage to check it against, so it was not shown."
+    ),
+    EscalationReason.CITATION_AUDIT: (
+        "Wording that may apply was found, but the citation could not be checked against "
+        "the document, so the answer was not shown."
+    ),
+    EscalationReason.EMPTY_ANSWER: "The answer came back empty, so there was nothing to show.",
+    EscalationReason.ANSWER_TOO_LONG: (
+        "The answer ran longer than the assistant can check, so it was not shown."
+    ),
+    EscalationReason.USER_REQUESTED: "",
+}
+
+
 class ChatMessage(models.Model):
     """One turn. Assistant messages carry their cost and their evidence."""
 
@@ -190,6 +251,27 @@ class ChatMessage(models.Model):
             "be the record of what an answer stood on."
         ),
     )
+    refusal_reason = models.CharField(
+        max_length=32,
+        choices=EscalationReason.choices,
+        blank=True,
+        default="",
+        help_text=(
+            "Why this turn refused; empty when it answered. Denormalised from the "
+            "escalation on purpose: the thread must not join per message, and the "
+            "refusal sweeps group by this field (`CHAT_TRUTHFULNESS_PRD.md` §4)."
+        ),
+    )
+    review_notes = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "Advisory findings a person should read — never a reason to refuse. The "
+            "first is a claim that states an outcome the verified quotes do not state "
+            "(`outcome_claim_warnings`), which the audit cannot see: it checks quotes, "
+            "not entailment (D-3)."
+        ),
+    )
 
     class Meta:
         # `created_at` alone is not a stable order: two rows written in the same
@@ -203,6 +285,15 @@ class ChatMessage(models.Model):
     def is_user(self) -> bool:
         return self.role == self.Role.USER
 
+    @property
+    def refusal_note(self) -> str:
+        """The sentence that follows the D17 refusal, or "" when this turn answered.
+
+        A property rather than a template conditional: the thread renders a turn, and the
+        mapping from reason to words belongs with the reason (D5, 2026-10-27).
+        """
+        return REFUSAL_NOTES.get(self.refusal_reason, "")
+
 
 class EscalatedQuery(models.Model):
     """A question the assistant would not answer, preserved for a human.
@@ -212,28 +303,11 @@ class EscalatedQuery(models.Model):
     the gap exists. `question` therefore stands on its own.
     """
 
-    class Reason(models.TextChoices):
-        #: Nothing was retrieved, so the model was never called. A different finding from
-        #: `INSUFFICIENT_CONTEXT`, and it used to share it: "the corpus matched nothing"
-        #: and "the model judged the passages unusable" send an operator to two different
-        #: places (a retrieval/key defect vs. a coverage gap).
-        NO_RETRIEVAL = "NO_RETRIEVAL", "Nothing retrieved"
-        INSUFFICIENT_CONTEXT = "INSUFFICIENT_CONTEXT", "Insufficient context"
-        NO_CITATIONS = "NO_CITATIONS", "No valid citations"
-        #: The model cited something the audit could not verify — a section that was not
-        #: retrieved, a quote that is not a substring, or an invented `sub_ref`. Kept
-        #: apart from `NO_CITATIONS` because they are different findings: one is a corpus
-        #: gap, the other is a contract violation (`testing_hazards.md` §1.31).
-        CITATION_AUDIT = "CITATION_AUDIT", "Citation audit refused"
-        #: The citations verified and the answer text was blank. `NO_CITATIONS` covered
-        #: this until 2026-10-27, which is a lie in the record: nothing was missing.
-        EMPTY_ANSWER = "EMPTY_ANSWER", "Empty answer"
-        #: The answer ran past `MAX_ANSWER_CHARS` and was refused rather than truncated.
-        #: `NO_CITATIONS` covered this too — the worst of the conflations, because it hid a
-        #: runaway generation behind a reason that reads like a thin corpus (16 of the 34
-        #: refusals in the dev database were `NO_CITATIONS`, covering four branches).
-        ANSWER_TOO_LONG = "ANSWER_TOO_LONG", "Answer over the length cap"
-        USER_REQUESTED = "USER_REQUESTED", "User requested"
+    #: The refusal reasons. The enum is module level because `ChatMessage` records the
+    #: same value; this name is the one the rest of the code reads. An alias, not a
+    #: re-declaration: assigning the members again would regenerate their labels and
+    #: produce an `AlterField` that changes nothing a person should see.
+    Reason = EscalationReason
 
     class Status(models.TextChoices):
         OPEN = "OPEN", "Open"

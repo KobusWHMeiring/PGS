@@ -159,6 +159,44 @@ def test_the_escalation_reasons_name_one_finding_each(standard_set):
     }
 
 
+def test_every_refusal_reason_has_a_sentence_that_does_not_blame_the_documents(
+    standard_set,
+):
+    """D5, 2026-10-27: the fixed sentence plus one that says what happened.
+
+    The refusal is fixed wording (D17) and, alone, it was read as a claim about the
+    corpus: a visitor concluded "the standard doesn't define GM" when the audit had
+    refused a correct answer for a citation address. So the second sentence may say the
+    documents matched nothing — but only when that is what happened.
+    """
+    from core.models import REFUSAL_NOTES, EscalatedQuery
+
+    for reason in EscalatedQuery.Reason.values:
+        note = REFUSAL_NOTES[reason]
+        if reason == EscalatedQuery.Reason.USER_REQUESTED:
+            assert note == "", "a visitor-initiated escalation needs no machine explanation"
+            continue
+        assert note, f"{reason} refuses without telling the visitor why"
+        if reason in {
+            EscalatedQuery.Reason.CITATION_AUDIT,
+            EscalatedQuery.Reason.NO_CITATIONS,
+            EscalatedQuery.Reason.EMPTY_ANSWER,
+            EscalatedQuery.Reason.ANSWER_TOO_LONG,
+        }:
+            assert "documents" not in note.lower(), (
+                f"{reason} blames the documents for a defect in the answer"
+            )
+
+
+def test_a_turn_without_a_refusal_has_no_note(standard_set):
+    session = ChatSession.objects.create(standard_set=standard_set)
+    answered = ChatMessage.objects.create(
+        session=session, role=ChatMessage.Role.ASSISTANT, content="An answer."
+    )
+
+    assert answered.refusal_note == ""
+
+
 def test_an_escalation_starts_open_and_records_the_question(standard_set):
     session = ChatSession.objects.create(standard_set=standard_set)
     message = ChatMessage.objects.create(

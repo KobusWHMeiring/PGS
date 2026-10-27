@@ -154,6 +154,14 @@
   color: rgb(var(--brand-ochreLight-rgb) / 0.92);
 }
 
+/* D5: the sentence that names why this turn refused, under the fixed refusal line.
+   Quieter than the sentence above it — it is an explanation, not the refusal — but the
+   same warm family, so a citation that could not be checked never reads as an outage. */
+.chat__bubble__note {
+  color: rgb(var(--brand-cream-rgb) / 0.72);
+  font-style: italic;
+}
+
 /* The waiting state. Muted, never an error and never a spinner pretending to be progress:
    the row says what is happening, and after 8 s the script replaces the label with a
    sentence that admits how long a long answer takes. The dots are decorative — a screen

@@ -1,12 +1,13 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-27 11:31
+> Generated: 2026-10-27 11:48
 
 ## Ready (up next)
 
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
 - **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
+- **The Concordance — Implementation Plan** - `Refinement\CONCORDANCE_PLAN.md` - Status: Ready — every decision closed (`PGS_PLATFORM_SPEC.md` §18.3 **D68**, 2026-10-27).
 
 ## In Progress
 
@@ -24,7 +25,7 @@
 
 ## Refinement
 
-- **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2 and 5.3 landed the same day** (gate green at 903): the definition question and the silica question both answer now, and the two GM-outcome turns are unchanged on purpose, because they are a copy decision. Remaining: D-2 (now smaller), D-3 (claim scope), D-4 (G3's alias table), D-5 (refusal copy), 5.4–5.8.
+- **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7 and 5.9 landed the same day** (gate green at 915): every refusal in that conversation now answers, and the two GM-outcome turns state the rule instead of the verdict. Remaining: D-2 (smaller than it was), D-4 (G3's alias table), 5.4, 5.6 and 5.8.
 - **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `Refinement\CONCORDANCE_PRD.md` - Status: Refinement — **the questions in §7 are decided** (product owner, 2026-10-27; recorded as
 - **PRD: The escalation answer path — a refusal that can reach a person** - `Refinement\ESCALATION_ANSWER_PATH_PRD.md` - Status: Refinement — design needed, no code written
 - **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
@@ -128,4 +129,4 @@ points at them instead of pretending they are imminent (D60).
 
 ## Drift (suggested moves)
 
-_none_
+- `Refinement\CONCORDANCE_PLAN.md` -> `ready\CONCORDANCE_PLAN.md`

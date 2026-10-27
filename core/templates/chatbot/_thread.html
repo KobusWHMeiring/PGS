@@ -25,8 +25,17 @@ that cannot be checked.
     </div>
   {% else %}
     <div class="chat__row">
-      <div class="chat__bubble {% if message.content == refusal %}chat__bubble--refusal{% else %}chat__bubble--answer{% endif %}">
+      <div class="chat__bubble {% if message.refusal_reason %}chat__bubble--refusal{% else %}chat__bubble--answer{% endif %}">
         <p>{{ message.content|linebreaksbr }}</p>
+
+        {% comment %} D5 (2026-10-27): the D17 sentence is fixed, and on its own it was read
+           as a claim about the documents — a visitor concluded "the standard doesn't define
+           GM" when the cause was a citation address. The second sentence names the cause.
+           Read from `refusal_reason`, not by comparing the text, so the copy can change
+           without the styling and the contact link silently disappearing with it. {% endcomment %}
+        {% if message.refusal_note %}
+          <p class="chat__bubble__note">{{ message.refusal_note }}</p>
+        {% endif %}
 
         {% if answer and message.pk == answer.message_id and answer.citations %}
           <div class="cite-row">
@@ -55,7 +64,7 @@ that cannot be checked.
           </div>
         {% endif %}
 
-        {% if message.content == refusal %}
+        {% if message.refusal_reason %}
           <p class="chat__followup">
             <a class="chat__link" href="{% url 'core:contact' %}">→ Send this question to the administrator</a>
           </p>

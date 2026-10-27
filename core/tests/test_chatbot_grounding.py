@@ -252,6 +252,43 @@ def test_no_retrieved_chunks_means_the_model_is_never_called(
 # --- A grounded answer ------------------------------------------------------
 
 
+def test_a_refusal_records_its_reason_on_the_turn(chat_session, chat_corpus, fake_chat_model):
+    """The turn carries the reason, so the thread can explain itself without a join.
+
+    The template reads `refusal_reason`, not the text: comparing the stored sentence was
+    how a copy change could silently remove the contact link and the warm styling.
+    """
+    from core.services._chatbot import REFUSAL, ModelReply
+
+    model = fake_chat_model(
+        reply=ModelReply(
+            answer="An answer the audit will refuse.",
+            citations=(
+                {"section_ref": "S99.9", "quote": "a sentence that is not in the chunk"},
+            ),
+            model="fake-model",
+        )
+    )
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert out.text == REFUSAL
+    assistant = ChatMessage.objects.filter(role=ChatMessage.Role.ASSISTANT).latest("id")
+    assert assistant.refusal_reason == "CITATION_AUDIT"
+    assert assistant.content == REFUSAL, "the fixed sentence is stored, unchanged"
+    assert assistant.refusal_note, "the turn can explain itself"
+
+
+def test_a_grounded_answer_stores_no_refusal_reason(chat_session, chat_corpus, fake_chat_model):
+    model = fake_chat_model(reply=_grounded_reply())
+
+    _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assistant = ChatMessage.objects.filter(role=ChatMessage.Role.ASSISTANT).latest("id")
+    assert assistant.refusal_reason == ""
+    assert assistant.refusal_note == ""
+
+
 def test_a_grounded_answer_is_returned_with_its_citation(chat_session, chat_corpus, fake_chat_model):
     model = fake_chat_model(reply=_grounded_reply())
 
@@ -701,6 +738,24 @@ def test_a_passage_number_is_not_part_of_its_address(chat_corpus, chat_standard_
     assert body[0].startswith("LOCATOR: "), body[0]
     assert "not part of any address" in SYSTEM_PROMPT, (
         "the rule the layout depends on is not stated to the model"
+    )
+
+
+def test_the_system_prompt_forbids_deciding_an_outcome():
+    """Rule 4b (D-3, 2026-10-27): state the rule, do not pronounce on organic status.
+
+    Two accepted answers told a visitor their fruit and their seeds "would not be
+    considered organic" on the strength of one clause prohibiting the *use* of GE seed.
+    The audit cannot see it — it checks quotes, not entailment — and the OPP reserves
+    certification decision-making to the administrator and the committee.
+    """
+    lowered = SYSTEM_PROMPT.lower()
+    assert "4b. do not decide an outcome" in lowered
+    assert "do not state the outcome" in lowered
+    assert "belongs to the certification body" in lowered
+    assert 'leading "no" or "yes"' in lowered, (
+        "a bare verdict word is how the rule was dodged: measured 2 runs of 2 before this "
+        "clause, 3 runs of 3 opened with the rule after it"
     )
 
 
