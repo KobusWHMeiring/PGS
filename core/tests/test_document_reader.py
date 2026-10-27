@@ -557,6 +557,12 @@ def curated_rows(db):
         source_file=CORPUS_SOURCE,
         sha256="c" * 64,
         section_scheme="saoso",
+        toc=[
+            {"part": "A", "kind": "SECTION", "label": "1", "title": "Introduction", "printed_page": 4},
+            {"part": "B", "kind": "SECTION", "label": "4", "title": "Crop Production", "printed_page": 35},
+            {"part": "B", "kind": "SECTION", "label": "6", "title": "Wild Harvesting", "printed_page": 52},
+            {"part": "B", "kind": "SECTION", "label": "22", "title": "Labelling", "printed_page": 65},
+        ],
     )
     for row_chunk in chunks_for_rows("Appendix 2"):
         DocumentChunk.objects.create(
@@ -574,7 +580,45 @@ def curated_rows(db):
         page=41,
         text="Animals must have access to pasture during the grazing season.",
     )
-    document.chunk_count = 31
+    # The branches the references point at, and the two passages that print references.
+    for section_ref, page, text, heading in (
+        ("S4.1", 35, "Crop rotation is required.", "4. CROP PRODUCTION"),
+        (
+            "S6.1",
+            52,
+            "Harvesting is permitted; see Section 4.6.2 for the rule on wild plants.",
+            "6. WILD HARVESTING",
+        ),
+        (
+            "S22.1.7",
+            65,
+            "Labels must follow Section A – 2.3, Appendix 4 for inputs, and Appendix 6 for "
+            "housing, and see Appendix 9 for what this standard does not say.",
+            "22. LABELLING",
+        ),
+        (
+            "Appendix 6a",
+            76,
+            "Minimum surface areas for laying hens indoors.",
+            "Minimum Surface Areas for Laying Hens Indoors",
+        ),
+        (
+            "Appendix 6b",
+            76,
+            "Minimum surface areas for livestock housing.",
+            "Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing",
+        ),
+        ("Appendix 4. Table 1", 80, "Permitted products.", "Appendix 4. Table 1"),
+        ("Appendix 4. Table 2", 80, "Restricted products.", "Appendix 4. Table 2"),
+    ):
+        DocumentChunk.objects.create(
+            document=document,
+            section_ref=section_ref,
+            heading_path=heading,
+            page=page,
+            text=text,
+        )
+    document.chunk_count = 38
     document.save(update_fields=["chunk_count"])
 
     PublicDocument.objects.create(
@@ -659,3 +703,85 @@ def test_the_table_costs_no_extra_query(curated_rows, django_assert_num_queries)
     """Three, the same as before this slice: the structure is derived from data already in hand."""
     with django_assert_num_queries(3):
         reader_for(curated_rows, "", "appendix-2")
+
+# --- References: the page makes the document's own cross-references clickable -
+
+
+def test_a_reference_to_an_appendix_is_a_link_in_a_new_tab(client, curated_rows):
+    """The measured sentence: `See Section B – Appendix 6 Minimum Surface Areas Indoors and…`.
+
+    `Section B –` is followed by a word, not a number, so it is not a section reference and carries
+    no link; the appendix reference is the target, resolved by the words the paper prints.
+    """
+    body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
+    anchor = (
+        '<a class="passage__ref" href="?section=appendix-6b#appendix-6b" target="_blank" '
+        'rel="noopener">Appendix 6 Minimum Surface Areas Indoors and Outdoors'
+    )
+
+    assert anchor in body
+    assert body.count("Appendix 6 Minimum Surface Areas Indoors and Outdoors") == 1
+
+
+def test_the_part_a_reference_explains_itself_on_the_page(client, curated_rows):
+    """`Section A – 2.3` is Part A, which the corpus does not hold: never Section 2."""
+    reader = reader_for(curated_rows, "", "s22-1-7")
+    body = client.get(f"/documents/saoso-curated/read/?section={reader.selected.anchor}").content.decode()
+    part_a = next(
+        segment
+        for passage in reader.passages
+        for block in passage.blocks
+        for segment in getattr(block, "segments", ())
+        if segment.text == "Section A – 2.3"
+    )
+
+    assert part_a.branch == ""
+    assert part_a.fragment == "not-in-corpus"
+    assert 'href="#not-in-corpus"' in body
+    assert 'id="not-in-corpus"' in body
+    assert "not in this corpus" in part_a.title
+    # The note is outside the phone disclosure, or a fragment inside it cannot be scrolled to.
+    assert body.index('id="not-in-corpus"') > body.index("</details>")
+
+
+def test_every_reference_announces_that_it_opens_a_new_tab(client, curated_rows):
+    anchor = reader_for(curated_rows, "", "s22-1-7").selected.anchor
+    body = client.get(f"/documents/saoso-curated/read/?section={anchor}").content.decode()
+    anchors = body.count('class="passage__ref"')
+
+    assert anchors >= 1
+    assert body.count("(opens in a new tab)") == anchors
+
+
+def test_an_undecidable_appendix_names_its_parts_without_becoming_a_link(client, curated_rows):
+    """Bare `Appendix 4` has two tables: the tooltip says which, and the words stay text."""
+    anchor = reader_for(curated_rows, "", "s22-1-7").selected.anchor
+    body = client.get(f"/documents/saoso-curated/read/?section={anchor}").content.decode()
+
+    assert '<span class="passage__ref-note" title="Appendix 4 is printed in parts:' in body
+    assert "Table 1" in body and "Table 2" in body
+
+
+def test_a_reference_to_a_branch_the_document_has_not_got_stays_text(client, curated_rows):
+    """`Appendix 9` is what the BPP and the landscape print; this document has no such branch."""
+    anchor = reader_for(curated_rows, "", "s22-1-7").selected.anchor
+    body = client.get(f"/documents/saoso-curated/read/?section={anchor}").content.decode()
+
+    assert "Appendix 9" in body
+    assert "?section=appendix-9" not in body
+
+
+def test_a_bare_section_resolves_inside_the_part_it_is_printed_in(client, curated_rows):
+    anchor = reader_for(curated_rows, "", "s6-1").selected.anchor
+    body = client.get(f"/documents/saoso-curated/read/?section={anchor}").content.decode()
+
+    assert (
+        '<a class="passage__ref" href="?section=s4-1#s4-1" target="_blank" rel="noopener">'
+        "Section 4.6.2" in body
+    )
+
+
+def test_the_references_cost_no_extra_query(curated_rows, django_assert_num_queries):
+    """Three: the index is built from the tree the page already has."""
+    with django_assert_num_queries(3):
+        reader_for(curated_rows, "", "s22-1-7")
