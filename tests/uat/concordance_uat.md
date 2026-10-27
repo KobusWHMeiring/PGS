@@ -53,6 +53,13 @@ corpus does not hold?**
 | `?section=` accepts a branch anchor, a passage anchor, and an unknown value | `core/tests/test_document_reader.py` |
 | Only the selected branch is rendered; a closed branch is not in the page | `core/tests/test_document_reader.py` |
 | The citation says "View this line", opens a new tab, and announces it | `core/tests/test_document_reader.py` |
+| Appendix 2's 19 empty conditions print the muted label, and the legend is one sentence | `knowledge/tests/test_table_sections.py`, `core/tests/test_document_reader.py` |
+| Every row reads as an entry: a substance heading, then its condition paragraphs | `knowledge/tests/test_row_blocks.py`, `core/tests/test_document_reader.py` |
+| The seven dividers sit above the rows the paper prints them above | `knowledge/tests/test_table_sections.py` |
+| `Section A – 2.3` resolves to the missing-sections note and never to `S2`; bare `Appendix 4` and bare `Appendix 6` stay text | `knowledge/tests/test_references.py`, `core/tests/test_document_reader.py` |
+| A reference is an `<a target="_blank" rel="noopener">` whose `href` is a branch in the tree, and the BPP and landscape render none | `core/tests/test_document_reader.py` |
+| One locator per run (366 → 311), and every passage keeps its `id` | `knowledge/tests/test_reading.py`, `core/tests/test_document_reader.py` |
+| A definition link lands on the definition's own `id`, once per term per passage | `knowledge/tests/test_glossary.py` |
 | Per-branch `<title>` and `rel=canonical` | `core/tests/test_document_reader.py` |
 | `<title>`/copy carries no forbidden claim term; the reader stays exempt for its recorded reason | `core/tests/test_claim_discipline.py` |
 | Touch targets ≥44 px; the tree is not a horizontal scroll at 390 px | `core/tests/test_public.py`, `tests/e2e` |
@@ -177,6 +184,72 @@ are reflowed.
 The markers are the browser's list markers, not characters added to the text — the corpus prints a
 bare `a` — and whether that reads as honest is a human call. A reader who has the PDF open should be
 able to follow the same clause in both without losing their place.
+
+---
+
+## Scenario 9 — The appendix reads as the paper's table
+
+**Setup:** open `/documents/saoso-standard-v2.1/read/?section=appendix-2`. Have the PDF open at
+printed p. 76 beside it.
+
+**Action:** read the branch top to bottom, as a reader looking for whether a substance may be used.
+
+**Expected:** a caption naming the paper's two columns, one sentence saying what the appendix is, then
+30 entries — each a substance on its own line with its condition below it. Four part headings
+(`I. Plant and animal origin` … `IV. Others`) and three `South African specific` qualifiers break the
+list where the paper breaks it, so the **Farmyard manure** row that appears twice does so under
+different conditions rather than as a duplicate. The 19 rows whose condition cell the paper leaves
+empty carry a muted `no condition printed` rather than silence, and no row reads as permission.
+
+**Judgement:** *Does a substance read as an entry with a condition attached to it — the thing a
+farmer looks up — or as a list of standalone inputs?* And specifically: *does a row with no condition
+read as the paper declining to permit something, or does it read as a blank the site forgot to
+fill?* If the second, the label or the legend is wrong, not the data.
+
+---
+
+## Scenario 10 — A reference goes somewhere
+
+**Setup:** four open pages — Appendix 2, `?section=s5` (5.1.7), `?section=s22` (22.1.7) and
+`?section=s6` (6.1) — and the PDF beside them.
+
+**Action:** follow, each in a new tab:
+
+1. from Appendix 2, `Appendix 6 Minimum Surface Areas Indoors and Outdoors` in the seaweed row's
+   sentence;
+2. from 5.1.7, `Appendix 6b` in `(defined in Section B Appendix 6b)`;
+3. from 22.1.7, `Section A – 2.3`;
+4. from 6.1, `Section 4.6.2`.
+
+**Expected:** (1) and (2) open Appendix 6b with the cited appendix in the tree; (4) opens Section 4
+with the citing passage in view; (3) **does not** open a section at all — it scrolls to the page's own
+note that Section A is printed and not in the corpus, and says so in its tooltip. The page you came
+from stays open behind each new tab.
+
+**Judgement:** *Does each link land on what the sentence meant — and where it cannot, does it say so
+rather than guessing?* The Part A case is the one to judge hardest: a reader who lands on *Organic
+Ecosystems* (Section 2) instead of an explanation has been told something false by a link. Then:
+*are there so many links that the clause is now hard to read?*
+
+---
+
+## Scenario 11 — A definition is a click away
+
+**Setup:** `?section=s22` at 22.1.7, which uses `ACB`; and `?section=s4` at 4.2, which uses
+`Conversion Period`. The glossary (`?section=s1`) open in another tab.
+
+**Action:** follow `ACB` from 22.1.7, then `Conversion Period` from 4.2; then scroll the glossary and
+read the definitions of `ACB`, `Habitat` and `Extensive Farming` in place.
+
+**Expected:** each term opens the glossary in a new tab, **at the definition itself** — not at the top
+of the branch — with the definition visible without scrolling. Within the glossary, terms are not
+linked to themselves. Elsewhere, each term is linked once per passage at most, not on every
+occurrence.
+
+**Judgement:** *Does following a term answer the question the reader had — "what does this word mean
+here?" — without losing the clause they were reading?* And: *does the clause still read as a clause
+with the links in it, or is it now link-studded?* This is the judgement that decides whether the
+feature stays.
 
 ---
 
