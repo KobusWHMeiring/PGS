@@ -198,3 +198,54 @@ def test_no_previous_passage_leaves_the_text_alone():
 
     assert strip_overlap(None, "a  One;") == "a  One;"
     assert strip_overlap("a  One;", "b  Two;") == "b  Two;"
+
+
+# --- The locator: once per run -------------------------------------------------
+
+
+def test_one_locator_per_run():
+    """A branch's locator line prints where it changes, not above all 52 clauses of `S5`.
+
+    The run key is the locator **and its printed page**: `S5.1.3` continuing onto the next page is a
+    new line to a reader, because the page number is part of what the line says.
+    """
+    from knowledge.reading import printed_locators
+
+    assert printed_locators([]) == []
+    assert printed_locators([("a", 1)]) == [True]
+    assert printed_locators([("a", 1), ("a", 1), ("a", 1)]) == [True, False, False]
+    assert printed_locators([("a", 1), ("a", 1), ("b", 1), ("b", 1)]) == [True, False, True, False]
+    assert printed_locators([("a", 1), ("a", 2)]) == [True, True]
+    assert len(printed_locators([("x", 41)] * 52)) == 52
+    assert sum(printed_locators([("x", 41)] * 52)) == 1
+
+
+def test_the_printed_locator_is_the_documents_own_string():
+    """`section_ref`, else `anchor`, else `heading_path`, else `p<page>` — one expression, one place.
+
+    The probe and the reader must not each hold a copy of this: a copy is how `probe_chat` came to
+    measure a retrieval limit the product did not have (§21, G8).
+    """
+    from knowledge.reading import passage_locator
+
+    # Unsaved instances: the model's own constraint forbids a blank `section_ref` in the store, so
+    # the later fallbacks are defensive — and this function must still answer for them.
+    document = StandardDocument(
+        standard_set=StandardSet(code="x"),
+        kind=StandardDocument.Kind.STANDARD,
+        issuing_body="SAOSO",
+        title="T",
+        version="1",
+        source_file="pgs_docs/t.pdf",
+        sha256="d" * 64,
+        section_scheme="saoso",
+    )
+    cases = [
+        (dict(section_ref="S5.1.3", anchor="", heading_path="5. ANIMAL", page=41), "S5.1.3"),
+        (dict(section_ref="", anchor="a-1", heading_path="5. ANIMAL", page=41), "a-1"),
+        (dict(section_ref="", anchor="", heading_path="5. ANIMAL", page=41), "5. ANIMAL"),
+        (dict(section_ref="", anchor="", heading_path="", page=7), "p7"),
+    ]
+    for fields, expected in cases:
+        chunk = DocumentChunk(document=document, text="…", **fields)
+        assert passage_locator(chunk) == expected

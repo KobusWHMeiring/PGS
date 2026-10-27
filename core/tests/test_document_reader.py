@@ -785,3 +785,39 @@ def test_the_references_cost_no_extra_query(curated_rows, django_assert_num_quer
     """Three: the index is built from the tree the page already has."""
     with django_assert_num_queries(3):
         reader_for(curated_rows, "", "s22-1-7")
+
+
+# --- The locator: printed once per run ----------------------------------------
+
+
+def test_the_locator_prints_once_for_a_branch_that_shares_one(client, curated_rows):
+    """Thirty rows share `Appendix 2 · printed p. 76`; the reader prints it three times, not thirty.
+
+    Every passage keeps its `id`, so a citation still lands on the row it quotes.
+    """
+    reader = reader_for(curated_rows, "", "appendix-2")
+    body = reader.passages
+
+    assert len(body) == 30
+    assert sum(1 for passage in body if passage.show_locator) == 3
+    assert [passage.show_locator for passage in body[:2]] == [True, False]
+
+    rendered = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
+    assert rendered.count('class="passage__locator"') == 3
+    assert all(f'id="{passage.anchor}"' in rendered for passage in body)
+
+
+def test_a_locator_prints_again_when_the_printed_page_changes(client, curated_rows):
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S5.1.3",
+        heading_path="5. ANIMAL HUSBANDRY",
+        page=42,
+        text="A second clause on the next printed page.",
+    )
+
+    reader = reader_for(curated_rows, "", "s5-1-3")
+
+    assert [passage.show_locator for passage in reader.passages] == [True, True]
+    assert reader.passages[1].locator == reader.passages[0].locator  # same reference, new page
