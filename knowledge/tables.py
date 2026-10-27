@@ -284,10 +284,116 @@ APPENDIX_2_ROWS: tuple[TableRow, ...] = (
 #: reviewed table adds a key, and the ingestion code does not change.
 TABLE_ROWS: dict[str, tuple[TableRow, ...]] = {"Appendix 2": APPENDIX_2_ROWS}
 
+#: What the reader prints where the paper's condition cell is empty (D70.4). A fragment, not a
+#: sentence: it sits in 19 rows, and nineteen sentences would be noise. Silence is not permission —
+#: the legend says so once, above the table.
+NO_CONDITION_LABEL = "no condition printed"
+
+
+@dataclass(frozen=True)
+class TableDivider:
+    """A printed heading *inside* the table: a part, or a centred qualifier.
+
+    `before_row` is an index into `TABLE_ROWS[section_ref]`, because the divider is attached to the
+    row it precedes — that is where the paper prints it, and a citation that lands mid-table must
+    see the divider that governs the row it landed on, never the one above it.
+    """
+
+    before_row: int
+    text: str
+    kind: str  # "part" | "qualifier"
+
+
+@dataclass(frozen=True)
+class TableSection:
+    """What the page prints once, above the rows: the columns, the claim, the dividers.
+
+    The words are reviewed data for the same reason the cells are: the caption quotes the paper, and
+    the legend is the group's own sentence, so it is swept by the claim-discipline test rather than
+    inferred from the rows.
+    """
+
+    columns: tuple[str, str]
+    legend: str
+    dividers: tuple[TableDivider, ...]
+
+
+@dataclass(frozen=True)
+class TableStructure:
+    """A curated section's structure, aligned to its rows — or nothing at all."""
+
+    section: TableSection
+    dividers: tuple[tuple[TableDivider, ...], ...]
+    labels: tuple[str, ...]
+
+
+#: Section reference -> printed structure. Reviewed 2026-10-27 against the `-table` extraction of
+#: printed pp. 76–78; `knowledge/tests/test_table_sections.py` proves every divider is still the
+#: line immediately above the row it names.
+TABLE_SECTIONS: dict[str, TableSection] = {
+    "Appendix 2": TableSection(
+        columns=(
+            "Substances — description, compositional requirements",
+            "Conditions for use",
+        ),
+        legend=(
+            "The standard prints this appendix as a table: each entry is a substance and the "
+            "condition printed beside it. Where it prints no condition, nothing is permitted by "
+            "its silence."
+        ),
+        dividers=(
+            TableDivider(0, "I. PLANT AND ANIMAL ORIGIN", "part"),
+            TableDivider(1, "South African specific", "qualifier"),
+            TableDivider(3, "South African specific", "qualifier"),
+            TableDivider(14, "South African specific", "qualifier"),
+            TableDivider(15, "II. MINERAL ORIGIN", "part"),
+            TableDivider(26, "III. MICROBIOLOGICAL", "part"),
+            TableDivider(28, "IV. OTHERS", "part"),
+        ),
+    ),
+}
+
+
+def _squash(text: str) -> str:
+    return " ".join((text or "").split())
+
 
 def rows_for(section_ref: str | None) -> tuple[TableRow, ...]:
     """In: a section reference. Out: its reviewed rows, or an empty tuple."""
     return TABLE_ROWS.get(section_ref or "", ())
+
+
+def section_for(section_ref: str | None) -> TableSection | None:
+    """In: a section reference. Out: its reviewed structure, or None. Never rebuilt per call."""
+    return TABLE_SECTIONS.get(section_ref or "")
+
+
+def structure_for(section_ref: str | None, texts: tuple[str, ...]) -> TableStructure | None:
+    """In: a section reference and the texts about to be rendered. Out: the structure, or None.
+
+    In:  `texts` — the stored chunk text of each passage, in printed order.
+    Out: the section, its dividers aligned per row, and one label per row; **None** unless the
+         section has reviewed rows, the count matches, and every text is its row's text
+         (whitespace-normalised).
+    Side effects: none.
+    Fails: never. A corpus that disagrees with the reviewed data renders the plain page it renders
+        today, because mislabelled rows would be worse than no structure.
+    """
+    section = section_for(section_ref)
+    rows = rows_for(section_ref)
+    if section is None or not rows or len(rows) != len(texts):
+        return None
+    if any(_squash(row.text) != _squash(text) for row, text in zip(rows, texts)):
+        return None
+
+    per_row: list[list[TableDivider]] = [[] for _ in rows]
+    for divider in section.dividers:
+        per_row[divider.before_row].append(divider)
+    return TableStructure(
+        section=section,
+        dividers=tuple(tuple(entry) for entry in per_row),
+        labels=tuple(NO_CONDITION_LABEL if not row.condition else "" for row in rows),
+    )
 
 
 def chunks_for_rows(section_ref: str) -> list[Chunk]:
@@ -298,8 +404,16 @@ def chunks_for_rows(section_ref: str) -> list[Chunk]:
 __all__ = [
     "APPENDIX_2_ROWS",
     "FIRST_PAGE",
+    "NO_CONDITION_LABEL",
+    "TABLE_BANDS",
     "TABLE_ROWS",
+    "TABLE_SECTIONS",
+    "TableDivider",
     "TableRow",
+    "TableSection",
+    "TableStructure",
     "chunks_for_rows",
     "rows_for",
+    "section_for",
+    "structure_for",
 ]
