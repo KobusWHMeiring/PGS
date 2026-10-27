@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<!-- DECISION ARTIFACT (not a production template) | Outeniqua PGS — the concordance
+     Companion to product/backlog/Refinement/CONCORDANCE_PRD.md §7 and
+     _scratch/concordance/spike.patch. Self-contained: no CDN, no build step, no network.
+     Answers autosave to localStorage; answers copy out as markdown.
+     Every number in Part 1 was measured on the local corpus on 2026-10-27 by
+     _scratch/concordance/verify_branches.py and the one-liners quoted beside it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — The concordance: eight questions</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --stop:            #8a2f2f;
+    --stop-soft:       #f9ecec;
+    --radius-sm:       9px;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px 170px; }
+  p, li { font-size: 14.5px; }
+  code, kbd { font-family: var(--mono); font-size: 12.5px; }
+  p code, li code, td code { background: var(--surface-low); padding: 1px 5px; border-radius: 5px; }
+  a { color: var(--accent); }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff; padding: 44px 20px 38px; margin-bottom: 26px;
+  }
+  header.hero .inner { max-width: 960px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.18; letter-spacing: -.01em; }
+  header.hero .question {
+    margin: 0; max-width: 66ch; font-size: 16px; opacity: .95;
+  }
+  header.hero .question b { font-weight: 650; }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .82;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code { font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px; }
+
+  /* ---------- blocks ---------- */
+  .panel {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 24px;
+  }
+  .panel h2 { margin: 0 0 8px; font-size: 17px; }
+  .panel > p:last-child { margin-bottom: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 40px 0 12px; }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -4px 0 16px; max-width: 72ch; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  .scroll table { min-width: 520px; }
+
+  .ev {
+    font-family: var(--mono); font-size: 12px; line-height: 1.5;
+    background: #1c2620; color: #e6eee8; padding: 13px 15px; border-radius: var(--radius-lg);
+    overflow-x: auto; margin: 12px 0; white-space: pre;
+  }
+  .ev .c { color: #9fb8a8; }
+  .ev .r { color: #f0c98a; }
+  .diagram {
+    font-family: var(--mono); font-size: 12px; line-height: 1.55;
+    background: var(--surface-low); color: var(--text);
+    padding: 14px 16px; border-radius: var(--radius-lg); overflow-x: auto;
+    margin: 12px 0; white-space: pre;
+  }
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 6px; vertical-align: 1px;
+  }
+  .badge.verified { background: var(--accent-soft); color: var(--accent); }
+  .badge.inferred { background: var(--warn-soft); color: var(--warn); }
+
+  .callout { border-left: 3px solid var(--accent-line); background: var(--surface-low); padding: 12px 15px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 12px 0; }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout.stop { border-left-color: var(--stop); background: var(--stop-soft); }
+  .callout p { margin: 0 0 8px; }
+  .callout p:last-child { margin: 0; }
+  .callout .t { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px; color: var(--muted); }
+
+  /* ---------- question cards ---------- */
+  .card {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 22px 24px 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .card.answered { box-shadow: var(--shadow), inset 3px 0 0 0 var(--accent); }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .tag {
+    flex: none; font-family: var(--mono); font-size: 12px; font-weight: 700;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 9px; border-radius: 8px; margin-top: 2px; white-space: nowrap;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 17px; line-height: 1.32; letter-spacing: -.005em; }
+  .card .why { margin: 0 0 4px; font-size: 14.5px; color: var(--muted); }
+  .card h4 {
+    font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 6px; font-weight: 700;
+  }
+  .card ul { margin: 6px 0 0; padding-left: 20px; }
+  .card li { margin-bottom: 5px; }
+
+  .rec { margin: 16px 0 0; background: var(--surface-low); border-radius: var(--radius-lg); padding: 13px 15px; }
+  .rec .label { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--accent); display: block; margin-bottom: 5px; }
+  .rec p { margin: 0; font-size: 14.5px; }
+
+  fieldset { border: none; margin: 16px 0 0; padding: 0; }
+  legend { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0; margin-bottom: 8px; }
+  .opt {
+    display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+    padding: 9px 12px; border-radius: var(--radius-sm); margin-bottom: 6px;
+    background: var(--surface-low); border: 1px solid transparent;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt:has(input:checked) { background: var(--accent-soft); border-color: var(--accent-line); }
+  .opt input { margin: 3px 0 0; flex: none; }
+  .opt .k { font-weight: 700; font-family: var(--mono); font-size: 12px; color: var(--accent); flex: none; }
+  .opt .v { font-size: 14px; }
+  .opt .v span { display: block; color: var(--muted); font-size: 13px; }
+
+  textarea {
+    width: 100%; margin-top: 12px; min-height: 74px; resize: vertical;
+    font-family: var(--font); font-size: 15px; line-height: 1.5;
+    color: var(--text); background: var(--surface-low);
+    border: 1px solid transparent; border-radius: var(--radius-lg); padding: 12px 14px;
+  }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  button {
+    font-family: var(--font); font-size: 13.5px; font-weight: 600; cursor: pointer;
+    border-radius: 10px; padding: 8px 14px; border: 1px solid transparent;
+    background: var(--surface-low); color: var(--text); transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+  button.tiny { font-size: 12.5px; padding: 6px 11px; }
+  .card-foot { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .card-foot .hint { font-size: 12.5px; color: var(--muted); }
+
+  /* ---------- sticky bar ---------- */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.93); backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky); padding: 11px 20px;
+  }
+  .bar .inner { max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .progress { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .saved.show { opacity: 1; }
+
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0;
+    width: min(840px, 94vw); box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 360px; max-height: 52vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high);
+  }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, .card-foot, dialog, button { display: none !important; }
+    .card, .panel { box-shadow: none; break-inside: avoid; border: 1px solid #ccc; }
+    .wrap { padding-bottom: 0; }
+    .ev, .diagram { background: #f2f2f2; color: #000; }
+    fieldset { display: none; }
+    textarea { background: #fff; border: 1px solid #ccc; min-height: 48px; }
+  }
+  @media (max-width: 620px) {
+    header.hero h1 { font-size: 23px; }
+    .wrap { padding: 0 14px 180px; }
+    .card, .panel { padding: 18px 16px; }
+    .card-head { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; decision artifact</p>
+    <h1>The concordance &mdash; eight questions before it is built</h1>
+    <p class="question">
+      Should <b>&#47;documents/&lt;code&gt;/read/</b> stop being a page of all the text and become
+      <b>the document's own structure as its navigation</b> &mdash; and, if so, in exactly what shape?
+    </p>
+    <div class="meta">
+      <span>Companion to <code>CONCORDANCE_PRD.md</code> &sect;7</span>
+      <span>Evidence from <code>_scratch/concordance/spike.patch</code></span>
+      <span>Measured 2026-10-27 &middot; corpus 366 passages</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>How to read this</h2>
+    <p>This is a decision document, not a proposal. Part 1 is what I could <em>check</em>, marked as
+      such. Parts 3&ndash;6 weigh options with their strongest case against them, including the
+      principles that point the other way. Part 7 is my recommendation. Part 8 is where you decide
+      &mdash; and where your answer leaves the page.</p>
+    <ul>
+      <li><b>Answers autosave in this browser</b> as you type. Nothing is sent anywhere; the page
+        works with no network.</li>
+      <li>Each question has a <b>Copy this answer</b> button, and the bar at the bottom has
+        <b>Copy answers</b> for all eight as markdown.</li>
+      <li>A one-word answer is fine. An answer that overrides me with a reason is better &mdash;
+        every option below has a real cost, and I would rather have your call than my guess.</li>
+      <li>Two of the eight questions are <b>not</b> in the PRD. Q8 is a defect I found while
+        measuring, and it decides whether &ldquo;View this line&rdquo; is true or decorative.</li>
+    </ul>
+  </div>
+
+  <!-- ================================================================ PART 1 -->
+  <div class="section-head">
+    <h2>Part 1 &mdash; What is actually true</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Nothing in this part is an opinion. Where a claim is a reading of a file
+    rather than a measurement, it says so.</p>
+
+  <div class="panel">
+    <h2>1.1 &nbsp;What already ships</h2>
+    <p><span class="badge verified">verified</span> <code>&#47;documents/&lt;code&gt;/read/</code> has been
+      live since 2026-10-27: the ingested text of one document in document order, a flat contents
+      list of every passage, in-document full-text search, one anchor per section reference,
+      <code>:target</code> highlighting, and a <code>?section=</code> parameter that can preselect a
+      passage. <code>SPEC &sect;18.3 D67</code>, <code>ASK_SURFACE_PRD &sect;4a</code>,
+      <code>core/templates/public/document_reader.html</code>, <code>knowledge/reading.py</code>.</p>
+    <p>So the change under discussion is <b>the shape of an existing surface</b>, not a new surface.
+      The spike exists to price that change; it was reverted, and lives as a patch.</p>
+  </div>
+
+  <div class="panel">
+    <h2>1.2 &nbsp;The corpus, measured today</h2>
+    <p><span class="badge verified">verified</span> Re-derived from the live database
+      (<code>_scratch/concordance/verify_branches.py</code>, a copy of the spike's derivation, run
+      read-only). The PRD's branch counts are correct, and every passage is accounted for:</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Document</th><th>Scheme</th><th class="num">Passages</th><th class="num">Branches</th><th class="num">Printed pages</th><th>Shape of the tree</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SAOSO v2.1</td><td><code>saoso</code></td><td class="num">319</td><td class="num">22</td><td class="num">22&ndash;88</td><td>13 numbered sections + 9 appendices</td></tr>
+          <tr><td>Outeniqua OPP</td><td><code>opp</code></td><td class="num">30</td><td class="num">8</td><td class="num">1&ndash;12</td><td>4 real sections, <b>4 one-passage stubs</b></td></tr>
+          <tr><td>Basic Production Principles</td><td><code>heading</code></td><td class="num">9</td><td class="num">4</td><td class="num">&mdash;</td><td>Introduction 1, Definition 1, Principles 6, Conclusion 1</td></tr>
+          <tr><td>Certification Landscape</td><td><code>heading</code></td><td class="num">8</td><td class="num">6</td><td class="num">4&ndash;9</td><td>titles include <b>&ldquo;R500&rdquo;</b> and <b>&ldquo;PGS SA.&rdquo;</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><b>What the weight actually is.</b> Rendering one branch instead of the document is a real
+      saving, and it is larger than the PRD claims:</p>
+    <div class="ev"><span class="c">$ # passage text per branch, SAOSO (the markup is on top of this)</span>
+total passage text          169,408 chars   <span class="c"># what today's page renders</span>
+median branch                 4,735 chars   <span class="c"># what the concordance would render</span>
+largest branch (section 4)   31,140 chars   <span class="r"># 18% of the document, in one branch</span></div>
+    <p>A median visit renders <b>about 3% of the text</b>. A visit to section 4 still renders 31 KB
+      of passages &mdash; which is fine, but it means &ldquo;light&rdquo; is a property of the median
+      branch, not of every branch.</p>
+  </div>
+
+  <div class="panel">
+    <h2>1.3 &nbsp;Three things the PRD says that my run sharpens or contradicts</h2>
+
+    <p><b>(a) <span class="badge inferred">sharper</span> &sect;7.5 says the TOC parser
+      &ldquo;already understands the blank range&rdquo;.</b> True of the parser, false of the
+      wiring: <code>parse_toc()</code> has <b>no production caller</b> &mdash; only
+      <code>knowledge/tests/test_toc_map.py</code> and <code>test_section_parsers.py</code> call it,
+      and the SAOSO parser explicitly <i>skips</i> TOC pages. Showing &ldquo;10 to 19. Left blank to
+      facilitate future enterprises&rdquo; is therefore: wire the parser into ingest, store the
+      result, render it. Cheap, but not free.</p>
+
+    <p><b>(b) <span class="badge verified">verified</span> &sect;7.3 says the derivation works for all
+      four documents. The counts are right; two of them are not usable as written.</b> Branch titles
+      come from the first heading in the branch, and that fails in three measured places:</p>
+    <div class="ev"><span class="c"># titles the derivation produces today</span>
+SAOSO   Section 1
+SAOSO   Appendix 2 &#150; Farmyard manure, slurry and urine
+SAOSO   3. GENERAL REQUIREMENTS FOR CROP PRODUCTION AND ANIMAL HUSBANDRY
+OPP     &#167;I   /   &#167;V   /   &#167;VII   /   &#167;VIII
+LAND    ESTABLISHING A PGS GROUP   /   <span class="r">R500</span>   /   <span class="r">PGS SA.</span>
+BPP     INTRODUCTION  /  DEFINITION OF ORGANIC AGRICULTURE  /  GENERAL PRINCIPLES  /  CONCLUSION
+
+<span class="c"># titles the document's own printed table of contents gives (parse_toc, 29 entries)</span>
+SAOSO   1 &#183; Definitions &#183; p.22
+SAOSO   Appendix 2 &#183; Fertilizers Conditioners and Soil Conditioners &#183; p.76</div>
+    <p>These are not cosmetic. The two branches a reader is most likely to consult are the two
+      whose derived titles are wrong: <b>Section 1</b> loses the word <i>Definitions</i>, and
+      <b>Appendix 2</b> &mdash; 30 substance rows, the appendix the whole &ldquo;cardboard&rdquo;
+      conversation lives in &mdash; is titled after the first of its sub-tables. A reader looking for
+      <i>wood, bark and sawdust</i> is offered &ldquo;Farmyard manure&rdquo;.</p>
+
+    <p><b>(c) <span class="badge verified">verified</span> The corpus is not the whole standard, and the
+      &ldquo;one screen&rdquo; framing hides that.</b> SAOSO's stored pages run <b>22 to 88</b>. The
+      printed standard's table of contents has <b>29 entries</b>. What is in the corpus is
+      Section B plus Appendices 1&ndash;7; what is not is Section A (Introduction, General, Minimum
+      Inspection Requirements &mdash; printed pages <b>4&ndash;11</b>) and Appendices A, B and C
+      (<b>93&ndash;96</b>). That is <b>22 branches out of 28 printed sections that carry text</b>,
+      before the ten reserved numbers 10&ndash;19 are even considered.</p>
+    <div class="callout warn">
+      <span class="t">Why this matters for the decision, not just for the corpus</span>
+      <p>The PRD's strongest line is that the concordance makes the standard's shape legible.
+        Measured, the tree makes <em>Section B's</em> shape legible and is silent about the rest. If
+        the page is presented as the standard, six printed sections have been dropped without a
+        word &mdash; which is the same class of failure as publishing a claim the documents do not
+        support.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>1.4 &nbsp;A defect I found while measuring, and the PRD does not know about</h2>
+    <p><span class="badge verified">verified</span> <b>57 of the corpus's 366 passages (15.6%) share
+      their citation anchor with another passage.</b> The reader disambiguates them with an
+      order-derived suffix (<code>#appendix-2-4</code>); citation links and search-hit links do not,
+      because both call <code>reading_anchor()</code> directly:</p>
+    <div class="ev"><span class="c"># knowledge/reading.py</span>
+reading_anchor(section_ref, anchor, heading_path)   <span class="c"># one anchor per chunk: no suffix</span>
+unique_anchors(chunks)                              <span class="c"># same, plus -2, -3 ... for collisions</span>
+
+<span class="c"># who calls which</span>
+unique_anchors   -> contents(), concordance_sections()        <span class="c"># the reader</span>
+reading_anchor   -> Citation.reading_anchor, SearchHit.anchor <span class="c"># the citation, the search list</span></div>
+    <div class="ev"><span class="c"># duplicate anchors per document, measured</span>
+saoso      319 passages   8 groups   48 passages land on someone else
+opp         30 passages   2 groups    2
+landscape    8 passages   2 groups    2
+bpp          9 passages   1 group     5
+TOTAL      366 passages              57   <span class="r">(15.6%)</span>
+
+<span class="c"># the worst groups</span>
+appendix-2 = 30 chunks   <span class="c"># 30 substance rows, all cited as Appendix 2</span>
+s1         =  8 chunks   <span class="c"># the glossary, by design (test_ingest.py says so)</span>
+appendix-1 =  6 chunks
+general-principles = 6 chunks (BPP)</div>
+    <p>So a citation to <i>any</i> of the 29 non-first rows of Appendix 2 carries
+      <code>#appendix-2</code> &mdash; and lands on <b>&ldquo;Farmyard manure, slurry and
+      urine&rdquo;</b>. Today that is a small, invisible inaccuracy in a 366-passage page. The whole
+      point of &ldquo;View this line in a new tab&rdquo; is that the reader arrives at the quoted
+      line; the feature makes this defect the product's most visible claim.</p>
+    <div class="callout stop">
+      <span class="t">And the suffix is a sequential id in disguise</span>
+      <p><code>-4</code> means &ldquo;the fourth chunk sharing this reference, in ingest order&rdquo;.
+        <code>build_principles.md</code> &sect;I forbids a sequential id on a public surface for
+        exactly this reason: edit a row into the middle of the Appendix 2 artefact (D53's review
+        path), re-ingest, and <code>#appendix-2-4</code> now points at a different substance while
+        still resolving &mdash; a wrong answer that looks right. The PRD's stability argument
+        (&ldquo;stable across a <code>--force</code> re-ingest, unlike a chunk id&rdquo;) holds for
+        <code>section_ref</code> itself and does <b>not</b> hold for the suffix.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>1.5 &nbsp;What the spike contains, and what it leaves undone</h2>
+    <p><span class="badge verified">verified</span> Read from the patch: 7 files, plus tests
+      (9 passing in <code>knowledge</code>, 10 in <code>core</code>). It adds
+      <code>concordance_sections()</code> and the three grouping rules the PRD records as
+      &sect;10.1&ndash;10.3; changes the reader to tree + one pane; adds
+      <code>?section=</code> resolution that accepts a branch anchor <i>or</i> a passage anchor;
+      rewrites the citation link to <code>?section=&lt;anchor&gt;#&lt;anchor&gt;</code>; and puts
+      the links in a new tab.</p>
+    <p>It does <b>not</b> touch the anchor ambiguity above (it resolves <code>?section=</code>
+      <i>from</i> the ambiguous anchor, so it faithfully opens the group's first passage). Its
+      test file also had three assertions that expected a placeholder string the fixture never
+      contained &mdash; assertions written from memory, which is the failure
+      <code>testing_hazards.md</code> &sect;1.6 exists to catch.</p>
+    <p><b>Also not established:</b> page weight after the change, mobile layout, or any UAT
+      judgement. The PRD is honest about this.</p>
+  </div>
+
+  <div class="panel">
+    <h2>1.6 &nbsp;Two local facts that will waste a session if not known</h2>
+    <p><b><span class="badge verified">verified</span> On this machine no citation link resolves.</b>
+      All eight <code>PublicDocument</code> rows hold absolute paths
+      (<code>C:/Users/&hellip;/pgs_docs/&hellip;.pdf</code>), so <code>corpus_for()</code> returns
+      <code>None</code> for every document and the reader reports &ldquo;not ingested&rdquo;. The
+      code has recorded repository-relative paths since commit <code>4c94c09</code>, so the rows are
+      stale: <code>python manage.py publish_documents</code> before judging anything, or the UAT
+      will be a judgement about a broken page.</p>
+    <p><b><span class="badge verified">verified</span> There is no <code>sitemap.xml</code> and no
+      <code>robots.txt</code> in the project.</b> The reader carries no robots meta either, so it is
+      indexable today by default. Q7 is therefore about whether to add a canonical link and a
+      per-branch title &mdash; not about turning indexing on.</p>
+  </div>
+
+  <!-- ================================================================ PART 2 -->
+  <div class="section-head">
+    <h2>Part 2 &mdash; The shape of the problem</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">One asymmetry drives every question below. Everything else is a
+    consequence of it.</p>
+
+  <div class="panel">
+    <p>A <b>citation</b> names a passage. The <b>tree</b> navigates by section. Those are two
+      identifier spaces over one document, and something has to join them &mdash; every time, the
+      same way, in one function:</p>
+    <div class="diagram">  answer page / board
+        |
+        |  "View this line"  ->  /documents/saoso/read/?section=s5-1-9#s5-1-9
+        |                                     ^ passage anchor       ^ the scroll target
+        v
+   +---------------------+   join: which branch contains this passage?
+   |  concordance_sections |  --------------------------------------------------+
+   +---------------------+                                                     |
+        |                                                                      v
+        |  branches, in printed order                                  one open branch
+        |                                                              (the pane)
+        +--------> the tree (nav, one link per branch) &lt;---- ?section= may name a BRANCH
+                                                                      (then no fragment scroll)
+
+   a browser never sends the fragment to the server, so the branch must travel in the query
+   string; the fragment is what scrolls. Two mechanisms, one link. Unknown value -> first branch.</div>
+
+    <h4>Three consequences, and they are the reason for the questions</h4>
+    <ul>
+      <li><b>The join is the product.</b> If the tree, the search list and the citation do not
+        resolve through the same derivation, they will disagree about which branch a passage is in
+        &mdash; and the disagreement will look like a broken citation.</li>
+      <li><b>Position-derived identifiers are not identifiers.</b> 15.6% of passages already share
+        an anchor; the reader's suffix is order, and order is not a promise (&sect;1.4).</li>
+      <li><b>The tree is a claim about the document.</b> It will be read as the standard's
+        structure, so every section it omits is a section the product has dropped silently
+        &mdash; and it omits six with text in them, plus ten reserved numbers (&sect;1.3c).</li>
+    </ul>
+    <p>The counter-pressure is the one the prototype already recorded: <em>a visitor who types
+      &ldquo;cardboard&rdquo; cannot browse to Appendix 2, because the word is in no heading.</em>
+      The tree cannot replace asking; it can only make a <i>cited</i> answer checkable. That is the
+      whole job, and it is enough of a job.</p>
+  </div>
+
+  <!-- ================================================================ PART 3 -->
+  <div class="section-head">
+    <h2>Part 3 &mdash; The options for the primary question</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Q1 asks what happens to the surface that shipped yesterday. Four shapes,
+    each drawn as what the reader actually sees.</p>
+
+  <div class="panel">
+    <div class="diagram"><b>A &mdash; keep it flat (status quo)</b>
++--------------------------------------------------+
+| search: [____________]                           |
+| +---------------------+  +---------------------+ |
+| | contents (366 rows) |  | every passage       | |
+| | s1 / s1-2 / s1-3... |  | in document order   | |
+| |  (scrolls forever)  |  |                     | |
+| +---------------------+  +---------------------+ |
++--------------------------------------------------+   333 KB raw / 62 KB gzipped, 4 queries</div>
+
+    <div class="diagram"><b>B &mdash; replace: tree + one open branch</b>  (the spike)
++--------------------------------------------------+
+| search: [____________]   (whole document)        |
+| +---------------------+  +---------------------+ |
+| | 1  Section 1     p22|  | SAOSO &rsaquo; Sec 1      | |
+| | 2  ORGANIC ECO.. p30|  |                     | |
+| | 4  CROP PROD..   p34|  | S1.1 ACB            | |
+| | ...  22 branches    |  | S1.2 Breeding       | |
+| |   (sticky >=900px)  |  | ... only this branch| |
+| +---------------------+  +---------------------+ |
++--------------------------------------------------+   median ~3% of the text, 4 queries</div>
+
+    <div class="diagram"><b>C &mdash; second route beside it</b>
+  /documents/&lt;code&gt;/read/     the flat page that shipped yesterday (unchanged)
+  /documents/&lt;code&gt;/concordance/   the tree
+        ^ two navigations over one document, two things to keep honest, two addresses to link</div>
+
+    <div class="diagram"><b>D &mdash; one column: a contents list that swaps the pane</b>
++--------------------------------------------------+
+| &lt; select a section &rsaquo;   [1 Section 1   v]      |
++--------------------------------------------------+
+| 1. DEFINITIONS                                   |
+| ACB  Accredited Certification Body...            |
+| ...                                              |
++--------------------------------------------------+   no sticky column; one thing to read on a phone</div>
+  </div>
+
+  <!-- ================================================================ PART 4 -->
+  <div class="section-head">
+    <h2>Part 4 &mdash; Evidence for and against each shape</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="panel">
+    <h4>A &mdash; keep it flat</h4>
+    <ul>
+      <li><b>For:</b> it works, it is tested, and nothing is at risk. It is also the most honest
+        artefact we have: every passage, in the document's order, no curation &mdash; which is the
+        disposition &sect;5 of the PRD argues for.</li>
+      <li><b>Against:</b> it is 333 KB and 366 rows, and the reviewer's finding was precisely that
+        it does not answer &ldquo;where am I&rdquo;. Its contents list is one line per passage, not
+        per section, so it is a scroll bar with labels.</li>
+    </ul>
+
+    <h4>B &mdash; replace with the tree</h4>
+    <ul>
+      <li><b>For:</b> the tree is the printed table of contents, so the page's structure is not a
+        curation. A median visit renders ~3% of the text. It makes &ldquo;View this line&rdquo;
+        meaningful, which is the reviewer's own words. One derivation serves tree, search and
+        citation, so they cannot drift.</li>
+      <li><b>Against:</b> titles are wrong on the two most-consulted branches until the TOC data
+        exists (&sect;1.3b); two of four documents produce a tree that reads as noise
+        (&ldquo;R500&rdquo;); a citation can still land on the wrong row (&sect;1.4);
+        and on a phone, 22 branches above the pane is a lot of scrolling before any text.</li>
+    </ul>
+
+    <h4>C &mdash; second route</h4>
+    <ul>
+      <li><b>For:</b> nothing risks the surface that shipped; the flat page stays as the
+        &ldquo;everything at once&rdquo; state for anyone who wants to search and read linearly;
+        you can ship the tree without deciding anything about the old page.</li>
+      <li><b>Against:</b> two navigations over one document is two derivations to keep honest
+        &mdash; the exact failure the PRD &sect;12 warns about. Two addresses split every inbound
+        link, and the citation format picks a winner anyway. It is also the option that most
+        reliably becomes permanent.</li>
+    </ul>
+
+    <h4>D &mdash; one column</h4>
+    <ul>
+      <li><b>For:</b> a native <code>&lt;select&gt;</code> is the best possible control at 390 px
+        (a real picker, no 44 px rows to mis-tap), it needs no sticky positioning, and it degrades
+        to a plain form without JavaScript. Cheapest of the four to build correctly.</li>
+      <li><b>Against:</b> it hides the structure &mdash; the reader cannot see that section 5 sits
+        between 4 and 6, so the &ldquo;legible shape&rdquo; claim is lost. A select also cannot
+        show the page numbers, which is half of what makes the list feel like a document.</li>
+    </ul>
+  </div>
+
+  <!-- ================================================================ PART 5 -->
+  <div class="section-head">
+    <h2>Part 5 &mdash; What the practice says, including where it disagrees</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">One row per principle: what it says, which option it favours, and whether
+    it actually holds here. Two of these rows point away from my recommendation.</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Principle</th><th>What it says</th><th>Favours</th><th>Does it hold here?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Progressive disclosure</b><br><span class="badge verified">IA standard</span></td>
+          <td>Show the structure; reveal detail on demand. Reduces perceived complexity without
+            removing information.</td>
+          <td>B, D</td>
+          <td>Yes &mdash; and it is the honest version of &ldquo;one screen&rdquo;: the
+            <i>structure</i> is on one screen, not the text.</td>
+        </tr>
+        <tr>
+          <td><b>Recognition over recall</b><br><span class="badge verified">heuristic</span></td>
+          <td>A reader should see where they are rather than remember it.</td>
+          <td>B</td>
+          <td>Yes &mdash; this is what <code>aria-current</code> on the tree buys, and what the flat
+            version cannot show at all.</td>
+        </tr>
+        <tr>
+          <td><b>One URL, one resource</b><br><span class="badge verified">web arch</span></td>
+          <td>An address should identify one thing, for as long as possible.</td>
+          <td>A on the address question; <b>against</b> C</td>
+          <td>Yes &mdash; and it is the argument against serving one document at two routes. It is
+            also the argument <b>against</b> order-derived anchors (Q8).</td>
+        </tr>
+        <tr>
+          <td><b>Identifiers outlive implementations</b><br><span class="badge verified">repo rule</span></td>
+          <td><code>build_principles.md</code> &sect;I: no sequential id on a public surface.</td>
+          <td>Q8 option (b)</td>
+          <td>Yes &mdash; a <code>-4</code> suffix is a sequential id in disguise. This is the one
+            row where the repo's own rule and a measured defect agree.</td>
+        </tr>
+        <tr>
+          <td><b>Don't open new tabs by default</b><br><span class="badge verified">UX guidance</span></td>
+          <td>A new tab breaks the back button's meaning, and on a phone it may not be noticed at
+            all. If you do it, say so.</td>
+          <td><b>Against</b> a silent new tab (Q2)</td>
+          <td>Partly &mdash; the case against is strongest on mobile, and the product owner has
+            already asked for the new tab. Announcing it costs one hidden span.</td>
+        </tr>
+        <tr>
+          <td><b>Accessibility of change of context</b><br><span class="badge verified">WCAG 2.1</span></td>
+          <td>SC 3.2.5 (AAA) is the only requirement that speaks to unexpected new windows; WCAG 2.2
+            does not require a warning.</td>
+          <td>Neutral &mdash; no conformance floor is breached either way</td>
+          <td>Yes &mdash; so this is a judgement about the reader's flow, not a compliance question.
+            Say the honest thing and move on.</td>
+        </tr>
+        <tr>
+          <td><b>Don't make a visitor read a textbook</b><br><span class="badge verified">PRD &sect;8</span></td>
+          <td>Browsing needs vocabulary; <code>/ask/</code> is the entry point.</td>
+          <td><b>Against</b> the tree as a <i>navigation into the site</i></td>
+          <td>Yes &mdash; but it does not touch the tree as the <i>landing surface for a
+            citation</i>. The tie-break: the tree is not a front door, it is the last step of a
+            citation.</td>
+        </tr>
+        <tr>
+          <td><b>A page states what it omits</b><br><span class="badge verified">claim discipline</span></td>
+          <td>This repo's central rule, applied to structure rather than to words.</td>
+          <td>Q5 option &ldquo;say so&rdquo;</td>
+          <td>Yes &mdash; and it is why &sect;1.3c matters: a tree of 22 branches presented as
+            &ldquo;the standard&rdquo; makes a claim the corpus cannot support.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================================================================ PART 6 -->
+  <div class="section-head">
+    <h2>Part 6 &mdash; Comparison</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">No scores. A weight I invented would be a number I could not defend; the
+    reasons are the evidence.</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Question</th><th>A &mdash; flat</th><th>B &mdash; tree replaces</th><th>C &mdash; second route</th><th>D &mdash; one column</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Does a citation land on its line?</b></td>
+          <td>Yes, but in 366 passages of context</td>
+          <td>Yes, in its section &mdash; subject to Q8</td>
+          <td>Depends which route the citation picks</td>
+          <td>Yes, in its section</td>
+        </tr>
+        <tr>
+          <td><b>Weight on a farm-office connection</b></td>
+          <td>333 KB raw / 62 KB gzipped</td>
+          <td>~3% of the text (median)</td>
+          <td>Both pages must be maintained</td>
+          <td>~3% of the text</td>
+        </tr>
+        <tr>
+          <td><b>Things to keep honest</b></td>
+          <td>1</td>
+          <td>1 derivation, 3 consumers</td>
+          <td>2 navigations</td>
+          <td>1 derivation, 3 consumers</td>
+        </tr>
+        <tr>
+          <td><b>Shows the document's shape</b></td>
+          <td>No</td>
+          <td>Yes &mdash; 22 of 28 sections</td>
+          <td>Only on one of the two</td>
+          <td><b>No</b> &mdash; one branch visible</td>
+        </tr>
+        <tr>
+          <td><b>At 390 px</b></td>
+          <td>Works, long</td>
+          <td>22 rows above the text</td>
+          <td>Works</td>
+          <td><b>Best</b> &mdash; a native picker</td>
+        </tr>
+        <tr>
+          <td><b>Build cost</b></td>
+          <td>None</td>
+          <td>Service + template + CSS + tests (the spike, corrected)</td>
+          <td>B plus an address decision</td>
+          <td>Template + CSS + tests, no view change</td>
+        </tr>
+        <tr>
+          <td><b>Reversible?</b></td>
+          <td>&mdash;</td>
+          <td>Yes, and cheaply</td>
+          <td>No &mdash; two routes ossify</td>
+          <td>Yes, and cheaply</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================================================================ PART 7 -->
+  <div class="section-head">
+    <h2>Part 7 &mdash; My recommendation, and what would change it</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="panel">
+    <p><b>Q1 &mdash; Replace the flat view with the tree.</b> Option B, the spike's shape. A second
+      route (C) is two derivations over one document forever, and the reason to keep the flat page
+      &mdash; &ldquo;see everything at once&rdquo; &mdash; is not a thing a reader does with 366
+      passages. <b>What would change my mind:</b> if the UAT judge cannot find their branch at
+      390 px, the answer is option D (one column, a real picker) &mdash; not a return to flat, so
+      decide the phone case before building the sticky column.</p>
+
+    <p><b>Q2 &mdash; &ldquo;View this line&rdquo;, new tab, with the new tab announced.</b> It is
+      the product owner's instruction, and the argument against it (a phone hides tabs) is answered
+      by the visually-hidden suffix rather than by refusing. <b>What would change my mind:</b> a UAT
+      where the reviewer loses the answer page behind a tab they did not know they opened &mdash;
+      then the link navigates in place, and the answer page gets a &ldquo;back to the answer&rdquo;
+      link instead.</p>
+
+    <p><b>Q3 &mdash; All four documents get the tree, and the two heading-scheme artefacts are
+      fixed in the same slice.</b> A name allow-list is a rule nobody remembers. But the measured
+      titles (&ldquo;R500&rdquo;, &ldquo;PGS SA.&rdquo;) are a corpus defect that the tree merely
+      exposes, so the slice includes correcting those heading lines in the reviewed artefact and
+      re-ingesting that one document. <b>What would change my mind:</b> if the artefact fix turns
+      out to need a parser change, ship the tree for the two numbered documents and leave the two
+      heading documents flat for one slice &mdash; explicitly, with a test that records the
+      exception.</p>
+
+    <p><b>Q4 &mdash; Sticky column at &ge;900 px, stacked above the pane below it</b> (the PRD's own
+      recommendation, and what <code>/ask/</code>'s aside already does). Add one thing the PRD does
+      not: below 900 px the tree collapses to its current branch plus a disclosure, so a phone shows
+      the text first. <b>What would change my mind:</b> measuring the 390 px render and finding the
+      disclosure unusable &mdash; then option D's picker.</p>
+
+    <p><b>Q5 &mdash; Show the reserved range 10&ndash;19, and say that the corpus omits Section A and
+      Appendices A&ndash;C.</b> Both need the stored TOC, which &sect;1.3a shows is one field plus
+      wiring, and it also gives the two wrong titles back (Q3's problem, solved by the same field).
+      The omission note is not optional: it is the claim-discipline rule applied to structure.
+      <b>What would change my mind:</b> nothing on the note. On the TOC field: if the plan cannot
+      afford the migration, omit the range visibly (&ldquo;sections 10&ndash;19 are reserved and
+      blank in the printed standard&rdquo;) rather than silently skipping it.</p>
+
+    <p><b>Q6 &mdash; Stay at <code>/read/</code>.</b> <code>/documents/&lt;code&gt;/</code> is a
+      download with an established meaning, and every citation shipped yesterday points at
+      <code>/read/</code>. <b>What would change my mind:</b> nothing in this slice. A rename is a
+      redirect and a new citation format, and it buys a nicer word.</p>
+
+    <p><b>Q7 &mdash; Indexable, with the document title and the section in the
+      <code>&lt;title&gt;</code>, and a <code>rel=canonical</code> to the <code>?section=</code>
+      form.</b> There is no sitemap and no robots file, so the choice is a title tag and a canonical
+      link, not infrastructure. <b>What would change my mind:</b> a decision to publish the corpus
+      as an HTML edition would change the canonical strategy &mdash; one canonical per section, not
+      per query string.</p>
+
+    <p><b>Q8 &mdash; Fix the anchors from content, not from position.</b> When several passages share
+      a <code>section_ref</code>, derive the disambiguator from the passage itself
+      (<code>#appendix-2-wood-bark-and-sawdust</code>) rather than from its index, and accept the old
+      bare anchor as an alias so the links shipped yesterday keep working. The stopgap, if the slice
+      must stay small, is to make citations use the same <code>-N</code> suffix the reader already
+      produces &mdash; consistent, but still order-derived, so it fixes the wrong-row landing and
+      keeps the re-ingest hazard. Either way the guard is the same: a test that walks all 366
+      passages and asserts each one's own anchor resolves to that passage. <b>What would change my
+      mind:</b> if the content-derived anchor collides for the Appendix 2 rows (two substances whose
+      text begins identically) the scheme needs a stable secondary key &mdash; measure before
+      committing.</p>
+
+    <div class="callout">
+      <span class="t">The one thing I would not ship without</span>
+      <p>Q8's guard test, and Q3's artefact fix. Without them the feature's headline claim &mdash;
+        this link takes you to the line &mdash; is false for one passage in six, and the tree's
+        titles misname the two branches a reader is most likely to want.</p>
+    </div>
+  </div>
+
+  <!-- ================================================================ PART 8 -->
+  <div class="section-head">
+    <h2>Part 8 &mdash; Your decision</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Pick an option or type your own answer &mdash; either counts. Answers
+    autosave; <b>Copy answers</b> at the bottom gives you all eight as markdown to paste back.</p>
+
+  <div id="questions"></div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress" id="progress"></span>
+    <span class="saved" id="saved">Saved</span>
+    <span class="spacer"></span>
+    <button class="ghost tiny" id="clearBtn">Clear all</button>
+    <button class="tiny" id="printBtn">Print</button>
+    <button class="primary" id="copyBtn">Copy answers</button>
+  </div>
+</div>
+
+<dialog id="outDlg">
+  <div class="dlg-head">
+    <h3>Your answers</h3>
+    <p>Paste this back to me. The last block is a <code>PGS_PLATFORM_SPEC.md</code> &sect;18.3 row,
+    filled in as far as your answers allow.</p>
+  </div>
+  <textarea id="outText" spellcheck="false"></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="dlgCopy">Copy to clipboard</button>
+    <button id="dlgDl">Download .md</button>
+    <span class="spacer" style="flex:1"></span>
+    <button class="ghost" id="dlgClose">Close</button>
+  </div>
+</dialog>
+
+<script>
+/* ------------------------------------------------------------------ data */
+const QUESTIONS = [
+  {
+    id: 'Q1',
+    prd: 'PRD §7.1',
+    title: 'Does the concordance replace the reader, or sit beside it?',
+    why: 'This decides whether one surface has to be kept honest or two, and whether the address space splits.',
+    facts: 'The reader shipped 2026-10-27 and is the only landing surface a citation has. The spike replaces it in place (7 files), so "replace" is the cheaper build; "second route" needs a new URL and a reason for both to exist.',
+    options: [
+      ['A', 'Replace', 'One surface, two states: tree + one open branch. The spike\'s shape.'],
+      ['B', 'Second route', 'Keep /read/ flat; add a concordance at its own address.'],
+      ['C', 'Keep flat', 'Do not change the shape; fix only the citation copy.'],
+      ['D', 'One column', 'Replace, but with a section picker instead of a sticky tree.']
+    ],
+    rec: 'A — replace. Two navigations over one document is two derivations to keep honest forever, and the flat page\'s only advantage (everything at once) is not something a reader does with 366 passages.'
+  },
+  {
+    id: 'Q2',
+    prd: 'PRD §7.2',
+    title: 'What does the citation link say, and does it open a new tab?',
+    why: 'The words are the promise. "Read it in SAOSO v2.1" describes a file; "View this line" describes a place.',
+    facts: 'The product owner\'s instruction (2026-10-27) is "View this line", a new tab, and landing on the selected section. Best practice warns that a new tab breaks the back button\'s meaning and is nearly invisible on a phone; the mitigation is to announce it, not to refuse it. WCAG 2.1 SC 3.2.5 (AAA) is the only requirement that speaks to unexpected new windows, so no conformance floor is at stake.',
+    options: [
+      ['A', 'New tab + announced', '"View this line in SAOSO v2.1" + hidden "(opens in a new tab)".'],
+      ['B', 'Same tab', 'Navigate in place; the answer page gets a "back to the answer" link.'],
+      ['C', 'New tab, silent', 'As instructed, without the hidden suffix.'],
+      ['D', 'Keep current copy', '"Read it in <document>", as shipped.']
+    ],
+    rec: 'A — the owner\'s instruction, with the new tab announced. It keeps the conversation in place and costs one visually-hidden span.'
+  },
+  {
+    id: 'Q3',
+    prd: 'PRD §7.3',
+    title: 'Do all four documents get a tree, or only SAOSO and the OPP?',
+    why: 'A per-document exception is a rule nobody remembers. But measured, two of the four produce a tree that reads as noise.',
+    facts: 'Measured: SAOSO 22 branches / 319 passages, OPP 8 / 30 (four are one-passage stubs), BPP 4 / 9, landscape 6 / 8. The landscape tree\'s titles include "R500" (a price line) and "PGS SA." (a seal name) — heading-scheme detection misreads body lines as headings. That is a corpus defect the tree exposes, not one it creates.',
+    options: [
+      ['A', 'All four, fix the artefacts', 'Tree everywhere; correct the two mis-detected heading lines in the reviewed corpus artefact and re-ingest that document.'],
+      ['B', 'All four, as measured', 'Tree everywhere; accept "R500" as a branch title for now.'],
+      ['C', 'SAOSO + OPP only', 'A name allow-list for the two numbered documents; the two heading documents stay flat.'],
+      ['D', 'All four, rule by scheme', 'heading-scheme documents keep the flat list until their detection is fixed; one data-keyed rule.']
+    ],
+    rec: 'A — all four, plus the artefact fix. It costs an artefact edit and one re-ingest, and it avoids both a name allow-list and a contents list that reads "R500".'
+  },
+  {
+    id: 'Q4',
+    prd: 'PRD §7.4',
+    title: 'Where does the tree live on the page?',
+    why: '22 branches is an unusable horizontal strip and a long scroll at 390 px. This is the question the UAT can actually fail.',
+    facts: 'The /ask/ aside already does sticky at ≥900 px. At 390 px, 22 rows of 44 px is ~968 px of scrolling before any clause text — so the phone case needs a decision, not the desktop case.',
+    options: [
+      ['A', 'Sticky column, stack below 900px', 'PRD recommendation. Keep all 22 rows in the stack.'],
+      ['B', 'Sticky column, disclosure on phone', 'Stack below 900 px, but collapsed to the current branch plus a "contents" disclosure.'],
+      ['C', 'Above the pane, always', 'A horizontal/wrapped list of branches above the text at every width.'],
+      ['D', 'Picker', 'One native <select> at every width (option D of Part 3).']
+    ],
+    rec: 'B — sticky at ≥900 px, and on a phone collapsed to the current branch with a disclosure. Same derivation, and the text comes first where the text is what the reader came for.'
+  },
+  {
+    id: 'Q5',
+    prd: 'PRD §7.5',
+    title: 'Do we show the reserved range 10–19, and say what the corpus omits?',
+    why: 'The printed standard reserves ten section numbers, and the tree silently skips them. Separately — and this is new — the corpus itself omits six printed sections that contain text.',
+    facts: 'parse_toc() reads 29 TOC entries correctly, including "10 to 19" with no page number, but has NO production caller (tests only) — so this needs wiring plus a stored field, i.e. the slice\'s only migration. Measured: the corpus covers published pages 22–88; Section A (pp. 4–11) and Appendices A–C (pp. 93–96) are not ingested. That is 22 branches of 28 printed sections with text.',
+    options: [
+      ['A', 'Range + omission note', 'Store the TOC, show 10–19 as reserved, and state on the page which printed sections are not in the corpus.'],
+      ['B', 'Range only, silent on the rest', 'Show 10–19; say nothing about Section A and Appendices A–C.'],
+      ['C', 'Omit the range, note the omission', 'No migration; the tree starts at Section 1 and the page says the range is reserved and blank.'],
+      ['D', 'Omit both, say nothing', 'The tree shows only what the corpus has.']
+    ],
+    rec: 'A — the stored TOC buys the reserved range AND restores the two wrong titles ("Definitions", "Fertilizers Conditioners and Soil Conditioners"). The omission note is not optional: a tree of 22 branches presented as "the standard" claims more than the corpus holds.'
+  },
+  {
+    id: 'Q6',
+    prd: 'PRD §7.6',
+    title: 'Does the concordance keep /read/, or take /documents/<code>/?',
+    why: 'An address is a promise. Every citation shipped yesterday points at /read/.',
+    facts: '/documents/<code>/ is a download with an established meaning and is already in the sitemap of the group\'s links. Moving the reader splits the address space and breaks every link shipped on 2026-10-27.',
+    options: [
+      ['A', 'Stay at /read/', 'No redirect, no new citation format.'],
+      ['B', 'Move to /documents/<code>/', 'The nicer name; needs a redirect and a citation-format change.'],
+      ['C', 'Serve both', 'Concordance at the document root, redirect /read/ to it.']
+    ],
+    rec: 'A — stay. A rename is a redirect, a new citation format and a broken-link audit, and it buys a nicer word.'
+  },
+  {
+    id: 'Q7',
+    prd: 'PRD §7.7',
+    title: 'Is a branch page indexed by search engines?',
+    why: 'These are the standard\'s own words at a stable address — the one surface where SEO is honest. It is also the surface carrying words the claim sweep forbids the group to use.',
+    facts: 'There is no sitemap.xml and no robots.txt in the project, and the reader sets no robots meta — so it is indexable today by default. The claim-sweep exemption (PUBLIC_URLS) is a test list, not a robots gate: the two do not actually conflict. So this question is only: a per-branch <title>, and a rel=canonical.',
+    options: [
+      ['A', 'Indexable + canonical', 'Per-branch <title>; rel=canonical to the ?section= form.'],
+      ['B', 'Indexable, no canonical', 'Per-branch <title> only.'],
+      ['C', 'noindex the reader', 'Keep the corpus out of search results entirely.']
+    ],
+    rec: 'A — indexable with a canonical link. The page renders the standard verbatim and says so; a search result for "SAOSO section 5.1.9" is a correct answer, not a claim.'
+  },
+  {
+    id: 'Q8',
+    prd: 'NOT IN THE PRD — found by measurement',
+    title: 'How is a passage anchor made unique, when 15.6% of passages share one?',
+    why: 'This decides whether "View this line" is true. A citation to any of 29 of the 30 Appendix 2 rows currently carries #appendix-2 and lands on "Farmyard manure, slurry and urine".',
+    facts: 'Measured: 57 of 366 passages (15.6%) share their anchor with another passage. The reader disambiguates with -2, -3 …; Citation.reading_anchor and SearchHit.anchor do not, because both call reading_anchor() directly. The -N suffix is derived from ingest order, so editing a row into the Appendix 2 artefact and re-ingesting repoints #appendix-2-4 at a different substance while still resolving.',
+    options: [
+      ['A', 'Content-derived suffix', 'Disambiguate from the passage itself (#appendix-2-wood-bark-and-sawdust); keep the bare anchor as an alias so shipped links still work.'],
+      ['B', 'Order-derived suffix (stopgap)', 'Make citations use the same -N the reader produces. Fixes the wrong-row landing; keeps the re-ingest hazard.'],
+      ['C', 'No fix', 'Accept that a citation lands at the top of its section.'],
+      ['D', 'Merge duplicate-ref groups', 'Treat the 30 Appendix 2 rows as one display unit so landing at the top is correct.']
+    ],
+    rec: 'A — content-derived, with the old anchor as an alias, plus a guard test that walks all 366 passages and asserts each passage\'s own anchor resolves to that passage. If two Appendix 2 rows share their opening words, measure before committing and add a stable secondary key.'
+  }
+];
+
+/* ------------------------------------------------------------------ state */
+const KEY = 'pgs-concordance-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const save = () => {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+    const s = document.getElementById('saved');
+    s.classList.add('show');
+    clearTimeout(save._t);
+    save._t = setTimeout(() => s.classList.remove('show'), 1400);
+  } catch (e) { /* storage blocked: typing still works */ }
+};
+
+/* ------------------------------------------------------------------ render */
+function card(q) {
+  const st = state[q.id] || {};
+  const opts = q.options.map(([k, label, note]) => `
+      <label class="opt">
+        <input type="radio" name="g_${q.id}" value="${k}" data-choice="${q.id}" ${st.choice === k ? 'checked' : ''}>
+        <span class="k">${k}</span>
+        <span class="v">${esc(label)}<span>${esc(note)}</span></span>
+      </label>`).join('');
+  return `
+  <div class="card ${st.choice || (st.answer && st.answer.trim()) ? 'answered' : ''}" id="card_${q.id}">
+    <div class="card-head">
+      <span class="tag">${q.id}</span>
+      <div>
+        <h3>${esc(q.title)}</h3>
+        <p class="why">${esc(q.why)}</p>
+      </div>
+    </div>
+    <h4>What is actually true</h4>
+    <p class="why">${esc(q.facts)}</p>
+    <div class="rec"><span class="label">Recommended &middot; ${esc(q.prd)}</span><p>${esc(q.rec)}</p></div>
+    <fieldset>
+      <legend>Your choice</legend>
+      ${opts}
+    </fieldset>
+    <textarea data-answer="${q.id}" placeholder="Your answer in your own words — override the options, add a condition, or say 'yes, A' and why.">${esc(st.answer || '')}</textarea>
+    <div class="card-foot">
+      <button class="tiny" data-accept="${q.id}">Accept recommendation</button>
+      <button class="tiny" data-copyone="${q.id}">Copy this answer</button>
+      <span class="hint" id="hint_${q.id}"></span>
+    </div>
+  </div>`;
+}
+
+document.getElementById('questions').innerHTML = QUESTIONS.map(card).join('');
+
+/* ------------------------------------------------------------------ events */
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  const id = t.dataset.answer;
+  if (!id) return;
+  state[id] = state[id] || {};
+  state[id].answer = t.value;
+  refresh(id); save();
+});
+
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.type !== 'radio' || !t.dataset.choice) return;
+  const id = t.dataset.choice;
+  state[id] = state[id] || {};
+  state[id].choice = t.value;
+  refresh(id); save();
+});
+
+document.addEventListener('click', (e) => {
+  const accept = e.target.dataset && e.target.dataset.accept;
+  const copyOne = e.target.dataset && e.target.dataset.copyone;
+
+  if (accept) {
+    const q = QUESTIONS.find(x => x.id === accept);
+    const key = q.rec.trim().charAt(0);
+    const radio = document.querySelector(`input[name="g_${accept}"][value="${key}"]`);
+    if (radio) radio.checked = true;
+    const ta = document.querySelector(`textarea[data-answer="${accept}"]`);
+    ta.value = q.rec;
+    state[accept] = state[accept] || {};
+    state[accept].choice = key;
+    state[accept].answer = q.rec;
+    refresh(accept); save();
+  }
+
+  if (copyOne) {
+    copyText(blockFor(copyOne), e.target, null);
+  }
+});
+
+function refresh(id) {
+  const el = document.getElementById('card_' + id);
+  if (!el) return;
+  const st = state[id] || {};
+  el.classList.toggle('answered', !!(st.choice || (st.answer && st.answer.trim())));
+  updateProgress();
+}
+
+function isAnswered(q) {
+  const st = state[q.id] || {};
+  return !!(st.choice || (st.answer && st.answer.trim()));
+}
+
+function updateProgress() {
+  const n = QUESTIONS.filter(isAnswered).length;
+  document.getElementById('progress').innerHTML = `<b>${n}</b> of ${QUESTIONS.length} answered`;
+}
+updateProgress();
+
+/* ------------------------------------------------------------------ copy */
+function blockFor(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  const st = state[id] || {};
+  const chosen = q.options.find(o => o[0] === st.choice);
+  const lines = [`### ${q.id} — ${q.title}`];
+  lines.push(`**Choice:** ${chosen ? chosen[0] + ' — ' + chosen[1] : '(none selected)'}`);
+  lines.push(`**Answer:** ${st.answer && st.answer.trim() ? st.answer.trim() : '(no answer)'}`);
+  return lines.join('\n');
+}
+
+async function copyText(text, btn, hintId) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; }
+  catch (err) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch (e2) { ok = false; }
+  }
+  const label = ok ? 'Copied' : 'Copy failed — select the text in the dialog instead';
+  if (hintId) {
+    const hint = document.getElementById(hintId);
+    hint.textContent = label;
+    setTimeout(() => { hint.textContent = ''; }, 2000);
+  }
+  if (btn) {
+    const was = btn.textContent;
+    btn.textContent = ok ? 'Copied' : 'Failed';
+    setTimeout(() => { btn.textContent = was; }, 1600);
+  }
+}
+
+/* ------------------------------------------------------------------ output */
+function buildMarkdown() {
+  const L = [];
+  L.push('# The concordance — decisions');
+  L.push('');
+  L.push('_Answers to CONCORDANCE_PRD.md §7 (plus Q8, found by measurement). 2026-10-27._');
+  L.push('');
+  QUESTIONS.forEach(q => {
+    const st = state[q.id] || {};
+    const chosen = q.options.find(o => o[0] === st.choice);
+    L.push(`### ${q.id} — ${q.title}`);
+    L.push(`_${q.prd}_`);
+    L.push('');
+    L.push(`**Choice:** ${chosen ? chosen[0] + ' — ' + chosen[1] : '(none selected)'}`);
+    L.push(`**Answer:** ${st.answer && st.answer.trim() ? st.answer.trim() : '(no answer)'}`);
+    L.push('');
+  });
+
+  const unanswered = QUESTIONS.filter(q => !isAnswered(q)).map(q => q.id);
+  L.push('---');
+  L.push(`_${QUESTIONS.length - unanswered.length} of ${QUESTIONS.length} answered.` +
+    (unanswered.length ? ' Outstanding: ' + unanswered.join(', ') + '.' : '') + '_');
+  L.push('');
+
+  // A §18.3 row, filled as far as the answers allow.
+  const one = (id) => {
+    const st = state[id] || {};
+    const q = QUESTIONS.find(x => x.id === id);
+    const chosen = q.options.find(o => o[0] === st.choice);
+    const words = st.answer && st.answer.trim();
+    if (words) return words.replace(/\s+/g, ' ').replace(/\|/g, '\\|');
+    if (chosen) return `${chosen[0]} — ${chosen[1]}`;
+    return '(unanswered)';
+  };
+  L.push('## Suggested PGS_PLATFORM_SPEC.md §18.3 row');
+  L.push('');
+  L.push('```');
+  L.push('| D68 | Does /documents/<code>/read/ become the concordance — the document\'s own structure as its navigation? | ' +
+    `**${one('Q1')}**. Citation: ${one('Q2')}. Documents: ${one('Q3')}. Layout: ${one('Q4')}. ` +
+    `Printed TOC and omissions: ${one('Q5')}. Route: ${one('Q6')}. Indexing: ${one('Q7')}. ` +
+    `Anchor uniqueness: ${one('Q8')}. |`);
+  L.push('```');
+  return L.join('\n');
+}
+
+const dlg = document.getElementById('outDlg');
+const out = document.getElementById('outText');
+
+document.getElementById('copyBtn').onclick = () => {
+  out.value = buildMarkdown();
+  dlg.showModal();
+  copyText(out.value, document.getElementById('dlgCopy'), null);
+};
+document.getElementById('dlgCopy').onclick = () => copyText(out.value, document.getElementById('dlgCopy'), null);
+document.getElementById('dlgDl').onclick = () => {
+  const blob = new Blob([out.value], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'concordance-decisions.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('dlgClose').onclick = () => dlg.close();
+document.getElementById('printBtn').onclick = () => window.print();
+
+document.getElementById('clearBtn').onclick = () => {
+  if (!confirm('Clear every answer? This cannot be undone.')) return;
+  state = {};
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  document.querySelectorAll('textarea').forEach(t => t.value = '');
+  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('answered'));
+  updateProgress();
+};
+</script>
+</body>
+</html>
