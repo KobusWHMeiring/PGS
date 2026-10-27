@@ -73,10 +73,16 @@ _TERMINAL = (".", ";", "?", "!")
 
 @dataclass(frozen=True)
 class Paragraph:
-    """A run of prose, its hard wraps joined. `kind` exists so a template can branch on it."""
+    """A run of prose, its hard wraps joined. `kind` exists so a template can branch on it.
+
+    `segments` is filled by `knowledge.references.annotate()` for a page that links the document's
+    own cross-references: a tuple of `Segment`s whose texts join back to `text`. Empty means "print
+    the text", so nothing here depends on the reader.
+    """
 
     text: str
     kind: str = "paragraph"
+    segments: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -123,6 +129,8 @@ class ListItem:
     marker: str
     text: str
     children: tuple["Block", ...] = ()
+    #: See `Paragraph.segments` — filled by the reader, empty in the corpus.
+    segments: tuple = ()
 
 
 @dataclass(frozen=True)
