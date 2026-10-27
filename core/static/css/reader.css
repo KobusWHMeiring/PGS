@@ -164,6 +164,17 @@
     align-items: start;
   }
 
+  /* Both the search box and the tree stay put while the branch scrolls: a reader checking a
+     quotation against a search hit should not have to scroll back to the top to search again.
+     The tree's offset clears the search's own height (measured at 1280 px, with and without
+     the "N passages matching" note, 2026-10-27), because CSS cannot read a sibling's height
+     and a guessed smaller value would let the search cover the tree's first rows. */
+  .reader__search {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 3;
+  }
+
   /* The disclosure is a phone affordance. On a desk the tree is always open and the summary
      is not a control the reader has to find. A closed `<details>` hides its content through
      the `::details-content` box rather than through the child's own `display`, so both the
@@ -181,10 +192,15 @@
     display: block;
   }
 
-  .reader__tree {
+  .reader__tree-details {
     position: sticky;
-    top: calc(var(--header-height) + 1rem);
-    max-height: calc(100vh - var(--header-height) - 2rem);
+    top: calc(var(--header-height) + 9.5rem);
+  }
+
+  /* The grid item is the `<details>`, so **it** is the sticky box: a sticky child cannot
+     travel beyond its parent's height, and the parent's height is exactly the tree's. */
+  .reader__tree {
+    max-height: calc(100vh - var(--header-height) - 10.5rem);
     overflow-y: auto;
   }
 }
