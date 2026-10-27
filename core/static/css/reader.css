@@ -11,8 +11,9 @@
        must be able to see *where the clause is* without losing the passages around it,
        so the target is marked with ground and a rule, never with a colour that hides
        the text it just arrived at.
-     * the contents list is a reading aid, so it stays tappable at 390 px (§IV, ≥44 px)
-       and scrolls independently of the text.
+     * the tree is a reading aid, so it stays tappable at 390 px (§IV, ≥44 px) and scrolls
+       independently of the text. On a phone it collapses to the branch the reader is in —
+       a disclosure, never JavaScript (§IV, D68 §7.4).
      * nothing here styles a *claim*: a search hit is marked with `<mark>` because the
        reader typed the word, not because the page is endorsing it.
    ========================================================================== */
@@ -126,12 +127,35 @@
   font-weight: 700;
 }
 
-/* --- Body: contents + passages ------------------------------------------- */
+/* --- Body: the tree + one open branch ------------------------------------ */
 
 .reader__body {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+}
+
+/* A `<details>` disclosure is the phone case (D68 §7.4): 22 branch rows of 44 px is ~968 px
+   of scrolling before a single clause. The summary names the branch the reader is in, so a
+   closed tree still tells them where they are; desktop opens it permanently in the media
+   query below. No JavaScript: `build_principles.md` §IV never requires it. */
+.reader__tree-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem; /* 44 px — DESIGN rule 5 */
+  padding: 0 0.85rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-creamWarm);
+  color: var(--brand-forestDark);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reader__tree-details[open] .reader__tree-summary {
+  margin-bottom: 0.75rem;
 }
 
 @media (min-width: 900px) {
@@ -140,7 +164,24 @@
     align-items: start;
   }
 
-  .reader__contents {
+  /* The disclosure is a phone affordance. On a desk the tree is always open and the summary
+     is not a control the reader has to find. A closed `<details>` hides its content through
+     the `::details-content` box rather than through the child's own `display`, so both the
+     pseudo-element and the child rule are needed on current Chromium/Safari/Firefox. */
+  .reader__tree-summary {
+    display: none;
+  }
+
+  .reader__tree-details:not([open])::details-content {
+    content-visibility: visible;
+    display: block;
+  }
+
+  .reader__tree-details > .reader__tree {
+    display: block;
+  }
+
+  .reader__tree {
     position: sticky;
     top: calc(var(--header-height) + 1rem);
     max-height: calc(100vh - var(--header-height) - 2rem);
@@ -148,14 +189,14 @@
   }
 }
 
-.reader__contents {
+.reader__tree {
   padding: 1rem;
   border: 1px solid var(--brand-sand);
   border-radius: var(--radius-sm);
   background-color: var(--brand-creamWarm);
 }
 
-.reader__contents-title {
+.reader__tree-title {
   margin: 0 0 0.5rem;
   color: var(--brand-forestDark);
   font-size: var(--text-micro);
@@ -164,7 +205,15 @@
   letter-spacing: 0.08em;
 }
 
-.reader__contents-list {
+@media (max-width: 899px) {
+  /* The summary already says "Contents"; inside the opened disclosure the second heading is
+     noise. */
+  .reader__tree-title {
+    display: none;
+  }
+}
+
+.reader__tree-list {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -172,25 +221,58 @@
   gap: 0.1rem;
 }
 
-.reader__contents-list li {
+.reader__tree-list li {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  align-items: baseline;
 }
 
-.reader__contents-link {
-  display: block;
-  min-height: 2.75rem; /* 44 px: this is the phone's table of contents */
-  padding: 0.6rem 0;
+.reader__tree-link {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.75rem; /* 44 px: this is the phone's whole table of contents */
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-xs);
   color: var(--brand-charcoal);
   font-size: var(--text-xs);
   text-decoration: none;
 }
 
-.reader__contents-link:hover {
+.reader__tree-link:hover {
   color: var(--brand-ochreInk);
   text-decoration: underline;
+}
+
+/* The open branch is marked with a rule, not a fill: a second ground inside the warm ground
+   would be a third surface in one column (DESIGN §3). */
+.reader__tree-link[aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--brand-ochre);
+  color: var(--brand-ochreInk);
+  font-weight: 700;
+}
+
+/* A reserved row is visible and cannot be opened: the standard prints the number and no
+   text, so there is nothing to link to. */
+.reader__tree-link--reserved {
+  color: var(--brand-muted);
+  cursor: default;
+}
+
+.reader__tree-link--reserved:hover {
+  color: var(--brand-muted);
+  text-decoration: none;
+}
+
+.reader__tree-name {
+  flex: 1 1 auto;
+}
+
+.reader__tree-note {
+  margin: 0.75rem 0 0;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
 }
 
 .reader__page {
@@ -198,6 +280,12 @@
   color: var(--brand-muted);
   font-size: var(--text-nano);
   white-space: nowrap;
+}
+
+.reader__crumb {
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
 }
 
 /* --- Passages ------------------------------------------------------------- */
