@@ -304,7 +304,9 @@ def matches(
         position = max(end, match.start() + 1)
 
     if terms:
-        found.extend(_term_matches(text, terms, open_branch=open_branch, seen=seen))
+        found.extend(
+            _term_matches(text, terms, index=index, open_branch=open_branch, seen=seen)
+        )
         found.sort(key=lambda entry: (entry.start, -entry.end))
         kept: list[Match] = []
         for match in found:
@@ -320,11 +322,13 @@ def _term_matches(
     text: str,
     terms: Mapping[str, "GlossaryEntry"],
     *,
+    index: ReferenceIndex,
     open_branch: str,
     seen: set[str] | None,
 ) -> list[Match]:
     """First occurrence of each defined term, longest first, at most once per `seen` set."""
-    open_anchor = index.branches[open_branch].anchor if open_branch in index.branches else ""
+    open_target = index.branches.get(open_branch)
+    open_anchor = open_target.anchor if open_target is not None else ""
     linked: list[Match] = []
     taken: list[tuple[int, int]] = []
     for term in sorted(terms, key=len, reverse=True):
@@ -349,7 +353,7 @@ def _term_matches(
                 match.group(0),
                 entry.branch_anchor,
                 entry.fragment,
-                entry.term,
+                "",  # no tooltip: the link's own text is the word it defines
             )
         )
     return linked

@@ -49,6 +49,7 @@ from knowledge.reading import (
     strip_overlap,
     unique_anchors,
 )
+from knowledge.glossary import GLOSSARY_BRANCH, glossary_entries, with_term_anchors
 from knowledge.references import annotate, build_reference_index
 from knowledge.tables import TableDivider, TableStructure, structure_for
 
@@ -338,6 +339,25 @@ def _select_section(
     return sections[0]
 
 
+def _branch_texts(pairs) -> list[str]:
+    """One branch's displayed text per passage, chunk overlaps trimmed.
+
+    Adjacent chunks of one printed section overlap on purpose, so retrieval can see both sides of a
+    boundary. A reader must not: `S1`'s eight chunks repeat 21–57 words at five boundaries, and the
+    definitions page printed the previous chunk's tail again at the top of the next one. The stored
+    text is untouched; only what a page renders is trimmed.
+    """
+    texts: list[str] = []
+    previous: DocumentChunk | None = None
+    for chunk, _anchor in pairs:
+        text = chunk.text
+        if previous is not None and previous.section_ref == chunk.section_ref:
+            text = strip_overlap(previous.text, text)
+        texts.append(text)
+        previous = chunk
+    return texts
+
+
 def reader_for(document: PublicDocument, query: str = "", section: str = "") -> Reader:
     """In: a published document, what the reader searched for, and which branch. Out: a `Reader`.
 
@@ -376,14 +396,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # boundaries, and the definitions page printed the previous chunk's tail again at the top
     # of the next one. The stored text is untouched; only what this page renders is trimmed.
     branch_pairs = selected.passages if selected is not None else ()
-    texts: list[str] = []
-    previous: DocumentChunk | None = None
-    for chunk, _anchor in branch_pairs:
-        text = chunk.text
-        if previous is not None and previous.section_ref == chunk.section_ref:
-            text = strip_overlap(previous.text, text)
-        texts.append(text)
-        previous = chunk
+    texts = _branch_texts(branch_pairs)
 
     # The reviewed structure is looked up against the text that is about to be rendered, so a
     # corpus that no longer matches the reviewed rows falls back to today's page instead of
@@ -399,8 +412,29 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
         [(passage_locator(chunk), chunk.page) for chunk, _anchor in branch_pairs]
     )
 
+    # The glossary, for the branch that defines the document's words: derived from the blocks the
+    # reader would render there (so the ids and the links cannot disagree), from data already in
+    # hand — one branch's passages, no query.
+    glossary_key = GLOSSARY_BRANCH.get(document_row.source_file)
+    glossary_section = next((entry for entry in sections if entry.key == glossary_key), None)
+    terms = {}
+    if glossary_section is not None:
+        glossary_blocks = [
+            block
+            for text in _branch_texts(glossary_section.passages)
+            for block in passage_blocks(text)
+        ]
+        terms = {
+            entry.term: entry
+            for entry in glossary_entries(
+                document_row.source_file, glossary_blocks, glossary_section.anchor
+            )
+        }
+    term_seen: set[str] = set()
+
     rows: list[ReaderPassage] = []
     for position, ((chunk, _anchor), text) in enumerate(zip(branch_pairs, texts)):
+        blocks = row_blocks(text) if structure is not None else passage_blocks(text)
         rows.append(
             ReaderPassage(
                 anchor=pairs[chunk.pk],
@@ -409,9 +443,12 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
                 heading_path=chunk.heading_path,
                 text=text,
                 blocks=annotate(
-                    row_blocks(text) if structure is not None else passage_blocks(text),
+                    with_term_anchors(blocks, term_seen)
+                    if selected is not None and selected.key == glossary_key
+                    else blocks,
                     index,
                     open_branch=selected.key if selected is not None else "",
+                    terms=terms,
                 ),
                 dividers=structure.dividers[position] if structure is not None else (),
                 note=structure.labels[position] if structure is not None else "",
