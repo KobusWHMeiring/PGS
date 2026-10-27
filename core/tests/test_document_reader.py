@@ -152,14 +152,17 @@ def test_a_citation_lands_on_the_definition_itself(client, seeded_documents):
     )
 
     assert problems == ()
-    assert [citation.reading_anchor for citation in citations] == ["s1", "s1-2"], (
-        "the second chunk shares the locator, so it must carry the reader's suffix"
+    assert [citation.reading_anchor for citation in citations] == [
+        "s1",
+        "s1-genetically-modified-organism-gmo",
+    ], "the second chunk shares the locator, so it must be named for its own words"
+    assert citations[1].read_url == (
+        "/documents/saoso-standard-v2.1/read/#s1-genetically-modified-organism-gmo"
     )
-    assert citations[1].read_url == "/documents/saoso-standard-v2.1/read/#s1-2"
 
     body = client.get("/documents/saoso-standard-v2.1/read/").content.decode()
-    assert 'id="s1"' in body and 'id="s1-2"' in body
-    gmo_passage = body.split('id="s1-2"', 1)[1]
+    assert 'id="s1"' in body and 'id="s1-genetically-modified-organism-gmo"' in body
+    gmo_passage = body.split('id="s1-genetically-modified-organism-gmo"', 1)[1]
     assert "Genetically Modified Organism" in gmo_passage[:400], (
         "the anchor must be on the passage the citation quotes"
     )
@@ -214,3 +217,37 @@ def test_a_search_with_no_match_says_the_documents_do_not_settle_it(client, seed
     body = client.get("/documents/saoso-standard-v2.1/read/?q=hydroponic").content.decode()
 
     assert "No passage in this document matches" in body
+
+
+def test_a_citation_to_the_second_row_of_a_table_opens_that_row(client, seeded_documents):
+    """`CONCORDANCE_PRD` §10.7 / `BugFixes/citation_anchor_collision.md`: 57 of 366 passages
+    share a reference, so a citation to Appendix 2's second row used to open the first.
+
+    The anchor is the passage's own words, and the link a reader follows must carry it.
+    """
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    wood = DocumentChunk.objects.create(
+        document=document,
+        section_ref="Appendix 2",
+        heading_path="APPENDICES > Appendix 2",
+        page=77,
+        text="Wood, bark and sawdust, only if not chemically treated.",
+    )
+    document.chunk_count = 3
+    document.save(update_fields=["chunk_count"])
+    standard_set = document.standard_set
+
+    citations, problems = audit_citations(
+        [{"section_ref": "Appendix 2", "quote": wood.text}],
+        chunks_by_id([wood.pk], standard_set=standard_set),
+        standard_set_id=standard_set.pk,
+        document_codes={CORPUS_SOURCE: "saoso-standard-v2.1"},
+    )
+
+    assert problems == ()
+    citation = citations[0]
+    assert citation.reading_anchor == "appendix-2-wood-bark-and-sawdust"
+    assert citation.read_url.endswith("#appendix-2-wood-bark-and-sawdust")
+
+    body = client.get(citation.read_url).content.decode()
+    assert 'id="appendix-2-wood-bark-and-sawdust"' in body

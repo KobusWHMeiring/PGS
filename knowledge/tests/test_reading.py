@@ -155,3 +155,22 @@ def test_an_empty_query_searches_nothing(document):
     """Guarded explicitly: an empty query that matched everything would render the whole
     document as a result, and the page would look broken while passing `!= []`."""
     assert search_in_document(document, "   ") == []
+
+
+def test_a_search_hit_carries_the_anchor_that_names_its_own_passage(document):
+    """The hit list links to the passage it quotes. Before 2026-10-27 every hit on a shared
+    reference linked to the group's first passage (`CONCORDANCE_PRD` §10.7)."""
+    document.chunks.all().delete()
+    DocumentChunk.objects.create(
+        document=document, section_ref="Appendix 2", page=76, text="Farmyard manure, slurry and urine"
+    )
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="Appendix 2",
+        page=77,
+        text="Wood, bark and sawdust, only if not chemically treated.",
+    )
+
+    hits = search_in_document(document, "sawdust")
+
+    assert [hit.anchor for hit in hits] == ["appendix-2-wood-bark-and-sawdust"]

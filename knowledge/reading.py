@@ -201,13 +201,20 @@ def _words(query: str) -> list[str]:
 
 
 def search_in_document(
-    document: StandardDocument, query: str, *, limit: int = 20
+    document: StandardDocument,
+    query: str,
+    *,
+    limit: int = 20,
+    anchors: dict[int, str] | None = None,
 ) -> list[SearchHit]:
     """In: a document and what a person typed. Out: matching passages, best first.
 
-    In:  `query` — free text from the reader's box; `limit` — how many passages.
+    In:  `query` — free text from the reader's box; `limit` — how many passages; `anchors` —
+         `{chunk id: anchor}` as the reader renders them, so a hit links to its own passage
+         rather than to the first one sharing its reference (`CONCORDANCE_PRD` §10.7).
+         Defaults to computing the map from this document.
     Out: `SearchHit` rows; empty when the query is empty or nothing matches.
-    Side effects: none (read-only).
+    Side effects: at most one extra query when `anchors` is None (read-only).
     Fails: never deliberately. A search box that raises is worse than one that finds
         nothing, and the reader page has no error surface for it.
 
@@ -221,6 +228,8 @@ def search_in_document(
     words = _words(query)
     if not words:
         return []
+    if anchors is None:
+        anchors = {chunk.pk: anchor for chunk, anchor in unique_anchors(reading_chunks(document))}
 
     base = document.chunks.all()
     for search_query in (
@@ -232,13 +241,13 @@ def search_in_document(
             .annotate(rank=SearchRank("search_vector", search_query))
             .order_by("-rank", "id")[:limit]
         )
-        hits = [_hit(chunk, words) for chunk in ranked]
+        hits = [_hit(chunk, words, anchors) for chunk in ranked]
         if hits:
             return hits
     return []
 
 
-def _hit(chunk: DocumentChunk, words: list[str]) -> SearchHit:
+def _hit(chunk: DocumentChunk, words: list[str], anchors: dict[int, str]) -> SearchHit:
     """The passage, sliced around the first word the reader typed."""
     text = chunk.text or ""
     lowered = text.lower()
@@ -253,7 +262,8 @@ def _hit(chunk: DocumentChunk, words: list[str]) -> SearchHit:
     typed = next((word for word in words if lowered.find(word.lower()) == at), "")
     hit = window[word_at : word_at + len(typed)] or window[word_at : word_at + 1]
     return SearchHit(
-        anchor=reading_anchor(chunk.section_ref, chunk.anchor, chunk.heading_path),
+        anchor=anchors.get(chunk.pk)
+        or reading_anchor(chunk.section_ref, chunk.anchor, chunk.heading_path),
         locator=chunk.section_ref or chunk.anchor or chunk.heading_path or f"p{chunk.page}",
         page=chunk.page,
         before=window[:word_at],

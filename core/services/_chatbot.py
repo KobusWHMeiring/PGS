@@ -318,8 +318,9 @@ class Citation:
     #: provenance rather than guessed from the title. Empty when the group does not publish the
     #: document the clause came from — and then a template renders text, never a dead link.
     document_code: str = ""
-    #: The fragment the reader lands on, derived from the same section reference the citation
-    #: shows (`knowledge.reading.reading_anchor`), so it survives a `--force` re-ingest.
+    #: The fragment the reader lands on. The first passage of a shared reference keeps the
+    #: reference itself; later ones are named for their own words, so the anchor is a property
+    #: of the text and survives a `--force` re-ingest (`CONCORDANCE_PRD` §10.7).
     reading_anchor: str = ""
 
     @property
@@ -818,14 +819,15 @@ def _reader_anchors(chunks: Sequence[RetrievedChunk]) -> dict[int, str]:
     In:  the retrieved chunks.
     Out: one anchor per chunk that is a stored row; empty for a chunk the database does
          not have (a test double), whose citation falls back to the section anchor.
-    Side Effects: one query, plus one per distinct document — a suffix is positional, so it
-         can only be computed from the document's ordered chunk list, which is what the
-         reader does (`knowledge.reading.reader_anchor_map`).
+    Side Effects: one query, plus one per distinct document — uniqueness is decided within the
+         document's ordered chunk list, so the map can only be computed there, which is what
+         the reader does (`knowledge.reading.reader_anchor_map`).
 
     Why this exists: eight SAOSO §1 chunks share the locator `S1`, so every citation of a
     definition linked to `#s1` — the top of a 21 000-character section — while the reader
-    renders `s1-2` … `s1-8` for the rest. A citation chip that opens three thousand
-    characters above its own quote is a link that technically works (F7).
+    renders a content-derived anchor for the rest (`s1-genetically-modified-organism-gmo`).
+    A citation chip that opens three thousand characters above its own quote is a link that
+    technically works (F7).
     """
     ids = [chunk.chunk_id for chunk in chunks]
     if not ids:
