@@ -530,8 +530,8 @@ def test_the_page_renders_a_glossary_term_above_its_definition(client, seeded_do
 
     body = client.get("/documents/saoso-standard-v2.1/read/?section=s1").content.decode()
 
-    assert '<p class="passage__term">ACB</p>' in body
-    assert '<p class="passage__term">Habitat</p>' in body
+    assert '<p class="passage__term" id="term-acb">ACB</p>' in body
+    assert '<p class="passage__term" id="term-habitat">Habitat</p>' in body
     assert "Accredited Certification Body." in body
 
 # --- The table branch: a curated appendix renders as the paper's table --------
@@ -559,6 +559,7 @@ def curated_rows(db):
         section_scheme="saoso",
         toc=[
             {"part": "A", "kind": "SECTION", "label": "1", "title": "Introduction", "printed_page": 4},
+            {"part": "B", "kind": "SECTION", "label": "1", "title": "Definitions", "printed_page": 22},
             {"part": "B", "kind": "SECTION", "label": "4", "title": "Crop Production", "printed_page": 35},
             {"part": "B", "kind": "SECTION", "label": "6", "title": "Wild Harvesting", "printed_page": 52},
             {"part": "B", "kind": "SECTION", "label": "22", "title": "Labelling", "printed_page": 65},
@@ -584,6 +585,13 @@ def curated_rows(db):
     for section_ref, page, text, heading in (
         ("S4.1", 35, "Crop rotation is required.", "4. CROP PRODUCTION"),
         (
+            "S1",
+            22,
+            "1. DEFINITIONS\n\nACB\n\nAccredited Certification Body. Accredited to ISO 17065 "
+            "or international equivalent.",
+            "1. DEFINITIONS",
+        ),
+        (
             "S6.1",
             52,
             "Harvesting is permitted; see Section 4.6.2 for the rule on wild plants.",
@@ -593,7 +601,8 @@ def curated_rows(db):
             "S22.1.7",
             65,
             "Labels must follow Section A – 2.3, Appendix 4 for inputs, and Appendix 6 for "
-            "housing, and see Appendix 9 for what this standard does not say.",
+            "housing, and see Appendix 9 for what this standard does not say. The ACB approves "
+            "a label before it is printed.",
             "22. LABELLING",
         ),
         (
@@ -618,7 +627,7 @@ def curated_rows(db):
             page=page,
             text=text,
         )
-    document.chunk_count = 38
+    document.chunk_count = 39
     document.save(update_fields=["chunk_count"])
 
     PublicDocument.objects.create(
@@ -821,3 +830,30 @@ def test_a_locator_prints_again_when_the_printed_page_changes(client, curated_ro
 
     assert [passage.show_locator for passage in reader.passages] == [True, True]
     assert reader.passages[1].locator == reader.passages[0].locator  # same reference, new page
+
+
+# --- The glossary: a defined word is a click away -----------------------------
+
+
+def test_a_defined_word_links_to_its_definition(client, curated_rows):
+    """`ACB` in 22.1.7 opens the glossary at the definition's own id, not at the branch's top."""
+    anchor = reader_for(curated_rows, "", "s22-1-7").selected.anchor
+    body = client.get(f"/documents/saoso-curated/read/?section={anchor}").content.decode()
+
+    assert (
+        '<a class="passage__ref" href="?section=s1#term-acb" target="_blank" rel="noopener">ACB'
+        in body
+    )
+
+
+def test_the_definition_carries_the_id_the_link_names(client, curated_rows):
+    body = client.get("/documents/saoso-curated/read/?section=s1").content.decode()
+
+    assert '<p class="passage__term" id="term-acb">ACB</p>' in body
+
+
+def test_the_glossary_page_does_not_link_to_itself(client, curated_rows):
+    """The definitions are on this page already; 71 self-links would be noise, not navigation."""
+    body = client.get("/documents/saoso-curated/read/?section=s1").content.decode()
+
+    assert "?section=s1#term-" not in body
