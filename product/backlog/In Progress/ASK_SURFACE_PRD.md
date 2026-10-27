@@ -131,6 +131,30 @@ at `CHAT_MAX_OUTPUT_TOKENS`, a single retry at double the cap — two calls, eac
 `CHAT_TIMEOUT_MS`, so the honest worst case is about a minute. That is the number the waiting
 row quotes.
 
+### 4c. The cap was one budget for two jobs (2026-10-27)
+
+Chasing the 41 s tail found the real mechanism: **`gemini-2.5-flash`'s thinking tokens are
+counted against `max_output_tokens`.** Attempts on the silica question, measured per call
+(`_scratch/answer_probe.py`, three runs each):
+
+| Run | Thinking | Output | Finish | Turn |
+|---|---|---|---|---|
+| cap 2048 | 842 | 600 | STOP | 9–10 s |
+| cap 2048 | **1962** | **72** | **MAX_TOKENS** → retry at 4096 | **18 s** |
+| cap 4096 | 842 | 600 | STOP | 8.5 s |
+| cap 4096 | **2383** | 651 | STOP | 14.9 s |
+
+At 2048 a heavy think (2383) cannot fit *at all*: the JSON is guaranteed to be cut, so the
+turn always pays for a second call. At 4096 the same thinking fits and the answer arrives in
+one call — and run 3 shows what the old cap was costing in *content*: 10 citations and 1133
+characters at 4096, against 6 citations and 1001 characters after a truncation-retry.
+
+Successful-call latency is unchanged by the cap (8.5–11 s measured at 2048, 4096 and 8192), so
+raising it trades nothing for the normal case. Shipped defaults are now **4096 / ceiling
+8192** (`CHAT_MAX_OUTPUT_TOKENS`, `CHAT_MAX_OUTPUT_TOKENS_CEILING`), in `settings.py` and
+`.env.example`, with a test that pins the floor and the reason. A deployment that never set
+either variable picks the new defaults up on its next deploy.
+
 ## 4. What is not built
 
 1. **The board** — a publishable-question table (question, answer, citations, category,

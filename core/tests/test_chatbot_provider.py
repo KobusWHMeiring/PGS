@@ -100,15 +100,37 @@ def _ask(model):
 
 
 def test_the_output_cap_is_read_from_settings_and_can_carry_a_real_answer():
-    """1024 tokens truncated a four-citation answer. The floor is 2048, not a taste."""
+    """1024 truncated a four-citation answer; 2048 truncated again. The floor is 4096.
+
+    The second truncation is the interesting one, because it is not about the answer's
+    length: `gemini-2.5-flash`'s **thinking tokens are counted against `max_output_tokens`**.
+    Measured on the silica question (`_scratch/answer_probe.py`): a normal attempt thinks 842
+    and answers in 600, but one attempt in three thought 1962 and was cut with 72 output
+    tokens — so the visitor paid for a second model call, 18 s instead of 9 s.
+    """
     client = _Client([_response(GOOD_JSON, types.FinishReason.STOP)])
     model = GeminiChatModel(client=client, api_key="test-key")
 
     _ask(model)
 
-    assert client.configs[0].max_output_tokens >= 2048, (
-        "the shipped 1024-token cap truncated the JSON mid-string in production"
+    assert client.configs[0].max_output_tokens >= 4096, (
+        "a cap this small leaves the JSON answer whatever the model's reasoning did not use"
     )
+
+
+def test_the_shipped_cap_leaves_room_for_a_heavy_think():
+    """Guarded against the *default*, not the request: an override may lower it deliberately.
+
+    This is the number a deployment inherits, so it is the one that decides whether the
+    product pays for a second call on a question the model thinks hard about.
+    """
+    from django.conf import settings
+
+    from core.services import _chatbot
+
+    assert settings.CHAT_MAX_OUTPUT_TOKENS >= 4096
+    assert settings.CHAT_MAX_OUTPUT_TOKENS_CEILING > settings.CHAT_MAX_OUTPUT_TOKENS
+    assert _chatbot.MAX_OUTPUT_TOKENS == 4096, "the fallback drifted from the setting"
 
 
 @override_settings(CHAT_MAX_OUTPUT_TOKENS=3000)

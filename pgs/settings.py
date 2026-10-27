@@ -242,12 +242,22 @@ CHAT_HISTORY_MESSAGES = int(env("CHAT_HISTORY_MESSAGES", "8"))
 # fallback — so the product ran at five for a day while the plan believed eight.
 CHAT_RETRIEVAL_LIMIT = int(env("CHAT_RETRIEVAL_LIMIT", "8"))
 CHAT_ANSWER_CACHE_TTL = int(env("CHAT_ANSWER_CACHE_TTL", "3600"))
-# Output tokens per generation attempt. 1024 truncated a four-citation answer mid-JSON
-# on 2026-10-19, which surfaced to the visitor as "the service is unavailable".
-CHAT_MAX_OUTPUT_TOKENS = int(env("CHAT_MAX_OUTPUT_TOKENS", "2048"))
+# Output tokens per generation attempt. 1024 truncated a four-citation answer mid-JSON on
+# 2026-10-19, which surfaced to the visitor as "the service is unavailable"; 2048 truncated
+# again on 2026-10-27, and the mechanism matters: **gemini-2.5-flash's thinking tokens are
+# counted against this cap**, so the JSON answer gets whatever the reasoning left. Measured
+# on the silica question (`_scratch/answer_probe.py`, three runs): a normal attempt thinks
+# 842 and answers in 600 (1442 of 2048), but one attempt in three thought for 1962 and was
+# cut with 72 output tokens left — MAX_TOKENS, a wasted call, and a second call at the
+# ceiling that took the turn to 18 s instead of 9 s.
+#
+# 4096 leaves ~2100 tokens for the answer after a heavy think, and the successful-call
+# latency is unchanged by the cap (9-11 s measured at 2048, 4096 and 8192). A deployment
+# with a tighter budget may lower this; lower it with a measurement, not a hunch.
+CHAT_MAX_OUTPUT_TOKENS = int(env("CHAT_MAX_OUTPUT_TOKENS", "4096"))
 # One retry is allowed at this cap when Gemini reports MAX_TOKENS; a second truncation
-# is reported, not retried again.
-CHAT_MAX_OUTPUT_TOKENS_CEILING = int(env("CHAT_MAX_OUTPUT_TOKENS_CEILING", "4096"))
+# is reported, not retried again. 8192 is the retry's room, not the normal budget.
+CHAT_MAX_OUTPUT_TOKENS_CEILING = int(env("CHAT_MAX_OUTPUT_TOKENS_CEILING", "8192"))
 
 
 # --- Media ------------------------------------------------------------------

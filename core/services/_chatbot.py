@@ -111,16 +111,22 @@ MAX_CITATIONS = 8
 #: retrieval. The audited citations, not the eight supplied passages.
 CARRIED_CITATIONS = 2
 
-#: How much of the model's reply is accepted verbatim. A cap *below* the JSON's natural
-#: size truncates the payload mid-string, and the failure surfaces as "Gemini returned
-#: text that is not the requested JSON schema" — a transport limit wearing a parse
-#: error's clothes, which the view then renders as an outage. 1024 tokens cut a real
-#: four-citation answer on 2026-10-19; 2048 leaves room without inviting runaway prose
-#: (`MAX_ANSWER_CHARS` still guards the finished answer).
-MAX_OUTPUT_TOKENS = 2048
-#: One retry is allowed at this cap when the provider reports `MAX_TOKENS`. It never
-#: grows past it: a second truncation is reported, not retried again.
-MAX_OUTPUT_TOKENS_CEILING = 4096
+#: The output-token budget per generation attempt, and the larger cap one truncation retry
+#: may ask for. A cap *below* the JSON's natural size truncates the payload mid-string, and
+#: the failure surfaces as "Gemini returned text that is not the requested JSON schema" — a
+#: transport limit wearing a parse error's clothes, which the view then renders as an outage.
+#: 1024 cut a four-citation answer on 2026-10-19; 2048 cut again on 2026-10-27, because
+#: **gemini-2.5-flash's thinking tokens are counted against this cap** — a measured attempt
+#: thought 1962 tokens and had 72 left for the answer, so the turn paid for a second call
+#: (`_scratch/answer_probe.py`, and `settings.CHAT_MAX_OUTPUT_TOKENS` for the full numbers).
+#:
+#: Kept equal to the settings defaults on purpose: these are the fallbacks a `getattr` reaches
+#: only when settings do not define the name, and a fallback that drifts from the setting is
+#: the §2.7 hazard this deployment has already paid for once — the instrument read 8 while the
+#: product ran 5. The retry grows to the ceiling and no further: a second truncation is
+#: reported, never retried again.
+MAX_OUTPUT_TOKENS = 4096
+MAX_OUTPUT_TOKENS_CEILING = 8192
 
 #: Bumped when the prompt, schema or retrieval changes in a way that makes an old cached
 #: reply unsafe to reuse. It is part of the cache key, so a stale answer cannot outlive
