@@ -99,6 +99,12 @@ printed page and section reference are visible without scrolling far.
 dropped into the middle of a wall of text?* The anchor can be asserted; whether a reader can tell
 where they are and what surrounds the rule cannot.
 
+The surface changed on 2026-10-27: the reader is now the concordance (the document's printed tree,
+one open branch, a citation that says **"View this line"** and opens in a new tab). The widened
+judgement — the tree, the phone disclosure, and what the page says the corpus does not hold — is
+**`tests/uat/concordance_uat.md` Scenario 3**, and that file is unsigned. Judge the landing there.
+This scenario still holds for the arrival itself.
+
 ---
 
 ## Scenario 4 — The citation survives leaving the site

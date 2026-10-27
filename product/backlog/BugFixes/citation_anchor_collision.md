@@ -1,6 +1,7 @@
 # Bug: a citation opens the wrong passage when its reference is shared
 
-**Status:** Open — found 2026-10-27 while pricing the concordance (SPEC §18.3 **D68**, Q8).
+**Status:** **Closed 2026-10-27** — fixed and guarded while building the concordance (SPEC §18.3
+**D68**, Q8). Resolution in §7; the guard runs on the shipped corpus (`knowledge/tests/test_anchors.py`).
 **Severity:** A visitor following "Read it in SAOSO v2.1" on an answer page can land on a different
 passage from the one quoted. The answer page's own quote is correct; the link's target is not.
 **Owner:** Build
@@ -71,8 +72,23 @@ wrong — that is the shape of `testing_hazards.md` §1.6.
 
 ## 6. Definition of done
 
-- [ ] Anchor derivation is content-derived for a shared reference and the bare anchor still resolves.
-- [ ] The guard test exists, **has been watched to fail** against the current derivation, and passes.
-- [ ] A stored citation from an Appendix 2 row (not the first) opens that row's text.
-- [ ] `SearchHit.anchor` and `Citation.reading_anchor` use the same derivation as the reader. No
+- [x] Anchor derivation is content-derived for a shared reference and the bare anchor still resolves.
+- [x] The guard test exists, **has been watched to fail** against the current derivation, and passes
+      (`knowledge/tests/test_anchors.py`; 0 ambiguous of 366 on the shipped corpus).
+- [x] A stored citation from an Appendix 2 row (not the first) opens that row's text
+      (`core/tests/test_document_reader.py::test_a_citation_to_the_second_row_of_a_table_opens_that_row`).
+- [x] `SearchHit.anchor` and `Citation.reading_anchor` use the same derivation as the reader. No
       second anchor function.
+
+## 7. Resolution (2026-10-27)
+
+`unique_anchors()` now names the second and later passage of a shared reference with a slug of its
+own words (`#appendix-2-wood-bark-and-sawdust`), keeps the first passage on its bare anchor, and
+keeps a numeric suffix only as a last resort when two passages begin with the same words. That last
+case exists once on the shipped corpus (`appendix-2-2`: two Appendix 2 rows both begin "Trace
+elements, e.g.") and is stable for unchanged text.
+
+The reader (`reader_anchor_map`), the search list (`search_in_document(anchors=)`) and the chat
+(`_reader_anchors` → `reader_anchor_map`) all read the one function. `Citation.read_url` now carries
+`?section=<anchor>#<anchor>` so the branch is selected server-side and the fragment scrolls to the
+passage. Measured: **0 ambiguous anchors of 366**, where this file recorded 57.

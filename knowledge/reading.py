@@ -7,8 +7,11 @@ rendered page in a way it cannot be found by hoping a PDF viewer scrolls to a nu
 
 **The anchor is derived, never stored.** `section_ref` survives a `--force` re-ingest; a
 chunk id does not, and `build_principles.md` §I forbids a sequential id on a public surface.
-The duplicate-`section_ref` ratchet is held at zero (`tests/test_ingest.py`), which is what
-makes a section reference a usable anchor rather than a collision.
+A reference alone is **not** an identifier, though: 57 of 366 passages share one (Appendix 2
+is 30 rows under one reference). The first passage of a group keeps the bare anchor, so links
+shipped before 2026-10-27 still land where they did; later passages are named for their own
+words (`#appendix-2-wood-bark-and-sawdust`). The disambiguator is therefore a property of
+the text — inserting a reviewed row does not repoint it (CONCORDANCE_PRD §10.7).
 
 No `core` import, ever (`build_principles.md` §I). This module knows about documents and
 chunks; it does not know what a URL is.

@@ -1,10 +1,11 @@
 # The Concordance — Implementation Plan
 
-**Status:** Ready — every decision closed (`PGS_PLATFORM_SPEC.md` §18.3 **D68**, 2026-10-27).
-Nothing built yet beyond the flat reader that ships today. **Start at Task 1.**
-**Read first:** §0.1 (the two tasks that touch files a concurrent session was editing — those are
-now committed, so re-check `git status --short core/` anyway), §0.2 (this machine's
-`PublicDocument` rows need `publish_documents` before anything is measurable), §0.4 (the dry run).
+**Status:** **In Progress** — all eleven tasks landed 2026-10-27; gate green at 954 tests,
+Playwright at 53. **UAT unsigned** (`tests/uat/concordance_uat.md`), so it stays here until that
+table carries names. The implementation
+notes that differ from this plan are in §12, at the end.
+**Read first:** §0.2 (this machine's `PublicDocument` rows need `publish_documents` before anything
+is measurable) and §0.4 (the dry run).
 **Owner:** Kobus Meiring (Product) · Build
 **PRD:** `CONCORDANCE_PRD.md` (decisions in §7, findings in §10.5–10.8, UAT impact in §11)
 **Decision record:** `product/design/d68_concordance_open_questions.html` (the eight answers)
@@ -1931,3 +1932,43 @@ the reader shows no text at all, and every judgement would be about a broken pag
 not completion for a surface a human must judge.** Do not mark this feature done before the
 sign-off table has names in it — and do not ask the reviewer to confirm anything in the *Automated
 coverage* table; that table exists so they do not have to.
+
+---
+
+## 12. Implementation notes — what differed from this plan
+
+Built 2026-10-27, one commit per task. The gate is green at **954 passed, 1 skipped** (the
+real-corpus anchor guard skips on the scratch database by design) and Playwright at **53**.
+These are the places the code does not match the plan above; each was found by running it.
+
+1. **Task 2 — the TOC is read from the raw pages.** The plan's snippet captured `pages` after
+   `apply_layout`, contradicting its own comment. `ingest_standard` now keeps `raw_pages` and
+   passes those to `toc_from_pages`, so the stored TOC is a record of what the document prints.
+   `--from-corpus` extracts the PDF once more for this purpose only (the artefact carries no TOC).
+2. **Task 4 — the plan's claim that `test_reading.py` "still passes" was wrong.** Its
+   `test_a_repeated_reference_keeps_the_plain_anchor_first` deliberately duplicates a reference,
+   so it asserted `appendix-2-2`; it now asserts `appendix-2-straw-is-listed`. Measured on the
+   shipped 366 passages: **0 ambiguous anchors**, and the first row of every group keeps its bare
+   anchor. **One last-resort numeric suffix remains** — `appendix-2-2`, because two Appendix 2
+   rows both begin "Trace elements, e.g." — which is the fallback the plan allows.
+3. **Task 5 — no `_citation_anchors`/`passage_anchors` was added.** The chat had already grown
+   `_reader_anchors()` (F7), which resolves through `reader_anchor_map()` → `unique_anchors()`, so
+   it inherited the content-derived anchors from Task 4 with no code change. The work that
+   remained was the search list (`search_in_document(anchors=)`), the two docstrings that still
+   described positional suffixes, and the citation tests that asserted `s1-2`.
+4. **Task 6 — two page-level tests became service-level.** Only the selected branch renders now,
+   so `test_every_chunk_has_its_anchor_on_the_page` asserts the tree's passages, and the F7 test
+   asserts the branch's anchors instead of both ids on one page. Task 7/8 re-add the page-level
+   assertions through `?section=`.
+5. **Task 9 — a closed `<details>` hides its content through `::details-content`, not through the
+   child's `display`.** `display: block` on the nav is not enough on current Chromium; the desktop
+   rule also needs `.reader__tree-details:not([open])::details-content { content-visibility:
+   visible; display: block; }`. Found by looking at the page (the desktop tree was invisible while
+   every assertion stayed green), which is why Step 4 exists.
+6. **Task 10 — the answer page's citations are dicts, not `Citation` objects.** `answer_page.html`
+   builds its href from `citation.document_code`/`reading_anchor` in the template; only
+   `_thread.html` can use the `read_url` property.
+7. **Dev data.** `ingest_standard` is idempotent on the PDF's sha256, so a plain re-run does not
+   write the new `toc` field. The dev database's four documents had their `toc` written directly
+   (the ingest path is what is tested); a `--force` re-ingest was avoided because it would have
+   re-embedded 366 chunks and dropped `ChatMessage.retrieved_chunks` evidence links.

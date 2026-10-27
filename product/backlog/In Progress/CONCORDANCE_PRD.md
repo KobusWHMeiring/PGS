@@ -1,10 +1,10 @@
 # PRD: The concordance — the standard on one screen, and a citation that opens a line
 
-**Status:** Ready — the eight questions in §7 were decided by the product owner on 2026-10-27
-(`PGS_PLATFORM_SPEC.md` §18.3 **D68**), the argument is in
-`product/design/d68_concordance_open_questions.html`, and the work is planned task-by-task in
-`CONCORDANCE_PLAN.md` (11 tasks, its algorithm dry-run against the live corpus). **Nothing is built:**
-nothing beyond the reader at `/documents/<code>/read/` exists yet.
+**Status:** **In Progress** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`, gate green
+at 954 tests). The reader at `/documents/<code>/read/` is the concordance: the printed structure is
+the navigation, one branch is open, a citation links to the line it quotes, and the page names the
+printed sections the corpus does not hold. **The UAT is unsigned** (`tests/uat/concordance_uat.md`),
+so this stays In Progress until that table carries names.
 **Owner:** Product (shape, publication), Build (the derivation in §5)
 **Opened:** 2026-10-27
 **Origin:** the ask-surface UAT, scenario *"Following a citation opens the document at the passage
@@ -54,9 +54,12 @@ Two measured facts support the change:
 
 * The document is small enough for a tree to be the navigation: **4 documents, ~101 printed pages,
   366 chunks** at the time of writing.
-* The current page is heavy precisely because it renders everything: **333,481 bytes raw / 61,647
+* The old page was heavy precisely because it rendered everything: **333,481 bytes raw / 61,647
   gzipped, 319 passages, 4 queries** for SAOSO, measured 2026-10-27. Rendering one branch is a
-  fraction of that, which matters on the connection a farm office actually has.
+  fraction of that. **Measured after the change (2026-10-27, the shipped page with the 23-row tree
+  included):** the first branch is **45,017 raw / 11,375 gzipped**, Appendix 2's 30 rows are 32,709 /
+  5,921, and the largest branch (S5, 66 passages) is 66,411 / 14,503 — so the heaviest branch is
+  still ~5× lighter on the wire than the old flat page, and the default view is ~8× lighter.
 
 ## 4. Does the concordance need its own ingestion pipeline?
 

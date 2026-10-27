@@ -1,12 +1,10 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-27 12:12
+> Generated: 2026-10-27 13:08
 
 ## Ready (up next)
 
-- **The Concordance — Implementation Plan** - `ready\CONCORDANCE_PLAN.md` - Status: Ready — every decision closed (`PGS_PLATFORM_SPEC.md` §18.3 **D68**, 2026-10-27).
-- **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `ready\CONCORDANCE_PRD.md` - Status: Ready — the eight questions in §7 were decided by the product owner on 2026-10-27
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
 - **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 
@@ -15,6 +13,8 @@
 - **The ask board, the answer page and the document reader — Implementation Plan** - `In Progress\ASK_SURFACE_PLAN.md` - Status: no status
 - **PRD — The ask surface, second shape (board + answer pages)** - `In Progress\ASK_SURFACE_PRD.md` - Status: In Progress — shape decided (**D62**); follow-up stage 1 landed (**D63**);
 - **PRD: Chat answer coverage — governing rules, table rows, and the gaps left** - `In Progress\CHAT_ANSWER_COVERAGE_PRD.md` - Status: In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
+- **The Concordance — Implementation Plan** - `In Progress\CONCORDANCE_PLAN.md` - Status: **In Progress** — all eleven tasks landed 2026-10-27; gate green at 954 tests,
+- **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `In Progress\CONCORDANCE_PRD.md` - Status: **In Progress** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`, gate green
 - **Corpus Canonical Format — Implementation Plan** - `In Progress\CORPUS_CANONICAL_FORMAT_PLAN.md` - Status: In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.5 and P2.5a landed 2026-10-22
 - **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — the BPP artefact is built and reviewed; the OPP, landscape and SAOSO are not converted.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
@@ -42,7 +42,7 @@ _none_
 
 ## Bug Fixes
 
-- **Bug: a citation opens the wrong passage when its reference is shared** - `BugFixes\citation_anchor_collision.md` - Status: Open — found 2026-10-27 while pricing the concordance (SPEC §18.3 **D68**, Q8).
+- **Bug: a citation opens the wrong passage when its reference is shared** - `BugFixes\citation_anchor_collision.md` - Status: **Closed 2026-10-27** — fixed and guarded while building the concordance (SPEC §18.3
 
 ## Done
 

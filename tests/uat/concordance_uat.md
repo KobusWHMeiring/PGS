@@ -1,10 +1,11 @@
 # UAT — The concordance (the reader becomes the document's own tree)
 
 **Feature slug:** `concordance`
-**PRD:** `product/backlog/Refinement/CONCORDANCE_PRD.md` · **Plan:** `CONCORDANCE_PLAN.md`
+**PRD:** `product/backlog/In Progress/CONCORDANCE_PRD.md` · **Plan:** `CONCORDANCE_PLAN.md`
 **Decision:** `PGS_PLATFORM_SPEC.md` §18.3 **D68** (eight answers, 2026-10-27)
 **Argument:** `product/design/d68_concordance_open_questions.html`
-**Status:** Drafted **before** implementation (shift-left validation)
+**Status:** Drafted **before** implementation (shift-left); **unsigned** — the feature is built
+and the gate is green, and this file is what a human still has to judge
 **Date:** 2026-10-27
 
 ---
