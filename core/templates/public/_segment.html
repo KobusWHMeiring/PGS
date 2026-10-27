@@ -1,0 +1,16 @@
+{% comment %}
+  One run of a paragraph: the document's words, and — when they name something in this document —
+  where to go.
+
+  Three shapes, decided by data, never by a string comparison in the template:
+
+  * `segment.branch` — a branch in the tree. The href is the tree's own link shape
+    (`?section=<anchor>#<anchor>`), and it opens in a new tab so the reader keeps the clause they
+    were reading (D70.3). `rel="noopener"` is not optional: a new tab that can reach back into this
+    one is the one thing a citation surface must not allow.
+  * `segment.fragment` — a target on this page (`#not-in-corpus`, a definition's id).
+  * `segment.title` only — no target, but something worth saying: bare `Appendix 4` is printed in two
+    tables and this says which (`title`, and the words are unchanged).
+
+  The visually-hidden suffix is the announcement; there is no icon, so nothing else announces it.
+{% endcomment %}{% if segment.branch %}<a class="passage__ref" href="?section={{ segment.branch }}#{{ segment.fragment }}" target="_blank" rel="noopener"{% if segment.title %} title="{{ segment.title }}"{% endif %}>{{ segment.text }}<span class="visually-hidden"> (opens in a new tab)</span></a>{% elif segment.fragment %}<a class="passage__ref" href="#{{ segment.fragment }}" target="_blank" rel="noopener"{% if segment.title %} title="{{ segment.title }}"{% endif %}>{{ segment.text }}<span class="visually-hidden"> (opens in a new tab)</span></a>{% elif segment.title %}<span class="passage__ref-note" title="{{ segment.title }}">{{ segment.text }}</span>{% else %}{{ segment.text }}{% endif %}

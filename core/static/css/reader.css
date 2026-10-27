@@ -575,3 +575,34 @@
   font-size: var(--text-xs);
   line-height: var(--leading-body);
 }
+
+/* A reference the document makes to itself — a section, an appendix, a defined word. It opens in a
+   new tab so the reader keeps the clause they were reading (D70.3), and it must read as a link in
+   the text rather than as a control: an offset hairline underline, no colour change beyond the
+   darker forest on hover, and no icon. The announcement is the visually-hidden suffix in the
+   template, which is one mechanism rather than three. */
+.passage__ref {
+  color: var(--brand-forest);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--brand-muted);
+  text-underline-offset: 0.2em;
+}
+
+.passage__ref:hover {
+  color: var(--brand-forestDark);
+  text-decoration-color: var(--brand-forestDark);
+}
+
+.passage__ref:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* A reference with no target but something to say: bare `Appendix 4` is printed in two tables.
+   Dotted rather than solid, so it never looks like a link that failed. */
+.passage__ref-note {
+  border-bottom: 1px dotted var(--brand-muted);
+  cursor: help;
+}

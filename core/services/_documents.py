@@ -47,6 +47,7 @@ from knowledge.reading import (
     strip_overlap,
     unique_anchors,
 )
+from knowledge.references import annotate, build_reference_index
 from knowledge.tables import TableDivider, TableStructure, structure_for
 
 logger = logging.getLogger(__name__)
@@ -384,9 +385,12 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # labelling rows it cannot vouch for (`knowledge.tables.structure_for`).
     section_ref = branch_pairs[0][0].section_ref if branch_pairs else None
     structure = structure_for(section_ref, tuple(texts))
+    # One index per request, built from the tree the page already rendered: a reference can only
+    # point at a branch that is in it.
+    index = build_reference_index(document_row, sections)
 
     rows: list[ReaderPassage] = []
-    for index, ((chunk, _anchor), text) in enumerate(zip(branch_pairs, texts)):
+    for position, ((chunk, _anchor), text) in enumerate(zip(branch_pairs, texts)):
         rows.append(
             ReaderPassage(
                 anchor=pairs[chunk.pk],
@@ -394,9 +398,13 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
                 page=chunk.page,
                 heading_path=chunk.heading_path,
                 text=text,
-                blocks=row_blocks(text) if structure is not None else passage_blocks(text),
-                dividers=structure.dividers[index] if structure is not None else (),
-                note=structure.labels[index] if structure is not None else "",
+                blocks=annotate(
+                    row_blocks(text) if structure is not None else passage_blocks(text),
+                    index,
+                    open_branch=selected.key if selected is not None else "",
+                ),
+                dividers=structure.dividers[position] if structure is not None else (),
+                note=structure.labels[position] if structure is not None else "",
             )
         )
     passages = tuple(rows)

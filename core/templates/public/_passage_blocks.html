@@ -14,7 +14,7 @@
 {% endcomment %}
 {% for block in blocks %}
   {% if block.kind == "paragraph" %}
-    <p class="passage__text">{{ block.text }}</p>
+    <p class="passage__text">{% for segment in block.segments %}{% include "public/_segment.html" %}{% empty %}{{ block.text }}{% endfor %}</p>
   {% elif block.kind == "heading" %}
     <p class="passage__heading">{{ block.text }}</p>
   {% elif block.kind == "term" %}
@@ -25,7 +25,7 @@
     <ol class="passage__list passage__list--{{ block.style }}"{% if block.start != 1 %} start="{{ block.start }}"{% endif %}>
       {% for item in block.items %}
         <li class="passage__item">
-          {{ item.text }}
+          {% for segment in item.segments %}{% include "public/_segment.html" %}{% empty %}{{ item.text }}{% endfor %}
           {% if item.children %}
             {% include "public/_passage_blocks.html" with blocks=item.children %}
           {% endif %}

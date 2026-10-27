@@ -34,7 +34,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
-from knowledge.concordance import _match_key, build_concordance
+from knowledge.concordance import ConcordanceSection, _match_key, build_concordance
 from knowledge.passages import Block, ListBlock, Paragraph
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
@@ -125,19 +125,23 @@ def _toc_parts(document: "StandardDocument") -> dict[str, str]:
     return parts
 
 
-def build_reference_index(document: "StandardDocument") -> ReferenceIndex:
+def build_reference_index(
+    document: "StandardDocument", sections: Sequence["ConcordanceSection"] | None = None
+) -> ReferenceIndex:
     """In: a document. Out: its branches and their parts. One query, via the concordance.
 
-    In:  the document (its chunks and its stored `toc`).
+    In:  the document (its chunks and its stored `toc`); `sections` — the tree, when the caller has
+         already built it, so the reader does not pay for a second `reading_chunks()` query.
     Out: `ReferenceIndex` — every rendered branch by key, and the printed part each belongs to.
          A reserved row (the printed `10 to 19`) is not a target: it has no text.
-    Side effects: one query for the chunks.
+    Side effects: one query for the chunks, and none when `sections` is given.
     Fails: never. A document with no TOC simply has no parts.
     """
-    concordance = build_concordance(document)
+    if sections is None:
+        sections = build_concordance(document).sections
     branches = {
         section.key: Target(key=section.key, anchor=section.anchor, title=section.title)
-        for section in concordance.sections
+        for section in sections
         if not section.reserved
     }
     printed = _toc_parts(document)

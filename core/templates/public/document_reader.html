@@ -115,20 +115,24 @@
                   </li>
                 {% endfor %}
               </ol>
-
-              {% comment %}
-                A tree presented as "the standard" claims more than the corpus holds: Section A
-                and Appendices A–C are not ingested (§10.6). Saying so is the claim-discipline
-                rule applied to structure instead of words.
-              {% endcomment %}
-              {% if reader.missing %}
-                <p class="reader__tree-note">
-                  Printed sections not in the corpus, and so not shown here:
-                  {% for title in reader.missing %}{{ title }}{% if not forloop.last %}, {% endif %}{% endfor %}.
-                </p>
-              {% endif %}
             </nav>
           </details>
+
+          {% comment %}
+            A tree presented as "the standard" claims more than the corpus holds: Section A and
+            Appendices A–C are not ingested (§10.6). Saying so is the claim-discipline rule applied to
+            structure instead of words.
+
+            It sits outside the `<details>` on purpose (D70.6): `Section A – 2.3` links here, and a
+            fragment inside a closed disclosure cannot be scrolled to on a phone — the reader would
+            follow a link that appears to do nothing.
+          {% endcomment %}
+          {% if reader.missing %}
+            <p class="reader__tree-note" id="not-in-corpus">
+              Printed sections not in the corpus, and so not shown here:
+              {% for title in reader.missing %}{{ title }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+            </p>
+          {% endif %}
 
           <div class="reader__passages">
             {% if reader.selected %}
