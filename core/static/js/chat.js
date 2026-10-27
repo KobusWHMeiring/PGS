@@ -222,6 +222,9 @@
     appendPendingUserMessage(text);
     appendPendingAnswer();
     setSendBusy(true);
+    // The status row is the newest row, so it is what "keep the newest in view" should show —
+    // otherwise the visitor scrolls to their own bubble and the page looks frozen below it.
+    scrollToLatest(true);
     input.value = "";
   });
 
