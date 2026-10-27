@@ -50,6 +50,7 @@ from knowledge.embedding import embed_texts
 from knowledge.extraction import extract_pages, sha256_of
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.sections import registry
+from knowledge.sections.toc import toc_from_pages
 from knowledge.tables import chunks_for_rows, rows_for
 
 logger = logging.getLogger(__name__)
@@ -295,11 +296,21 @@ def ingest_standard(
         # the report has no layout or reflow pages to name.
         layout_pages: tuple[int, ...] = ()
         rejoined_pages: tuple[int, ...] = ()
+        # The artefact carries no printed TOC, and `--from-corpus` has no pages: the PDF
+        # is read again for this one purpose, because the TOC is a property of the
+        # *printed* document rather than of the reviewed text (D68 §7.5).
+        toc_pages = extract_pages(path)
     else:
+        # The TOC is read from the **raw** pages, before de-columning and reflow: it is a
+        # record of what the document prints, not of how we read the body. Its own page
+        # is a `PAGE_LAYOUT_EXCLUSIONS` entry for SAOSO, so this is also the rendering a
+        # reader can check against the paper copy.
+        raw_pages = extract_pages(path)
+        toc_pages = raw_pages
         # The page is de-columned *before* the parser sees it (D46). Layout is a measured
         # property of a page, not a flag on the document: a new standard ingested with
         # explicit metadata has no exclusion table and gets generic detection (D16).
-        pages, layout_pages = apply_layout(extract_pages(path), doc_key=doc_key)
+        pages, layout_pages = apply_layout(raw_pages, doc_key=doc_key)
         # Hyphenated words the PDF wrapped are rejoined *after* the columns are ordered,
         # so line adjacency is reading adjacency (D52). Before this, `non-` /
         # `P a g e | 47` / `ruminant` was one stored sentence and no quote could pass.
@@ -335,6 +346,11 @@ def ingest_standard(
         table_chunks.append(chunk)
     chunks = table_chunks
 
+    # Stored once per document (D68 §7.5). It is the only source of a branch's *name*:
+    # SAOSO's `S1` opener carries no heading, and Appendix 2's first heading names its
+    # first sub-table (CONCORDANCE_PRD §10.1, §10.5).
+    toc = [entry.as_dict() for entry in toc_from_pages(toc_pages)]
+
     warnings: list[str] = []
     vectors: list[list[float]] | None = None
     if embed:
@@ -364,6 +380,7 @@ def ingest_standard(
             sha256=digest,
             section_scheme=descriptor["section_scheme"],
             chunk_count=len(chunks),
+            toc=toc,
         )
         DocumentChunk.objects.bulk_create(
             [

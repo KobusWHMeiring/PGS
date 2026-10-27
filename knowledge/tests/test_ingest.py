@@ -726,3 +726,30 @@ def test_an_artefact_for_another_document_is_refused(standard_set):
             embed=False,
             corpus_path=CORPUS_ARTEFACT,
         )
+
+
+# --- D68: the printed table of contents is stored once per document ----------
+
+
+def test_ingest_stores_the_printed_toc(saoso_pdf, standard_set):
+    """Through `ingest_standard`, not by setting the field (`testing_hazards.md` §1.32):
+    the claim is about what the writer stores, so the writer must produce it.
+    """
+    report = ingest_standard(
+        pdf_path=saoso_pdf, standard_set=standard_set, doc_key="saoso", embed=False
+    )
+
+    toc = StandardDocument.objects.get(pk=report.document_id).toc
+
+    assert len(toc) == 29
+    assert {"part", "kind", "label", "title", "printed_page"} == set(toc[0])
+    assert [entry["label"] for entry in toc if entry["kind"] == "RANGE"] == ["10 to 19"]
+
+
+def test_a_document_with_no_printed_toc_stores_an_empty_list(standard_set):
+    """The BPP prints no contents page; the field must be empty rather than absent."""
+    report = ingest_standard(
+        pdf_path=PDFS["bpp"], standard_set=standard_set, doc_key="bpp", embed=False
+    )
+
+    assert StandardDocument.objects.get(pk=report.document_id).toc == []

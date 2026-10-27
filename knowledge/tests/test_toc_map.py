@@ -21,6 +21,7 @@ import pytest
 
 from knowledge.sections.toc import (
     APPENDIX,
+    CLAUSE,
     PRINTED_TO_PDF_OFFSET,
     RANGE,
     appendix_for_page,
@@ -195,3 +196,49 @@ def test_front_matter_is_not_an_entry(entries):
     titles = {entry.title for entry in entries}
     assert not [title for title in titles if "Foundation of the SAOSO" in title]
     assert not [entry for entry in entries if entry.printed_page == 2]
+
+
+# --- D68: the printed TOC is read at ingest ----------------------------------
+
+
+def test_the_toc_is_read_from_the_page_that_prints_it():
+    """`saoso_toc.txt` is a verbatim `pdftotext -layout` extract of printed p.2.
+
+    A hand-written TOC would encode the same assumption as the regex it tests
+    (`testing_hazards.md` §3.7). Measured 2026-10-27: 29 entries, of which one is the
+    reserved range and three are the appendices the corpus does not contain (§10.6).
+    """
+    from knowledge.sections.toc import toc_from_pages
+
+    entries = toc_from_pages([fixture("saoso_toc")])
+
+    assert len(entries) == 29
+    assert [entry.kind for entry in entries].count(RANGE) == 1
+    assert [entry.label for entry in entries if entry.kind == APPENDIX][-3:] == [
+        "Appendix A",
+        "Appendix B",
+        "Appendix C",
+    ]
+
+
+def test_a_page_with_no_contents_heading_yields_nothing():
+    """Bounded on purpose: `APPENDICES` appears in the body too, and a body clause matches
+    the TOC's clause pattern. A body page must produce no entries."""
+    from knowledge.sections.toc import toc_from_pages
+
+    assert toc_from_pages([fixture("saoso_part_b")]) == []
+
+
+def test_the_stored_shape_is_a_dict_of_the_entry():
+    """`StandardDocument.toc` is JSONB; the concordance reads `entry["label"]`."""
+    from knowledge.sections.toc import toc_from_pages
+
+    entry = toc_from_pages([fixture("saoso_toc")])[0]
+
+    assert entry.as_dict() == {
+        "part": "A",
+        "kind": CLAUSE,
+        "label": "1",
+        "title": "Introduction - The Principles of Organic Agriculture",
+        "printed_page": 4,
+    }

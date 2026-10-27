@@ -29,6 +29,7 @@ is a range with **no page number** at all, and several entries wrap onto a secon
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 #: SAOSO's front cover is unnumbered, so the page the document prints is one less than
@@ -57,6 +58,13 @@ TOC_APPENDIX = re.compile(
 #: `10 to 19.  Left blank to facilitate future enterprises` — no page number exists.
 TOC_RANGE = re.compile(r"^(\d{1,2})\s+to\s+(\d{1,2})\.\s*(.*)$")
 
+#: The heading a contents page prints. Only pages carrying it are parsed: `TOC_CLAUSE`
+#: matches a printed body clause too, so parsing the whole document would file body
+#: headings as contents entries.
+CONTENTS_HEADING = re.compile(
+    r"(TABLE OF CONTENTS|^\s*CONTENTS\s*$)", re.IGNORECASE | re.MULTILINE
+)
+
 CLAUSE = "CLAUSE"
 APPENDIX = "APPENDIX"
 RANGE = "RANGE"
@@ -78,6 +86,17 @@ class TocEntry:
         if self.printed_page is None:
             return None
         return self.printed_page + PRINTED_TO_PDF_OFFSET
+
+    def as_dict(self) -> dict:
+        """The stored shape (`StandardDocument.toc`). A dict, not a tuple: the concordance
+        reads `entry["label"]` and the field is JSONB."""
+        return {
+            "part": self.part,
+            "kind": self.kind,
+            "label": self.label,
+            "title": self.title,
+            "printed_page": self.printed_page,
+        }
 
 
 @dataclass(frozen=True)
@@ -155,6 +174,22 @@ def parse_toc(text: str) -> list[TocEntry]:
             )
 
     return entries
+
+
+def toc_from_pages(pages: Sequence[str]) -> list[TocEntry]:
+    """In: extracted pages, in order. Out: the entries of the page(s) printing a contents list.
+
+    In:  `pages` — raw or de-columned page text; `parse_toc` is indifferent to which
+         (proved by `test_section_parsers.test_the_toc_parses_the_same_de_columned`).
+    Out: `TocEntry` list in printed order; **empty** when no page prints a contents heading,
+         which is the honest answer for a document with no TOC and the state every document
+         ingested before this task is in.
+    Side effects: none.
+    Fails: never deliberately. A contents page that parses to nothing returns `[]` and the
+        concordance falls back to headings.
+    """
+    selected = [page for page in pages if CONTENTS_HEADING.search(page)]
+    return parse_toc("\f".join(selected)) if selected else []
 
 
 def appendix_spans(
