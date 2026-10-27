@@ -181,6 +181,14 @@ def test_an_answer_that_says_the_item_is_not_named_is_grounded(
 
 
 def test_an_ungrounded_question_refuses_and_escalates(chat_session, fake_chat_model):
+    """No corpus chunk is retrieved, so the model is not asked and the reason says why.
+
+    This case used to be recorded as `INSUFFICIENT_CONTEXT`, the same value the model's own
+    `insufficient_context` flag produces. They are different findings — "nothing matched
+    the question" is a retrieval/key defect, "the passages did not govern it" is a
+    coverage gap — so the empty-retrieval branch records `NO_RETRIEVAL` and the reason
+    below is asserted rather than left to the log (`CHAT_TRUTHFULNESS_PRD.md` §4.1).
+    """
     model = fake_chat_model(
         reply=_grounded_reply(
             answer="Buy the blue fertiliser from the shop in George.",
@@ -194,8 +202,9 @@ def test_an_ungrounded_question_refuses_and_escalates(chat_session, fake_chat_mo
     assert out.text == REFUSAL
     assert out.insufficient_context is True
     assert out.citations == []
+    assert model.calls == [], "the model was asked to answer from an empty result set"
     assert EscalatedQuery.objects.count() == 1
-    assert EscalatedQuery.objects.get().reason == EscalatedQuery.Reason.INSUFFICIENT_CONTEXT
+    assert EscalatedQuery.objects.get().reason == EscalatedQuery.Reason.NO_RETRIEVAL
 
 
 def test_refusal_fires_on_empty_citations_even_if_the_flag_is_false(

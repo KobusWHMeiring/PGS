@@ -333,6 +333,89 @@ def test_a_reply_with_no_citations_is_recorded_as_no_citations(
     assert _escalation_reason() == EscalatedQuery.Reason.NO_CITATIONS
 
 
+def test_an_empty_answer_is_not_recorded_as_missing_citations(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """The citations verified; the text was blank. Nothing was missing.
+
+    This branch shared `NO_CITATIONS` with three others until 2026-10-27, so the record
+    said "no valid citations" about a turn whose citations were all valid.
+    """
+    from core.models import EscalatedQuery
+
+    model = fake_chat_model(reply=_reply(answer=""))
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert out.text == REFUSAL
+    assert _escalation_reason() == EscalatedQuery.Reason.EMPTY_ANSWER
+
+
+def test_a_runaway_answer_is_not_recorded_as_missing_citations(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """`MAX_ANSWER_CHARS` fired, and the reason must say so — not "thin corpus".
+
+    The worst of the conflations: a reviewer reading `NO_CITATIONS` looks at the corpus
+    and the retrieval; the finding is that the generation ran on.
+    """
+    from core.models import EscalatedQuery
+    from core.services._chatbot import MAX_ANSWER_CHARS
+
+    model = fake_chat_model(reply=_reply(answer="x" * (MAX_ANSWER_CHARS + 1)))
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert out.text == REFUSAL
+    assert _escalation_reason() == EscalatedQuery.Reason.ANSWER_TOO_LONG
+
+
+def test_nothing_retrieved_is_not_recorded_as_insufficient_context(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """An empty result set is a retrieval finding; the model was never asked.
+
+    Sharing a reason with "the model judged the passages unusable" sends an operator to
+    the corpus when the defect is in the key `search_terms` chose.
+    """
+    from core.models import EscalatedQuery
+    from knowledge.services import RetrievalResult
+
+    model = fake_chat_model(reply=_reply())
+
+    out = _ask(
+        chat_session,
+        "What does the standard require for traceability?",
+        model,
+        retrieval=lambda *args, **kwargs: RetrievalResult(
+            query="", standard_set_id=None
+        ),
+    )
+
+    assert out.text == REFUSAL
+    assert model.calls == [], "the model must not be asked to answer from nothing"
+    assert _escalation_reason() == EscalatedQuery.Reason.NO_RETRIEVAL
+
+
+def test_the_models_own_flag_is_recorded_as_insufficient_context(
+    chat_session, chat_corpus, fake_chat_model
+):
+    """The other half of the split: passages arrived, and the model judged them unusable.
+
+    With `NO_RETRIEVAL` covering the empty result set, this value now means exactly one
+    finding — a coverage gap — which is what an operator needs to know before widening
+    the corpus.
+    """
+    from core.models import EscalatedQuery
+
+    model = fake_chat_model(reply=_reply(insufficient_context=True))
+
+    out = _ask(chat_session, "What does the standard require for traceability?", model)
+
+    assert out.text == REFUSAL
+    assert _escalation_reason() == EscalatedQuery.Reason.INSUFFICIENT_CONTEXT
+
+
 def test_a_refusal_is_never_cached(chat_session, chat_corpus, fake_chat_model):
     """A genuine refusal is not cached either — one extra call beats a stale refusal."""
     model = fake_chat_model(reply=_reply(insufficient_context=True, citations=()))

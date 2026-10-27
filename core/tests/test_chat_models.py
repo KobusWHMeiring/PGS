@@ -129,18 +129,32 @@ def test_the_message_role_is_a_closed_pair(standard_set):
     assert set(ChatMessage.Role.values) == {"USER", "ASSISTANT"}
 
 
-def test_escalation_reasons_are_the_four_the_spec_names(standard_set):
-    """Four since D54. The fourth exists so the record can tell three findings apart.
+def test_the_escalation_reasons_name_one_finding_each(standard_set):
+    """Seven since 2026-10-27 (five since D54, plus the split of a lossy pair).
 
-    `NO_CITATIONS` = the model cited nothing; `INSUFFICIENT_CONTEXT` = the corpus could not
-    ground the question; `CITATION_AUDIT` = it cited something the audit could not verify
-    (a paraphrase, an absent section, an invented `sub_ref`). The first and third used to
-    share a reason, which made a model-contract violation read like a thin corpus.
+    The record exists so a refusal can be attributed without re-asking the model, which
+    means one value must mean one thing. Two did not:
+
+    * `NO_CITATIONS` fired on four branches — the model cited nothing, the answer text was
+      empty, the answer ran past `MAX_ANSWER_CHARS`, and every citation was a duplicate.
+      16 of the 34 refusals on the dev box carried it, so "group by reason" grouped a
+      corpus gap with a runaway generation.
+    * `INSUFFICIENT_CONTEXT` covered both "nothing was retrieved" (a retrieval/key defect)
+      and "the model judged the passages unusable" (a coverage gap).
+
+    What each value now names: `NO_RETRIEVAL` the corpus matched nothing at all;
+    `INSUFFICIENT_CONTEXT` the passages did not govern the question; `NO_CITATIONS` the
+    model answered without citing; `CITATION_AUDIT` it cited something unverifiable;
+    `EMPTY_ANSWER` the citations verified and the text was blank; `ANSWER_TOO_LONG` the
+    generation ran past the cap; `USER_REQUESTED` a person escalated it.
     """
     assert set(EscalatedQuery.Reason.values) == {
+        "NO_RETRIEVAL",
         "INSUFFICIENT_CONTEXT",
         "NO_CITATIONS",
         "CITATION_AUDIT",
+        "EMPTY_ANSWER",
+        "ANSWER_TOO_LONG",
         "USER_REQUESTED",
     }
 

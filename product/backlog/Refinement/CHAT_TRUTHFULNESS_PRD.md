@@ -258,11 +258,13 @@ weakens a fifth:
 | **S5/S6** (claim scope) | **3 accepted answers exist, all from the conversation under review**; 2 of the 3 state a certification outcome no passage states ("the fruit … will not be considered organic"). The third is careful — *"There is no provision **in the provided passages**…"* | D-3's sample is the transcript itself. The extract is `_scratch/claim_review_2026-10-27.md`; regenerate it with the S5 query. The third answer proves the hedge is reachable without a rule |
 
 **And the reason field is lossier than the sweeps assume.** 16 of 34 refusals are
-`NO_CITATIONS`, a label that fires on four different branches in `answer_question()` — no
-citations, an empty answer, `len(answer) > MAX_ANSWER_CHARS`, and `not citations`. One of
-those is a runaway answer wearing a grounding label. A sweep that groups by `reason` (S3,
-S4, S6 all do) is reading a field that conflates a bug with a contract violation, so the
-enum is split **before** the box sweeps, not after (`§9` step 3).
+`NO_CITATIONS`, a label that fired on four different branches in `answer_question()` — no
+citations, an empty answer, `len(answer) > MAX_ANSWER_CHARS`, and every citation a
+duplicate. One of those was a runaway answer wearing a grounding label. **Split on
+2026-10-27** (see §5.9): the enum is now `NO_RETRIEVAL`, `INSUFFICIENT_CONTEXT`,
+`NO_CITATIONS`, `CITATION_AUDIT`, `EMPTY_ANSWER`, `ANSWER_TOO_LONG`, `USER_REQUESTED` —
+one value per finding, migration `0008`, no data change. The box sweeps (S3, S4, S6) can
+group on it now.
 
 ---
 
@@ -358,6 +360,18 @@ that names the class in human words:
 This is the only fix here that changes copy on a public surface, so it needs the product
 owner. It is also the fix that would have stopped the visitor's false conclusion directly.
 
+### 5.9 One refusal reason names one finding — **landed 2026-10-27**
+
+`NO_CITATIONS` covered four branches and `INSUFFICIENT_CONTEXT` covered two, so the record
+could not attribute the refusal it exists to attribute. Split into `NO_RETRIEVAL`,
+`INSUFFICIENT_CONTEXT`, `NO_CITATIONS`, `CITATION_AUDIT`, `EMPTY_ANSWER`, `ANSWER_TOO_LONG`
+(plus the visitor-initiated `USER_REQUESTED`), with migration `0008`, no data change and no
+`PROMPT_VERSION` bump — an enum is not a contract the cache depends on. `why_refused.py`
+now explains each value and says what a pre-split database means. Four new tests, one per
+branch, each proved red by reverting the branch; the old test that asserted the wrong
+reason for the empty-retrieval case was corrected rather than deleted, and it now also
+proves the model is never called.
+
 ### 5.8 A citation link that lands on the quoted definition (F7) — small, do last
 
 Derive the reading anchor from the chunk's own leading headword when `section_ref` repeats
@@ -373,9 +387,9 @@ renders in-document search; this only makes the fragment land on the passage.
 | **D-1** | Is the rare-term chooser's filler-guard a stop-list, a phrase-preference rule, or both? | **Both, but the phrase rule is not what fixed turn 4** (measured in §3 F1). The stop-list plus the two-bet hedge is landed; the adjacent-bigram preference is *dropped* — it was measured and it loses on the cost question (`farm visit` displaces `cost`, which is where §2.1 would have come from). Keep the list ≤ 15 words, each justified by a measured question |
 | **D-2** | May the audit drop a `sub_ref` (never the citation) when the chunk has no sub-clause map and the value is an item marker in the chunk's own text? | **Re-measure first** — the prompt rule answered the six recorded cases. If any remain: yes, same shape as D61 (decoration, not identity) |
 | **D-2b** | May an unresolvable locator be replaced by the chunk its quote uniquely matches? | **Record, do not build.** It would have saved three of this PRD's four refusals, and it is stricter than it looks (unique match required) — but it is a relaxation of the address contract and belongs to the product owner, after D-3 |
-| **D-3** | Does the prompt forbid deciding an outcome (organic / not organic), and may a follow-up see its parent's answer prose? | Yes to the first sentence; measure the second (S6) before narrowing the window |
-| **D-4** | Does G3 get a seeded alias table (`cost → fee, membership fee`), now that its evidence is shown to rest on a bad key? | Yes, and re-measure G3 *after* 5.1 — an alias table is data, and G5's "no classifier" still holds |
-| **D-5** | May the refusal surface carry a second sentence naming the cause, given D17 fixes the wording? | Yes for `CITATION_AUDIT`/`NO_CITATIONS` only; the corpus-silent case keeps the bare D17 string |
+| **D-3** | Does the prompt forbid deciding an outcome (organic / not organic), and may a follow-up see its parent's answer prose? | **Approved 2026-10-27** — state the rule, do not decide the outcome. Follow-up window still to be measured (S6) before narrowing |
+| **D-4** | Does G3 get a seeded alias table (`cost → fee, membership fee`), now that its evidence is shown to rest on a bad key? | **Approved 2026-10-27** — yes, and re-measure G3 *after* 5.1, which has landed. An alias table is data, and G5's "no classifier" still holds |
+| **D-5** | May the refusal surface carry a second sentence naming the cause, given D17 fixes the wording? | **Approved 2026-10-27** — the product owner allows a sentence that names the clause/cause. Build it on the split enum (§5.9): the copy differs per reason, which is why the enum had to land first |
 
 ---
 
@@ -432,9 +446,9 @@ Therefore:
    verb-key questions re-probed and recorded.
 2. **S1 and S2** sweeps. The probe now prints the key, so S1 is a run; S2 is a fixture test
    (`test_the_definition_question_reaches_the_definitions_section` proves one term).
-3. **Split the `NO_CITATIONS` reason** into the four branches it currently covers (no
-   citations / empty answer / over-long answer / audit-cleared nothing), so S3, S4 and S6
-   group on a field that means one thing. No prompt change, no `PROMPT_VERSION` bump.
+3. ~~**Split the `NO_CITATIONS` reason** into the four branches it currently covers, so S3,
+   S4 and S6 group on a field that means one thing.~~ **Done 2026-10-27** (§5.9), gate green
+   at 907. No prompt change, no `PROMPT_VERSION` bump.
 4. ~~Land **5.2** and **5.3**; one `PROMPT_VERSION` bump.~~ **Done 2026-10-27,** `d50-1`,
    gate green at 903. Re-probed: definition **3/3 grounded, 7/7 audited**; silica **6/6
    audited, grounded**; the two GM-outcome turns unchanged (they are D-3, not a bug to

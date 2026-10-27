@@ -1563,7 +1563,7 @@ def answer_question(
             fingerprint=fingerprint,
             question=text,
             chunks=chunks,
-            reason=EscalatedQuery.Reason.INSUFFICIENT_CONTEXT,
+            reason=EscalatedQuery.Reason.NO_RETRIEVAL,
             latency_ms=latency_ms,
             reply=None,
             cached=False,
@@ -1657,6 +1657,10 @@ def answer_question(
             cached=cached,
         )
     if not citations or not reply.answer.strip():
+        # The citations verified and the answer said nothing. This branch used to be
+        # recorded as `NO_CITATIONS`, which is a lie in the record: the citations were
+        # there. It is reachable only after `problems` is empty, so `not citations` here
+        # means every citation was a duplicate, and the honest reason is the empty text.
         return _as_refusal(
             session=session,
             user_message=user_message,
@@ -1664,7 +1668,7 @@ def answer_question(
             problems=problems,
             question=text,
             chunks=chunks,
-            reason=EscalatedQuery.Reason.NO_CITATIONS,
+            reason=EscalatedQuery.Reason.EMPTY_ANSWER,
             latency_ms=latency_ms,
             reply=reply,
             cached=cached,
@@ -1673,7 +1677,9 @@ def answer_question(
     answer_text = reply.answer.strip()
     if len(answer_text) > MAX_ANSWER_CHARS:
         # A runaway answer is not a grounded one, and truncating it would silently
-        # change what the model said. Refuse and record it for review instead.
+        # change what the model said. Refuse and record it for review instead — as
+        # `ANSWER_TOO_LONG`, never `NO_CITATIONS`: the citations verified, the generation
+        # ran on, and a reviewer needs to see *that* rather than a thin-corpus story.
         return _as_refusal(
             session=session,
             user_message=user_message,
@@ -1681,7 +1687,7 @@ def answer_question(
             problems=problems,
             question=text,
             chunks=chunks,
-            reason=EscalatedQuery.Reason.NO_CITATIONS,
+            reason=EscalatedQuery.Reason.ANSWER_TOO_LONG,
             latency_ms=latency_ms,
             reply=reply,
             cached=cached,

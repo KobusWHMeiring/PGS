@@ -213,6 +213,11 @@ class EscalatedQuery(models.Model):
     """
 
     class Reason(models.TextChoices):
+        #: Nothing was retrieved, so the model was never called. A different finding from
+        #: `INSUFFICIENT_CONTEXT`, and it used to share it: "the corpus matched nothing"
+        #: and "the model judged the passages unusable" send an operator to two different
+        #: places (a retrieval/key defect vs. a coverage gap).
+        NO_RETRIEVAL = "NO_RETRIEVAL", "Nothing retrieved"
         INSUFFICIENT_CONTEXT = "INSUFFICIENT_CONTEXT", "Insufficient context"
         NO_CITATIONS = "NO_CITATIONS", "No valid citations"
         #: The model cited something the audit could not verify — a section that was not
@@ -220,6 +225,14 @@ class EscalatedQuery(models.Model):
         #: apart from `NO_CITATIONS` because they are different findings: one is a corpus
         #: gap, the other is a contract violation (`testing_hazards.md` §1.31).
         CITATION_AUDIT = "CITATION_AUDIT", "Citation audit refused"
+        #: The citations verified and the answer text was blank. `NO_CITATIONS` covered
+        #: this until 2026-10-27, which is a lie in the record: nothing was missing.
+        EMPTY_ANSWER = "EMPTY_ANSWER", "Empty answer"
+        #: The answer ran past `MAX_ANSWER_CHARS` and was refused rather than truncated.
+        #: `NO_CITATIONS` covered this too — the worst of the conflations, because it hid a
+        #: runaway generation behind a reason that reads like a thin corpus (16 of the 34
+        #: refusals in the dev database were `NO_CITATIONS`, covering four branches).
+        ANSWER_TOO_LONG = "ANSWER_TOO_LONG", "Answer over the length cap"
         USER_REQUESTED = "USER_REQUESTED", "User requested"
 
     class Status(models.TextChoices):

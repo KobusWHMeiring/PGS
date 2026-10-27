@@ -21,13 +21,21 @@ Run it on the box with the deployment environment sourced:
 Run `manage.py migrate` first on a dev box: the gate migrates `pgs_verify`, so `pgs` can
 sit a migration behind and this will fail with `UndefinedColumn` after a model change.
 
-Reading it:
+Reading it — one reason names one finding, since the 2026-10-27 split:
 
     corpus*0        the live text does not contain the word at all — a corpus defect,
                     and the extractor is the first suspect (poppler vs Xpdf)
+    NO_RETRIEVAL    nothing was retrieved, so the model was never asked — the defect is
+                    in the key `search_terms` chose or in the corpus, not in the answer
     INSUFFICIENT_CONTEXT  it was retrieved, and the model still judged the set unusable
-    CITATION_AUDIT  the model answered, and its quote did not verify against the text
+    CITATION_AUDIT  the model answered, and a quote or an address did not verify
     NO_CITATIONS    the model answered without citing — grounding, not retrieval
+    EMPTY_ANSWER    the citations verified and the text was blank
+    ANSWER_TOO_LONG the generation ran past `MAX_ANSWER_CHARS` and was refused, not cut
+
+`NO_CITATIONS` used to cover the last four of those, so "group the refusals by reason"
+grouped a runaway generation with a thin corpus. If you are reading a database written
+before 2026-10-27, treat that value as "one of four" and read `refusal_checks`.
 
 Since P2.5a the turn itself carries the evidence, so the `!` lines below are the failing
 checks verbatim: `not present in the retrieved set` is a prompt-contract defect, `the
