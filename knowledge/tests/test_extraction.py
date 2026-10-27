@@ -6,7 +6,7 @@ the VPS gate (poppler 24.02.0) failed 15 tests and 61 errors, all extraction dif
 So a deployment must be able to say *which* binary it means, and a missing binary must not
 read as an empty document (`testing_hazards.md` §2.9).
 
-**The output encoding is part of that contract** (`testing_hazards.md` §1.33). Xpdf 4.00's
+**The output encoding is part of that contract** (`testing_hazards.md` §1.34). Xpdf 4.00's
 `-enc` default is Latin-1, not UTF-8: measured 2026-10-27, 275 of the 433 154 bytes in the
 eight shipped PDFs are 8-bit and none of them is valid UTF-8. Decoding that stream as UTF-8
 with `errors="replace"` — which is what this module did until then — turned every `°`, `²`,

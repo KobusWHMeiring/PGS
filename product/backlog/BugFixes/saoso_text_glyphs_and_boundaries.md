@@ -1,49 +1,82 @@
-# Bug: SAOSO's extracted text loses glyphs, and one page boundary swallows a part title
+# Bug: SAOSO's text — a lost superscript and a swallowed part title (the glyphs are closed)
 
-**Status:** Open — found 2026-10-27 while reading the definitions branch after the concordance and
-passage-layout work (SPEC §18.3 **D68**; `PASSAGE_LAYOUT_PLAN.md` §7.9).
-**Severity:** A reader checking a quotation sees `360\ufffd` where the paper prints `360°`; a
-superscript `2` splits the *Factory farming* sentence with a stray line; the last chunk of `S1`
-carries the *next* part's half-title, so the definitions end with a second `SECTION B` heading.
-**Owner:** Corpus (D53 artefact review) · Build (the guard)
-**Affected:** `DocumentChunk.text` for SAOSO v2.1 (30 of 366 chunks carry U+FFFD); the
-section boundary between `S1` and `S2`; every surface that reproduces the text — the reader, the
-search snippets, the chatbot's quotes.
-**Reference:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, `CORPUS_EDITS`) ·
-`knowledge/sections/toc.py` / `saoso.py` (section attribution) ·
+**Status:** **§1 closed 2026-10-27** — the glyph loss was an encoding bug in the extraction, not a
+lossy PDF, and all 83 replacement characters in the ingested corpus are real characters again.
+**§2 and §3 open** — a superscript still splits one sentence, and `S1` still ends with the next
+part's half-title; both are line-order and section-attribution problems, and neither is a view
+concern.
+**Severity:** was — a reader checking a quotation saw `360�` where the paper prints `360°`, and
+`ros�` for `rosé` on a public page.
+**Owner:** Corpus (D53 artefact review) · Build (the guards)
+**Affected:** `DocumentChunk.text` for every ingested document; the reader, the search snippets and
+the chatbot's quotes.
+**Reference:** `testing_hazards.md` §1.34 (the trap, with the byte evidence) ·
+`knowledge/extraction.py` (`-enc UTF-8`, strict decode) ·
+`knowledge/tests/test_corpus_glyphs.py` (the guards) ·
 `product/backlog/In Progress/PASSAGE_LAYOUT_PRD.md` §3 (display-only rule) ·
-`scripts/build_corpus.py` (the artefact generator)
+`scripts/extract_fixtures.py` (the artefact generator)
 
 ---
 
-## 1. Lost glyphs (U+FFFD)
+## 1. Lost glyphs (U+FFFD) — **closed 2026-10-27**
 
-**Measured 2026-10-27 on the shipped corpus: 30 of 366 chunks contain U+FFFD.** The PDF's text layer
-does not map several glyphs, and `pdftotext` emits the replacement character. Examples:
+**The earlier diagnosis on this page was wrong**, and the error is worth keeping in view: it said
+the loss was "in the SOURCE documents, not in the extraction", that "no encoding recovers the real
+character", and that "the same codepoint covers at least six different characters". All three were
+artefacts of the *decode*, not of the PDFs.
 
-| Chunk | Stored text | What the paper prints |
+`knowledge/extraction.py` decoded `pdftotext`'s stdout as UTF-8 with `errors="replace"`. Xpdf 4.00
+— the build on the machine whose fixtures and corpus this project measures — writes **Latin-1**
+unless it is asked for UTF-8. Every 8-bit byte it emitted therefore arrived as U+FFFD, and
+`errors="replace"` made sure nothing complained.
+
+Measured on the eight shipped PDFs (2026-10-27):
+
+| | |
+|---|---|
+| bytes extracted | 433 154 |
+| non-ASCII bytes | **275** |
+| of those, valid UTF-8 | **0** |
+| U+FFFD in the four ingested documents | **83** (SAOSO 37, landscape 31, OPP 10, BPP 5) |
+| U+FFFD with `pdftotext -enc UTF-8` | **0, in all eight documents** |
+
+What the corpus now says instead:
+
+| Was | Now | Where |
 |---|---|---|
-| `S1` | `moving freely around 360\ufffd, or kept in` | `360°` |
-| `S1` | `more` / `2` / `than 25kg weight/m .` | `more than 25 kg weight/m².` (the superscript is a separate line) |
-| `S5.1.7` | `100 m\ufffd of the house/building` | `100 m²` |
-| `S5.2.1` | `dairy \ufffd 90 days; eggs … \ufffd 42 days` | `dairy ≥ 90 days` (an inequality sign) |
-| `S7.5.3`, `S21.5` | `45\ufffdC`, `70 \ufffdC` | `45 °C`, `70 °C` |
-| `S22.1.10` | `\ufffd PGS certified` | a bullet or `©`-style mark |
-| `Appendix 4. Table 1` | `\ufffd organic flavouring extracts` | a bullet |
-| `Appendix 6b` | `1 m\ufffd/100`, `Outdoor \ufffd runs` | `m²`, a bullet |
-| `OPP` fee table | `R 250,001 \ufffd R 500,000` | `–` (an en dash) |
-| `landscape` | `GIZ` credit: `Gesellschaft f\ufffdr …` | `für` (a `ü`) |
+| `moving freely around 360�` | `360°` | `S1` |
+| `100 m� of the house/building` | `100 m²` | `S5.1.7`, `Appendix 6b` |
+| `not exceed 45�C` | `45°C` | `S7.5.3` |
+| `For white and ros� wines` | `rosé` | `Appendix 7` |
+| `Quality wines (M�thode` | `Mèthode` — **the document's own spelling** | `Appendix 7` |
+| `Section B � Appendix 6` | `Section B – Appendix 6` | `Appendix 2` |
+| `R 250,001 � R 500,000` | `R 250,001 – R 500,000` | OPP fee table |
+| `Gesellschaft f�r` | `für` | landscape |
+| *(dropped entirely)* | 66 × `●` — the OPP's list bullets | OPP |
+| *(dropped entirely)* | 101 × `©`, 37 × `•`, 32 × `–`, 4 × `‘’“”` families | all |
 
-The same codepoint covers at least six different characters, so **a mapping cannot be guessed**.
-D53 says the text of record is a reviewed artefact: the fix is a reviewed `CORPUS_EDITS` entry per
-occurrence (or a reviewed per-glyph mapping after a human reads the page image), then
-`ingest_standard --force`.
+Two things this taught us that a per-character mapping table would not have:
 
-A display fix is forbidden: substituting `°` or `²` in the reader would put a character in the
-document that the corpus does not hold, and the chatbot's citation audit checks quotes against the
-stored text — the reader and the audit would then disagree about what the document says.
+1. **The en dash and the `≥` are different glyphs.** On the lossy path both arrived as the single
+   byte `0xAD`, which is why the old note concluded one codepoint covered six characters. Xpdf
+   resolves them separately: `32 × –` (cross-references, conversion periods) and `3 × ≥` (the GE
+   isolation distances: `soybeans ≥ 10 m`). Nothing had to be guessed.
+2. **Some glyphs were being dropped, not replaced.** In the OPP, Xpdf's Latin-1 output had no byte
+   for `●` at all, so the bullet vanished and 66 list items were ingested as prose. That is a
+   second, quieter class of loss that no U+FFFD count would ever have shown.
 
-## 2. A superscript splits a sentence
+**Fixed by:** `-enc UTF-8` in all three extraction modes, a strict decode that raises
+`ExtractionError` naming the file, regenerated fixtures (`scripts/extract_fixtures.py --force`),
+the BPP artefact regenerated with its reviewed edits re-applied, and re-ingestion with `--force`.
+Guards: `knowledge/tests/test_corpus_glyphs.py` (no committed page and no range fixture may hold
+U+FFFD, and ten named characters must survive) and `test_passages` (the ingested text, end to end).
+
+**One character is still not recoverable, and it is not a loss:** the BPP prints a Dingbats bullet
+before `Planting:` and `Seed/seedling Management:` that the font maps to the private-use code
+U+F06E. No Unicode value names it, so it is a recorded `drop` in `CORPUS_EDITS` — keeping it would
+put a character in the corpus that no reader can see and no audit can quote.
+
+## 2. A superscript splits a sentence — **open**
 
 The *Factory farming* definition stores:
 
@@ -55,14 +88,16 @@ The *Factory farming* definition stores:
 than 25kg weight/m .
 ```
 
-The `2` is the superscript of `m²` on its own extracted line. The reader renders it as its own
-paragraph, so the sentence reads "…with more / 2 / than 25 kg weight/m ." — visibly broken. This is
-the same glyph problem as §1 plus a line-order one; a corpus edit merges it to `m²`.
+The `2` is the superscript of `m²` on its own extracted line, and `m .` is missing the `²`
+entirely: this is a *line-order* problem, not the encoding one (§1 fixed `100 m²` in `S5.1.7`,
+where the superscript is drawn inline). The reader renders the `2` as its own paragraph, so the
+sentence reads "…with more / 2 / than 25kg weight/m ." — visibly broken.
 
 Measured: 5 of 366 chunks contain a lone-digit line, but four are table cells in Appendix 6a/6b
-(where a lone number is correct). `S1` is the only sentence-splitting case today.
+(where a lone number is correct). `S1` is the only sentence-splitting case today. The fix is a
+corpus edit that merges the superscript into `m²` (D53), with the page image read to confirm.
 
-## 3. `S1` swallows the next part's half-title
+## 3. `S1` swallows the next part's half-title — **open**
 
 The last `S1` chunk (page 22, 422 characters) ends with:
 
@@ -84,21 +119,27 @@ in the reviewed artefact's block structure (D53), so a part title becomes a boun
 than a paragraph of the section before it. It is not a reader concern — suppressing it in the view
 would hide text the corpus truly holds.
 
-## 4. Why this is a separate follow-up, not part of the layout slice
+## 4. Why §2 and §3 are a separate follow-up
 
 The passage-layout PRD is explicit: the stored text is untouched, the words are verbatim, and an
-unrecognised shape is a paragraph. Correcting glyphs and section boundaries changes `DocumentChunk`
-rows, needs `--force` (which drops `ChatMessage.retrieved_chunks` evidence links), and requires a
-human looking at the page image. That is the SAOSO artefact conversion (D53 / P5), not a view change.
+unrecognised shape is a paragraph. Correcting the superscript and the section boundary changes
+`DocumentChunk` rows, needs `--force` (which drops `ChatMessage.retrieved_chunks` evidence links),
+and requires a human looking at the page image. That is the SAOSO artefact conversion (D53 / P5),
+not a view change. §1 was different: it needed no review, because the character was already in the
+extraction — only the decode was throwing it away.
 
 ## 5. Definition of done
 
-- [ ] A reviewed SAOSO artefact (`knowledge/corpus/saoso.md`) whose `CORPUS_EDITS` carry the glyph
-      corrections, with each edit proved necessary and applied (`test_corpus_format.py`'s idiom).
+- [x] The corpus holds the characters the paper prints: **zero U+FFFD** in all four ingested
+      documents, measured after re-ingest (2026-10-27).
+- [x] `-enc UTF-8` in every extraction mode, a strict decode, and the fixtures regenerated from the
+      shipped PDFs with the extractor banner and command recorded.
+- [x] A guard asserting zero U+FFFD over the committed pages, the range fixtures and the ingested
+      text, so a future extraction cannot reintroduce the loss silently.
+- [x] The reader shows `360°`, `m²`, `45°C`, `rosé`, `Mèthode`, `Section B – Appendix 6` and
+      `R 250,001 – R 500,000`; the chatbot can quote those sentences verbatim.
+- [ ] A reviewed `CORPUS_EDITS` entry merges the *Factory farming* superscript (§2).
 - [ ] The half-title page is a boundary, not the tail of `S1`; the `S1` branch ends at *Wild
-      Harvesting*, and `SECTION B` is not reproduced inside it.
-- [ ] Re-ingest with `--force`; the corpus check reports the document as rebuilt from the artefact.
-- [ ] A guard asserting **zero U+FFFD in the ingested corpus** (or an explicit allow-list with a
-      reason per entry), so a future extraction cannot reintroduce the loss silently.
-- [ ] The reader shows `360°`, `m²`, `45 °C` and `R 250,001 – R 500,000`; the chatbot can quote
-      those sentences verbatim and the audit accepts them.
+      Harvesting*, and `SECTION B` is not reproduced inside it (§3).
+- [ ] Re-ingest with `--force` after those reviews; the corpus check reports the document as
+      rebuilt from the artefact.

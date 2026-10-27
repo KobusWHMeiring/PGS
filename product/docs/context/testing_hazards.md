@@ -1335,6 +1335,42 @@ does *not* support; the deployed corpus's df is measured with `scripts/probe_cha
 prints it per question. Added 2026-10-27 with
 `knowledge/tests/test_retrieval.test_an_unknown_word_hedges_two_bets`.
 
+### 1.34 The extractor's default output encoding is not UTF-8, and `errors="replace"` hides it
+
+`pdftotext` is asked for text; what it *writes* depends on its build. Xpdf 4.00's `-enc`
+default is **Latin-1**, so its stream carries raw 8-bit bytes for every glyph it maps outside
+ASCII. Decoding that as UTF-8 with `errors="replace"` — forgiving-looking, and silent — turns
+each one into U+FFFD. Poppler's default is UTF-8, so the defect is invisible on one of the two
+builds this repo supports, and every test that ran on the other build was measuring a corpus
+that had lost characters.
+
+Evidence:
+    $ pdftotext -v 2>&1 | head -1
+    pdftotext version 4.00
+    $ pdftotext -layout pgs_docs/saoso-version-2.1-2026.pdf - | grep -a "moving freely" | od -An -tx1 | grep -o "33 36 30 .. .."
+    33 36 30 b0 2c            # 0xB0: not valid UTF-8 -> U+FFFD
+    $ pdftotext -enc UTF-8 -layout ... | grep -a "moving freely" | od -An -tx1 | grep -o "33 36 30 .. .."
+    33 36 30 c2 b0            # 0xC2 0xB0: U+00B0, the degree sign the paper prints
+
+    # across all eight shipped PDFs
+    non-ASCII bytes: 275 of 433 154;  valid UTF-8 among them: 0
+    U+FFFD stored in the four ingested documents: 83   (all recoverable)
+    U+FFFD with `-enc UTF-8`: 0
+
+Consequence: a public reader printing `ros�` for `rosé`, `100 m�` for `100 m²`, and a corpus
+whose quotes no longer contain the character the document prints — so a faithful answer gets
+refused by the citation audit. Two further strata of loss were hiding underneath it: the 66
+`●` bullets in the OPP were being dropped outright, not replaced, so its lists were ingested as
+prose; and a measured layout expectation (`test_columns`, `test_reflow`) had been derived from
+the bullet-less page, so restoring the glyphs changed a "measured" constant.
+
+Rule: pin the encoding in the command line (`-enc UTF-8`), decode **strictly**, and fail loudly
+with the file name when the bytes are not what you asked for. Never `errors="replace"` an
+extraction: the replacement character is a *claim* that the document prints U+FFFD. Then guard
+the artefacts, not only the code: `knowledge/tests/test_corpus_glyphs.py` fails if any
+committed page holds U+FFFD, and `test_passages` checks the ingested text end to end. Added
+2026-10-27 with `knowledge/extraction.py` and `knowledge/tests/test_corpus_glyphs.py`.
+
 ## 5. Template for a new entry
 
 ```markdown

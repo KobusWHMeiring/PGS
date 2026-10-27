@@ -151,13 +151,56 @@ is signed; **Scenario 8** is the passage layout. The tooling is the same as §18
 
 **Backlog state.** `In Progress/`: CONCORDANCE (PRD + plan), PASSAGE_LAYOUT (PRD + plan), ASK_SURFACE,
 VPS_DEPLOYMENT, CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `BugFixes/`:
-`citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` **open**. `ready/`: only the
+`citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` **half closed in §0f**
+(the glyph loss is fixed; the superscript and the half-title are still open). `ready/`: only the
 MVP 1a pair.
 
 **Repo state.** `main`, tree clean, **42 commits ahead of `origin/main`**, nothing pushed or deployed.
 The live site is still `206f35f`, and its corpus predates D52/D53 — §18's two operational items are
 open and now further behind (the reader's layout is not deployed either).
 
+## 0f. 2026-10-27 — the corpus keeps its glyphs: `-enc UTF-8`, and the U+FFFD mystery is closed
+
+**This is the most recent slice.** D69. `BugFixes/saoso_text_glyphs_and_boundaries.md` §1 is
+**closed** — and its diagnosis was wrong, which is why it stayed open for a week.
+
+- **The `�` was never the PDF.** `knowledge/extraction.py` decoded `pdftotext`'s stdout as UTF-8
+  with `errors="replace"`; the `pdftotext` on this machine is **Xpdf 4.00**, whose default output
+  encoding is **Latin-1**. Measured on the eight shipped PDFs: **275 of 433 154 bytes are 8-bit and
+  none of them is valid UTF-8** — and `pdftotext -enc UTF-8` extracts all eight with **zero**
+  U+FFFD. The old claim ("no encoding recovers the real character") came from that Latin-1 path and
+  is retracted; the en dash and the `≥` are *different glyphs* (they only collapsed to one byte on
+  the lossy path).
+- **83 characters in the four ingested documents were affected**, all recovered: `360°`, `100 m²`,
+  `45°C`, `rosé`, `Mèthode` (the document's own spelling), `Section B – Appendix 6`,
+  `R 250,001 – R 500,000`, `für`. **Plus 66 OPP `●` bullets that had been dropped outright**, so its
+  lists were ingested as prose; `●` is now a list marker.
+- **Two "measured" constants moved**, and both moves are improvements: the OPP's PDF 4 is now an
+  explicit layout exclusion — it was only de-columned *because* §3.2's bullets were missing, and a
+  two-band split of its 3-column table orphaned `Members will be invited to take part` from its
+  predicate. `test_columns`/`test_reflow`/`test_ingest` are updated with the reason beside them.
+- **The BPP artefact was regenerated** and its five reviewed edits re-applied; two private-use
+  Dingbats bullets (U+F06E) are now recorded `CORPUS_EDITS` drops, because no extractor can name
+  them and no reader can see them. `MAX_EDITS` ratchets 5 → 7.
+- **Guards, proven by breaking them:** `test_corpus_glyphs.py` (every committed page and range
+  fixture: zero U+FFFD; ten named characters must survive; the manifest must name `-enc UTF-8`),
+  `test_passages` (the ingested text, end to end), and `test_extraction` (the command asks for UTF-8;
+  a Latin-1 stream raises `ExtractionError` naming the file instead of becoming U+FFFD).
+  `testing_hazards.md` **§1.34** records the trap with the byte evidence.
+- **Still open in that bug file:** §2 the *Factory farming* superscript still splits its sentence
+  (`m .` is missing the `²` — a line-order problem, not this one), and §3 `S1` still ends with the
+  next part's half-title. Both are D53 artefact reviews, not view work.
+
+**Local state.** The dev corpus was re-ingested with `--force` and embeddings (319/30/8/9 chunks,
+**0 U+FFFD**); that dropped the old `ChatMessage.retrieved_chunks` evidence links, as `--force` does.
+Gate **1004 passed / 1 skipped**. The live site is still `206f35f` and needs the same re-ingest
+(P7.4) before any of this is visible there.
+
+**Next, and not built:** the reader's table structure, the repeated locators, and in-view
+cross-references — findings and options are agreed; see §0e items 1–5 for the rest of the judgement
+list, and note that item 6 is now closed for the glyph half.
+
+---
 ---
 
 ## 0. The one thing to know first

@@ -17,7 +17,7 @@ differently, and the SAOSO footers this parser reads page numbers from move. The
 is part of the contract with the fixtures.
 
 `-enc UTF-8` is not decoration either, and it cost this project 83 characters
-(`testing_hazards.md` §1.33). Xpdf 4.00's output encoding defaults to **Latin-1**, so its
+(`testing_hazards.md` §1.34). Xpdf 4.00's output encoding defaults to **Latin-1**, so its
 `-layout` stream carries raw 8-bit bytes for every glyph it maps outside ASCII — the degree
 sign in `360°`, the superscript in `100 m²`, the en dash in `Section B – Appendix 6`, the
 `é` in `rosé`. Decoding that stream as UTF-8 (as this module did, with `errors="replace"`)
@@ -109,7 +109,7 @@ def pdftotext_text(pdf_path: str | Path, *, mode: str = "layout") -> str:
 
     The decode is strict on purpose. `errors="replace"` looks forgiving and is not: it is
     how `360°`, `100 m²` and `rosé` became `360�`, `100 m�` and `ros�` in the corpus, with
-    no error anywhere and a passing test suite (§1.33).
+    no error anywhere and a passing test suite (§1.34).
     """
     args = _MODES.get(mode)
     if args is None:

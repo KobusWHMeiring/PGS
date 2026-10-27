@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-27 16:46
+> Generated: 2026-10-27 17:57
 
 ## Ready (up next)
 
@@ -45,7 +45,7 @@ _none_
 ## Bug Fixes
 
 - **Bug: a citation opens the wrong passage when its reference is shared** - `BugFixes\citation_anchor_collision.md` - Status: **Closed 2026-10-27** — fixed and guarded while building the concordance (SPEC §18.3
-- **Bug: SAOSO's extracted text loses glyphs, and one page boundary swallows a part title** - `BugFixes\saoso_text_glyphs_and_boundaries.md` - Status: Open — found 2026-10-27 while reading the definitions branch after the concordance and
+- **Bug: SAOSO's text — a lost superscript and a swallowed part title (the glyphs are closed)** - `BugFixes\saoso_text_glyphs_and_boundaries.md` - Status: **§1 closed 2026-10-27** — the glyph loss was an encoding bug in the extraction, not a
 
 ## Done
 
