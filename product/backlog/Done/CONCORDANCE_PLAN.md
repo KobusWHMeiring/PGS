@@ -1,8 +1,7 @@
 # The Concordance — Implementation Plan
 
-**Status:** **In Progress** — all eleven tasks landed 2026-10-27; gate green at 954 tests,
-Playwright at 53. **UAT unsigned** (`tests/uat/concordance_uat.md`), so it stays here until that
-table carries names. The implementation
+**Status:** **Done** — all eleven tasks landed 2026-10-27; **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
+The implementation
 notes that differ from this plan are in §12, at the end.
 **Read first:** §0.2 (this machine's `PublicDocument` rows need `publish_documents` before anything
 is measurable) and §0.4 (the dry run).

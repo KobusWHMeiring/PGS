@@ -1,30 +1,24 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-28 06:02
+> Generated: 2026-10-28 06:32
 
 ## Ready (up next)
 
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
 - **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
-- **PRD: The reader's structure — a table reads as a table, and a reference goes somewhere** - `ready\READER_STRUCTURE_PRD.md` - Status: **Ready** — the design was agreed in session on 2026-10-27 (product owner: definition-list
 
 ## In Progress
 
 - **The ask board, the answer page and the document reader — Implementation Plan** - `In Progress\ASK_SURFACE_PLAN.md` - Status: no status
 - **PRD — The ask surface, second shape (board + answer pages)** - `In Progress\ASK_SURFACE_PRD.md` - Status: In Progress — shape decided (**D62**); follow-up stage 1 landed (**D63**);
 - **PRD: Chat answer coverage — governing rules, table rows, and the gaps left** - `In Progress\CHAT_ANSWER_COVERAGE_PRD.md` - Status: In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
-- **The Concordance — Implementation Plan** - `In Progress\CONCORDANCE_PLAN.md` - Status: **In Progress** — all eleven tasks landed 2026-10-27; gate green at 954 tests,
-- **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `In Progress\CONCORDANCE_PRD.md` - Status: **In Progress** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`, gate green
 - **Corpus Canonical Format — Implementation Plan** - `In Progress\CORPUS_CANONICAL_FORMAT_PLAN.md` - Status: In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.5 and P2.5a landed 2026-10-22
 - **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — the BPP artefact is built and reviewed; the OPP, landscape and SAOSO are not converted.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
 - **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: two items left, both human gates** — the VPS restore rehearsal and the missing UAT seats. `f4e8907` deployed and the corpus was rebuilt with `--force` on 2026-10-22 (364 chunks, all embedded, `lexical_only=False`); committee confirmation of no-claims left for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 - **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plans A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19, and **D (D1–D5, chatbot)** landed with it, so every sub-plan except the deferred C3 is built. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. **Closing MVP 0 is now an enumerated list, not a judgement call** — `MVP0_PLAN_V2.md` §4.1 (audited 2026-10-22): two engineering items, three human gates, one fix in flight. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
-- **Passage layout — Implementation Plan** - `In Progress\PASSAGE_LAYOUT_PLAN.md` - Status: **In Progress** — all six tasks landed 2026-10-27; UAT Scenario 8 unsigned. Implementation
-- **PRD: Passage layout — the document's lists, rendered as lists** - `In Progress\PASSAGE_LAYOUT_PRD.md` - Status: **In Progress** — built 2026-10-27 (the display-only option A, chosen by the product
-- **The reader's structure — Implementation Plan** - `In Progress\READER_STRUCTURE_PLAN.md` - Status: **In Progress** — **all ten tasks built 2026-10-27** (gate 1138 passed / 1 skipped,
 - **PRD: UAT sign-off tooling — an HTML judgement surface with the data already loaded** - `In Progress\UAT_SIGN_OFF_TOOLING_PRD.md` - Status: **Slice 1 BUILT 2026-10-22** — moved to `In Progress/`. 768 tests green, artefact driven
 - **Deployment: organicguarantee.africa on the homtini VPS** - `In Progress\VPS_DEPLOYMENT.md` - Status: In Progress — **redeploy path exercised 2026-10-22** (six runs; four deploy-blocking defects found and
 
@@ -51,7 +45,13 @@ _none_
 
 ## Done
 
+- **The Concordance — Implementation Plan** - `Done\CONCORDANCE_PLAN.md` - Status: **Done** — all eleven tasks landed 2026-10-27; **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
+- **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `Done\CONCORDANCE_PRD.md` - Status: **Done** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`), and
 - **MVP 0 Implementation Plan — Standards Foundation & Public Shop Window** - `Done\MVP0_PLAN.md` - Status: Superseded — do not execute; see `MVP0_PLAN_V2.md`
+- **Passage layout — Implementation Plan** - `Done\PASSAGE_LAYOUT_PLAN.md` - Status: **Done** — all six tasks landed 2026-10-27; **UAT Scenario 8 signed PASS 2026-10-28
+- **PRD: Passage layout — the document's lists, rendered as lists** - `Done\PASSAGE_LAYOUT_PRD.md` - Status: **Done** — built 2026-10-27 (the display-only option A, chosen by the product owner
+- **The reader's structure — Implementation Plan** - `Done\READER_STRUCTURE_PLAN.md` - Status: **Done** — all ten tasks built 2026-10-27 (gate 1139 passed / 1 skipped, Playwright 58). **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4). What differs from the plan — one corrected
+- **PRD: The reader's structure — a table reads as a table, and a reference goes somewhere** - `Done\READER_STRUCTURE_PRD.md` - Status: **Done** — built 2026-10-27 and **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
 
 ## To Do (ideas without a PRD yet)
 

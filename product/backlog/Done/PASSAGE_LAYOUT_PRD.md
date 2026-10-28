@@ -1,8 +1,8 @@
 # PRD: Passage layout — the document's lists, rendered as lists
 
-**Status:** **In Progress** — built 2026-10-27 (the display-only option A, chosen by the product
-owner after the concordance shipped). The one remaining human step is **UAT Scenario 8** in
-`tests/uat/concordance_uat.md`; until that carries a name, this is not done.
+**Status:** **Done** — built 2026-10-27 (the display-only option A, chosen by the product owner
+after the concordance shipped), and **UAT Scenario 8 signed PASS** on 2026-10-28 as part of the
+concordance signature (`tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).)
 **Owner:** Product (the verbatim rule) · Build (the formatter)
 **Opened:** 2026-10-27
 **Origin:** reviewing `/documents/saoso-standard-v2.1/read/` at `S5.1.3` — lettered conditions render

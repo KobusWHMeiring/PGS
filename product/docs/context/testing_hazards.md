@@ -1450,6 +1450,58 @@ indents, and fixing it belongs to the corpus artefact, not to a display heuristi
 with `knowledge/passages.py::Qualifier` and
 `tests/e2e/test_reader_layout.py::test_a_printed_margin_label_is_not_a_section_heading`.
 
+### 3.15 `verify.sh | tail` reports success whatever the gate did
+
+Piping the gate into `tail` (or `head`, or `grep`) makes the shell report **the last command's** exit
+status, so `scripts/verify.sh 2>&1 | tail -3 && git commit …` commits on a red gate. It happened on
+2026-10-28: a transient database failure produced `430 passed, 710 errors` and the commit went
+through, because `tail` exited 0.
+
+Evidence:
+    ./scripts/verify.sh 2>&1 | tail -3 && git commit -m "…"     # commits anyway
+
+Consequence: the one command whose whole job is to say "this tree is shippable" stops being able to
+stop anything, and the mistake is invisible in the transcript — the summary line still prints.
+
+Rule: never put the gate in a pipeline when its status decides something. Either run it bare, or use
+`set -o pipefail` (bash) so the pipeline carries the failure, or capture the status:
+
+    ./scripts/verify.sh > /tmp/gate.log 2>&1; test $? -eq 0 && git commit …
+
+A red gate is not always a code failure — the 2026-10-28 run was a transient DB error and the same
+tree passed 1139/1 immediately after. Re-run before believing it, and never commit through the pipe.
+
+### 3.16 A run that is killed leaves the test database, and every later gate run fails ~700 tests
+
+`verify.sh` runs `pytest --create-db`, and Django's `autoclobber=False` means "create or fail", not
+"drop and create". So if a run is interrupted — Ctrl-C, or a `| tail` that closes the pipe and
+SIGPIPEs pytest (§3.15) — its `test_pgs_verify` survives, and the **next** run dies before its first
+assertion:
+
+    430 passed, 710 errors in 59.14s
+    E  psycopg2.errors.DuplicateDatabase: database "test_pgs_verify" already exists
+    E  psycopg2.errors.ObjectInUse: database "test_pgs_verify" is being accessed by other users
+
+A second symptom hides inside that: teardown cannot drop the database because **one connection from
+the previous run is still open**, so `pytest` ends with
+`PytestWarning: Error when trying to teardown test databases` and leaves it in place. The database
+therefore persists for ever after one bad run, and it looks exactly like a code failure.
+
+Evidence (2026-10-28, back to back):
+    ./scripts/verify.sh | tail -3 && git commit …      # 430 passed, 710 errors  → but it committed
+    ./scripts/verify.sh                                 # same 710 errors, no pipe in sight
+    psql: drop database if exists test_pgs_verify
+    ./scripts/verify.sh                                 # 1139 passed, 1 skipped
+
+Consequence: "the gate is red" is not evidence of a code defect, and the one place that proves a tree
+is shippable becomes unreliable after an interruption.
+
+Rule: `verify.sh` now **drops a leftover `test_<db>` before pytest** — that is what `--create-db` was
+asking for — and the drop is run with `autocommit = True` on a plain connection, because
+`with psycopg2.connect(...)` wraps the statements in a transaction and `DROP DATABASE` cannot run
+inside one (`ActiveSqlTransaction`). When a gate run errors en masse, check
+`select datname from pg_database` **before** reading a single traceback. Added 2026-10-28.
+
 ## 5. Template for a new entry
 
 ```markdown

@@ -182,6 +182,36 @@ echo "==> 3/3  pytest"
 # one. Regenerating the fixtures is `scripts/extract_fixtures.py`; checking whether a new
 # extractor build would change them is `scripts/check_extraction.py`.
 export PDFTOTEXT_BIN="$REPO_ROOT/scripts/_no_extractor"
+
+# Drop a leftover test database first. `--create-db` sets `autoclobber=False`, so when a run is
+# interrupted (Ctrl-C, or a `| tail` that closes the pipe and SIGPIPEs pytest) its test database
+# survives — and every following run then fails ~700 tests with
+# `DuplicateDatabase: database "test_…" already exists` before the first assertion
+# (`testing_hazards.md` §3.15–§3.16). Dropping it is what `--create-db` was asking for anyway.
+"$PYTHON" - "$DATABASE_URL" <<'DROP'
+import sys
+from urllib.parse import urlsplit
+
+import psycopg2
+
+url = urlsplit(sys.argv[1])
+name = f"test_{url.path.lstrip('/')}"
+admin = url._replace(path="/postgres").geturl()
+# Not `with psycopg2.connect(...)`: that context manager wraps the statements in a transaction,
+# and `DROP DATABASE` cannot run inside one (`ActiveSqlTransaction`) — measured 2026-10-28.
+conn = psycopg2.connect(admin)
+conn.autocommit = True
+try:
+    with conn.cursor() as cur:
+        cur.execute(
+            "select pg_terminate_backend(pid) from pg_stat_activity where datname = %s", (name,)
+        )
+        cur.execute(f'drop database if exists "{name}"')
+finally:
+    conn.close()
+print(f"    dropped any leftover {name}")
+DROP
+
 "$PYTHON" -m pytest -q --create-db
 
 echo ""

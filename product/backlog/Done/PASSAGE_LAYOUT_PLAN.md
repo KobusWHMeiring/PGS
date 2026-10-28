@@ -1,7 +1,7 @@
 # Passage layout — Implementation Plan
 
-**Status:** **In Progress** — all six tasks landed 2026-10-27; UAT Scenario 8 unsigned. Implementation
-notes are in §7.
+**Status:** **Done** — all six tasks landed 2026-10-27; **UAT Scenario 8 signed PASS 2026-10-28**
+(part of the concordance signature). Implementation notes are in §7.
 **PRD:** `PASSAGE_LAYOUT_PRD.md`
 **Reference:** `build_principles.md` §I, §II, §IV, §VIII · `testing_hazards.md` §1.6, §1.32, §1.33
 **Baseline:** `934a2cc` (the sticky tree and search), gate green at 954.

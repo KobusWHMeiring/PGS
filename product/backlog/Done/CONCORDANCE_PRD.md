@@ -1,10 +1,11 @@
 # PRD: The concordance — the standard on one screen, and a citation that opens a line
 
-**Status:** **In Progress** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`, gate green
-at 954 tests). The reader at `/documents/<code>/read/` is the concordance: the printed structure is
-the navigation, one branch is open, a citation links to the line it quotes, and the page names the
-printed sections the corpus does not hold. **The UAT is unsigned** (`tests/uat/concordance_uat.md`),
-so this stays In Progress until that table carries names.
+**Status:** **Done** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`), and
+**UAT SIGNED 2026-10-28**: `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by
+Kobus (Product) against commit `4e02d71` and applied by `scripts/uat_signoff.py`. The reader at
+`/documents/<code>/read/` is the concordance: the printed structure is the navigation, one branch is
+open, a citation links to the line it quotes, and the page names the printed sections the corpus does
+not hold. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
 **Owner:** Product (shape, publication), Build (the derivation in §5)
 **Opened:** 2026-10-27
 **Origin:** the ask-surface UAT, scenario *"Following a citation opens the document at the passage

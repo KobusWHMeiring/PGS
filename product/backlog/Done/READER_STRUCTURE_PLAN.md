@@ -1,7 +1,6 @@
 # The reader's structure — Implementation Plan
 
-**Status:** **In Progress** — **all ten tasks built 2026-10-27** (gate 1138 passed / 1 skipped,
-Playwright 53); **the UAT is unsigned**, so it stays here. What differs from the plan — one corrected
+**Status:** **Done** — all ten tasks built 2026-10-27 (gate 1139 passed / 1 skipped, Playwright 58). **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4). What differs from the plan — one corrected
 number, six changed signatures and three findings — is in **§12**, at the end.
 **Read first:** §12's corrected glossary count and §0.1's numbers; everything else held.
 **The precondition was satisfied** before Task 1: the four answers are recorded in the PRD (§2

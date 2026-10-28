@@ -149,12 +149,13 @@ is signed; **Scenario 8** is the passage layout. The tooling is the same as §18
    half-title of printed p.30. These need the reviewed SAOSO artefact and `--force`; the reader must
    **not** substitute characters (the citation audit checks quotes against the stored text).
 
-**Backlog state.** `In Progress/`: CONCORDANCE (PRD + plan), PASSAGE_LAYOUT (PRD + plan), ASK_SURFACE,
-**READER_STRUCTURE (PRD now in `ready/`, plan here — built, UAT unsigned)**, VPS_DEPLOYMENT,
-CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `BugFixes/`:
-`citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` half closed in §0f
-(the glyph loss is fixed; the superscript and the half-title are still open). `ready/`: the MVP 1a
-pair and `READER_STRUCTURE_PRD.md`.
+**Backlog state.** `Done/` gained **three** features on 2026-10-28 — CONCORDANCE, PASSAGE_LAYOUT and
+READER_STRUCTURE (PRD + plan each). `In Progress/`: ASK_SURFACE, VPS_DEPLOYMENT,
+CORPUS_CANONICAL_FORMAT, CORPUS_COLUMN_EXTRACTION, MVP0. `ready/`: only the MVP 1a pair.
+`BugFixes/`: `citation_anchor_collision` **closed**; `saoso_text_glyphs_and_boundaries` — §1 closed
+(the glyph loss), **§2–§5 open** (the `m²` superscript, the `S1` half-title, three letterspaced
+lines, and Appendices 6a/6b's lost table rows — the last is G4's shape and its mechanism already
+exists as `TABLE_ROWS`).
 
 **Repo state.** `main`, tree clean, **42 commits ahead of `origin/main`**, nothing pushed or deployed.
 The live site is still `206f35f`, and its corpus predates D52/D53 — §18's two operational items are
@@ -271,10 +272,15 @@ their tables (20 animal classes and 20 values, 5 attached and 15 piled at the en
 Appendix 2 defect still live for the two appendices nobody curated, and is what **G4** means. Both
 are reviewed-artefact work (D53), and §5's mechanism already exists: two new keys in `TABLE_ROWS`.
 
-**The UAT is the only thing left.** `tests/uat/concordance_uat.md` now carries **eleven** scenarios,
-9–11 are new, and **none is signed**: Scenario 9 is the table, 10 the references, 11 the glossary.
-The artefact is regenerated (`product/design/uat/concordance.html`). This feature is not done without
-names in that table.
+**The UAT is signed, and it closed three features.** `tests/uat/concordance_uat.md` carries eleven
+**PASS** results, signed by **Kobus (Product) on 2026-10-28** against commit `4e02d71` and the dev
+corpus (366 chunks, Xpdf 4.00), applied by `scripts/uat_signoff.py`. The export's environment says
+`working_tree: modified` — the only dirty file at generation was the artefact itself; `uat_page.
+environment()` now excludes it (`fix(uat)`), and the signed artefact is deliberately not regenerated
+because it must keep naming `4e02d71`. That signature closes **CONCORDANCE** (D68),
+**PASSAGE_LAYOUT** (Scenario 8) and **READER_STRUCTURE** (Scenarios 9–11); all six documents are in
+`Done/`. **The PGS administrator, committee reviewer and consumer-member seats are still empty** —
+the OPP wants three voices (D4) — and the file says so.
 
 **One defect shipped in this slice and was found by the product owner, not by the suite** — worth
 reading before trusting a green gate on a layout change. Moving the missing-sections note out of the

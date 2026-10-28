@@ -1,9 +1,8 @@
 # PRD: The reader's structure — a table reads as a table, and a reference goes somewhere
 
-**Status:** **Ready** — the design was agreed in session on 2026-10-27 (product owner: definition-list
-shape first, a vision-model extraction only as a fallback; cross-references open in a new tab;
-glossary links in scope), and the **four questions in §10 are answered** by the product owner on
-2026-10-27. Plan: `product/backlog/In Progress/READER_STRUCTURE_PLAN.md`.
+**Status:** **Done** — built 2026-10-27 and **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
+The design (definition-list shape, references in a new tab, glossary in scope) and the four answers
+in §10 stand as decided; the plan is `product/backlog/Done/READER_STRUCTURE_PLAN.md`.
 **Owner:** Product (what the reader may claim) · Build (the two derivations)
 **Opened:** 2026-10-27
 **Origin:** reading `/documents/saoso-standard-v2.1/read/?section=appendix-2` after the glyph fix
