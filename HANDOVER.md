@@ -268,6 +268,17 @@ the test asserts their absence. Making them linkable needs the corpus artefact, 
 The artefact is regenerated (`product/design/uat/concordance.html`). This feature is not done without
 names in that table.
 
+**One defect shipped in this slice and was found by the product owner, not by the suite** — worth
+reading before trusting a green gate on a layout change. Moving the missing-sections note out of the
+phone `<details>` made it a **third child** of the two-column `.reader__body` grid: the passages
+wrapped to the next row and the *sticky* tree sat on top of the text, so following a citation landed
+on a page whose quoted line was behind the contents list. Markup valid, every string present, anchors
+resolving, console clean, 1138 tests green, no 390 px overflow. Fixed by wrapping the tree and the
+note in `.reader__tree-column` and moving the sticky rule there (the CSS comment had always said the
+sticky box must be the grid item), and guarded by `tests/e2e/test_reader_layout.py` — three browser
+assertions, proven by reverting the fix. **The e2e suite is outside `verify.sh`; run it whenever a
+template or stylesheet changes** (`testing_hazards.md` §3.12).
+
 ---
 
 ## 0. The one thing to know first

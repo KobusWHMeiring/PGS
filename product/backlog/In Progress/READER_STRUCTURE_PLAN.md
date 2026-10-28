@@ -1086,3 +1086,15 @@ appendix is the same claim, and it means **every** one of the 9 undecided mentio
    chunks *with their 768-float embeddings* (`pgvector._from_text` is ~40 % of the profile). That is
    D68's one-query design, unchanged here; a `defer("embedding")` on the reading path is the obvious
    next win and is **not** taken, because it is the citation and concordance path's query.
+
+**And one defect the suite did not catch (2026-10-27, found by the product owner).** Task 5 moved the
+missing-sections note out of the phone `<details>` (D70.6) — correctly — but appended it as a **third
+child** of the two-column `.reader__body` grid. The grid put the note in row 1 column 2, wrapped
+`.reader__passages` to row 2, and left the *sticky* tree sitting on top of the passage text: following
+a citation landed on a page whose quoted line was behind the contents list. Every server-side test
+passed (markup valid, strings present, anchors resolving, 3 queries, no 390 px overflow) and so did
+the 1138-test gate. The fix wraps the `<details>` and the note in `.reader__tree-column` and moves the
+sticky rule onto that column — which is what the CSS comment already said the sticky box must be.
+The guard is `tests/e2e/test_reader_layout.py` (three browser assertions, proven by reverting the
+fix), and the trap is `testing_hazards.md` **§3.12**. **The lesson for the next template change: the
+e2e suite is outside `verify.sh`, so a stylesheet or template edit is not verified by the gate.**
