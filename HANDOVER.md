@@ -263,6 +263,14 @@ passage, where the layout finds no following line and does not call them terms. 
 the test asserts their absence. Making them linkable needs the corpus artefact, not view work.
 `READER_STRUCTURE_PLAN.md` §12 has the six signature changes and the three findings.
 
+**Two further corpus findings were filed the same day**, both found by reading the rendered appendix
+and the glossary: `BugFixes/saoso_text_glyphs_and_boundaries.md` **§4** — three lines were extracted
+letter by letter (`p u r c h a s e d` in `S5.5.7`, `b o v i n e a n i m a l s` and `t h a n o n e`
+in Appendix 6a), which search cannot match; and **§5** — Appendices **6a and 6b** lost the rows of
+their tables (20 animal classes and 20 values, 5 attached and 15 piled at the end), which is the
+Appendix 2 defect still live for the two appendices nobody curated, and is what **G4** means. Both
+are reviewed-artefact work (D53), and §5's mechanism already exists: two new keys in `TABLE_ROWS`.
+
 **The UAT is the only thing left.** `tests/uat/concordance_uat.md` now carries **eleven** scenarios,
 9–11 are new, and **none is signed**: Scenario 9 is the table, 10 the references, 11 the glossary.
 The artefact is regenerated (`product/design/uat/concordance.html`). This feature is not done without

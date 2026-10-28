@@ -1,19 +1,24 @@
-# Bug: SAOSO's text — a lost superscript and a swallowed part title (the glyphs are closed)
+# Bug: SAOSO's text — a lost superscript, a swallowed part title, letterspaced words and two tables that lost their rows
 
 **Status:** **§1 closed 2026-10-27** — the glyph loss was an encoding bug in the extraction, not a
 lossy PDF, and all 83 replacement characters in the ingested corpus are real characters again.
-**§2 and §3 open** — a superscript still splits one sentence, and `S1` still ends with the next
-part's half-title; both are line-order and section-attribution problems, and neither is a view
-concern.
+**§2–§5 open** — a superscript splits one sentence, `S1` ends with the next part's half-title, three
+lines were extracted letter-by-letter, and Appendices 6a/6b store a table whose values have come
+away from their labels. All five are corpus/parser concerns; **none is a view concern**, and each is
+fixed by a reviewed artefact rather than by a display rule (see §6).
 **Severity:** was — a reader checking a quotation saw `360�` where the paper prints `360°`, and
-`ros�` for `rosé` on a public page.
+`ros�` for `rosé` on a public page. §4 and §5 are severity *readability*: a definition reads
+"…with more / 2 / than 25kg weight/m .", and Appendix 6a's twenty animal classes are followed by
+twenty numbers with nothing tying them together.
 **Owner:** Corpus (D53 artefact review) · Build (the guards)
 **Affected:** `DocumentChunk.text` for every ingested document; the reader, the search snippets and
 the chatbot's quotes.
+**Opened:** 2026-10-27 · **Last measured:** 2026-10-27 (after the reader-structure session)
 **Reference:** `testing_hazards.md` §1.34 (the trap, with the byte evidence) ·
 `knowledge/extraction.py` (`-enc UTF-8`, strict decode) ·
 `knowledge/tests/test_corpus_glyphs.py` (the guards) ·
 `product/backlog/In Progress/PASSAGE_LAYOUT_PRD.md` §3 (display-only rule) ·
+`knowledge/tables.py` (the mechanism §5 needs) ·
 `scripts/extract_fixtures.py` (the artefact generator)
 
 ---
@@ -119,16 +124,89 @@ in the reviewed artefact's block structure (D53), so a part title becomes a boun
 than a paragraph of the section before it. It is not a reader concern — suppressing it in the view
 would hide text the corpus truly holds.
 
-## 4. Why §2 and §3 are a separate follow-up
+## 4. Three lines were extracted letter by letter — **open**
+
+A tracked (letterspaced) line in the PDF comes out of `pdftotext` with a space between every letter,
+so a word stops being a word. Measured over the ingested SAOSO: **3 runs**, all short:
+
+| Where | Page | Stored text | Printed |
+|---|---:|---|---|
+| `S5.5.7` | 49 | `p u r c h a s e d` | *purchased*, set in tracking in a heading run |
+| `Appendix 6a` | 85 | `b o v i n e a n i m a l s` | *bovine animals* |
+| `Appendix 6a` | 85 | `t h a n o n e` | *than one* (in "less than one year old") |
+
+**Consequence:** search and retrieval cannot match them — `bovine` finds nothing in Appendix 6a,
+and a reader searching *purchased* misses `S5.5.7`. The reader prints the letters as they are, which
+is correct: the words are the document's and the citation audit compares quotes against this text,
+so substituting a character in the view is not an option.
+
+**Fix:** a reviewed `CORPUS_EDITS` entry in the SAOSO artefact (D53) — the same mechanism that
+repaired the BPP's five corrections, and the same "necessary and applied" idiom: each edit names the
+stored text, the printed text, and the page image that settles it. Cheap (three lines), and it
+should ride along with §2 and §3's review.
+
+**Guard:** after the artefact lands, `knowledge/tests/test_corpus_glyphs.py`'s family of character
+assertions is the wrong shape for this; the right one is a corpus-level test that no chunk contains a
+run of three or more single-letter tokens (`(?<!\w)\w( \w){3,}`), which is what this measurement
+was. One line, and it also catches the next letterspaced line a reprint introduces.
+
+## 5. Appendices 6a and 6b lost the rows of their tables — **open**
+
+This is the **Appendix 2 defect**, still live for the two appendices nobody curated. The paper prints
+them as two-column tables (`Class or species` beside `Number per ha`); `pdftotext -layout` keeps the
+two columns' lines out of step, so the values separate from their labels. `knowledge/tables.py`'s
+module docstring describes the failure and the measurement that fixed Appendix 2; these are the same
+pages' neighbours, untouched because `TABLE_ROWS` has one key.
+
+Appendix 6a, printed p.85, one chunk of 757 characters — **20 classes, 20 values, 5 values still
+attached, 15 piled at the end, and the next part's half-title on the tail**:
+
+```
+… Equines over six months old 5
+   Calves for fattening
+   Other b o v i n e   a n i m a l s less t h a n o n e year old 3,3
+   Male bovine animals from one to less than two years old 3,3
+   Female bovine animals from one to less than two years old 2
+   Male bovine animals two years old or over 2,5
+   Breeding heifers  Heifers for fattening  Dairy cows  Cull dairy cows  Other cows
+   Female breeding rabbits  Ewes  Goats  Piglets  Breeding sows  Pigs for fattening
+   Other pigs  Table chickens  Laying hens
+  2 5 2,5 2 2 2,5 100 13,3 13,3 74 6,5 14 14 580 230
+  SECTION B  SOUTH AFRICAN specific
+```
+
+Appendix 6b (p.86) has the same shape in its rabbit table, and it also carries the half-title
+defect of §3 — a trailing `MINIMUM INDOOR AND OUTDOOR SPACE REQUIREMENTS FOR RABBITS` block.
+
+**Consequence:** a reader cannot answer "how many laying hens per hectare?" from this branch. The
+numbers are present, the classes are present, and no pairing survives. A citation of any cell is
+unquotable as a table row, exactly as Appendix 2's were before 2026-10-21 — which is also how a
+grounded answer once attached `Free of significant contaminants` to the wrong substance.
+
+**Fix:** two new keys in `TABLE_ROWS`/`TABLE_SECTIONS` (`"Appendix 6a"`, `"Appendix 6b"`) with
+reviewed cells, in printed order, using the mechanism Appendix 2 already has: 20 rows for 6a, and
+6b's rows per species. Nothing in the reader changes — `structure_for()` picks up a new key and the
+page renders the same definition-list shape. The `TABLE_BANDS` measurement will need 6a's and 6b's
+column offsets added.
+
+**Prerequisite, and the reason it is not done in the view:** the cells must be read off the page by
+a human (or drafted by a vision model and **reviewed**, D70.2). A parser that guessed the pairing
+would be inventing the document's meaning — the same mistake the Table 1 "four-column rows already
+coherent" exclusion was there to avoid.
+
+This is also what **G4** means ("Appendices 3, 4, 6a/6b and 7"), so the work is already scheduled
+by `CORPUS_CANONICAL_FORMAT_PLAN`'s artefact conversion rather than invented here.
+
+## 6. Why §2–§5 are a separate follow-up
 
 The passage-layout PRD is explicit: the stored text is untouched, the words are verbatim, and an
-unrecognised shape is a paragraph. Correcting the superscript and the section boundary changes
-`DocumentChunk` rows, needs `--force` (which drops `ChatMessage.retrieved_chunks` evidence links),
-and requires a human looking at the page image. That is the SAOSO artefact conversion (D53 / P5),
-not a view change. §1 was different: it needed no review, because the character was already in the
-extraction — only the decode was throwing it away.
+unrecognised shape is a paragraph. Correcting the superscript, the section boundary, the
+letterspaced lines and the two tables changes `DocumentChunk` rows, needs `--force` (which drops
+`ChatMessage.retrieved_chunks` evidence links), and requires a human looking at the page image. That
+is the SAOSO artefact conversion (D53 / P5), not a view change. §1 was different: it needed no
+review, because the character was already in the extraction — only the decode was throwing it away.
 
-## 5. Definition of done
+## 7. Definition of done
 
 - [x] The corpus holds the characters the paper prints: **zero U+FFFD** in all four ingested
       documents, measured after re-ingest (2026-10-27).
@@ -141,5 +219,9 @@ extraction — only the decode was throwing it away.
 - [ ] A reviewed `CORPUS_EDITS` entry merges the *Factory farming* superscript (§2).
 - [ ] The half-title page is a boundary, not the tail of `S1`; the `S1` branch ends at *Wild
       Harvesting*, and `SECTION B` is not reproduced inside it (§3).
+- [ ] Three `CORPUS_EDITS` entries rejoin the letterspaced words (§4), and a corpus-level guard
+      refuses a run of three or more single-letter tokens.
+- [ ] `TABLE_ROWS` gains `Appendix 6a` (20 reviewed rows) and `Appendix 6b`, with `TABLE_BANDS`
+      offsets for their pages, so both render as tables and their cells are quotable (§5).
 - [ ] Re-ingest with `--force` after those reviews; the corpus check reports the document as
       rebuilt from the artefact.
