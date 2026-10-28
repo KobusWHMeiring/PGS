@@ -187,11 +187,20 @@ paragraphs rather than as a ladder of lines. In 8.1, the roman `i.`/`ii.` sits *
 The page's note at the foot says the words and punctuation are the document's and that line breaks
 are reflowed.
 
+**Also, since 2026-10-28 — the wrapped clause** (`reader_clause_line_breaks.md`): open
+`?section=s23-3` (forced and involuntary labour) and `?section=s23-1`. Each clause is printed across
+two lines, the second on a hanging indent. Each must read as **one paragraph, one sentence**, and
+selecting it with the mouse must give the whole sentence — `…retaining part of the workers' wages,
+property or documents.` — with no second clause dragged in behind it.
+
 **Judgement:** *Does this read as a reproduction of the paper, or as a machine's attempt at one?*
 The markers are the browser's list markers, not characters added to the text — the corpus prints a
 bare `a` — and whether that reads as honest is a human call. A reader who has the PDF open should be
-able to follow the same clause in both without losing their place.
+able to follow the same clause in both without losing their place. For the clause case: *would you
+quote this clause to someone by copying it off the page?*
 **Result:** PASS · Kobus (Product) · 2026-10-28
+**Added 2026-10-28:** the clause case, owed a re-judgement — the PASS above covers the list
+rendering only.
 
 ---
 

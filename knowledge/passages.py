@@ -70,10 +70,41 @@ _BULLETS = "•‣▪◦●*-–—"
 _ROMAN_VALUES = {"i": 1, "v": 5, "x": 10, "l": 50, "c": 100, "d": 500, "m": 1000}
 _TERMINAL = (".", ";", "?", "!")
 
+#: A numbered clause line (`23.5.`, `4.8.6.`), which SAOSO prints one to a line, always at the left
+#: margin (measured: 386 lines, 384 at column 0, none without body text). It opens its own paragraph:
+#: two clauses in one block is a reader copying a clause and getting the next one with it.
+_CLAUSE_NUMBER = re.compile(r"^\d{1,2}(?:\.\d{1,2}){1,3}\.")
+
 #: The longest centred mixed-case line that is still a printed label rather than a heading. The
 #: shipped labels measure 22–50 characters (`(Ref Canada Organic Regime, CAN/CGSB-32.310)` is the
 #: longest); the longest centred *heading* is a caps division title.
 _QUALIFIER_CHARS = 60
+
+#: A line set this far in cannot be body text in a single column: SAOSO centres its division titles,
+#: its page banners and its printer's labels. Below this is a *hanging* indent — how the paper prints
+#: a wrapped clause's continuation — and such a line belongs to the paragraph above it.
+_CENTRED_INDENT = 10
+
+
+def _starts_its_own_block(indent: int, paragraph_indent: int) -> bool:
+    """Does a line at `indent` open a new block rather than continue the open paragraph?
+
+    A centred line always does, **in either direction**: a printer's label printed between two
+    paragraphs must neither swallow the prose below it nor be joined to the prose above it.
+
+    A hanging indent never does. SAOSO prints a wrapped clause's continuation 6–9 columns in
+    (`S23.3`: `…retaining part of the / workers' wages, …`), and the rule this replaced — "the indent
+    differs by six columns or more" — treated exactly that as a centred label. A sentence then
+    arrived as two paragraphs, and copying it glued the next clause on
+    (`BugFixes/reader_clause_line_breaks.md`: 13 of 319 chunks, 20 dangling paragraphs).
+
+    Two centred lines a few columns apart stay two blocks, so `SECTION B` and the subtitle under it
+    are not fused into one heading.
+    """
+    centred = indent >= _CENTRED_INDENT
+    if centred != (paragraph_indent >= _CENTRED_INDENT):
+        return True
+    return centred and abs(indent - paragraph_indent) >= 6
 
 
 @dataclass(frozen=True)
@@ -360,7 +391,7 @@ def _is_term(stripped: str, next_line: str, indent: int) -> bool:
     introduce. A centred line is not a term — it is one of the document's labels, handled as a
     heading when its paragraph flushes. A line that ends a sentence is prose, however short.
     """
-    if indent >= 10:
+    if indent >= _CENTRED_INDENT:
         return False
     words = stripped.split()
     if not 1 <= len(words) <= 8 or len(stripped) > 70:
@@ -429,7 +460,7 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
             # clause, and a line indented that far cannot be body text in a single column.
             centred = (
                 paragraph_indent is not None
-                and paragraph_indent >= 10
+                and paragraph_indent >= _CENTRED_INDENT
                 and len(text) <= 100
                 and not text.endswith(_TERMINAL)
             )
@@ -522,13 +553,20 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
                 item.lines.append(stripped)
                 continue
             close_lists()
+        if _CLAUSE_NUMBER.match(stripped):
+            # A clause number starts a paragraph of its own. Without this, joining a wrapped clause
+            # would also join it to the next clause: the hanging indent used to break paragraphs
+            # by accident, and taking that away would leave `…documents. 23.5. Operators…` as one.
+            flush_paragraph()
         if _is_term(stripped, next_line, indent):
             flush_paragraph()
             blocks.append(Term(stripped))
             continue
-        if paragraph and paragraph_indent is not None and abs(indent - paragraph_indent) >= 6:
+        if paragraph and paragraph_indent is not None and _starts_its_own_block(
+            indent, paragraph_indent
+        ):
             # A centred line (`South African specific`) is its own block, not the tail of the
-            # paragraph before it.
+            # paragraph before it. A hanging indent is the continuation of the clause above.
             flush_paragraph()
         if not paragraph:
             paragraph_indent = indent

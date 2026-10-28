@@ -149,6 +149,17 @@ def reader_corpus(db):
             "Synthetic fertiliser\n\nA fertiliser manufactured industrially.",
         ),
         ("S5.1.9", 42, "Animals must have access to pasture during the grazing season."),
+        (
+            "S23.3",
+            67,
+            # The paper wraps this clause on a hanging indent of 9 columns, which the layout used to
+            # read as a centred label — two paragraphs, and a copied clause glued to the next one
+            # (`BugFixes/reader_clause_line_breaks.md`).
+            "23.3. Operators shall not use forced or involuntary labour or apply any pressure "
+            "such as retaining part of the\n"
+            "         workers\u2019 wages, property or documents.\n\n"
+            "23.5. Operators shall provide their employees equal opportunity.",
+        ),
     ):
         DocumentChunk.objects.get_or_create(
             document=document, section_ref=section_ref, defaults={"page": page, "text": text}

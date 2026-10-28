@@ -201,6 +201,48 @@ def test_a_centred_label_ends_the_list_and_is_not_a_heading():
     assert [block.kind for block in passage_blocks(division)] == ["list", "heading", "paragraph"]
 
 
+def test_a_wrapped_clause_is_one_paragraph_and_copies_as_one_sentence():
+    """SAOSO prints a clause's continuation on a hanging indent of 6–9 columns.
+
+    `S23.3` is stored as two lines because the paper wraps it; the reader split them into two
+    paragraphs, so a quoted clause could not be selected as one sentence and copying it gave
+    `…property or documents.23.5. Operators…` — no break, no space. Measured on the shipped
+    corpus: 25 of 319 chunks carried a split-off continuation (`BugFixes/reader_clause_line_breaks.md`).
+    """
+    text = (
+        "23.3. Operators shall not use forced or involuntary labour or apply any pressure such as "
+        "retaining part of the\n"
+        "         workers' wages, property or documents.\n"
+        "\n"
+        "23.5. Operators shall provide their employees and contractors equal opportunity."
+    )
+
+    blocks = passage_blocks(text)
+
+    assert [block.kind for block in blocks] == ["paragraph", "paragraph"]
+    assert blocks[0].text.endswith("workers' wages, property or documents.")
+    assert blocks[1].text.startswith("23.5.")
+
+
+def test_a_centred_note_between_two_paragraphs_is_still_its_own_block():
+    """The hanging indent joins; the centred line still splits, in both directions.
+
+    `S4.8.6` prints a footnote whose tail (`certifiers using this standard.`) is centred at column
+    46 — that one stays apart, and so does the prose printed *after* a centred label. A rule that
+    only looked at the incoming line would join the label to the sentence below it.
+    """
+    note = (
+        " This Section combines the conversion periods of the IFOAM Norms with the EU 2018-848 "
+        "in order to derive guidance for those\n"
+        "                                              certifiers using this standard."
+    )
+    label = "                    South African specific\n\nAreas are defined in the Act."
+
+    assert [block.kind for block in passage_blocks(note)] == ["paragraph", "paragraph"]
+    assert passage_blocks(note)[1].text == "certifiers using this standard."
+    assert [block.kind for block in passage_blocks(label)] == ["qualifier", "paragraph"]
+
+
 def test_a_line_starting_with_a_single_space_letter_is_prose():
     assert passage_blocks("a lot of things happen on a farm.")[0].kind == "paragraph"
 
@@ -326,3 +368,53 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     everything = [block for chunk in chunks for block in passage_blocks(chunk.text)]
     assert sum(1 for block in everything if block.kind == "list") > 60
     assert sum(1 for block in everything if block.kind == "term") > 100
+
+
+#: How many paragraphs of the shipped corpus that are **not** the chunk's first block begin with a
+#: lower-case word, by section: measured 2026-10-28 after the hanging-indent fix (0 before it: 20).
+#: Every remaining one is a **corpus** defect named in
+#: `BugFixes/saoso_text_glyphs_and_boundaries.md` — the reader cannot join them without inventing
+#: text — so they are recorded here rather than left to hide the next split:
+#:
+#: * `S1` — the `m²` superscript of *Factory farming* is its own extracted line, so the sentence
+#:   resumes after it ("…more / 2 / than 25kg weight/m .", §2 there: a corpus edit);
+#: * `S4.8.6` — the tail of a footnote, printed centred at column 46, correctly gets its own block
+#:   (§3: the section banner is a parser concern);
+#: * `Appendix 1`, `Appendix 3`, `Appendix 7` — table cells whose text came away from its label
+#:   (§5), and `Appendix 6b`, whose two-column table lost its rows entirely (§5).
+_SPLIT_BLOCK_EXCEPTIONS = {
+    "S1",
+    "S4.8.6",
+    "Appendix 1",
+    "Appendix 3",
+    "Appendix 6b",
+    "Appendix 7",
+}
+
+
+def test_no_clause_is_split_off_its_own_sentence(standard_set):
+    """The measurement in the bug, as a guard: 13 chunks of 319 ended in a dangling continuation.
+
+    A hanging indent (6–9 columns) is how SAOSO prints a wrapped clause, and the block-splitting
+    rule treated it as a centred label — so a sentence arrived in two pieces and copying it glued
+    the next clause on (`…property or documents.23.5. Operators…`). The guard is over the real
+    corpus because a three-line fixture passes while the document is wrong (`testing_hazards.md`
+    §1.6). It counts a paragraph that is not the chunk's **first** block, because a chunk that
+    begins mid-sentence opens with a lower-case word and that is the chunker's, not the layout's.
+
+    A *new* dangling paragraph is a new defect; the recorded ones are corpus edits.
+    """
+    ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
+    chunks = list(DocumentChunk.objects.order_by("id"))
+    assert len(chunks) == 319
+
+    split = []
+    for chunk in chunks:
+        for index, block in enumerate(passage_blocks(chunk.text)):
+            if index == 0 or block.kind != "paragraph" or not block.text:
+                continue
+            if block.text.split(" ", 1)[0][:1].islower():
+                split.append((chunk.section_ref, block.text[:60]))
+
+    unexpected = [case for case in split if case[0] not in _SPLIT_BLOCK_EXCEPTIONS]
+    assert not unexpected, f"a clause is split from its own sentence: {unexpected}"

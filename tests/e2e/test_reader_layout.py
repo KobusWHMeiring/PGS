@@ -158,3 +158,44 @@ def test_a_printed_margin_label_is_not_a_section_heading(page, live_server, read
     assert measured["qualifier_size"] < measured["heading_size"], (
         f"the label is not subordinate to the heading: {measured}"
     )
+
+
+def test_a_wrapped_clause_reads_and_selects_as_one_sentence(page, live_server, reader_corpus):
+    """`S23.3` wraps mid-sentence on a hanging indent; the browser must show, and select, one sentence.
+
+    Found by the product owner reading `?section=s23` on 2026-10-28: the clause arrived as two
+    paragraphs, so it could not be selected as one sentence and copying it gave
+    `…property or documents.23.5. Operators…`. The fix is a display rule, so this belongs in a
+    browser: the gate can prove the blocks, only the page can prove the paragraph.
+    """
+    page.set_viewport_size({"width": 1280, "height": 900})
+    page.goto(
+        live_server.url + "/documents/saoso-standard-v2.1/read/?section=s23-3",
+        wait_until="networkidle",
+    )
+
+    measured = page.evaluate(
+        r"""() => {
+            const paragraphs = [...document.querySelectorAll('p.passage__text')];
+            const clause = paragraphs.find(p => p.textContent.includes('forced or involuntary'));
+            if (!clause) return null;
+            const range = document.createRange();
+            range.selectNodeContents(clause);
+            return {
+                paragraphs: paragraphs.length,
+                sentence: clause.textContent,
+                selected: range.toString(),
+                startsLowercase: /^\s*[a-z]/.test(clause.textContent),
+            };
+        }"""
+    )
+
+    assert measured, "the clause did not render at all"
+    assert not measured["startsLowercase"], "the continuation is still its own paragraph"
+    assert "workers\u2019 wages, property or documents." in measured["sentence"]
+    assert "part of the workers\u2019 wages" in measured["selected"], (
+        f"the sentence does not select as one clause: {measured['selected'][:120]}"
+    )
+    assert measured["paragraphs"] == 2, (
+        f"two printed clauses should be two paragraphs, got {measured['paragraphs']}"
+    )

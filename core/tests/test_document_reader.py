@@ -465,6 +465,40 @@ def test_the_page_renders_a_lettered_clause_as_a_list(client, seeded_documents):
     assert "a. Sufficient" not in body, "the marker is a list marker, not text added to the document"
 
 
+def test_a_wrapped_clause_is_one_paragraph_on_the_page(client, seeded_documents):
+    """`S23.3` wraps mid-sentence on a hanging indent, and the page must show one paragraph.
+
+    Two paragraphs meant a reader could not select the clause as one sentence, and copying the
+    page glued the next clause on with no break and no space — `…property or documents.23.5.
+    Operators…`. The reader only decides where a paragraph ends; not a character of the document
+    changes (`BugFixes/reader_clause_line_breaks.md`).
+    """
+    document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
+    DocumentChunk.objects.create(
+        document=document,
+        section_ref="S23.3",
+        heading_path="23. HUMAN RIGHTS AND SOCIAL JUSTICE",
+        page=67,
+        text=(
+            "23.3. Operators shall not use forced or involuntary labour or apply any pressure such "
+            "as retaining part of the\n"
+            "         workers\u2019 wages, property or documents.\n"
+            "\n"
+            "23.5. Operators shall provide their employees and contractors equal opportunity."
+        ),
+    )
+    document.chunk_count = 3
+    document.save(update_fields=["chunk_count"])
+
+    body = client.get("/documents/saoso-standard-v2.1/read/?section=s23-3").content.decode()
+
+    assert (
+        "retaining part of the workers\u2019 wages, property or documents." in body
+    ), "the wrapped clause must read as one sentence"
+    assert '<p class="passage__text">workers\u2019' not in body, "the continuation is not a block"
+    assert body.count('<p class="passage__text">') == 2, "two clauses, two paragraphs"
+
+
 def test_a_nested_list_is_rendered_inside_its_item(client, seeded_documents):
     document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
     DocumentChunk.objects.create(

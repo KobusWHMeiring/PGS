@@ -1502,6 +1502,35 @@ asking for — and the drop is run with `autocommit = True` on a plain connectio
 inside one (`ActiveSqlTransaction`). When a gate run errors en masse, check
 `select datname from pg_database` **before** reading a single traceback. Added 2026-10-28.
 
+### 3.17 A rule for a centred label catches every hanging indent, and the sentence splits in two
+
+`passage_blocks` gave a line its own block when its indent differed from the open paragraph's by
+**six columns or more**. The threshold was chosen for SAOSO's centred labels (`South African
+specific`, set at column 20+). A wrapped clause's continuation, however, is printed on a **hanging
+indent of 6–9 columns** — precisely the range the rule called "centred":
+
+    23.3. Operators shall not use forced or involuntary labour or apply any pressure such as
+             retaining part of the workers' wages, property or documents.        # indent 9
+
+Evidence (the shipped SAOSO, every rendered paragraph after the first that begins lower-case):
+    before the fix: 20 of 319 chunks   S23.1 'organic.', S23.3 'workers’ wages…',
+                                       Appendix 1 'technical specifications…', …
+    after  the fix:  8, all corpus defects (S1's `m²` superscript, S4.8.6's centred note,
+                      Appendix 1/3/6b/7's table cells) — `saoso_text_glyphs_and_boundaries.md`
+
+Consequence: a quoted clause could not be selected as one sentence, and copying the page gave
+`…property or documents.23.5. Operators…` — no break and no space, because the next clause was its
+own `<p>` with no whitespace between the elements. Worse, the misfire was **load-bearing**: it broke
+paragraphs at clause boundaries by accident, so taking it out glued consecutive numbered clauses
+(6 paragraphs held two clause numbers each) until a clause number was given its own block.
+
+Rule: a line opens a block when it is **centred** (`indent >= 10`, see `_CENTRED_INDENT`), in either
+direction, and never when it is a hanging indent; a numbered clause (`23.5.`, `4.8.6.`) always opens
+its own paragraph. Measured, not tuned — and the guard is over the real corpus, because a fixture of
+three lines passes while the document is wrong (§1.6). Added 2026-10-28 with
+`knowledge/passages.py::_starts_its_own_block` and
+`knowledge/tests/test_passages.py::test_no_clause_is_split_off_its_own_sentence`.
+
 ## 5. Template for a new entry
 
 ```markdown

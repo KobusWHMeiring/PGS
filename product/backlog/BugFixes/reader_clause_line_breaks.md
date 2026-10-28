@@ -1,7 +1,10 @@
 # Bug: a wrapped clause renders as two paragraphs, and copies back glued
 
-**Status:** **Open** — found 2026-10-28 by the product owner reading `?section=s23` at
-`S23.3 · printed p. 67`, where the clause breaks mid-sentence and the next clause number runs into it.
+**Status:** **Fixed 2026-10-28** — the hanging indent no longer splits a clause, and a numbered clause
+now opens its own paragraph. Guards in `knowledge/tests/test_passages.py`,
+`core/tests/test_document_reader.py` and `tests/e2e/test_reader_layout.py`, each watched failing
+against the old rule first. Resolution in §7; the clause case is added to UAT Scenario 8 for the
+product owner to re-judge.
 **Severity:** **readability and copying.** A quoted clause cannot be selected as one sentence, and a
 reader who copies it gets `…property or documents.23.5. Operators shall…` — no break, no space.
 **Owner:** Build (display rule in `knowledge/passages.py`) · Product (nothing to decide)
@@ -93,9 +96,52 @@ whitespace decision the reader already owns (`strip_overlap` does the same kind 
 
 ## 6. Definition of done
 
-- [ ] `S23.3`, `S23.1`, `S23.4` each render as one paragraph on `/read/?section=s23`.
-- [ ] The 25-of-319 measurement is re-run and every remaining case is either fixed or named in the
+- [x] `S23.3`, `S23.1`, `S23.4` each render as one paragraph on `/read/?section=s23`.
+- [x] The 25-of-319 measurement is re-run and every remaining case is either fixed or named in the
       exception list with its reason.
-- [ ] `test_passages.py`'s losslessness guard is still green, unmodified.
-- [ ] UAT Scenario 8 carries a re-judged result for the clause case.
-- [ ] Gate green; Playwright green; `testing_hazards.md` §3.14 gains the hanging-indent case.
+- [x] `test_passages.py`'s losslessness guard is still green, unmodified.
+- [ ] UAT Scenario 8 carries a re-judged result for the clause case. (The clause case is appended to
+      the scenario; the re-judgement is the product owner's, and the artefact is regenerated from
+      that commit.)
+- [x] Gate green (1143 passed, 1 skipped); Playwright green (58 + 1 new); `testing_hazards.md` §3.14
+      gained the hanging-indent case as §3.17.
+
+## 7. Resolution (2026-10-28)
+
+`passage_blocks` now gives a line its own block when it is **centred** — `indent >= 10`, in either
+direction, so a label printed between two paragraphs neither swallows the prose below it nor joins
+the prose above it — and never when the line is a hanging indent. `_CENTRED_INDENT` is one constant
+shared with the qualifier branch and `_is_term`, so the three cannot drift apart again.
+
+Two things the fix exposed that the bug had not measured:
+
+1. **A second rule was missing.** The `abs(...) >= 6` misfire was *load-bearing*: it broke paragraphs
+   at clause boundaries by accident. With it gone, consecutive numbered clauses joined — **5
+   paragraphs held two clause numbers each** (measured, Appendix 1). A numbered clause line
+   (`23.5.`, `4.8.6.`; 386 in the shipped SAOSO, all at the left margin) now opens its own paragraph.
+2. **The number was 13 tails, not 25.** The bug counted a sweep it described but did not leave in
+   the repo; re-measured two ways, the defect was **13** chunks ending in a dangling continuation
+   and **20** dangling paragraphs anywhere in a chunk. Both are in the table below, before and after.
+
+Measured on the shipped corpus, 2026-10-28:
+
+| | before | after |
+|---|---:|---:|
+| chunks whose last paragraph begins lower-case | 13 | **0** |
+| paragraphs after the first beginning lower-case | 20 | **8** |
+| paragraphs holding two or more clause numbers | 6 | **0** |
+| rendered paragraphs | 630 | 616 |
+| rendered blocks by kind (heading/term/paragraph/qualifier/list) | 56/206/630/88/93 | 56/206/**616**/88/93 |
+
+The 8 that remain are named in `_SPLIT_BLOCK_EXCEPTIONS`, and each belongs to
+`saoso_text_glyphs_and_boundaries.md`: `S1`'s `m²` superscript (§2), `S4.8.6`'s centred note (§3),
+and Appendix 1/3/6b/7's table cells (§5). No block kind changed count except paragraphs, and the
+losslessness guard — `flatten(passage_blocks(text))` is the chunk's text for all 319 — passes
+unmodified.
+
+**Guards, each seen red against the old rule** (reverted `passages.py`, ran, restored):
+`test_a_wrapped_clause_is_one_paragraph_and_copies_as_one_sentence` and
+`test_no_clause_is_split_off_its_own_sentence` (corpus), 
+`test_a_wrapped_clause_is_one_paragraph_on_the_page` (page), and
+`test_a_wrapped_clause_reads_and_selects_as_one_sentence` (browser, which selects the rendered
+sentence and asserts the wrap is inside it).
