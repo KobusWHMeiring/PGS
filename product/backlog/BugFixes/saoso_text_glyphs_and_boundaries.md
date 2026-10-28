@@ -11,6 +11,8 @@ has to be decided before it can be curated; see §5 and §8.
 `ros�` for `rosé` on a public page. §4 and §5 were severity *readability*: a definition read
 "…with more / 2 / than 25kg weight/m .", and Appendix 6a's twenty animal classes were followed by
 twenty numbers with nothing tying them together.
+**UAT:** Appendix 6a's new shape is **Scenario 13, SIGNED PASS 2026-10-28** by Kobus (Product) in
+`tests/uat/concordance_uat.md` (13/13, against `e6f4464`).
 **Owner:** Corpus (D53 artefact review) · Build (the guards)
 **Affected:** `DocumentChunk.text` for every ingested document; the reader, the search snippets and
 the chatbot's quotes.

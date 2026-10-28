@@ -1,9 +1,9 @@
 # PRD: The documents page offers the concordance
 
-**Status:** **Built 2026-10-28** — all four acceptance items and the guards are in place; the file
-stays in `ready/` because **UAT Scenario 12 is not yet judged** (`tests/uat/concordance_uat.md`),
-and nothing with a user-facing surface is Done without a sign-off. Move to `Done/` when Kobus has
-judged it.
+**Status:** **Done 2026-10-28** — built, and **UAT Scenario 12 SIGNED PASS** by Kobus (Product) in
+`tests/uat/concordance_uat.md` (13/13 PASS, signed against `e6f4464`, 385 chunks). The scenario was
+judged at sign-off from the implementation and its guards; the result note says a hands-on pass is
+still owed before the P7.4 deploy, because a signature that claims a run nobody made is not evidence.
 **Owner:** Product (what a reader is promised) · Build (one row action)
 **Opened:** 2026-10-28
 **Origin:** found while closing the reader-structure slice — the concordance is reachable from a chat

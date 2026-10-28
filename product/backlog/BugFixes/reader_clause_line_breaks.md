@@ -1,10 +1,9 @@
 # Bug: a wrapped clause renders as two paragraphs, and copies back glued
 
-**Status:** **Fixed 2026-10-28** — the hanging indent no longer splits a clause, and a numbered clause
+**Status:** **Closed 2026-10-28** — the hanging indent no longer splits a clause, and a numbered clause
 now opens its own paragraph. Guards in `knowledge/tests/test_passages.py`,
 `core/tests/test_document_reader.py` and `tests/e2e/test_reader_layout.py`, each watched failing
-against the old rule first. Resolution in §7; the clause case is added to UAT Scenario 8 for the
-product owner to re-judge.
+against the old rule first. Resolution in §7; **UAT Scenario 8 re-judged and signed PASS**.
 **Severity:** **readability and copying.** A quoted clause cannot be selected as one sentence, and a
 reader who copies it gets `…property or documents.23.5. Operators shall…` — no break, no space.
 **Owner:** Build (display rule in `knowledge/passages.py`) · Product (nothing to decide)
@@ -100,9 +99,9 @@ whitespace decision the reader already owns (`strip_overlap` does the same kind 
 - [x] The 25-of-319 measurement is re-run and every remaining case is either fixed or named in the
       exception list with its reason.
 - [x] `test_passages.py`'s losslessness guard is still green, unmodified.
-- [ ] UAT Scenario 8 carries a re-judged result for the clause case. (The clause case is appended to
-      the scenario; the re-judgement is the product owner's, and the artefact is regenerated from
-      that commit.)
+- [x] UAT Scenario 8 carries a re-judged result for the clause case — **SIGNED PASS 2026-10-28** by
+      Kobus (Product) in `tests/uat/concordance_uat.md`, against `e6f4464`. The result note records
+      that the judgement was made from the implementation and the guards, not from a hands-on read.
 - [x] Gate green (1143 passed, 1 skipped); Playwright green (58 + 1 new); `testing_hazards.md` §3.14
       gained the hanging-indent case as §3.17.
 

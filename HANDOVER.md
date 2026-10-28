@@ -337,6 +337,12 @@ markers, 3 reviewed edits in 1 537 blocks), and the ingest reads it —
   restored**, 30 left unlinked because a *previous* rebuild had genuinely rewritten those passages.
   `text_sha` now hashes a passage's **words**, not its layout — before that the artefact made
   **230 of 291** passages read as changed text and evidence stopped relinking.
+- **The concordance UAT is signed 13/13 PASS** (`tests/uat/concordance_uat.md`, Kobus/Product,
+  against `e6f4464`, 385 chunks): the eleven scenes of 2026-10-28 plus the clause case re-judged,
+  Scenario 12 (the documents page offers the concordance) and Scenario 13 (Appendix 6a's stocking
+  rates). Scenarios 8's clause case, 12 and 13 were judged at sign-off from the implementation and
+  its guards, and their result lines say so — a hands-on pass is still owed before the P7.4 deploy.
+  `DOCUMENTS_READER_LINK_PRD.md` moved to `Done/` on that sign-off.
 - **`scripts/fast.sh` and `pgs.settings_test` are the other agent's session**, in the same tree:
   the two test lanes, the fast password hasher, and the `slow` marker. Not this slice's work, and not
   committed with it.

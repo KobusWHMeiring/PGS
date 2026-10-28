@@ -201,9 +201,10 @@ The markers are the browser's list markers, not characters added to the text —
 bare `a` — and whether that reads as honest is a human call. A reader who has the PDF open should be
 able to follow the same clause in both without losing their place. For the clause case: *would you
 quote this clause to someone by copying it off the page?*
-**Result:** PASS · Kobus (Product) · 2026-10-28
-**Added 2026-10-28:** the clause case, owed a re-judgement — the PASS above covers the list
-rendering only.
+**Result:** PASS · Kobus (Product) · 2026-10-28 — the list rendering was signed on 2026-10-28 against 4e02d71; the clause case added with the artefact rebuild is approved at sign-off from the implementation and its automated guards; a hands-on pass is still owed before the P7.4 deploy
+**Added 2026-10-28:** the clause case. Judged at sign-off the same day, from the implementation and
+its guards rather than from a hands-on read — the note on the result says so, because a signature
+that claims a run nobody made is not evidence.
 
 ---
 
@@ -293,7 +294,7 @@ reads as a difference between the documents rather than as something half-built.
 **Judgement:** *Does the page read as eight documents you can read, four of which you can also read
 as text — or as an inconsistent list where something is missing?* The second reading is a fail, and
 the fix is the copy or the page, not the data.
-**Result:** not yet judged · added 2026-10-28 with `DOCUMENTS_READER_LINK_PRD`
+**Result:** PASS · Kobus (Product) · 2026-10-28 — the documents page offers the concordance on the four rows with text; approved at sign-off from the implementation and its automated guards; a hands-on pass is still owed before the P7.4 deploy
 
 ---
 
@@ -314,7 +315,7 @@ attached to the class above it.
 printed next to each other?* And: *is it obvious that the number belongs to the class above it and
 not the one below?* That is the judgement the appendix exists for; a farmer asking for a stocking
 rate must not have to count rows.
-**Result:** not yet judged · added 2026-10-28 (SAOSO artefact, plan P6; Appendix 6b is still prose)
+**Result:** PASS · Kobus (Product) · 2026-10-28 — Appendix 6a's twenty reviewed rows replace the pile of numbers; Appendix 6b is still prose by decision (saoso_text_glyphs_and_boundaries.md section 8); approved at sign-off from the implementation and its automated guards; a hands-on pass is still owed before the P7.4 deploy
 
 ---
 
@@ -341,7 +342,9 @@ rate must not have to count rows.
 | 9. The appendix reads as the paper's table |  | PASS | Kobus | Product | 2026-10-28 |
 | 10. A reference goes somewhere |  | PASS | Kobus | Product | 2026-10-28 |
 | 11. A definition is a click away |  | PASS | Kobus | Product | 2026-10-28 |
+| 12. Finding the text from the documents page |  | PASS | Kobus | Product | 2026-10-28 |
+| 13. The stocking-rate appendix answers its own question |  | PASS | Kobus | Product | 2026-10-28 |
 
-**Results:** 11 PASS · 0 FAIL · 0 N/A — signed by Kobus (Product).
+**Results:** 13 PASS · 0 FAIL · 0 N/A — signed by Kobus (Product).
 
-**Signed against:** commit `4e02d71` (modified), database `pgs (dev), 366 chunks, Xpdf 4.00`, generated 2026-10-28.
+**Signed against:** commit `e6f4464` (modified), database `pgs (dev), 385 chunks, Xpdf 4.00`, generated 2026-10-28.
