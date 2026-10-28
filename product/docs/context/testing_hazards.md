@@ -1371,6 +1371,35 @@ the artefacts, not only the code: `knowledge/tests/test_corpus_glyphs.py` fails 
 committed page holds U+FFFD, and `test_passages` checks the ingested text end to end. Added
 2026-10-27 with `knowledge/extraction.py` and `knowledge/tests/test_corpus_glyphs.py`.
 
+### 3.12 A CSS grid counts its children, and a new sibling moves everything
+
+`.reader__body` is `grid-template-columns: 17rem minmax(0, 1fr)` and its first child — the tree
+`<details>` — is the **sticky** box. Moving the "printed sections not in the corpus" note out of the
+phone `<details>` (D70.6) inserted a **third** child between the tree and `.reader__passages`. The
+grid put the note in row 1 column 2 and wrapped the passages to row 2 column 1, so the sticky tree
+sat **on top of the passage text** — a reader following a citation arrived at a page where the quoted
+line was behind the contents list.
+
+Evidence (Playwright, desktop 1280 px, after the fix that had already shipped):
+    tree      {'x': 96,  'y': 232, 'width': 272, 'height': 743}
+    passages  {'x': 0,   ...}                      # before: same column as the tree
+    target    {'x': 50,  'y': 303}                 # before: underneath the tree
+
+Nothing server-side saw it: the markup was valid, every string was present, all anchors resolved,
+the console was clean, `manage.py check` passed and the 1138-test gate was green — the 390 px
+overflow test passed too, because nothing overflowed *horizontally*. It was found by a human looking
+at the page, on the deep anchor the reader had just been sent to.
+
+Consequence: a grid whose item count is load-bearing is a layout contract with no compiler. Adding a
+sibling to it is a layout change, not a content change.
+
+Rule: when inserting an element into a grid or flex container, check what its children *are* to the
+layout (the CSS comment usually says), and wrap rather than append. Guard it in the browser:
+`tests/e2e/test_reader_layout.py` asserts the two panes do not overlap and that a `:target` passage
+is not behind the tree. The e2e suite is outside `verify.sh`, so **run `python -m pytest tests/e2e -q`
+whenever a template or a stylesheet changes** — this defect shipped inside a slice that ran the gate
+nine times. Added 2026-10-27 with `tests/e2e/test_reader_layout.py`.
+
 ## 5. Template for a new entry
 
 ```markdown

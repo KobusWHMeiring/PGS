@@ -87,6 +87,14 @@
 
         <div class="reader__body">
           {% comment %}
+            The tree column is **one grid item**: `.reader__body` is a two-column grid, and the
+            sticky box is this div (a sticky child cannot travel past its own parent's height).
+            Adding a sibling between the `<details>` and `.reader__passages` would push the
+            passages to the next grid row and let the sticky tree sit on top of them — which is
+            exactly what happened on 2026-10-27 when the note below was first moved out.
+          {% endcomment %}
+          <div class="reader__tree-column">
+          {% comment %}
             A `<details>` rather than a CSS-only collapse: it needs no JavaScript, which is what
             `build_principles.md` §IV requires, and on a phone the closed summary still names
             the branch the reader is in. The desktop rule in reader.css opens it permanently.
@@ -133,6 +141,7 @@
               {% for title in reader.missing %}{{ title }}{% if not forloop.last %}, {% endif %}{% endfor %}.
             </p>
           {% endif %}
+          </div>
 
           <div class="reader__passages">
             {% if reader.selected %}

@@ -212,16 +212,26 @@
     display: block;
   }
 
-  .reader__tree-details {
+  /* The grid item is the whole tree **column** (the `<details>` plus the note about what the
+     corpus does not hold), so **it** is the sticky box: a sticky child cannot travel beyond its
+     parent's height, and the parent's height is exactly what it contains. Making the `<details>`
+     sticky instead leaves the column itself in normal flow, and any sibling added beside it —
+     the note, 2026-10-27 — wraps the passages to the next grid row and lets the tree sit on top
+     of them. */
+  .reader__tree-column {
     position: sticky;
     top: calc(var(--header-height) + 9.5rem);
   }
 
-  /* The grid item is the `<details>`, so **it** is the sticky box: a sticky child cannot
-     travel beyond its parent's height, and the parent's height is exactly the tree's. */
   .reader__tree {
     max-height: calc(100vh - var(--header-height) - 10.5rem);
     overflow-y: auto;
+  }
+
+  /* The note sits under the tree and travels with it, so the scrollable tree has to give back
+     the room the note takes — measured at 1280 px: two lines of `--text-micro` plus its margin. */
+  .reader__tree-column:has(.reader__tree-note) .reader__tree {
+    max-height: calc(100vh - var(--header-height) - 14.5rem);
   }
 }
 
