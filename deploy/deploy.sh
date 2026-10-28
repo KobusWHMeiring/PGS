@@ -196,9 +196,9 @@ fi
 find "$BACKUP_DIR" -maxdepth 1 -type d -name 'db-*' -printf '%T@ %p\n' 2>/dev/null \
     | sort -rn | tail -n +"$((KEEP_BACKUPS + 1))" | cut -d' ' -f2- | xargs -r rm -rf
 
-# 5. Migrate, seed, publish, collect static -----------------------------------
+# 5. Migrate, seed, publish, report the corpus, collect static ------------------
 echo ""
-echo "==> 4/8  migrate, seed, publish documents, collectstatic"
+echo "==> 4/8  migrate, seed, publish documents, corpus report, collectstatic"
 run_manage migrate --noinput
 # Seals and categories are DATA (A4), idempotent by design, and never reactivate a
 # seal the group has retired.
@@ -206,6 +206,18 @@ run_manage seed_deployment
 # The eight published documents (C2). Data too, and the step whose absence leaves
 # /documents/ linking eight 503s that /health/ cannot see.
 run_manage publish_documents
+# Is this box serving the corpus its reviewed artefacts describe? (D56, plan P2.4)
+# **Reported, never enforced and never repaired.** A first install has an empty corpus
+# and a box deployed before D53 serves a PDF-built one; refusing to deploy over either
+# is worse than saying so. The refresh is deliberately not run here: it re-embeds four
+# documents and drops every chat turn's citation links, which is a decision for a person
+# with a terminal. `tests/tools/test_deploy_corpus_check.py` holds both halves of that.
+if ! run_manage corpus_check; then
+    echo ""
+    echo "⚠️  corpus_check: the corpus is not current (above). The site is up on what it has."
+    echo "   Refresh it deliberately, when someone can watch it run:"
+    echo "     sudo -u $APP_USER bash -c 'set -a; . $ENV_FILE; set +a; cd $APP_DIR && venv/bin/python manage.py corpus_refresh --apply'"
+fi
 run_manage collectstatic --noinput
 
 echo ""

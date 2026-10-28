@@ -371,24 +371,7 @@ def ingest_standard(
             + ". Refusing to write an empty document — this is the failure mode that "
             "invalidated MVP 0 v1."
         )
-    chunks = chunk_sections(sections)
-    # `knowledge/tables.py` replaces a printed table's auto-chunks with one chunk per
-    # reviewed row (Appendix 2 is the first). The rows are a reconstruction — the single
-    # documented exception to "a chunk is a slice of the section" — because the `-layout`
-    # text interleaves the condition column into the substance column. Data, not a
-    # branch: a reviewed section is looked up in `TABLE_ROWS`.
-    reviewed: set[str] = set()
-    table_chunks: list = []
-    for chunk in chunks:
-        ref = chunk.section_ref
-        if rows_for(ref):
-            if ref in reviewed:
-                continue  # the section's auto-chunks are replaced once, in order
-            reviewed.add(ref)
-            table_chunks.extend(chunks_for_rows(ref))
-            continue
-        table_chunks.append(chunk)
-    chunks = table_chunks
+    chunks = chunks_for_sections(sections)
 
     # Stored once per document (D68 §7.5). It is the only source of a branch's *name*:
     # SAOSO's `S1` opener carries no heading, and Appendix 2's first heading names its
@@ -471,6 +454,37 @@ def ingest_standard(
     )
 
 
+def chunks_for_sections(sections) -> list:
+    """The chunks an ingest writes for these sections.
+
+    In: `sections` — parsed sections, whether they came from a reviewed artefact (D53) or
+        from the section parser.
+    Out: the chunk list, in document order.
+
+    Split out of `ingest_standard` because `corpus_check` has to say what an artefact
+    *would* produce without writing it (P2.2). A second copy of this rule would be a
+    second answer to "is this box current?", and the two would drift apart silently.
+
+    `knowledge/tables.py` replaces a printed table's auto-chunks with one chunk per
+    reviewed row (Appendix 2 is the first). The rows are a reconstruction — the single
+    documented exception to "a chunk is a slice of the section" — because the `-layout`
+    text interleaves the condition column into the substance column. Data, not a branch: a
+    reviewed section is looked up in `TABLE_ROWS`.
+    """
+    reviewed: set[str] = set()
+    chunks: list = []
+    for chunk in chunk_sections(sections):
+        ref = chunk.section_ref
+        if rows_for(ref):
+            if ref in reviewed:
+                continue  # the section's auto-chunks are replaced once, in order
+            reviewed.add(ref)
+            chunks.extend(chunks_for_rows(ref))
+            continue
+        chunks.append(chunk)
+    return chunks
+
+
 def _resolve_source(
     doc_key: str | None, corpus_path: str | Path | None, from_pdf: bool
 ) -> str | Path | None:
@@ -519,9 +533,12 @@ def _relative_source(path: Path) -> str:
 
 __all__ = [
     "CORPUS_DOCUMENTS",
+    "CORPUS_DIR",
     "IngestError",
     "IngestReport",
+    "chunks_for_sections",
     "chunks_per_section_ref",
+    "corpus_artifact",
     "duplicate_section_refs",
     "ingest_standard",
     "resolve_standard_set",
