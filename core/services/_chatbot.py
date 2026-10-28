@@ -768,14 +768,28 @@ def locator_of(chunk: RetrievedChunk | DocumentChunk) -> str:
     )
 
 
+#: A Markdown heading marker at the very start of a passage: the corpus format (D53) carries
+#: headings as `#`-level Markdown, so the same clause states as `4.1. Processing…` from the
+#: PDF path and as `## 4.1. Processing…` from the reviewed artefact. It is presentation.
+_HEADING_PREFIX = re.compile(r"^#{1,6}[ 	]+", re.MULTILINE)
+
+
 def text_sha(text: str | None) -> str:
     """The digest a grounding snapshot records for a passage's text.
 
     One expression, one place: `_grounding_snapshot` writes it and `_evidence.py` matches
     against it after a rebuild. Truncated to 16 hex characters because it answers "is this
     the same passage?" inside one database row, not "is this file intact?".
+
+    **Hashed over its words, not its layout.** A leading Markdown heading marker is stripped
+    (the artefact states `## 4.1. …` where the PDF path stated `4.1. …`) and runs of
+    whitespace are collapsed — the same normalisation the citation audit uses to compare a
+    quote with a passage. Without it, the first artefact rebuild read **230 of 291** passages
+    as changed text (measured 2026-10-28) and the evidence that a rebuild did *not* alter a
+    passage stopped relinking. A changed *word* still changes the digest, which is the point.
     """
-    return hashlib.sha256((text or "").encode()).hexdigest()[:16]
+    normalised = " ".join(_HEADING_PREFIX.sub("", text or "").split())
+    return hashlib.sha256(normalised.encode()).hexdigest()[:16]
 
 
 def _normalise_ref(value: str) -> str:

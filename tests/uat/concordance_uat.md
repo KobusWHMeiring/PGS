@@ -31,7 +31,10 @@ corpus does not hold?**
    `python manage.py publish_documents` before anything else. If the reader still shows no text,
    stop — a judgement against a half-seeded instance is not evidence.
 2. Confirm the corpus: `python manage.py uat_seed --check`. It reports chunks and vectors per
-   document. Expected: SAOSO 319 / OPP 30 / BPP 9 / landscape 8.
+   document. Expected: **SAOSO 338 / OPP 30 / BPP 9 / landscape 8 = 385**. SAOSO rose from 319 on
+   2026-10-28 because the standard is now ingested from its reviewed artefact and Appendix 6a's
+   twenty classes are twenty chunks; a different number means a different corpus, so check
+   before judging anything below.
 3. `python manage.py runserver`, then open `/documents/saoso-standard-v2.1/read/`.
 4. Have an answer page with at least one citation to a substance row in **Appendix 2** — ask
    *"Can I use cardboard from my neighbour?"* if there is not one (needs `GEMINI_API_KEY`).
@@ -291,6 +294,27 @@ reads as a difference between the documents rather than as something half-built.
 as text — or as an inconsistent list where something is missing?* The second reading is a fail, and
 the fix is the copy or the page, not the data.
 **Result:** not yet judged · added 2026-10-28 with `DOCUMENTS_READER_LINK_PRD`
+
+---
+
+## Scenario 13 — The stocking-rate appendix answers its own question
+
+**Setup:** open `?section=appendix-6a` (Number of animals per ha equivalent to 170 kg N/ha/year).
+Have the PDF open at printed p. 85 beside it.
+
+**Action:** answer one question from the page alone, without searching: *how many laying hens may I
+run per hectare at the 170 kg N/ha limit?* Then check two more rows at random against the paper.
+
+**Expected:** twenty rows — a class of animal on its own line with its number beneath it, in the
+paper's order (`Equines over six months old` → 2 … `Laying hens` → 230). A caption naming the two
+columns and one sentence saying what the table is. No pile of numbers at the end, and no number
+attached to the class above it.
+
+**Judgement:** *Does this read as a table you could act on — class → stocking rate — or as two lists
+printed next to each other?* And: *is it obvious that the number belongs to the class above it and
+not the one below?* That is the judgement the appendix exists for; a farmer asking for a stocking
+rate must not have to count rows.
+**Result:** not yet judged · added 2026-10-28 (SAOSO artefact, plan P6; Appendix 6b is still prose)
 
 ---
 

@@ -67,17 +67,26 @@ FIRST_PAGE = 76
 #: 76; the continuation page's cells start at 64). Used to *verify* the curated cells
 #: against the page — ingestion does not split anything at runtime, because the rows
 #: are already the reviewed data. A reprint that moves the column changes this number
-#: and `test_tables.py` fails.
-TABLE_BANDS: dict[int, int] = {76: 60, 77: 64, 78: 64}
+#: and `test_tables.py` fails. Printed 85 is Appendix 6a's single value column, measured
+#: 2026-10-28 in `-table` output (the numbers start at column 88).
+TABLE_BANDS: dict[int, int] = {76: 60, 77: 64, 78: 64, 85: 88}
 
 
 @dataclass(frozen=True)
 class TableRow:
-    """One printed table row: a substance cell and the condition printed beside it."""
+    """One printed table row: a substance cell and the condition printed beside it.
+
+    `section_ref` is carried here rather than hardcoded in `as_chunk`, because there is more
+    than one reviewed table now: Appendix 2 pairs a substance with a condition, Appendix 6a
+    pairs a class of animal with a stocking rate. A hardcoded "Appendix 2" would make every
+    appended row claim to be a substance — the kind of quiet mislabelling a reader cannot see
+    and a citation inherits.
+    """
 
     page: int
     substance: str
     condition: str = ""
+    section_ref: str = "Appendix 2"
 
     @property
     def text(self) -> str:
@@ -87,11 +96,11 @@ class TableRow:
     @property
     def heading_path(self) -> str:
         label = " ".join(self.substance.split())
-        return f"Appendix 2 — {label[:80]}"
+        return f"{self.section_ref} — {label[:80]}"
 
     def as_chunk(self) -> Chunk:
         return Chunk(
-            section_ref="Appendix 2",
+            section_ref=self.section_ref,
             text=self.text,
             token_count=estimate_tokens(self.text),
             heading_path=self.heading_path,
@@ -280,9 +289,146 @@ APPENDIX_2_ROWS: tuple[TableRow, ...] = (
     TableRow(page=78, substance="Calcium lignosulfonate"),
 )
 
+
+#: Verbatim cells from SAOSO v2.1 (2026), Appendix 6a, printed p. 85 — one row per class of
+#: animal. Reviewed 2026-10-28 against the `-table` extraction of that page and against the
+#: EU regulation the appendix cites (`Source: EU 2092/91`), which agree row for row.
+#:
+#: **Why this needed a review and not a parser.** `-layout` puts the value column on the
+#: same line grid as the class column, so five values landed on a neighbour's line and the
+#: other fifteen piled up at the end of the page: no pairing survived, and "how many laying
+#: hens per hectare?" was unanswerable from the branch that answers it
+#: (`BugFixes/saoso_text_glyphs_and_boundaries.md` §5). The pairing is the table's meaning,
+#: so it is data a person read, never inferred.
+APPENDIX_6A_ROWS: tuple[TableRow, ...] = (
+    TableRow(
+        page=85,
+        substance="Equines over six months old",
+        condition="2",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Calves for fattening",
+        condition="5",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Other bovine animals less than one year old",
+        condition="5",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Male bovine animals from one to less than two years old",
+        condition="3,3",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Female bovine animals from one to less than two years old",
+        condition="3,3",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Male bovine animals two years old or over",
+        condition="2",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Breeding heifers",
+        condition="2,5",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Heifers for fattening",
+        condition="2,5",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Dairy cows",
+        condition="2",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Cull dairy cows",
+        condition="2",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Other cows",
+        condition="2,5",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Female breeding rabbits",
+        condition="100",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Ewes",
+        condition="13,3",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Goats",
+        condition="13,3",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Piglets",
+        condition="74",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Breeding sows",
+        condition="6,5",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Pigs for fattening",
+        condition="14",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Other pigs",
+        condition="14",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Table chickens",
+        condition="580",
+        section_ref="Appendix 6a",
+    ),
+    TableRow(
+        page=85,
+        substance="Laying hens",
+        condition="230",
+        section_ref="Appendix 6a",
+    ),
+)
+
 #: Section reference -> curated rows. Data, not a branch: another document with a
 #: reviewed table adds a key, and the ingestion code does not change.
-TABLE_ROWS: dict[str, tuple[TableRow, ...]] = {"Appendix 2": APPENDIX_2_ROWS}
+TABLE_ROWS: dict[str, tuple[TableRow, ...]] = {
+    "Appendix 2": APPENDIX_2_ROWS,
+    "Appendix 6a": APPENDIX_6A_ROWS,
+}
 
 #: What the reader prints where the paper's condition cell is empty (D70.4). A fragment, not a
 #: sentence: it sits in 19 rows, and nineteen sentences would be noise. Silence is not permission —
@@ -351,6 +497,18 @@ TABLE_SECTIONS: dict[str, TableSection] = {
             TableDivider(28, "IV. OTHERS", "part"),
         ),
     ),
+    "Appendix 6a": TableSection(
+        columns=(
+            "Class or species",
+            "Maximum number of animals per ha equivalent to 170 kg N/ha/year",
+        ),
+        legend=(
+            "The standard prints this appendix as a table: each row is a class of animal and "
+            "the maximum number of animals per hectare whose manure it may contribute, at the "
+            "limit of 170 kg of nitrogen per hectare per year."
+        ),
+        dividers=(),
+    ),
 }
 
 
@@ -403,6 +561,7 @@ def chunks_for_rows(section_ref: str) -> list[Chunk]:
 
 __all__ = [
     "APPENDIX_2_ROWS",
+    "APPENDIX_6A_ROWS",
     "FIRST_PAGE",
     "NO_CONDITION_LABEL",
     "TABLE_BANDS",

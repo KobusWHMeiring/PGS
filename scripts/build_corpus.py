@@ -58,7 +58,7 @@ django.setup()
 
 from knowledge.chunking import chunk_sections  # noqa: E402
 from knowledge.columns import apply_layout  # noqa: E402
-from knowledge.corpus import flat  # noqa: E402
+from knowledge.corpus import CORPUS_EDITS, flat  # noqa: E402
 from knowledge.extraction import extract_pages, sha256_of  # noqa: E402
 from knowledge.ingest import CORPUS_DOCUMENTS  # noqa: E402
 from knowledge.reflow import reflow_pages  # noqa: E402
@@ -76,6 +76,13 @@ PDF_FILES = {
     "bpp": "Basic Production Principles_ENG_PRINT.pdf",
     "landscape": "PGS Certification landscape_Final.pdf",
 }
+
+#: Documents whose `-raw` rendering is unusable even on pages where its word multiset
+#: matches. SAOSO is printed double-spaced in one column, so Xpdf's content-stream order
+#: leaves the page word-for-word identical but line-broken so that no heading can be found
+#: by the clause parser (measured 2026-10-28: `--doc saoso` with the fallback on parsed
+#: **zero** sections). The flag is still available; it is not the default for these.
+RAW_FALLBACK_OFF = {"saoso"}
 
 #: Bump when the *shape* of the artefact changes (annotations, block rules). The value is
 #: written into every header, so a file produced by an older generator is visibly stale.
@@ -189,6 +196,18 @@ def flatten(pages: list[str]) -> tuple[list[tuple[int, str]], list[int], str]:
         for number, page in enumerate(pages, 1)
         for line in page.split("\n")
     ]
+    starts, norm = offsets(lines)
+    return lines, starts, norm
+
+
+def offsets(lines: list[tuple[int, str]]) -> tuple[list[int], str]:
+    """The whitespace-free offsets of an explicit line stream, and its squashed text.
+
+    Split out of `flatten` because the SAOSO artefact is sliced from the *parser's* body
+    stream rather than from every page (see `SaosoParser.body_lines`): the offsets must
+    describe the lines the generator actually walks, or `locate_sections` searches one
+    document and slices another.
+    """
     starts: list[int] = []
     chunks: list[str] = []
     offset = 0
@@ -197,7 +216,7 @@ def flatten(pages: list[str]) -> tuple[list[tuple[int, str]], list[int], str]:
         squashed = "".join(line.split())
         chunks.append(squashed)
         offset += len(squashed)
-    return lines, starts, "".join(chunks)
+    return starts, "".join(chunks)
 
 
 def locate_sections(
@@ -244,11 +263,32 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     """The artefact text for one document."""
     descriptor = CORPUS_DOCUMENTS[doc_key]
     pages, raw_pages, printed = pages_of(pdf_path, doc_key, raw_fallback=raw_fallback)
-    sections = registry.get(descriptor["section_scheme"]).parse("\f".join(pages))
+    parser = registry.get(descriptor["section_scheme"])
+    joined = "\f".join(pages)
+    sections = parser.parse(joined)
     if not sections:
         raise SystemExit(f"{pdf_path.name} parsed to zero sections; nothing to write")
 
-    lines, starts, norm = flatten(pages)
+    # Slice from the stream the **parser** reads. A parser that declares `body_lines`
+    # knows which pages are this document's body (SAOSO: Part B only, the TOC skipped) and
+    # which lines are furniture; slicing every page instead produced a draft that carried
+    # other parts' text into sections and repeated Section C three times
+    # (`SaosoParser.body_lines`).
+    body_lines = getattr(parser, "body_lines", None)
+    if body_lines is not None:
+        stream = body_lines(joined)
+        lines = [(pdf_page, line) for pdf_page, _page_number, line in stream]
+        printed = {pdf_page: number for pdf_page, number, _line in stream}
+        # The parser's own furniture rule, and only it: SAOSO's page is printed
+        # double-spaced, so a blank line is a paragraph boundary the chunker needs, and a
+        # lone digit is a superscript or a table cell, not a page stamp. Dropping either
+        # here is how the first draft lost the `m²` superscript and the Appendix 6a values
+        # (`BugFixes/saoso_text_glyphs_and_boundaries.md` §2, §5).
+        keep = lambda line: not is_furniture(line)
+    else:
+        lines, _starts, _norm = flatten(pages)
+        keep = is_page_furniture
+    starts, norm = offsets(lines)
     spans = locate_sections(sections, lines, starts, norm)
 
     out: list[str] = [
@@ -280,12 +320,21 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
             current_page = heading_page
         if section.section_ref:
             out.append(f"<!-- ref: {section.section_ref} -->")
-        title = section.text.partition("\n")[0]
+        # An appendix's heading is its *canonical label*, not the printed form: the paper
+        # prints `APPENDIX 6a:`, `APPENDIX 4, TABLE 1` and `APPENDIX 5` four different ways,
+        # while the toc — the source of the label — prints one. The parser uses the label as
+        # the section's `heading_path` (it is the only name an appendix has), so writing the
+        # printed form here would make the artefact's tree label differ from the parser's.
+        title = (
+            section.heading_path
+            if section.heading_path == section.section_ref
+            else section.text.partition(chr(10))[0]
+        )
         depth = section.heading_path.count(" > ") + 2
         out.append(f"{'#' * depth} {title}")
 
         for number, line in lines[body_start:body_end]:
-            if is_page_furniture(line):
+            if not keep(line):
                 continue
             if number != current_page:
                 out.append(marker(number))
@@ -297,6 +346,39 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     # invent a second boundary the chunker would treat as a separate paragraph.
     while "\n\n\n" in text:
         text = text.replace("\n\n\n", "\n\n")
+    return apply_review(text, CORPUS_EDITS.get(doc_key, ()))
+
+
+def apply_review(text: str, edits) -> str:
+    """Apply the reviewed corrections (`CORPUS_EDITS`) to a freshly generated artefact.
+
+    In: the draft text and the document's reviewed edits. Out: the text with each edit's
+    `replacement` in place of its `original`.
+    Fails: `SystemExit` when an edit matches nothing or matches more than once — a review
+    that no longer applies is a review of a different document, and regenerating on a reprint
+    must fail loudly rather than quietly drop a correction a person made.
+
+    Why here and not as a hand edit: a reprint regenerates this file, and a correction that
+    only lives in the working tree is lost the first time somebody runs `--force`. The edits
+    are data (`knowledge/corpus.py`), the generator applies them, and
+    `knowledge/tests/test_corpus_saoso.py` still proves each one was necessary and applied.
+
+    The match is **whitespace-tolerant**, because a correction can join lines: the `m²`
+    superscript sits on its own line, so the edit names the sentence by its words.
+    """
+    for edit in edits:
+        if not edit.replacement:
+            continue
+        pattern = re.compile(
+            r"\s+".join(re.escape(word) for word in flat(edit.original).split())
+        )
+        text, replaced = pattern.subn(flat(edit.replacement), text, count=1)
+        if replaced != 1:
+            raise SystemExit(
+                f"the reviewed edit for PDF page {edit.page} matched {replaced} times in the "
+                f"draft: {edit.original[:60]!r}. A reprint has moved the text — re-review it "
+                "rather than deleting the edit."
+            )
     return text
 
 
@@ -317,7 +399,7 @@ def main(argv: list[str] | None = None) -> int:
             "Use only the de-columned text. The fallback is on by default because it is "
             "measured: it fires only on pages where `-raw` is word-for-word identical to "
             "the de-columned page, and those are the pages whose columns defeat the band "
-            "detector."
+            "detector. Documents in RAW_FALLBACK_OFF (SAOSO) start without it."
         ),
     )
     args = parser.parse_args(argv)
@@ -331,7 +413,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"no such PDF: {pdf_path}")
 
     target = CORPUS_DIR / f"{args.doc}.md"
-    text = build(pdf_path, args.doc, raw_fallback=not args.no_raw_fallback)
+    raw_fallback = not args.no_raw_fallback and args.doc not in RAW_FALLBACK_OFF
+    text = build(pdf_path, args.doc, raw_fallback=raw_fallback)
     if args.stdout:
         sys.stdout.write(text)
         return 0
@@ -347,7 +430,7 @@ def main(argv: list[str] | None = None) -> int:
     with open(target, "w", encoding="utf-8", newline="") as handle:
         handle.write(text)
 
-    pages, raw_pages, _ = pages_of(pdf_path, args.doc)
+    pages, raw_pages, _ = pages_of(pdf_path, args.doc, raw_fallback=raw_fallback)
     sections = registry.get(CORPUS_DOCUMENTS[args.doc]["section_scheme"]).parse(
         "\f".join(pages)
     )

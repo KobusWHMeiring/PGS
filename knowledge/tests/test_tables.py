@@ -19,7 +19,14 @@ import pytest
 from knowledge.tests.page_fixtures import pages
 
 from knowledge.extraction import extract_pages
-from knowledge.tables import APPENDIX_2_ROWS, TABLE_BANDS, chunks_for_rows, rows_for
+from knowledge.corpus import CORPUS_EDITS
+from knowledge.tables import (
+    APPENDIX_2_ROWS,
+    APPENDIX_6A_ROWS,
+    TABLE_BANDS,
+    chunks_for_rows,
+    rows_for,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SAOSO_PDF = REPO_ROOT / "pgs_docs" / "saoso-version-2.1-2026.pdf"
@@ -242,3 +249,90 @@ def test_one_chunk_per_row_and_none_of_them_invented():
 def test_an_unreviewed_section_has_no_rows():
     assert rows_for("Appendix 3") == ()
     assert rows_for(None) == ()
+
+
+# --- Appendix 6a: twenty classes, twenty stocking rates ---------------------
+#
+# Read from the page on 2026-10-28 (`BugFixes/saoso_text_glyphs_and_boundaries.md` §5).
+# `-layout` put five values on a neighbour's line and piled the other fifteen at the foot
+# of the page, so "how many laying hens per hectare?" was unanswerable from the appendix
+# that answers it. The pairing is the table's meaning, which is why the guard pins the
+# pairing and not merely the presence of the words.
+
+
+def test_appendix_6a_is_twenty_classes_and_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_values():
+    assert len(APPENDIX_6A_ROWS) == 20, "the paper prints twenty classes"
+    assert all(row.condition for row in APPENDIX_6A_ROWS), (
+        "every 6a row prints a stocking rate: a silent row would divide by nothing"
+    )
+    assert all(row.section_ref == "Appendix 6a" for row in APPENDIX_6A_ROWS)
+    assert all(row.page == 85 for row in APPENDIX_6A_ROWS)
+
+
+def _corrected(page: str) -> str:
+    """The page as the artefact states it, with the review's declared corrections applied.
+
+    Two Appendix 6a cells are printed in *tracking*, so the extraction holds one token per
+    letter (`b o v i n e a n i m a l s`). `knowledge/corpus.py` records the review that joins
+    them; a guard that compared the curated cell to the letterspaced extraction would demand
+    the defect back. The corrections themselves are justified in `test_corpus_saoso.py`.
+    """
+    for edit in CORPUS_EDITS["saoso"]:
+        page = page.replace(edit.original, edit.replacement)
+    return page
+
+
+@pytest.mark.parametrize("row", APPENDIX_6A_ROWS, ids=lambda row: row.substance[:40])
+def test_every_six_a_class_is_in_the_left_column_of_its_page(table_pages, row):
+    left, _right = _streams([_corrected(page) for page in table_pages], row.page)
+    assert _contains(left, row.substance), (
+        f"{row.substance!r} is not in the left column of printed page {row.page}"
+    )
+
+
+def _follows(line: str, substance: str, value: str) -> bool:
+    """Are `value`'s words on `line`, after `substance`'s words? The pairing, in one predicate.
+
+    Not a column slice: the declared correction to a letterspaced cell shortens the line, so a
+    fixed band would compare the value against the wrong characters. A class name in this
+    appendix holds no digits, so a numeric value cannot match one by accident.
+    """
+    words = _words(line)
+    head = _words(substance)
+    tail = _words(value)
+    for start in range(len(words) - len(head) + 1):
+        if words[start : start + len(head)] != head:
+            continue
+        rest = words[start + len(head) :]
+        if any(rest[i : i + len(tail)] == tail for i in range(len(rest) - len(tail) + 1)):
+            return True
+    return False
+
+
+@pytest.mark.parametrize("row", APPENDIX_6A_ROWS, ids=lambda row: row.substance[:40])
+def test_every_six_a_value_is_paired_with_its_class_on_one_line(table_pages, row):
+    """The `-layout` defect in one assertion: the value must sit on the class's own line.
+
+    A presence check would pass on the broken pairing too — every value is on the page, and
+    five of them were on a *neighbour's* line while fifteen piled up at the foot of it. This
+    is the guard that says which class owns which number.
+    """
+    lines = [
+        line
+        for line in _corrected(table_pages[row.page]).splitlines()
+        if _contains(line, row.substance)
+    ]
+    assert lines, f"{row.substance!r} is not on printed page {row.page}"
+    assert any(_follows(line, row.substance, row.condition) for line in lines), (
+        f"printed p.{row.page}: {row.condition!r} is not on the line of {row.substance!r} "
+        f"— the curated pairing has drifted from the paper"
+    )
+
+
+def test_one_chunk_per_six_a_row_and_none_of_them_invented():
+    chunks = chunks_for_rows("Appendix 6a")
+    assert len(chunks) == 20
+    assert all(chunk.section_ref == "Appendix 6a" for chunk in chunks)
+    assert all(chunk.heading_path.startswith("Appendix 6a — ") for chunk in chunks)
+    for chunk, row in zip(chunks, APPENDIX_6A_ROWS):
+        assert chunk.text == row.text

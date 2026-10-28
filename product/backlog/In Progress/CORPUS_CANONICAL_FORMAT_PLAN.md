@@ -1,7 +1,9 @@
 # Corpus Canonical Format — Implementation Plan
 
 **Status:** In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.5 and P2.5a landed 2026-10-22**
-(migration `core/0006`, read side `scripts/why_refused.py`); P2–P2.4 and P2.6–P2.8 remain
+(migration `core/0006`, read side `scripts/why_refused.py`); **P6 landed 2026-10-28 for SAOSO**
+(`knowledge/corpus/saoso.md`, 271 sections / 291 artefact chunks / 338 ingested, Appendix 6b open);
+P2–P2.4, P6's 6b and P7 remain
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment
 **Last Updated:** 2026-10-22
 **PRD:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, extended by section 8)
@@ -318,7 +320,7 @@ of the three — do it second to keep P4's momentum while the review habits are 
 
 ---
 
-### P6 — SAOSO, 101 pages, and the appendices (absorbs G4)
+### P6 — SAOSO, 101 pages, and the appendices (absorbs G4) — **landed 2026-10-28, 6b open**
 
 The long pole, and review-bound. Sequence:
 
@@ -338,7 +340,33 @@ The long pole, and review-bound. Sequence:
 G4 appendix questions (borax, crop protectants, additives) grounded live; no chunk count regression
 in retrieval tests.
 
----
+**Outcome, 2026-10-28.** `knowledge/corpus/saoso.md` exists (271 sections, 71 page markers), the
+ingest reads it (`source=corpus`, 338 chunks, all embedded) and the delta is **three reviewed edits**
+— the *Factory farming* superscript (`m²`), and two letterspaced Appendix 6a/`S5.5.7` lines. Step 3's
+kill criterion was never approached: 3 of 1 537 blocks, not ~10%.
+
+What the draft forced, because each was a defect the artefact exposed rather than a preference:
+
+| found | fixed in |
+|---|---|
+| the generator sliced *every* page, so `S1` carried dropped pages and `Appendix 7` repeated Section C three times | `SaosoParser.body_lines()` is the one body definition; the generator slices it |
+| `-raw` fallback parses this document to **zero sections** (one double-spaced column) | `RAW_FALLBACK_OFF = {"saoso"}` in the generator |
+| a `ref:`-annotated heading carried its `#` marker into the text, so every clause rendered at heading weight and its wrapped continuation split off again | `corpus._heading_text()` |
+| `heading_path` named the parent in one path and the section in the other | `SaosoParser` includes the section, per the format's own rule |
+| a clause heading's slug overran `anchor` (128), so the first ingest died `value too long` | `corpus.section_anchor()` truncates at a word boundary |
+| the artefact's Markdown/whitespace made **230 of 291** passages read as changed text, so evidence stopped relinking | `text_sha()` hashes a passage's words, not its layout |
+
+**Step 4 done for 6a only.** `TABLE_ROWS["Appendix 6a"]` is twenty reviewed rows (class → stocking
+rate), verified against `-table` **and** against EU 2092/91, which the appendix cites: the two agree
+row for row, and `test_tables.py` pins each class to the value on its own printed line — a presence
+check would pass on the broken `-layout` pairing. `TABLE_BANDS[85] = 88`.
+
+**Appendices 3, 4 Table 1, 6b and 7 remain**, and they are a different kind of work: 6b alone is
+three pages of species × live weight × indoor/outdoor measures, where `TableRow` (one substance, one
+condition cell) does not describe what the paper prints. 6a could be curated without inventing a
+column label; 6b cannot, so it needs a product decision first
+(`BugFixes/saoso_text_glyphs_and_boundaries.md` §8). Appendices 3, 4 and 7 are single-column lists
+and are the same shape as 6a.
 
 ### P7 — Close the loop: ingest, deploy, and the box
 

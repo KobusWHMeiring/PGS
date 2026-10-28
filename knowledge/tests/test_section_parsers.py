@@ -260,7 +260,21 @@ def test_saoso_page_is_the_printed_number():
     """D42: `P a g e | 60` in the footer, not the PDF index (which is 61)."""
     sections = {s.section_ref: s for s in SaosoParser().parse(fixture("saoso_part_b"))}
     assert sections["S20.1.1"].page == 60
-    assert sections["S20.1.1"].heading_path == "20. PROCESSING AND HANDLING > 20.1. General"
+
+
+def test_saoso_heading_path_includes_the_section_itself():
+    """The corpus format's rule (`knowledge/corpus.py`): the path is useful alone.
+
+    Until 2026-10-28 this excluded the section, so an `S20.1.1` chunk's path named its
+    *parent* and a reader could not tell which clause they were in without joining the
+    reference. The reviewed artefact derives the path from the `#` depth — including the
+    section — so the two paths agree only in this form, and `test_corpus_saoso.py` proves it.
+    """
+    sections = {s.section_ref: s for s in SaosoParser().parse(fixture("saoso_part_b"))}
+    assert sections["S20.1.1"].heading_path.startswith(
+        "20. PROCESSING AND HANDLING > 20.1. General > 20.1.1. Handlers and processors"
+    ), sections["S20.1.1"].heading_path
+    assert sections["S20"].heading_path == "20. PROCESSING AND HANDLING"
 
 
 def test_saoso_section_text_is_partitioned_not_duplicated():
@@ -596,3 +610,99 @@ def test_no_saoso_section_carries_the_printed_page_footer(shipped_corpus):
     ]
     assert carriers == []
     assert sections, "the parser emitted nothing, so this test proves nothing"
+
+
+def test_the_body_stream_is_exactly_what_the_parser_parses():
+    """`body_lines` exists so the artefact generator slices the *reader's* document.
+
+    Measured cost of the alternative (2026-10-28, generating `knowledge/corpus/saoso.md`):
+    slicing every page instead of this stream produced a draft whose `S1` carried text from
+    pages the parser drops, and whose `Appendix 7` reproduced the whole of Section C three
+    times — because a section's body then ran to the next heading *anywhere in the PDF*.
+    """
+    text = fixture("saoso_part_b")
+
+    stream = SaosoParser().body_lines(text)
+    parsed = SaosoParser().parse(text)
+
+    assert stream, "the fixture produced no body lines"
+    assert all(isinstance(pdf_page, int) and pdf_page >= 1 for pdf_page, _printed, _ in stream)
+    # Every section's lines are found, in order, in the stream the generator will slice.
+    joined = "\n".join(line for _pdf, _printed, line in stream)
+    cursor = 0
+    for section in parsed:
+        for line in section.text.splitlines():
+            found = joined.find(line, cursor)
+            assert found >= 0, f"{section.section_ref}: {line!r} is not in the body stream"
+            cursor = found
+
+
+NL = chr(10)
+FF = chr(12)
+#: The page-run banner exactly as the paper prints it: the part letter centred, then the
+#: part's title beneath it, both at an indent no body line reaches.
+BANNER = (
+    "                                                   SECTION B" + NL + NL
+    + "                  DEFINITIONS, GENERAL PRINCIPLES, RECOMMENDATIONS"
+)
+
+
+def test_the_running_part_banner_is_not_body_text():
+    """`SECTION B` + the part's title is the page's running head, printed on every page.
+
+    Measured on the shipped SAOSO (2026-10-28): 21 pages open with it, and **no** page opens
+    with any other all-caps line at indent 8 or more — every other indented page-start is a
+    label (`South African specific`, `Regional or other exception`), a table header or a
+    wrapped sentence. Left in, it became the tail of twelve branches, telling a reader a new
+    part starts and then following nothing (`saoso_text_glyphs_and_boundaries.md` §3).
+    """
+    text = FF.join(
+        [
+            # The banner is how the part letter is found, so a page that carries body text
+            # opens with it — that is the shape the shipped document has.
+            BANNER + NL + NL + "1. FIRST" + NL + "Nothing here yet.",
+            BANNER + NL + "2. SECOND" + NL + "Operators shall do the thing.",
+            # And the column-0 variant the appendix pages print.
+            "SECTION B" + NL + "3. THIRD" + NL + "Operators shall do the other thing.",
+        ]
+    )
+
+    sections = SaosoParser().parse(text)
+
+    assert [s.section_ref for s in sections] == ["S1", "S2", "S3"]
+    for section in sections:
+        assert "SECTION B" not in section.text, section.text
+        assert "DEFINITIONS, GENERAL PRINCIPLES" not in section.text, section.text
+
+
+def test_a_page_that_opens_with_a_label_keeps_it():
+    """The banner rule must not eat `South African specific` or a wrapped sentence."""
+    text = (
+        BANNER + NL + NL + "1. FIRST" + NL + "Some body." + FF
+        + "                             South African specific" + NL
+        + "2. SECOND" + NL + "Operators shall do the thing."
+    )
+
+    sections = SaosoParser().parse(text)
+
+    assert "South African specific" in sections[0].text
+
+
+def test_a_banner_printed_mid_page_is_dropped_too():
+    """`S4.8.6` ends with the banner *after* a centred footnote, not at the page top.
+
+    The one exception to "the banner opens the page" the shipped document has: printed
+    p. 40 puts the footnote `certifiers using this standard.` above the part banner, so the
+    head had to be recognised by its own title line rather than by its position.
+    """
+    text = (
+        BANNER + NL + NL + "4.8.6. The natural reproductive ability is respected." + NL
+        + "This excludes techniques that reduce the germination capacities." + NL + NL
+        + BANNER + NL + NL + "4.8.7. Something else entirely."
+    )
+
+    sections = SaosoParser().parse(text)
+
+    assert [s.section_ref for s in sections] == ["S4.8.6", "S4.8.7"]
+    assert "SECTION B" not in sections[0].text, sections[0].text
+    assert "DEFINITIONS, GENERAL PRINCIPLES" not in sections[0].text

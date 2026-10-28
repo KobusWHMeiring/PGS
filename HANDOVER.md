@@ -3,10 +3,13 @@
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
-the answer-coverage session, the budget-and-instrument session, the deployment session
-and the reader-structure session — **2026-10-27**.
-**Repo state:** `main`, tree clean, **65 commits ahead of `origin/main`** (see §0g and §3).
-`verify.sh` green at **1138 tests**; `python -m pytest tests/e2e -q` green at 53 more.
+the answer-coverage session, the budget-and-instrument session, the deployment session,
+the reader-structure session and the corpus-artefact session — **2026-10-28**.
+**Repo state:** `main`, **68 commits ahead of `origin/main`** (see §0h and §3).
+`verify.sh` green — **1237 passed / 1 skipped**, and `python -m pytest tests/e2e -q` green at
+**60**. Both numbers are this tree's: it also carries the test-lane session's *uncommitted*
+work (`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker), which is where the wall time
+went from ~4 min to 65 s.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **not pushed since `a9fc663`**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — thirty-odd commits
 behind, and its corpus is the pre-D52/D53 poppler build (**363 chunks**, 316 SAOSO against Xpdf's
@@ -305,6 +308,39 @@ template or stylesheet changes** (`testing_hazards.md` §3.12).
 
 ---
 
+## 0h. 2026-10-28 — SAOSO is a reviewed artefact, and three bugs the draft found
+
+**This is the most recent slice, and it is not deployed.** Plan `CORPUS_CANONICAL_FORMAT_PLAN.md`
+**P6** is done for SAOSO: `knowledge/corpus/saoso.md` is the text of record (271 sections, 71 page
+markers, 3 reviewed edits in 1 537 blocks), and the ingest reads it —
+`source=corpus`, **338 chunks, all embedded**. `uat_seed --check` expects **385** now
+(SAOSO 338 + OPP 30 + BPP 9 + landscape 8). Gate green at **1160**; Playwright **60**.
+
+- **What the artefact fixed** (`BugFixes/saoso_text_glyphs_and_boundaries.md` §2–§5a, all closed):
+  the `m²` superscript no longer splits *Factory farming*; the `SECTION B` page banner no longer ends
+  twelve branches with a part title and nothing after it; three letterspaced lines are words again;
+  and Appendix 6a is **twenty reviewed rows** — *Laying hens → 230* — instead of twenty classes
+  followed by twenty unrelated numbers.
+- **The generator was the real defect, five times.** It sliced *every* page rather than the parser's
+  body stream (so `Appendix 7` reproduced Section C three times); its `-raw` fallback parses this
+  document to **zero sections**; a `ref:`-annotated heading carried its `#` into the text, so every
+  clause rendered at heading weight *and* its wrapped continuation split off again; `heading_path`
+  named the parent in one path and the section in the other; and a clause heading's slug overran
+  `anchor`'s 128 characters, so the first ingest died with `value too long`. Each is fixed where it
+  belonged, and `test_corpus_saoso.py` (20 guards) proves the two paths agree.
+- **Appendix 6b is deliberately still open.** Three pages of species × live weight × indoor/outdoor
+  measures, where `TableRow` (one substance, one condition cell) does not describe what the paper
+  prints. Curating it means deciding what a row *is* — a product call, not a parser one (§8 there).
+- **Evidence survived, and the tool to do it is new.** `manage.py relink_evidence --apply`
+  (commit `a67ee5d`) rebuilds `ChatMessage.retrieved_chunks` from the `grounding` snapshot wherever
+  the passage's text is unchanged. Both `--force` rebuilds in this session ran it: **57 links
+  restored**, 30 left unlinked because a *previous* rebuild had genuinely rewritten those passages.
+  `text_sha` now hashes a passage's **words**, not its layout — before that the artefact made
+  **230 of 291** passages read as changed text and evidence stopped relinking.
+- **`scripts/fast.sh` and `pgs.settings_test` are the other agent's session**, in the same tree:
+  the two test lanes, the fast password hasher, and the `slow` marker. Not this slice's work, and not
+  committed with it.
+
 ## 0. The one thing to know first
 
 **The standards corpus, the public site and the grounded chatbot all exist.** `knowledge/`
@@ -421,8 +457,8 @@ home page's summary of the same content must not share a tag level.
    tooling is built and worked once.
 2. **The deployed corpus and chat budget predate D52/D53 and §21.** `deploy.sh` never runs
    `ingest_standard`, so the box answers from pre-reflow text, and its `.env` may still pin
-   `CHAT_RETRIEVAL_LIMIT=5`. Refresh the four documents once with `--force`, confirm 366
-   chunks and `lexical_only=False`, check the setting, and ask three questions through
+   `CHAT_RETRIEVAL_LIMIT=5`. Refresh the four documents once with `--force`, confirm **385**
+   chunks (SAOSO is 338 since the artefact, §0h) and `lexical_only=False`, check the setting, and ask three questions through
    `/ask/`. `--force` must **not** enter `deploy.sh` (it destroys every
    `ChatMessage.retrieved_chunks` trail); `corpus_check`/`corpus_refresh` is the pending
    yes/no in `CORPUS_CANONICAL_FORMAT_PRD.md` §7 item 1.
@@ -658,10 +694,25 @@ python manage.py publish_documents         # idempotent (sha256); copies the 8 P
 python manage.py runserver                 # DEBUG defaults to False — see the note below
 
 # Corpus (the four governed documents, D16)
-python manage.py ingest_standard --doc saoso --file pgs_docs/saoso-version-2.1-2026.pdf
-# (…) opp, bpp, landscape — see MVP0_PLAN_V2 §6. Re-running is a no-op: ingestion is
-# idempotent on sha256. Drop --no-embed only if you are intentionally re-embedding; the
-# 2026-10-20 corpus is already embedded (D48). --no-embed still works for tests/offline.
+# SAOSO and the BPP read a REVIEWED ARTEFACT (D53): the text of record is
+# knowledge/corpus/<doc>.md, and the PDF is hashed only to prove the artefact is still the
+# text of that file. `--from-corpus` is what selects it; without it the PDF is re-parsed
+# by layout heuristics, which is the path D53 replaced.
+python manage.py ingest_standard --doc saoso --file pgs_docs/saoso-version-2.1-2026.pdf \
+    --from-corpus knowledge/corpus/saoso.md
+python manage.py ingest_standard --doc bpp --file "pgs_docs/Basic Production Principles_ENG_PRINT.pdf" \
+    --from-corpus knowledge/corpus/bpp.md
+# (…) opp, landscape have no artefact yet — see MVP0_PLAN_V2 §6. Re-running is a no-op:
+# ingestion is idempotent on sha256. Drop --no-embed only if you are intentionally
+# re-embedding; the 2026-10-28 corpus is embedded (338/30/9/8 = 385).
+
+# Regenerate an artefact after a reprint. The generator drafts it, applies the reviewed
+# edits from CORPUS_EDITS (knowledge/corpus.py), and refuses to rewrite a file without
+# --force because a human reviewed it. The diff IS the review queue.
+python scripts/build_corpus.py --doc saoso --stdout > /tmp/draft.md   # look before writing
+python scripts/build_corpus.py --doc saoso --force                    # overwrite the artefact
+# SAOSO needs no `-raw` fallback (one double-spaced column: the fallback parses to zero
+# sections) and the generator defaults it off for that document (RAW_FALLBACK_OFF).
 
 # After a corpus change that does NOT touch the PDF (a reviewed table, a parser fix), the
 # sha256 guard makes a plain re-run a no-op. Use --force once, deliberately: it deletes the
@@ -1123,7 +1174,7 @@ python scripts/uat_signoff.py --file tests/uat/mvp0_standards_and_public_site_ua
 | Shell | `scripts/uat_page.py` | CSS, script, markdown renderer, `environment()` |
 | Runner | `scripts/uat_runner.py` | one self-contained HTML; no CDN, no network, `file://` |
 | Write-back | `scripts/uat_signoff.py` | `--dry-run` diff; `**Result:**` per scenario + `### Per-scenario results`; idempotent |
-| Preflight | `core/services/_uat.py`, `manage.py uat_seed --check` | **366 chunks**, 0 unembedded, **8 published documents**, settings, health, `pdftotext` |
+| Preflight | `core/services/_uat.py`, `manage.py uat_seed --check` | **385 chunks** (SAOSO 338 + OPP 30 + BPP 9 + landscape 8), 0 unembedded, **8 published documents**, settings, health, `pdftotext` |
 
 **D1–D4 are settled** (PRD §9, confirmed 2026-10-22): staging for anything that writes and production
 for read-only scenarios; screenshots optional; one sign-off row per scenario; one seat each, product
@@ -1143,7 +1194,7 @@ flips C1 and D from partial to done.
 1. **The deployed corpus predates D52 and D53.** `deploy/deploy.sh` migrates, seeds, publishes and
    collects static — it **never runs `ingest_standard`** — so the live chatbot is answering from
    text without the hyphen reflow, the page-footer fix or the BPP artefact. Refresh the four
-   documents once on the box, deliberately (`--force` each), confirm **366 chunks** and
+   documents once on the box, deliberately (`--force` each), confirm **385 chunks** and
    `lexical_only=False`, then ask three questions through `/ask/`. Also check `pdftotext -v`: if the
    server runs poppler and this box runs Xpdf 4.00, the extraction differs from every fixture.
 2. **`--force` must not go into `deploy.sh`.** It re-embeds on every deploy, changes every chunk id,
@@ -1207,10 +1258,10 @@ is a human act, and it is now the only thing left.
    carrying the commit and database. `--dry-run` prints the diff, a second application changes
    nothing, and a malformed export is refused whole rather than half-applied.
 5. **`core/services/_uat.py` + `manage.py uat_seed --check`.** Six rows, observed beside expected:
-   settings, dependencies, **366 chunks**, 0 unembedded, **8 published documents**, `pdftotext`.
+   settings, dependencies, **385 chunks**, 0 unembedded, **8 published documents**, `pdftotext`.
    The corpus blocks; health and `pdftotext` advise, because `celery_worker` is legitimately absent
-   on a dev box and a row that is always red is a row nobody reads. **Measured on this box: 366
-   chunks, 0 without a vector, 8 published, Xpdf 4.00** — so the dev DB matches §17 exactly.
+   on a dev box and a row that is always red is a row nobody reads. **Measured on this box: 385
+   chunks, 0 without a vector, 8 published, Xpdf 4.00** (338 SAOSO since §0h).
    Slice 1 has no `--scenario` seeder: MVP 0 needs no new rows, and a bare `uat_seed` exits 2 rather
    than pretending.
 6. **63 tests in `tests/tools/` plus 4 browser tests in `tests/e2e/test_uat_artefact.py`**, and `pytest.ini`'s `testpaths` now includes `tests/tools` — a test outside

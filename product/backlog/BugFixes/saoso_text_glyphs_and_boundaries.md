@@ -2,18 +2,20 @@
 
 **Status:** **§1 closed 2026-10-27** — the glyph loss was an encoding bug in the extraction, not a
 lossy PDF, and all 83 replacement characters in the ingested corpus are real characters again.
-**§2–§5 open** — a superscript splits one sentence, `S1` ends with the next part's half-title, three
-lines were extracted letter-by-letter, and Appendices 6a/6b store a table whose values have come
-away from their labels. All five are corpus/parser concerns; **none is a view concern**, and each is
-fixed by a reviewed artefact rather than by a display rule (see §6).
+**§2–§5 closed 2026-10-28** — fixed by the SAOSO artefact (`knowledge/corpus/saoso.md`, plan P6),
+not by display rules. §2 and §4 are three reviewed `CORPUS_EDITS`; §3 is a measured parser rule
+(the part banner is the page's running head); §5a is twenty reviewed rows in `TABLE_ROWS`.
+**§5b (Appendix 6b) stays open** — its table is three pages of multi-column measures and a “row”
+has to be decided before it can be curated; see §5 and §8.
 **Severity:** was — a reader checking a quotation saw `360�` where the paper prints `360°`, and
-`ros�` for `rosé` on a public page. §4 and §5 are severity *readability*: a definition reads
-"…with more / 2 / than 25kg weight/m .", and Appendix 6a's twenty animal classes are followed by
+`ros�` for `rosé` on a public page. §4 and §5 were severity *readability*: a definition read
+"…with more / 2 / than 25kg weight/m .", and Appendix 6a's twenty animal classes were followed by
 twenty numbers with nothing tying them together.
 **Owner:** Corpus (D53 artefact review) · Build (the guards)
 **Affected:** `DocumentChunk.text` for every ingested document; the reader, the search snippets and
 the chatbot's quotes.
-**Opened:** 2026-10-27 · **Last measured:** 2026-10-27 (after the reader-structure session)
+**Opened:** 2026-10-27 · **Last measured:** 2026-10-28, on the corpus rebuilt from the artefact
+(SAOSO **338 chunks**, all embedded; the four documents **385**)
 **Reference:** `testing_hazards.md` §1.34 (the trap, with the byte evidence) ·
 `knowledge/extraction.py` (`-enc UTF-8`, strict decode) ·
 `knowledge/tests/test_corpus_glyphs.py` (the guards) ·
@@ -247,12 +249,84 @@ blocked by the cost of destroying evidence it is about to rewrite anyway.
       text, so a future extraction cannot reintroduce the loss silently.
 - [x] The reader shows `360°`, `m²`, `45°C`, `rosé`, `Mèthode`, `Section B – Appendix 6` and
       `R 250,001 – R 500,000`; the chatbot can quote those sentences verbatim.
-- [ ] A reviewed `CORPUS_EDITS` entry merges the *Factory farming* superscript (§2).
-- [ ] The half-title page is a boundary, not the tail of `S1`; the `S1` branch ends at *Wild
-      Harvesting*, and `SECTION B` is not reproduced inside it (§3).
-- [ ] Three `CORPUS_EDITS` entries rejoin the letterspaced words (§4), and a corpus-level guard
-      refuses a run of three or more single-letter tokens.
-- [ ] `TABLE_ROWS` gains `Appendix 6a` (20 reviewed rows) and `Appendix 6b`, with `TABLE_BANDS`
-      offsets for their pages, so both render as tables and their cells are quotable (§5).
-- [ ] Re-ingest with `--force` after those reviews; the corpus check reports the document as
-      rebuilt from the artefact.
+- [x] A reviewed `CORPUS_EDITS` entry merges the *Factory farming* superscript (§2).
+- [x] The part banner is a boundary, not the tail of twelve branches; no chunk in the ingested
+      corpus contains `SECTION <LETTER>` followed by the part title (§3).
+- [x] One `CORPUS_EDITS` entry per letterspaced *line* (three runs, two lines, one edit each), and a
+      corpus-level guard refuses a run of three or more single-letter tokens (§4).
+- [x] `TABLE_ROWS` gains `Appendix 6a` — **20 reviewed rows**, each class paired with its stocking
+      rate, with `TABLE_BANDS[85]` for the guard — so the appendix renders as a table and its cells
+      are quotable (§5a).
+- [ ] `Appendix 6b`: three pages of multi-column measures; needs a decision on what a row is (§8).
+- [x] Re-ingest with `--force` from the reviewed artefact; the corpus reports `source=corpus`
+      (`document #28`, 338 chunks, all embedded), and the evidence links were relinked (§6).
+
+## 8. Resolution (2026-10-28) — the SAOSO artefact, and what it cost
+
+The four defects were fixed by **converting SAOSO to a reviewed artefact** (plan
+`CORPUS_CANONICAL_FORMAT_PLAN.md` P6): `scripts/build_corpus.py --doc saoso` drafts
+`knowledge/corpus/saoso.md` from the PDF, the review is a diff, and `ingest_standard --from-corpus`
+reads the artefact instead of re-deriving layout on every ingest.
+
+**The fixed outcome, measured on the ingested corpus (338 chunks, all embedded):**
+
+| | before | after |
+|---|---|---|
+| chunks holding a part banner (`SECTION B` + title) | 12 | **0** |
+| chunks holding a letterspaced run (3+ single-letter tokens) | 2 | **0** |
+| chunks whose last paragraph is a dangling continuation | 13 | **1** (`S4.8.6`, the centred note) |
+| Appendix 6a | 20 classes, 5 values attached, 15 piled at the foot | **20 rows**, `Laying hens → 230` |
+| chunks | 319 (PDF path) | 338 (19 more: 6a's reviewed rows replace 1 auto chunk) |
+
+**What the draft exposed that the bug had not** — each fixed where it belonged, not in the reader:
+
+1. **The artefact generator sliced every page, not the parser's body stream.** The draft's `S1`
+   carried pages the parser drops, and `Appendix 7` reproduced Section C three times, because a
+   section's body ran to the next heading *anywhere in the PDF*. `SaosoParser.body_lines()` is now
+   the one definition of the document's body, and the generator slices it (`scripts/build_corpus.py`).
+2. **`-raw` is unusable for this document.** SAOSO is one double-spaced column, so Xpdf's
+   content-stream order is word-for-word identical but line-broken so no heading can be found: the
+   generator parsed **zero sections**. `RAW_FALLBACK_OFF = {“saoso”}` makes that a measured default.
+3. **A `ref:` annotation forced the heading to carry a `#` marker into the text.** Every clause then
+   rendered at heading weight *and* its wrapped continuation split off again — the defect
+   `reader_clause_line_breaks.md` had just fixed from the other side. An annotated heading is now
+   stored as text (its marker dropped); BPP's headings, which have no refs, keep theirs.
+4. **`heading_path` disagreed between the two paths.** The parser named a section's *parent*, the
+   artefact its own heading. The parser now includes the section itself, which is the corpus
+   format's stated rule and the only form useful alone.
+5. **A clause heading's slug overran `anchor` (128 chars)** and the first ingest died with
+   `value too long for character varying(128)`. Truncated at a word boundary — it only ever shortens
+   a fallback locator.
+6. **The two-column `-table` extraction was needed, not a guess.** Appendix 6a's twenty pairings come
+   from `pdftotext -table` (the mode the repo measured for Appendix 2) and agree row for row with the
+   EU regulation the appendix cites; `test_tables.py` pins each class to the value on its own printed
+   line.
+
+**The evidence cost, and the fix that made it visible.** `--force` drops
+`ChatMessage.retrieved_chunks`, so the rebuild was preceded by `manage.py relink_evidence`
+(commit `a67ee5d`). Two things surfaced:
+
+* the first artefact rebuild reported **70 of 80** snapshot passages as *text changed* for
+  presentation reasons only — the artefact states a heading as `## 4.1.` where the PDF path stated
+  `4.1.`, and collapses blank-line runs. `text_sha` now hashes a passage's **words** (heading marker
+  stripped, whitespace collapsed), the same normalisation the citation audit uses;
+* snapshots written *before* that change carry the old digest, so 40 of them were re-keyed from the
+  PDF path (which is still derivable) and then relinked. **57 links restored**; 30 left unlinked
+  because a *previous* rebuild (2026-10-27) had genuinely rewritten those passages. The snapshot is
+  still the record for them.
+
+**Guards** — `knowledge/tests/test_corpus_saoso.py` (20 tests: header/sha, monotonic pages, identity,
+body text equality with the PDF path, character multiset, per-block traceability, each edit necessary
+and applied, edit ratchet, and the five defects above), plus
+`knowledge/tests/test_section_parsers.py` (the body stream, the banner at a page top, a banner printed
+mid-page, a page opening with a label), `knowledge/tests/test_corpus_format.py` (`ref:` before a
+heading with no body, a `ref:` mid-body, two refs in a row, the anchor limit, an unannotated heading
+keeping its marker) and `knowledge/tests/test_tables.py` (6a's twenty pairings).
+
+**§5b, Appendix 6b, is deliberately not done.** It is three printed pages (86–88) of a multi-column
+table — species × live weight × indoor/outdoor area, then poultry, poultry barns and rabbits — and
+`TableRow` models *one* substance and *one* condition cell. Curating it means deciding whether a row
+is a species (measures joined across three columns, with labels the paper prints only in the header)
+or a printed line (which splits a species across four rows). That is a product decision about what a
+reader can quote, so it is left open rather than invented here: the artefact holds the page text, and
+the appendix renders as prose exactly as it did before.

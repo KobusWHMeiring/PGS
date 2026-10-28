@@ -35,7 +35,7 @@ from knowledge.models import DocumentChunk
 #: D53's BPP artefact (HANDOVER §17). Deliberately a constant rather than a query: the
 #: point of the row is to compare against a number somebody decided, and a test pins it
 #: so a corpus change shows up as a failing expectation rather than a silent pass.
-EXPECTED_CHUNKS = 366
+EXPECTED_CHUNKS = 385
 
 #: The eight documents C2 publishes (D22). "SOP's" is assumed to be the OPP (C1 §6 #6);
 #: if it turns out to be a ninth document, this number moves with the tuple.

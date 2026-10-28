@@ -69,6 +69,79 @@ APPENDIX = re.compile(
 #: A page whose only job is to list the document's contents.
 TOC = re.compile(r"TABLE OF CONTENTS")
 
+#: The page-run banner: the part letter, printed at the top of every page of the part
+#: (`SECTION B` centred, at indent 8–63; and at column 0 on the appendix pages).
+SECTION_LINE = re.compile(r"^\s*SECTION ([A-C])\s*$")
+
+#: The part's title, printed beneath the banner in capitals at the same indent
+#: (`DEFINITIONS, GENERAL PRINCIPLES, RECOMMENDATIONS AND STANDARDS`).
+RUNNING_TITLE = re.compile(r"^\s{8,}[A-Z0-9][A-Z0-9 ,&.'()/\-]*$")
+
+
+def _running_head(page_lines: list[str], index: int) -> tuple[int, bool]:
+    """Out: the index just past the running head at `index`, and whether it had a title.
+
+    `page_lines[index]` must be a `SECTION <letter>` line. The head is that line plus the
+    blank lines and capitalised title lines directly under it.
+    """
+    end = index + 1
+    titled = False
+    while end < len(page_lines):
+        line = page_lines[end]
+        if RUNNING_TITLE.match(line) and not APPENDIX.match(line):
+            titled = True
+            end += 1
+            continue
+        # A blank line *between* the banner and its title belongs to the head; one after
+        # the title is the first paragraph boundary.
+        if (
+            not line.strip()
+            and end + 1 < len(page_lines)
+            and RUNNING_TITLE.match(page_lines[end + 1])
+            and not APPENDIX.match(page_lines[end + 1])
+        ):
+            end += 1
+            continue
+        break
+    return end, titled
+
+
+def without_running_head(page_lines: list[str]) -> list[str]:
+    """Drop the page's running head: `SECTION B` and the part title printed under it.
+
+    In:  one page's lines. Out: the same lines without the running head.
+    Side effects: none. Fails: never.
+
+    The banner is furniture — it is stamped on every page of the part — but it is *not*
+    excluded by `is_furniture`, so it became the tail of twelve branches, telling a reader
+    that a new part starts and then following nothing
+    (`BugFixes/saoso_text_glyphs_and_boundaries.md` §3).
+
+    Measured on the shipped Part B (2026-10-28): **21 pages open with it and no page opens
+    with any other all-caps line at indent 8 or more.** Every other indented page-start is a
+    label (`South African specific`), a table header or a wrapped sentence — which is why a
+    bare `SECTION <letter>` is dropped only at a page start, where the document prints it.
+
+    Mid-page it is dropped only when the part's title line sits directly under it: printed
+    p. 40 puts a centred footnote above the banner (`S4.8.6`), and the title is what makes
+    that head unambiguous wherever it lands.
+    """
+    kept: list[str] = []
+    index = 0
+    at_page_start = True
+    while index < len(page_lines):
+        line = page_lines[index]
+        if SECTION_LINE.match(line):
+            end, titled = _running_head(page_lines, index)
+            if titled or at_page_start:
+                index = end
+                continue
+        if line.strip():
+            at_page_start = False
+        kept.append(line)
+        index += 1
+    return kept
+
 
 def canonical_appendix_label(part: str, table: str | None) -> str:
     """`APPENDIX 4, TABLE 2` -> `Appendix 4. Table 2`, the TOC's own label.
@@ -103,6 +176,42 @@ class SaosoParser:
     #: unique `section_ref`.
     PART = "B"
 
+    def body_lines(
+        self, text: str, part: str | None = None
+    ) -> list[tuple[int, int | None, str]]:
+        """The lines this parser treats as the document's body, with their pages.
+
+        In:  `text` — pages of `pdftotext -layout` output, form-feed separated.
+        Out: `(pdf_page, printed_page, line)` for every line of every page that belongs to
+             `part`, TOC and other-part pages excluded. Blank lines are kept: they are
+             the chunker's paragraph boundaries.
+        Side effects: none. Fails: never.
+
+        **This is not a convenience.** The corpus generator (D53) has to slice this
+        document's sections out of a line stream, and it used to slice them out of *every
+        page*. That produced a draft whose `S1` carried text from pages the reader never
+        sees and whose `Appendix 7` reproduced all of Section C three times, because a
+        section's body ran to the next heading *anywhere in the PDF*. One expression, one
+        place: `parse()` is built on this, so the artefact cannot disagree with the
+        parser about what the document's body is.
+        """
+        wanted = (part or self.PART).upper()
+        current_part: str | None = None
+
+        lines: list[tuple[int, int | None, str]] = []
+        for pdf_page, raw_page in enumerate(text.split("\f"), 1):
+            if TOC.search(raw_page):
+                continue
+            header = HDR.search(raw_page)
+            if header:
+                current_part = header.group(1)
+            if current_part != wanted:
+                continue
+            printed = page_number(raw_page)
+            page_lines = without_running_head(raw_page.splitlines())
+            lines.extend((pdf_page, printed, line) for line in page_lines)
+        return lines
+
     def parse(self, text: str, part: str | None = None, **_: object) -> list[ParsedSection]:
         """In:  `text` — one or more pages of `pdftotext -layout` output, form-feed
                    separated; `part` — the part letter, defaulting to D41's `B`.
@@ -112,24 +221,9 @@ class SaosoParser:
         Fails: nothing. A document with no part header yields `[]`, which is the
              correct answer for the TOC and for Section A.
         """
-        wanted = (part or self.PART).upper()
-        current_part: str | None = None
-
-        # Flatten to (printed page, line), skipping TOC pages entirely and every page
-        # that belongs to another part.
-        lines: list[tuple[int | None, str]] = []
-        for raw_page in text.split("\f"):
-            if TOC.search(raw_page):
-                continue
-            header = HDR.search(raw_page)
-            if header:
-                current_part = header.group(1)
-            if current_part != wanted:
-                continue
-            printed = page_number(raw_page)
-            lines.extend((printed, line) for line in raw_page.splitlines())
-
-        return self._build(lines)
+        return self._build(
+            [(printed, line) for _pdf, printed, line in self.body_lines(text, part)]
+        )
 
     def _build(self, lines: list[tuple[int | None, str]]) -> list[ParsedSection]:
         sections: list[ParsedSection] = []
@@ -153,7 +247,14 @@ class SaosoParser:
                     heading_path=(
                         current["ref"]
                         if current["kind"] == "appendix"
-                        else " > ".join(title for _, title in stack[:-1])
+                        # The path **includes** the section itself, which is the corpus
+                        # format's rule (`knowledge/corpus.py`) and the only form that is
+                        # useful alone: `20. PROCESSING AND HANDLING > 20.1. General` says
+                        # where the clause is, while its parent alone says where it is not.
+                        # The reviewed artefact derives the same path from the `#` depth,
+                        # so the two paths agree and `test_corpus_saoso.py` can prove it
+                        # (changed 2026-10-28, when the artefact landed).
+                        else " > ".join(title for _, title in stack)
                     ),
                     page=current["page"],
                     anchor=current["anchor"],

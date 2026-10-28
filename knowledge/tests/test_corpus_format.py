@@ -92,7 +92,25 @@ Operators shall process organic products separately."""
         )
     )
     assert document.sections[0].section_ref == "S20.1"
-    assert document.sections[0].text.startswith("##")
+    assert document.sections[0].text.startswith("20.1. Processing"), (
+        "an annotated heading is the cited line, so the marker is not part of the text"
+    )
+
+
+def test_a_heading_without_a_ref_keeps_its_marker():
+    """The BPP's headings are real headings: `## INTRODUCTION` renders as one.
+
+    Only an annotated heading loses the marker (`_heading_text`), because only there does the
+    annotation say the heading is the document's own cited line.
+    """
+    document = parse_blocks(
+        artefact(
+            """<!-- page: 3 printed: none -->
+## INTRODUCTION
+The terms of reference."""
+        )
+    )
+    assert document.sections[0].text.startswith("## INTRODUCTION")
 
 
 def test_nested_headings_build_heading_path():
@@ -180,3 +198,78 @@ def test_the_header_extra_fields_are_kept_but_not_required():
         artefact("<!-- page: 3 printed: none -->\n## X\nText.", header)
     )
     assert document.extra == {"reviewed_on": "2026-10-22"}
+
+
+def test_a_section_with_no_body_is_followed_by_the_next_sections_ref():
+    """A clause that *is* its own heading has no body, so the next `ref:` follows immediately.
+
+    Found on 2026-10-28 by generating the SAOSO artefact: `2.2.5. Operators shall prevent or
+    remedy soil and water salinization…` is printed as one line, so its section has no body
+    line between its heading and `<!-- ref: S2.2.6 -->`. The parser read that as a misplaced
+    annotation and refused the 101-page draft (`reading.py`'s neighbour: `section.text` is the
+    heading alone).
+    """
+    document = parse_blocks(
+        artefact(
+            """<!-- page: 33 printed: 32 -->
+<!-- ref: S2.2.5 -->
+### 2.2.5. Operators shall prevent salinization.
+<!-- ref: S2.2.6 -->
+### 2.2.6. Operators shall not deplete water resources.
+They shall recycle rainwater."""
+        )
+    )
+
+    assert [section.section_ref for section in document.sections] == ["S2.2.5", "S2.2.6"]
+    assert document.sections[0].text == "2.2.5. Operators shall prevent salinization."
+    assert document.sections[1].text.endswith("They shall recycle rainwater.")
+
+
+def test_a_ref_in_the_middle_of_a_body_is_still_an_error():
+    """The rule the allowance above must not weaken: a ref annotates the heading below it."""
+    with pytest.raises(CorpusFormatError, match="immediately before"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 33 printed: 32 -->
+<!-- ref: S2.2.5 -->
+### 2.2.5. Operators shall prevent salinization.
+<!-- ref: S2.2.6 -->
+Some body text that belongs to 2.2.5.
+### 2.2.6. Operators shall not deplete water resources."""
+            )
+        )
+
+
+def test_two_refs_in_a_row_are_an_error():
+    """Two annotations for one heading means one of them is being silently discarded."""
+    with pytest.raises(CorpusFormatError, match="One reference per heading"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 33 printed: 32 -->
+<!-- ref: S2.2.5 -->
+<!-- ref: S2.2.6 -->
+### 2.2.5. Operators shall prevent salinization."""
+            )
+        )
+
+
+def test_a_long_clause_heading_gets_an_anchor_that_fits_the_column():
+    """`DocumentChunk.anchor` is 128 characters; a clause heading is a whole sentence.
+
+    The SAOSO artefact's first ingest failed with `value too long for type character
+    varying(128)` (2026-10-28) on `20.1.1. Handlers and processors shall not co-mingle…`.
+    The slug is truncated at a word boundary, and only ever shortens a *fallback* locator:
+    a section with a `section_ref` is addressed by its reference.
+    """
+    heading = (
+        "20.1.1. Handlers and processors shall not co-mingle organic products with "
+        "non-organic products, and shall keep them identifiable at every stage."
+    )
+    document = parse_blocks(
+        artefact(f"<!-- page: 61 printed: 60 -->\n<!-- ref: S20.1.1 -->\n### {heading}")
+    )
+
+    anchor = document.sections[0].anchor
+    assert 0 < len(anchor) <= 128, anchor
+    assert not anchor.endswith("-"), "truncated mid-word or on a separator"
+    assert anchor.startswith("20-1-1-handlers")

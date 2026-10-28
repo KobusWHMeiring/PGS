@@ -89,6 +89,24 @@ COMMENT = re.compile(r"^<!--.*-->\s*$")
 
 REQUIRED_HEADER_FIELDS = ("doc_key", "source", "sha256", "generator")
 
+#: `DocumentChunk.anchor` is a `CharField(max_length=128)`. A clause heading can be a whole
+#: sentence, so its slug overruns the column (the SAOSO artefact's first ingest failed with
+#: `value too long`, 2026-10-28).
+ANCHOR_MAX = 128
+
+
+def section_anchor(title: str) -> str:
+    """A locator for a section the source never numbered, inside the column's limit.
+
+    Truncated at a word boundary rather than mid-word. This only ever shortens a *fallback*
+    locator: `reading_anchor` prefers a `section_ref`, and a document that prints clause
+    numbers keeps its real address.
+    """
+    value = slug(title)
+    if len(value) <= ANCHOR_MAX:
+        return value
+    return value[:ANCHOR_MAX].rsplit("-", 1)[0]
+
 
 @dataclass(frozen=True)
 class Block:
@@ -155,6 +173,27 @@ def _parse_header(lines: list[str], index: int) -> tuple[dict[str, str], int]:
     return fields, index
 
 
+#: `## `, `### ` … at the start of a line — the artefact's structural marker.
+HEADING_MARKER = re.compile(r"^#{1,6}[ 	]+")
+
+
+def _heading_text(current: dict) -> str:
+    """The heading line as the section's **text**: the marker comes off when it has a `ref:`.
+
+    A `#`-heading in the artefact is *structure* — it builds `heading_path` and nothing else
+    (`knowledge/corpus.py` rules 3). A section annotation tells the reader that the heading is
+    the document's own cited line, and for SAOSO that line is the clause itself
+    (`23.3. Operators shall not use forced or involuntary labour …`). Left in, the marker
+    became a `Heading` block in the reader, so every clause printed at heading weight and its
+    wrapped continuation split off again — the defect
+    `BugFixes/reader_clause_line_breaks.md` had just fixed from the other direction.
+
+    The BPP has no `ref:` annotations, so its headings are real headings and keep the marker
+    (`## INTRODUCTION` renders as one, `PASSAGE_LAYOUT_PRD` §3).
+    """
+    return HEADING_MARKER.sub("", current["heading"]) if current["ref"] else current["heading"]
+
+
 def parse_blocks(text: str) -> CorpusDocument:
     """Parse an artefact's text into sections and page-attributed blocks.
 
@@ -185,12 +224,12 @@ def parse_blocks(text: str) -> CorpusDocument:
         sections.append(
             ParsedSection(
                 section_ref=current["ref"],
-                text="\n".join([current["heading"], *body]).strip(),
+                text="\n".join([_heading_text(current), *body]).strip(),
                 heading_path=(
                     " > ".join(title for _, title in stack) or current["title"]
                 ),
                 page=current["page"],
-                anchor=slug(current["title"]),
+                anchor=section_anchor(current["title"]),
             )
         )
 
@@ -206,10 +245,11 @@ def parse_blocks(text: str) -> CorpusDocument:
 
         ref = REF.match(line)
         if ref:
-            if current is not None and not current["body"]:
+            if pending_ref is not None:
                 raise CorpusFormatError(
-                    f"a `ref:` annotation must come before its heading, not after "
-                    f"{current['heading']!r}"
+                    f"line {index}: two `ref:` annotations in a row before one heading "
+                    f"({pending_ref!r}, then {ref.group(1)!r}). One reference per heading — "
+                    "the second would silently replace the first."
                 )
             pending_ref = ref.group(1)
             continue
@@ -257,6 +297,14 @@ def parse_blocks(text: str) -> CorpusDocument:
             continue
 
         current["body"].append(line)
+        if line.strip() and pending_ref is not None:
+            # A `ref:` annotates the heading *below* it. Body text in between means the
+            # annotation was typed in the wrong place, and silently attaching it to a
+            # heading further down would give a section someone else's citation.
+            raise CorpusFormatError(
+                f"line {index}: `ref: {pending_ref}` must be immediately before its "
+                "heading, not followed by body text"
+            )
         if not line.strip():
             new_block = True
             continue
@@ -355,6 +403,43 @@ class CorpusEdit:
 #: was found by reading the artefact.** Keeping them here rather than as comments in the
 #: Markdown is deliberate: a comment cannot fail a test, and this table can.
 CORPUS_EDITS: dict[str, tuple[CorpusEdit, ...]] = {
+    "saoso": (
+        CorpusEdit(
+            page=25,
+            original="fattening of chickens with more 2 than 25kg weight/m .",
+            replacement="fattening of chickens with more than 25kg weight/m².",
+            reason=(
+                "The `²` of `m²` is drawn as a superscript, so `pdftotext` puts the digit "
+                "on its own line *between* `more` and `than` and leaves the base line as "
+                "`m .` — the sentence read `…with more / 2 / than 25kg weight/m .` and could "
+                "not be quoted. Read from the page image: one sentence, `weight/m²`. The "
+                "lone digit is the superscript, not a page stamp, so it is merged rather "
+                "than dropped (`BugFixes/saoso_text_glyphs_and_boundaries.md` §2)."
+            ),
+        ),
+        CorpusEdit(
+            page=50,
+            original="p u r c h a s e d",
+            replacement="purchased",
+            reason=(
+                "A tracked (letterspaced) word in a heading run: the text layer emits one "
+                "token per letter, so `purchased` matched nothing in search or retrieval. "
+                "Read from the page image, the word is set in tracking, not spelled out "
+                "(ibid. §4)."
+            ),
+        ),
+        CorpusEdit(
+            page=86,
+            original="Other b o v i n e a n i m a l s less t h a n o n e year old",
+            replacement="Other bovine animals less than one year old",
+            reason=(
+                "Two letterspaced runs inside one Appendix 6a row (`bovine animals`, "
+                "`than one`). Recorded as one edit because both are on the same printed "
+                "line and the same cell; `bovine` has to be findable, since the appendix "
+                "is where a farmer looks up a stocking rate (ibid. §4–§5)."
+            ),
+        ),
+    ),
     "bpp": (
         CorpusEdit(
             kind="drop",

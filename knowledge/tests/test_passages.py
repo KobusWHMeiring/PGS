@@ -312,7 +312,7 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     """
     ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
     chunks = list(DocumentChunk.objects.order_by("id"))
-    assert len(chunks) == 319
+    assert len(chunks) == 338  # 319 + the 19 reviewed Appendix 6a rows
 
     for chunk in chunks:
         source = normalise(HASH_HEADING.sub("", chunk.text))
@@ -354,7 +354,12 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     assert sum(1 for text in labels if "South African" in text) >= 25
     assert not any("South African specific" == text for text in headings)
     assert not any("Regional or other exception" == text for text in headings)
-    assert any("SECTION B" == text for text in headings), "a division title must stay a heading"
+    # The part banner is the page's running head, not a division title in the text: since
+    # 2026-10-28 the parser drops it (`SaosoParser.body_lines`), which is what stops twelve
+    # branches ending with a part title and nothing after it
+    # (`BugFixes/saoso_text_glyphs_and_boundaries.md` §3). The division-vs-label rule itself
+    # is pinned on a fixture by `test_a_centred_label_ends_the_list_and_is_not_a_heading`.
+    assert not any("SECTION B" == text for text in headings)
 
     s1_terms = [
         block.text
@@ -406,7 +411,7 @@ def test_no_clause_is_split_off_its_own_sentence(standard_set):
     """
     ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
     chunks = list(DocumentChunk.objects.order_by("id"))
-    assert len(chunks) == 319
+    assert len(chunks) == 338
 
     split = []
     for chunk in chunks:
