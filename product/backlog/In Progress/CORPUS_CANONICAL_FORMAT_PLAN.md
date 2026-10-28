@@ -441,6 +441,23 @@ no settings.
 D52/D53), `corpus_refresh --apply`, `corpus_check` clean, three probe questions. The box needs **no
 `pdftotext`** for any of it. Record the run in `VPS_DEPLOYMENT.md`.
 
+**Pre-condition found 2026-10-28, while building P2.1–P2.4 — this gate cannot pass as written.**
+`ingest_standard`'s artefact branch still calls `extract_pages(path)` for **one** field: the printed
+`toc` (`knowledge/ingest.py`, "the artefact carries no printed TOC, and `--from-corpus` has no
+pages: the PDF is read again for this one purpose", D68 §7.5). So `corpus_refresh --apply` — the
+command this task runs on the box — needs a PDF reader even though the *text* comes from a reviewed
+artefact. Two honest fixes, and the choice is a decision, not a preference:
+
+1. **carry the TOC in the artefact** (`<!-- toc -->` block in `knowledge/corpus/*.md`), so the file
+   really is the whole text of record; or
+2. **preserve the stored `toc` across a refresh** (`corpus_refresh` reads the old row's `toc` and
+   passes it to `ingest_standard`), since the PDF's sha256 is unchanged and the TOC is a property of
+   the printed pages, not of the extraction.
+
+(2) is smaller and loses nothing; (1) is the one that makes the artefact self-contained, which is
+what D53 says it is. Until one lands, the box's gate is "`corpus_refresh --apply` succeeds on a
+machine that has poppler", not "needs no reader at all".
+
 **Gate:** on the box, `deploy.sh` green with `PDFTOTEXT_BIN` unset **and poppler still installed**;
 then, to prove the claim, `apt remove poppler-utils` on a staging check (or `PATH` without it) and
 `corpus_refresh --apply` still works.

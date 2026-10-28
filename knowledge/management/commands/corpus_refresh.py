@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from django.core.management.base import BaseCommand, CommandError
 
-from knowledge.drift import NO_ARTEFACT, citation_links, corpus_states, pdf_path_for
+from knowledge.drift import citation_links, corpus_states, pdf_path_for
 from knowledge.ingest import IngestError, ingest_standard, resolve_standard_set
 
 

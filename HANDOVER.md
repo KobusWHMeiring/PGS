@@ -62,6 +62,12 @@ the reader or a public page changed.
 - **Known gap, unchanged:** `knowledge/tests/test_anchors.py::test_every_passage_of_the_real_corpus_resolves_to_itself`
   skips in both lanes ("no corpus ingested on this instance"), so the D68 anchor guard is not
   actually in the gate. Worth closing before P7.4.
+- **New finding, blocking P7.4's own gate:** the artefact ingest still reads the PDF for **one**
+  field — the printed `toc` (`knowledge/ingest.py`, the `toc_pages = extract_pages(path)` line in
+  the artefact branch, D68 §7.5). So `corpus_refresh --apply` needs `pdftotext` even though the text
+  comes from a reviewed artefact, and P7.4's "the box needs no reader for any of it" / "remove
+  poppler-utils and refresh still works" cannot pass as written. The plan records both fixes
+  (carry the TOC in the artefact, or preserve the stored `toc` across a refresh); neither is built.
 
 ---
 
