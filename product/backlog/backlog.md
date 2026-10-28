@@ -1,11 +1,11 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-28 07:09
+> Generated: 2026-10-28 07:55
 
 ## Ready (up next)
 
-- **PRD: The documents page offers the concordance** - `ready\DOCUMENTS_READER_LINK_PRD.md` - Status: **Ready** — small, decided, and independent of every open PRD. Build it in one task.
+- **PRD: The documents page offers the concordance** - `ready\DOCUMENTS_READER_LINK_PRD.md` - Status: **Built 2026-10-28** — all four acceptance items and the guards are in place; the file
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
 - **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 
@@ -43,7 +43,7 @@ _none_
 ## Bug Fixes
 
 - **Bug: a citation opens the wrong passage when its reference is shared** - `BugFixes\citation_anchor_collision.md` - Status: **Closed 2026-10-27** — fixed and guarded while building the concordance (SPEC §18.3
-- **Bug: a wrapped clause renders as two paragraphs, and copies back glued** - `BugFixes\reader_clause_line_breaks.md` - Status: **Open** — found 2026-10-28 by the product owner reading `?section=s23` at
+- **Bug: a wrapped clause renders as two paragraphs, and copies back glued** - `BugFixes\reader_clause_line_breaks.md` - Status: **Fixed 2026-10-28** — the hanging indent no longer splits a clause, and a numbered clause
 - **Bug: SAOSO's text — a lost superscript, a swallowed part title, letterspaced words and two tables that lost their rows** - `BugFixes\saoso_text_glyphs_and_boundaries.md` - Status: **§1 closed 2026-10-27** — the glyph loss was an encoding bug in the extraction, not a
 
 ## Done

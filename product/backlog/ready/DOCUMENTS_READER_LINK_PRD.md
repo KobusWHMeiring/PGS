@@ -1,6 +1,9 @@
 # PRD: The documents page offers the concordance
 
-**Status:** **Ready** — small, decided, and independent of every open PRD. Build it in one task.
+**Status:** **Built 2026-10-28** — all four acceptance items and the guards are in place; the file
+stays in `ready/` because **UAT Scenario 12 is not yet judged** (`tests/uat/concordance_uat.md`),
+and nothing with a user-facing surface is Done without a sign-off. Move to `Done/` when Kobus has
+judged it.
 **Owner:** Product (what a reader is promised) · Build (one row action)
 **Opened:** 2026-10-28
 **Origin:** found while closing the reader-structure slice — the concordance is reachable from a chat
@@ -79,6 +82,23 @@ implementation must **not** add eight queries — resolve the ingested set in on
    *From `/documents/`, a reader who has never used the site finds the SAOSO standard's text in two
    clicks, and knows why the checklist has no such link.* Judgement: does the page read as eight
    documents *you can read*, four of which you can also read as text — or as an inconsistent list?
+
+## 5a. How it was built (2026-10-28)
+
+* `documents_context()` returns `DocumentRow(document, read_url)` — the published row plus the
+  reader's address, empty when there is no text. `ingested_sources()` resolves the whole set in
+  **one** query, from `DocumentChunk` rather than from `chunk_count`, because a denormalised counter
+  is one interrupted ingest away from linking a row to a page with no text in it.
+* Measured: `/documents/` went from **1 query to 2** — measured with `CaptureQueriesContext` before
+  writing the guard, then asserted by `test_the_page_does_not_query_once_per_row`.
+* `_doc_rows.html` is shared by `/documents/` and the home page's band, so the band gained the same
+  verb. That is deliberate (two hand-maintained lists already disagreed once, C2) and asserted
+  (`test_the_home_band_offers_the_same_reader_link`).
+* Because the partial is shared by two pages, `test_the_documents_page_offers_eight_downloads` in the
+  browser suite now selects `a.doc-row__action:not(.doc-row__action--secondary)` — without that, the
+  count would change the moment a corpus is present in the fixture.
+* The gated row (D22 dossiers) is unchanged: it has no `PublicDocument` row, so it can never gain
+  the reader link.
 
 ## 6. Non-goals
 

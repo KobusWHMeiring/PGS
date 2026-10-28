@@ -3,6 +3,12 @@ The document list, with the shape the live /forms/ page has: the four governed
 documents, the visit preparation list, and three blank participant checklists, plus
 one gated row for historical records.
 
+**Each row is a `core.services._documents.DocumentRow`**: the published file, plus the
+reader's address when that document's text is ingested. Four of the eight have text, so
+four rows carry a second action (`Read the text`); the four forms print only their
+download, because a checklist really is just a file. The reader address is computed once
+for the whole list, not once per row (one extra query, not eight).
+
 **C2 made this data.** The rows used to be eight hardcoded `Publishing soon` chips,
 because `/documents/` did not exist and a link to a missing route raises
 `NoReverseMatch` at render time. They are now `PublicDocument` rows — the group's
@@ -18,16 +24,28 @@ The gated row is the exception and is already honest: dossiers are never public
 {% endcomment %}
 <div class="docs">
 
-  {% for document in documents %}
+  {% for row in documents %}
     <div class="doc-row">
       <div class="doc-row__main">
-        <span class="doc-row__type">{{ document.kind }}</span>
+        <span class="doc-row__type">{{ row.document.kind }}</span>
         <div>
-          <p class="doc-row__title">{{ document.title }}</p>
-          <p class="doc-row__meta">{{ document.note }}</p>
+          <p class="doc-row__title">{{ row.document.title }}</p>
+          <p class="doc-row__meta">{{ row.document.note }}</p>
         </div>
       </div>
-      <a class="doc-row__action" href="{% url 'core:document_file' document.code %}">Download</a>
+      <div class="doc-row__actions">
+        <a class="doc-row__action" href="{% url 'core:document_file' row.document.code %}">Download</a>
+        {% comment %}
+        D1: a row whose text is ingested offers the concordance beside its download; D3: always
+        in this order, because Download exists for every row and consistency beats proximity.
+        A row with no ingested text prints **nothing** here (D2) — the four checklists are
+        published as files, and a chip for a feature they do not have is the "retired chip"
+        DESIGN rule 8 forbids.
+        {% endcomment %}
+        {% if row.read_url %}
+          <a class="doc-row__action doc-row__action--secondary" href="{{ row.read_url }}">Read the text</a>
+        {% endif %}
+      </div>
     </div>
   {% endfor %}
 

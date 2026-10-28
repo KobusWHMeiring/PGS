@@ -38,7 +38,7 @@ from django.urls import reverse
 
 from core.models import PublicDocument
 from knowledge.concordance import ConcordanceSection, build_concordance
-from knowledge.models import StandardDocument
+from knowledge.models import DocumentChunk, StandardDocument
 from knowledge.passages import passage_blocks, row_blocks
 from knowledge.reading import (
     SearchHit,
@@ -206,6 +206,20 @@ def published_documents() -> list[PublicDocument]:
     return list(PublicDocument.objects.published())
 
 
+@dataclass(frozen=True)
+class DocumentRow:
+    """One line of the public document list: the file, and where its text can be read.
+
+    `read_url` is empty for a document whose text is not ingested. That is not a disabled
+    control: a form is published as a file, and that is the whole truth about it
+    (`DOCUMENTS_READER_LINK_PRD` D2). The row prints nothing rather than a promise the
+    reader page would have to take back.
+    """
+
+    document: PublicDocument
+    read_url: str = ""
+
+
 def public_codes_by_source() -> dict[str, str]:
     """In: nothing. Out: `{source_file: code}` for the published documents. One query.
 
@@ -228,10 +242,45 @@ def public_codes_by_source() -> dict[str, str]:
 def documents_context() -> dict:
     """The context fragment every page that carries the list needs.
 
-    In: none. Out: `{"documents": [...]}`. Side effects: one query.
+    In: none. Out: `{"documents": [DocumentRow, ...]}`. Side effects: two queries.
     Fails: never deliberately.
+
+    Each row carries the reader's address **when the document's text is ingested**, and an
+    empty string when it is not. The set is resolved once for the whole list rather than by
+    asking `corpus_for()` per row: that function is a query, and a public page must not grow a
+    query each time the group publishes a ninth document (`DOCUMENTS_READER_LINK_PRD` §4).
     """
-    return {"documents": published_documents()}
+    documents = published_documents()
+    with_text = ingested_sources()
+    return {
+        "documents": [
+            DocumentRow(
+                document=document,
+                read_url=(
+                    reverse("core:document_reader", kwargs={"code": document.code})
+                    if document.source_path in with_text
+                    else ""
+                ),
+            )
+            for document in documents
+        ]
+    }
+
+
+def ingested_sources() -> set[str]:
+    """In: nothing. Out: the `source_file` of every corpus document that holds text.
+
+    One query, and the join is provenance: `PublicDocument.source_path` and
+    `StandardDocument.source_file` both hold `pgs_docs/<file>.pdf`, because the publish seed
+    and the ingest read the same filenames.
+
+    Derived from `DocumentChunk`, not from `StandardDocument.chunk_count`: a denormalised
+    counter is one interrupted ingest away from promising a reader a page with no text in it,
+    and this is the value that decides whether the row prints the link at all.
+    """
+    return set(
+        DocumentChunk.objects.values_list("document__source_file", flat=True).distinct()
+    )
 
 
 @dataclass(frozen=True)

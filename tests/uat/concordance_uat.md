@@ -273,6 +273,27 @@ feature stays.
 
 ---
 
+## Scenario 12 — Finding the text from the documents page
+
+**Setup:** open `/documents/`, as someone who has never used this site and has not seen a citation.
+The four checklists and the visit preparation list are on the same page.
+
+**Action:** without using the site's search or the chatbot, find the SAOSO standard's text from this
+page, and then say why the crops checklist has no such option.
+
+**Expected:** eight rows. Four of them — SAOSO v2.1, the OPP, Basic Production Principles and the
+Certification Landscape — carry two actions, `Download` then `Read the text`, and the second opens
+that document's concordance. The other four carry only `Download`: no greyed link, no tooltip, no
+chip explaining an absence. Two clicks to the standard's text, and the difference between the rows
+reads as a difference between the documents rather than as something half-built.
+
+**Judgement:** *Does the page read as eight documents you can read, four of which you can also read
+as text — or as an inconsistent list where something is missing?* The second reading is a fail, and
+the fix is the copy or the page, not the data.
+**Result:** not yet judged · added 2026-10-28 with `DOCUMENTS_READER_LINK_PRD`
+
+---
+
 ## Sign-off
 
 | Role | Name | Date | Result | Notes |

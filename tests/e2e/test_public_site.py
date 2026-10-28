@@ -133,7 +133,7 @@ def test_the_documents_page_offers_eight_downloads(page, live_server):
     """
     page.goto(live_server.url + "/documents/", wait_until="networkidle")
 
-    links = page.locator("a.doc-row__action[href^='/documents/']")
+    links = page.locator("a.doc-row__action:not(.doc-row__action--secondary)[href^='/documents/']")
     assert links.count() == 8, f"{links.count()} download links — the rows did not render"
     assert page.locator(".doc-row__action--pending").count() == 0, "a pending chip survived"
 
@@ -143,6 +143,33 @@ def test_the_documents_page_offers_eight_downloads(page, live_server):
         links.first.click()
     download = download_info.value
     assert download.suggested_filename.endswith(".pdf"), download.suggested_filename
+
+
+def test_a_row_with_text_offers_the_reader_as_a_real_link(phone_page, live_server, reader_corpus):
+    """PRD D1: the four documents with text gain `Read the text` beside Download — on a phone.
+
+    `reader_corpus` ingests only the SAOSO's twin, so exactly one of the eight rows may
+    carry the second verb: the four forms have no text, and D2 says they print nothing
+    rather than a disabled control. Measured on the phone, because the row is a flex line
+    that now holds two verbs and a 44px target is the thing that breaks first.
+    """
+    phone_page.goto(live_server.url + "/documents/", wait_until="networkidle")
+
+    read = phone_page.locator("a.doc-row__action--secondary")
+    assert read.count() == 1, f"{read.count()} reader links — only the ingested document has one"
+    assert read.first.inner_text().strip() == "Read the text"
+
+    box = read.first.bounding_box()
+    assert box and box["height"] >= 44, f"the reader link is {box} — under the 44px target"
+    overflow = phone_page.evaluate(
+        "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    assert overflow <= 0, f"two actions on a row overflow the phone by {overflow}px"
+
+    read.first.click()
+    phone_page.wait_for_load_state("networkidle")
+    assert phone_page.url.endswith("/documents/saoso-standard-v2.1/read/"), phone_page.url
+    assert "passage__text" in phone_page.content(), "the reader link did not open the text"
 
 
 @pytest.mark.parametrize("width", [768, 1024, 1280])

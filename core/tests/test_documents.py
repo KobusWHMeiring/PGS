@@ -307,3 +307,104 @@ def test_dossiers_stay_behind_request_access(client: Client, published):
     assert "Request access" in gated_block, "the gated action is not Request access"
     assert "/documents/" not in gated_block, "a dossier row links to a download"
     assert 'href="/contact/"' in gated_block, "the gated row does not offer a next step"
+
+
+# --- The concordance, offered from the row (DOCUMENTS_READER_LINK_PRD) -------
+
+#: The four documents whose text is ingested, so `/documents/<code>/read/` renders. The
+#: other four are forms and checklists published as files, with no text to read.
+WITH_TEXT = (
+    "saoso-standard-v2.1",
+    "opp",
+    "basic-production-principles",
+    "certification-landscape",
+)
+
+
+@pytest.fixture
+def ingested(published):
+    """A corpus behind four of the eight rows, joined the way the real one is.
+
+    `StandardDocument.source_file` and `PublicDocument.source_path` must be the **same
+    string** — that equality is the join the reader uses, so a fixture that faked it
+    would prove nothing about the thing that breaks. One chunk per document is enough to
+    make "has text" true; the real 319 are ingested by the reader's own suite.
+    """
+    from knowledge.models import DocumentChunk, StandardDocument, StandardSet
+
+    corpus = StandardSet.objects.create(code="outeniqua", label="Outeniqua", is_default=True)
+    for code in WITH_TEXT:
+        document = PublicDocument.objects.get(code=code)
+        twin = StandardDocument.objects.create(
+            standard_set=corpus,
+            kind=StandardDocument.Kind.STANDARD,
+            title=document.title,
+            source_file=document.source_path,
+            sha256=f"{code:0<64}".replace("-", "a")[:64],
+            section_scheme="saoso",
+        )
+        DocumentChunk.objects.create(
+            document=twin, section_ref="S1", page=22, text="A definition a reader can quote."
+        )
+    return published
+
+
+def test_the_rows_with_text_offer_the_reader_and_the_rest_do_not(client: Client, ingested):
+    """Half the list can be read as text; the page must say which half (`DOCUMENTS_READER_LINK_PRD` D1).
+
+    The four forms have no ingested text, and D2 says they gain **nothing** — not a
+    disabled control and not a chip — because a form is published as a file and that is
+    the whole truth about it.
+    """
+    html = client.get("/documents/").content.decode()
+
+    for code in WITH_TEXT:
+        assert f'href="/documents/{code}/read/"' in html, f"{code} has text but no reader link"
+        assert "Read the text" in html
+
+    for spec in DOCUMENTS:
+        if spec.code in WITH_TEXT:
+            continue
+        assert f'href="/documents/{spec.code}/read/"' not in html, (
+            f"{spec.code} has no ingested text, so it must not offer the reader"
+        )
+
+
+def test_no_row_links_to_a_reader_that_would_apologise(client: Client, ingested):
+    """A link the page prints must open the document's text, not "we have not published it".
+
+    That page is honest, but a row that links to it promises something the group cannot
+    show. This is the assertion that would have caught `corpus_for()` answering for a
+    document whose text was never ingested.
+    """
+    html = client.get("/documents/").content.decode()
+
+    for code in WITH_TEXT:
+        response = client.get(f"/documents/{code}/read/")
+        assert response.status_code == 200, f"{code}'s reader link does not resolve"
+        assert b"not published the text" not in response.content, (
+            f"{code} links to a reader that has no text"
+        )
+
+
+def test_the_page_does_not_query_once_per_row(client: Client, ingested, django_assert_num_queries):
+    """Eight rows, and the page already made one query for the list.
+
+    A `corpus_for()` per row would add eight more — the shape that turns a light public
+    page into a N+1 the day a ninth document is published. The ingested set is resolved
+    once and matched in Python.
+    """
+    with django_assert_num_queries(2):
+        client.get("/documents/")
+
+
+def test_the_home_band_offers_the_same_reader_link(client: Client, ingested):
+    """One list, rendered on two pages, so both must show the same verbs.
+
+    The band and `/documents/` share `_doc_rows.html` on purpose: two hand-maintained
+    lists disagreed about which documents exist once already (C2).
+    """
+    html = client.get("/").content.decode()
+
+    for code in WITH_TEXT:
+        assert f'href="/documents/{code}/read/"' in html, f"home does not link {code}'s text"
