@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-28 18:55
+> Generated: 2026-10-28 19:56
 
 ## Ready (up next)
 
@@ -25,6 +25,7 @@
 ## Refinement
 
 - **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7, 5.8, 5.9 and 5.10 landed the same day** (gate green at 920): every refusal in that conversation answers, the two GM-outcome turns state the rule instead of the verdict, G3 is closed, and a definition citation lands on the definition. Remaining: D-2's re-measure on the box, 5.6 (the follow-up window, needs S6), and the box sweeps.
+- **PRD: The code atlas — one generated view of the application as built** - `Refinement\CODE_ATLAS_PRD.md` - Status: Refinement — a requirement from the product owner (2026-10-28); two decisions (§4) and a plan before it can be built. Supersedes the `CONVENTION.md` note that a state doc was "premature until there is code" — there is code now.
 - **PRD: The escalation answer path — a refusal that can reach a person** - `Refinement\ESCALATION_ANSWER_PATH_PRD.md` - Status: Refinement — design needed, no code written
 - **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
 - **Refinement: The Regenerative Add-On — architecture findings, and what to decide before MVP 2** - `Refinement\REGENERATIVE_ADDON_ARCHITECTURE.md` - Status: Refinement — target shape agreed (A, §2); implementation paused until the standard itself exists. Three decisions are nonetheless time-sensitive (§8), because MVP 1a and MVP 2 will otherwise freeze them by accident.

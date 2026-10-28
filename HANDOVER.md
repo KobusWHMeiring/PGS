@@ -20,7 +20,7 @@ plan **P7.4** rebuilds it from artefacts. See §22, §0g and
 
 ---
 
-## 0f. 2026-10-28 — the corpus can say whether it is current, and the ingest fails closed
+## 0i. 2026-10-28 — the corpus can say whether it is current, and the ingest fails closed
 
 **This is the most recent slice.** Plan tasks **P2.1–P2.4** and **P7.1** of
 `product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md`, built as one idea: *drift is
@@ -68,6 +68,22 @@ the reader or a public page changed.
   comes from a reviewed artefact, and P7.4's "the box needs no reader for any of it" / "remove
   poppler-utils and refresh still works" cannot pass as written. The plan records both fixes
   (carry the TOC in the artefact, or preserve the stored `toc` across a refresh); neither is built.
+- **Also filed this session, nothing built:** **`Refinement/CODE_ATLAS_PRD.md`** — the product
+  owner's requirement for one generated, committed view of the application as built (schema,
+  services, views and routes, async/schedulers, the corpus pipeline), in `product/docs/state/`, with
+  a gate that regenerates and diffs so it cannot rot. It answers "what exists" and is deliberately
+  not a handover, a spec or a UAT. Today's numbers are in its §1 and they are the reason it exists:
+  30,744 Python lines, 12 models / 87 fields, 46 service functions, 17 view functions, **one**
+  Celery task and **no beat schedule**, 36 migrations, 59 test modules.
+- **Awaiting one decision, D71** (`product/design/d71_p4_and_the_generator.html`): what the next
+  corpus slice is, now that P4's first step is measured broken. Recommendation: repair the generator,
+  make P3.1's regeneration gate real, teach `OppParser` the `heading_path` rule, then review the OPP
+  as a verification pass (`product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md`, P4's
+  landing note).
+- **Not committed by this session:** the test-lane work (`scripts/fast.sh`, `pgs/settings_test.py`,
+  the `slow` marker, `tests/tools/test_test_harness.py`, `product/docs/context/TEST_COST_PLAYBOOK.md`)
+  arrived uncommitted and was deliberately left uncommitted — it is another session's, and the gate
+  is green with it in the tree (1265 passed / 1 skipped).
 
 ---
 
