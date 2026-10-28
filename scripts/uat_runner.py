@@ -321,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
     out = Path(args.out) if args.out else OUT_DIR / f"{uat.slug}.html"
     out.parent.mkdir(parents=True, exist_ok=True)
-    env = environment(args.database or "")
+    env = environment(args.database or "", out_path=out)
     # `newline="\n"` on purpose: the default write emits CRLF on Windows, so the artefact
     # would differ by platform and a regeneration would show a whole-file diff
     # (testing_hazards.md §1.27).

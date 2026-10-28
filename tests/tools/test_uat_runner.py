@@ -261,3 +261,36 @@ def test_render_inline_escapes_before_it_emphasises():
     assert render_inline("<b>**bold**</b>") == "&lt;b&gt;<strong>bold</strong>&lt;/b&gt;"
     # A backticked asterisk is code, not an unclosed `<em>`.
     assert render_inline("`a * b`") == "<code>a * b</code>"
+
+
+def test_environment_ignores_the_artefact_it_is_writing(monkeypatch):
+    """Regenerating the page always leaves it differing from HEAD; that is not a dirty tree.
+
+    Found on the 2026-10-28 concordance sign-off: the export said `working_tree: modified`
+    while the only dirty file was the artefact itself, so a clean signature was impossible.
+    """
+    from pathlib import Path
+
+    from scripts import uat_page
+
+    rel = "product/design/uat/concordance.html"
+
+    def fake_git(*args: str) -> str:
+        if args == ("rev-parse", "--short", "HEAD"):
+            return "abc1234"
+        return f" M {rel}\n?? something-else.txt"
+
+    monkeypatch.setattr(uat_page, "_git", fake_git)
+
+    with_own = uat_page.environment("pgs", out_path=uat_page.REPO_ROOT / rel)
+    without = uat_page.environment("pgs")
+
+    assert with_own["working_tree"] == "modified", "the other untracked file still counts"
+    assert without["working_tree"] == "modified"
+
+    monkeypatch.setattr(
+        uat_page, "_git", lambda *a: "abc1234" if a[:1] == ("rev-parse",) else f" M {rel}"
+    )
+
+    assert uat_page.environment("pgs", out_path=uat_page.REPO_ROOT / rel)["working_tree"] == "clean"
+    assert uat_page.environment("pgs")["working_tree"] == "modified"

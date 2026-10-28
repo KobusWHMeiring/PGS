@@ -122,14 +122,35 @@ def _git(*args: str) -> str:
     return result.stdout.strip() if result.returncode == 0 else ""
 
 
-def environment(database: str) -> dict[str, object]:
+def environment(database: str, out_path: Path | None = None) -> dict[str, object]:
     """What this artefact was generated against — commit, working-tree state, database.
 
     A signature on a build nobody can identify is not evidence (PRD §7), so these three
     travel in the header and in the export.
+
+    In:  `database` — the instance the reviewer will judge; `out_path` — the artefact this
+         generation is writing, which is excluded from the dirty check.
+    Out: `{commit, working_tree, database, generated_on}`.
+    Side effects: two `git` calls.
+    Fails: never — an unknown commit is recorded as unknown.
+
+    Why `out_path` is excluded: regenerating the artefact *always* leaves it differing from the
+    commit it was generated on, so without this every signature says `working_tree: modified` while
+    the only difference is the output itself — which makes a clean signature impossible and teaches
+    reviewers to ignore the field (found on the 2026-10-28 concordance sign-off).
     """
     commit = _git("rev-parse", "--short", "HEAD") or "unknown"
-    dirty = bool(_git("status", "--porcelain"))
+    status = _git("status", "--porcelain")
+    if out_path is not None and status:
+        try:
+            own = out_path.resolve().relative_to(REPO_ROOT).as_posix()
+        except ValueError:  # an artefact written outside the repo cannot be the reason it is dirty
+            own = ""
+        if own:
+            status = "\n".join(
+                line for line in status.splitlines() if own not in line
+            )
+    dirty = bool(status.strip())
     return {
         "commit": commit,
         "working_tree": "modified" if dirty else "clean",
