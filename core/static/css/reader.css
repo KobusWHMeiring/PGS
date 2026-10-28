@@ -148,6 +148,17 @@
 
 /* --- Body: the tree + one open branch ------------------------------------ */
 
+/* A citation is a jump, not a journey.
+
+   `root.css` sets `html { scroll-behavior: smooth }`, which is right for a two-screen page and wrong
+   here: the SAOSO branch a definition lives in is ~12 000 px tall and the jump to it is ~11 000 of
+   them. Smooth takes seconds, and any wheel nudge during it cancels the scroll — so a reader
+   following `#term-synthetic` stayed where they were and concluded the link was broken (reported
+   2026-10-27). A link whose whole purpose is "land on this line" must land. */
+html:has(.section--reader) {
+  scroll-behavior: auto;
+}
+
 .reader__body {
   display: grid;
   grid-template-columns: 1fr;
@@ -366,6 +377,22 @@
   }
 }
 
+/* A definition's id is on the `<p>` *inside* a passage, so `.passage`'s own `scroll-margin-top`
+   never applies to it and the definition landed behind the sticky search — measured on the live
+   page 2026-10-27: term top 96 px, search bottom 191 px, so `#term-synthetic` opened a page where
+   `Synthetic` was covered. Same offsets as `.passage`, for the same reason. */
+.passage__term[id],
+.reader__tree-note[id] {
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+
+@media (min-width: 900px) {
+  .passage__term[id],
+  .reader__tree-note[id] {
+    scroll-margin-top: calc(var(--header-height) + 8rem);
+  }
+}
+
 /* The ground and rule bleed to the pane's edges so the arrival reads as a location, not as a
    coloured sentence. */
 .passage:target {
@@ -421,6 +448,19 @@
   font-size: var(--text-base);
   font-weight: 700;
   line-height: var(--leading-tight);
+}
+
+/* A printer's marginal label: mixed case, centred on the paper, qualifying what follows rather
+   than dividing the document (`South African specific`, `Regional or other exception`). It must sit
+   *below* the term it qualifies, never at `.passage__heading`'s weight — the same relationship the
+   table's `South African specific` qualifier has to its row. */
+.passage__qualifier {
+  margin: 1.3rem 0 0.4rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-style: italic;
+  letter-spacing: 0.01em;
 }
 
 /* A reviewed table row's substance cell (`Guano`, `Wood, bark, sawdust…`): an entry in the paper's

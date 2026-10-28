@@ -91,3 +91,70 @@ def test_on_a_phone_the_tree_is_a_disclosure_and_the_note_is_readable(page, live
         "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     assert overflow <= 0, f"the reader scrolls sideways at 390 px by {overflow}px"
+
+
+def test_a_definition_link_lands_below_the_search_bar(page, live_server, reader_corpus):
+    """`#term-synthetic` must land on `Synthetic`, and the definition must be readable.
+
+    Two measured defects, both reported from the live page on 2026-10-27: the jump inherited
+    `root.css`'s `scroll-behavior: smooth` and animated across ~11 000 px (seconds, and any wheel
+    nudge cancels it), and a definition's `id` sits on a `<p>` *inside* a passage, so `.passage`'s
+    `scroll-margin-top` never applied to it and it landed at y=96 — behind a search panel whose
+    bottom is 191. The page arrived, and the definition was covered.
+    """
+    page.set_viewport_size({"width": 1280, "height": 900})
+    page.goto(live_server.url + "/documents/saoso-standard-v2.1/read/?section=s1#term-synthetic")
+    page.wait_for_timeout(400)
+
+    assert (
+        page.evaluate("() => getComputedStyle(document.documentElement).scrollBehavior") == "auto"
+    ), "the reader animates its jumps: a citation would crawl, and a wheel nudge cancels it"
+
+    boxes = page.evaluate(
+        """() => {
+            const term = document.getElementById('term-synthetic');
+            const search = document.querySelector('.reader__search').getBoundingClientRect();
+            const box = term && term.getBoundingClientRect();
+            return term ? {top: box.top, bottom: search.bottom,
+                           height: window.innerHeight} : null;
+        }"""
+    )
+
+    assert boxes, "the definition is not on the page at all"
+    assert boxes["top"] >= boxes["bottom"], (
+        f"the definition is behind the search panel: term top {boxes['top']}, "
+        f"search bottom {boxes['bottom']}"
+    )
+    assert 0 <= boxes["top"] < boxes["height"], "the definition is not in the viewport"
+
+
+def test_a_printed_margin_label_is_not_a_section_heading(page, live_server, reader_corpus):
+    """`South African specific` is a printer's label, and must not weigh what a division weighs.
+
+    SAOSO centres it above each definition that adds to or amends the international wording — 26 of
+    them in `S1` alone, plus 23 `Regional or other exception`. The layout found them as centred
+    lines and rendered them at `passage__heading`'s weight, so the definitions page read as a dozen
+    sections all called *South African specific*. Reported from the live page on 2026-10-27.
+    """
+    page.set_viewport_size({"width": 1280, "height": 900})
+    page.goto(live_server.url + "/documents/saoso-standard-v2.1/read/?section=s1", wait_until="networkidle")
+
+    measured = page.evaluate(
+        """() => {
+            const q = document.querySelector('.passage__qualifier');
+            const h = document.querySelector('.passage__heading');
+            return {
+                qualifiers: document.querySelectorAll('.passage__qualifier').length,
+                wrong: [...document.querySelectorAll('.passage__heading')]
+                    .filter(e => /South African|Regional or other exception/i.test(e.textContent)).length,
+                qualifier_size: q && parseFloat(getComputedStyle(q).fontSize),
+                heading_size: h && parseFloat(getComputedStyle(h).fontSize),
+            };
+        }"""
+    )
+
+    assert measured["qualifiers"] >= 1, "the printed label did not render at all"
+    assert measured["wrong"] == 0, "a printed margin label rendered at section-heading weight"
+    assert measured["qualifier_size"] < measured["heading_size"], (
+        f"the label is not subordinate to the heading: {measured}"
+    )

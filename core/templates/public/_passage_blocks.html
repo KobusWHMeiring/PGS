@@ -21,6 +21,15 @@
     <p class="passage__term"{% if block.anchor %} id="{{ block.anchor }}"{% endif %}>{{ block.text }}</p>
   {% elif block.kind == "row" %}
     <p class="passage__row">{{ block.text }}</p>
+  {% elif block.kind == "qualifier" %}
+    {% comment %}
+      A printer's marginal label, centred above the definition or clause it qualifies
+      (`South African specific`, `Regional or other exception`: 58 of them in the shipped SAOSO).
+      Set at heading weight they read as a dozen sections with the same name, which is what a
+      reader reported on 2026-10-27. `knowledge/passages.py` separates them by the paper's own
+      casing — a division title is capitals, a label is mixed case.
+    {% endcomment %}
+    <p class="passage__qualifier">{{ block.text }}</p>
   {% else %}
     <ol class="passage__list passage__list--{{ block.style }}"{% if block.start != 1 %} start="{{ block.start }}"{% endif %}>
       {% for item in block.items %}

@@ -186,13 +186,19 @@ def test_a_line_at_column_zero_continues_a_lettered_item():
     assert block.items[0].text == "ACB Accredited Certification Body."
 
 
-def test_a_centred_heading_ends_the_list():
-    text = "a  One;\n\n                    South African specific\n\nAreas are defined in the Act."
+def test_a_centred_label_ends_the_list_and_is_not_a_heading():
+    """The paper's casing separates its two centred shapes, and the reader must too.
 
-    kinds = [block.kind for block in passage_blocks(text)]
+    `South African specific` is a marginal label printed above the definition or clause it
+    qualifies — 26 of them in `S1` alone. Set at heading weight it read as a section heading, which
+    is what a reader reported on 2026-10-27. `SECTION B` is a division title, and stays one.
+    """
+    label = "a  One;\n\n                    South African specific\n\nAreas are defined in the Act."
+    division = "a  One;\n\n                    SECTION B\n\nAreas are defined in the Act."
 
-    assert kinds == ["list", "heading", "paragraph"]
-    assert passage_blocks(text)[1].text == "South African specific"
+    assert [block.kind for block in passage_blocks(label)] == ["list", "qualifier", "paragraph"]
+    assert passage_blocks(label)[1].text == "South African specific"
+    assert [block.kind for block in passage_blocks(division)] == ["list", "heading", "paragraph"]
 
 
 def test_a_line_starting_with_a_single_space_letter_is_prose():
@@ -292,9 +298,21 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     assert len(lists) == 2, "S2.1.4 prints two lettered lists and the second restarts at a"
 
     s513_blocks = passage_blocks(by_ref["S5.1.3"].text)
-    headings = [block.text for block in s513_blocks if block.kind == "heading"]
-    assert "Regional or other exception" in headings
-    assert "SOUTH AFRICAN specific" in headings
+    qualifiers = [block.text for block in s513_blocks if block.kind == "qualifier"]
+    assert "Regional or other exception" in qualifiers
+    assert "SOUTH AFRICAN specific" in qualifiers
+
+    # The measured ratio (§3.12's neighbour): the shipped SAOSO centres 62 blocks, and 58 of them
+    # are printer's labels in mixed case. None of them may render at a division title's weight.
+    every_block = [
+        block for chunk in chunks for block in passage_blocks(chunk.text)
+    ]
+    labels = [b.text for b in every_block if b.kind == "qualifier"]
+    headings = [b.text for b in every_block if b.kind == "heading"]
+    assert sum(1 for text in labels if "South African" in text) >= 25
+    assert not any("South African specific" == text for text in headings)
+    assert not any("Regional or other exception" == text for text in headings)
+    assert any("SECTION B" == text for text in headings), "a division title must stay a heading"
 
     s1_terms = [
         block.text

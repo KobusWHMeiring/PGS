@@ -127,6 +127,7 @@ def reader_corpus(db):
             "section_scheme": "saoso",
             "toc": [
                 {"part": "A", "kind": "SECTION", "label": "1", "title": "Introduction", "printed_page": 4},
+                {"part": "B", "kind": "SECTION", "label": "1", "title": "Definitions", "printed_page": 22},
                 {"part": "B", "kind": "SECTION", "label": "5", "title": "Animal Husbandry", "printed_page": 41},
             ],
         },
@@ -138,6 +139,14 @@ def reader_corpus(db):
             "a  Sufficient free movement\n\n"
             "b  Access to pasture during the grazing season\n\n"
             "c  Shelter from wind and rain",
+        ),
+        (
+            "S1",
+            22,
+            "1. DEFINITIONS\n\nSynthetic\n\nA substance that is formulated or manufactured by a "
+            "chemical process.\n\n"
+            "                    South African specific\n\n"
+            "Synthetic fertiliser\n\nA fertiliser manufactured industrially.",
         ),
         ("S5.1.9", 42, "Animals must have access to pasture during the grazing season."),
     ):

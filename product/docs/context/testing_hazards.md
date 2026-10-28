@@ -1400,6 +1400,56 @@ is not behind the tree. The e2e suite is outside `verify.sh`, so **run `python -
 whenever a template or a stylesheet changes** — this defect shipped inside a slice that ran the gate
 nine times. Added 2026-10-27 with `tests/e2e/test_reader_layout.py`.
 
+### 3.13 An anchor id does not inherit its ancestor's `scroll-margin`, and `scroll-behavior: smooth` eats long jumps
+
+`root.css` sets `html { scroll-behavior: smooth }` and `.passage { scroll-margin-top: … }` so a
+citation lands below the sticky header and search. A **definition's** `id` (`term-synthetic`) sits on
+a `<p>` *inside* the passage, so the margin never applied to it: measured on the live page,
+`term top 96 px` against `search bottom 191 px` — the page scrolled and the definition was covered.
+Separately, the SAOSO branch is ~12 000 px tall and the jump to it is ~11 000: as a smooth animation
+that takes seconds, and **any wheel nudge cancels it**, so the reader stays where they were and the
+link looks dead. Reported by the product owner as "didn't take me to the definition".
+
+Evidence (Playwright, 1280 px, before the fix):
+    term-synthetic  {'top': 96, 'search_bottom': 191, 'covered': True, 'behavior': 'smooth'}
+    scrollY after 400 ms: 4800 of 11177      # still animating; after 2.5 s it reached 11177
+
+Consequence: a deep link can arrive late, land under fixed chrome, or not arrive at all, and every
+server-side test still passes — the `id` is in the HTML and the `href` is correct.
+
+Rule: a link whose purpose is "land on this line" must jump **instantly** on the reader surface, and
+every id inside a sticky-offset layout needs its own `scroll-margin-top` (`.passage__term[id]` and
+`.reader__tree-note[id]` now carry it). Guard it in the browser:
+`tests/e2e/test_reader_layout.py::test_a_definition_link_lands_below_the_search_bar` asserts both
+the computed `scroll-behavior` and that the definition's top is at or below the search's bottom.
+Added 2026-10-27, found by eye on the live page.
+
+### 3.14 A centred line is two different things, and only the paper's casing says which
+
+`passage_blocks` treats a far-indented single line as a block of its own, which is right — `1.
+DEFINITIONS`, `SECTION B` and `South African specific` all print centred. It rendered **all** of them
+at `passage__heading` weight, so the SAOSO definitions page read as fourteen sections called *South
+African specific* (reported by the product owner, 2026-10-27).
+
+Evidence (the shipped SAOSO, every block the layout called a heading):
+    26x  mixedcase=True   'South African specific'
+    23x  mixedcase=True   'Regional or other exception'
+    17x  mixedcase=False  'SECTION B'
+    10x  mixedcase=False  'DEFINITIONS, GENERAL PRINCIPLES, RECOMMENDATIONS AND STANDAR…'
+     3x  mixedcase=True   'SOUTH AFRICAN specific'      # the paper's own inconsistency
+     2x  mixedcase=True   'South African Specific'
+     2x  mixedcase=True   'water during sugar processing. As additive for wine and appl…'  # prose, ≤100 chars
+
+Consequence: 58 of the 62 centred blocks are printer's labels, and giving them a division title's
+weight makes a glossary look like a table of contents.
+
+Rule: a centred line in **mixed case and ≤ 60 characters** is a `Qualifier` (muted italic, one step
+below the term it qualifies); capitals or numbering is a `Heading`. The one remaining wart is the
+long mixed-case prose line above, which still reads as a heading — it is a wrapped sentence the paper
+indents, and fixing it belongs to the corpus artefact, not to a display heuristic. Added 2026-10-27
+with `knowledge/passages.py::Qualifier` and
+`tests/e2e/test_reader_layout.py::test_a_printed_margin_label_is_not_a_section_heading`.
+
 ## 5. Template for a new entry
 
 ```markdown

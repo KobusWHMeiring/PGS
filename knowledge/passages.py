@@ -70,6 +70,11 @@ _BULLETS = "•‣▪◦●*-–—"
 _ROMAN_VALUES = {"i": 1, "v": 5, "x": 10, "l": 50, "c": 100, "d": 500, "m": 1000}
 _TERMINAL = (".", ";", "?", "!")
 
+#: The longest centred mixed-case line that is still a printed label rather than a heading. The
+#: shipped labels measure 22–50 characters (`(Ref Canada Organic Regime, CAN/CGSB-32.310)` is the
+#: longest); the longest centred *heading* is a caps division title.
+_QUALIFIER_CHARS = 60
+
 
 @dataclass(frozen=True)
 class Paragraph:
@@ -123,6 +128,26 @@ class RowHeading:
 
 
 @dataclass(frozen=True)
+class Qualifier:
+    """A printer's marginal label, centred above the thing it qualifies.
+
+    SAOSO sets `South African specific` above each definition that adds to or amends the
+    international wording, and `Regional or other exception` above each clause that carries one:
+    **26 and 23 of them in the shipped corpus**. On the paper they are small centred labels; the
+    layout found them as centred lines, and until 2026-10-27 they rendered at the *section-heading*
+    weight — `1. DEFINITIONS` and fourteen `South African specific` labels looked like peers, which
+    is exactly what a reader reported.
+
+    The distinction is the paper's own casing: a printed division title is set in capitals
+    (`SECTION B`, `2. ORGANIC ECOSYSTEMS`) and a marginal label in mixed case. A qualifier is
+    therefore **not** a heading, and it never was — it only took the heading's weight.
+    """
+
+    text: str
+    kind: str = "qualifier"
+
+
+@dataclass(frozen=True)
 class ListItem:
     """One printed list row: the marker as printed, its text, and any nested lists."""
 
@@ -143,7 +168,7 @@ class ListBlock:
     kind: str = "list"
 
 
-Block = Paragraph | Heading | Term | RowHeading | ListBlock
+Block = Paragraph | Heading | Term | RowHeading | Qualifier | ListBlock
 
 
 @dataclass
@@ -400,17 +425,25 @@ def passage_blocks(text: str) -> tuple[Block, ...]:
         nonlocal paragraph_indent
         if paragraph:
             text = _collapse(" ".join(paragraph))
-            # A single centred line is the document's own heading, not prose: SAOSO centres
-            # `Regional or other exception` and `SOUTH AFRICAN specific` in the middle of a
-            # clause, and they read as headings on the paper. A line indented that far cannot be
-            # body text in a single column.
+            # A single centred line is not prose: SAOSO centres printed labels in the middle of a
+            # clause, and a line indented that far cannot be body text in a single column.
             centred = (
                 paragraph_indent is not None
                 and paragraph_indent >= 10
                 and len(text) <= 100
                 and not text.endswith(_TERMINAL)
             )
-            blocks.append(Heading(text) if centred else Paragraph(text))
+            if not centred:
+                blocks.append(Paragraph(text))
+            elif len(text) <= _QUALIFIER_CHARS and any(char.islower() for char in text):
+                # The paper's own casing tells the two apart: a division title is set in capitals
+                # (`SECTION B`), a marginal label in mixed case (`South African specific`,
+                # `Regional or other exception`). Measured: 58 of the 62 centred blocks in the
+                # shipped SAOSO are labels, and rendering them at heading weight made `S1` read as
+                # fourteen sections called *South African specific*.
+                blocks.append(Qualifier(text))
+            else:
+                blocks.append(Heading(text))
             paragraph.clear()
         paragraph_indent = None
 
@@ -562,6 +595,7 @@ __all__ = [
     "ListBlock",
     "ListItem",
     "Paragraph",
+    "Qualifier",
     "RowHeading",
     "Term",
     "flatten",
