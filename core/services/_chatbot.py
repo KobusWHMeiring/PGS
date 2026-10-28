@@ -749,18 +749,33 @@ def _normalise_text(text: str) -> str:
     return " ".join((text or "").split())
 
 
-def locator_of(chunk: RetrievedChunk) -> str:
+def locator_of(chunk: RetrievedChunk | DocumentChunk) -> str:
     """The string a citation must use for this chunk.
 
     SAOSO and the OPP have a `section_ref`. The BPP and the landscape print no clause
     numbers, so their locator is the content-derived `anchor` (D42/D43); a page number
     is the last resort only because it is at least checkable against the paper.
+
+    Both a `RetrievedChunk` and a `DocumentChunk` qualify: this reads three attributes,
+    and a corpus rebuild has to render the locator from the stored row (`_evidence.py`
+    matches a grounding snapshot back onto new chunks). One expression, one place — a copy
+    in the relinker would let the two drift into never matching.
     """
     return (
         chunk.section_ref
         or chunk.anchor
         or (f"p.{chunk.page}" if chunk.page is not None else "")
     )
+
+
+def text_sha(text: str | None) -> str:
+    """The digest a grounding snapshot records for a passage's text.
+
+    One expression, one place: `_grounding_snapshot` writes it and `_evidence.py` matches
+    against it after a rebuild. Truncated to 16 hex characters because it answers "is this
+    the same passage?" inside one database row, not "is this file intact?".
+    """
+    return hashlib.sha256((text or "").encode()).hexdigest()[:16]
 
 
 def _normalise_ref(value: str) -> str:
@@ -1144,7 +1159,7 @@ def _grounding_snapshot(chunks: Sequence[RetrievedChunk]) -> list[dict]:
             "page": chunk.page,
             "heading_path": chunk.heading_path,
             "document": chunk.document_title,
-            "text_sha": hashlib.sha256((chunk.text or "").encode()).hexdigest()[:16],
+            "text_sha": text_sha(chunk.text),
         }
         for chunk in chunks
     ]

@@ -229,6 +229,14 @@ letterspaced lines and the two tables changes `DocumentChunk` rows, needs `--for
 is the SAOSO artefact conversion (D53 / P5), not a view change. §1 was different: it needed no
 review, because the character was already in the extraction — only the decode was throwing it away.
 
+**The evidence-link cost is now recoverable (2026-10-28).** `manage.py relink_evidence --apply`
+rebuilds `ChatMessage.retrieved_chunks` from the P2.5a `grounding` snapshot for every passage whose
+text the rebuild did not change, and reports the rest as *same locator, different text* rather than
+re-pointing them at words no answer ever quoted. Run it after each `--force`. Measured on the dev
+instance before any of §2–§5: 54 passages restorable, 16 already linked, 10 not (they were answered
+before the 2026-10-27 rebuild, whose reflow changed their text). So the review below is no longer
+blocked by the cost of destroying evidence it is about to rewrite anyway.
+
 ## 7. Definition of done
 
 - [x] The corpus holds the characters the paper prints: **zero U+FFFD** in all four ingested

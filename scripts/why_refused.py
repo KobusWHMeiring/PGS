@@ -41,6 +41,12 @@ Since P2.5a the turn itself carries the evidence, so the `!` lines below are the
 checks verbatim: `not present in the retrieved set` is a prompt-contract defect, `the
 quote is not in the cited chunk` is a corpus defect. Before P2.5a that distinction was
 thrown away, and G9 had to be diagnosed by re-asking the model.
+
+**A `--force` re-ingest empties `retrieved_chunks` and the snapshot is what is left.** The
+`retrieved(...)` line therefore falls back to the `grounding` snapshot's locators when the
+M2M is empty, and says so — otherwise a probe run after a rebuild prints `retrieved(0)` on
+a turn that retrieved five passages, which reads as a retrieval failure and is not one.
+`manage.py relink_evidence` restores the links where the text is unchanged.
 """
 
 from __future__ import annotations
@@ -68,11 +74,22 @@ REFUSALS = 5
 TURNS = 5
 
 
-def _refs(message: ChatMessage) -> list[str]:
-    return [
+def _refs(message: ChatMessage) -> tuple[list[str], str]:
+    """Out: the locators this turn was given, and where they were read from.
+
+    The M2M first — it is the joinable record, and a link can be followed to the word. The
+    `grounding` snapshot second, because a `--force` re-ingest cascades the links away and
+    "retrieved(0)" on a turn that retrieved five passages is a lie the operator would act
+    on. Never silent about which: the caller prints the source.
+    """
+    linked = [
         chunk.section_ref or chunk.anchor or f"p{chunk.page}"
         for chunk in message.retrieved_chunks.all()
     ]
+    if linked:
+        return linked, "retrieved"
+    snapshot = [entry.get("locator", "") for entry in (message.grounding or [])]
+    return [locator for locator in snapshot if locator], "snapshot"
 
 
 def main(argv: list[str]) -> int:
@@ -96,8 +113,8 @@ def main(argv: list[str]) -> int:
     turns = ChatMessage.objects.filter(role=ChatMessage.Role.ASSISTANT).order_by("-id")
     for message in turns[:TURNS]:
         print(f"   #{message.id} {message.content[:70]!r}")
-        refs = _refs(message)
-        print(f"        retrieved({len(refs)}): {refs}")
+        refs, source = _refs(message)
+        print(f"        {source}({len(refs)}): {refs}")
         raw = [entry.get("section_ref") for entry in (message.citations or {}).get("raw", [])]
         audited = [
             entry.get("section_ref") for entry in (message.citations or {}).get("accepted", [])

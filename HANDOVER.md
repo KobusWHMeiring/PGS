@@ -669,6 +669,14 @@ python manage.py ingest_standard --doc saoso --file pgs_docs/saoso-version-2.1-2
 # embedding. This is what the 2026-10-21 Appendix 2 rows required.
 python manage.py ingest_standard --doc saoso --file pgs_docs/saoso-version-2.1-2026.pdf --force
 
+# Then put the evidence links back. The grounding snapshot (P2.5a) records what every
+# answer stood on, so `relink_evidence` restores the retrieved_chunks rows for every
+# passage whose text the rebuild did not change, and names the ones it cannot ("same
+# locator, different text" is deliberate: a link that resolves to different words is a
+# citation that lies). No --apply, no writes.
+python manage.py relink_evidence             # what would be restored, and what cannot be
+python manage.py relink_evidence --apply     # restore them
+
 # What did the assistant actually retrieve and answer? Read-only, writes no rows, needs a
 # key and a corpus. Prints terms, document frequency, the passages with the arm that found
 # them, the raw and audited citations. `--chunks-only` skips the model call.
@@ -1140,10 +1148,14 @@ flips C1 and D from partial to done.
    server runs poppler and this box runs Xpdf 4.00, the extraction differs from every fixture.
 2. **`--force` must not go into `deploy.sh`.** It re-embeds on every deploy, changes every chunk id,
    and cascades through `ChatMessage.retrieved_chunks` — every historical answer loses its evidence
-   trail. The recommended replacement is `corpus_check` (read-only diff, no API calls) in the deploy
-   plus `corpus_refresh --apply` as a deliberate operator command; `deploy.sh` may fill an **empty**
-   corpus but must only *report* drift on a non-empty one. Written up in
-   `CORPUS_CANONICAL_FORMAT_PRD.md` §7 item 1, awaiting a yes/no.
+   trail. **Since 2026-10-28 the trail can be rebuilt**: `manage.py relink_evidence --apply`
+   restores the links from the `grounding` snapshot wherever the passage's text is unchanged, and
+   reports the ones it cannot (a passage the rebuild rewrote). Run it after every deliberate
+   `--force`, before anything else touches the corpus. The recommended replacement is still
+   `corpus_check` (read-only diff, no API calls) in the deploy plus `corpus_refresh --apply` as a
+   deliberate operator command; `deploy.sh` may fill an **empty** corpus but must only *report*
+   drift on a non-empty one. Written up in `CORPUS_CANONICAL_FORMAT_PRD.md` §7 item 1, awaiting a
+   yes/no.
 
 ### Then, in order
 
