@@ -102,27 +102,50 @@ Measured: 5 of 366 chunks contain a lone-digit line, but four are table cells in
 (where a lone number is correct). `S1` is the only sentence-splitting case today. The fix is a
 corpus edit that merges the superscript into `m²` (D53), with the page image read to confirm.
 
-## 3. `S1` swallows the next part's half-title — **open**
+## 3. A part banner is ingested into the end of a section — **open** (re-measured 2026-10-28)
 
-The last `S1` chunk (page 22, 422 characters) ends with:
+**This section previously said "`S1` swallows the next part's half-title". That was the visible case,
+not the defect.** Measured 2026-10-28: the block is printed **twelve** times — at the tail of one chunk
+in *every* section of Part B — and the reader therefore ends twelve branches with a second part title.
+The product owner found it on 2026-10-28 reading the definitions page ("…appearing at the end of every
+page").
+
+| chunk | printed p. | chunk | printed p. |
+|---|---:|---|---:|
+| `S1` | 22 | `S7.5.3` | 55 |
+| `S2.4.5` | 32 | `S8.2` | 56 |
+| `S3.2.1` | 33 | `S9.7.5` | 59 |
+| `S4.8.6` | 40 | `S20.6.3` | 63 |
+| `S5.7.9` | 51 | `S21.6` | 64 |
+| `S6.1` | 52 | `S22.1.11` | 66 |
 
 ```
-Wild Harvesting / Wild Harvested / Wild Crafted
-Collecting products according to the requirements of these standards …
+… with the EU 2018-848 in order to derive guidance for those
 
-                     SECTION B
+                                              certifiers using this standard.
 
-   DEFINITIONS, GENERAL PRINCIPLES, RECOMMENDATIONS AND STANDARDS
+                                                               SECTION B
+
+                      DEFINITIONS, GENERAL PRINCIPLES, RECOMMENDATIONS AND STANDARDS
 ```
 
-That half-title is the **start of printed p.30**, which the parser attributes to the preceding
-section because the section heading it keys on (`2. ORGANIC ECOSYSTEMS`) comes *after* it. The
-reader therefore ends the definitions branch with a second `SECTION B` heading and its subtitle.
+Not one of these is a section's last sentence: the `SECTION B` block is the **page-run banner** that
+SAOSO prints above Part B's contents, and the parser attributes it to whichever section was open when
+the page arrived. Twelve chunks, twelve branches, one cause.
 
-This is attribution, not text loss: the strings are real. The fix belongs in the section parser or
-in the reviewed artefact's block structure (D53), so a part title becomes a boundary marker rather
-than a paragraph of the section before it. It is not a reader concern — suppressing it in the view
-would hide text the corpus truly holds.
+**Consequence:** the definitions branch ends with `SECTION B` and its subtitle as if they were the last
+thing the standard says about definitions; `S6`, `S7`, `S8`, `S9`, `S20`, `S21` and `S22` end the same
+way. A reader scrolling to the end of any of them is told a new part starts, and then nothing follows.
+
+**Fix:** the banner is a **structural marker**, not prose: a part title closes the section above it and
+opens nothing. That is a parser/artefact decision (D53) — in the reviewed artefact the banner becomes a
+boundary line (the corpus format already has headings and page markers), and the parser must not
+append a heading that precedes a section's own heading into the previous section's text. Suppressing
+it in the view would hide text the corpus truly holds, so the reader is not the place.
+
+**Guard:** after the artefact lands, a corpus test asserts that **no chunk in any document contains
+`SECTION <LETTER>` followed by a title line** — the measurement above, as one regex over the
+ingested text.
 
 ## 4. Three lines were extracted letter by letter — **open**
 

@@ -282,6 +282,16 @@ because it must keep naming `4e02d71`. That signature closes **CONCORDANCE** (D6
 `Done/`. **The PGS administrator, committee reviewer and consumer-member seats are still empty** —
 the OPP wants three voices (D4) — and the file says so.
 
+**Four follow-ups are filed, separately, because they are four different kinds of work** (the
+product owner's 2026-10-28 reading session):
+
+| Item | Where | Size |
+|---|---|---|
+| `/documents/` links to the concordance (four of eight have text) | `ready/DOCUMENTS_READER_LINK_PRD.md` | one task, decided |
+| A wrapped clause renders as two paragraphs (25 of 319 chunks; `S23.3`) | `BugFixes/reader_clause_line_breaks.md` | one display rule + guards |
+| The `SECTION B` banner at the end of **twelve** branches | `BugFixes/saoso_text_glyphs_and_boundaries.md` **§3, re-measured** | artefact/parser (D53) |
+| Tables as reviewed data (JSON/MD) so any table can be displayed — absorbs **G4** | `Refinement/TABLES_AS_DATA_PRD.md`, four questions open | the big one |
+
 **One defect shipped in this slice and was found by the product owner, not by the suite** — worth
 reading before trusting a green gate on a layout change. Moving the missing-sections note out of the
 phone `<details>` made it a **third child** of the two-column `.reader__body` grid: the passages
