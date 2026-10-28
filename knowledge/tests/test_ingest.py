@@ -26,10 +26,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+from io import StringIO
 from pathlib import Path
 
 import pytest
 from django.core.management import call_command
+from django.core.management.base import CommandError
 
 from knowledge.embedding import EmbeddingError, GeminiEmbeddingProvider
 from knowledge.ingest import (
@@ -157,6 +159,53 @@ def test_ingest_reports_being_a_no_op(saoso_pdf, standard_set):
     assert any("already ingested" in warning for warning in report.warnings)
 
 
+def test_the_command_names_the_text_of_record_it_read(saoso_pdf, standard_set):
+    """The line an operator reads is the only place the default is visible (D55)."""
+    out = StringIO()
+    call_command(
+        "ingest_standard",
+        "--doc",
+        "saoso",
+        "--file",
+        str(saoso_pdf),
+        "--no-embed",
+        stdout=out,
+    )
+
+    assert "source=corpus" in out.getvalue()
+
+
+def test_the_command_can_still_parse_the_pdf_on_request(saoso_pdf, standard_set):
+    """`--from-pdf` through argparse, not just through the service: the flag is the
+    documented way back to the extraction path, so its wiring is part of the claim."""
+    out = StringIO()
+    call_command(
+        "ingest_standard",
+        "--doc",
+        "saoso",
+        "--file",
+        str(saoso_pdf),
+        "--no-embed",
+        "--from-pdf",
+        stdout=out,
+    )
+
+    assert "source=pdf" in out.getvalue()
+
+
+def test_the_command_exits_non_zero_when_the_artefact_is_gone(
+    standard_set, monkeypatch, tmp_path
+):
+    """A deploy script can only see an exit status, so the refusal has to be an exception
+    the command turns into `CommandError` — never a warning on a successful run."""
+    monkeypatch.setattr("knowledge.ingest.CORPUS_DIR", tmp_path)
+
+    with pytest.raises(CommandError, match="build_corpus"):
+        call_command(
+            "ingest_standard", "--doc", "bpp", "--file", str(PDFS["bpp"]), "--no-embed"
+        )
+
+
 def test_duplicate_refs_are_reported_and_the_ratchet_holds(saoso_pdf, standard_set):
     """The ratchet is on *sections* sharing a citation, not on chunks.
 
@@ -184,6 +233,9 @@ def test_each_corpus_document_ingests(doc_key, standard_set):
     )
     assert report.created is True
     assert report.chunk_count > 0
+    # And it read the text of record the document declares (D55): the reviewed artefact
+    # where one exists, the PDF where none does yet.
+    assert bool(report.corpus_digest) == ("corpus_artefact" in CORPUS_DOCUMENTS[doc_key])
     assert report.duplicate_ref_count == 0
 
     document = StandardDocument.objects.get(pk=report.document_id)
@@ -371,7 +423,11 @@ def test_an_unreadable_file_is_a_loud_extraction_error(standard_set, tmp_path):
     not_a_pdf.write_bytes(b"this is not a PDF")
     with pytest.raises(ExtractionError):
         ingest_standard(
-            pdf_path=not_a_pdf, standard_set=standard_set, doc_key="saoso", embed=False
+            pdf_path=not_a_pdf,
+            standard_set=standard_set,
+            doc_key="saoso",
+            embed=False,
+            from_pdf=True,
         )
 
 
@@ -423,7 +479,11 @@ def test_the_ingest_reports_the_pages_it_transformed(doc_key, standard_set):
     also pinned as a literal below.
     """
     report = ingest_standard(
-        pdf_path=PDFS[doc_key], standard_set=standard_set, doc_key=doc_key, embed=False
+        pdf_path=PDFS[doc_key],
+        standard_set=standard_set,
+        doc_key=doc_key,
+        embed=False,
+        from_pdf=True,
     )
     assert report.created is True
     assert set(report.layout_pages) == EXPECTED_TRANSFORMED_PAGES[doc_key]
@@ -434,7 +494,11 @@ def test_bpp_reports_eight_layout_pages(standard_set):
     # A literal on purpose. If the detector regresses to zero, the golden set and the
     # report would agree with each other and both be wrong.
     report = ingest_standard(
-        pdf_path=PDFS["bpp"], standard_set=standard_set, doc_key="bpp", embed=False
+        pdf_path=PDFS["bpp"],
+        standard_set=standard_set,
+        doc_key="bpp",
+        embed=False,
+        from_pdf=True,
     )
     assert len(report.layout_pages) == 8
 
@@ -562,7 +626,11 @@ def flat(text: str) -> str:
 @pytest.mark.parametrize("doc_key", sorted(EXPECTED_REFLOW_PAGES))
 def test_the_ingest_reports_the_pages_it_rejoined(doc_key, standard_set):
     report = ingest_standard(
-        pdf_path=PDFS[doc_key], standard_set=standard_set, doc_key=doc_key, embed=False
+        pdf_path=PDFS[doc_key],
+        standard_set=standard_set,
+        doc_key=doc_key,
+        embed=False,
+        from_pdf=True,
     )
     assert report.created is True
     assert len(report.reflow_pages) == EXPECTED_REFLOW_PAGES[doc_key]
@@ -757,6 +825,81 @@ def test_an_artefact_for_another_document_is_refused(standard_set):
             embed=False,
             corpus_path=CORPUS_ARTEFACT,
         )
+
+
+# --- D55: the ingest fails closed --------------------------------------------
+
+
+def test_a_document_that_declares_a_review_ingests_from_it_by_default(standard_set):
+    """D55: for a document with a reviewed artefact, the artefact *is* the text of record.
+
+    Parsing the PDF is now a deliberate act, so a deploy cannot quietly serve a heuristically
+    extracted corpus that a review has already superseded.
+    """
+    report = ingest_standard(
+        pdf_path=PDFS["bpp"], standard_set=standard_set, doc_key="bpp", embed=False
+    )
+
+    assert report.corpus_digest == hashlib.sha256(CORPUS_ARTEFACT.read_bytes()).hexdigest()
+    assert report.layout_pages == () and report.reflow_pages == ()
+
+
+def test_a_missing_artefact_stops_the_ingest_and_names_the_generator(standard_set, monkeypatch, tmp_path):
+    """The failure D55 forbids is the silent one: no artefact, so parse the PDF anyway.
+
+    A machine that lost `knowledge/corpus/` would otherwise serve different text from the
+    review, with every guard green — the corpus is only evidence if something checks it.
+    """
+    monkeypatch.setattr("knowledge.ingest.CORPUS_DIR", tmp_path)
+
+    with pytest.raises(IngestError) as caught:
+        ingest_standard(
+            pdf_path=PDFS["bpp"], standard_set=standard_set, doc_key="bpp", embed=False
+        )
+
+    message = str(caught.value)
+    assert "bpp.md" in message, "the error must name the file it looked for"
+    assert "scripts/build_corpus.py" in message, "and the command that produces it"
+    assert "--from-pdf" in message, "and the flag that says 'I meant the PDF'"
+    assert DocumentChunk.objects.count() == 0, "nothing may be written on the way out"
+
+
+def test_from_pdf_is_still_the_diagnostic_path(standard_set):
+    """D55 keeps `--from-pdf`: it is the equivalence oracle, and the only PDF parse left."""
+    report = ingest_standard(
+        pdf_path=PDFS["saoso"],
+        standard_set=standard_set,
+        doc_key="saoso",
+        embed=False,
+        from_pdf=True,
+    )
+
+    assert report.corpus_digest == ""
+    assert report.layout_pages, "the extraction path did not run"
+
+
+def test_asking_for_both_sources_at_once_is_refused(standard_set):
+    with pytest.raises(IngestError, match="choose one"):
+        ingest_standard(
+            pdf_path=PDFS["bpp"],
+            standard_set=standard_set,
+            doc_key="bpp",
+            embed=False,
+            corpus_path=CORPUS_ARTEFACT,
+            from_pdf=True,
+        )
+
+
+def test_a_document_with_no_declared_artefact_still_parses_its_pdf(standard_set):
+    """The declaration is data, not a file-exists probe: `opp` and `landscape` have no
+    review yet (P4, P5) and must keep working exactly as they did before D55.
+    """
+    report = ingest_standard(
+        pdf_path=PDFS["opp"], standard_set=standard_set, doc_key="opp", embed=False
+    )
+
+    assert report.corpus_digest == ""
+    assert report.chunk_count > 0
 
 
 # --- D68: the printed table of contents is stored once per document ----------

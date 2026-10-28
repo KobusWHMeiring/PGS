@@ -70,8 +70,20 @@ class Command(BaseCommand):
             dest="corpus_path",
             help=(
                 "Read the text from a reviewed artefact (knowledge/corpus/<doc>.md) "
-                "instead of parsing the PDF (D53). The PDF is still hashed and must "
-                "match the artefact's recorded sha256."
+                "instead of parsing the PDF (D53). This is the **default** for a document "
+                "that declares one, so the flag exists to name a different file. The PDF "
+                "is still hashed and must match the artefact's recorded sha256."
+            ),
+        )
+        parser.add_argument(
+            "--from-pdf",
+            dest="from_pdf",
+            action="store_true",
+            help=(
+                "Parse the PDF even though the document declares a reviewed artefact "
+                "(D55). The diagnostic path and the equivalence oracle — a corpus that "
+                "is supposed to come from a review must not fall back to this, so it is "
+                "never the default and never silent."
             ),
         )
         parser.add_argument(
@@ -100,6 +112,7 @@ class Command(BaseCommand):
                 embed=options["embed"],
                 force=options["force"],
                 corpus_path=options.get("corpus_path"),
+                from_pdf=options["from_pdf"],
             )
         except IngestError as error:
             # `CommandError` is what makes the exit status non-zero: a failed ingest

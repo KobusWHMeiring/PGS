@@ -271,13 +271,25 @@ def test_structure_blocks_are_never_segmented(corpus):
 
 #: The measured inventory (`scripts/probe_reader_structure.py`, 2026-10-27): 10 section references
 #: and 29 appendix mentions, 30 of which resolve to a branch and 9 of which cannot.
-EXPECTED_MENTIONS = 39
+#:
+#: Re-measured 2026-10-28 after D55 (P7.1): the ingest now reads SAOSO's reviewed artefact by
+#: default, and the artefact carries each section's printed heading **in its body** where the
+#: PDF path left it in `heading_path` alone. Two headings — `Appendix 4. Table 1` and
+#: `Appendix 4. Table 2`, printed pp. 81 and 83 — therefore read as mentions of `Appendix 4`
+#: that resolve to no single branch (there are two tables). Nothing that used to link stopped
+#: linking: `EXPECTED_LINKS` is unchanged at 30, and the losslessness assertion still runs over
+#: every passage. The two extra are a heading naming its parent, not a broken reference.
+EXPECTED_MENTIONS = 41
 EXPECTED_LINKS = 30
-EXPECTED_PLAIN = 9
+EXPECTED_PLAIN = 11
 
 
 def test_the_shipped_corpus_resolves_as_measured(standard_set):
-    """One ingest (six seconds), three facts: the inventory, the two traps, and losslessness."""
+    """One ingest (six seconds), three facts: the inventory, the two traps, and losslessness.
+
+    No `corpus_path` and no `from_pdf`: this measures the **default** ingest, which since D55
+    reads the reviewed artefact, because that is the corpus the reader and the chatbot see.
+    """
     ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
     document = StandardDocument.objects.get(source_file=CORPUS_SOURCE)
     index = build_reference_index(document)

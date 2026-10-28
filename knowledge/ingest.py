@@ -62,6 +62,14 @@ class IngestError(RuntimeError):
 
 #: The four governed corpus documents (D16). `section_scheme` is what selects the
 #: parser, so adding a standard is a data change plus a parser module — not a migration.
+#:
+#: `corpus_artefact` **declares that this document is served from a reviewed artefact**
+#: (D53, D55) and names the file under `knowledge/corpus/`. A declaration, not a
+#: file-exists probe: D55's question is "is this document *supposed* to come from a
+#: review?", and a probe answers "is there a file lying around?" — the two disagree
+#: exactly when the file is missing, which is the failure the declaration catches. `opp`
+#: and `landscape` gain theirs when P4 and P5 review them; until then they parse their
+#: PDFs, which is a recorded gap and not a silent fallback.
 CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
     "saoso": {
         "kind": StandardDocument.Kind.STANDARD,
@@ -69,6 +77,7 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "title": "SAOSO Standard for Organic Production and Processing",
         "version": "2.1",
         "section_scheme": "saoso",
+        "corpus_artefact": "saoso.md",
     },
     "opp": {
         "kind": StandardDocument.Kind.SOP,
@@ -84,6 +93,7 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         # The document prints no version; an empty string is the honest value.
         "version": "",
         "section_scheme": "heading",
+        "corpus_artefact": "bpp.md",
     },
     "landscape": {
         "kind": StandardDocument.Kind.LANDSCAPE,
@@ -93,6 +103,21 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "section_scheme": "heading",
     },
 }
+
+#: The reviewed artefacts (D53). Repo-relative: `corpus_check` and `corpus_refresh` compare
+#: exactly these files with what a box stored, so the path must not depend on the CWD.
+CORPUS_DIR: Path = Path(settings.BASE_DIR) / "knowledge" / "corpus"
+
+
+def corpus_artifact(doc_key: str | None) -> Path | None:
+    """The reviewed artefact a governed document declares, or `None` (D55).
+
+    In: `doc_key` — a `CORPUS_DOCUMENTS` name, or anything else.
+    Out: the path under `CORPUS_DIR`, whether or not it exists — the caller decides what a
+         missing file means, and for the ingest that is an error.
+    """
+    name = CORPUS_DOCUMENTS.get(doc_key or "", {}).get("corpus_artefact")
+    return CORPUS_DIR / name if name else None
 
 
 @dataclass(frozen=True)
@@ -195,6 +220,7 @@ def ingest_standard(
     provider=None,
     force: bool = False,
     corpus_path: str | Path | None = None,
+    from_pdf: bool = False,
 ) -> IngestReport:
     """Ingest one PDF into one `StandardSet`.
 
@@ -203,9 +229,12 @@ def ingest_standard(
          `embed` — request embeddings (skipped with a warning when no key is present);
          `provider` — an `EmbeddingProvider`, for tests; `force` — replace an already
          ingested document (same sha256) instead of returning the no-op report;
-         `corpus_path` — a reviewed artefact (`knowledge/corpus/<doc>.md`) whose text is
-         used instead of parsing the PDF (D53). The PDF is still hashed, still the source
-         of truth, and must match the artefact's recorded sha256.
+         `corpus_path` — a reviewed artefact (`knowledge/corpus/<doc>.md`) to read the text
+         from instead of the PDF (D53). Defaults to the document's *declared* artefact, so
+         a caller only passes it to name a different one. The PDF is still hashed, still
+         the source of truth, and must match the artefact's recorded sha256;
+         `from_pdf` — parse the PDF instead (D55), the diagnostic path and equivalence
+         oracle. Mutually exclusive with `corpus_path`.
     Out: an `IngestReport`. `created=False` means the bytes were already ingested.
          `layout_pages` names the PDF pages the column transform changed, so the
          operator's log and the tests can see the transform ran rather than inferring
@@ -217,12 +246,21 @@ def ingest_standard(
          hatch for a corpus-built-here change (a curated table, a parser fix) whose
          source bytes are unchanged. It drops the old chunks' `retrieved_chunks` links,
          so run it deliberately rather than as part of a deploy.
-    Fails: `IngestError` for missing metadata or an unknown scheme;
+    Fails: `IngestError` for missing metadata or an unknown scheme, for both sources named
+        at once, and for a **declared artefact that is missing** (D55 — the one failure
+        that must never fall back to the PDF);
         `ExtractionError` when the PDF cannot be read;
         `EmbeddingError` when embeddings were requested and failed. Embedding happens
         **before** the transaction, so a failure writes nothing at all — including no
         deletion under `force`.
     """
+    if corpus_path is not None and from_pdf:
+        raise IngestError(
+            "--from-pdf and --from-corpus are two answers to one question; choose one. "
+            "The artefact is the default for a reviewed document, so --from-pdf is the "
+            "only flag you normally need."
+        )
+
     descriptor = dict(CORPUS_DOCUMENTS.get(doc_key, {})) if doc_key else {}
     if doc_key and doc_key not in CORPUS_DOCUMENTS and not any(
         (kind, title, section_scheme)
@@ -252,6 +290,11 @@ def ingest_standard(
     if not path.exists():
         raise IngestError(f"No such PDF: {path}")
 
+    # Which text of record: the declared artefact (D53, D55) or the PDF. Resolved before
+    # the sha guard so a machine that lost its review cannot report "already ingested"
+    # and serve the old chunks as though nothing were wrong.
+    corpus_path = _resolve_source(doc_key, corpus_path, from_pdf)
+
     digest = sha256_of(path)
     existing = StandardDocument.objects.filter(
         standard_set=standard_set, sha256=digest
@@ -263,6 +306,7 @@ def ingest_standard(
             chunk_count=existing.chunk_count,
             embedded=existing.chunks.exclude(embedding__isnull=True).exists(),
             duplicate_refs={},   # nothing was parsed on this path
+            corpus_digest=existing.corpus_digest,   # what the stored chunks came from
             warnings=(f"already ingested as document #{existing.pk}; nothing written",),
         )
 
@@ -425,6 +469,40 @@ def ingest_standard(
         reflow_pages=rejoined_pages,
         corpus_digest=corpus_digest,
     )
+
+
+def _resolve_source(
+    doc_key: str | None, corpus_path: str | Path | None, from_pdf: bool
+) -> str | Path | None:
+    """Which text of record this ingest reads (D53, D55).
+
+    In: `doc_key` — a `CORPUS_DOCUMENTS` name; `corpus_path` — an artefact named
+        explicitly; `from_pdf` — the caller has asked for the extraction path.
+    Out: the artefact to read the text from, or `None` meaning "parse the PDF".
+    Fails: `IngestError` when a document that **declares** a reviewed artefact has no file
+        at that path. Deliberate (D55): the alternative is a silent fall back to
+        `pdftotext`, which is how a review stops being the text of record while every
+        other guard stays green.
+    """
+    if corpus_path is not None:
+        return corpus_path
+    if from_pdf:
+        return None
+    declared = corpus_artifact(doc_key)
+    if declared is None:
+        return None
+    if not declared.exists():
+        try:
+            shown = declared.relative_to(Path(settings.BASE_DIR)).as_posix()
+        except ValueError:  # a caller pointed CORPUS_DIR elsewhere (a test)
+            shown = str(declared)
+        raise IngestError(
+            f"{shown} is missing, and {doc_key!r} declares it as its reviewed text "
+            "(D55) — the ingest will not fall back to the PDF. Generate and review it "
+            f"with `python scripts/build_corpus.py --doc {doc_key}`, or pass --from-pdf "
+            "to parse the PDF deliberately."
+        )
+    return declared
 
 
 def _relative_source(path: Path) -> str:
