@@ -1,11 +1,15 @@
 # Corpus Canonical Format — Implementation Plan
 
-**Status:** In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.5 and P2.5a landed 2026-10-22**
-(migration `core/0006`, read side `scripts/why_refused.py`); **P6 landed 2026-10-28 for SAOSO**
-(`knowledge/corpus/saoso.md`, 271 sections / 291 artefact chunks / 338 ingested, Appendix 6b open);
-P2–P2.4, P6's 6b and P7 remain
+**Status:** In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.1–P2.4 landed
+2026-10-28** (`corpus_digest` on the row, `corpus_check`, `corpus_refresh`, the deploy report);
+**P2.5 and P2.5a landed 2026-10-22** (migration `core/0006`, read side `scripts/why_refused.py`);
+**P6 landed 2026-10-28 for SAOSO** (`knowledge/corpus/saoso.md`, 271 sections / 291 artefact chunks
+/ 338 ingested, Appendix 6b open); **P7.1 landed 2026-10-28** (ingest fails closed, with one
+amendment — §P7.1).
+**Remaining:** P2.6–P2.8 (`chat_review`, the staff flag, retention), P4 (OPP), P5 (landscape),
+P6's step 4 for Appendices 3, 4 Table 1, 6b and 7, P7.3 (docs) and P7.4 (the box, from artefacts).
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment
-**Last Updated:** 2026-10-22
+**Last Updated:** 2026-10-28
 **PRD:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, extended by section 8)
 **Decisions:** `PGS_PLATFORM_SPEC.md` section 18.3 **D55–D58**
 **Reference:** `knowledge/corpus.py`; `knowledge/corpus/bpp.md`; `scripts/build_corpus.py`;
@@ -275,6 +279,41 @@ purge.
 
 *Fails if:* a doc claims a retention schedule that does not exist.
 
+### P2.1–P2.4 — outcome, 2026-10-28
+
+Built as one slice, because the four are one idea: **drift is visible, and repairing it is a
+decision rather than a side effect.**
+
+| Task | Landed as |
+|---|---|
+| P2.1 | `StandardDocument.corpus_digest` (migration `knowledge/0004`), written by `ingest_standard`. Empty means "parsed from the PDF" — a fact, not a missing value. |
+| P2.2 | `knowledge/drift.py` (`corpus_states()`) + `manage.py corpus_check` — read-only, one row per governed document, exit 1 on drift, naming the fix and never running it. |
+| P2.3 | `manage.py corpus_refresh [--apply]` — a dry run until told otherwise, and it counts the `ChatMessage.retrieved_chunks` rows the re-ingest will drop **before** it drops them. |
+| P2.4 | `deploy/deploy.sh` runs `corpus_check` after `publish_documents`, guarded with `if !` so `set -e` cannot turn a stale corpus into a failed deploy; it never refreshes. `tests/tools/test_deploy_corpus_check.py` holds both halves. |
+
+Two things the task text did not settle, and how they were settled:
+
+1. **A document with no artefact is not drift.** `opp` and `landscape` report `no artefact`
+   and do not change the exit status: they are a recorded gap (P4, P5), and a check that
+   went red for work nobody has done would be ignored by the second person who saw it. The
+   three states that *are* drift say which they are, because the fixes differ.
+2. **The citation-link count is structural.** `citation_links()` walks Django's relation
+   metadata instead of naming `ChatMessage`, because `knowledge` must not import `core`
+   (`build_principles.md` §I). Its only honest test needs a real citation table, so it lives
+   in `core/tests/test_corpus_refresh_links.py`.
+
+`chunks_for_sections()` moved out of `ingest_standard` (both the chunking and the reviewed
+`TABLE_ROWS` replacement) so the expected count in `corpus_check` comes from the code that
+writes chunks. A second implementation of that rule would have been a second answer to "is
+this box current?", and the two would have drifted apart silently.
+
+**Re-measured on this machine, 2026-10-28** (`manage.py corpus_check`, corpus of 2026-10-27):
+`bpp 9/9 drift (built from the PDF)`, `saoso 338/338 drift (built from the PDF)`,
+`opp`/`landscape` `no artefact` — which is the exact state the plan predicted for a corpus
+ingested before P2.1, and the exit status was 1. The local corpus was deliberately **not**
+refreshed: this machine has no `GEMINI_API_KEY`, so an `--apply` here would have silently
+downgraded 385 embedded chunks to lexical-only. That is P7.4's job on the box.
+
 ---
 
 ---
@@ -373,6 +412,24 @@ and are the same shape as 6a.
 **P7.1 — Ingest fails closed (D55).** For a `CORPUS_DOCUMENTS` key with a reviewed artefact, the
 default is the artefact. Missing artefact → `CommandError` naming `scripts/build_corpus.py` and
 `--from-pdf`. `--from-pdf` remains, and remains tested.
+
+**Landing note, 2026-10-28 — one amendment, made because P7.1 is being built before P4/P5.**
+"With a reviewed artefact" is read as **a declaration, not a file-exists probe**:
+`CORPUS_DOCUMENTS[doc_key]["corpus_artefact"]` names the file, and only `saoso` and `bpp`
+declare one today. A probe answers "is there a file lying around?"; the question D55 asks is
+"is this document *supposed* to come from a review?" — and the two disagree exactly when the
+file is missing, which is the failure worth catching. `opp` and `landscape` therefore keep
+parsing their PDFs until P4 and P5 declare theirs, which is a recorded gap rather than a
+silent fallback.
+
+What that changed in the suite is worth recording, because it is the point: ~10 tests that
+ingest `saoso`/`bpp` from the PDF now say `from_pdf=True`. They were always about the
+extraction path; until now nothing distinguished it from the text of record. One measurement
+moved with the corpus — `test_the_shipped_corpus_resolves_as_measured` (39/30/9 → 41/30/11):
+SAOSO's artefact carries each section's printed heading in the body, so `Appendix 4. Table 1`
+and `Table 2` (pp. 81, 83) read as mentions of `Appendix 4`, which names two tables and so
+resolves to neither. No link was lost (`EXPECTED_LINKS` unchanged at 30) and losslessness is
+still asserted per passage.
 
 **P7.2 — `CORPUS_DOCUMENTS` moves to a Django-free module** (PRD section 7.2), so the generator needs
 no settings.

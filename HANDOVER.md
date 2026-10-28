@@ -4,17 +4,64 @@
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
 the answer-coverage session, the budget-and-instrument session, the deployment session,
-the reader-structure session and the corpus-artefact session — **2026-10-28**.
-**Repo state:** `main`, **68 commits ahead of `origin/main`** (see §0h and §3).
-`verify.sh` green — **1237 passed / 1 skipped**, and `python -m pytest tests/e2e -q` green at
+the reader-structure session, the corpus-artefact session and the corpus-drift session —
+**2026-10-28**.
+**Repo state:** `main`, **84 commits ahead of `origin/main`** (see §0h and §3).
+`verify.sh` green — **1265 passed / 1 skipped**, and `python -m pytest tests/e2e -q` green at
 **60**. Both numbers are this tree's: it also carries the test-lane session's *uncommitted*
 work (`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker), which is where the wall time
 went from ~4 min to 65 s.
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **not pushed since `a9fc663`**.
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — thirty-odd commits
-behind, and its corpus is the pre-D52/D53 poppler build (**363 chunks**, 316 SAOSO against Xpdf's
-319), so `uat_seed --check` correctly blocks until plan **P7.4** rebuilds it from artefacts. See §22,
-§0g and `product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — **98 commits**
+behind, and its corpus is the pre-D52/D53 poppler build (**364 chunks**), so `manage.py
+corpus_check` (new: §0f) and `uat_seed --check` both correctly report it as not current until
+plan **P7.4** rebuilds it from artefacts. See §22, §0g and
+`product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
+
+---
+
+## 0f. 2026-10-28 — the corpus can say whether it is current, and the ingest fails closed
+
+**This is the most recent slice.** Plan tasks **P2.1–P2.4** and **P7.1** of
+`product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md`, built as one idea: *drift is
+visible, and repairing it is a decision rather than a side effect.* Nothing about retrieval,
+the reader or a public page changed.
+
+- **`StandardDocument.corpus_digest`** (migration `knowledge/0004`) records the sha256 of the
+  reviewed artefact a corpus was built from, or `""` when the PDF was parsed. Until now that
+  value existed only on `IngestReport` — printed and thrown away — so nothing could compare a
+  box with its review.
+- **`manage.py corpus_check`** — read-only, one row per governed document, exit 1 on drift, and
+  it names the fix instead of running it. Three states are drift and it says which: *built from
+  the PDF*, *the artefact changed since*, *nobody ingested it*. **No artefact is not drift**
+  (`opp`, `landscape` until P4/P5) — a check that went red for work nobody has done gets ignored.
+- **`manage.py corpus_refresh [--apply]`** — a dry run until told otherwise. `--force` deletes
+  the join rows every chat turn stood on, so it counts them first (`citation_links()` walks
+  Django's relation metadata, because `knowledge` may not import `core`) and says the number
+  before `--apply` can spend it.
+- **`deploy/deploy.sh`** runs `corpus_check` after `publish_documents`, guarded with `if !` so
+  `set -e` cannot turn a stale corpus into a failed deploy, and it **never refreshes**: a
+  re-embed of four documents is a decision for a person with a terminal.
+- **The ingest fails closed (D55).** A document that *declares* a reviewed artefact
+  (`CORPUS_DOCUMENTS[key]["corpus_artefact"]` — `saoso`, `bpp`) now reads that file by default;
+  if it is missing the command exits non-zero and writes nothing, naming
+  `scripts/build_corpus.py` and `--from-pdf`. A declaration, not a file-exists probe: the two
+  disagree exactly when the file is gone, which is the failure worth catching.
+- **What moved in the suite:** ~10 tests that ingest `saoso`/`bpp` from the PDF now pass
+  `from_pdf=True` — they were always about the extraction. `test_the_shipped_corpus_resolves_as_measured`
+  re-measured 39/30/9 → **41/30/11**: the artefact carries each section's printed heading in the
+  body, so `Appendix 4. Table 1`/`Table 2` read as mentions of `Appendix 4` (two tables, one name,
+  no single target). No link was lost; `EXPECTED_LINKS` is unchanged at 30.
+- **Judged, not built:** nothing here needs a UAT table of its own. The operator-facing judgement
+  — *do these three commands read clearly on a real box, and does the deploy's warning tell
+  someone what to do?* — is carried by **P7.4**, which runs all of it against the live corpus.
+- **This machine is (correctly) reported as drifting:** `bpp 9/9 · built from the PDF`,
+  `saoso 338/338 · built from the PDF`, `opp`/`landscape` `no artefact`, exit 1. It was **not**
+  refreshed: there is no `GEMINI_API_KEY` here, so `--apply` would have downgraded 385 embedded
+  chunks to lexical-only. That is the box's job, not the laptop's.
+- **Known gap, unchanged:** `knowledge/tests/test_anchors.py::test_every_passage_of_the_real_corpus_resolves_to_itself`
+  skips in both lanes ("no corpus ingested on this instance"), so the D68 anchor guard is not
+  actually in the gate. Worth closing before P7.4.
 
 ---
 

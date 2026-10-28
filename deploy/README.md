@@ -116,8 +116,8 @@ Order, and why the order is the safety:
    --create-db`) against the `pgs_verify` database with **no `.env`** — the only
    environment where "green" means anything;
 2. only then `git pull --ff-only`, `scripts/backup.sh` (a failed backup aborts),
-   `migrate`, `seed_deployment`, `publish_documents`, `collectstatic`,
-   `check --deploy`;
+   `migrate`, `seed_deployment`, `publish_documents`, `corpus_check`,
+   `collectstatic`, `check --deploy`;
 3. sync the nginx site and both units from the repo, `nginx -t` with rollback;
 4. restart `pgs_celery` **then** `pgs_web`, then poll `/health/` through the
    socket until it reports `"status": "ok"`.
@@ -128,13 +128,25 @@ code is still serving and the schema is untouched.
 `deploy.sh` re-executes itself if the pull changed it, so new steps in a newer
 script actually run.
 
+**`corpus_check` reports and never blocks.** It compares each governed document's
+stored `corpus_digest` with the reviewed artefact on disk and prints one row per
+document. A first install has an empty corpus and a box deployed before D53 serves a
+PDF-built one, so the deploy **warns** and carries on — refusing to deploy over a
+corpus that needs a refresh is worse than saying so. It never refreshes: see §4.
+
 ## 4. Ingest the corpus — once, not per deploy
 
 `/ask/` answers only from an ingested corpus, and ingestion makes embedding calls
-(340 chunks at the time of writing), so it is a deliberate step rather than part of
-every deploy. It is idempotent on each PDF's sha256.
+(338 SAOSO chunks plus the other three at the time of writing), so it is a deliberate
+step rather than part of every deploy. It is idempotent on each PDF's sha256.
 
-**Set `GEMINI_API_KEY` first.** Ingesting without it still writes all 340 chunks —
+**A document with a reviewed artefact is built from that artefact** (D53/D55).
+`saoso` and `bpp` declare one under `knowledge/corpus/`, so `--doc saoso` reads the
+reviewed text; if the file is missing the command **fails** rather than falling back
+to the PDF. `--from-pdf` is the deliberate override — the diagnostic path and the
+equivalence oracle. `opp` and `landscape` have no artefact yet and parse their PDFs.
+
+**Set `GEMINI_API_KEY` first.** Ingesting without it still writes every chunk —
 with `embedding = NULL` — and because the sha256 then matches, a later run reports
 "already ingested" and writes nothing. Retrieval stays lexical-only until you
 re-ingest with `--force`, which is a full re-embed. Check the key is present before
@@ -155,19 +167,41 @@ sudo -u carbonplanner bash -c 'set -a; . /home/carbonplanner/apps/pgs/.env; set 
 #   --doc landscape --file "pgs_docs/PGS Certification landscape_Final.pdf"
 ```
 
-Confirm afterwards (expect `340 chunks`, `0 duplicate section_refs`,
-`lexical_only=False`):
+The command prints `source=corpus` or `source=pdf`, which is the quickest way to see
+which text of record a run actually read.
+
+### Is this box current? `corpus_check` and `corpus_refresh`
+
+A deploy **reports** the corpus and never repairs it. Repairing it is two commands,
+and the first one is safe:
 
 ```bash
-sudo -u carbonplanner bash -c 'set -a; . /home/carbonplanner/apps/pgs/.env; set +a; \
-  cd /home/carbonplanner/apps/pgs && venv/bin/python manage.py shell -c "
-from knowledge.models import DocumentChunk as C
-print(C.objects.count(), C.objects.filter(embedding__isnull=True).count())"'
+# read-only: one row per governed document, exit 1 on drift
+... manage.py corpus_check
+
+# read-only too: says what it would re-ingest, and how many chat citation links
+# the re-ingest will drop before it drops them
+... manage.py corpus_refresh
+
+# and this is the one that writes: re-ingest each drifted document from its
+# artefact, with --force, re-embedding every chunk
+... manage.py corpus_refresh --apply
 ```
 
-Re-run with `--force` only when the corpus itself changed (a parser fix, a curated
-table). Without `--force` a second run reports "already ingested" and writes
-nothing.
+Drift is three different things and the report names which: chunks built from the PDF
+(`these chunks were built from the PDF`), a reviewed artefact that changed after the
+corpus was built (`has changed since`), and a document nobody ingested. A document with
+no artefact at all — `opp`, `landscape` until P4/P5 — is reported as `no artefact` and
+is **not** drift.
+
+`--force` deletes the document, its chunks, and every `ChatMessage.retrieved_chunks`
+row that pointed at them. Each chat turn's stored grounding snapshot survives (P2.5a),
+and `manage.py relink_evidence --write` turns those snapshots back into links for the
+passages whose text did not change. That is why the refresh is never part of a deploy.
+
+Re-run with `--force` — or `corpus_refresh --apply` — only when the corpus itself
+changed (a parser fix, a curated table). Without it a second run reports "already
+ingested" and writes nothing.
 
 ## 5. The API key and the admin user
 

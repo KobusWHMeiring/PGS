@@ -55,9 +55,9 @@ class Command(BaseCommand):
             chunks = (
                 f"{state.stored_chunks} / {state.expected_chunks}"
                 if state.expected_chunks is not None
-                else "—"
+                else "-"
             )
-            artefact = "—" if state.artefact is None else state.artefact.name
+            artefact = "-" if state.artefact is None else state.artefact.name
             line = f"{state.doc_key:<10} {state.state:<18} {chunks:>13}  {artefact}"
             if state.is_broken:
                 self.stdout.write(self.style.ERROR(line))
