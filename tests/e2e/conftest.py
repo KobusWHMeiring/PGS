@@ -94,3 +94,54 @@ def pytest_configure(config):
     import os
 
     os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
+
+
+@pytest.fixture
+def reader_corpus(db):
+    """A tiny ingested corpus behind `/documents/saoso-standard-v2.1/read/`.
+
+    The reader is the one public route this suite never rendered, because it needs text and the
+    others do not — and that gap is where a layout defect lived for an afternoon: the missing-
+    sections note was inserted as a third child of the two-column `.reader__body` grid, which
+    wrapped the passages to the next row and left the sticky tree on top of them
+    (`tests/e2e/test_reader_layout.py` is the guard).
+
+    This is the second and last place the suite touches the ORM, for the reason
+    `published_documents` gives: a route with no data renders a page that passes every assertion
+    while measuring nothing.
+    """
+    from knowledge.models import DocumentChunk, StandardDocument, StandardSet
+
+    corpus, _ = StandardSet.objects.get_or_create(
+        code="outeniqua", defaults={"label": "Outeniqua", "is_default": True}
+    )
+    document, _ = StandardDocument.objects.get_or_create(
+        standard_set=corpus,
+        source_file="pgs_docs/saoso-version-2.1-2026.pdf",
+        defaults={
+            "kind": StandardDocument.Kind.STANDARD,
+            "issuing_body": "SAOSO",
+            "title": "SAOSO Standard",
+            "version": "2.1",
+            "sha256": "e" * 64,
+            "section_scheme": "saoso",
+            "toc": [
+                {"part": "A", "kind": "SECTION", "label": "1", "title": "Introduction", "printed_page": 4},
+                {"part": "B", "kind": "SECTION", "label": "5", "title": "Animal Husbandry", "printed_page": 41},
+            ],
+        },
+    )
+    for section_ref, page, text in (
+        (
+            "S5.1.3",
+            41,
+            "a  Sufficient free movement\n\n"
+            "b  Access to pasture during the grazing season\n\n"
+            "c  Shelter from wind and rain",
+        ),
+        ("S5.1.9", 42, "Animals must have access to pasture during the grazing season."),
+    ):
+        DocumentChunk.objects.get_or_create(
+            document=document, section_ref=section_ref, defaults={"page": page, "text": text}
+        )
+    return document
