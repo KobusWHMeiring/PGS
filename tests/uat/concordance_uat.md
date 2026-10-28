@@ -79,6 +79,7 @@ still open behind it.
 finger on the sentence you just read in the answer — or does it feel like being dropped near it?*
 And, with the tab open: *is it obvious the answer is still there, or did opening a tab lose the
 reader's place?* A yes to the first and a no to the second is a pass.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -94,6 +95,7 @@ appendix's first row ("Farmyard manure, slurry and urine").
 in front of you?* This is the check that separates a real locator from a link that lands in the right
 neighbourhood; a reader who has to hunt through 30 rows to find the row they were quoted will not
 trust the next citation.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -109,6 +111,7 @@ behind a control; tapping that control shows all 22 branches; choosing one loads
 section an obvious action rather than a hunt?* Then, throttled: *does a branch arrive quickly enough
 that a reader would wait for a second one?* Layout and speed at width are judgements; the absence of
 a horizontal scroll is measured and not your problem.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -123,6 +126,7 @@ covers — numbered sections, appendices of permitted substances, and a reserved
 **Judgement:** *Judged by the second person: does the contents list read as the shape of a standard,
 or as a list of headings someone extracted?* If they cannot say what section 5 or Appendix 2 is
 **for** after using it, the tree is a table of contents in name only.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -138,6 +142,7 @@ are not in the corpus.
 **Judgement:** *Does that read as a boundary the group is drawing deliberately, or as an apology for
 an unfinished page?* This is the same test as a Waiting card: the group must be able to say what it
 does not have without sounding broken.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -151,6 +156,7 @@ fertilizers and soil conditioners (not "Farmyard manure, slurry and urine").
 **Judgement:** *Can you tell, from the name alone, whether this is the branch you want?* A name that
 describes the first thing inside the branch rather than the branch is worse than no name: it teaches
 the reader to distrust the whole list.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -165,6 +171,7 @@ shows the document, starting at its first branch.
 **Judgement:** *Do both read as honest states rather than as failures of the site?* A citation that
 404s tells a reader the document is gone; a citation that lands on a wall of text tells them nobody
 was thinking. Both of those are worse than an explanation.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -184,6 +191,7 @@ are reflowed.
 The markers are the browser's list markers, not characters added to the text — the corpus prints a
 bare `a` — and whether that reads as honest is a human call. A reader who has the PDF open should be
 able to follow the same clause in both without losing their place.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -205,6 +213,7 @@ empty carry a muted `no condition printed` rather than silence, and no row reads
 farmer looks up — or as a list of standalone inputs?* And specifically: *does a row with no condition
 read as the paper declining to permit something, or does it read as a blank the site forgot to
 fill?* If the second, the label or the legend is wrong, not the data.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -230,6 +239,7 @@ from stays open behind each new tab.
 rather than guessing?* The Part A case is the one to judge hardest: a reader who lands on *Organic
 Ecosystems* (Section 2) instead of an explanation has been told something false by a link. Then:
 *are there so many links that the clause is now hard to read?*
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -250,6 +260,7 @@ occurrence.
 here?" — without losing the clause they were reading?* And: *does the clause still read as a clause
 with the links in it, or is it now link-studded?* This is the judgement that decides whether the
 feature stays.
+**Result:** PASS · Kobus (Product) · 2026-10-28
 
 ---
 
@@ -260,3 +271,23 @@ feature stays.
 | Product owner | | | | |
 | PGS administrator | | | | |
 | Second person (Scenario 4) | | | | |
+
+### Per-scenario results
+
+| Scenario | Category | Result | Reviewer | Role | Date |
+|---|---|---|---|---|---|
+| 1. Arriving at the line |  | PASS | Kobus | Product | 2026-10-28 |
+| 2. A substance row, not the first row |  | PASS | Kobus | Product | 2026-10-28 |
+| 3. 390 px, in a farm office |  | PASS | Kobus | Product | 2026-10-28 |
+| 4. The shape of the standard |  | PASS | Kobus | Product | 2026-10-28 |
+| 5. The page is honest about what it does not hold |  | PASS | Kobus | Product | 2026-10-28 |
+| 6. Two branch names |  | PASS | Kobus | Product | 2026-10-28 |
+| 7. A document with no text, and a link that is stale |  | PASS | Kobus | Product | 2026-10-28 |
+| 8. A clause reads as the document prints it |  | PASS | Kobus | Product | 2026-10-28 |
+| 9. The appendix reads as the paper's table |  | PASS | Kobus | Product | 2026-10-28 |
+| 10. A reference goes somewhere |  | PASS | Kobus | Product | 2026-10-28 |
+| 11. A definition is a click away |  | PASS | Kobus | Product | 2026-10-28 |
+
+**Results:** 11 PASS · 0 FAIL · 0 N/A — signed by Kobus (Product).
+
+**Signed against:** commit `4e02d71` (modified), database `pgs (dev), 366 chunks, Xpdf 4.00`, generated 2026-10-28.
