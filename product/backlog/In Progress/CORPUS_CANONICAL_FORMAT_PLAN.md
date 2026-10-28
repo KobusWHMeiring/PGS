@@ -6,8 +6,10 @@
 **P6 landed 2026-10-28 for SAOSO** (`knowledge/corpus/saoso.md`, 271 sections / 291 artefact chunks
 / 338 ingested, Appendix 6b open); **P7.1 landed 2026-10-28** (ingest fails closed, with one
 amendment — §P7.1).
-**Remaining:** P2.6–P2.8 (`chat_review`, the staff flag, retention), P4 (OPP), P5 (landscape),
-P6's step 4 for Appendices 3, 4 Table 1, 6b and 7, P7.3 (docs) and P7.4 (the box, from artefacts).
+**Remaining:** P2.6–P2.8 (`chat_review`, the staff flag, retention), **P4 (OPP) — measured blocked
+2026-10-28, see its landing note and `product/design/d71_p4_and_the_generator.html`**, P5
+(landscape), P6's step 4 for Appendices 3, 4 Table 1, 6b and 7, P7.3 (docs) and P7.4 (the box,
+from artefacts).
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment
 **Last Updated:** 2026-10-28
 **PRD:** `CORPUS_CANONICAL_FORMAT_PRD.md` (D53, extended by section 8)
@@ -347,6 +349,29 @@ quotes contiguous and audited. `MAX_EDITS` set from the review, not guessed.
 
 **Gate:** `ingest_standard --doc opp --from-corpus` produces the **same** `(section_ref, anchor,
 page, heading_path)` set as `--from-pdf`, and the cardinality test still passes.
+
+**Blocked as written — measured 2026-10-28, before spending a session on it.** Step 1 above does
+not work: `scripts/build_corpus.py:290` assigns `keep = is_page_furniture` in the **generic** branch
+(the SAOSO branch one line up negates it, `keep = lambda line: not is_furniture(line)`), and the
+writer keeps a line only when `keep()` is true. So every document without `body_lines()` — the OPP,
+the landscape and the BPP — generates a draft of page numbers and blank lines and is otherwise
+thrown away. `--doc opp` therefore exits 0 with 2,742 characters against the document's 29,203, and
+`--doc bpp` dies on its own reviewed edit (`matched 0 times in the draft`). `git log -S` puts the
+inversion in `e6f4464`, the SAOSO artefact commit; SAOSO is the one document with `body_lines()`, so
+nothing exercised the other branch, and **no test calls the generator at all** — P3.1's *Fails if*
+clause was written and never implemented.
+
+With the line negated (measured in memory, tree unchanged) the OPP draft is 30,191 characters, 28
+sections, **30 chunks** (the PDF path's count), **28 of 28 sections text-identical** to the PDF path
+and 66 `●` bullets intact — so the review queue is empty and P4 is a verification pass, not a
+correction pass. It fails the gate above on **one field**: `heading_path` agrees 0 of 28 times
+because the artefact names each section and the OPP parser names the part — the same disagreement
+P6 settled for SAOSO by teaching `SaosoParser` to include the section.
+
+Also unmeasured until now: once fixed, the **BPP does not regenerate cleanly** (45 diff lines; 12
+repeated `The Principle Of Health.` side labels against 4 in the committed file), so P3.1's gate
+needs a furniture rule for the generic path before it can be green. The choice of what to do first is
+D71 (`product/design/d71_p4_and_the_generator.html`, four options, one recommendation).
 
 ---
 

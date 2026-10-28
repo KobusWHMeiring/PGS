@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-28 17:15
+> Generated: 2026-10-28 18:55
 
 ## Ready (up next)
 

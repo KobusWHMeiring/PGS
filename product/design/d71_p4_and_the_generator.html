@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where the corpus work stands — and what P4 actually is</title>
+<!-- Exploration artifact for product/design/ (pgs-writing-explorations).
+     Self-contained: no CDN, no build step, no external font, no network.
+     The decision it serves: what the next corpus slice is, now that P4's first step
+     has been measured and does not work. Export produces a D71 row for SPEC §18.3. -->
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --bad:             #7d2f2a;
+    --bad-soft:        #f6e7e5;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px 140px; }
+  a { color: var(--accent); }
+
+  /* ---------- sticky bar ---------- */
+  .bar {
+    position: sticky; top: 0; z-index: 40;
+    background: rgba(244,246,242,.94);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--surface-high);
+    box-shadow: var(--shadow-sticky);
+  }
+  .bar__inner {
+    max-width: 980px; margin: 0 auto;
+    display: flex; align-items: center; gap: .5rem;
+    padding: .5rem 20px;
+  }
+  .bar__brand { font-weight: 700; font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .bar__links { display: flex; gap: .15rem; flex-wrap: wrap; flex: 1; }
+  .bar__links a {
+    font-size: .78rem; text-decoration: none; color: var(--muted);
+    padding: .3rem .5rem; border-radius: 8px;
+    white-space: nowrap; flex: 0 0 auto;
+  }
+  .bar__links a:hover { background: var(--surface-low); color: var(--text); }
+  button { font: inherit; cursor: pointer; border-radius: 9px; border: 1px solid var(--surface-high); background: var(--surface); color: var(--text); padding: .38rem .7rem; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.ghost { background: transparent; }
+  button.tiny { font-size: .78rem; padding: .3rem .55rem; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 2.6rem 0 1.4rem; }
+  .eyebrow { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  h1 { font-size: clamp(1.7rem, 4.2vw, 2.5rem); line-height: 1.15; margin: .5rem 0 .8rem; letter-spacing: -.015em; }
+  .lede { font-size: 1.06rem; color: #33403a; max-width: 62ch; }
+  .question {
+    margin: 1.4rem 0 0; padding: 1.05rem 1.15rem;
+    background: var(--accent-soft); border: 1px solid var(--accent-line);
+    border-radius: var(--radius-lg);
+  }
+  .question .q-label { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .question p { margin: .35rem 0 0; font-size: 1.1rem; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.1rem; }
+  .chip {
+    font-size: .78rem; padding: .28rem .6rem; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--surface-high); color: #33403a;
+  }
+  .chip b { font-variant-numeric: tabular-nums; }
+  .chip--ok { background: var(--accent-soft); border-color: var(--accent-line); }
+  .chip--warn { background: var(--warn-soft); border-color: #e7d6bb; }
+
+  /* ---------- sections ---------- */
+  section { padding: 2.2rem 0 1rem; border-top: 1px solid var(--surface-high); }
+  section:first-of-type { border-top: 0; }
+  /* Anchor jumps must clear the sticky bar, or a nav link lands with its heading under it. */
+  section[id], .option[id] { scroll-margin-top: 7.5rem; }
+  h2 { font-size: 1.28rem; margin: 0 0 .2rem; letter-spacing: -.01em; }
+  h2 .num { color: var(--muted); font-weight: 500; margin-right: .5rem; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 1.02rem; margin: 1.5rem 0 .4rem; }
+  h4 { font-size: .92rem; margin: 1.1rem 0 .3rem; }
+  p, li { max-width: 78ch; }
+  .sub { color: var(--muted); font-size: .92rem; margin: .1rem 0 1rem; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: var(--radius-lg); padding: 1rem 1.1rem; box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: .8rem; }
+  .card--warn { border-color: #e7d6bb; background: var(--warn-soft); }
+  .card--bad { border-color: #e0c9c6; background: var(--bad-soft); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* ---------- evidence labels ---------- */
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: .68rem;
+    letter-spacing: .04em; text-transform: uppercase; padding: .1rem .38rem;
+    border-radius: 5px; vertical-align: .12em; margin-right: .3rem;
+    border: 1px solid var(--surface-high); background: var(--surface-low); color: #3c4a42;
+  }
+  .tag--measured { background: var(--accent-soft); border-color: var(--accent-line); color: #26523c; }
+  .tag--read { background: #eef1f6; border-color: #ccd6e4; color: #33465e; }
+  .tag--plan { background: var(--warn-soft); border-color: #e7d6bb; color: #6d4816; }
+  .legend { display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; margin: .7rem 0 0; font-size: .86rem; color: #3c4a42; }
+
+  code, pre { font-family: var(--mono); }
+  code { font-size: .88em; background: var(--surface-low); padding: .06em .3em; border-radius: 4px; }
+  pre {
+    background: #1e2a24; color: #e8efe9; padding: .85rem 1rem; border-radius: var(--radius-lg);
+    overflow-x: auto; font-size: .8rem; line-height: 1.5; margin: .7rem 0;
+  }
+  pre .c { color: #9fb3a6; }
+  pre .bad { color: #f0b4ac; }
+  pre .good { color: #b6e0c4; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius-lg); overflow: hidden; margin: .8rem 0; font-size: .9rem; }
+  caption { text-align: left; font-size: .8rem; color: var(--muted); padding-bottom: .35rem; }
+  th, td { text-align: left; padding: .5rem .65rem; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { background: var(--surface-low); font-size: .76rem; text-transform: uppercase; letter-spacing: .05em; color: #3c4a42; font-weight: 700; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .state { font-weight: 600; white-space: nowrap; }
+  .state--done { color: #26523c; }
+  .state--open { color: var(--warn); }
+  .state--blocked { color: var(--bad); }
+
+  /* ---------- pipelines ---------- */
+  .pipe { display: flex; flex-wrap: wrap; align-items: stretch; gap: .35rem; margin: .8rem 0 .3rem; }
+  .step {
+    flex: 1 1 130px; min-width: 120px;
+    background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: 10px; padding: .55rem .6rem; font-size: .82rem;
+  }
+  .step b { display: block; font-size: .78rem; letter-spacing: .02em; }
+  .step span { color: var(--muted); font-size: .74rem; }
+  .step--broke { border-color: #d9bdb9; background: var(--bad-soft); }
+  .step--ok { border-color: var(--accent-line); background: var(--accent-soft); }
+  .step--warn { border-color: #e7d6bb; background: var(--warn-soft); }
+  .arrow { align-self: center; color: var(--muted); font-size: .8rem; font-family: var(--mono); padding: 0 .1rem; }
+  .pipe-legend { font-size: .78rem; color: var(--muted); margin: .1rem 0 .9rem; }
+  .pipe-legend b { color: #3c4a42; }
+
+  /* two-path divider diagram */
+  .paths { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin: .9rem 0 .4rem; }
+  @media (max-width: 760px) { .paths { grid-template-columns: 1fr; } }
+  .path { background: var(--surface); border: 1px solid var(--surface-high); border-radius: var(--radius-lg); padding: .8rem .9rem; }
+  .path h4 { margin: 0 0 .2rem; }
+  .path ol { margin: .4rem 0 0; padding-left: 1.15rem; font-size: .85rem; }
+  .path li + li { margin-top: .3rem; }
+  .path--ok { border-color: var(--accent-line); }
+  .path--bad { border-color: #d9bdb9; }
+  .verdict { font-size: .8rem; font-weight: 700; margin-top: .5rem; }
+  .path--ok .verdict { color: #26523c; }
+  .path--bad .verdict { color: var(--bad); }
+
+  /* ---------- options ---------- */
+  .option {
+    background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: var(--radius-xl); padding: 1.05rem 1.15rem; margin: .9rem 0;
+    box-shadow: var(--shadow);
+  }
+  .option--picked { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow); }
+  .option__head { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
+  .option__id {
+    font-family: var(--mono); font-size: .8rem; font-weight: 700;
+    background: var(--accent-soft); color: #26523c; border: 1px solid var(--accent-line);
+    border-radius: 6px; padding: .05rem .4rem;
+  }
+  .option__title { font-weight: 700; font-size: 1.02rem; }
+  .option__tag { font-size: .78rem; color: var(--muted); }
+  .fa { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: .7rem; }
+  @media (max-width: 760px) { .fa { grid-template-columns: 1fr; } }
+  .fa h4 { margin: 0 0 .25rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
+  .fa--for h4 { color: #26523c; }
+  .fa--against h4 { color: var(--bad); }
+  .fa ul { margin: 0; padding-left: 1.1rem; font-size: .87rem; }
+  .fa li + li { margin-top: .3rem; }
+
+  /* ---------- matrix ---------- */
+  .matrix td:first-child { font-weight: 600; }
+  .matrix { min-width: 620px; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-lg); }
+  .yes { color: #26523c; font-weight: 700; }
+  .no { color: var(--bad); font-weight: 700; }
+  .part { color: var(--warn); font-weight: 700; }
+
+  .callout { border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 var(--radius-lg) var(--radius-lg) 0; padding: .8rem 1rem; margin: .9rem 0; }
+  .callout--warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout--bad { border-left-color: var(--bad); background: var(--bad-soft); }
+  .callout p:last-child { margin-bottom: 0; }
+  blockquote { margin: .8rem 0; padding: .1rem 0 .1rem 1rem; border-left: 3px solid var(--surface-high); color: #3c4a42; font-size: .92rem; }
+
+  /* ---------- decision ---------- */
+  .decide {
+    background: var(--surface); border: 2px solid var(--accent-line);
+    border-radius: var(--radius-xl); padding: 1.2rem; box-shadow: var(--shadow);
+  }
+  fieldset { border: 0; margin: 0; padding: 0; }
+  .opt-row {
+    display: flex; gap: .7rem; align-items: flex-start;
+    padding: .7rem .8rem; border: 1px solid var(--surface-high); border-radius: 12px;
+    margin-bottom: .5rem; background: var(--surface); cursor: pointer;
+  }
+  .opt-row:hover { background: var(--surface-low); }
+  .opt-row input { margin-top: .25rem; }
+  .opt-row b { font-size: .92rem; }
+  .opt-row span { display: block; font-size: .82rem; color: var(--muted); }
+  textarea {
+    width: 100%; min-height: 110px; resize: vertical; font: inherit; font-size: .92rem;
+    padding: .7rem .8rem; border-radius: 12px; border: 1px solid var(--surface-high);
+    background: var(--surface); color: var(--text);
+  }
+  .saved { font-size: .78rem; color: var(--muted); opacity: 0; transition: opacity .2s; }
+  .saved.on { opacity: 1; }
+  .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; align-items: center; }
+  .spacer { flex: 1; }
+
+  dialog {
+    border: 0; border-radius: var(--radius-xl); padding: 0; width: min(760px, 94vw);
+    box-shadow: 0 20px 60px -20px rgba(0,0,0,.4); background: var(--surface); color: var(--text);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.45); }
+  .dlg-head { padding: 1rem 1.1rem .5rem; }
+  .dlg-head h3 { margin: 0; }
+  .dlg-head p { margin: .2rem 0 0; font-size: .85rem; color: var(--muted); }
+  dialog textarea { min-height: 340px; font-family: var(--mono); font-size: .78rem; border-radius: 0; border: 0; border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high); }
+  .dlg-foot { display: flex; gap: .5rem; padding: .7rem 1.1rem 1rem; flex-wrap: wrap; }
+
+  footer { padding: 2rem 0 0; color: var(--muted); font-size: .82rem; border-top: 1px solid var(--surface-high); margin-top: 2rem; }
+  footer code { background: var(--surface-low); }
+
+  @media (max-width: 700px) {
+    .bar__inner { flex-wrap: wrap; gap: .35rem; padding: .45rem 14px; }
+    .bar__brand { font-size: .72rem; }
+    .bar__links { order: 3; flex: 1 0 100%; width: 100%; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+    section[id], .option[id] { scroll-margin-top: 5.5rem; }
+    .wrap { padding: 0 14px 100px; }
+    table { font-size: .82rem; }
+    th, td { padding: .42rem .45rem; }
+  }
+
+  @media print {
+    @page { margin: 14mm; }
+    body { background: #fff; }
+    .bar, dialog, .actions, .saved { display: none !important; }
+    .wrap { max-width: none; padding: 0; }
+    .option, .card, .decide, table { box-shadow: none; break-inside: avoid; }
+    section { break-inside: auto; }
+    a { color: inherit; text-decoration: none; }
+    pre { background: #f2f2f0; color: #1c2620; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar__inner">
+    <span class="bar__brand">PGS &middot; corpus</span>
+    <nav class="bar__links">
+      <a href="#truth">1 &middot; What is true</a>
+      <a href="#shape">2 &middot; Shape</a>
+      <a href="#options">3 &middot; Options</a>
+      <a href="#evidence">4 &middot; For / against</a>
+      <a href="#rules">5 &middot; Rules</a>
+      <a href="#compare">6 &middot; Matrix</a>
+      <a href="#recommend">7 &middot; Recommendation</a>
+      <a href="#decide">8 &middot; Decide</a>
+    </nav>
+    <button class="tiny" id="printBtn">Print</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Outeniqua PGS &middot; corpus canonical format &middot; exploration &middot; 2026-10-28</div>
+    <h1>Where the corpus work stands &mdash; and what P4 actually is</h1>
+    <p class="lede">
+      The drift slice landed today: a deployment can now tell whether its corpus matches the
+      review that produced it, and the ingest refuses to fall back to the PDF. The plan's next
+      task is <strong>P4, the OPP artefact</strong>. I ran its first step before recommending
+      it, and the first step does not work. This page is what I found, the four ways forward,
+      and one recommendation.
+    </p>
+
+    <div class="question">
+      <div class="q-label">The question</div>
+      <p>P4 is written as &ldquo;generate the OPP draft, review it, declare the edits&rdquo;. The
+        generator produces an empty draft for every document except SAOSO. So: <em>what is the
+        next slice</em> &mdash; repair and review, review anyway, deploy the box, or settle the
+        table-of-contents dependency first?</p>
+    </div>
+
+    <div class="chips">
+      <span class="chip chip--ok">gate <b>1265</b> passed / <b>1</b> skipped</span>
+      <span class="chip chip--ok">verify.sh green</span>
+      <span class="chip">documents converted <b>2</b> of 4</span>
+      <span class="chip chip--warn">P4 step 1 <b>broken</b> (measured)</span>
+      <span class="chip chip--warn">box <b>98</b> commits behind</span>
+    </div>
+  </header>
+
+  <section id="how">
+    <h2><span class="num">0</span>How to read this</h2>
+    <p class="sub">An execution decision, not new product scope. Nothing here proposes a change to
+      what the product says; it is about which work happens next and what that work really costs.</p>
+    <div class="legend">
+      <span><span class="tag tag--measured">measured</span>I ran it today; the command is printed.</span>
+      <span><span class="tag tag--read">read</span>quoted from a file, with <code>file:line</code>.</span>
+      <span><span class="tag tag--plan">plan</span>what a plan or PRD claims &mdash; claims are not evidence.</span>
+    </div>
+    <div class="callout">
+      <p>Every claim below that could be checked was checked, including the ones that would have
+        been convenient to assume. Where I could not check something, it says so.</p>
+      <p><strong>Five minutes?</strong> Read the question above, then
+        <a href="#recommend">Part 7</a> and <a href="#decide">Part 8</a>. Parts 1&ndash;6 are the
+        evidence those two stand on.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ PART 1 -->
+  <section id="truth">
+    <h2><span class="num">1</span>What is actually true</h2>
+    <p class="sub">The plan's board, the slice that landed today, the corpus those commands
+      protect, and the box that is not running any of it yet.</p>
+
+    <h3>1.1 The board</h3>
+        <div class="scroll">
+<table>
+      <caption><span class="tag tag--read">read</span> <code>product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md</code> status line, cross-checked against the working tree.</caption>
+      <thead>
+        <tr><th>Task</th><th>What it is</th><th>State</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>P1</td><td>The gate reads committed page fixtures; the extractor is poisoned</td><td class="state state--done">landed 10-22</td></tr>
+        <tr><td>P2.1&ndash;P2.4</td><td><code>corpus_digest</code>, <code>corpus_check</code>, <code>corpus_refresh</code>, the deploy report</td><td class="state state--done">landed 10-28</td></tr>
+        <tr><td>P2.5 / P2.5a</td><td>Attribution, stored citations, refusal checks, grounding snapshot</td><td class="state state--done">landed 10-22</td></tr>
+        <tr><td>P2.6 &middot; P2.7</td><td><code>chat_review</code>, the staff flag for a wrong-but-grounded answer</td><td class="state state--open">not built</td></tr>
+        <tr><td>P2.8</td><td>Retention: decision recorded, no purge job</td><td class="state state--done">decision only</td></tr>
+        <tr><td>P3</td><td>Edits become replayable (<code>build_corpus.py</code> applies <code>CORPUS_EDITS</code>)</td><td class="state state--blocked">code yes, gate false today</td></tr>
+        <tr><td><strong>P4</strong></td><td><strong>The OPP artefact &mdash; 15 pages, the rehearsal for landscape</strong></td><td class="state state--blocked"><strong>next, and blocked</strong></td></tr>
+        <tr><td>P5</td><td>The landscape artefact &mdash; 10 pages</td><td class="state state--open">not started</td></tr>
+        <tr><td>P6</td><td>The SAOSO artefact + Appendix 6a rows</td><td class="state state--done">landed 10-28, step 4 open</td></tr>
+        <tr><td>P6b</td><td>Appendix 6b's table rows</td><td class="state state--blocked">needs a product decision</td></tr>
+        <tr><td>P7.1</td><td>The ingest fails closed (D55)</td><td class="state state--done">landed 10-28</td></tr>
+        <tr><td>P7.3</td><td>Docs: <code>HANDOVER</code> §0f, <code>deploy/README</code> §3&ndash;4</td><td class="state state--done">partly</td></tr>
+        <tr><td>P7.4</td><td>The box rebuilt from artefacts</td><td class="state state--blocked">open, gate now impossible</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>1.2 What landed today &mdash; the drift slice</h3>
+    <p>Four commits: the row records its review, the ingest fails closed, a deployment can tell
+      whether it is current, and the docs. The three commands an operator now has:</p>
+    <pre><span class="c"># read-only, exit 1 on drift, names the fix and never runs it</span>
+<span class="good">$</span> python manage.py corpus_check
+
+<span class="c"># read-only, counts the chat citation links a --force re-ingest would drop</span>
+<span class="good">$</span> python manage.py corpus_refresh
+
+<span class="c"># the one that writes: re-ingest each drifted document from its artefact</span>
+<span class="good">$</span> python manage.py corpus_refresh --apply
+</pre>
+    <p><span class="tag tag--measured">measured</span> on this machine's own corpus
+      (ingested 2026-10-27, before the digest column existed):</p>
+    <pre>corpus set: outeniqua (4 governed document(s))
+
+document   state                     chunks  artefact
+bpp        drift                      9 / 9  bpp.md
+           these chunks were built from the PDF
+landscape  no artefact                    -  -
+opp        no artefact                    -  -
+saoso      drift                  338 / 338  saoso.md
+           these chunks were built from the PDF
+
+corpus is NOT current: bpp, saoso      <span class="c"># exit 1</span></pre>
+    <p class="sub">It was <em>not</em> refreshed: this laptop has no <code>GEMINI_API_KEY</code>, so
+      <code>--apply</code> would have silently downgraded 385 embedded chunks to lexical-only.
+      That is the box's job (P7.4), not the laptop's.</p>
+
+    <h3>1.3 The corpus those commands protect</h3>
+    <div class="grid2">
+      <div class="card">
+        <h4>Text of record</h4>
+        <p style="margin:.2rem 0;font-size:.9rem">Two of four documents have a reviewed artefact on disk:</p>
+            <div class="scroll">
+<table style="margin:.3rem 0">
+          <tr><td><code>saoso.md</code></td><td class="num">338 chunks</td></tr>
+          <tr><td><code>bpp.md</code></td><td class="num">9 chunks</td></tr>
+          <tr><td><code>opp</code> &mdash; PDF path</td><td class="num">30 chunks</td></tr>
+          <tr><td><code>landscape</code> &mdash; PDF path</td><td class="num">8 chunks</td></tr>
+          <tr><td><strong>total</strong></td><td class="num"><strong>385</strong></td></tr>
+        </table>
+    </div>
+      </div>
+      <div class="card">
+        <h4>What "converted" buys</h4>
+        <ul style="margin:.2rem 0 0;padding-left:1.1rem;font-size:.9rem">
+          <li>The text is a reviewed file in git, so a diff is the review.</li>
+          <li>The PDF's <code>pdftotext</code> build stops changing what the product answers.</li>
+          <li><code>corpus_check</code> can compare a box with the review.</li>
+          <li>A missing artefact stops the ingest instead of falling back (D55).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>1.4 The box</h3>
+    <p><span class="tag tag--read">read</span> Live at <code>organicguarantee.africa</code>, commit
+      <code>206f35f</code> &mdash; <strong>98 commits behind</strong> <span class="tag tag--measured">measured</span>
+      <code>git rev-list --count 206f35f..HEAD</code>. Its corpus is the pre-D52/D53 poppler build
+      (364 chunks), so it serves two documents' worth of text nobody reviewed and will now, correctly,
+      report itself as drifting.</p>
+  </section>
+
+  <!-- ============================================================ PART 2 -->
+  <section id="shape">
+    <h2><span class="num">2</span>The shape of the problem</h2>
+    <p class="sub">Not "the OPP needs reviewing". Something more specific: the generator works for
+      exactly one document, and that document is the reason nobody noticed.</p>
+
+    <h3>2.1 The asymmetry that hid it</h3>
+    <p><span class="tag tag--read">read</span> <code>scripts/build_corpus.py:280&ndash;290</code>.
+      The generator slices an artefact from a line stream. A parser may declare
+      <code>body_lines()</code> &mdash; knowing which pages are the body and which lines are
+      furniture. Only <code>SaosoParser</code> does. Everything else takes the generic branch:</p>
+    <pre>    body_lines = getattr(parser, "body_lines", None)
+    if body_lines is not None:
+        stream = body_lines(joined)
+        ...
+        keep = lambda line: not is_furniture(line)   <span class="good"># negated: keep the text</span>
+    else:
+        lines, _starts, _norm = flatten(pages)
+        keep = is_page_furniture                     <span class="bad"># NOT negated: keep the page numbers</span>
+</pre>
+    <p>Two lines below, the writer keeps a line only when <code>keep(line)</code> is true. So for
+      every document without <code>body_lines</code> &mdash; the OPP, the landscape, the BPP &mdash;
+      the draft keeps the printed page numbers and blank lines and throws the document away.</p>
+
+    <div class="paths">
+      <div class="path path--ok">
+        <h4>SAOSO's path (has <code>body_lines</code>)</h4>
+        <ol>
+          <li>parse the de-columned, reflowed pages</li>
+          <li><code>body_lines()</code> names the body pages</li>
+          <li><code>keep = not is_furniture</code> &mdash; keeps the text</li>
+          <li>draft &asymp; the document; reviewed into <code>saoso.md</code></li>
+        </ol>
+        <div class="verdict">works &mdash; and it is the only path ever exercised</div>
+      </div>
+      <div class="path path--bad">
+        <h4>Every other document (generic branch)</h4>
+        <ol>
+          <li>parse the de-columned, reflowed pages</li>
+          <li><code>flatten()</code> gives every line</li>
+          <li><code>keep = is_page_furniture</code> &mdash; keeps the furniture</li>
+          <li>draft = page numbers; <code>CORPUS_EDITS</code> then match nothing</li>
+        </ol>
+        <div class="verdict">broken since <code>e6f4464</code> (2026-10-28)</div>
+      </div>
+    </div>
+    <p class="pipe-legend"><b>Legend:</b> green = the branch with a body-slicer; red = the branch
+      every other governed document takes. The failure is silent because an empty draft still
+      parses into sections &mdash; they simply have no text.</p>
+
+    <h3>2.2 What that looks like when you run it</h3>
+    <p><span class="tag tag--measured">measured</span> <code>python scripts/build_corpus.py --doc opp --stdout</code></p>
+    <pre><span class="bad">OPP draft: 2,742 characters, 15 page markers, 28 headings, 28 refs</span>
+<span class="c"># the OPP's extracted text is 29,203 characters. The draft is headings and page numbers:</span>
+
+## I. Membership procedure
+## II. Membership fees, farm assessment fees, licensing fees
+## 2.1 Membership Fees
+<span class="c">...</span>
+<!-- page: 2 printed: 2 -->
+2
+</pre>
+    <p><span class="tag tag--measured">measured</span> and for the document P3's own gate names:</p>
+    <pre><span class="good">$</span> python -c "import build_corpus; build_corpus.build('pgs_docs/Basic Production Principles_ENG_PRINT.pdf', 'bpp')"
+<span class="bad">SystemExit: the reviewed edit for PDF page 4 matched 0 times in the draft:
+'must be preferably composted 2 Sustainable means: meeting th'.</span>
+<span class="c"># 18,616 committed characters in bpp.md; the draft has no body, so the
+# reviewed edit cannot match. Regeneration of the BPP is broken.</span>
+</pre>
+
+    <h3>2.3 Why no test caught it</h3>
+    <p><span class="tag tag--measured">measured</span> <code>grep -rn "build_corpus" knowledge/tests core/tests tests/</code>
+      returns three hits: two strings inside assertions and one in a docstring.
+      <strong>No test runs the generator.</strong> P3.1's own <em>Fails if</em> clause &mdash;
+      "generating BPP then applying no manual step differs from the committed
+      <code>bpp.md</code>" &mdash; was written and never implemented.</p>
+    <p><span class="tag tag--measured">measured</span> the broken draft still parses &mdash; into
+      28 sections whose combined body is 1,322 characters, almost all of it the headings
+      themselves. An empty artefact therefore looks structurally valid to every guard that counts
+      sections or chunks.</p>
+    <div class="callout callout--warn">
+      <p>Even if it had been written, it would have skipped in the gate. The gate poisons
+      <code>PDFTOTEXT_BIN</code> on purpose (D57), and the existing seam
+      <code>stub_ingest_extraction</code> patches <code>knowledge.ingest.extract_pages</code> &mdash;
+      not <code>scripts/build_corpus.py</code>, which imported the function directly. A regeneration
+      test needs its own seam, or it is a test that never runs
+      (<code>testing_hazards.md</code> §2.6).</p>
+    </div>
+
+    <h3>2.4 What the OPP needs once that line is fixed</h3>
+    <p><span class="tag tag--measured">measured</span> With <code>keep</code> negated (temporarily,
+      in memory; the repo is unchanged), the same generator produces:</p>
+        <div class="scroll">
+<table>
+      <caption>The OPP: the draft the generator would write, against the parser's own output.</caption>
+      <thead><tr><th>Measure</th><th class="num">Value</th><th>Means</th></tr></thead>
+      <tbody>
+        <tr><td>Draft size</td><td class="num">30,191 chars / 14 page markers</td><td>a real document, not furniture</td></tr>
+        <tr><td>Sections</td><td class="num">28</td><td>same as the PDF path</td></tr>
+        <tr><td>Chunks it would produce</td><td class="num">30</td><td>same as the PDF path's 30 &mdash; P4's cardinality gate is achievable</td></tr>
+        <tr><td>Text identical to the PDF path (whitespace-normalised)</td><td class="num">28 of 28</td><td><strong>the review queue is empty</strong></td></tr>
+        <tr><td><code>&#9679;</code> bullets preserved</td><td class="num">66</td><td>the D69 list marker survived the artefact path</td></tr>
+        <tr><td><code>heading_path</code> identical to the PDF path</td><td class="num">0 of 28</td><td><strong>P4's gate fails on this field</strong> &mdash; see 2.5</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>So P4 is not a 15-page correction review. The text needs <strong>no edits</strong>; the
+      review is a verification pass, like SAOSO's three edits in 1,537 blocks. That is a much
+      cheaper task than the plan's wording implies &mdash; and a much worse one to attempt before the
+      generator works.</p>
+
+    <h3>2.5 The one thing the draft does change</h3>
+    <p>All 28 sections agree on <code>(section_ref, page)</code> and disagree on
+      <code>heading_path</code>: the PDF parser gives the <em>part</em> the clause sits in (five
+      distinct values), the artefact gives each section its own name (28 values).</p>
+    <pre>artefact:  2.2 PGS farm assessment and certification fee
+pdf path:  II. Membership fees, farm assessment fees, licensing fees</pre>
+    <p><span class="tag tag--read">read</span> SAOSO already decided this, in P6: "&ldquo;<em>a
+      <code>ref:</code>-annotated heading carried its <code>#</code> marker into the text, so every
+      clause rendered at heading weight</em>&rdquo; and "&ldquo;<em><code>heading_path</code> named
+      the parent in one path and the section in the other &rarr; <code>SaosoParser</code> includes
+      the section, per the format's own rule</em>&rdquo;. So the OPP parser has to learn the same
+      rule; the artefact is not the thing to change.</p>
+
+    <h3>2.6 And a third dependency, unrelated to the OPP</h3>
+    <p><span class="tag tag--read">read</span> <code>knowledge/ingest.py</code>, the artefact branch:
+      "the artefact carries no printed TOC, and <code>--from-corpus</code> has no pages: the PDF is
+      read again for this one purpose". So <code>corpus_refresh --apply</code> still needs
+      <code>pdftotext</code>, and P7.4's gate &mdash; "the box needs <strong>no</strong>
+      <code>pdftotext</code> for any of it", "remove poppler-utils and it still works" &mdash;
+      cannot pass as written.</p>
+  </section>
+
+  <!-- ============================================================ PART 3 -->
+  <section id="options">
+    <h2><span class="num">3</span>The options</h2>
+    <p class="sub">Four ways to spend the next session. Each gets its strongest case in Part 4,
+      including the two I would not pick.</p>
+
+    <div class="option" id="opt-a">
+      <div class="option__head">
+        <span class="option__id">A</span>
+        <span class="option__title">P4 as the plan says it</span>
+        <span class="option__tag">&mdash; generate, review 15 pages, declare the edits</span>
+      </div>
+      <div class="pipe">
+        <div class="step step--broke"><b>generate</b><span>empty draft</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>guards</b><span>identity, charset</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step step--broke"><b>review</b><span>nothing to review</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>declare edits</b><span>fails: no match</span></div>
+      </div>
+      <div class="pipe-legend"><b>Breaks at step 1.</b> The command that produces the thing being
+        reviewed exits 0 with a draft that holds no text.</div>
+    </div>
+
+    <div class="option" id="opt-b">
+      <div class="option__head">
+        <span class="option__id">B</span>
+        <span class="option__title">Repair the generator, test it, then review the OPP</span>
+        <span class="option__tag">&mdash; one line, one test, one parser rule, then a verification review</span>
+      </div>
+      <div class="pipe">
+        <div class="step step--ok"><b>fix keep</b><span>1 line + body-furniture rule</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step step--ok"><b>regeneration test</b><span>P3.1's missing gate</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>OPP heading_path</b><span>parser learns the section</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>generate + review</b><span>28 sections, 0 text edits</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>ingest + gate</b><span><code>--from-corpus</code> identity</span></div>
+      </div>
+      <div class="pipe-legend"><b>Two finding-shaped risks:</b> the BPP does not regenerate
+        cleanly even once fixed (12 repeated side labels vs 4 in the committed file), and the
+        regeneration test needs a seam the current fixtures do not provide.</div>
+    </div>
+
+    <div class="option" id="opt-c">
+      <div class="option__head">
+        <span class="option__id">C</span>
+        <span class="option__title">Deploy the box first (P7.4)</span>
+        <span class="option__tag">&mdash; 98 commits is a real gap; ship it, then continue</span>
+      </div>
+      <div class="pipe">
+        <div class="step"><b>deploy</b><span>98 commits</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>corpus_check</b><span>expect drift</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step step--warn"><b>corpus_refresh</b><span>2 of 4 have artefacts</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step step--broke"><b>the no-reader proof</b><span>TOC needs pdftotext</span></div>
+      </div>
+      <div class="pipe-legend"><b>Ends with a gate that cannot pass</b>, so the task stays open and
+        the box half-converted.</div>
+    </div>
+
+    <div class="option" id="opt-d">
+      <div class="option__head">
+        <span class="option__id">D</span>
+        <span class="option__title">Settle the TOC, then deploy</span>
+        <span class="option__tag">&mdash; make the artefact self-contained first</span>
+      </div>
+      <div class="pipe">
+        <div class="step"><b>TOC decision</b><span>in the artefact, or preserved</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>reader-free ingest</b><span>--from-corpus w/o pdftotext</span></div>
+        <div class="arrow">&rarr;</div>
+        <div class="step"><b>P7.4</b><span>proof can pass</span></div>
+      </div>
+      <div class="pipe-legend"><b>Cheapest if P7.4 is urgent</b> &mdash; but the box would still
+        serve two unconverted documents, and the generator stays broken underneath the task that
+        needs it.</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PART 4 -->
+  <section id="evidence">
+    <h2><span class="num">4</span>Evidence for and against</h2>
+
+    <h3>A &mdash; P4 as written</h3>
+    <div class="fa">
+      <div class="fa--for">
+        <h4>Strongest case for</h4>
+        <ul>
+          <li>It is what the plan says, in the plan's own order.</li>
+          <li>No scope invention: the review discipline (flagged delta, kill criterion) is already written.</li>
+          <li>If the draft were fine, it is one session of reading.</li>
+        </ul>
+      </div>
+      <div class="fa--against">
+        <h4>Against</h4>
+        <ul>
+          <li>Step 1 exits 0 with 2,742 characters of page numbers. A reviewer would be reviewing nothing and would say so.</li>
+          <li>The declared-edits step cannot run: <code>SystemExit</code> "matched 0 times".</li>
+          <li>It would produce an artefact that loses 27,000 characters of the OPP, and the ingest has no way to notice &mdash; the count gate passes (30 chunks either way).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>B &mdash; repair, test, then review</h3>
+    <div class="fa">
+      <div class="fa--for">
+        <h4>Strongest case for</h4>
+        <ul>
+          <li>It fixes the thing that makes P4, P5 <em>and</em> every future document impossible, in one line.</li>
+          <li>The measurement says the review itself is cheap: 28 of 28 sections text-identical, 30 chunks, 66 bullets intact.</li>
+          <li>It implements P3.1's own gate, which is a stated promise of a task already marked landed.</li>
+          <li>It leaves the next two documents (landscape, any reprint) working.</li>
+        </ul>
+      </div>
+      <div class="fa--against">
+        <h4>Against</h4>
+        <ul>
+          <li>Scope creep: the plan has no task for "repair the generator", so the plan needs amending rather than following.</li>
+          <li>The BPP does not regenerate cleanly even after the fix &mdash; 45 diff lines, 8 extra repeated side labels &mdash; so the regeneration test would be red for a reason that is not the OPP.</li>
+          <li>It delays the box by a session.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>C &mdash; deploy first</h3>
+    <div class="fa">
+      <div class="fa--for">
+        <h4>Strongest case for</h4>
+        <ul>
+          <li>98 commits undeployed is its own risk: the concordance, the answer surface, the reader and the drift commands are all unshipped.</li>
+          <li>It exercises <code>corpus_check</code> on a real box, which is the only place its operator-facing wording can be judged.</li>
+          <li>Local work continues either way; the box does not block it.</li>
+        </ul>
+      </div>
+      <div class="fa--against">
+        <h4>Against</h4>
+        <ul>
+          <li>P7.4's gate cannot pass (2.6), so the task ends "done except its proof".</li>
+          <li><code>corpus_refresh --apply</code> would convert 2 of 4 documents; the other two keep serving PDF text, and the report would say so forever until P4/P5.</li>
+          <li>It is a deploy session, not a corpus session &mdash; a different kind of day.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>D &mdash; TOC first</h3>
+    <div class="fa">
+      <div class="fa--for">
+        <h4>Strongest case for</h4>
+        <ul>
+          <li>It is the only way P7.4's proof can be made true, and the proof is the interesting half of P7.4.</li>
+          <li>The change is small if the TOC is preserved across a refresh: the PDF's sha256 has not changed, so the printed TOC cannot have.</li>
+        </ul>
+      </div>
+      <div class="fa--against">
+        <h4>Against</h4>
+        <ul>
+          <li>It is a decision (artefact carries the TOC, or refresh preserves it), and it defers the generator defect again.</li>
+          <li>Preserving the TOC hides a real question: what happens on a genuine reprint, when the TOC <em>does</em> change?</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PART 5 -->
+  <section id="rules">
+    <h2><span class="num">5</span>What this repo's own rules say</h2>
+    <p class="sub">Not philosophy: four rules that already exist here, what each says, and whether
+      it actually holds for this decision. One of them points the other way.</p>
+        <div class="scroll">
+<table>
+      <thead><tr><th>Rule</th><th>Where</th><th>What it says here</th><th>For</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>A test that passes for the wrong reason is worse than no test</td>
+          <td><code>AGENTS.md</code>, <code>testing_hazards.md</code> §0</td>
+          <td>P4 would produce an artefact that loses the document's text and passes the chunk-count gate. That is the exact failure mode named in the rule.</td>
+          <td class="yes">B</td>
+        </tr>
+        <tr>
+          <td>Prove a guard can fail before trusting it green</td>
+          <td><code>AGENTS.md</code></td>
+          <td>P3's gate has never been run, and cannot be run as written. A gate nobody executes is a claim.</td>
+          <td class="yes">B</td>
+        </tr>
+        <tr>
+          <td>Schema before logic; amend the plan, do not follow it off a cliff</td>
+          <td><code>build_principles.md</code> §II, and P7.1's own landing note today</td>
+          <td>The plan's P4 order assumes a working generator. Today's P7.1 needed an amendment for the same reason: the task text assumed a state that was not true.</td>
+          <td class="yes">B</td>
+        </tr>
+        <tr>
+          <td>The gate must run with no PDF reader (D57)</td>
+          <td><code>knowledge/tests/page_fixtures.py</code>, D57</td>
+          <td>Any regeneration test must be runnable in the poisoned-extractor gate. Today's seam patches the ingest, not the generator &mdash; so this pushes on <em>how</em> B is built, not whether.</td>
+          <td class="part">B, with care</td>
+        </tr>
+        <tr>
+          <td>Ship what is finished; a green tree that nobody runs is not value</td>
+          <td><code>HANDOVER.md</code> §0, deployment notes</td>
+          <td>98 commits behind is a real cost, and the concordance is signed and unshipped.</td>
+          <td class="no">C</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="sub">The disagreement is real: the fourth and fifth rules point at different slices. I
+      break the tie on <em>irreversibility</em> &mdash; C and D can both happen next week at the same
+      cost; a session spent reviewing an empty draft produces an artefact that has to be re-reviewed
+      from scratch, and it would have looked done.</p>
+  </section>
+
+  <!-- ============================================================ PART 6 -->
+  <section id="compare">
+    <h2><span class="num">6</span>Comparison</h2>
+    <p class="sub">Unweighted on purpose. The criteria are the ones the reader cares about; the
+      reasons are what the reader should weigh.</p>
+    <div class="scroll">
+    <table class="matrix">
+      <thead>
+        <tr><th>Criterion</th><th>A &mdash; as written</th><th>B &mdash; repair first</th><th>C &mdash; deploy</th><th>D &mdash; TOC first</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Produces a correct OPP artefact</td>
+          <td class="no">No &mdash; empty draft</td>
+          <td class="yes">Yes</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+        </tr>
+        <tr>
+          <td>Leaves the generator working for P5 and reprints</td>
+          <td class="no">No</td>
+          <td class="yes">Yes</td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+        </tr>
+        <tr>
+          <td>Turns a written promise into a running gate</td>
+          <td class="no">No</td>
+          <td class="yes">P3.1's <em>Fails if</em></td>
+          <td class="no">No</td>
+          <td class="no">No</td>
+        </tr>
+        <tr>
+          <td>Delivers something a user can see</td>
+          <td class="no">No</td>
+          <td class="part">Not directly</td>
+          <td class="yes">Yes</td>
+          <td class="part">Indirectly</td>
+        </tr>
+        <tr>
+          <td>Closes its own gate</td>
+          <td class="no">No</td>
+          <td class="yes">Yes</td>
+          <td class="no">No &mdash; TOC dependency</td>
+          <td class="yes">Yes</td>
+        </tr>
+        <tr>
+          <td>Risk of a silent wrong answer</td>
+          <td class="no">High &mdash; empty text passes every count</td>
+          <td class="part">Low &mdash; a test that must go red first</td>
+          <td class="part">Low &mdash; reported drift</td>
+          <td class="part">Low</td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td>1 session</td>
+          <td>1&ndash;1.5 sessions</td>
+          <td>1 session</td>
+          <td>0.5 session</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ PART 7 -->
+  <section id="recommend">
+    <h2><span class="num">7</span>Recommendation</h2>
+    <div class="card" style="border-color:var(--accent-line)">
+      <p style="margin-top:0"><strong>B &mdash; repair the generator, make P3.1's gate real, then
+        review the OPP as a verification pass.</strong> Four steps, in this order, each with a
+        red test first:</p>
+      <ol>
+        <li><strong>Negate <code>keep</code> in the generic branch</strong> and add the body
+          furniture rule the BPP needs (its repeated <code>The Principle Of Health.</code> side
+          labels: 12 in the draft, 4 in the committed artefact). Test: a generated BPP draft
+          contains the BPP's own words, and regenerating <code>bpp.md</code> is a no-op diff.</li>
+        <li><strong>Give the regeneration test a seam that works under
+          <code>PDFTOTEXT_BIN=/usr/bin/true</code></strong> &mdash; patch the generator's import, or
+          have it take pages. A test that skips in the gate is the hazard this repo keeps writing
+          down.</li>
+        <li><strong>Teach <code>OppParser</code> the P6 rule</strong> (a section's
+          <code>heading_path</code> names the section), so P4's identity gate means something.</li>
+        <li><strong>Generate the OPP artefact and review it</strong> &mdash; 15 pages, 28 sections,
+          30 chunks, and, per today's measurement, no text edits. Declare `CORPUS_EDITS` only if the
+          review finds one; the review queue is not the document.</li>
+      </ol>
+      <p><strong>What this changes:</strong> P4 gains a step 0 in the plan, and P3's status moves
+        from "landed" to "landed, with its gate now running".</p>
+      <p><strong>What would change my mind:</strong></p>
+      <ul>
+        <li>If a release to the box is needed this week for a reason outside the corpus, C wins and
+          P7.4 ships with its no-reader proof explicitly deferred.</li>
+        <li>If step 1 turns out to be more than the two changes measured here &mdash; if the OPP's
+          draft, once generated, differs from the PDF path in more than
+          <code>heading_path</code> &mdash; then P4 goes back to being review-bound and should be
+          planned as such, with the flagged-delta list produced before anyone reads a page.</li>
+        <li>If the BPP's 45-line drift is judged too expensive to reconcile now, then the
+          regeneration gate should be scoped to documents with a matching generator version, and
+          that scoping must be written in the plan rather than discovered by the next person.</li>
+      </ul>
+    </div>
+
+    <h3>And then</h3>
+    <p>In order, once B lands: <strong>P5</strong> (landscape &mdash; 10 pages, the same shape, now
+      cheap) &rarr; <strong>the TOC decision + P7.4</strong> (so the box's proof can pass) &rarr;
+      <strong>P6's step 4</strong> (Appendices 3, 4&nbsp;Table&nbsp;1, 7) with Appendix 6b held
+      behind its product decision.</p>
+  </section>
+
+  <!-- ============================================================ PART 8 -->
+  <section id="decide">
+    <h2><span class="num">8</span>Your decision</h2>
+    <p class="sub">Saved in this browser only (<code>localStorage</code>). Export produces a
+      markdown row usable in <code>PGS_PLATFORM_SPEC.md</code> §18.3 as <strong>D71</strong>.</p>
+
+    <div class="decide">
+      <fieldset>
+        <legend style="font-weight:700;font-size:.9rem;padding:0 0 .5rem">Which slice runs next?</legend>
+        <label class="opt-row"><input type="radio" name="choice" value="A">
+          <span><b>A &mdash; P4 as written.</b><span>Generate, review, declare edits. Accept the draft as it comes.</span></span></label>
+        <label class="opt-row"><input type="radio" name="choice" value="B">
+          <span><b>B &mdash; repair, test, review.</b><span>Fix the generator, make P3.1's gate real, teach the OPP parser, then review.</span></span></label>
+        <label class="opt-row"><input type="radio" name="choice" value="C">
+          <span><b>C &mdash; deploy first.</b><span>P7.4 now; defer the no-reader proof.</span></span></label>
+        <label class="opt-row"><input type="radio" name="choice" value="D">
+          <span><b>D &mdash; TOC first.</b><span>Settle the table-of-contents dependency, then deploy.</span></span></label>
+        <label class="opt-row"><input type="radio" name="choice" value="Other">
+          <span><b>Other</b><span>Say what, and what it displaces.</span></span></label>
+      </fieldset>
+
+      <h4 style="margin-top:1rem">Notes &mdash; what would you change, and why?</h4>
+      <textarea id="notes" placeholder="e.g. B, but skip step 3 for now — the OPP gate can assert (section_ref, page) and leave heading_path as a recorded difference."></textarea>
+
+      <div class="actions">
+        <span class="saved" id="saved">Saved</span>
+        <span class="spacer"></span>
+        <button class="ghost tiny" id="clearBtn">Clear</button>
+        <button class="primary" id="exportBtn">Export decision</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Provenance.</strong> Everything measured on 2026-10-28 against
+      <code>main</code> at <code>2467e6a</code>, working tree unchanged by the measurements
+      (the <code>keep</code> negation was applied in memory and reverted; <code>git diff
+      scripts/build_corpus.py</code> is empty). Gate: <code>scripts/verify.sh</code> &mdash;
+      1265 passed, 1 skipped, <code>lint-imports</code> kept.</p>
+    <p>Sources: <code>product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md</code> &middot;
+      <code>scripts/build_corpus.py</code> &middot; <code>knowledge/ingest.py</code> &middot;
+      <code>knowledge/drift.py</code> &middot; <code>deploy/deploy.sh</code> &middot;
+      <code>HANDOVER.md</code> §0f.</p>
+    <p>This is an exploration artifact (<code>product/design/</code>). It is not a template, it never
+      becomes production UI, and it makes no request to the network.</p>
+  </footer>
+</div>
+
+<dialog id="outDlg">
+  <div class="dlg-head">
+    <h3>Your decision</h3>
+    <p>Paste this into the spec's §18.3 table, or attach it.</p>
+  </div>
+  <textarea id="outText" spellcheck="false"></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="dlgCopy">Copy</button>
+    <button id="dlgDl">Download .md</button>
+    <span class="spacer" style="flex:1"></span>
+    <button class="ghost" id="dlgClose">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var KEY = 'pgs-d71-next-slice';
+  var state = { choice: '', notes: '' };
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || { choice: '', notes: '' }; } catch (e) {}
+
+  var savedEl = document.getElementById('saved');
+  var notesEl = document.getElementById('notes');
+  var radios = document.querySelectorAll('input[name="choice"]');
+
+  function restore() {
+    if (state.notes) { notesEl.value = state.notes; }
+    if (state.choice) {
+      radios.forEach(function (r) { if (r.value === state.choice) { r.checked = true; } });
+      markPicked();
+    }
+  }
+
+  function save() {
+    state.notes = notesEl.value;
+    var picked = document.querySelector('input[name="choice"]:checked');
+    state.choice = picked ? picked.value : '';
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    savedEl.classList.add('on');
+    window.setTimeout(function () { savedEl.classList.remove('on'); }, 1100);
+  }
+
+  function markPicked() {
+    var picked = document.querySelector('input[name="choice"]:checked');
+    ['a', 'b', 'c', 'd'].forEach(function (id) {
+      var el = document.getElementById('opt-' + id);
+      if (!el) { return; }
+      el.classList.remove('option--picked');
+    });
+    if (!picked) { return; }
+    var el = document.getElementById('opt-' + picked.value.toLowerCase());
+    if (el) { el.classList.add('option--picked'); }
+  }
+
+  radios.forEach(function (r) { r.addEventListener('change', function () { markPicked(); save(); }); });
+  notesEl.addEventListener('input', save);
+
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    notesEl.value = '';
+    radios.forEach(function (r) { r.checked = false; });
+    state = { choice: '', notes: '' };
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    markPicked();
+  });
+
+  var TITLES = {
+    A: 'P4 as written',
+    B: 'Repair the generator, test it, then review the OPP',
+    C: 'Deploy the box first (P7.4)',
+    D: 'Settle the TOC, then deploy',
+    Other: 'Other'
+  };
+
+  function buildMarkdown() {
+    var picked = document.querySelector('input[name="choice"]:checked');
+    var choice = picked ? picked.value : '';
+    var notes = (notesEl.value || '').trim();
+    var L = [];
+    L.push('# D71 — What is the next corpus slice, now that P4\'s first step does not work?');
+    L.push('');
+    L.push('_Exploration: `product/design/d71_p4_and_the_generator.html` (2026-10-28)._');
+    L.push('');
+    L.push('**Decision:** ' + (choice ? TITLES[choice] : '(no answer)'));
+    L.push('');
+    L.push('**Notes:** ' + (notes || '—'));
+    L.push('');
+    L.push('---');
+    L.push('');
+    L.push('## Row for SPEC §18.3');
+    L.push('');
+    L.push('| D71 | What is the next corpus slice, now that P4\'s first step does not work? | ' +
+      (choice ? '**' + TITLES[choice] + '**' : '**open**') +
+      (notes ? ' — ' + notes.replace(/\n+/g, ' ') : '') + ' |');
+    L.push('');
+    L.push('## What was measured, for the record');
+    L.push('');
+    L.push('- `build_corpus.py` generic branch keeps page furniture and drops the body (`keep = is_page_furniture`); SAOSO is unaffected because it has `body_lines()`.');
+    L.push('- OPP draft: 2,742 chars (document 29,203). BPP regeneration: `SystemExit`, reviewed edit matched 0 times.');
+    L.push('- With the line negated: OPP draft 30,191 chars, 28 sections, 30 chunks, 28/28 text-identical to the PDF path, 66 `●` bullets intact, 0/28 `heading_path` identical.');
+    L.push('- No test runs the generator: P3.1\'s "regeneration is a no-op diff" gate was never written, and would skip in the poisoned-extractor gate as the seam is today.');
+    L.push('- `ingest_standard` still calls `extract_pages` for the printed TOC, so P7.4\'s "no pdftotext" proof cannot pass as written.');
+    return L.join('\n');
+  }
+
+  var dlg = document.getElementById('outDlg');
+  var outText = document.getElementById('outText');
+
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    outText.value = buildMarkdown();
+    if (typeof dlg.showModal === 'function') { dlg.showModal(); } else { dlg.setAttribute('open', 'open'); }
+  });
+  document.getElementById('dlgClose').addEventListener('click', function () { dlg.close(); });
+  document.getElementById('dlgCopy').addEventListener('click', function () {
+    outText.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    if (navigator.clipboard) { navigator.clipboard.writeText(outText.value).catch(function () {}); }
+  });
+  document.getElementById('dlgDl').addEventListener('click', function () {
+    var blob = new Blob([outText.value], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'd71-next-corpus-slice.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  });
+
+  restore();
+})();
+</script>
+</body>
+</html>
