@@ -247,6 +247,17 @@ class StandardDocument(models.Model):
             "and for every document ingested before the field existed."
         ),
     )
+    corpus_digest = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text=(
+            "sha256 of the reviewed corpus artefact these chunks were built from "
+            "(D53, D56), or empty when the PDF was parsed at ingest. It exists so a "
+            "deployment can tell whether its corpus still matches the review that "
+            "produced it — `manage.py corpus_check` compares it with the file on disk."
+        ),
+    )
 
     class Meta:
         ordering = ["standard_set__code", "kind", "version"]

@@ -381,6 +381,7 @@ def ingest_standard(
             section_scheme=descriptor["section_scheme"],
             chunk_count=len(chunks),
             toc=toc,
+            corpus_digest=corpus_digest,
         )
         DocumentChunk.objects.bulk_create(
             [

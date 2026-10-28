@@ -648,6 +648,36 @@ def test_ingesting_from_the_artefact_uses_its_sections(standard_set):
     assert DocumentChunk.objects.filter(anchor="general-principles").exists()
 
 
+def test_an_artefact_ingest_records_the_digest_on_the_document(standard_set):
+    """The report is for the operator; the *row* is what a deploy can compare (D56).
+
+    Without it, `corpus_check` has nothing to compare and a box can serve a corpus built
+    from a review that has since changed its mind, silently.
+    """
+    report = ingest_standard(
+        pdf_path=PDFS["bpp"],
+        standard_set=standard_set,
+        doc_key="bpp",
+        embed=False,
+        corpus_path=CORPUS_ARTEFACT,
+    )
+
+    document = StandardDocument.objects.get(pk=report.document_id)
+    assert document.corpus_digest == report.corpus_digest
+    assert document.corpus_digest == hashlib.sha256(CORPUS_ARTEFACT.read_bytes()).hexdigest()
+
+
+def test_a_pdf_ingest_records_no_artefact_digest(standard_set):
+    """Empty, not absent: "parsed from the PDF at ingest" is the fact drift is measured
+    against, and a guess would hide the difference between the two paths."""
+    report = ingest_standard(
+        pdf_path=PDFS["opp"], standard_set=standard_set, doc_key="opp", embed=False
+    )
+
+    assert report.corpus_digest == ""
+    assert StandardDocument.objects.get(pk=report.document_id).corpus_digest == ""
+
+
 def test_the_artefact_and_the_pdf_produce_the_same_document(db):
     """The migration's safety net: switching a document to its artefact may not move a
     section, a page or a locator. Only the text a review corrected may differ."""

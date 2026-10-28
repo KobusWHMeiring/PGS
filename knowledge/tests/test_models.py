@@ -270,3 +270,16 @@ def test_the_toc_survives_a_round_trip_as_json():
     document.save(update_fields=["toc"])
 
     assert StandardDocument.objects.get(pk=document.pk).toc == [entry]
+
+
+# --- 7. Drift is visible from the row, not only from a report (D56, P2.1) ----
+
+
+def test_a_document_starts_with_no_artefact_digest():
+    """Empty means "this corpus was parsed from the PDF", which is a fact the column has
+    to be able to state. Null would make it indistinguishable from "unknown", and every
+    row written before the column existed holds the same fact."""
+    document = make_document()
+
+    assert document.corpus_digest == ""
+    assert StandardDocument.objects.get(pk=document.pk).corpus_digest == ""
