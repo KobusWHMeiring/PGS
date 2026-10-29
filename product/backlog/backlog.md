@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-28 19:56
+> Generated: 2026-10-29 05:21
 
 ## Ready (up next)
 
@@ -24,6 +24,7 @@
 
 ## Refinement
 
+- **PRD: The `/ask/` panel — the answered board, and a way to start over** - `Refinement\ASK_PANEL_REFINEMENTS_PRD.md` - Status: Refinement — the product owner's request, 2026-10-28, for the next session. Two items; the
 - **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7, 5.8, 5.9 and 5.10 landed the same day** (gate green at 920): every refusal in that conversation answers, the two GM-outcome turns state the rule instead of the verdict, G3 is closed, and a definition citation lands on the definition. Remaining: D-2's re-measure on the box, 5.6 (the follow-up window, needs S6), and the box sweeps.
 - **PRD: The code atlas — one generated view of the application as built** - `Refinement\CODE_ATLAS_PRD.md` - Status: Refinement — a requirement from the product owner (2026-10-28); two decisions (§4) and a plan before it can be built. Supersedes the `CONVENTION.md` note that a state doc was "premature until there is code" — there is code now.
 - **PRD: The escalation answer path — a refusal that can reach a person** - `Refinement\ESCALATION_ANSWER_PATH_PRD.md` - Status: Refinement — design needed, no code written
