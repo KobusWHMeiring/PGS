@@ -291,6 +291,88 @@ warning flag (OPP §4.6: probation does not forfeit the logo).
 
 **Acceptance:** four rejection cases and one pass, each a named exception.
 
+
+### Task A8: The public self-check
+
+**Files:** `core/models/_selfcheck.py`, `core/services/_selfcheck.py`, `core/forms/_selfcheck.py`,
+`core/views/_public.py`, `core/templates/public/before_you_apply.html`,
+`core/management/commands/report_self_check.py`, `core/tests/test_selfcheck.py`,
+`tests/uat/self_check_uat.md`
+
+**PRD:** `../Refinement/SELF_CHECK_PRD.md` · **Decision:** D71 · **Design and wording:**
+`product/design/d71_self_check_questions.html`
+
+**Depends on A6** — the page's only exit is the application flow, and a quiz whose only exit is the
+`contact details to confirm` chips is a deeper dead end than the one it replaces. **Does not depend
+on C2**: the prefill handoff is `C2a`, so A8 is never blocked on the questionnaire renderer.
+
+**Tests first**
+
+```python
+def test_nothing_is_stored_without_consent(client, payload):
+    client.post(reverse("core:before_you_apply"), payload)          # neither consent ticked
+    assert SelfCheckReport.objects.count() == 0
+    assert not SelfCheckDemographic.objects.exists()
+
+def test_research_consent_writes_one_row_and_stores_no_identifier(client, payload):
+    client.post(reverse("core:before_you_apply"), {**payload, "research_consent": "on"})
+    report = SelfCheckReport.objects.get()
+    assert not report.member_id and not report.farm_id        # there is no such field to set
+
+def test_demographic_consent_is_refused_without_research_consent(client, payload):
+    r = client.post(reverse("core:before_you_apply"),
+                    {**payload, "demographic_consent": "on", "census_gender": "F"})
+    assert r.status_code == 200 and not SelfCheckDemographic.objects.exists()
+
+def test_withdraw_deletes_both_rows(client, consented_report):
+    withdraw(consented_report.public_uuid)
+    assert not SelfCheckReport.objects.exists() and not SelfCheckDemographic.objects.exists()
+
+def test_the_two_fixed_lines_come_from_the_finalise_gate_constant():
+    # §5.8: a MISSING record is a record, not a blocker. The public promise and the gate
+    # use one constant, so changing one cannot leave the other behind.
+    assert MISSING_RECORD_BLOCKS_FINALISE is False
+    assert evaluate({}).fixed_lines["missing_record"] == MISSING_RECORD_IS_A_RECORD_NOT_A_BLOCKER
+
+def test_the_land_history_note_prints_both_thresholds(result_html):
+    assert "12 months" in result_html and "18 months" in result_html
+    assert "not yet settled" in result_html          # D31 is shown, never resolved
+
+def test_rather_not_say_produces_no_todo_item_and_is_not_counted_missing(result):
+    assert all(item.key != "B5" for item in result.todo)
+    assert result.records_missing == 0
+
+def test_a_non_crops_category_gets_a_caveat_not_an_empty_form(client):
+    r = client.post(reverse("core:before_you_apply"), {"success": "on", "categories": ["ANIMAL"]})
+    assert "still being written" in r.content.decode()
+
+def test_the_page_states_no_eligibility_claim(client):
+    html = client.get(reverse("core:before_you_apply")).content.decode().lower()
+    for term in ("you are ready", "you qualify", "you are eligible", "approved"):
+        assert term not in html
+
+def test_every_todo_citation_resolves_or_is_declared_text_only():
+    for item in evaluate(ALL_NO).todo:
+        if item.citation.kind == "TEXT_ONLY":
+            assert item.citation.label in TEXT_ONLY_CITATIONS   # a reviewed list, not a shrug
+        else:
+            assert item.citation.anchor in corpus_anchors()      # D68's rule, enforced
+```
+
+**Then** implement in this order: models + migration; `SELF_CHECK_ITEMS` and `build_check`; `evaluate`
+(a frozen `SelfCheckResult`, no writes); `submit` (atomic, two tables, consent-gated); `withdraw`;
+the form, view, template and `Page` entry; `report_self_check` with `--min-count` (default 5) and
+`--demographics`. Per-IP throttle via the `/ask/` mechanism plus a honeypot. The route joins
+`PAGES`, so the existing claim-discipline sweep covers it from the first render.
+
+**Acceptance:** every guard above passes **and was proved by breaking it**; nothing is written with no
+consent; the page has no advice copy of its own; `report_self_check` refuses a cell under the
+threshold. UAT (judgement only): does the result read as a mirror or a verdict, is the land-history
+note comprehensible to someone who has never read the OPP, does "Rather not say" feel like a real
+answer, does the consent read as a real choice, and does it work one-handed in sunlight.
+
+---
+
 ---
 
 # Sub-plan B — Templates (the irreversible core)
@@ -302,7 +384,10 @@ warning flag (OPP §4.6: probation does not forfeit the logo).
 
 **Tests first:** a template with a duplicate `key` is rejected; a `key` not matching
 `^[a-z_]+\.(V\d{2}[a-z]?|Q\d+(\.\d+)?)$` is rejected; a verdict with `polarity` missing is rejected;
-`standard_ref` may be null; a schema with `schema_version != 1` is rejected.
+`standard_ref` may be null; a schema with `schema_version != 1` is rejected; a question's optional
+`self_check` block (`{"tier": 1, "why": "..."}`) is accepted, and an unknown key inside it is not
+(**D71** — the public self-check derives twelve of its controls from this schema, so the wording has
+one home; see `../Refinement/SELF_CHECK_PRD.md` §4.6).
 
 **Then** implement `AssessmentTemplate(category, version, standard_version, schema, effective_from,
 is_active)` plus `validate_schema(dict) -> list[str]` returning human-readable problems rather than
@@ -353,6 +438,12 @@ def test_inverted_and_informational_verdicts_carry_the_right_polarity(key):
     pol = {v["key"]: v["polarity"] for v in load_crops_schema()["verdicts"]}
     assert pol[key] != "POSITIVE"
 ```
+
+**Also author the twelve `self_check` markers** (D71): Q4.2, Q5.1, Q11.1, Q11.2, and the seven
+Sheet I §2 records, each with a `why` sentence naming its clause. The public page renders these
+questions from the schema, not from a copy — so a wording change at the visit reaches the front door,
+and `test_selfcheck.py::test_every_derived_control_resolves` fails if a marker points at a question
+that does not exist. The count is asserted: **twelve**.
 
 **Then** author all 38 questions across PART A (general information) and PART B (crop production),
 marking `respondent` per the FORM's grey/white cells, `attachments` for the documents Sheet I §2
@@ -425,6 +516,28 @@ appears; a `POST` to the autosave endpoint returns 204 and persists one answer; 
 HTMX for autosave (already permitted, D1) — one vendored file, no build step.
 
 **Acceptance:** render test passes for Crops; autosave survives a simulated browser refresh.
+
+---
+
+### Task C2a: Carry the self-check answers into the questionnaire
+
+**Files:** `core/services/_selfcheck.py`, `core/views/_portal.py`, `core/tests/test_selfcheck_prefill.py`
+
+**Deliberately after A8 and C2, and A8 is not blocked on it.** The public self-check (A8, D71) asks
+twelve questions that are also questions on the frozen Crops template. A farmer who completed the
+check should not answer them twice.
+
+**Tests first:** an applicant who completes the check and then registers sees the questionnaire's
+matching questions pre-filled; a pre-filled answer is a **draft** (`AssessmentAnswer` with the
+answer's own provenance), never a submitted one; editing the questionnaire changes nothing about the
+`SelfCheckReport`; a farmer who never did the check sees an empty form and no error.
+
+**Then** match on `question_key` against the template's `self_check` markers, copy the farmer's
+declared answers into drafts, and mark each pre-filled row with its source. Nothing is inferred: a
+`RATHER_NOT_SAY` answer arrives **unanswered**, not as a "no".
+
+**Acceptance:** the twelve matching answers arrive as drafts; a `RATHER_NOT_SAY` answer leaves its
+question blank; the report is never mutated by the portal.
 
 ---
 

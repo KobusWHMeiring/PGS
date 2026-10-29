@@ -71,6 +71,7 @@ answer "which Crops farms were not compliant on on-farm composting?" without ope
 | **Sheet I conclusion**: social equity (§1) + documentation/records checklist (§2) | — | 1a |
 | **Farmer corrective-action follow-up** + prior-action review at the next visit | — | 1a |
 | Visit report PDF (Sheet I report portion, decision block pending) | Discipline workflow, unannounced visits | out of scope (§17.1) |
+| **Public self-check** at `/before-you-apply/` — 20 controls, to-do list, declared fee band, and a consented aggregate (D71) | Reporting on it (a management command only) | MVP 3 |
 | `visitPack` producer + sync API — **gated on `1∥`** | Translated content | post-MVP |
 
 **Three deliberate limitations, stated rather than discovered:**
@@ -96,7 +97,7 @@ Seven sub-plans. B is the irreversible one and is sequenced before anything that
 
 | Sub-plan | What it delivers | Proves |
 |---|---|---|
-| **A — Membership & application** | `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`, `CommitteeTerm`, `Pledge`, `MembershipFee`, `AssessmentFee`, `PriorCertification`; application flow; eligibility gates | The membership rules from OPP §I–§II can be enforced rather than described |
+| **A — Membership & application** | `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`, `CommitteeTerm`, `Pledge`, `MembershipFee`, `AssessmentFee`, `PriorCertification`; application flow; eligibility gates; **A8 — the public self-check that leads into it (D71)** | The membership rules from OPP §I–§II can be enforced rather than described, and a farmer who is not ready yet is told what to gather instead of being turned away |
 | **B — Templates** | `AssessmentTemplate`, the v1 schema format, `load_template`, the hand-authored **Crops** template, freeze semantics | That 38 questions and 37 verdicts can be represented without distorting the paper form |
 | **C — Questionnaire** | `Assessment`, `AssessmentAnswer`, `EvidenceDocument`; farmer-facing render, autosave, attachment readiness, submit and snapshot; **corrective-action follow-up task list** | That the two-role (grey/white) form works when only half of it is farmer-visible, and the farmer can answer a finding after the visit |
 | **D — Scheduling & committee** | `FarmVisit`, `VisitParticipant`; `validate_assessment_team()`; the numeric pre-visit rules; fee gate | That OPP §3.3/§4.1 composition is a server-side validation, not a guideline |
@@ -160,6 +161,10 @@ Rules:
   Crops leaves it `null` rather than inventing one.
 - `allowed_ref_gaps` documents the source's own numbering defects so validation warns on **new** gaps
   without failing on known ones.
+- A question may carry an optional `self_check: {"tier": 1, "why": "..."}` block (**D71**). It marks
+  a question the public `/before-you-apply/` page asks, and carries the sentence that names its clause.
+  Twelve controls carry it — Q4.2, Q5.1, Q11.1, Q11.2 and the seven Sheet I §2 records — so the front
+  door and the visit cannot drift apart in wording. An unknown key inside the block is rejected.
 - `sub_questions` are **structured**, not prose: each child has its own `key`, `polarity`, options and
   `required` flag. They are stored on the parent verdict's `sub_answers` JSON as
   `{"<sub_key>": "YES|NO|NA"}` and are never folded into the parent's single value. The FORM prints
@@ -289,8 +294,9 @@ of buried in a notes column.
 Task order, acceptance tests and schema details: `MVP1A_PLAN.md`.
 
 1. **A1–A7** — membership, farms, pledge, fees, prior certification, application flow, eligibility gates.
+   **A8** — the public self-check (D71), after A6 because the application is its only exit.
 2. **B1–B4** — template model, schema validation, the hand-authored Crops template, freeze semantics.
-3. **C1–C6** — assessment and answers, questionnaire render + autosave, attachments, submit/snapshot, clarifications, corrective-action follow-up.
+3. **C1–C6** — assessment and answers, questionnaire render + autosave, attachments, submit/snapshot, clarifications, corrective-action follow-up. **C2a** carries the self-check's answers into the questionnaire as drafts.
 4. **D1–D4** — visit and participants, team validation, notice rules, scheduling UI.
 5. **E1–E9** — verdict capture with polarity and sub-answers, findings, exemptions, corrective actions, signatures, photos, input register, Sheet I conclusion, prior-action review.
 6. **F1–F3** — WeasyPrint report, `finalise_visit`, completeness gates.

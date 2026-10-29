@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D71 — The front door: what a farmer answers before applying</title>
+<!--
+  Exploration artifact — see .agents/skills/pgs-writing-explorations/SKILL.md
+
+  Decision it serves: D71 — what does a prospective farmer actually read and answer at
+  /before-you-apply/, and does the wording hold up in front of a stranger?
+
+  REVISION 2, 2026-10-29. All 19 controls were judged by the product owner; ten came back
+  "reword" with a note. Each note is answered on its own card as "What your note
+  produced", a "Why we ask" disclosure is now on every question, Group B became a
+  question ("Do you have these?") with a fourth answer, and A5 (cost) is new since the
+  review. The product owner's verdicts are pre-seeded below, so this page opens showing
+  the state of the decision rather than a blank form.
+
+  Self-contained: no CDN, no external fonts, no network. Palette copied from
+  d61_ask_interface_options.html :root. Decisions autosave to localStorage and export as
+  a §18.3-compatible markdown row.
+-->
+<style>
+  :root {
+    --cream: #fdfbf7;
+    --creamWarm: #f6f1e7;
+    --sageLight: #f3ece0;
+    --sand: #e6dece;
+    --charcoal: #282622;
+    --muted: #6b665d;
+    --forestDark: #242d1e;
+    --forest: #323e2a;
+    --forestDeep: #1a2116;
+    --ochre: #b87b2e;
+    --ochreDark: #9c641e;
+    --ochreLight: #f9f1e2;
+    --warmDark: #2b2319;
+    --moss: #425337;
+    --white: #ffffff;
+    --serif: Georgia, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+    --radius: 12px;
+    --shadow: 0 18px 40px -22px rgb(26 33 22 / 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-bottom: 96px;
+  }
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
+  a { color: var(--ochreDark); }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  .hero { background: var(--forest); color: var(--cream); padding: 56px 0 44px; }
+  .hero .eyebrow {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ochreLight); opacity: .85;
+  }
+  .hero h1 { font-size: clamp(1.7rem, 3.4vw, 2.6rem); margin: 14px 0 18px; }
+  .hero .question {
+    border-left: 3px solid var(--ochre); padding: 4px 0 4px 18px;
+    font-size: 1.06rem; max-width: 62ch; color: #f2ece0;
+  }
+  .hero .meta {
+    margin-top: 24px; font-family: var(--mono); font-size: .78rem;
+    color: var(--sageLight); opacity: .8;
+  }
+
+  .howto { background: var(--ochreLight); border-bottom: 1px solid var(--sand); padding: 20px 0; }
+  .howto p { margin: 0 0 6px; font-size: .93rem; max-width: 92ch; }
+  .howto p:last-child { margin-bottom: 0; }
+
+  section.part { padding: 48px 0 8px; }
+  .part__num {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ochreDark);
+  }
+  .part h2 { font-size: clamp(1.35rem, 2.4vw, 1.85rem); margin: 6px 0 6px; }
+  .part > .wrap > .lede { color: var(--muted); max-width: 78ch; margin: 0 0 26px; }
+
+  .card {
+    background: var(--white); border: 1px solid var(--sand);
+    border-radius: var(--radius); padding: 22px 24px; margin: 0 0 18px;
+    box-shadow: var(--shadow);
+  }
+  .card--warm { background: var(--creamWarm); }
+  .card--forest { background: var(--forest); color: var(--cream); border-color: var(--forestDeep); }
+  .card--forest h3, .card--forest h4 { color: var(--cream); }
+  .card h3 { margin: 0 0 10px; font-size: 1.16rem; }
+  .card h4 { margin: 18px 0 6px; font-size: 1rem; }
+  .card p:last-child { margin-bottom: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .91rem; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--sand); vertical-align: top; }
+  th { font-family: var(--mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+
+  code, .mono { font-family: var(--mono); font-size: .86em; }
+  .quote {
+    font-family: var(--mono); font-size: .82rem; line-height: 1.55;
+    background: var(--sageLight); border-left: 3px solid var(--sand);
+    padding: 10px 14px; margin: 8px 0; color: var(--warmDark);
+    white-space: pre-wrap; overflow-wrap: break-word;
+  }
+  .src { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: .68rem;
+    letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px;
+    border-radius: 999px; border: 1px solid var(--sand); background: var(--cream);
+    color: var(--muted); vertical-align: middle;
+  }
+  .pill--verified { border-color: var(--moss); color: var(--moss); }
+  .pill--gap { border-color: var(--ochre); color: var(--ochreDark); background: var(--ochreLight); }
+  .pill--new { border-color: var(--ochre); color: var(--ochreDark); }
+  .pill--signed { border-color: var(--moss); background: #eef2e9; color: var(--moss); }
+  /* Option labels are judged as farmer-facing copy, so they must not be shouted. */
+  .pill--opt {
+    text-transform: none; letter-spacing: 0; font-family: var(--sans);
+    font-size: .8rem; padding: 3px 10px; color: var(--warmDark);
+  }
+
+  .stage { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .phone {
+    width: 390px; max-width: 100%; flex: 0 0 390px;
+    background: var(--cream); border: 1px solid var(--sand);
+    border-radius: 22px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .phone__bar {
+    background: var(--forestDeep); color: var(--sageLight);
+    font-family: var(--mono); font-size: .7rem; padding: 8px 16px;
+    display: flex; justify-content: space-between;
+  }
+  .phone__scroll { padding: 20px 18px 26px; max-height: 76vh; overflow-y: auto; }
+  .phone h3 { font-family: var(--serif); font-size: 1.5rem; margin: 0 0 6px; }
+  .phone .sub { color: var(--muted); font-size: .86rem; margin: 0 0 20px; }
+
+  .qgroup { margin: 0 0 22px; }
+  .qgroup__title {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ochreDark); margin: 0 0 10px;
+    border-bottom: 1px solid var(--sand); padding-bottom: 6px;
+  }
+  .groupnote {
+    background: var(--ochreLight); border: 1px solid var(--sand); border-radius: 8px;
+    padding: 10px 12px; font-size: .8rem; margin: 0 0 16px; color: var(--warmDark);
+  }
+  .q { margin: 0 0 20px; }
+  .q__label { font-weight: 600; font-size: .95rem; display: block; margin-bottom: 3px; }
+  .q__help { color: var(--muted); font-size: .8rem; margin: 0 0 8px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 7px; }
+  .opt {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--sand); background: var(--white);
+    border-radius: 999px; padding: 8px 13px; font-size: .84rem;
+    min-height: 40px; cursor: pointer; user-select: none; font-family: var(--sans);
+    color: var(--charcoal);
+  }
+  .opt:hover { border-color: var(--ochre); }
+  .opt input { accent-color: var(--forest); margin: 0; }
+  .opt.is-on { background: var(--ochreLight); border-color: var(--ochre); }
+
+  .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--sand); border-radius: 999px; overflow: hidden; width: fit-content; }
+  .seg button {
+    font-family: var(--sans); font-size: .78rem; padding: 8px 11px; min-height: 38px;
+    border: 0; background: var(--white); color: var(--muted); cursor: pointer;
+  }
+  .seg button + button { border-left: 1px solid var(--sand); }
+  .seg button.is-on { background: var(--forest); color: var(--cream); }
+
+  .consent {
+    background: var(--white); border: 1px solid var(--sand); border-radius: 10px;
+    padding: 12px 14px; margin: 0 0 12px; font-size: .82rem;
+  }
+  .consent__head { display: flex; gap: 9px; align-items: flex-start; font-weight: 600; }
+  .consent__body { color: var(--muted); margin: 6px 0 0 26px; font-size: .79rem; }
+
+  /* "Why we ask" — the disclosure the notes asked for, on every question. */
+  details.whyask { margin: 6px 0 0; }
+  details.whyask summary {
+    font-size: .78rem; color: var(--ochreDark); cursor: pointer;
+    list-style: none; display: inline-flex; align-items: center; gap: 5px;
+    min-height: 32px;
+  }
+  details.whyask summary::-webkit-details-marker { display: none; }
+  details.whyask summary::before { content: "\25B8"; font-size: .7rem; }
+  details.whyask[open] summary::before { content: "\25BE"; }
+  details.whyask p {
+    font-size: .78rem; color: var(--warmDark); background: var(--sageLight);
+    border-radius: 8px; padding: 9px 11px; margin: 4px 0 0;
+  }
+
+  .free { display: block; width: 100%; margin-top: 8px; }
+  .free textarea {
+    width: 100%; border: 1px solid var(--sand); border-radius: 8px;
+    font-family: var(--sans); font-size: .85rem; padding: 9px 11px;
+    min-height: 62px; resize: vertical; background: var(--white); color: var(--charcoal);
+  }
+  .free span { font-size: .72rem; color: var(--muted); }
+
+  .mock-note {
+    font-size: .76rem; color: var(--muted); border-top: 1px dashed var(--sand);
+    margin-top: 18px; padding-top: 12px;
+  }
+  .btn {
+    display: inline-block; background: var(--forest); color: var(--cream);
+    border: 0; border-radius: 999px; padding: 13px 26px; font-size: .93rem;
+    font-family: var(--sans); cursor: pointer; min-height: 46px;
+  }
+  .btn--ghost { background: transparent; color: var(--forest); border: 1px solid var(--forest); }
+  .btn--ochre { background: var(--ochreDark); color: var(--white); }
+
+  .result { flex: 1 1 420px; min-width: 320px; }
+  .tally {
+    display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 16px;
+    font-family: var(--mono); font-size: .74rem;
+  }
+  .tally span { border: 1px solid var(--sand); border-radius: 999px; padding: 4px 10px; background: var(--white); }
+  .todo { list-style: none; margin: 0; padding: 0; }
+  .todo li {
+    border-left: 3px solid var(--ochre); background: var(--white);
+    padding: 11px 14px; margin: 0 0 9px; border-radius: 0 8px 8px 0;
+    font-size: .87rem;
+  }
+  .todo li strong { display: block; }
+  .todo li .why { color: var(--muted); font-size: .79rem; display: block; margin-top: 3px; }
+  .todo li.ok { border-left-color: var(--moss); opacity: .72; }
+  .mirror {
+    background: var(--sageLight); border-radius: 10px; padding: 14px 16px;
+    font-size: .87rem; margin: 0 0 16px;
+  }
+  .mirror p { margin: 0 0 8px; }
+  .mirror p:last-child { margin: 0; }
+  .disclaimer-line {
+    font-size: .8rem; color: var(--warmDark); background: var(--ochreLight);
+    border: 1px solid var(--sand); border-radius: 8px; padding: 10px 12px; margin: 14px 0;
+  }
+  .feetag {
+    display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+    background: var(--white); border: 1px solid var(--sand); border-radius: 10px;
+    padding: 12px 14px; margin: 0 0 14px; font-size: .86rem;
+  }
+  .feetag strong { font-family: var(--serif); font-size: 1.02rem; }
+
+  .ledger-item { border: 1px solid var(--sand); border-radius: var(--radius); background: var(--white); margin: 0 0 16px; overflow: hidden; }
+  .ledger-item.is-decided { border-color: var(--moss); }
+  .ledger-item.is-dropped { opacity: .62; }
+  .ledger-head {
+    display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap;
+    padding: 16px 20px 10px;
+  }
+  .ledger-id {
+    font-family: var(--mono); font-size: .74rem; background: var(--forest);
+    color: var(--cream); border-radius: 6px; padding: 2px 7px;
+  }
+  .ledger-head h3 { margin: 0; font-size: 1.02rem; flex: 1 1 auto; }
+  .ledger-body { padding: 0 20px 18px; }
+  .ledger-body .proposed {
+    border-left: 3px solid var(--moss); padding: 2px 0 2px 14px; margin: 10px 0;
+  }
+  .ledger-body .proposed .who { font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--moss); }
+  .revised {
+    background: #eef2e9; border-left: 3px solid var(--moss); border-radius: 0 8px 8px 0;
+    padding: 10px 13px; margin: 12px 0 0; font-size: .85rem;
+  }
+  .revised .who {
+    font-family: var(--mono); font-size: .66rem; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--moss); display: block; margin-bottom: 4px;
+  }
+  .decide { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 8px; align-items: center; }
+  .decide button {
+    font-family: var(--sans); font-size: .8rem; padding: 8px 14px; min-height: 40px;
+    border-radius: 999px; border: 1px solid var(--sand); background: var(--white);
+    cursor: pointer; color: var(--charcoal);
+  }
+  .decide button.is-on { background: var(--forest); border-color: var(--forest); color: var(--cream); }
+  .decide button[data-v="drop"].is-on { background: #7a2d1e; border-color: #7a2d1e; }
+  textarea.note {
+    width: 100%; border: 1px solid var(--sand); border-radius: 8px;
+    font-family: var(--sans); font-size: .85rem; padding: 9px 11px;
+    min-height: 46px; resize: vertical; background: var(--cream);
+    color: var(--charcoal);
+  }
+  .change { font-size: .82rem; color: var(--muted); margin: 10px 0 0; }
+  .change strong { color: var(--warmDark); }
+
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: var(--forestDeep); color: var(--cream);
+    box-shadow: 0 -2px 10px rgb(26 33 22 / .16);
+    font-size: .85rem;
+  }
+  .bar__inner {
+    max-width: 1120px; margin: 0 auto; padding: 11px 24px;
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .bar strong { font-family: var(--mono); font-size: .78rem; letter-spacing: .06em; }
+  .bar__progress { flex: 0 1 180px; height: 6px; background: #3d4a34; border-radius: 999px; overflow: hidden; }
+  .bar__progress i { display: block; height: 100%; width: 0%; background: var(--ochre); }
+  .bar .spacer { flex: 1 1 auto; }
+  .bar button {
+    font-family: var(--sans); font-size: .8rem; padding: 8px 16px; min-height: 38px;
+    border-radius: 999px; border: 1px solid #4a5840; background: transparent;
+    color: var(--cream); cursor: pointer;
+  }
+  .bar button.primary { background: var(--ochre); border-color: var(--ochre); color: var(--forestDeep); font-weight: 600; }
+
+  dialog {
+    border: 0; border-radius: var(--radius); padding: 0; max-width: 860px; width: 94vw;
+    box-shadow: var(--shadow); background: var(--cream); color: var(--charcoal);
+  }
+  dialog::backdrop { background: rgb(26 33 22 / .55); }
+  .dlg__head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--sand); }
+  .dlg__head h3 { margin: 0; }
+  .dlg__body { padding: 16px 20px 20px; }
+  .dlg__body textarea {
+    width: 100%; min-height: 320px; font-family: var(--mono); font-size: .78rem;
+    border: 1px solid var(--sand); border-radius: 8px; padding: 12px; background: var(--white);
+  }
+
+  @media print {
+    body { padding-bottom: 0; background: #fff; }
+    .bar, dialog, .decide, .phone__bar { display: none !important; }
+    .hero { background: #fff; color: #000; padding: 0 0 18px; }
+    .hero h1, .hero .question, .hero .meta { color: #000; }
+    .card, .ledger-item, .phone { box-shadow: none; break-inside: avoid; }
+    section.part { padding: 22px 0 4px; }
+    .phone__scroll { max-height: none; overflow: visible; }
+    details.whyask p { display: block; }
+  }
+
+  @media (max-width: 900px) {
+    .phone { flex: 1 1 auto; }
+    .stage { gap: 18px; }
+  }
+
+  /* Narrow screens: the Part 1 comparison table is the only four-column
+     element on the page, and it is what pushes 390 px past the viewport. */
+  @media (max-width: 720px) {
+    .wrap { padding: 0 14px; }
+    .card { padding: 16px 14px; }
+    .ledger-body { padding: 0 14px 16px; }
+    .ledger-head { padding: 14px 14px 8px; }
+    table { font-size: .84rem; }
+    th, td { padding: 7px 6px; }
+    td.num { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">D71 &middot; decision artifact &middot; revision 2 &middot; not a production template</div>
+    <h1>The front door: what a farmer answers before applying</h1>
+    <p class="question">
+      You judged all nineteen controls on 2026-10-29. Ten came back <em>reword</em> with a note.
+      This revision answers every note in the page itself &mdash; and turns one of them
+      (&ldquo;why do you ask this?&rdquo;) into a disclosure on all twenty.
+    </p>
+    <div class="meta">
+      Twenty controls: operation (5), the seven records a visit checks, five practices, one exit
+      question, two consents &middot; your verdicts are pre-seeded &middot; A5 is new since your review
+    </div>
+  </div>
+</header>
+
+<div class="howto">
+  <div class="wrap">
+    <p><strong>What changed in this revision.</strong> Group B stopped asking for documents and
+      started asking a question &mdash; <em>&ldquo;Do you have these? None of them are needed to
+      apply&rdquo;</em> &mdash; with a fourth answer for the ones that feel private. Every question
+      now carries a <em>Why we ask</em> disclosure that names the clause. The placeholders
+      (&ldquo;whether it is critical&rdquo;) are gone because the answer already exists in the
+      code: <span class="mono">MVP1A_PRD</span> &sect;5.8 &mdash; a missing record is a recorded
+      fact, not a blocker; a blank unanswered question is the only thing that stops a visit.</p>
+    <p><strong>How to re-read it.</strong> Part 3 is the running page &mdash; open the
+      <em>Why we ask</em> lines, that is where your notes landed. Part 5 shows each of your ten
+      notes against what it produced. Part 6B lists the three questions I could not answer for
+      you.</p>
+  </div>
+</div>
+
+<!-- ============================ PART 1 ============================ -->
+<section class="part" id="p1">
+  <div class="wrap">
+    <div class="part__num">Part 1</div>
+    <h2>What is actually true</h2>
+    <p class="lede">Six things were checked before a word of copy was drafted. All still hold in
+      this revision; two were added because your notes forced a question.</p>
+
+    <div class="card">
+      <h3>1. The real form asks the farmer 77 things</h3>
+      <p>Sheet B.1 (Crops) holds <strong>38 numbered Question blocks</strong>, containing
+        <strong>77 numbered sub-questions</strong> (4.1, 4.2, 4.3&hellip;), and <strong>37</strong>
+        <span class="mono">V#</span> verdict rows. <span class="pill pill--verified">measured</span>
+        <span class="src">&nbsp;openpyxl over <span class="mono">pgs_docs/6. PGS Farm visit assessment form&hellip;.xlsx</span>, sheet <span class="mono">6.B.1.Crops</span></span></p>
+      <p>A front door that reproduced that would not be a front door. It would be the visit.</p>
+    </div>
+
+    <div class="card">
+      <h3>2. The FORM already separates the farmer's half from the assessor's</h3>
+      <p>Every <span class="mono">Question N</span> is the white half &mdash; the farmer's own
+        description. Every <span class="mono">V#</span> immediately after it is the grey half
+        &mdash; the administrator's verdict, on the visit, against evidence.</p>
+      <p>This is why a preview cannot accidentally become a verdict: verdicts are
+        <span class="mono">respondent: ADMINISTRATOR</span> and hang off a
+        <span class="mono">FarmVisit</span> that does not exist yet
+        (<span class="mono">MVP1A_PRD</span> &sect;5.1). The form does the discipline for us.</p>
+    </div>
+
+    <div class="card card--warm">
+      <h3>3. &ldquo;Not critical&rdquo; is not a softening &mdash; it is already the rule in the code</h3>
+      <p>Your note on B1 asked for &ldquo;not critical that you have them&rdquo;. That is not a copy
+        decision, it is the specified behaviour of the visit:</p>
+      <div class="quote">A visit cannot be finalised with an unset `RecordCheck` or without a
+`SocialEquity` row. A `MISSING` record is a recorded fact, not a blocker &mdash;
+Homtini's missing sales records did not stop the visit; blank did.</div>
+      <p class="src">MVP1A_PRD &sect;5.8, D45</p>
+      <p>So Group B can say it plainly, and it is true: a missing record does not stop an
+        assessment. What stops one is a question left blank. The front door now states the rule the
+        server enforces, instead of a reassurance that might disagree with it.</p>
+    </div>
+
+    <div class="card">
+      <h3>4. The record checklist is real, and most of it is not Crops-specific</h3>
+      <p>Sheet I &sect;2 lists nine items, a&ndash;i. Three of them (g, h, i) are
+        <em>&ldquo;for agro-processing only&rdquo;</em>, so a Crops farm is checked on
+        <strong>seven</strong>. <span class="pill pill--verified">measured</span></p>
+      <div class="quote">a. Farm sketch of layout of farm, buildings, production areas, wildlife habitats, access, neighbouring properties and activities
+b. Sketches or diagrams of fields, indicating acreage and cultivation, pasture/range, stock densities
+c. Farm diary recording main activities; planting, harvest quantities, applications, etc.
+d. Records of purchases/donations of all inputs, incl seeds/seedlings
+e. Sales records.
+f. Input/output reconciliation report (This report compares two sets of data, like sales records and production records, to ensure&hellip;)
+Soil test and water test results, including Soil Organic Matter &amp; Cation Exchange Capacity</div>
+      <p class="src">FORM Sheet I &sect;2, verbatim (the seventh line is unnumbered in the source)</p>
+      <p><strong>New this revision:</strong> nothing in the standard or the form sets a maximum age
+        for a soil or water test &mdash; the only laboratory sampling the standard describes is
+        the group&rsquo;s own, for pesticides and GMOs (SAOSO 1.4.2). So B7&rsquo;s
+        &ldquo;an older test is still a starting point&rdquo; is a statement about what the
+        documents require, not a favour.</p>
+    </div>
+
+    <div class="card card--warm">
+      <h3>5. The standard has its own records clause &mdash; and the group does not publish it</h3>
+      <p>SAOSO &sect;1.5 <em>Documentary accounts</em> requires stock and financial records that let
+        the group trace suppliers, quantities, materials bought, storage, and buyers. It is the
+        clause that gives the seven-item list its authority.</p>
+      <p>It is <strong>not in the corpus</strong>. <span class="mono">knowledge/corpus/saoso.md</span>
+        begins at <span class="mono">## 1. DEFINITIONS</span> (printed p.&nbsp;22);
+        &sect;1.5 sits at printed p.&nbsp;12, and the stored page range begins at 22.
+        <span class="pill pill--gap">gap</span> <span class="pill pill--verified">measured</span></p>
+      <p>So the &ldquo;Why we ask&rdquo; text cites <strong>FORM Sheet I &sect;2</strong> and, where
+        one exists, a clause the corpus actually holds. Nothing in this page links to a passage the
+        reader cannot open &mdash; D68&rsquo;s rule, applied to copy.</p>
+    </div>
+
+    <div class="card">
+      <h3>6. Two governing documents disagree about the land-history threshold</h3>
+      <table>
+        <thead><tr><th>Source</th><th>Annuals</th><th>Pasture / meadow</th><th>Other perennials</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>SAOSO 4.2.3 &mdash; the conversion period, assessed at a visit</td>
+            <td class="num">12 months</td><td class="num">12</td><td class="num">18</td>
+          </tr>
+          <tr>
+            <td>OPP &sect;V &mdash; when the <em>In-Conversion</em> seal applies</td>
+            <td class="num">18 months</td><td class="num">12</td><td class="num">12</td>
+          </tr>
+          <tr>
+            <td>OPP &sect;I.2 &mdash; the farmer pledge&rsquo;s land-history attestation</td>
+            <td class="num">12 months</td><td class="num">12</td><td class="num">18</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="quote">4.2.3. The length of the conversion period&hellip; shall be at least:
+a  12 months before sowing or planting in the case of annual production;
+b  12 months before grazing or harvest for pastures and meadows;
+c  18 months before harvest for other perennials;
+d  36 months for land where inputs not permitted&hellip; have been used.</div>
+      <p class="src">SAOSO &sect;4.2.3 &mdash; in the corpus, so it can be linked</p>
+      <p>D31 recorded the conflict and refused to resolve it. The page prints <strong>both</strong>
+        and plans for the longer &mdash; and it gives the group the count it needs to settle D31,
+        which is now the point of the question rather than a side effect.</p>
+    </div>
+
+    <div class="card">
+      <h3>7. The form must survive a grep, and a farmer&rsquo;s answer is not a group claim</h3>
+      <p><span class="mono">core/tests/test_claim_discipline.py</span> fails the build if
+        <span class="mono">pasture raised</span>, <span class="mono">pasture-raised</span>,
+        <span class="mono">gmo free</span>, <span class="mono">gmo-free</span>,
+        <span class="mono">biodynamic</span>, <span class="mono">chemical-free</span> or
+        <span class="mono">spray-free</span> appears in the rendered HTML of any public route.</p>
+      <p>&ldquo;Are all your seeds non-GMO?&rdquo; and the answer &ldquo;some are, some
+        aren&rsquo;t&rdquo; are the FORM&rsquo;s own question and the farmer&rsquo;s own statement.
+        Neither matches a forbidden term, and neither is an endorsement. That distinction is DESIGN
+        &sect;1: a producer statement is not a PGS claim.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PART 2 ============================ -->
+<section class="part" id="p2">
+  <div class="wrap">
+    <div class="part__num">Part 2</div>
+    <h2>The shape of the problem, revised</h2>
+    <p class="lede">Your notes converged on one thing I had underweighted: every group-B question
+      reads as a demand until it says what happens if the answer is no. That is now the spine of
+      the page.</p>
+
+    <div class="card">
+      <h3>Four constraints no question may cross</h3>
+      <p><strong>It asks a fact, never a status.</strong> No question implies the group has judged
+        anything. The result screen says so in one fixed line.</p>
+      <p><strong>It is coarse on purpose.</strong> Bands and short answer sets, not values. The
+        application asks for exact hectares and exact figures; the front door asks
+        <em>roughly</em>. A band is also what makes an aggregate safe to publish.</p>
+      <p><strong>It asks nothing it cannot act on.</strong> Every question either changes the
+        to-do list, changes the honest answer about timing or cost, or feeds the aggregate.</p>
+      <p><strong>It never leaves a &ldquo;no&rdquo; hanging.</strong> New this revision. Each
+        record, each practice and each consent says what happens next when the answer is no &mdash;
+        because &ldquo;no&rdquo; was where every one of your notes landed.</p>
+    </div>
+
+    <div class="card">
+      <h3>Why a &ldquo;Why we ask&rdquo; line, and not a tooltip</h3>
+      <p>You suggested tooltips on C3 and C4. I have used a native disclosure
+        (<span class="mono">&lt;details&gt;</span>) instead, and put it on all twenty questions:</p>
+      <p>A tooltip needs JavaScript and a hover, and it is unreachable on a phone and invisible to
+        print. A disclosure works with the keyboard, on a touch screen, with no JS, and it prints
+        open. It also puts the clause on the page in text, where a reviewer can check it against
+        the document &mdash; which a tooltip never does.</p>
+    </div>
+
+    <div class="card">
+      <h3>What a band costs you, and what a value would cost us</h3>
+      <p>A2 and A5 are bands rather than figures for two reasons at once: a farmer is far more
+        likely to answer &ldquo;20&ndash;100 ha&rdquo; than an exact hectare count on a first visit,
+        and an exact hectare figure plus a category plus a turnover figure in a catchment of a few
+        dozen farms is a farm you can name. The band is the privacy control and the completion
+        control.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PART 3 ============================ -->
+<section class="part" id="p3">
+  <div class="wrap">
+    <div class="part__num">Part 3</div>
+    <h2>The check, running</h2>
+    <p class="lede">The page as a farmer meets it, at 390&nbsp;px. Open a
+      <em>Why we ask</em> line &mdash; that is where your ten notes landed. Part 4 recomputes from
+      your answers.</p>
+
+    <div class="stage">
+      <div class="phone">
+        <div class="phone__bar"><span>/before-you-apply/</span><span>PGS Outeniqua</span></div>
+        <div class="phone__scroll">
+          <h3>Before you apply</h3>
+          <p class="sub">Twenty questions, about five minutes. They tell you what a farm visit
+            checks and what you already have &mdash; and they change nothing until you apply.</p>
+          <div id="mockForm"></div>
+          <button class="btn" id="showResult">Show me what I have</button>
+          <p class="mock-note">Nothing is kept unless you tick a consent box below the result.
+            With both unticked, closing the tab leaves no record on the server.</p>
+        </div>
+      </div>
+
+      <div class="result">
+        <div class="card card--warm" id="resultCard">
+          <h3>What you get back</h3>
+          <p class="sub" style="color:var(--muted);margin-top:0">Answer something on the left and
+            this fills in.</p>
+          <div id="resultBody">
+            <p style="color:var(--muted);font-size:.9rem">Nothing answered yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PART 4 ============================ -->
+<section class="part" id="p4">
+  <div class="wrap">
+    <div class="part__num">Part 4</div>
+    <h2>What the result must never say</h2>
+    <p class="lede">The result is the whole risk of this feature, so it is specified as a set of
+      prohibitions rather than a layout.</p>
+
+    <div class="card">
+      <table>
+        <thead><tr><th>Never</th><th>Why</th><th>Instead</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>&ldquo;You are ready to apply&rdquo; / &ldquo;you qualify&rdquo; / &ldquo;you are eligible&rdquo;</td>
+            <td>A claim about a farm, on a public route, sourced to nobody. <span class="mono">eligible</span> is already used legitimately on <span class="mono">/become-a-member/</span>, so the guard has to be route-scoped.</td>
+            <td>&ldquo;Of the seven records a visit checks, your answers show four in place.&rdquo;</td>
+          </tr>
+          <tr>
+            <td>A score, a percentage, a progress ring</td>
+            <td>A number invites comparison and reads as an assessment result.</td>
+            <td>Counts out of a known denominator, item by item.</td>
+          </tr>
+          <tr>
+            <td>The word <em>certified</em>, or any seal</td>
+            <td>MVP 0 publishes no seal, active or otherwise; seals are MVP 2.</td>
+            <td>&ldquo;the visit decides&rdquo;.</td>
+          </tr>
+          <tr>
+            <td>A single conversion-period number</td>
+            <td>D31 &mdash; two governing documents disagree, and the conflict is unresolved.</td>
+            <td>Both periods, the fact that they differ, and &ldquo;plan for the longer&rdquo;.</td>
+          </tr>
+          <tr>
+            <td>A fee band the farmer did not declare</td>
+            <td>BUILD &sect;III &mdash; <em>declared, not computed</em>. The platform stores the band the farmer chose; it never derives one from sales data.</td>
+            <td>The band they ticked, with the OPP&rsquo;s own figures beside it.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card card--forest">
+      <h3>The one fixed line, on every result</h3>
+      <p style="font-size:1.02rem;margin:0">&ldquo;The farm visit decides. This is only what your
+        answers show, and the visit happens after you apply.&rdquo;</p>
+    </div>
+
+    <div class="card">
+      <h3>The second fixed line, added this revision</h3>
+      <p>&ldquo;A missing record does not stop an assessment. The visit records it, and you and the
+        group agree what happens next.&rdquo;</p>
+      <p class="src">This is MVP1A_PRD &sect;5.8 in a farmer&rsquo;s words. It appears under
+        Group B and again under the to-do list, because it is the sentence that turns
+        &ldquo;no&rdquo; from a rejection into an instruction.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PART 5 ============================ -->
+<section class="part" id="p5">
+  <div class="wrap">
+    <div class="part__num">Part 5</div>
+    <h2>The wording ledger — revised</h2>
+    <p class="lede">Your verdict is pre-seeded on every card. Each of your ten
+      <em>reword</em> notes now has a green block: <strong>what it produced</strong>. Change a
+      verdict, or write the wording you want in the note, and the export carries it.</p>
+    <div id="ledger"></div>
+  </div>
+</section>
+
+<!-- ============================ PART 6 ============================ -->
+<section class="part" id="p6">
+  <div class="wrap">
+    <div class="part__num">Part 6</div>
+    <h2>What is still open</h2>
+
+    <div class="card">
+      <h3>A. The one thing I could not answer for you</h3>
+      <p><strong>E2 &mdash; &ldquo;if we wanted to apply to funding applications, what information
+        would be valuable to capture?&rdquo;</strong> That is a new purpose, and a purpose cannot be
+        added by wording: the consent text names what is collected and what it is for, so a funding
+        dataset needs its own consent, its own field list and its own retention answer. Some of what
+        a funder asks for the page already collects in bands (category, hectares, turnover if A5 is
+        kept, land history); employment numbers come from the visit&rsquo;s social-equity section
+        (<span class="mono">SocialEquity</span>), which is not on the front door.</p>
+      <p>The page therefore says what the census is <em>for</em>, in the FORM&rsquo;s own words
+        &mdash; &ldquo;to profile small-scale organic farmers in South Africa for advocacy and
+        support purposes&rdquo; &mdash; and states plainly that funding applications are not covered.
+        Proposing which fields a funder needs is a group decision, not a design one.</p>
+    </div>
+
+    <div class="card">
+      <h3>B. Two domain questions your notes surfaced that no document answers</h3>
+      <p><strong>1. Is there an unwritten freshness rule for soil and water tests?</strong> Neither
+        SAOSO nor the assessment form sets a maximum age. Homtini&rsquo;s test is several years old
+        and the farm remains verified &mdash; which suggests the practice, but practice is not a
+        rule. Until the group states one, the page says only &ldquo;tell us when it was
+        taken&rdquo;.</p>
+      <p><strong>2. Is &ldquo;a mix&rdquo; enough?</strong> For the front door, yes &mdash; it
+        changes nothing and it is honest. For the visit, no: the FORM records the status of each
+        seed lot, because that is the baseline the group measures improvement against. The
+        <em>Why we ask</em> on C3 says exactly that, so a farmer who answers &ldquo;a mix&rdquo;
+        learns what it will cost them later rather than being told it is fine.</p>
+    </div>
+
+    <div class="card card--warm">
+      <h3>C. A5 — the proposal that is not in your export</h3>
+      <p>Cost is the first thing a farmer asks, and the page does not answer it &mdash; while
+        <span class="mono">/become-a-member/</span> already has a &ldquo;which band are you
+        in?&rdquo; panel. Turnover is the only input the fee scale uses (OPP &sect;2.3), so one
+        band question would let the result print the actual figure.</p>
+      <p>It is also the most commercially sensitive question on the page, so: bands only, an
+        explicit &ldquo;rather not say&rdquo;, and no fee figure if skipped. It is marked
+        <span class="pill pill--new">new — not in your export</span>. Keep or drop it and the
+        export updates.</p>
+    </div>
+
+    <div class="card">
+      <h3>D. What would change my mind</h3>
+      <p>If, reading Part 3 on your own phone, you would not finish it &mdash; then it is three
+        questions too long and Group B is what to cut, because A and C carry the aggregate value and
+        D is the only question that answers &ldquo;why don&rsquo;t they join&rdquo;.</p>
+      <p>If the fourth answer (&ldquo;rather not say&rdquo;) turns out to be most people&rsquo;s
+        answer to the records block, then the block is asking the wrong question at this moment and
+        should move inside the application, after the farmer has decided to trust the group.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PART 7 ============================ -->
+<section class="part" id="p7">
+  <div class="wrap">
+    <div class="part__num">Part 7</div>
+    <h2>Your decision</h2>
+    <div class="card">
+      <p>Every button and note autosaves in this browser. <strong>Export</strong> produces a
+        markdown row for <span class="mono">PGS_PLATFORM_SPEC.md</span> &sect;18.3 plus a table of
+        the per-question verdicts, ready to paste into the PRD&rsquo;s wording section.</p>
+      <p style="margin-bottom:0">A question with no verdict is not silently accepted. The export
+        lists it as <span class="mono">UNDECIDED</span>, because a page of defaults that looks
+        decided is the failure this whole artifact exists to avoid. <em>Reset</em> clears the
+        pre-seeded verdicts too, so you can start from nothing if you would rather.</p>
+    </div>
+  </div>
+</section>
+
+<div class="bar">
+  <div class="bar__inner">
+    <strong id="progressText">0 / 20 decided</strong>
+    <div class="bar__progress"><i id="progressBar"></i></div>
+    <span class="spacer"></span>
+    <button id="exportBtn" class="primary">Export decisions</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<dialog id="exportDlg">
+  <div class="dlg__head">
+    <h3>Paste into the PRD / spec &sect;18.3</h3>
+    <button class="btn btn--ghost" id="closeDlg" style="padding:6px 16px">Close</button>
+  </div>
+  <div class="dlg__body">
+    <textarea id="exportText" readonly></textarea>
+    <p style="font-size:.8rem;color:var(--muted)">Copy from the box &mdash; nothing is uploaded.</p>
+  </div>
+</dialog>
+
+<script>
+/* =====================================================================
+   The question set. One array drives Part 3 (the mock) and Part 5 (the
+   ledger), so the wording you approve is literally the wording that renders.
+   Every `why` is sourced; if a clause is not in the corpus it is cited as
+   text and not made to look like a link.
+   ===================================================================== */
+const GROUPS = {
+  A: 'About your farm',
+  B: 'Records a visit checks',
+  C: 'Practices the visit looks at',
+  D: 'On your way out',
+  E: 'Two consents'
+};
+
+const GROUP_NOTE = {
+  B: 'Do you have these? <strong>None of them are needed to apply.</strong> A missing record does not stop an assessment \u2014 the visit records it and you agree what happens next. What does stop a visit is a question left blank.'
+};
+
+/* OPP \u00a72.3, transcribed from core/services/_public.py FEE_BANDS (integer cents). */
+const FEE_BANDS = [
+  { label: 'Below R250 000',              initial: 150000, renewal: 90000  },
+  { label: 'R250 001 \u2013 R500 000',     initial: 250000, renewal: 200000 },
+  { label: 'R500 001 \u2013 R1 000 000',   initial: 300000, renewal: 250000 },
+  { label: 'R1 000 001 \u2013 R2 500 000', initial: 370000, renewal: 320000 },
+  { label: 'R2 500 001 \u2013 R5 000 000', initial: 500000, renewal: 500000 },
+  { label: 'Above R5 000 000',            initial: 800000, renewal: 800000 }
+];
+
+const QUESTIONS = [
+  /* ---------------- A ---------------- */
+  {
+    id: 'A1', group: 'A', type: 'multi', verdict: 'proposed',
+    title: 'What do you produce?',
+    help: 'Tick everything that applies.',
+    options: ['Crops &mdash; vegetables, fruit, grain, pasture', 'Livestock and animal products', 'Seed', 'Processing &mdash; jam, cheese, flour, and so on'],
+    formRef: 'FORM Sheet A', formLabel: 'Sheet selection',
+    form: 'Specify category/categories for which the applicant is seeking endorsement:\nSheet B | Crops (B.1) + Input suppliers (B.2)\nSheet C | Animal Husbandry\nSheet D | Seed production\nSheet E | Agro-Processing',
+    change: 'Same four categories the form names, in a farmer\u2019s nouns rather than the form\u2019s sheet letters, because "Sheet B" means nothing before you have applied. Only Crops has a full check today (D28), so a non-Crops tick is answered honestly instead of with an empty form.',
+    why: 'The group assesses crops, livestock, seed and processing under different questionnaires, and a seed producer should not be asked about compost. Telling us which one you are under means the next page is the right one.'
+  },
+  {
+    id: 'A2', group: 'A', type: 'single', verdict: 'proposed',
+    title: 'How much land do you farm in total?',
+    help: 'Your best estimate is fine \u2014 the application asks for the exact figure.',
+    options: ['Less than 1 ha', '1&ndash;5 ha', '5&ndash;20 ha', '20&ndash;100 ha', 'More than 100 ha'],
+    formRef: 'FORM B.1 Q2.1&ndash;2.3', formLabel: 'Land area',
+    form: '2.1 Total Hectares cultivated\n2.2 Total hectares pasture\n2.3 Total Hectares of farm (total surface area (hectares) of farm',
+    change: 'Three exact fields become one band. The reason is both privacy and completion: an exact hectare figure plus a category plus a turnover band, in a catchment of a few dozen farms, is a farm you can name. A band answers what the front door actually needs.',
+    why: 'Land area is <strong>not</strong> used to set your fee \u2014 fees follow turnover (OPP \u00a72.3). It is asked because the visit checks field diagrams against acreage (FORM Sheet I \u00a72 b), and because the group reports the scale of farms it serves.'
+  },
+  {
+    id: 'A3', group: 'A', type: 'single', verdict: 'proposed',
+    title: 'How much of that is pasture or grazing?',
+    help: 'Skip if none of your land is grazed.',
+    options: ['None', 'Less than 1 ha', '1&ndash;5 ha', '5&ndash;20 ha', 'More than 20 ha'],
+    formRef: 'FORM B.1 Q2.2', formLabel: 'Pasture area',
+    form: '2.2 Total hectares pasture',
+    change: 'Kept as its own question because pasture has a different conversion period from annual crops, so it changes the timing answer rather than only the scale.',
+    why: 'Pasture and meadow have their own conversion period \u2014 12 months before grazing or harvest (SAOSO 4.2.3 b) \u2014 which is different from other perennials. Without this answer the timing note would be wrong for a grazing farm.'
+  },
+  {
+    id: 'A4', group: 'A', type: 'single', verdict: 'proposed', reserved: true,
+    title: 'How long has this land been farmed organically?',
+    help: 'The land, not you \u2014 count from when the last non-organic input was used on it.',
+    options: ['Not yet', 'Under 12 months', '12&ndash;17 months', '18 months or more', 'I am not sure'],
+    formRef: 'FORM B.1 Q3.1', formLabel: 'Land history',
+    form: '3.1 How long has the land been farmed organically?',
+    change: 'The FORM\u2019s sentence, verbatim \u2014 only bands added. The bands sit on 12 and 18 because those are the two thresholds the documents disagree about (Part 1, item 6); "18 months or more" is the first band where the disagreement stops mattering.',
+    why: 'The conversion period is the most common reason someone is not yet assessable. The standard sets it at 12 months for annuals, 12 for pasture, 18 for other perennials, and 36 where inputs not permitted by organic principles were used (SAOSO 4.2.3). The group\u2019s In-Conversion seal applies for less than 18 months for annuals (OPP \u00a7V). We ask so we can tell you which applies \u2014 not to judge you. <em>Reserved: if the group settles D31 the bands may move.</em>'
+  },
+  {
+    id: 'A5', group: 'A', type: 'single', verdict: '', reserved: true, isNew: true,
+    title: 'Roughly what was your turnover last year?',
+    help: 'This is what the group\u2019s fee scale uses. Bands only \u2014 and you can skip it.',
+    options: ['Below R250 000', 'R250 001 \u2013 R500 000', 'R500 001 \u2013 R1 000 000', 'R1 000 001 \u2013 R2 500 000', 'R2 500 001 \u2013 R5 000 000', 'Above R5 000 000', 'I would rather not say'],
+    formRef: 'OPP \u00a72.3', formLabel: 'Turnover band',
+    form: '(the six-band assessment fee scale; the FORM asks for turnover on the application, not on a public page)',
+    change: 'New since your review. Cost is the first thing a farmer asks and the page did not answer it, while /become-a-member/ already has a "which band are you in?" panel. Bands only, skippable, and no figure shown if skipped.',
+    why: 'Fees follow a six-band turnover scale (OPP \u00a72.3), and turnover is <strong>self-declared by the farmer and peer-reviewed</strong> \u2014 the platform stores the band you choose and never calculates one from sales data. If you would rather not say, you simply will not see a fee figure here; the public table on /become-a-member/ is there either way.'
+  },
+
+  /* ---------------- B ---------------- */
+  {
+    id: 'B1', group: 'B', type: 'records', short: 'A farm sketch', verdict: 'reword',
+    title: 'Do you have a sketch of the farm?',
+    help: 'Layout, buildings, production areas, natural bush, access roads, neighbours.',
+    formRef: 'FORM Sheet I \u00a72 a', formLabel: 'Farm sketch',
+    form: 'a. Farm sketch of layout of farm, buildings, production areas, wildlife habitats, access, neighbouring properties and activities',
+    change: 'Phrased as a question, per your note. "Wildlife habitats" became "natural bush" and the list order changed so a farmer can picture the page; every element is still named.',
+    revised: 'You asked for "Do you have these records?" and an explicit "not critical". Group B is now a question with a header that says <em>None of them are needed to apply</em>, and every item reads "Do you have\u2026". The reassurance is not a copy decision: MVP1A_PRD \u00a75.8 already specifies that a MISSING record is a recorded fact, not a blocker \u2014 what stops a visit is a blank unanswered question. The page now states the rule the server enforces.',
+    why: 'The visit needs to see the farm\u2019s shape on one page \u2014 production areas, water, natural vegetation, and what is next door, because what neighbours do can affect what reaches your land (SAOSO 4.6, Avoiding contamination). A sketch is usually the fastest way to show it.'
+  },
+  {
+    id: 'B2', group: 'B', type: 'records', short: 'Field diagrams', verdict: 'proposed',
+    title: 'Do you have sketches or diagrams of your fields?',
+    help: 'Acreage, what is growing where, grazing areas, stock numbers.',
+    formRef: 'FORM Sheet I \u00a72 b', formLabel: 'Field diagrams',
+    form: 'b. Sketches or diagrams of fields, indicating acreage and cultivation, pasture/range, stock densities',
+    change: 'Lightest edit in the set: the FORM already reads as plain language, and it only gained "Do you have".',
+    why: 'Field diagrams are how the visit checks that what you describe on paper matches what is planted \u2014 the record is compared against the land, not only read.'
+  },
+  {
+    id: 'B3', group: 'B', type: 'records', short: 'A farm diary', verdict: 'proposed',
+    title: 'Do you have a farm diary?',
+    help: 'Plantings, harvest quantities, anything you apply to the land.',
+    formRef: 'FORM Sheet I \u00a72 c', formLabel: 'Farm diary',
+    form: 'c. Farm diary recording main activities; planting, harvest quantities, applications, etc.',
+    change: '"Applications" on its own means nothing to a farmer who has never read the standard \u2014 it means inputs applied. Spelled out; nothing added.',
+    why: 'A diary is the evidence trail behind everything else you tell us: what was planted, what was harvested, what was applied. It is also what makes an input/output reconciliation possible at all.'
+  },
+  {
+    id: 'B4', group: 'B', type: 'records', short: 'Input records', verdict: 'reword',
+    title: 'Do you have records of the inputs you buy or receive?',
+    help: 'Including seeds and seedlings, and donations as well as purchases.',
+    formRef: 'FORM Sheet I \u00a72 d', formLabel: 'Input records',
+    form: 'd. Records of purchases/donations of all inputs, incl seeds/seedlings',
+    change: 'Only "incl." expanded, and phrased as a question. Kept as its own item rather than merged with sales, because the two are checked differently and a farmer can have one without the other.',
+    revised: 'Your note: "we need to explain if this is critical or not \u2014 feels like quite private info to share". Both are answered. The criticality is now stated in the group header, and the privacy worry is answered in the farmer\u2019s own terms: the group asks <em>what</em> was bought, never what it cost, and there is a fourth answer \u2014 <em>Rather not say</em> \u2014 on every record, which removes the item from your to-do list and adds one line saying the visit will still ask.',
+    why: 'Inputs are where a visit starts, because that is where an organic claim is easiest to lose: one treated seedling or one bag of conventional compost changes what the land has received. The evidence needed is <em>what</em> was bought and from where. <strong>The group does not ask what you paid</strong>, and it does not ask for your supplier contracts.'
+  },
+  {
+    id: 'B5', group: 'B', type: 'records', short: 'Sales records', verdict: 'reword',
+    title: 'Do you have sales records?',
+    help: 'Whatever form they take \u2014 a book, slips, a spreadsheet, invoices.',
+    formRef: 'FORM Sheet I \u00a72 e', formLabel: 'Sales records',
+    form: 'e. Sales records.',
+    change: 'The help line is new. It exists because "sales records" makes a farmer with a notebook think they have none, and the visit accepts any of those.',
+    revised: 'Your note: "farmers will push back against sharing \u2014 does it indicate from the docs why they may be asking? Maybe an option to say I would rather not share." Yes, it does, and the page now says it: this is a <strong>traceability</strong> check \u2014 that what left the farm came from the farm \u2014 not an income or tax check, and the group does not ask what you earned (OPP \u00a7VI.3 wants invoices to show <em>which farm</em> and <em>what quantity</em>, not the price). "Rather not say" is a fourth answer here, as above.',
+    why: 'Sales records are how the visit shows that produce sold as yours was grown by you \u2014 the same traceability requirement that applies to bought-in produce (OPP \u00a7VI.3). The group does not ask what you earned, and the figure it looks for is the quantity, not the price.'
+  },
+  {
+    id: 'B6', group: 'B', type: 'records', short: 'An input/output reconciliation', verdict: 'reword',
+    title: 'Do you have an input/output reconciliation?',
+    help: 'Your sales compared against what you produced, to show nothing came in from outside.',
+    formRef: 'FORM Sheet I \u00a72 f', formLabel: 'Reconciliation',
+    form: 'f. Input/output reconciliation report (This report compares two sets of data, like sales records and production records, to ensure\u2026)',
+    change: 'The FORM explains this in a bracket nobody reads. It is now the help line, in the farmer\u2019s words.',
+    revised: 'Your note: "we need to explain why we need it and confirm it will be okay if they don\u2019t have it \u2014 that we could help capture those details going forward". The "why" is now in the disclosure, the "okay if not" is in the group header, and the "we can help" is explicit on the result screen: this is a record you build going forward, not one you must have kept. It stays, because it is also the item whose absence produced a Major finding at Homtini (MVP1A_PRD \u00a75.9) \u2014 so it is worth reaching a farmer early.',
+    why: 'This is the one comparison that proves the two halves agree: what you produced against what you sold. Where it does not exist, the group can help set one up \u2014 it is a record you build forward, and there is no requirement that you have been keeping it.'
+  },
+  {
+    id: 'B7', group: 'B', type: 'records', short: 'Soil and water test results', verdict: 'reword',
+    title: 'Do you have soil and water test results?',
+    help: 'Including soil organic matter and cation exchange capacity, if your lab reports them.',
+    formRef: 'FORM Sheet I \u00a72 (unnumbered line)', formLabel: 'Soil and water tests',
+    form: 'Soil test and water test results, including Soil Organic Matter &Cation Exchange Capacity',
+    change: 'Kept, with the two technical terms left in \u2014 a lab report uses them, so a farmer can match them. "If your lab reports them" is new, because not every lab does.',
+    revised: 'Your note: "we don\u2019t have a recent one at Homtini (5/6 years old, I think) but are still verified \u2014 so say this isn\u2019t a blocking requirement". Confirmed and measured: <strong>nothing in the standard or the assessment form sets a maximum age</strong> \u2014 SAOSO\u2019s only laboratory sampling is the group\u2019s own, for pesticides and GMOs (SAOSO 1.4.2). So the page says an older test is still a starting point and to tell the visit when it was taken. The one thing it cannot say is whether the group has an unwritten freshness rule (Part 6B).',
+    why: 'A soil test is a snapshot of soil health, not a pass mark, and neither the standard nor the assessment form sets a maximum age. A test from a few years ago is still a starting point \u2014 tell the visit when it was taken. A missing test is recorded, not held against you.'
+  },
+
+  /* ---------------- C ---------------- */
+  {
+    id: 'C1', group: 'C', type: 'single', verdict: 'keep',
+    title: 'Do you make your own compost?',
+    help: '',
+    options: ['Yes', 'No'],
+    formRef: 'FORM B.1 Q4.2', formLabel: 'Own compost',
+    form: '4.2 Do you make your own compost?',
+    change: 'Verbatim. On-farm composting is called "a key requirement of organic principles" in the FORM\u2019s own verdict V4, so it earns a place at the front door.',
+    why: 'The FORM\u2019s verdict V4 describes adequate on-farm composting as "a key requirement of organic principles", so it is one of the first practices a visit looks at.'
+  },
+  {
+    id: 'C2', group: 'C', type: 'single', verdict: 'keep',
+    title: 'Do you buy in compost?',
+    help: 'Purchased compost has to come from an acceptable source.',
+    options: ['Yes', 'No'],
+    formRef: 'FORM B.1 Q5.1', formLabel: 'Purchased compost',
+    form: '5.1 Do you purchase compost?\n5.2 List your supplier/s',
+    change: 'Verbatim question; the supplier list stays in the application. The help line is the FORM\u2019s own V5 test, so the farmer learns the standard before the visit does.',
+    why: 'Purchased compost is allowed, but its source and quality are checked (FORM V5) \u2014 the risk is what came in with it. The supplier list belongs in the application, not here.'
+  },
+  {
+    id: 'C3', group: 'C', type: 'single', verdict: 'reword',
+    title: 'Where do your seeds come from?',
+    help: 'Tick the one that is most of it.',
+    options: ['Organic seed', 'Conventional, untreated', 'Conventional, treated', 'I save my own', 'A mix'],
+    formRef: 'FORM B.1 Q11.1', formLabel: 'Seed source',
+    form: '11.1 Do you purchase seeds? If so, are they organic, conventional untreated or conventional treated? (please list suppliers) Important: the status of each seed needs to be recorded - this is baseline information against which future improvements in the proportion of organic seeds used by the farmer can be assessed',
+    change: 'The three statuses the FORM names are kept exactly, plus "I save my own" (Q12.1) and "a mix", because most farms are a mix and forcing one answer loses the fact that matters. Supplier lists stay in the application.',
+    revised: 'Your note: "the Mix will be our answer \u2014 just confirming if that is enough info for us". Two answers, and they differ. For the front door, yes: "a mix" changes nothing and it is honest. For the visit, no \u2014 and the FORM says why in its own words: "the status of each seed needs to be recorded - this is baseline information against which future improvements in the proportion of organic seeds used by the farmer can be assessed". So the disclosure now says that, and a farmer answering "a mix" learns what it costs them later instead of being told it is fine.',
+    why: 'The standard prefers organically produced seed, allows in-conversion material, and then permits conventional seed provided it has not been treated with prohibited post-harvest pesticides (SAOSO 4.1.1). So "a mix" or "conventional untreated" does not disqualify you. What the visit needs later is the status of <em>each</em> seed lot, because the FORM uses that as the baseline for improvement \u2014 which is why one word is enough here and not enough then.'
+  },
+  {
+    id: 'C4', group: 'C', type: 'single', verdict: 'reword',
+    title: 'Are all your seeds non-GMO?',
+    help: 'If you buy conventional seed, the group will ask for a letter from the supplier saying the seed is not treated and not GMO.',
+    options: ['Yes', 'No', 'Some are, some aren\u2019t', 'I do not know'],
+    formRef: 'FORM B.1 Q11.2', formLabel: 'Non-GMO seed',
+    form: '11.2 Are all your seeds non-GMO? (If from conventional sources, please request a letter from the seed suppliers stating that the seeds are not treated, and not GMO and attach to the assessment)',
+    change: 'The question is the FORM\u2019s, verbatim. The help line is the FORM\u2019s bracket, moved out of the way. "I do not know" is new and it is the point.',
+    revised: 'Your note: "in my case some are GMO and some aren\u2019t \u2014 so a mix answer here too, and maybe \u2018why do we ask this\u2019 tooltips". "Some are, some aren\u2019t" is now an answer, and the tooltip is now a disclosure on all twenty questions rather than on this one \u2014 a tooltip needs a hover and a phone has none.',
+    why: 'The standard does not permit ingredients, additives or processing aids derived from GMOs (SAOSO 2.3.2), and the group can take samples for laboratory analysis (SAOSO 1.4.1). "Some are, some aren\u2019t" is a common and answerable answer \u2014 it becomes a list of what to replace, not a refusal.'
+  },
+  {
+    id: 'C5', group: 'C', type: 'single', verdict: 'reword',
+    title: 'Do you buy in produce from other farmers to sell on?',
+    help: 'Buying in other people\u2019s produce is allowed, with conditions.',
+    options: ['No', 'Yes', 'No, but we plan to'],
+    formRef: 'FORM Sheet A, Aggregation', formLabel: 'Aggregation',
+    form: 'Do you (farmer) buy in produce from other farmers for selling to your consumer?\nWhich produce:\nSpecify if third party or PGS certified (and provide the supporting documentation):\nIf so, does it include conventionally grown produce (list them)?\nIf so, do you label the produce accordingly? (show the labelling during the farm visit)',
+    change: 'The FORM\u2019s question, with the no/yes order flipped so "No" is first (the common case) and a third answer added for a plan. The follow-ups stay in the application.',
+    revised: 'Your note asked what a "yes" means and said your own answer will soon change from no to yes. OPP \u00a7VI answers it and the page now says it: buying in is allowed, each case is assessed and approved by the group, each supplying farm signs a declaration and commits to moving towards certification within six months, and produce must be traceable by invoice, separated where conventional, and labelled (OPP \u00a7VI.1\u20136.5). So yes is not disqualifying \u2014 it changes what the visit checks. "No, but we plan to" is now an answer, which is your case and the interesting one.',
+    why: 'Buying in produce is allowed, and OPP \u00a7VI sets the conditions: the group assesses each case, every supplying farm signs a declaration and commits to progressing towards certification within six months, traceability runs through invoices and delivery notes, organic and conventional produce are physically separated, and batches are labelled by production method (OPP \u00a7VI.1\u20136.5). A "yes" changes what the visit checks, not whether you can join.'
+  },
+
+  /* ---------------- D ---------------- */
+  {
+    id: 'D1', group: 'D', type: 'single', verdict: 'reword',
+    title: 'If you are not going to apply just yet, what would need to change?',
+    help: 'Optional. It never appears on your application.',
+    options: ['The cost', 'Records and paperwork', 'Land history / conversion time', 'Time', 'I am not sure the group is right for me', 'Something else'],
+    free: 'If you chose \u201csomething else\u201d, tell us in a line \u2014 280 characters, optional',
+    formRef: '\u2014', formLabel: 'No source',
+    form: '(no equivalent in the FORM \u2014 this is new)',
+    change: 'The only question here with no source, and the reason the aggregate is worth collecting: an answer sheet says what farmers have, never why they left. Closed list, not free text, because free text from a public form is where third-party personal data arrives (the D59 lesson).',
+    revised: 'Your note: "for Something else we need to be able to say what that is". One optional free-text line, 280 characters. It is safe here for a structural reason, not a promise: the only row that can hold it is a row that exists because a consent box was ticked. There is no unconsented row for it to land in, and it never appears on a public page.',
+    why: 'Nobody who completes the assessment form can tell us why people stop before it \u2014 by definition. This is the only question that can, and it is not part of your application.'
+  },
+
+  /* ---------------- E ---------------- */
+  {
+    id: 'E1', group: 'E', type: 'consent', verdict: 'keep',
+    title: 'May we count your answers?',
+    help: 'Unticked by default. Nothing is stored unless you tick this.',
+    formRef: 'D64, 2026-10-23', formLabel: 'Research consent',
+    form: '(the /ask/ board\u2019s consent rule, reused: opt-in only, unticked by default, so silence is not consent)',
+    change: 'Names the recipients rather than saying "research purposes", because sharing de-identified data with a second organisation is a transfer and the consent text is where it is disclosed or it is not disclosed. Says "totals, never farm by farm" and gives a withdrawal route that works without an account.',
+    why: 'The group is asked by PGS South Africa and SAOSA what farmers are looking for and what stands in the way, and today it can only answer from the farms that already joined \u2014 which is the one group guaranteed to be positive about joining. Your answers, in totals, are what makes that answer honest.',
+    consent: 'Your answers may be added to the group\u2019s totals, without your name, farm name, address or contact details, and shared with PGS South Africa and SAOSA to show what farmers are looking for and what stands in the way. It is reported only in totals, never farm by farm, and never published for fewer than a handful of farms. You can ask us to delete it at any time.'
+  },
+  {
+    id: 'E2', group: 'E', type: 'consent', verdict: 'reword', reserved: true,
+    title: 'May we include your demographic details in those totals?',
+    help: 'Separately from the question above. Unticked by default.',
+    formRef: 'FORM Sheet A, census; POPIA special information', formLabel: 'Demographic consent',
+    form: 'For census purposes\n(PGS SA & SAOSO collect this data to profile small-scale organic farmers in South Africa for advocacy & support purposes)\nGender of farmer / Age group / Demographic group',
+    change: 'A separate opt-in, which is the whole point: it lets a farmer in a small catchment say "you may have my farm, not my person". Refused unless the box above is also ticked.',
+    revised: 'Your note asked what the census information is and what it is for \u2014 and whether a funding application would want something else. The page now answers the first two in the FORM\u2019s own words: the form collects it "for census purposes", because PGS SA and SAOSO "profile small-scale organic farmers in South Africa for advocacy & support purposes". The third is a different question and it is not answered by wording: a funding dataset is a new purpose, needing its own consent, its own fields and its own retention answer. See Part 6A.',
+    why: 'The assessment form collects gender, age group and demographic group and states the purpose on the form itself: "for census purposes \u2014 PGS SA & SAOSO collect this data to profile small-scale organic farmers in South Africa for advocacy & support purposes". That is the whole of what it is for. <strong>Funding applications are not covered by this consent</strong> \u2014 they would need different information and a separate agreement (Part 6A).',
+    consent: 'Separately: may we include the census details the assessment form asks for \u2014 gender, age group, demographic group \u2014 in the same totals? The FORM states the purpose: to profile small-scale organic farmers in South Africa for advocacy and support. This is how a group can see who organic certification is reaching and who it is missing. You may share the picture of your farm without sharing this, and either can be withdrawn on its own. It is not used for funding applications.'
+  }
+];
+
+/* ============================ state ============================ */
+const KEY = 'pgs.d71.selfcheck.v2';
+
+function defaults() {
+  const d = { answers: {}, decisions: {}, notes: {} };
+  QUESTIONS.forEach(q => { if (q.verdict) d.decisions[q.id] = q.verdict; });
+  return d;
+}
+let state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return defaults();
+    const s = JSON.parse(raw);
+    return { answers: s.answers || {}, decisions: s.decisions || {}, notes: s.notes || {} };
+  } catch (e) { return defaults(); }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+}
+const byId = id => QUESTIONS.find(q => q.id === id);
+const answered = id => {
+  const a = state.answers[id];
+  if (a === undefined || a === null) return false;
+  if (Array.isArray(a)) return a.length > 0;
+  return a !== '';
+};
+
+/* ============================ Part 3: the mock ============================ */
+function renderMock() {
+  const host = document.getElementById('mockForm');
+  host.innerHTML = '';
+  ['A', 'B', 'C'].forEach(g => {
+    const wrap = document.createElement('div');
+    wrap.className = 'qgroup';
+    wrap.innerHTML = '<p class="qgroup__title">' + GROUPS[g] + '</p>';
+    if (GROUP_NOTE[g]) {
+      const n = document.createElement('p');
+      n.className = 'groupnote';
+      n.innerHTML = GROUP_NOTE[g];
+      wrap.appendChild(n);
+    }
+    QUESTIONS.filter(q => q.group === g).forEach(q => wrap.appendChild(mockQuestion(q)));
+    host.appendChild(wrap);
+  });
+  const dg = document.createElement('div');
+  dg.className = 'qgroup';
+  dg.innerHTML = '<p class="qgroup__title">' + GROUPS.D + '</p>';
+  dg.appendChild(mockQuestion(byId('D1')));
+  host.appendChild(dg);
+}
+
+function mockQuestion(q) {
+  const box = document.createElement('div');
+  box.className = 'q';
+  const label = document.createElement('label');
+  label.className = 'q__label';
+  label.textContent = q.title;
+  box.appendChild(label);
+  if (q.help) {
+    const h = document.createElement('p');
+    h.className = 'q__help';
+    h.innerHTML = q.help;
+    box.appendChild(h);
+  }
+
+  if (q.type === 'records') {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    ['Yes', 'Partly', 'No', 'Rather not say'].forEach(v => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = v;
+      if (state.answers[q.id] === v) b.classList.add('is-on');
+      b.addEventListener('click', () => {
+        state.answers[q.id] = (state.answers[q.id] === v) ? '' : v;
+        save(); renderMock(); renderResult();
+      });
+      seg.appendChild(b);
+    });
+    box.appendChild(seg);
+  } else if (q.type !== 'consent') {
+    const opts = document.createElement('div');
+    opts.className = 'opts';
+    q.options.forEach((o, i) => {
+      const el = document.createElement('label');
+      el.className = 'opt';
+      const isMulti = q.type === 'multi';
+      const input = document.createElement('input');
+      input.type = isMulti ? 'checkbox' : 'radio';
+      if (!isMulti) input.name = 'r_' + q.id;
+      const cur = state.answers[q.id];
+      if (isMulti) input.checked = Array.isArray(cur) && cur.includes(i);
+      else input.checked = cur === i;
+      if (input.checked) el.classList.add('is-on');
+      input.addEventListener('change', () => {
+        if (isMulti) {
+          const arr = Array.isArray(state.answers[q.id]) ? state.answers[q.id].slice() : [];
+          const at = arr.indexOf(i);
+          if (at === -1) arr.push(i); else arr.splice(at, 1);
+          state.answers[q.id] = arr;
+        } else {
+          state.answers[q.id] = i;
+        }
+        save(); renderMock(); renderResult();
+      });
+      const span = document.createElement('span');
+      span.innerHTML = o;
+      el.appendChild(input);
+      el.appendChild(span);
+      opts.appendChild(el);
+    });
+    box.appendChild(opts);
+  }
+
+  if (q.free) {
+    const f = document.createElement('div');
+    f.className = 'free';
+    const ta = document.createElement('textarea');
+    ta.maxLength = 280;
+    ta.placeholder = q.free;
+    ta.value = state.answers['D1_free'] || '';
+    ta.addEventListener('input', () => { state.answers['D1_free'] = ta.value; save(); });
+    const hint = document.createElement('span');
+    hint.textContent = '280 characters \u00b7 only kept if you tick a consent box below';
+    f.appendChild(ta);
+    f.appendChild(hint);
+    box.appendChild(f);
+  }
+
+  if (q.why) {
+    const d = document.createElement('details');
+    d.className = 'whyask';
+    const s = document.createElement('summary');
+    s.textContent = 'Why we ask';
+    const p = document.createElement('p');
+    p.innerHTML = q.why;
+    d.appendChild(s);
+    d.appendChild(p);
+    box.appendChild(d);
+  }
+  return box;
+}
+
+/* ============================ Part 4: the result ============================ */
+const RECORD_IDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7'];
+
+function money(cents) {
+  const whole = Math.round(cents / 100);
+  return 'R' + whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function renderResult() {
+  const body = document.getElementById('resultBody');
+  const any = QUESTIONS.some(q => answered(q.id)) || state.answers['D1_free'];
+  if (!any) {
+    body.innerHTML = '<p style="color:var(--muted);font-size:.9rem">Nothing answered yet.</p>';
+    return;
+  }
+
+  let html = '';
+
+  /* category honesty */
+  const cats = state.answers.A1 || [];
+  if (cats.filter(i => i !== 0).length) {
+    html += '<div class="mirror"><p><strong>About your categories.</strong> The full check is ' +
+      'written for Crops. The others are still being written, so this page cannot tell you much ' +
+      'about them \u2014 the administrator can.</p></div>';
+  }
+
+  /* fee band, if declared */
+  const tb = state.answers.A5;
+  if (typeof tb === 'number' && FEE_BANDS[tb]) {
+    const b = FEE_BANDS[tb];
+    html += '<div class="feetag"><strong>' + b.label + '</strong>' +
+      '<span>Assessment fee: <strong>' + money(b.initial) + '</strong> initial &middot; ' +
+      '<strong>' + money(b.renewal) + '</strong> renewal</span>' +
+      '<span class="src">OPP \u00a72.3 &middot; the band you declared</span></div>';
+  } else if (tb === 6) {
+    html += '<div class="feetag"><span>The fee table is on ' +
+      '<span class="mono">/become-a-member/</span> \u2014 you can work out your band there ' +
+      'without telling us.</span></div>';
+  }
+
+  /* records mirror */
+  const yes = RECORD_IDS.filter(id => state.answers[id] === 'Yes').length;
+  const partly = RECORD_IDS.filter(id => state.answers[id] === 'Partly').length;
+  const no = RECORD_IDS.filter(id => state.answers[id] === 'No').length;
+  const rather = RECORD_IDS.filter(id => state.answers[id] === 'Rather not say');
+  const touched = RECORD_IDS.filter(id => state.answers[id]).length;
+
+  if (touched) {
+    html += '<div class="tally"><span>' + yes + ' of 7 in place</span>' +
+            '<span>' + partly + ' partly</span>' +
+            '<span>' + no + ' not yet</span>' +
+            (rather.length ? '<span>' + rather.length + ' you would rather not say</span>' : '') +
+            '</div>';
+    html += '<div class="mirror"><p><strong>Of the seven records a visit checks, your answers ' +
+            'show ' + yes + ' in place' + (partly ? ' and ' + partly + ' partly' : '') + '.</strong></p>' +
+            '<p>Nothing here is a decision about your farm. A visit checks these against the ' +
+            'paperwork itself.</p></div>';
+    html += '<div class="disclaimer-line">A missing record does not stop an assessment. The ' +
+            'visit records it, and you and the group agree what happens next.</div>';
+  }
+
+  /* to-do */
+  const todo = RECORD_IDS.filter(id => state.answers[id] === 'Partly' || state.answers[id] === 'No');
+  if (todo.length) {
+    html += '<h4 style="margin-top:0">What to gather</h4><ul class="todo">';
+    todo.forEach(id => {
+      const q = byId(id);
+      html += '<li><strong>' + (q.short || q.title) + '</strong>' +
+              '<span class="why">' + (state.answers[id] === 'Partly' ? 'Partly there' : 'Not yet') +
+              ' &middot; a visit checks this against your paperwork, and the administrator can ' +
+              'tell you what will do.</span></li>';
+    });
+    html += '</ul>';
+  } else if (touched === 7) {
+    html += '<ul class="todo"><li class="ok"><strong>All seven records described as in place.</strong>' +
+            '<span class="why">The visit still checks them \u2014 that is what a visit is.</span></li></ul>';
+  }
+  if (rather.length) {
+    html += '<p style="font-size:.82rem;color:var(--muted);margin:10px 0 0">' + rather.length +
+      ' you would rather not answer here. That is fine \u2014 the visit will still ask for ' +
+      (rather.length === 1 ? 'it' : 'them'), ' and you can decide then.</p>';
+  }
+
+  /* land history: the two-threshold note */
+  const lh = state.answers.A4;
+  if (lh === 0 || lh === 1) {
+    html += '<div class="disclaimer-line"><strong>About the land-history timing.</strong> ' +
+      'Two of the group\u2019s governing documents give different periods: the standard the visit ' +
+      'assesses against says 12 months before sowing or planting for annual crops (SAOSO ' +
+      '&sect;4.2.3), while the group\u2019s In-Conversion seal applies for less than 18 months ' +
+      '(OPP &sect;V). The group has not yet settled which applies. <strong>Plan for the ' +
+      'longer.</strong></div>';
+  } else if (lh === 2) {
+    html += '<div class="disclaimer-line"><strong>About the land-history timing.</strong> At 12 ' +
+      'to 17 months you sit between the two periods the group\u2019s documents give \u2014 12 ' +
+      'months (SAOSO &sect;4.2.3) and 18 (OPP &sect;V). The group has not settled which applies, ' +
+      'so nothing here is a promise about timing. <strong>Plan for the longer.</strong></div>';
+  } else if (lh === 3) {
+    html += '<div class="disclaimer-line"><strong>About the land-history timing.</strong> At 18 ' +
+      'months or more, both the standard (SAOSO &sect;4.2.3) and the group\u2019s seal (OPP ' +
+      '&sect;V) are satisfied on the land-history point. Other things may still need work.</div>';
+  } else if (lh === 4) {
+    html += '<div class="disclaimer-line"><strong>About the land-history timing.</strong> If you ' +
+      'are not sure, the pledge you sign records what you declare, and the conversion period is ' +
+      'calculated from the date the group receives your application (SAOSO &sect;4.2.2). An ' +
+      'estimate is enough to start.</div>';
+  }
+
+  /* practices: what a "no" means */
+  if (state.answers.C5 === 1 || state.answers.C5 === 2) {
+    html += '<div class="disclaimer-line"><strong>About buying in produce.</strong> That is ' +
+      'allowed. The group assesses each case, every supplying farm signs a declaration and is ' +
+      'expected to progress towards certification within six months, produce must be traceable ' +
+      'by invoice, organic and conventional batches kept separate, and labelled accordingly ' +
+      '(OPP &sect;VI.1\u20136.5).</div>';
+  }
+
+  /* consents */
+  html += '<div style="margin-top:18px"><h4 style="margin-top:0">Keep my answers?</h4>';
+  ['E1', 'E2'].forEach(id => {
+    const q = byId(id);
+    const on = state.answers[id] === true;
+    html += '<div class="consent"><div class="consent__head">' +
+      '<input type="checkbox" ' + (on ? 'checked' : '') + ' data-consent="' + id + '">' +
+      '<span>' + q.title + '</span></div>' +
+      '<p class="consent__body">' + q.consent + '</p></div>';
+  });
+  html += '</div>';
+
+  /* the fixed lines + CTA */
+  html += '<div class="disclaimer-line" style="border-color:var(--forest)">The farm visit ' +
+    'decides. This is only what your answers show, and the visit happens after you apply.</div>';
+  html += '<p style="font-size:.78rem;color:var(--muted);margin:0 0 12px">With both boxes ' +
+    'unticked, nothing is kept.</p>';
+  html += '<button class="btn btn--ochre" type="button">Start my application</button>';
+  html += '<p class="mock-note">In the built page this goes to Task A6 \u2014 the application ' +
+    'flow. Until A6 exists there is nowhere to land, which is why this page ships after it.</p>';
+
+  body.innerHTML = html;
+  body.querySelectorAll('[data-consent]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      state.answers[cb.dataset.consent] = cb.checked;
+      save(); renderResult();
+    });
+  });
+}
+
+/* ============================ Part 5: the ledger ============================ */
+function renderLedger() {
+  const host = document.getElementById('ledger');
+  host.innerHTML = '';
+  ['A', 'B', 'C', 'D', 'E'].forEach(g => {
+    const head = document.createElement('h3');
+    head.style.margin = '28px 0 12px';
+    head.style.fontSize = '1.05rem';
+    head.style.color = 'var(--muted)';
+    head.innerHTML = 'Group ' + g + ' &mdash; ' + GROUPS[g];
+    host.appendChild(head);
+    QUESTIONS.filter(q => q.group === g).forEach(q => host.appendChild(ledgerCard(q)));
+  });
+}
+
+function ledgerCard(q) {
+  const el = document.createElement('div');
+  el.className = 'ledger-item';
+  if (state.decisions[q.id] === 'drop') el.classList.add('is-dropped');
+  else if (state.decisions[q.id]) el.classList.add('is-decided');
+
+  const head = document.createElement('div');
+  head.className = 'ledger-head';
+  head.innerHTML = '<span class="ledger-id">' + q.id + '</span><h3>' + q.title + '</h3>' +
+    (q.isNew ? '<span class="pill pill--new">new \u2014 not in your export</span>' : '') +
+    (q.reserved ? '<span class="pill pill--gap">reserved \u2014 not final</span>' : '') +
+    (q.formRef === '\u2014' ? '<span class="pill pill--new">new</span>' : '');
+  el.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'ledger-body';
+
+  body.innerHTML =
+    '<p class="src">Source \u2014 ' + q.formRef + ' &middot; ' + q.formLabel + '</p>' +
+    '<div class="quote">' + escapeHtml(q.form) + '</div>' +
+    '<div class="proposed"><span class="who">Proposed at the front door</span>' +
+    '<p style="margin:6px 0 0"><strong>' + q.title + '</strong></p>' +
+    (q.help ? '<p style="margin:4px 0 0;font-size:.86rem;color:var(--muted)">' + q.help + '</p>' : '') +
+    (q.options ? '<p style="margin:6px 0 0;font-size:.84rem">' +
+      q.options.map(o => '<span class="pill pill--opt">' + o + '</span>').join(' ') + '</p>' : '') +
+    (q.type === 'records' ? '<p style="margin:6px 0 0;font-size:.84rem">' +
+      ['Yes', 'Partly', 'No', 'Rather not say'].map(o => '<span class="pill pill--opt">' + o + '</span>').join(' ') +
+      '</p>' : '') +
+    (q.consent ? '<p style="margin:6px 0 0;font-size:.84rem;color:var(--warmDark)">\u201c' + q.consent + '\u201d</p>' : '') +
+    (q.why ? '<details class="whyask" open><summary>Why we ask</summary><p>' + q.why + '</p></details>' : '') +
+    '</div>' +
+    '<p class="change"><strong>What changed and why.</strong> ' + q.change + '</p>';
+
+  if (q.revised) {
+    const r = document.createElement('div');
+    r.className = 'revised';
+    r.innerHTML = '<span class="who">What your note produced</span>' + q.revised;
+    body.appendChild(r);
+  }
+
+  const decide = document.createElement('div');
+  decide.className = 'decide';
+  [['keep', 'Keep FORM wording'], ['proposed', 'Ship as proposed'], ['reword', 'Reword (note)'], ['drop', 'Drop']]
+    .forEach(([v, text]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = text;
+      b.dataset.v = v;
+      if (state.decisions[q.id] === v) b.classList.add('is-on');
+      b.addEventListener('click', () => {
+        state.decisions[q.id] = (state.decisions[q.id] === v) ? '' : v;
+        save(); renderLedger(); updateProgress();
+      });
+      decide.appendChild(b);
+    });
+  body.appendChild(decide);
+
+  const ta = document.createElement('textarea');
+  ta.className = 'note';
+  ta.placeholder = 'Note for the PRD \u2014 if you chose Reword, write the wording you want here.';
+  ta.value = state.notes[q.id] || '';
+  ta.addEventListener('input', () => { state.notes[q.id] = ta.value; save(); updateProgress(); });
+  body.appendChild(ta);
+
+  el.appendChild(body);
+  return el;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ============================ progress + export ============================ */
+function updateProgress() {
+  const total = QUESTIONS.length;
+  const done = QUESTIONS.filter(q => state.decisions[q.id]).length;
+  document.getElementById('progressText').textContent = done + ' / ' + total + ' decided';
+  document.getElementById('progressBar').style.width = Math.round(done / total * 100) + '%';
+}
+
+function buildExport() {
+  const decided = QUESTIONS.filter(q => state.decisions[q.id]);
+  const undecided = QUESTIONS.filter(q => !state.decisions[q.id]);
+  const lines = [];
+
+  lines.push('### D71 wording ledger \u2014 exported ' + new Date().toISOString().slice(0, 10));
+  lines.push('');
+  lines.push('| id | verdict | note |');
+  lines.push('|---|---|---|');
+  QUESTIONS.forEach(q => {
+    const v = state.decisions[q.id] || 'UNDECIDED';
+    const n = (state.notes[q.id] || '').replace(/\|/g, '/').replace(/\n/g, ' ');
+    lines.push('| ' + q.id + ' | ' + v + ' | ' + n + ' |');
+  });
+  lines.push('');
+  lines.push('Decided: ' + decided.length + ' of ' + QUESTIONS.length +
+             (undecided.length ? ' \u2014 **undecided: ' + undecided.map(q => q.id).join(', ') + '**' : ''));
+  lines.push('');
+  lines.push('#### \u00a718.3 row (paste at D71)');
+  lines.push('');
+  const keep = QUESTIONS.filter(q => state.decisions[q.id] === 'keep').map(q => q.id);
+  const reword = QUESTIONS.filter(q => state.decisions[q.id] === 'reword').map(q => q.id);
+  const drop = QUESTIONS.filter(q => state.decisions[q.id] === 'drop').map(q => q.id);
+  const prop = QUESTIONS.filter(q => state.decisions[q.id] === 'proposed').map(q => q.id);
+  lines.push('| D71 | What does a prospective farmer answer at `/before-you-apply/`, in whose words? | **' +
+    'A ' + QUESTIONS.length + '-control check: operation (' +
+    QUESTIONS.filter(q => q.group === 'A').length + '), the seven records a visit checks, five practices, one exit question, two separate consents.** ' +
+    'FORM wording kept verbatim on ' + (keep.length ? keep.join(', ') : 'none') + '; register only changed on ' +
+    prop.length + '; reworded before build: ' + (reword.length ? reword.join(', ') : 'none') +
+    (drop.length ? '; dropped: ' + drop.join(', ') : '') + '. Each control is shown against its source in ' +
+    '`product/design/d71_self_check_questions.html`. ' +
+    '**Every control carries a "Why we ask" disclosure** naming the clause, because the review\u2019s dominant note was "explain why". ' +
+    '**Group B asks a question, not for documents** \u2014 "Do you have these? None of them are needed to apply" \u2014 with a fourth answer, "Rather not say", because the review flagged the records as private. The reassurance is not copy: MVP1A_PRD \u00a75.8 already specifies that a MISSING record is a recorded fact, not a blocker. ' +
+    '**The records checklist cites FORM Sheet I \u00a72 in text, not a link** \u2014 SAOSO \u00a71.5 *Documentary accounts* is not in the corpus (stored pages begin at 22; \u00a71.5 is printed p. 12), so a link would break D68\u2019s rule. ' +
+    '**The land-history note prints both thresholds** \u2014 SAOSO 4.2.3 (12 months annuals) and OPP \u00a7V (18) \u2014 and states the group has not settled D31. ' +
+    '**Consent is D64\u2019s rule**: opt-in, unticked by default, no row written without it; the demographic fields are a separate opt-in refused without the first, and the consent text states plainly that funding applications are not covered. ' +
+    '**No verdict, no score, no seal**: the result states counts out of seven, the fee band the farmer declared (OPP \u00a72.3, never computed) and two fixed lines. |');
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+document.getElementById('showResult').addEventListener('click', () => {
+  renderResult();
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const dlg = document.getElementById('exportDlg');
+  document.getElementById('exportText').value = buildExport();
+  if (typeof dlg.showModal === 'function') dlg.showModal();
+  else document.getElementById('exportText').style.display = 'block';
+});
+document.getElementById('closeDlg').addEventListener('click', () => {
+  document.getElementById('exportDlg').close();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Clear every answer, verdict and note in this browser \u2014 including the pre-seeded verdicts?')) return;
+  state = { answers: {}, decisions: {}, notes: {} };
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  renderMock(); renderResult(); renderLedger(); updateProgress();
+});
+
+/* boot */
+renderMock();
+renderResult();
+renderLedger();
+updateProgress();
+</script>
+</body>
+</html>
