@@ -291,6 +291,7 @@ warning flag (OPP §4.6: probation does not forfeit the logo).
 
 **Acceptance:** four rejection cases and one pass, each a named exception.
 
+---
 
 ### Task A8: The public self-check
 
@@ -370,8 +371,6 @@ consent; the page has no advice copy of its own; `report_self_check` refuses a c
 threshold. UAT (judgement only): does the result read as a mirror or a verdict, is the land-history
 note comprehensible to someone who has never read the OPP, does "Rather not say" feel like a real
 answer, does the consent read as a real choice, and does it work one-handed in sunlight.
-
----
 
 ---
 
