@@ -84,6 +84,14 @@ the reader or a public page changed.
   the `slow` marker, `tests/tools/test_test_harness.py`, `product/docs/context/TEST_COST_PLAYBOOK.md`)
   arrived uncommitted and was deliberately left uncommitted — it is another session's, and the gate
   is green with it in the tree (1265 passed / 1 skipped).
+- **⚠ Two artifacts claim D71.** This session filed `product/design/d71_p4_and_the_generator.html`
+  ("what is the next corpus slice") and its export emits a `D71` row for SPEC §18.3. A later
+  uncommitted artifact, `product/design/d71_self_check_questions.html` ("the front door: 19 questions
+  before a farmer applies", `/before-you-apply/`), claims the same number. **Recommendation:** the
+  front-door page keeps **D71** — it is a product-and-copy decision, which is what §18.3 is for — and
+  the corpus page becomes an unnumbered execution decision or **D72**; the clear-conversation
+  decision in `Refinement/ASK_PANEL_REFINEMENTS_PRD.md` §2 then becomes D73. Nothing is renamed yet,
+  because both files belong to different sessions and the owner should choose.
 
 ---
 
