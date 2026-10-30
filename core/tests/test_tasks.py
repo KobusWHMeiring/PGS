@@ -167,6 +167,7 @@ def test_rule_accepts_a_well_formed_policy():
 # --- The real registry (the plan's named test, corrected) -------------------
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_every_task_declares_a_retry_policy():
     """§VII.3 over every task registered in this project.
 
@@ -183,11 +184,13 @@ def test_every_task_declares_a_retry_policy():
     )
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_the_heartbeat_task_exists():
     """A6's acceptance: a `heartbeat` task exists in a real worker's registry."""
     assert "core.tasks.heartbeat" in _registry_report()["tasks"]
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_autodiscovery_alone_registers_tasks():
     """The real-worker case: importing `pgs.celery` and nothing else.
 
@@ -209,6 +212,7 @@ def test_autodiscovery_alone_registers_tasks():
     )
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_no_probe_tasks_leak_into_the_real_registry():
     """Guards the guard.
 
@@ -265,6 +269,7 @@ def test_health_check_uses_the_project_app_not_a_second_one():
     assert _health.celery_app is project_app
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_tasks_are_namespaced_by_module():
     """Bare task names collide silently between apps when they share a worker."""
     for name in _registry_report()["tasks"]:

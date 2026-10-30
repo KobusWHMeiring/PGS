@@ -212,7 +212,10 @@ finally:
 print(f"    dropped any leftover {name}")
 DROP
 
-"$PYTHON" -m pytest -q --create-db
+# `--durations=15` is not decoration: the gate's wall time is what a session spends waiting,
+# and with no durations printed a suite drifting from 42s to 4 minutes has no signal until
+# someone measures it by hand (product/docs/context/TESTING_TIME_PLAN.md).
+"$PYTHON" -m pytest -q --create-db --durations=15
 
 echo ""
 echo "✅ verify passed — this tree is shippable"

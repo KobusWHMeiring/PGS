@@ -73,6 +73,7 @@ def test_the_console_is_not_one_of_the_public_pages():
     assert all(URL != path for _, path, _ in PAGES)
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_staff_see_the_preflight_and_one_button_per_action(staff):
     client = Client()
     client.force_login(staff)
@@ -93,6 +94,7 @@ def test_staff_see_the_preflight_and_one_button_per_action(staff):
         assert item.reason.split("`")[0][:40] in body
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_the_page_is_not_indexable(staff):
     client = Client()
     client.force_login(staff)
@@ -152,6 +154,7 @@ def test_csrf_is_enforced(staff):
     assert response.status_code == 403
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_a_button_runs_its_command_and_shows_the_output(staff, monkeypatch):
     calls: list[tuple[str, tuple]] = []
 
@@ -171,6 +174,7 @@ def test_a_button_runs_its_command_and_shows_the_output(staff, monkeypatch):
     assert "documents: 8 published" in body
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_a_failing_command_reports_instead_of_raising(staff, monkeypatch):
     def _explode(command, *args, **kwargs):
         raise RuntimeError("the database said no")

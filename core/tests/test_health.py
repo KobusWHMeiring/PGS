@@ -227,6 +227,7 @@ def test_failure_detail_is_not_exposed_by_default(client: Client, all_up, monkey
 # --- Shape and structure ----------------------------------------------------
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_report_is_an_immutable_dataclass():
     """§II: compound return values are `@dataclass(frozen=True)`."""
     report = _health.check_health()

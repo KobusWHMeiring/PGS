@@ -1,6 +1,7 @@
 # Testing time & test value — measured, staged plan
 
-**Status:** Proposal — nothing in here is implemented yet except the two fixes noted in §8.
+**Status:** Stage 0+1 implemented 2026-10-28 (hasher, fast lane, gate durations, harness guards).
+Stage 3 (value audit) not started. Measurements in §9.
 **Date:** 2026-10-28
 **Evidence base:** 819 pytest invocations recovered from the pi session logs
 (`~/.pi/agent/sessions/*pgs*`, 2026-10-18 → 2026-10-28), one instrumented coverage run of the
@@ -204,15 +205,22 @@ the unchanged code does not drop (Stage 3 gives the baseline).
 ### Stage 2 — Split the lanes (the 4.5 h lever)
 
 1. `scripts/fast.sh` → `pytest -q -m "not slow" --reuse-db -x --ff` (last-failed first, stop at
-   the first failure). Target: **< 20 s warm**.
-2. Mark `slow` the 8 tests >1 s plus the modules that spawn subprocesses or drive
-   `live_server`. Do not mark by module size — mark by measured cost.
+   the first failure). It accepts paths, and **that is the real loop**: `scripts/fast.sh
+   core/tests/test_ask_board.py` returns in seconds. The whole-suite lane is the pre-commit step.
+2. Mark `slow` the tests measured at ≥0.6 s warm plus everything that spawns a process — 13 tests
+   in four modules, worth ~20 s of a ~60 s suite. Do not mark by module size.
 3. Write the rule into `AGENTS.md`: the loop is `scripts/fast.sh`; the gate is
    `scripts/verify.sh`, once, before commit and always before deploy.
 4. Keep `tests/e2e` out of both, exactly as today.
 
-**Accept:** the loop is <20 s warm, catches a deliberately broken test (prove it can fail), and
-`scripts/verify.sh` is unchanged in coverage.
+**Accept:** the lane is ≤60 s warm at the current suite size (1 237 tests), a scoped run is
+seconds, and `scripts/verify.sh` is unchanged in coverage.
+
+> **Correction to the original target.** "<20 s" was written against a 1 140-test suite measured at
+> 42 s. By the time the lane shipped the suite had grown to 1 237 tests and the honest floor for a
+> whole-suite run was ~55–60 s warm; the lane trims ~20 s of that and nothing more. Below that you
+> scope by path — a lane selector cannot make 1 225 tests cheaper than they are. Stating the number
+> the suite can actually hit is the whole point of §1.
 
 ### Stage 3 — The value audit (1–2 days)
 
@@ -333,3 +341,54 @@ for the `--reuse-db` recommendation, since a stale connection is also what produ
 
 `pytest-cov` 7.1.0 was installed into `.venv` for this investigation only. Stage 0/3 need it
 (or `coverage` directly) as a declared dev dependency, or the inventory script cannot run in CI.
+
+---
+
+## 9. What Stage 0+1 actually did (2026-10-28)
+
+### Shipped
+
+| Change | File | Guard |
+|---|---|---|
+| Test-only settings module with a fast password hasher | `pgs/settings_test.py`, `pytest.ini` | `tests/tools/test_test_harness.py` — asserts a hash costs <50 ms, that `pgs/settings.py` declares no hasher at all, and that only pytest loads the test module (proved by breaking all three) |
+| Inner loop, separate from the gate | `scripts/fast.sh` | a test asserts it exists, excludes `slow`, passes `--reuse-db` |
+| Gate reports the slowest 15 cases | `scripts/verify.sh` | the same test asserts `--durations=` on the *command line* (a substring check passed on the comment, §3.18) |
+| `slow` marker, applied by measured cost | `pytest.ini` + 4 test modules | `--strict-markers` fails an unregistered marker |
+| The loop/gate rule, for agents | `AGENTS.md` | — |
+| Three hazards | `testing_hazards.md` §3.17–§3.19 | — |
+
+### Measured
+
+Auth-heavy subset (`test_ask_board` + `test_ask_answer_page` + `test_uat_console`, 37 tests),
+warm, alternated, two reps:
+
+```
+production hasher  30.89s → 29.15s
+fast hasher         6.96s →  7.66s        # 4x on this subset
+```
+
+Full suite (1 232 tests, warm, `--reuse-db`, harness tests excluded so both arms are comparable):
+
+```
+production hasher 124.94s → 120.65s
+fast hasher        60.97s              # ~2x — more user-creating tests than the 37-test subset
+```
+
+Lane split, warm: 1 225 selected / 13 deselected; the 13 `slow` tests cost **20.46 s** on their own.
+
+### Caveat on these numbers
+
+The working tree was being edited concurrently during the measurement (a dozen files, and the
+suite grew 1 140 → 1 237 tests mid-session). Individual wall times therefore vary by up to 4×
+(one fast-lane run measured 94.6 s on a loaded box). **The A/B pairs, run alternated and repeated,
+are the reliable figures; single runs are not** — which is exactly §1's warning, now with our own
+numbers behind it. Re-measure with `testcost profile --reps 2` on a quiet tree before quoting the
+gate's budget.
+
+### Not done (Stage 3, the value audit)
+
+* `scripts/test_inventory.py` is not committed; the analysis lives in `_scratch/_analysis/`.
+  The portable version is `~/.agents/skills/measuring-test-suite-cost/scripts/testcost.py inventory`.
+* The invariant map (invariant → every witness → which is primary) is not written.
+* No mutation testing has been run. Until it has, **no test in this repo may be deleted on the
+  strength of coverage overlap** — 743 tests are sole witness of no line and assert 743 claims.

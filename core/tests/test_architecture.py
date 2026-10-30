@@ -144,6 +144,7 @@ def test_the_config_declares_the_contract_exactly():
     assert "core" not in contract["source_modules"]
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_knowledge_does_not_import_core():
     """The rule itself, run exactly as CI runs it (A8)."""
     result = _run_linter()
@@ -153,6 +154,7 @@ def test_knowledge_does_not_import_core():
     )
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_the_contract_actually_detects_a_violation():
     """The contract must be able to fail, or the green above means nothing.
 
@@ -173,6 +175,7 @@ def test_the_contract_actually_detects_a_violation():
     assert _run_linter().returncode == 0
 
 
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
 def test_core_may_import_knowledge():
     """Directionality, asserted rather than assumed.
 

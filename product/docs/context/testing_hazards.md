@@ -1531,6 +1531,124 @@ three lines passes while the document is wrong (§1.6). Added 2026-10-28 with
 `knowledge/passages.py::_starts_its_own_block` and
 `knowledge/tests/test_passages.py::test_no_clause_is_split_off_its_own_sentence`.
 
+### 3.17 A suite timed once is timed wrong: the same tree measured 253s and 42s in one day
+
+`python -m pytest -q --create-db` on an unchanged tree, seven runs in one afternoon:
+
+```
+253.58s   1138 passed   <- first run of the session
+213.52s   1138 passed
+174.30s   1138 passed   (fast password hasher)
+ 93.62s   1139 passed   (--reuse-db)
+ 66.81s   1139 passed
+ 48.00s   1139 passed
+ 42.64s   1139 passed   <- warm, fast hasher, --reuse-db
+```
+
+The spread is Windows file cache and endpoint protection, not the suite. Two consequences, both
+bitten during the investigation that produced this entry:
+
+1. **Every duration in a handover or a plan is a cold number unless it says otherwise.**
+   "The suite takes four minutes" and "the suite takes 42 seconds" were both true on the same
+   commit. State cold **and** warm.
+2. **An A/B comparison where the first arm is cold invents an effect size.** The first measurement
+   of the password-hasher change read 65.3s → 12.3s (5×); measured warm, alternated, twice, it is
+   18–21s → 5.7–6.5s on the same subset. The cold run was inside the "treatment".
+
+**Rule:** a performance claim needs (a) a warm-up run, (b) two alternated reps, (c) the scope and
+the interpreter named, and (d) the test-time sum from `--junitxml` reported separately from wall
+time. `~/.agents/skills/measuring-test-suite-cost/scripts/testcost.py profile` does all four
+(`--reps 2`); `scripts/fast.sh` exists so the loop never has to pay this cost at all. Added
+2026-10-28 with `product/docs/context/TESTING_TIME_PLAN.md`.
+
+### 3.18 A guard that asserts on a substring passes on the comment that documents it
+
+`tests/tools/test_test_harness.py` asserts that the gate still runs `pytest --create-db
+--durations=15`. The first version read:
+
+```python
+gate = (REPO_ROOT / "scripts" / "verify.sh").read_text(encoding="utf-8")
+assert "--durations" in gate
+```
+
+Deleting the flag from the command line left the test **green**, because the surrounding comment
+(`# --durations=15 is not decoration: …`) still contains the string. The same trap one level up:
+`re.search(r"-m pytest[^\n]*", gate)` matched the *comment* on line 44 that mentions
+``python -m pytest``, not the command on line 218.
+
+**Rule:** when a test asserts something about a script, assert on the **non-comment lines** that
+execute it — filter `line.lstrip().startswith("#")` out, then require the flags on a line that
+both names `pytest` and carries `--create-db`. And prove the guard can fail by deleting the flag
+while leaving the comment in place: that is the only version of the break test that catches this.
+Added 2026-10-28 (the guard was written, failed to fail, and was rewritten in the same session).
+
+### 3.19 An in-place edit from a script may not land, and the next process reads the old file
+
+This is §3.3 with a wider blast radius: `Path.write_text()` from a helper script, followed by
+`sed`/`pytest` a second later, produced *three* different views of `scripts/verify.sh` in one
+session — old, new, and a mixture — and once left `scripts/uat_page.py` unparseable while the
+earlier full-suite runs had been green (the file was edited concurrently and the run that
+followed read a stale cache).
+
+**Rule:** after any scripted write that a following command depends on, re-read the file in a
+**fresh process** and assert the change is there before running anything that consumes it:
+
+```python
+p.write_text(s, encoding="utf-8", newline="")
+assert "--durations=15" in p.read_text(encoding="utf-8")   # in-process is not enough
+```
+
+and never trust a single green run of a subset after an in-place edit. If a guard is being
+proved by breaking a file, break it, verify the break with a fresh read, run the guard, restore,
+verify the restore — in that order.
+
+### 3.20 A grep over a truncated dump is not evidence of absence
+
+Building the retrieval eval set, the corpus was dumped to one line per chunk with the text
+cut to 160 characters, and then grepped:
+
+```bash
+grep -in "self.claim" _scratch/evalset/corpus.txt   # 0 hits
+grep -in "genetically modified" _scratch/evalset/corpus.txt   # 0 hits
+```
+
+Both are **wrong**: `self-claim` is in OPP §6.5 and `Genetically Modified Organism (GMO)` is a
+SAOSO §1 definition. Both live past character 160 of their chunk. The conclusion drawn from
+the empty grep — "the corpus does not answer this" — is exactly the claim a graded question
+rests on, and it would have graded a concealed passage as `expected: []`.
+
+Evidence: the same terms against the database, not the dump:
+
+```bash
+python manage.py shell -c "from knowledge.models import DocumentChunk; \
+  print(DocumentChunk.objects.filter(text__iregex='self.claim').count())"   # 1
+```
+
+**Rule:** grep the store, never a preview of it. If a dump is needed for reading, write the
+full text and a separate *index* file; do not let a display truncation become an evidence base.
+This is §2.7 wearing a different hat: the instrument (a truncated file) was not measuring the
+thing being asserted (the corpus).
+
+### 3.21 A report that prints a tick dies on the Windows console, after spending the work
+
+`scripts/eval_retrieval.py` printed `✓`/`✗` per metric. On this repo's Windows dev box stdout
+is cp1252, so the first `print` of a tick raised `UnicodeEncodeError` **after** all 35 query
+embeddings had been paid for. The same class of failure applies to any glyph the corpus uses
+(the OPP prints U+25CF) echoed back into a report.
+
+```text
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2717' in position 62
+```
+
+**Rule:** keep a terminal report ASCII, and if it echoes arbitrary document text, soften the
+stream once rather than sprinkling guards:
+
+```python
+sys.stdout.reconfigure(errors="replace")   # a swallowed glyph is cheaper than a lost run
+```
+
+An instrument that crashes on a character is a tool people stop running.
+
 ## 5. Template for a new entry
 
 ```markdown

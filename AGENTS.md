@@ -63,6 +63,24 @@ This repo uses the **Harvester backlog convention** (see `product/backlog/CONVEN
 
 ## Conventions that bite people
 
+- **Three budgets, one loop, and a hard cap.** `scripts/fast.sh --critical` is the after-edit check:
+  the eight files that guard what this repo cannot get wrong (claim discipline, the `knowledge`→`core`
+  boundary, the citation audit, retrieval scope and floors, the eval instrument's own integrity, the
+  test harness) — **measured 22 s warm, 48 s in tests cold (55 s wall)** on 2026-10-30. It is a *subset of files the
+  gate already runs*: no test lives only there, and nothing was removed from the gate to make it fit.
+  `scripts/fast.sh` is the whole suite minus the `slow` marker (`--reuse-db`, `-x --ff`; target ≤60 s
+  warm, measured 155 s cold here). `scripts/verify.sh` is the gate: `--create-db`, `--durations=15`,
+  run once per commit and always before a deploy (measured 197 s cold on 2026-10-30). **No edit waits
+  more than three minutes on tests** — if a budget is missed, move a file between the budgets; never
+  invent a fourth lane and never delete a test to make a number. Running the gate after every edit is
+  what cost 4.5 h of full-suite runs in 32 sessions (`product/docs/context/TESTING_TIME_PLAN.md`).
+  pytest runs `pgs.settings_test`, which swaps in a fast password hasher — every
+  `create_user(password=…)` otherwise pays ~0.5 s of PBKDF2, and it was 2× the whole suite.
+  `tests/tools/test_test_harness.py` guards that the override cannot reach `manage.py`, WSGI or the
+  gate.
+- **Do not benchmark a suite once.** The same tree, same command, measured 253 s → 42 s on one day
+  (`testing_hazards.md` §3.17). Quote cold and warm, or measure nothing.
+
 - **A test that passes for the wrong reason is worse than no test.** Every silent failure
   found during A1–A7 — Django injecting `testserver` into `ALLOWED_HOSTS`, pytest
   renaming the test database, Celery's `autoretry_for` being absent rather than `None`, an
