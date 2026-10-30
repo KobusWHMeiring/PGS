@@ -80,3 +80,31 @@ points at them instead of pretending they are imminent (D60).
       test can make. Recorded only as a gate row in `HANDOVER.md` §3 until now.
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.
 - [ ] Afrikaans: decide whether to translate the full site or navigation and headings only.
+
+## Test-suite cost — found while measuring (2026-10-28)
+
+Measured across five repos from the session logs (819 pytest invocations, 8.1 h in pgs alone;
+49 h in the fleet). Playbook: `product/docs/context/TEST_COST_PLAYBOOK.md`; plan and results:
+`product/docs/context/TESTING_TIME_PLAN.md`. The first two stages shipped in this session; what
+follows is the unfiled remainder.
+
+- [ ] **Stage 3 — the value audit (blocks any test deletion).** Commit a `scripts/test_inventory.py`,
+      write the hand-built invariant map (invariant → every witness → which is primary), and run a
+      mutation pilot on `knowledge/retrieval.py` and `core/services/_chatbot*.py`. Until all three
+      exist, **no test may be removed on the strength of coverage overlap**: 743 tests are sole
+      witness of no line while asserting 743 distinct claims (`TESTING_TIME_PLAN.md` §3, §9).
+- [ ] **`pytest tests/e2e` is not green at HEAD.** 43 passed, 34 errors when the directory is run
+      as a whole; each file passes alone (37 passed for `test_public_site.py). The errors are
+      `django.db.backends.postgresql InterfaceError` while setting `autocommit` under
+      `live_server` — a dropped connection when several modules share one session. This is
+      `testing_hazards.md` §3.11 again, and it means the 79 s the e2e run costs currently buys 34
+      false alarms. It is also the reason `--reuse-db` is not yet the local default.
+- [ ] **Fleet rollout, in the order the measurements justify** (`TEST_COST_PLAYBOOK.md` §7):
+      **homitini** first — 225 `create_user(password=…)` sites with no hasher override and 29 h of
+      pytest time, the largest single win anywhere in the fleet, and a one-file change with
+      `pgs/settings_test.py` as the template; then **harvester** (bare `pytest` has three collection
+      errors, so it has never run a full suite in 612 invocations); then **ngo-finance**
+      (`testcost floor`/`profile` — do not guess); **homtini_store** is the control group, leave it.
+- [ ] **Wire the ratchet.** `testcost profile --budget` needs a warm number measured on a quiet tree
+      before it can gate CI — every figure taken on 2026-10-28 was contaminated by concurrent
+      edits and a loaded box (`TESTING_TIME_PLAN.md` §9).

@@ -4,19 +4,172 @@
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
 the answer-coverage session, the budget-and-instrument session, the deployment session,
-the reader-structure session, the corpus-artefact session and the corpus-drift session —
-**2026-10-28**.
-**Repo state:** `main`, **84 commits ahead of `origin/main`** (see §0h and §3).
-`verify.sh` green — **1265 passed / 1 skipped**, and `python -m pytest tests/e2e -q` green at
-**60**. Both numbers are this tree's: it also carries the test-lane session's *uncommitted*
-work (`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker), which is where the wall time
-went from ~4 min to 65 s.
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **not pushed since `a9fc663`**.
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — **98 commits**
-behind, and its corpus is the pre-D52/D53 poppler build (**364 chunks**), so `manage.py
-corpus_check` (new: §0f) and `uat_seed --check` both correctly report it as not current until
-plan **P7.4** rebuilds it from artefacts. See §22, §0g and
+the reader-structure session, the corpus-artefact session, the corpus-drift session and
+the retrieval-baseline session — **2026-10-30**.
+**Repo state:** `main`, **96 commits ahead of `origin/main`** and **pushed on 2026-10-30**
+(see §0k; the "not pushed since `a9fc663`" line below was true for nine days and is not any
+more). `verify.sh` green on this tree — **1305 passed / 1 skipped** (1291 in `fast.sh` plus the
+14 `slow` ones), and `tests/e2e/test_public_site.py` green at **38**. The test lane's work
+(`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is now **committed**, which is where
+the wall time went from ~4 min to 65 s.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed 2026-10-30**.
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — **behind, and
+the gap just grew by this push**, because its corpus is the pre-D52/D53 poppler build (**364
+chunks**), so `manage.py corpus_check` (new: §0f) and `uat_seed --check` both correctly report it
+as not current until plan **P7.4** rebuilds it from artefacts. See §22, §0g and
 `product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
+
+---
+
+## 0k. 2026-10-30 — the baseline got measured, the whole price got published, and the tree got committed
+
+**This session committed four clusters of work that between them had sat uncommitted in the tree
+for up to three days, and pushed.** It built two of the four itself (§0k.3, §0k.4); the other two
+were finished by earlier sessions that ran out before `git commit`. Nothing about retrieval, the
+reader or the public site changed after the tests below were run.
+
+**Why this mattered more than any single file:** `git status` held **four sessions' work at once**
+and the eval instrument was **untracked**, so the next agent could not tell whose work was whose —
+the exact failure §0j warned about, one session later. The tree is clean as of this handover.
+
+### 0k.1 `ce59e83` — C1f: the whole price, why join, and what we do not claim
+
+The product owner read the rendered home page and said `R100 / year` could not be the price. Right
+in substance, wrong about the number: `R100` **is** the annual membership (OPP §2.1), but it is one
+of **five** amounts the OPP allows, and the fee section published two and omitted **two**.
+
+- **OPP §2.4** (visit catering, R30/R50) and **§2.5** (seal licence, R500/farm/year) now have
+  cards of their own — both conditional, so neither may inherit the standing of a fee the OPP sets
+  for everyone.
+- **A floor, not a total:** `FIRST_YEAR_FROM_CENTS` is arithmetic on two published figures and the
+  paragraph names its three exclusions. A total is impossible without the farm's distance.
+- **`SAOSO_LOGO_LICENSED = False`.** The owner believes the group holds the SAOSO "Organic PGS
+  Certified" logo licence (a sticker was seen); LANDSCAPE p7 makes that a separate route (18
+  months, a PGS SA assessment, a licensing agreement), and a sticker is evidence of the seals
+  OPP §V lets our own committee issue. **Open: produce the agreement and the flip is one commit.**
+- `core/tests/test_public_costs.py` (new, 21 tests) asserts **completeness and framing, not
+  figures** — `test_public.py` already pins those. Two drafts tripped the existing guards (a typed
+  fee, a seal label) and were rewritten, which is the guards working.
+- **No new UAT scenario, deliberately:** adding an unsigned eleventh would reopen a signed MVP 0
+  and break `test_uat_parse.py`. The five things a human should judge are `C1_BUILD_PLAN.md` §C1g.
+
+### 0k.2 `e57ce78` — the test lane, committed
+
+819 pytest invocations across five repos, 49 h of waiting, 8.1 h of it here. Three budgets and one
+eval-free inner loop: `--critical` (22 s warm), `fast.sh` (whole suite minus `slow`), `verify.sh`
+(the gate, now with `--durations=15`). `pgs/settings_test.py` swaps in a fast hasher for pytest
+only, guarded by `tests/tools/test_test_harness.py`. **The `slow` marker is measured, not guessed.**
+`testing_hazards.md` §3.17 is the entry that makes the numbers meaningful: same tree, same command,
+253 s and 42 s in one afternoon — so quote cold **and** warm.
+
+### 0k.3 `d54219d` — the retrieval instrument and the baseline it changes
+
+S1 of `spike/RETRIEVAL_EVAL_SPIKE.md`. 35 graded questions, 32 answerable, on 385 chunks
+(`sha256:dd90ea793953`), at the product's own `k=8`:
+
+| variant | R@1 | R@3 | R@8 | MRR | citation audit |
+|---|---|---|---|---|---|
+| `bare` — the product | **0.188** | 0.594 | 0.812 | 0.388 | 280/280 |
+| `lexical` only | 0.188 | 0.375 | 0.500 | 0.284 | 184/184 |
+| `vector` only | **0.531** | 0.688 | 0.875 | 0.647 | 280/280 |
+
+**Read the first row twice.** The product finds the answering clause at rank 1 for **six
+questions in thirty-two**, while recall@8 is 0.81 — so a refusal is more often a **ranking**
+failure than a coverage gap. That is the number `CHAT_ANSWER_COVERAGE_PRD` has been missing, and it
+is the reason not to answer a refusal question by adding more corpus.
+
+The semantic arm is the stronger arm (R@1 0.531 vs 0.188) and the pipeline hides it: `search_terms`
+gives the rare-term arm five of the eight seats first. **Recorded, not acted on** — fourteen items
+are questions the product *refused*, so the set over-samples the hybrid's failures. Do not re-tune
+`search_terms` against this set.
+
+**Q1 is not answered and the doc says so.** `--variant context` refuses loudly until D73's
+`embedding_text` column exists. That is S2.
+
+### 0k.4 what this session did *not* build
+
+Nothing in the corpus pipeline. The next slice is unchanged and still starts where §0j said:
+the **table block in the artefact format** with a guard that fails on a malformed annotation,
+proved on landscape p4–p5 (`LANDSCAPE_TABLES_PRD.md` §9). Then landscape 10 pages + front matter,
+then D73's column, then S2's A/B/C.
+
+**Also corrected here:** `DESIGN.md` still said "only one dark band exists (#7)" after the band
+rhythm grew to eleven rows — it is #9. And `backlog.md` was regenerated (`--write`) rather than
+hand-edited.
+
+---
+
+## 0j. 2026-10-29 — the landscape's tables are decided; retrieval gets a brief for the instrument it lacks
+
+**Nothing was built in this session.** No migration, no code change, no test added, no corpus
+re-ingested: **docs and decisions only** (`product/backlog/`, `product/design/`). The tree's only new
+files are one PRD, one spike brief and one decision artifact; the only edits are to `PGS_PLATFORM_SPEC.md`
+§18.3, two existing PRDs, `HANDOVER.md` and the generated index.
+
+**The tree also carries work that is not from this session** — `core/services/_public.py`,
+`core/static/css/{components,site}.css`, `core/templates/public/{home,become_a_member}.html`,
+`sections/_fee_tables.html`, `sections/_key_facts.html`, the new `sections/_recognition.html`,
+`sections/_why_join.html`, `core/tests/test_public_costs.py`, `product/design/DESIGN.md` and
+`C1_BUILD_PLAN.md`, plus `product/backlog/todo.md` and the test-lane files (`scripts/fast.sh`,
+`pgs/settings_test.py`, `pytest.ini`, `scripts/verify.sh`, `product/docs/context/*`). It appeared
+**during** this session, so another instance was working in the same tree — attribute it before staging
+anything, and stage this session's paths by hand rather than `git add -A`.
+
+**What was asked.** A reader reported that *Certification Landscape › establishing-a-pgs-group* showed
+the printed table as column-major soup, cut mid-cell. The diagnosis is in
+`Refinement/LANDSCAPE_TABLES_PRD.md` §1 with the commands that reproduce it. Three findings, in
+descending order of size:
+
+- **Pages 1–3 of that document are not in the corpus at all** (measured: `0` chunks contain
+  "Participatory Guarantee Systems", the six basic elements or the three certification routes). The
+  text extracts fine; `HeadingParser` opens a section only at a CAPS line, page 2's only capitals line
+  is the running header (suppressed by repetition) and page 3's are Title case (a documented miss).
+  So "what is a PGS?" is uncitable, and the miss is indistinguishable from a corpus gap.
+- **`de_column` fires on 8 of the landscape's 10 pages**, five of which are 5-column tables. This repo
+  already excludes five such pages elsewhere (SAOSO 2/82/83, OPP 4/11); landscape had no entry.
+- **No extraction mode makes a cell quotable** — measured 1/5 (raw `-layout`), 2/5 (`de_column`,
+  shipped), 0/5 (`-table`, which *is* loss-free: identical non-space character multiset). A table row is
+  two-dimensional and a chunk is one; the flattening has to be eliminated, not tuned.
+
+**Decided** (spec §18.3 **D72.1–D72.7**, argued on a decision page the product owner answered
+2026-10-29: `product/design/d72_landscape_tables_questions.html`): a row on PDF 6 is a seal and the
+artwork cell is its printed label; a fee is a cell, never a derived fact; **the reader renders the
+printed grid**; the OPP's two table pages wait for their artefact; the page-break row belongs to one
+table; **pages 1–3 enter as reviewed front-matter passages**; the exclusion ships with the rows in
+**one** re-ingest.
+
+**Decided, and this one relocated work** — spec §18.3 **D73**: table rows are stored in the **reviewed
+corpus artefact**, not in `knowledge/tables.py`, and the vector is computed from a **stored context
+column** (`title · column: value`), never from the bare cells. Consequences:
+`LANDSCAPE_TABLES_PRD.md` §5.1/§5.2 (an N-cell `TableRow` and a `(doc_key, ref)` key) are **superseded**
+and its step 2 — a key refactor — is **dropped**; the landscape's artefact conversion (P5) moves ahead of
+its place in the rollout, because 10 pages is the cheapest of the four and it lets the front matter land
+as a reviewer-added heading.
+
+**Measured, and it constrains the artefact syntax** (`Refinement/TABLES_AS_DATA_PRD.md` §3a): a GFM pipe
+table chunks as **one** chunk (rows are one paragraph); blank lines between rows **still** produce one
+chunk (the chunker packs to ~800 tokens); and `<!-- cell -->` is **silently dropped** today because
+`ANNOTATION` matches only `corpus|page|ref`. So a table's structure must be parsed *as structure* (like
+`sub_refs`), one chunk per row must come from the table code, and a malformed table annotation must
+**raise**.
+
+**Also measured — a live retrieval defect, unfixed** (`TABLES_AS_DATA_PRD.md` §7 Q5): Appendix 6a's
+twenty curated rows are **3–4 tokens** each (`Ewes / 13,3`) and they are *all twenty* of the corpus's
+3–4-token chunks (Appendix 2 runs 5 chars `Guano` → 769). All 385 chunks carry a vector, fused by RRF
+(k=60). `"laying hens"` retrieves page 85; `"how many laying hens per hectare"` returns **no hits** — the
+row is reachable only by its own words. D73's context column is the fix; whether it helps is unmeasured.
+
+**A correction the repo should keep.** Four questions were put to the product owner as preferences and
+only three were product decisions. "Pure function vs stored column" is **engineering**, and the tell is
+in `TABLES_AS_DATA_PRD.md` above §7: a product decision changes *what the product claims*; an engineering
+decision changes *how a claim is served and checked*.
+
+**Why nothing was built, and what is next.** Every remaining step depends on a decision now taken but not
+yet implemented, and the corpus work is gated on the artefact's table syntax. The next session starts
+with **`spike/RETRIEVAL_EVAL_SPIKE.md`**, and it is deliberately first: it records the **baseline on
+today's corpus** before the table work changes anything, which is the only way the D73 comparison can
+mean something. Its first command is in that file's §0. Then: the table block in `corpus.py` with a
+failing guard on a malformed annotation, proven on landscape p4–p5.
 
 ---
 

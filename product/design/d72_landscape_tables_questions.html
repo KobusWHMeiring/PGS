@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<!-- DECISION ARTIFACT (not a production template) | Outeniqua PGS — the certification landscape's tables
+     Companion to product/backlog/Refinement/LANDSCAPE_TABLES_PRD.md §6.
+     Self-contained: no CDN, no build step, no network, no external fonts.
+     Answers autosave to localStorage; answers copy out as markdown plus a §18.3 row.
+     Every number in Part 1 was measured on 2026-10-29 against the shipped PDF and the live corpus;
+     the commands that produce them are quoted in Part 1.6 so any claim here can be re-run. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — The landscape's tables: six questions</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --stop:            #8a2f2f;
+    --stop-soft:       #f9ecec;
+    --radius-sm:       9px;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px 170px; }
+  p, li { font-size: 14.5px; }
+  code, kbd { font-family: var(--mono); font-size: 12.5px; }
+  p code, li code, td code { background: var(--surface-low); padding: 1px 5px; border-radius: 5px; }
+  a { color: var(--accent); }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff; padding: 44px 20px 38px; margin-bottom: 26px;
+  }
+  header.hero .inner { max-width: 960px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.18; letter-spacing: -.01em; }
+  header.hero .question { margin: 0; max-width: 68ch; font-size: 16px; opacity: .95; }
+  header.hero .question b { font-weight: 650; }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .82;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code { font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px; }
+
+  /* ---------- blocks ---------- */
+  .panel {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 24px;
+  }
+  .panel h2 { margin: 0 0 8px; font-size: 17px; }
+  .panel > p:last-child { margin-bottom: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 40px 0 12px; }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -4px 0 16px; max-width: 72ch; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.c { text-align: center; white-space: nowrap; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  .scroll table { min-width: 560px; }
+
+  .ev {
+    font-family: var(--mono); font-size: 12px; line-height: 1.5;
+    background: #1c2620; color: #e6eee8; padding: 13px 15px; border-radius: var(--radius-lg);
+    overflow-x: auto; margin: 12px 0; white-space: pre;
+  }
+  .ev .c { color: #9fb8a8; }
+  .ev .r { color: #f0c98a; }
+  .diagram {
+    font-family: var(--mono); font-size: 12px; line-height: 1.55;
+    background: var(--surface-low); color: var(--text);
+    padding: 14px 16px; border-radius: var(--radius-lg); overflow-x: auto;
+    margin: 12px 0; white-space: pre;
+  }
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 6px; vertical-align: 1px;
+  }
+  .badge.verified { background: var(--accent-soft); color: var(--accent); }
+  .badge.inferred { background: var(--warn-soft); color: var(--warn); }
+
+  .callout { border-left: 3px solid var(--accent-line); background: var(--surface-low); padding: 12px 15px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 12px 0; }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout.stop { border-left-color: var(--stop); background: var(--stop-soft); }
+  .callout p { margin: 0 0 8px; }
+  .callout p:last-child { margin: 0; }
+  .callout .t { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 5px; color: var(--muted); }
+
+  blockquote { margin: 12px 0; padding: 10px 16px; border-left: 3px solid var(--accent-line); background: var(--surface-low); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  blockquote p { margin: 0 0 6px; font-size: 14px; }
+  blockquote p:last-child { margin: 0; }
+  blockquote cite { font-size: 12.5px; color: var(--muted); font-style: normal; }
+
+  /* ---------- question cards ---------- */
+  .card {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 22px 24px 20px; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .card.answered { box-shadow: var(--shadow), inset 3px 0 0 0 var(--accent); }
+  .card-head { display: flex; gap: 14px; align-items: flex-start; }
+  .tag {
+    flex: none; font-family: var(--mono); font-size: 12px; font-weight: 700;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 4px 9px; border-radius: 8px; margin-top: 2px; white-space: nowrap;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 17px; line-height: 1.32; letter-spacing: -.005em; }
+  .card .why { margin: 0 0 4px; font-size: 14.5px; color: var(--muted); }
+  .card h4 {
+    font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 6px; font-weight: 700;
+  }
+  .card ul { margin: 6px 0 0; padding-left: 20px; }
+  .card li { margin-bottom: 5px; }
+
+  .rec { margin: 16px 0 0; background: var(--surface-low); border-radius: var(--radius-lg); padding: 13px 15px; }
+  .rec .label { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--accent); display: block; margin-bottom: 5px; }
+  .rec p { margin: 0; font-size: 14.5px; }
+
+  fieldset { border: none; margin: 16px 0 0; padding: 0; }
+  legend { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0; margin-bottom: 8px; }
+  .opt {
+    display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+    padding: 9px 12px; border-radius: var(--radius-sm); margin-bottom: 6px;
+    background: var(--surface-low); border: 1px solid transparent;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt:has(input:checked) { background: var(--accent-soft); border-color: var(--accent-line); }
+  .opt input { margin: 3px 0 0; flex: none; }
+  .opt .k { font-weight: 700; font-family: var(--mono); font-size: 12px; color: var(--accent); flex: none; }
+  .opt .v { font-size: 14px; }
+  .opt .v span { display: block; color: var(--muted); font-size: 13px; }
+
+  textarea {
+    width: 100%; margin-top: 12px; min-height: 74px; resize: vertical;
+    font-family: var(--font); font-size: 15px; line-height: 1.5;
+    color: var(--text); background: var(--surface-low);
+    border: 1px solid transparent; border-radius: var(--radius-lg); padding: 12px 14px;
+  }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  button {
+    font-family: var(--font); font-size: 13.5px; font-weight: 600; cursor: pointer;
+    border-radius: 10px; padding: 8px 14px; border: 1px solid transparent;
+    background: var(--surface-low); color: var(--text); transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+  button.tiny { font-size: 12.5px; padding: 6px 11px; }
+  .card-foot { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .card-foot .hint { font-size: 12.5px; color: var(--muted); }
+
+  /* ---------- sticky bar ---------- */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.93); backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky); padding: 11px 20px;
+  }
+  .bar .inner { max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .progress { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .saved.show { opacity: 1; }
+
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0;
+    width: min(840px, 94vw); box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 360px; max-height: 52vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high);
+  }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, .card-foot, dialog, button { display: none !important; }
+    .card, .panel { box-shadow: none; break-inside: avoid; border: 1px solid #ccc; }
+    .wrap { padding-bottom: 0; }
+    .ev, .diagram { background: #f2f2f2; color: #000; }
+    fieldset { display: none; }
+    textarea { background: #fff; border: 1px solid #ccc; min-height: 48px; }
+  }
+  @media (max-width: 620px) {
+    header.hero h1 { font-size: 23px; }
+    .wrap { padding: 0 14px 180px; }
+    .card, .panel { padding: 18px 16px; }
+    .card-head { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; decision artifact</p>
+    <h1>The certification landscape&rsquo;s tables &mdash; six questions, and one finding bigger than the tables</h1>
+    <p class="question">
+      Should the landscape&rsquo;s five table pages become <b>reviewed rows in
+      <code style="background:rgba(255,255,255,.14);padding:2px 6px;border-radius:5px">knowledge/tables.py</code></b>
+      &mdash; and, if so, <b>what is a row</b>, how is it <b>keyed</b>, and does the <b>reader</b> get a new shape?
+    </p>
+    <div class="meta">
+      <span>Companion to <code>LANDSCAPE_TABLES_PRD.md</code> &sect;6</span>
+      <span>Measured 2026-10-29 &middot; corpus 385 chunks</span>
+      <span>Landscape: 10 pages, 8 chunks, 6 branches</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>How to read this</h2>
+    <p>This is a decision document, not a proposal. Part 1 is what I could <em>check</em>, marked as
+      such, with the commands that produce it. Parts 3&ndash;6 weigh the options with their strongest
+      case <em>against</em> them. Part 7 is my recommendation. Part 8 is where you decide &mdash; and
+      where your answer leaves the page.</p>
+    <ul>
+      <li><b>Answers autosave in this browser</b> as you type. Nothing is sent anywhere; the page works
+        with no network.</li>
+      <li>Each question has <b>Copy this answer</b>; the bar at the bottom has <b>Copy answers</b> for
+        all seven as markdown, plus a ready-made <code>spec &sect;18.3</code> row.</li>
+      <li>A one-word answer is fine. An answer that overrides me with a reason is better.</li>
+      <li><b>Q6 is not a table question</b> and it is the bigger one: pages 1&ndash;3 of this document
+        are not in the corpus at all. <b>Q7 is not in the PRD</b> &mdash; it is a sequencing question
+        that decides how long a public page stays wrong.</li>
+    </ul>
+  </div>
+
+  <!-- ================================================================ PART 1 -->
+  <div class="section-head">
+    <h2>Part 1 &mdash; What is actually true</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Nothing in this part is an opinion. Where a claim is a reading of a file
+    rather than a measurement, it says so.</p>
+
+  <div class="panel">
+    <h2>1.1 &nbsp;What ships today</h2>
+    <p><span class="badge verified">verified</span> The landscape is ingested on the live corpus as
+      <b>8 chunks</b> and presented by the concordance as <b>6 branches</b>. It is also published as a
+      reader page on the public site. Measured counts for all four governed documents:</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Document</th><th>Scheme</th><th class="num">Chunks</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SAOSO v2.1</td><td><code>saoso</code></td><td class="num">338</td><td>Appendices 2 and 6a are curated rows</td></tr>
+          <tr><td>Outeniqua OPP</td><td><code>opp</code></td><td class="num">30</td><td>PDF 4 and 11 excluded from the column transform, uncurated</td></tr>
+          <tr><td>Basic Production Principles</td><td><code>heading</code></td><td class="num">9</td><td>prose columns, handled correctly</td></tr>
+          <tr><td><b>Certification Landscape</b></td><td><code>heading</code></td><td class="num">8</td><td><b>this document</b></td></tr>
+          <tr><td colspan="2"><b>Total</b></td><td class="num"><b>385</b></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>What the reader sees for the branch you reported &mdash; the whole of it, 440 characters, as stored:</p>
+    <div class="ev"><span class="c"># DocumentChunk.text, anchor=establishing-a-pgs-group, page 4</span>
+ESTABLISHING A PGS GROUP
+The table below outlines the steps for the establishment of a PGS group and its membership to PGS SA.
+Key steps
+Resource documents,
+Use of seals and logos
+Seals and logos  Fee
+guidelines and requirements
+Local PGS group determines the
+Step 1
+Farmers who are already producing &bull;
+PGS group
+a surplus of organic produce and &bull;
+Annual membership fee (paid
+organized as an Organic farmer
+Association (OFO), and wanting to      <span class="r">&lt;-- the chunk ENDS here, mid-cell</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>1.2 &nbsp;Where it breaks &mdash; the pipeline, with the damage located</h2>
+    <p><span class="badge verified">verified</span> Every page goes through the same four stages. The
+      stage that breaks this document is step 2, and it breaks it because the page is not what step 2
+      assumes:</p>
+    <div class="diagram">  pgs_docs/PGS Certification landscape_Final.pdf
+        |
+        |  (1) pdftotext -layout -enc UTF-8          <span>-- the corpus contract; the page as a grid</span>
+        v
+  raw page text  (10 pages)
+        |
+        |  (2) knowledge/columns.py :: de_column      <span>-- assumes TWO COLUMNS OF PROSE</span>
+        |      detects 4 gutters on PDF 4            <span>-- emits 4 column blocks, in order</span>
+        v
+  re-ordered page text                            <span>&lt;=== THE ROW IS DESTROYED HERE</span>
+        |
+        |  (3) knowledge/sections/heading.py          <span>-- opens a section at a CAPS line</span>
+        |      "R500" alone on a line  ->  a heading  <span>-- invents a branch, cuts the row</span>
+        v
+  8 sections -> 8 chunks -> 6 concordance branches
+        |
+        |  (4) reader / chatbot                      <span>-- a cell is never a contiguous substring</span>
+        v
+  "establishing a pgs group" = one third of a table</div>
+    <p>Step 2 is not a bug in the sense of a coding error. It is doing exactly what it was built to do,
+      to a page built for something else.</p>
+  </div>
+
+  <div class="panel">
+    <h2>1.3 &nbsp;Which pages are transformed, and which are genuinely two-column prose</h2>
+    <p><span class="badge verified">verified</span> <code>apply_layout(doc_key="landscape")</code> changes
+      <b>8 of 10 pages</b>. Five of those eight are printed tables with the <em>same</em> five-column
+      header. Three are genuine two-column prose, and step 2 is <b>right</b> about them &mdash; touching
+      them would be the regression.</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>PDF page</th><th>Gutters detected</th><th>What the page actually is</th><th>Step 2 verdict</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>2</td><td><code>(63,65)</code></td><td>two columns of prose (intro, the 6 elements)</td><td class="c">&check; correct</td></tr>
+          <tr><td>3</td><td><code>(64,65) (67,69)</code></td><td>two columns of prose (1st/2nd/3rd-party)</td><td class="c">&check; correct</td></tr>
+          <tr><td><b>4</b></td><td><code>(32,40) (65,66) (99,100) (108,110)</code></td><td><b>5-column table</b> &mdash; Key steps / Resource documents / Use of seals / Seals / Fee</td><td class="c">&cross; wrong</td></tr>
+          <tr><td><b>5</b></td><td><code>(34,35) (36,38) (48,49) (64,66) (110,112)</code></td><td><b>5-column table</b>, header repeated, Step 3</td><td class="c">&cross; wrong</td></tr>
+          <tr><td><b>6</b></td><td><code>(29,36) (40,43) (44,46) (47,49) (51,63)</code></td><td><b>5-column table</b> &mdash; two seal rows</td><td class="c">&cross; wrong</td></tr>
+          <tr><td><b>7</b></td><td><code>(29,35) (60,68) &hellip; (99,127)</code></td><td><b>5-column table</b> &mdash; SAOSO steps</td><td class="c">&cross; wrong</td></tr>
+          <tr><td><b>8</b></td><td><code>(31,33) (41,42) (44,45) (48,57) (97,99)</code></td><td><b>5-column table</b> &mdash; direct 3rd-party row</td><td class="c">&cross; wrong</td></tr>
+          <tr><td>9</td><td><code>(51,52) (59,61)</code></td><td>two columns of prose (funding &amp; copyright)</td><td class="c">&check; correct</td></tr>
+          <tr><td>1, 10</td><td>&mdash;</td><td>cover, blank</td><td class="c">&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout warn">
+      <span class="t">The uncomfortable part</span>
+      <p>This repo already excludes five pages for exactly this reason &mdash; SAOSO PDF 2 (its TOC),
+        PDF 82 and 83 (Appendix 4 Table 1), OPP PDF 4 and 11 (3-column tables). The landscape has no
+        entry, and <code>columns.py</code>&rsquo;s own docstring records the symptom: <em>&ldquo;landscape
+        pdf 4 gains bands and reorders further&rdquo;</em>. A page was measured, recorded, and never
+        excluded.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>1.4 &nbsp;No extraction mode makes a cell quotable &mdash; this is the load-bearing finding</h2>
+    <p><span class="badge verified">verified</span> Five sentences that are verbatim contiguous on the
+      paper, checked as <code>flat(sentence) in flat(chunk)</code> across every chunk of the document,
+      for three renderings:</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Rendering</th><th class="num">Paper sentences quotable</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>A.</b> raw <code>-layout</code></td><td class="num"><b>1 / 5</b></td><td>a row&rsquo;s cells sit on one visual line, so a cell&rsquo;s sentence is interrupted by its neighbour</td></tr>
+          <tr><td><b>B.</b> <code>de_column</code> (shipped)</td><td class="num"><b>2 / 5</b></td><td>slightly better by accident: some lines span a band and are kept whole</td></tr>
+          <tr><td><b>C.</b> <code>pdftotext -table</code> for PDF 4&ndash;8</td><td class="num"><b>0 / 5</b></td><td>rows align, but columns still share a line &mdash; and the footer stops being suppressed, so furniture becomes headings</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>And C is <b>loss-free</b>: its non-space character multiset is <em>identical</em> to A&rsquo;s on
+      every page that carries text (2&ndash;9, measured). So the best available extraction still scores
+      <b>0 of 5</b>. Tuning the detector cannot fix this, because the problem is not detection:</p>
+    <div class="callout stop">
+      <span class="t">Why this cannot be extracted away</span>
+      <p>A table row is a two-dimensional object. Text is a sequence. Every extraction mode must
+        flatten one axis, so <em>either</em> the columns interleave <em>or</em> the rows are torn apart.
+        The repo already wrote this down in <code>CORPUS_COLUMN_EXTRACTION_PRD.md</code>:</p>
+      <p><em>&ldquo;Not in scope: &hellip; table row reconstruction.&rdquo;</em></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>1.5 &nbsp;The finding that is bigger than the tables: pages 1&ndash;3 are not in the corpus at all</h2>
+    <p><span class="badge verified">verified</span> Measured on the live corpus and reproduced from a
+      fresh in-process build. Four probes, four zeros:</p>
+    <div class="ev"><span class="c"># does any chunk of the landscape contain ...</span>
+Participatory Guarantee Systems   (PDF 2)   ->  <span class="r">0</span>
+six basic elements                (PDF 2)   ->  <span class="r">0</span>
+First-Party                       (PDF 3)   ->  <span class="r">0</span>
+Third-Party                       (PDF 3)   ->  <span class="r">0</span></div>
+    <p>The 8 chunks cover PDF 4&ndash;9. Step 3 of the pipeline opens a section at a <b>CAPS</b> line,
+      and pages 1&ndash;3 print none that survive: page 2&rsquo;s only capitals line is the
+      <em>running header</em>, which is suppressed by repetition; page 3&rsquo;s
+      <code>First-Party Claim</code> / <code>Third-Party Certification</code> are Title case, which
+      <code>heading.py</code> documents as a deliberate miss (&ldquo;a false heading is a worse citation
+      than a missing one&rdquo;). Page 1 is a cover; page 10 is blank.</p>
+    <div class="callout stop">
+      <span class="t">What this means in product terms</span>
+      <p>The plain-language answer to <b>&ldquo;what is a PGS?&rdquo;</b>, the <b>six basic elements</b>,
+        and the <b>three certification routes</b> are exactly what a smallholder asks about, and none of
+        it is citable &mdash; not because the text is scrambled, but because <b>there is no row in
+        <code>DocumentChunk</code></b>. A retrieval miss here is indistinguishable from a corpus gap,
+        which is the failure mode <code>testing_hazards.md</code> &sect;1.17 records as the expensive one.
+        Two of those three routes are also the subject of the public site&rsquo;s claim-discipline rules.</p>
+      <p>It is <b>not</b> an extraction problem: the text extracts fine. The parser has no section to
+        put it in.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>1.6 &nbsp;How the corpus manages tables today &mdash; and the commands that produced Part 1</h2>
+    <p><span class="badge verified">verified</span> Three tiers plus one layer. The layer is not an
+      alternative to the tiers; the plan of record says so explicitly (below).</p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Mechanism</th><th>Covers today</th><th>Open</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Prose in columns</td>
+            <td><code>columns.py::de_column</code> (D46)</td>
+            <td>BPP PDF 3&ndash;10, OPP 12, landscape 2/3/9</td>
+            <td>&mdash;</td>
+          </tr>
+          <tr>
+            <td>Rows that must pair</td>
+            <td><code>tables.py</code> reviewed rows (D51, D70.1)</td>
+            <td><code>Appendix 2</code> &mdash; <b>30 rows</b>; <code>Appendix 6a</code> &mdash; <b>20 rows</b></td>
+            <td>SAOSO App. 3, 4 Tables, 6b, 7; <b>landscape PDF 4&ndash;8</b>; OPP PDF 4, 11</td>
+          </tr>
+          <tr>
+            <td>Anything else</td>
+            <td>shipped as extracted, reviewed in an artefact diff (D53)</td>
+            <td><code>bpp.md</code>, <code>saoso.md</code></td>
+            <td>OPP, landscape artefacts (P4/P5)</td>
+          </tr>
+          <tr>
+            <td><b>Text of record</b> (the layer)</td>
+            <td><code>knowledge/corpus/*.md</code> &mdash; sha256-pinned, reviewed as a diff</td>
+            <td>same two documents</td>
+            <td>same two documents</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The two layers are not rivals &mdash; <code>CORPUS_CANONICAL_FORMAT_PLAN.md</code> step 4,
+      answer 4:</p>
+    <blockquote>
+      <p>&ldquo;Appendices 1&ndash;7: <b>the reviewed rows in <code>knowledge/tables.py</code> keep owning
+        substance&harr;condition pairing; the artefact owns the page text.</b> Extend
+        <code>TABLE_ROWS</code> for Appendices 3, 4 Table 1, 6a/6b and 7 inside this task (G4), using the
+        committed <code>-table</code> pages so the verification needs no extractor.&rdquo;</p>
+      <cite>&mdash; CORPUS_CANONICAL_FORMAT_PLAN.md</cite>
+    </blockquote>
+    <p><b>The shape of the mechanism</b> &mdash; four parts, of which exactly one is code that differs
+      per table:</p>
+    <div class="diagram">  TABLE_ROWS      rows: reviewed cells, in printed order, in Python        &lt;- data
+  TABLE_SECTIONS  column labels, part headings, dividers               &lt;- data
+  TABLE_BANDS     column offset per printed page, measured              &lt;- the only per-table code
+  chunks_for_sections()  replaces a section's auto-chunks with one
+                         chunk per row                                 &lt;- one function, all tables</div>
+    <p>There is no <code>parse_appendix_2()</code>. The guard exists because a <em>presence</em> check
+      passes on a broken pairing &mdash; Appendix 6a&rsquo;s note: &ldquo;a presence check would pass on
+      the broken <code>-layout</code> pairing.&rdquo;</p>
+    <p><b>Reproduce all of Part 1</b> <span class="badge verified">verified</span></p>
+    <div class="ev"><span class="c"># bands per page, and what the transform changes</span>
+python -c "from knowledge.extraction import extract_pages; \
+  from knowledge.columns import apply_layout, column_bands; \
+  p=extract_pages('pgs_docs/PGS Certification landscape_Final.pdf'); \
+  print(apply_layout(p, doc_key='landscape')[1]); \
+  [print(n, column_bands(p[n-1])) for n in range(2,10)]"
+
+<span class="c"># is -table a character-for-character permutation of -layout?</span>
+<span class="c"># (Counter(non-space chars) per page; True on every page 2-9)</span>
+
+<span class="c"># the six branches</span>
+python manage.py shell -c "from knowledge.concordance import concordance_sections; \
+  from knowledge.models import StandardDocument; \
+  [print(s.key, s.title, len(s.passages)) for s in concordance_sections(StandardDocument.objects.get(id=22))]"
+
+<span class="c"># pages 1-3 absent</span>
+python manage.py shell -c "from knowledge.models import StandardDocument; \
+  d=StandardDocument.objects.get(id=22); \
+  print(d.chunks.filter(text__icontains='Participatory Guarantee Systems').count())"</div>
+  </div>
+
+  <!-- ================================================================ PART 2 -->
+  <div class="section-head">
+    <h2>Part 2 &mdash; The shape of the problem</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Why this is not a bug to fix but a boundary to cross, and the asymmetry that
+    decides which options are worth the page.</p>
+
+  <div class="panel">
+    <h2>2.1 &nbsp;The asymmetry: reading order and row association are opposites</h2>
+    <p>A human reads a table by jumping between two axes. A chunk is one axis. That is why the measured
+      score in &sect;1.4 is 0&ndash;2 of 5 for <em>every</em> mode, and why the fix cannot be a better
+      mode. The only object that satisfies both axes is one that was <b>decided</b>, not derived:</p>
+    <div class="diagram">  what the paper means            what a chunk can hold
+  -----------------------------   --------------------------------
+  row 1  [A|B|C|D|E]  <-- 2-D    "A B C D E"     <-- 1-D, one row
+  row 2  [F|G|H|I|J]             "F G H I J"
+  row 3  [K|L|M|N|O]             "K L M N O"
+
+  pairing (which B goes with A)   the pairing, once decided, IS the row
+  is on the paper, not in text    (a chunk per row = a quotable cell)</div>
+  </div>
+
+  <div class="panel">
+    <h2>2.2 &nbsp;The decision table &mdash; under which conditions does the answer change?</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Condition</th><th>Consequence</th><th>Where it bites here</th></tr></thead>
+        <tbody>
+          <tr><td>The document is prose laid out in columns</td><td><code>de_column</code> is correct; keep it</td><td>PDF 2, 3, 9</td></tr>
+          <tr><td>Rows must pair to mean anything</td><td>Reviewed rows; no parser can infer the pairing</td><td>PDF 4&ndash;8</td></tr>
+          <tr><td>The row itself is not decidable from the page</td><td>The row becomes a product decision, recorded as data</td><td><b>PDF 6</b> (2 of 5 columns are pictures) &cdot; <b>PDF 5</b> (row continues across a page)</td></tr>
+          <tr><td>A page&rsquo;s content sits under no heading at all</td><td>The parser drops it; it must enter as data</td><td><b>PDF 1&ndash;3</b> (Q6)</td></tr>
+          <tr><td>The corpus holds a row the paper does not</td><td>Refuse: mislabelled rows are worse than none</td><td><code>structure_for()</code> returns <code>None</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>2.3 &nbsp;What the corpus contract actually forbids</h2>
+    <p>The artefact contract (D53, <code>knowledge/corpus.py</code>) says every block is a
+      <b>contiguous slice of the pages its page marker names</b>. A table row is a reconstruction
+      &mdash; which is why <code>tables.py</code> carries the single documented exception to
+      &ldquo;a chunk is a slice&rdquo;, and why the exception is <em>reviewed data</em> rather than a
+      cleverer extractor:</p>
+    <blockquote>
+      <p>&ldquo;The row text joins two cells; <b>the join itself is not on the paper</b>. A quote may
+        cover either cell or the whole row, and a reader checks it by finding the row, not a sentence.
+        This is the deliberate exception to <code>chunking.py</code>&rsquo;s &lsquo;a chunk is always
+        <code>section.text[start:end]</code>&rsquo;.&rdquo;</p>
+      <cite>&mdash; knowledge/tables.py, assumption 3</cite>
+    </blockquote>
+  </div>
+
+  <!-- ================================================================ PART 3 -->
+  <div class="section-head">
+    <h2>Part 3 &mdash; The options</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Five options for the mechanism as a whole. Q1&ndash;Q7 then decide the parts
+    that any of them still leaves open.</p>
+
+  <div class="panel">
+    <h2>A &nbsp;&mdash; Reviewed rows in <code>tables.py</code> (data + a guard)</h2>
+    <div class="diagram">  human reads the page  ->  TABLE_ROWS[(doc, branch)]  ->  1 chunk per row
+                                ^                                  |
+                                |                                  v
+                          test pins each cell           reader: labelled cells
+                          to its printed line            chat: quotable cell</div>
+    <p>What Appendix 2 and Appendix 6a already do. Generalised to N cells and keyed by document.</p>
+  </div>
+
+  <div class="panel">
+    <h2>B &nbsp;&mdash; A vision model drafts the table, at ingest</h2>
+    <div class="diagram">  page image  ->  model  ->  JSON  ->  DocumentChunk      <span>no human in the loop</span></div>
+    <p>The model is good at this. The question is not its accuracy; it is what happens to the
+      corpus&rsquo;s traceability contract when a chunk is not a slice of any page.</p>
+  </div>
+
+  <div class="panel">
+    <h2>C &nbsp;&mdash; A layout library or a per-table parser</h2>
+    <div class="diagram">  page  ->  pdfplumber / camelot / custom geometry  ->  rows  <span>inferred pairing</span></div>
+    <p>Infers the pairing from geometry. Works until the geometry is unusual, which is the situation
+      that produced this page.</p>
+  </div>
+
+  <div class="panel">
+    <h2>D &nbsp;&mdash; Markdown tables in the canonical artefact</h2>
+    <div class="diagram">  knowledge/corpus/landscape.md
+    | Key steps | Resource documents | Use of seals | Seals | Fee |
+    |-----------|--------------------|--------------|-------|-----|
+    | Step 1    | IFOAM PGS tool kit | ...          | ...   | ... |</div>
+    <p>One reviewed file per document, tables and all. The long-term shape if the number of tables
+      grows; a format version, a generator change and a new equivalence test if it happens now.</p>
+  </div>
+
+  <div class="panel">
+    <h2>E &nbsp;&mdash; Exclude the pages and publish the gap</h2>
+    <div class="diagram">  PAGE_LAYOUT_EXCLUSIONS["landscape"] = {4,5,6,7,8}
+  ->  printed grid preserved, rows still unquotable, reader states the limitation</div>
+    <p>Cheapest. Honest. Does not answer &ldquo;what does membership cost?&rdquo;</p>
+  </div>
+
+  <!-- ================================================================ PART 4 -->
+  <div class="section-head">
+    <h2>Part 4 &mdash; Evidence for, then against</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Each option gets its strongest case before its weaknesses.</p>
+
+  <div class="panel">
+    <h2>A &nbsp;&mdash; Reviewed rows</h2>
+    <h4 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">For</h4>
+    <ul>
+      <li><b>It is the only option measured to make a cell quotable.</b> The mechanism already
+        delivers this for 50 SAOSO rows.</li>
+      <li><b>It is the plan of record.</b> G4 assigns exactly this work, and
+        <code>CORPUS_CANONICAL_FORMAT_PLAN.md</code> answer 4 assigns pairing to <code>tables.py</code>
+        rather than to the artefact.</li>
+      <li><b>It fits what a human must do anyway.</b> 8 rows is twenty minutes of reading, once per
+        edition. The alternative is a permanent heuristic for a document that will not change.</li>
+      <li><b>It can fail loudly.</b> A reprint that moves a column fails a test instead of moving a fee
+        onto the wrong seal.</li>
+    </ul>
+    <h4>Against</h4>
+    <ul>
+      <li><b>It puts document content in Python.</b> The row text lives in a module, not in the
+        artefact &mdash; two files to keep consistent, and a reviewer who must diff both.</li>
+      <li><b>It needs the key change.</b> <code>rows_for("Appendix 2")</code> is global; the landscape has
+        <code>section_ref = NULL</code>. <code>chunks_for_sections</code> must learn the document, and
+        that touches <code>corpus_check</code> and the reader&rsquo;s call site.</li>
+      <li><b>It does not scale to &ldquo;every table in every standard&rdquo;.</b> At some number of
+        curated tables, option D becomes the cheaper review.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>B &nbsp;&mdash; Vision model at ingest</h2>
+    <h4 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">For</h4>
+    <ul>
+      <li><b>Zero human time per table</b>, and it handles seals, merged cells and page breaks better
+        than any mode in &sect;1.4.</li>
+      <li><b>The repo has already allowed the drafting half of it</b> &mdash; D70.2 keeps a model in the
+        loop as a <em>drafter</em>.</li>
+    </ul>
+    <h4>Against</h4>
+    <ul>
+      <li><b>It breaks the traceability contract</b>, which is the whole point of D53. An unreviewed
+        chunk is not a slice of any page, so &ldquo;this quote is on printed page 6&rdquo; stops being
+        provable.</li>
+      <li><b>The failure is silent and quotable.</b> A wrong digit in <code>R500</code> passes every
+        guard, reaches a farmer, and looks exactly like the paper.</li>
+      <li><b>It cannot be tested cheaply.</b> The existing guard style &mdash; pin each cell to its
+        printed line &mdash; exists precisely so the answer is falsifiable.</li>
+      <li><b>It adds a network dependency to ingest.</b> The corpus build is currently offline,
+        deterministic and reproducible from the PDF bytes; embeddings are already the only exception.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>C &nbsp;&mdash; Layout library / per-table parser</h2>
+    <h4 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">For</h4>
+    <ul>
+      <li><b>No reviewed data at all</b> &mdash; new editions need no human.</li>
+      <li><b>Would have caught this page</b> without an exclusion list.</li>
+    </ul>
+    <h4>Against</h4>
+    <ul>
+      <li><b>It infers the pairing</b>, which is the exact mistake the Table 1 exclusions were created
+        to avoid.</li>
+      <li><b>It is a new dependency</b> in a repo whose extraction is deliberately one <code>pdftotext</code>
+        call (<code>extraction.py</code>&rsquo;s entire reason for existing).</li>
+      <li><b>It moves the review, it does not remove it.</b> Someone still has to check the output of a
+        heuristic; the difference is that they are checking code rather than the paper.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>D &nbsp;&mdash; Markdown tables in the artefact</h2>
+    <h4 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">For</h4>
+    <ul>
+      <li><b>One reviewed file per document</b>, tables and prose together &mdash; the reviewer diffs
+        one thing.</li>
+      <li><b>It is where the format is heading</b> if the corpus grows beyond four documents.</li>
+    </ul>
+    <h4>Against</h4>
+    <ul>
+      <li><b>Format version 3</b>: <code>corpus.py</code> currently says &ldquo;everything else is text,
+        verbatim&rdquo;, and a Markdown table would become literal text with pipes if parsed today.</li>
+      <li><b>The landscape has no artefact at all</b> (P5). This option makes the table fix wait for a
+        conversion that is separately scheduled.</li>
+      <li><b>It contradicts the plan of record</b> for exactly this slice.</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>E &nbsp;&mdash; Exclude and publish the gap</h2>
+    <h4 style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)">For</h4>
+    <ul>
+      <li><b>Three lines of data</b>, an existing golden, no new mechanism.</li>
+      <li><b>Stops the reordering</b>, so the reader page shows the printed grid to a human.</li>
+    </ul>
+    <h4>Against</h4>
+    <ul>
+      <li><b>Measured: it fixes almost nothing.</b> Still 8 chunks, still 6 branches, still cut mid-cell
+        &mdash; raw <code>-layout</code> also puts <code>R500</code> at the start of a line. Quotability
+        stays at 1/5.</li>
+      <li><b>The fee question stays unanswerable</b>, which is the question this document exists to
+        answer.</li>
+    </ul>
+  </div>
+
+  <!-- ================================================================ PART 5 -->
+  <div class="section-head">
+    <h2>Part 5 &mdash; What the principles say &mdash; including where they disagree</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="panel">
+    <p>A page of principles that all point one way is a tell. Two of these cut against my
+      recommendation, and I say how I break the tie.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Principle, and where it is written</th><th>What it says</th><th>Holds here?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>D70.2 &mdash; <code>READER_STRUCTURE_PRD.md</code></td>
+            <td>A model may draft a table; a human reviews it; nothing unreviewed becomes a chunk</td>
+            <td><b>For A.</b> Explicitly against B-at-ingest, explicitly allows model-assisted drafting</td>
+          </tr>
+          <tr>
+            <td>Traceability &mdash; D53, <code>corpus.py</code>, <code>test_corpus_*</code></td>
+            <td>Every block is a contiguous slice of its printed page</td>
+            <td><b>For A</b> (a reviewed row is a declared exception with a guard) <b>and against B</b></td>
+          </tr>
+          <tr>
+            <td>&ldquo;Data encodes the standard&rdquo; &mdash; <code>AGENTS.md</code></td>
+            <td>Seals, categories, corpora and questionnaires are data; a retarget needs no migration</td>
+            <td><b>Partly against A.</b> It points at D: a table belongs in the reviewed artefact, not a
+              Python module. Tie-break: the plan of record already assigns <em>pairing</em> to
+              <code>tables.py</code>, and A needs no format change. D is the better answer at ~6+ tables</td>
+          </tr>
+          <tr>
+            <td>&ldquo;A test that passes for the wrong reason is worse than no test&rdquo; &mdash; <code>testing_hazards.md</code></td>
+            <td>Prove a guard can fail before trusting it green</td>
+            <td><b>For A.</b> It is the reason a presence check is not enough and a per-page offset is
+              required &mdash; i.e. the only per-table code A needs</td>
+          </tr>
+          <tr>
+            <td>&ldquo;A new standard edition means regenerate &rarr; diff &rarr; review&rdquo; &mdash; D53 &sect;6</td>
+            <td>The extractor runs per edition, not per ingest</td>
+            <td><b>Tension with A:</b> rows in Python mean a new edition edits code. Tie-break: the guard
+              fails loudly, which is the property that matters, and an edition change is a code change
+              either way</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>Where I break the tie:</b> count first. Two curated tables exist today and four
+      (<code>Appendix 2</code>, <code>6a</code>, landscape p4&ndash;5 and p7&ndash;8) after this slice, plus
+      <code>6b</code> and the OPP&rsquo;s two pages already scheduled. Below about six tables,
+      data-in-Python plus a pinned guard is cheaper to <em>review</em> than a format version &mdash;
+      because the reviewer diffs cells rather than a generator&rsquo;s output. That is the trigger to
+      revisit D, and it is written into the PRD &sect;12 so it is not a feeling.</p>
+  </div>
+
+  <!-- ================================================================ PART 6 -->
+  <div class="section-head">
+    <h2>Part 6 &mdash; Comparison, unweighted</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">No invented scores. Each cell is a judgement with its reason, and you are
+    free to weight the criteria differently &mdash; that is the point of showing them separately.</p>
+
+  <div class="panel">
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Criterion</th><th class="c">A rows</th><th class="c">B model</th><th class="c">C parser</th><th class="c">D artefact</th><th class="c">E exclude</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Makes a cell quotable</td>
+            <td class="c">&check;</td><td class="c">&check;</td><td class="c">~</td><td class="c">&check;</td><td class="c">&cross;</td>
+          </tr>
+          <tr>
+            <td>Fails loudly when the paper moves</td>
+            <td class="c">&check;</td><td class="c">&cross;</td><td class="c">~</td><td class="c">&check;</td><td class="c">&mdash;</td>
+          </tr>
+          <tr>
+            <td>Keeps unreviewed output out of the corpus</td>
+            <td class="c">&check;</td><td class="c">&cross;</td><td class="c">~</td><td class="c">&check;</td><td class="c">&check;</td>
+          </tr>
+          <tr>
+            <td>Works today, under <code>--from-pdf</code></td>
+            <td class="c">&check;</td><td class="c">&check;</td><td class="c">&check;</td><td class="c">&cross;</td><td class="c">&check;</td>
+          </tr>
+          <tr>
+            <td>No new format version / dependency</td>
+            <td class="c">&check;</td><td class="c">~</td><td class="c">&cross;</td><td class="c">&cross;</td><td class="c">&check;</td>
+          </tr>
+          <tr>
+            <td>Human time per edition</td>
+            <td class="c">~ 8 rows</td><td class="c">&check; none</td><td class="c">&check; none</td><td class="c">~ 8 rows</td><td class="c">&check; none</td>
+          </tr>
+          <tr>
+            <td>Answers &ldquo;what does membership cost?&rdquo;</td>
+            <td class="c">&check;</td><td class="c">&check;</td><td class="c">~</td><td class="c">&check;</td><td class="c">&cross;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-bottom:0"><span class="badge inferred">judgement</span> The one row where E looks
+      good &mdash; &ldquo;no human time&rdquo; &mdash; is the row that does not matter: the cost is 8 rows
+      once per edition, and the benefit is the entire fee and seal table.</p>
+  </div>
+
+  <!-- ================================================================ PART 7 -->
+  <div class="section-head">
+    <h2>Part 7 &mdash; My recommendation</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="panel">
+    <h2>A &mdash; reviewed rows, keyed by document and branch, with the reader changed and the front matter rescued</h2>
+    <p>Concretely:</p>
+    <ol>
+      <li><b><code>TableRow</code> becomes N cells</b>, keeping <code>substance</code>/<code>condition</code>
+        as the two-cell reading so Appendix 2 and 6a do not churn.</li>
+      <li><b>The key becomes <code>(doc_key, ref)</code></b>, where <code>ref</code> is
+        <code>section_ref</code> when the document numbers its sections and the branch anchor otherwise
+        &mdash; because the landscape is heading-only by design and synthetic refs would change the
+        citation scheme.</li>
+      <li><b>8 rows across 3 tables</b>, one chunk each, each cell pinned to its printed line.</li>
+      <li><b>The reader gets labelled cells</b> &mdash; the surface the defect was reported on.</li>
+      <li><b>Pages 1&ndash;3 enter as reviewed front-matter passages</b>, the same data-not-parser
+        mechanism (Q6).</li>
+    </ol>
+    <div class="rec">
+      <span class="label">What would change my mind</span>
+      <p><b>On A &rarr; D:</b> if the curator count passes about six tables, or if the landscape&rsquo;s
+        artefact conversion lands first &mdash; then the rows belong in the artefact and putting them in
+        Python would be building tomorrow&rsquo;s cleanup.</p>
+      <p><b>On B:</b> if a model-drafted row plus a mandatory human diff proves faster to review than a
+        human typing 8 rows, use it. That is D70.2&rsquo;s fallback, and it is a drafting tool, not an
+        ingest step.</p>
+      <p><b>On E:</b> nothing. Measured, it fixes reading order and nothing else.</p>
+      <p><b>On the whole slice:</b> if the landscape is judged a brochure rather than a governed
+        document, the honest move is to drop it from the chat corpus and keep it as the reader page.
+        I do not think that is right &mdash; the fee and seal facts are the questions &mdash; but it is
+        the cheapest option and it should be rejected explicitly rather than by omission.</p>
+    </div>
+  </div>
+
+  <!-- ================================================================ PART 8 -->
+  <div class="section-head">
+    <h2>Part 8 &mdash; Your decision</h2>
+    <span class="rule"></span>
+  </div>
+  <p class="section-note">Seven questions. Q1&ndash;Q6 are the PRD&rsquo;s &sect;6 table; Q7 is new
+    &mdash; it decides how long a public page stays wrong. Answer in any form; the last block copies out
+    as a <code>spec &sect;18.3</code> row.</p>
+
+  <div id="questions"></div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress" id="progress"></span>
+    <span class="saved" id="saved">Saved</span>
+    <span class="spacer"></span>
+    <button class="ghost tiny" id="clearBtn">Clear all</button>
+    <button class="tiny" id="printBtn">Print</button>
+    <button class="primary" id="copyBtn">Copy answers</button>
+  </div>
+</div>
+
+<dialog id="outDlg">
+  <div class="dlg-head">
+    <h3>Your answers</h3>
+    <p>Paste this back to me. The last block is a <code>PGS_PLATFORM_SPEC.md</code> &sect;18.3 row,
+    filled in as far as your answers allow.</p>
+  </div>
+  <textarea id="outText" spellcheck="false"></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="dlgCopy">Copy to clipboard</button>
+    <button id="dlgDl">Download .md</button>
+    <span class="spacer" style="flex:1"></span>
+    <button class="ghost" id="dlgClose">Close</button>
+  </div>
+</dialog>
+
+<script>
+/* ------------------------------------------------------------------ data */
+const QUESTIONS = [
+  {
+    id: 'Q1',
+    prd: 'PRD §6 Q1',
+    title: 'What is a row on PDF 6, where two of the five columns are seal artwork?',
+    why: 'A row is the unit of citation. On this page the printed row contains a picture; the corpus cannot hold a picture, so what a row is has to be decided, not extracted.',
+    facts: 'Verified: PDF 6 prints PGS SEALS AND THEIR USE on the same 5-column grid as PDF 4, with two rows (one per seal). Two of the five columns hold the seal artwork and its name; "Use of seals and logos" is a prose column; the Fee column reads "As above". pdftotext -table renders the artwork as nothing, because images are not text. Measured across the three tables: 8 rows, 5 columns, and 2 of the 35 cells are images. This is the same question that keeps Appendix 6b open ("a row has to be decided before it can be curated").',
+    options: [
+      ['A', 'A seal is a row; the artwork is its printed label', 'Row = seal name + when it may be granted + what it permits. The image is recorded as not stored, in the table\'s legend, the way Appendix 2 records its assumptions.'],
+      ['B', 'Curate PDF 4-5 and 7-8 now; leave PDF 6 out', 'Ship two tables now and revisit PDF 6 together with Appendix 6b, which asks the same "what is a row" question.'],
+      ['C', 'Row = the seal name only', 'One cell per row (the seal name). The name is quotable; the conditions stay unquotable.'],
+      ['D', 'Treat PDF 6 as prose', 'No rows. The page keeps its printed grid and nothing on it is quotable.']
+    ],
+    rec: 'A — the label is what a reader would actually quote ("may be granted this seal by their group"), and the picture is not. Record the decision in the table\'s legend so the omission is visible rather than silent.'
+  },
+  {
+    id: 'Q2',
+    prd: 'PRD §6 Q2',
+    title: 'Is a fee a cell, or also a derived fact (R500, R1 000, R350, R2 500)?',
+    why: 'The fees are the most likely question anyone asks this document. A number lifted out of the sentence that qualifies it is a claim, and this repo treats unsupported claims as a build failure.',
+    facts: 'Verified: five money amounts sit in the Fee column, each with conditions attached. PDF 4: "Local PGS group determines the membership fee for farmers/consumers/traders"; "Annual membership fee (paid by the PGS group to PGS SA): R500"; "Once-off customisation ... : R1 000". PDF 5: "Recommended annual fee for the use of stickers ... R350 [to be divided between PGS SA (30%) and PGS groups (70%)]". PDF 7: licensing agreement "for farmer members: R500" and "for retail members: R2 500". None is a standalone price: "recommended", "paid by the group", "to be divided", "determined by SAOSO".',
+    options: [
+      ['A', 'Cell only', 'The fee stays inside the row that qualifies it. Quotable with its conditions; nothing derived.'],
+      ['B', 'Cell plus a glossary term', 'Add "membership fee" to the glossary branch, pointing at the row, with no number.'],
+      ['C', 'Cell plus a dedicated Fees section on the reader', 'A derived summary of all five amounts at the top of the document.'],
+      ['D', 'Cell plus a Fee model field', 'Store the amounts in the database so the platform can display them.']
+    ],
+    rec: 'A — cell only. Every number needs its qualifier to be true, and the moment a fee becomes a field it will be read out of context. This also keeps the retarget rule: a fee is data in the document, not a column in the schema.'
+  },
+  {
+    id: 'Q3',
+    prd: 'PRD §6 Q3',
+    title: 'Does the reader get labelled cells in this slice, or only quotability first?',
+    why: 'The reader is the surface the defect was reported on. "Quotable" is a property of the corpus; "readable" is what the person looking at the page asked for.',
+    facts: 'Verified: D70.1 renders a curated table as a definition list — first cell as the heading, remaining cells as paragraphs, no labels. That shape is right for two cells and has no place for five. A 5-cell row rendered that way reads as five paragraphs under a heading: better than today, but a reader cannot tell the fee from the resource list. structure_for() already receives the printed column labels (TABLE_SECTIONS.columns), so the labels exist in the data.',
+    options: [
+      ['A', 'Labelled cells now', 'First cell as the row heading; the rest as labelled pairs using the printed column headers. Mock in product/design first, per DESIGN.md.'],
+      ['B', 'Quotability first, reader later', 'Ship the rows; the reader keeps the definition-list shape and gets fixed in its own slice.'],
+      ['C', 'Render the printed grid', 'A real horizontal table on the reader page.'],
+      ['D', 'Show only two cells: the step and the fee', 'A summary shape that deliberately drops the seals and resource columns.']
+    ],
+    rec: 'A — now. It is one mock and one template change, it is the surface that was reported, and B leaves a public page saying "Seals and logos Fee" in the middle of a sentence.'
+  },
+  {
+    id: 'Q4',
+    prd: 'PRD §6 Q4',
+    title: 'Do the OPP\'s two table pages (PDF 4 and 11) join this slice?',
+    why: 'They are the same defect class, already excluded from the transform, and still uncurated. Including them makes the slice bigger; excluding them leaves a known gap in a document that is in the chat corpus.',
+    facts: 'Verified: OPP PDF 4 is §3.1 committee roles (role | function | duties, 3 columns) and PDF 11 is §6.5 labelling categories (3 columns). Both are in PAGE_LAYOUT_EXCLUSIONS. The OPP has an artefact conversion scheduled at P4, and its 3-column shape differs from the landscape\'s 5 — so the same TableRow model covers both, but the review is a separate document read.',
+    options: [
+      ['A', 'Wait for the OPP artefact (P4)', 'This slice is the landscape; the OPP\'s rows land with its artefact, where the reviewer is already reading every page.'],
+      ['B', 'Include both OPP pages now', 'Five tables in one slice; one mechanism proven on two documents.'],
+      ['C', 'Separate PRD for the OPP pages', 'A third document of the same work, tracked on its own.'],
+      ['D', 'Include the label table (§6.5) only', 'The one a farmer asks about; defer the committee-roles table.']
+    ],
+    rec: 'A — wait. The OPP conversion is already scheduled and its reviewer will be on those pages anyway; doing it here would mean reading the same pages twice and re-ingesting twice.'
+  },
+  {
+    id: 'Q5',
+    prd: 'PRD §6 Q5',
+    title: 'PDF 5 repeats the table header and opens Step 3. Is that a row of the same table, or a second table?',
+    why: 'A chunk carries one page number, and a row that spans a page break has to pick one. Getting this wrong puts a step on a page it is not printed on — a citation that points at the wrong paper.',
+    facts: 'Verified: PDF 5 opens with the same five column headers as PDF 4 and continues with "Step 3 -- The group conducts farm visits and on approval grants certificates...". Under today\'s ingest, PDF 5\'s content lands in the branch mis-titled "R500". TableRow already has a cross-page precedent: Appendix 2\'s seaweed row merges "iii) fermentation.", printed at the top of the next page, by hand and recorded.',
+    options: [
+      ['A', 'One table, three rows; page = where the row starts', 'ESTABLISHING A PGS GROUP has Steps 1, 2 (p4) and 3 (p5), each with its own page.'],
+      ['B', 'Two tables, split at the page boundary', 'PDF 4 and PDF 5 are separate branches, each with its own rows.'],
+      ['C', 'One table, all rows on page 4', 'Simple, and the citation for Step 3 points at a page that does not print it.']
+    ],
+    rec: 'A — one table, three rows, page per row start. The document prints one title and one header; the page break is the printer\'s, not the author\'s, and DocumentChunk.page is already a single number per chunk.'
+  },
+  {
+    id: 'Q6',
+    prd: 'PRD §6 Q6 — NOT a table question',
+    title: 'Pages 1-3 are not in the corpus at all. Where do they come from?',
+    why: 'Measured: 0 chunks contain "Participatory Guarantee Systems", "six basic elements", "First-Party" or "Third-Party". The plain-language answer to "what is a PGS?", the six elements and the three certification routes are uncitable — and a miss here looks exactly like a corpus gap.',
+    facts: 'Verified on the live corpus and reproduced in-process. The text extracts correctly; heading.py opens a section only at a CAPS line, and pages 1-3 print none that survive: page 2\'s only capitals line is the running header (suppressed by repetition), page 3\'s headings are Title case ("First-Party Claim"), a documented deliberate miss. So this is not extractable, and no amount of layout work touches it.',
+    options: [
+      ['A', 'Reviewed front-matter passages, same mechanism as the rows', 'Three or four entries with reviewer-added headings (e.g. "WHAT IS A PGS?", "THE THREE CERTIFICATION ROUTES"), keyed the same way as the table rows, working today under --from-pdf.'],
+      ['B', 'Convert the landscape to an artefact first (P5), add headings there', 'Do it in the canonical artefact where a heading is already part of the format. Blocks on P5.'],
+      ['C', 'Publish the gap', 'State on the reader page that the introduction is not in the corpus, the way the concordance already states which printed sections are absent.'],
+      ['D', 'Leave it silent', 'Nothing changes; the document keeps 8 chunks covering PDF 4-9.']
+    ],
+    rec: 'A — the same data-not-parser mechanism, and it does not need the whole artefact conversion. It is also the highest-value item on this page: it is the difference between the chatbot being able to answer "what is a PGS?" from this document and being unable to.'
+  },
+  {
+    id: 'Q7',
+    prd: 'NOT IN THE PRD — a sequencing question',
+    title: 'Does the page exclusion ship on its own re-ingest, or together with the rows?',
+    why: 'The exclusion (PDF 4-8 → PAGE_LAYOUT_EXCLUSIONS) is three lines. Shipping it alone restores reading order in a day; waiting for the rows means the public page stays mangled for the length of the build. Neither is free: every --force re-ingest drops ChatMessage evidence links and needs relink_evidence.',
+    facts: 'Measured: the exclusion alone gives reading order and nothing else — still 8 chunks, still 6 branches, still cut mid-cell, still 1/5 quotable. So it is not a partial fix for the reported symptom; it is a stop-bleed. Cost: one extra --force re-ingest plus relink_evidence, and one golden expectation to change (EXPECTED_TRANSFORMED_PAGES).',
+    options: [
+      ['A', 'With the rows — one re-ingest', 'The page stays mangled until the rows land, then changes once, correctly.'],
+      ['B', 'Ship alone now — two re-ingests', 'Reading order restored in a day; the rows land later and re-ingest again.'],
+      ['C', 'Exclude now, re-ingest only when the rows land', 'The code is right immediately; the corpus catches up once, at the end.']
+    ],
+    rec: 'A — unless the rows are more than about a week out, in which case B. C is the option I would argue against: it leaves the code and the corpus disagreeing, which is exactly the drift corpus_check exists to detect.'
+  }
+];
+
+/* ------------------------------------------------------------------ state */
+const KEY = 'pgs-landscape-tables-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const save = () => {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(state));
+    const s = document.getElementById('saved');
+    s.classList.add('show');
+    clearTimeout(save._t);
+    save._t = setTimeout(() => s.classList.remove('show'), 1400);
+  } catch (e) { /* storage blocked: typing still works */ }
+};
+
+/* ------------------------------------------------------------------ render */
+function card(q) {
+  const st = state[q.id] || {};
+  const opts = q.options.map(([k, label, note]) => `
+      <label class="opt">
+        <input type="radio" name="g_${q.id}" value="${k}" data-choice="${q.id}" ${st.choice === k ? 'checked' : ''}>
+        <span class="k">${k}</span>
+        <span class="v">${esc(label)}<span>${esc(note)}</span></span>
+      </label>`).join('');
+  return `
+  <div class="card ${st.choice || (st.answer && st.answer.trim()) ? 'answered' : ''}" id="card_${q.id}">
+    <div class="card-head">
+      <span class="tag">${q.id}</span>
+      <div>
+        <h3>${esc(q.title)}</h3>
+        <p class="why">${esc(q.why)}</p>
+      </div>
+    </div>
+    <h4>What is actually true</h4>
+    <p class="why">${esc(q.facts)}</p>
+    <div class="rec"><span class="label">Recommended &middot; ${esc(q.prd)}</span><p>${esc(q.rec)}</p></div>
+    <fieldset>
+      <legend>Your choice</legend>
+      ${opts}
+    </fieldset>
+    <textarea data-answer="${q.id}" placeholder="Your answer in your own words — override the options, add a condition, or say 'yes, A' and why.">${esc(st.answer || '')}</textarea>
+    <div class="card-foot">
+      <button class="tiny" data-accept="${q.id}">Accept recommendation</button>
+      <button class="tiny" data-copyone="${q.id}">Copy this answer</button>
+      <span class="hint" id="hint_${q.id}"></span>
+    </div>
+  </div>`;
+}
+
+document.getElementById('questions').innerHTML = QUESTIONS.map(card).join('');
+
+/* ------------------------------------------------------------------ events */
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  const id = t.dataset.answer;
+  if (!id) return;
+  state[id] = state[id] || {};
+  state[id].answer = t.value;
+  refresh(id); save();
+});
+
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.type !== 'radio' || !t.dataset.choice) return;
+  const id = t.dataset.choice;
+  state[id] = state[id] || {};
+  state[id].choice = t.value;
+  refresh(id); save();
+});
+
+document.addEventListener('click', (e) => {
+  const accept = e.target.dataset && e.target.dataset.accept;
+  const copyOne = e.target.dataset && e.target.dataset.copyone;
+
+  if (accept) {
+    const q = QUESTIONS.find(x => x.id === accept);
+    const key = q.rec.trim().charAt(0);
+    const radio = document.querySelector(`input[name="g_${accept}"][value="${key}"]`);
+    if (radio) radio.checked = true;
+    const ta = document.querySelector(`textarea[data-answer="${accept}"]`);
+    ta.value = q.rec;
+    state[accept] = state[accept] || {};
+    state[accept].choice = key;
+    state[accept].answer = q.rec;
+    refresh(accept); save();
+  }
+
+  if (copyOne) {
+    copyText(blockFor(copyOne), e.target, null);
+  }
+});
+
+function refresh(id) {
+  const el = document.getElementById('card_' + id);
+  if (!el) return;
+  const st = state[id] || {};
+  el.classList.toggle('answered', !!(st.choice || (st.answer && st.answer.trim())));
+  updateProgress();
+}
+
+function isAnswered(q) {
+  const st = state[q.id] || {};
+  return !!(st.choice || (st.answer && st.answer.trim()));
+}
+
+function updateProgress() {
+  const n = QUESTIONS.filter(isAnswered).length;
+  document.getElementById('progress').innerHTML = `<b>${n}</b> of ${QUESTIONS.length} answered`;
+}
+updateProgress();
+
+/* ------------------------------------------------------------------ copy */
+function blockFor(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  const st = state[id] || {};
+  const chosen = q.options.find(o => o[0] === st.choice);
+  const lines = [`### ${q.id} — ${q.title}`];
+  lines.push(`**Choice:** ${chosen ? chosen[0] + ' — ' + chosen[1] : '(none selected)'}`);
+  lines.push(`**Answer:** ${st.answer && st.answer.trim() ? st.answer.trim() : '(no answer)'}`);
+  return lines.join('\n');
+}
+
+async function copyText(text, btn, hintId) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; }
+  catch (err) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch (e2) { ok = false; }
+  }
+  const label = ok ? 'Copied' : 'Copy failed — select the text in the dialog instead';
+  if (hintId) {
+    const hint = document.getElementById(hintId);
+    hint.textContent = label;
+    setTimeout(() => { hint.textContent = ''; }, 2000);
+  }
+  if (btn) {
+    const was = btn.textContent;
+    btn.textContent = ok ? 'Copied' : 'Failed';
+    setTimeout(() => { btn.textContent = was; }, 1600);
+  }
+}
+
+/* ------------------------------------------------------------------ output */
+function buildMarkdown() {
+  const L = [];
+  L.push('# The certification landscape\'s tables — decisions');
+  L.push('');
+  L.push('_Answers to LANDSCAPE_TABLES_PRD.md §6 (plus Q7, a sequencing question). 2026-10-29._');
+  L.push('');
+  QUESTIONS.forEach(q => {
+    const st = state[q.id] || {};
+    const chosen = q.options.find(o => o[0] === st.choice);
+    L.push(`### ${q.id} — ${q.title}`);
+    L.push(`_${q.prd}_`);
+    L.push('');
+    L.push(`**Choice:** ${chosen ? chosen[0] + ' — ' + chosen[1] : '(none selected)'}`);
+    L.push(`**Answer:** ${st.answer && st.answer.trim() ? st.answer.trim() : '(no answer)'}`);
+    L.push('');
+  });
+
+  const unanswered = QUESTIONS.filter(q => !isAnswered(q)).map(q => q.id);
+  L.push('---');
+  L.push(`_${QUESTIONS.length - unanswered.length} of ${QUESTIONS.length} answered.` +
+    (unanswered.length ? ' Outstanding: ' + unanswered.join(', ') + '.' : '') + '_');
+  L.push('');
+
+  const one = (id) => {
+    const st = state[id] || {};
+    const q = QUESTIONS.find(x => x.id === id);
+    const chosen = q.options.find(o => o[0] === st.choice);
+    const words = st.answer && st.answer.trim();
+    if (words) return words.replace(/\s+/g, ' ').replace(/\|/g, '\\|').replace(/[.;]+$/, '');
+    if (chosen) return `${chosen[0]} — ${chosen[1]}`;
+    return '(unanswered)';
+  };
+  L.push('## Suggested PGS_PLATFORM_SPEC.md §18.3 row');
+  L.push('');
+  L.push('```');
+  L.push('| D72 | What is a row in a document that prints its data as tables, and how are those rows held? | ' +
+    `**D72.1 What is a row on PDF 6:** ${one('Q1')}. ` +
+    `**D72.2 Fees:** ${one('Q2')}. ` +
+    `**D72.3 Reader:** ${one('Q3')}. ` +
+    `**D72.4 OPP pages:** ${one('Q4')}. ` +
+    `**D72.5 Page-break row:** ${one('Q5')}. ` +
+    `**D72.6 Front matter (PDF 1-3):** ${one('Q6')}. ` +
+    `**D72.7 Sequencing:** ${one('Q7')}. |`);
+  L.push('```');
+  return L.join('\n');
+}
+
+const dlg = document.getElementById('outDlg');
+const out = document.getElementById('outText');
+
+document.getElementById('copyBtn').onclick = () => {
+  out.value = buildMarkdown();
+  dlg.showModal();
+  copyText(out.value, document.getElementById('dlgCopy'), null);
+};
+document.getElementById('dlgCopy').onclick = () => copyText(out.value, document.getElementById('dlgCopy'), null);
+document.getElementById('dlgDl').onclick = () => {
+  const blob = new Blob([out.value], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'landscape-tables-decisions.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('dlgClose').onclick = () => dlg.close();
+document.getElementById('printBtn').onclick = () => window.print();
+
+document.getElementById('clearBtn').onclick = () => {
+  if (!confirm('Clear every answer? This cannot be undone.')) return;
+  state = {};
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  document.querySelectorAll('textarea').forEach(t => t.value = '');
+  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('answered'));
+  updateProgress();
+};
+</script>
+</body>
+</html>

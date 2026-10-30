@@ -75,6 +75,46 @@ The terms of reference for these principles …
   `knowledge.corpus.CORPUS_EDITS`, so a test can prove the correction was necessary (its
   `original` is in the PDF-derived text) and applied (its `replacement` is in the file).
 
+## 3a. OCR: where it would sit, and why it has no job in this corpus (measured 2026-10-29)
+
+Asked directly, so answered with a measurement rather than a position. **Every page of all four
+governed documents carries a text layer**, so there is nothing to OCR:
+
+| Document | Pages | Characters per page (median) | Pages with no text |
+|---|---|---|---|
+| SAOSO v2.1 | 101 | 2 063 | 1 (the last, blank) |
+| Outeniqua OPP | 15 | 1 441 | 1 |
+| Basic Production Principles | 13 | 1 629 | 1 |
+| Certification landscape | 10 | 1 721 | 1 |
+
+`tesseract` is not installed and should not be. When a document *does* arrive as a scan, OCR's place is
+as a **third drafting input to the artefact build**, beside `pdftotext` and the fixture generator —
+never at runtime, and never as text of record:
+
+```
+PDF ->  pdftotext -layout       (the normal case: a text layer exists)
+    ->  OCR                     (only for pages where the text layer is empty or short)
+    ->  vision model, cells     (only for tables and figures, drafted and then reviewed, D70.2)
+                              \\-> one reviewed artefact -> chunks -> lexical index + vectors
+```
+
+Two rules make that safe, and the second is the one that matters:
+
+1. **All three are drafts.** The artefact is the text of record and a human reviews the diff
+   (unchanged from D53); an OCR line is exactly as reviewable as a `pdftotext` line.
+2. **OCR is the wrong tool for a table.** It reproduces precisely the defect this repo has spent four
+decisions fixing: a text stream with no cell structure, from which row association cannot be
+recovered (see `TABLES_AS_DATA_PRD.md` §3a's measurements). For a scanned table, a vision model that
+returns *cells* is the drafting tool (D70.2), and a human still reviews it. And for a page whose
+meaning is a picture — the landscape's two seal artworks — OCR would read `PGS ORGANIC` and lose the
+thing that was there.
+
+**Worth adding regardless of OCR:** a per-page text-layer coverage check in the artefact build, so a
+scanned standard fails loudly with a page number instead of ingesting as an empty or half-empty
+document. Today the ingest refuses **zero** sections; a document that is 40% scans would pass.
+
+---
+
 ## 4. The spike: BPP, 13 pages
 
 ### 4.1 Result

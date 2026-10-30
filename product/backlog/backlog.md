@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-10-29 10:01
+> Generated: 2026-10-30 09:09
 
 ## Ready (up next)
 
@@ -28,12 +28,12 @@
 - **PRD: Chat truthfulness — a refusal that names its cause, and an answer that claims no more than it cites** - `Refinement\CHAT_TRUTHFULNESS_PRD.md` - Status: Refinement — findings recorded 2026-10-27 from a four-turn live conversation. **5.1, 5.2, 5.3, 5.5, 5.7, 5.8, 5.9 and 5.10 landed the same day** (gate green at 920): every refusal in that conversation answers, the two GM-outcome turns state the rule instead of the verdict, G3 is closed, and a definition citation lands on the definition. Remaining: D-2's re-measure on the box, 5.6 (the follow-up window, needs S6), and the box sweeps.
 - **PRD: The code atlas — one generated view of the application as built** - `Refinement\CODE_ATLAS_PRD.md` - Status: Refinement — a requirement from the product owner (2026-10-28); two decisions (§4) and a plan before it can be built. Supersedes the `CONVENTION.md` note that a state doc was "premature until there is code" — there is code now.
 - **PRD: The escalation answer path — a refusal that can reach a person** - `Refinement\ESCALATION_ANSWER_PATH_PRD.md` - Status: Refinement — design needed, no code written
-- **PRD: The certification landscape's tables — reviewed rows, and the rule for every other table** - `Refinement\LANDSCAPE_TABLES_PRD.md` - Status: Refinement — diagnosis measured 2026-10-29; **six decisions needed (§6)**, nothing built.
+- **PRD: The certification landscape's tables — reviewed rows, and the rule for every other table** - `Refinement\LANDSCAPE_TABLES_PRD.md` - Status: Refinement — **all seven decisions taken 2026-10-29** (D72.1–D72.7, §6); nothing built.
 - **Outeniqua PGS Digital Platform — Aimed Design Spec (Target State)** - `Refinement\PGS_PLATFORM_SPEC.md` - Status: Refinement — final PRD review completed 2026-10-18. Findings F1–F5 applied; decisions D14–D24 recorded in §18.3. MVP 0 is specified in `MVP0_PRD.md` and `MVP0_PLAN_V2.md`; it awaits one system brainstorm (`MVP0_PRD.md` §9) before implementation.
 - **Refinement: The Regenerative Add-On — architecture findings, and what to decide before MVP 2** - `Refinement\REGENERATIVE_ADDON_ARCHITECTURE.md` - Status: Refinement — target shape agreed (A, §2); implementation paused until the standard itself exists. Three decisions are nonetheless time-sensitive (§8), because MVP 1a and MVP 2 will otherwise freeze them by accident.
 - **Refinement: SAOSA multi-branch readiness — is this blueprint only for Outeniqua?** - `Refinement\SAOSA_MULTI_BRANCH_READINESS.md` - Status: Refinement — findings recorded 2026-10-19; no build approved. Awaits a product decision on deployment shape (§8) and the four leaks in §5.
 - **PRD: The public self-check — "Before you apply"** - `Refinement\SELF_CHECK_PRD.md` - Status: Refinement — shape decided (**D71**, 2026-10-29). Every control and its wording judged by
-- **PRD: Tables as reviewed data — so the reader can display any table without new code** - `Refinement\TABLES_AS_DATA_PRD.md` - Status: **Refinement** — four questions in §7 need the product owner before a plan can be written.
+- **PRD: Tables as reviewed data — so the reader can display any table without new code** - `Refinement\TABLES_AS_DATA_PRD.md` - Status: **Refinement** — **§7 Q1 answered 2026-10-29: option 2, the corpus artefact.
 
 ## On Hold
 
@@ -42,6 +42,7 @@ _none_
 ## Spikes
 
 - **Spike: `0∥` — Offline capture on the assessor's real device** - `spike\OFFLINE_SPIKE_PRD.md` - Status: Spike — not started. Brief written from the spec; no code, no decision yet.
+- **Spike: an instrument for retrieval quality — the eval set we do not have** - `spike\RETRIEVAL_EVAL_SPIKE.md` - Status: Spike — **S1 done 2026-10-30: the set, the runner, the integrity tests and the
 
 ## Bug Fixes
 
@@ -144,6 +145,34 @@ points at them instead of pretending they are imminent (D60).
       test can make. Recorded only as a gate row in `HANDOVER.md` §3 until now.
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.
 - [ ] Afrikaans: decide whether to translate the full site or navigation and headings only.
+
+## Test-suite cost — found while measuring (2026-10-28)
+
+Measured across five repos from the session logs (819 pytest invocations, 8.1 h in pgs alone;
+49 h in the fleet). Playbook: `product/docs/context/TEST_COST_PLAYBOOK.md`; plan and results:
+`product/docs/context/TESTING_TIME_PLAN.md`. The first two stages shipped in this session; what
+follows is the unfiled remainder.
+
+- [ ] **Stage 3 — the value audit (blocks any test deletion).** Commit a `scripts/test_inventory.py`,
+      write the hand-built invariant map (invariant → every witness → which is primary), and run a
+      mutation pilot on `knowledge/retrieval.py` and `core/services/_chatbot*.py`. Until all three
+      exist, **no test may be removed on the strength of coverage overlap**: 743 tests are sole
+      witness of no line while asserting 743 distinct claims (`TESTING_TIME_PLAN.md` §3, §9).
+- [ ] **`pytest tests/e2e` is not green at HEAD.** 43 passed, 34 errors when the directory is run
+      as a whole; each file passes alone (37 passed for `test_public_site.py). The errors are
+      `django.db.backends.postgresql InterfaceError` while setting `autocommit` under
+      `live_server` — a dropped connection when several modules share one session. This is
+      `testing_hazards.md` §3.11 again, and it means the 79 s the e2e run costs currently buys 34
+      false alarms. It is also the reason `--reuse-db` is not yet the local default.
+- [ ] **Fleet rollout, in the order the measurements justify** (`TEST_COST_PLAYBOOK.md` §7):
+      **homitini** first — 225 `create_user(password=…)` sites with no hasher override and 29 h of
+      pytest time, the largest single win anywhere in the fleet, and a one-file change with
+      `pgs/settings_test.py` as the template; then **harvester** (bare `pytest` has three collection
+      errors, so it has never run a full suite in 612 invocations); then **ngo-finance**
+      (`testcost floor`/`profile` — do not guess); **homtini_store** is the control group, leave it.
+- [ ] **Wire the ratchet.** `testcost profile --budget` needs a warm number measured on a quiet tree
+      before it can gate CI — every figure taken on 2026-10-28 was contaminated by concurrent
+      edits and a loaded box (`TESTING_TIME_PLAN.md` §9).
 
 ## Drift (suggested moves)
 
