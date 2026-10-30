@@ -202,6 +202,15 @@ passages whose text did not change. That is why the refresh is never part of a d
 there is no `--write`, and the deploy's own warning names `corpus_refresh --apply` for
 the same reason.)
 
+**Only turns recorded after 2026-10-28 can be relinked**, and this is measured, not assumed.
+The snapshot lives on a column added with `core.0006`, so every turn that predates it
+reports `no grounding snapshot (nothing to relink)`. The first real refresh on the VPS
+(2026-10-30) examined **7 turns, all 7 without a snapshot, 0 relinkable** — so the 40
+citation links the refresh dropped (5 `bpp`, 35 `saoso`) are **gone**, not recoverable.
+Nothing user-facing broke; the historical evidence trail for those seven answers did.
+Expect the same on any box deployed before that date, and do not treat "relink exists" as
+making a `--force` free on an old install.
+
 Re-run with `--force` — or `corpus_refresh --apply` — only when the corpus itself
 changed (a parser fix, a curated table). Without it a second run reports "already
 ingested" and writes nothing.

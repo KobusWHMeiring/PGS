@@ -86,16 +86,42 @@ are questions the product *refused*, so the set over-samples the hybrid's failur
 **Q1 is not answered and the doc says so.** `--variant context` refuses loudly until D73's
 `embedding_text` column exists. That is S2.
 
-### 0k.4 what this session did *not* build
+### 0k.4 The deploy that made the box current — and the 40 links it could not keep
+
+`8d2839d` deployed to the VPS the same day and is the **first time that box has ever been
+current**: its corpus was the pre-D52 poppler build, 311 SAOSO / 16 BPP chunks, and
+`corpus_check` had been reporting drift since D56 landed.
+
+What the deploy did, in its own words: the gate ran **twice** (the script changed in the pull,
+so it re-executed — expected, ~2× 72 s), the pre-migration backup verified 172 archive entries
+across 21 tables, migrations `core.0006`–`0009` and `knowledge.0003`–`0004` applied, and
+`/health/` answered 503 on the **first** poll with `celery_worker: error` before going green on
+the second — which is the restart order working, not a fault.
+
+`corpus_refresh --apply` then rebuilt from the artefacts: **bpp 16 → 9** (the box's 16 predated
+the column transform and the page-4 band override) and **saoso 311 → 338**, both `embedded=True`,
+so the corpus is now **385 chunks** — the first time the box has matched the reviewed text.
+
+**The finding worth carrying forward: the relink path only protects turns recorded after
+2026-10-28.** `manage.py relink_evidence` reported **7 turns examined, 7 with no grounding
+snapshot, 0 relinkable**. The snapshot lives on a column added by `core.0006`, so every turn that
+predates it has nothing to rebuild from and the **40 citation links the refresh dropped (5 bpp,
+35 saoso) are gone**. Nothing user-facing broke; the historical evidence trail for those seven
+answers did. `deploy/README.md` §4 now says so, because "relink exists" was being read as making a
+`--force` free on any install — it does not, on an old one.
+
+**Also corrected here:** `DESIGN.md` still said "only one dark band exists (#7)" after the band
+rhythm grew to eleven rows — it is #9; `backlog.md` was regenerated (`--write`) rather than
+hand-edited; and `deploy/README.md` told the operator `relink_evidence --write`, a flag that does
+not exist (`c0ee0ca`). A wrong flag in a runbook fails exactly when the operator is holding a
+corpus that has just dropped links.
+
+### 0k.5 what this session did *not* build
 
 Nothing in the corpus pipeline. The next slice is unchanged and still starts where §0j said:
 the **table block in the artefact format** with a guard that fails on a malformed annotation,
 proved on landscape p4–p5 (`LANDSCAPE_TABLES_PRD.md` §9). Then landscape 10 pages + front matter,
 then D73's column, then S2's A/B/C.
-
-**Also corrected here:** `DESIGN.md` still said "only one dark band exists (#7)" after the band
-rhythm grew to eleven rows — it is #9. And `backlog.md` was regenerated (`--write`) rather than
-hand-edited.
 
 ---
 
