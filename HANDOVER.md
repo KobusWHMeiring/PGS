@@ -39,9 +39,11 @@ documents session, the chatbot session, the column session, the embedding sessio
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session and the deploy-and-close session — **2026-10-30**.
-**Repo state:** `main`; `verify.sh` green at **1387 passed / 1 skipped** (110.7 s, measured
-2026-10-30 on this box with `--durations=15`); `scripts/fast.sh` at **1373 passed / 1 skipped**
-(64 s warm). The board work §0l.4 found uncommitted is committed (§0n.1), so the tree is clean. `tests/e2e/test_public_site.py` green at **38**. The test lane's work
+**Repo state:** `main`; `verify.sh` green at **1387 passed / 1 skipped**, timed **110.7 s and then
+181.2 s on the same committed tree within the same session** — so quote *both* or neither
+(`testing_hazards.md` §3.17; a single number is a snapshot, not a measurement). `scripts/fast.sh` at
+**1373 passed / 1 skipped**, 64 s warm. The board work §0l.4 found uncommitted is committed
+(§0n.1), so the tree is clean. **Not pushed** — this session committed only. `tests/e2e/test_public_site.py` green at **38**. The test lane's work
 (`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is **committed**, which is where
 the wall time went from ~4 min to 65 s.
 
