@@ -23,10 +23,39 @@ Two decisions surface here, both deliberate:
 {% block content %}
   {% include "public/_page_head.html" %}
 
-  <section class="section">
+  <section class="section" id="fees">
     <div class="container">
       {% include "public/sections/_fee_panel.html" %}
       {% include "public/sections/_fee_tables.html" %}
+    </div>
+  </section>
+
+  <section class="section section--warm" id="why-join">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">What membership actually gives you</h2>
+        <p class="section__lede">
+          The same fee buys the same four things whether you farm or you buy: assessment
+          by peers, a recorded decision, knowledge that moves between farms, and a claim
+          your customers can check.
+        </p>
+      </div>
+
+      {% include "public/sections/_why_join.html" %}
+    </div>
+  </section>
+
+  <section class="section" id="recognition">
+    <div class="container">
+      <div class="section__head">
+        <h2 class="serif-title section__title">Where this is recognised</h2>
+        <p class="section__lede">
+          “Recognised” is a word worth being precise about. Here is what is documented,
+          by whom, and what this page deliberately does not claim.
+        </p>
+      </div>
+
+      {% include "public/sections/_recognition.html" %}
     </div>
   </section>
 

@@ -69,4 +69,85 @@ payable before the visit; only fully paid-up members are eligible for assessment
     </p>
   </section>
 
+  {% comment %}
+  OPP §2.4 and §2.5 — the two amounts the page used to leave out. They are not
+  assessment fees and they do not belong in either card above: one is per person per
+  visit and paid to the host farmer, the other is per farm per year and only arises
+  once a farm is certified and labelling produce. Leaving them out was the defect that
+  made the ribbon's annual-membership figure on the home page read as the price of
+  joining.
+  {% endcomment %}
+
+  <section class="fee-card fee-card--visit" aria-labelledby="fee-visit-heading">
+    <h2 class="fee-card__title" id="fee-visit-heading">Farm visit catering</h2>
+
+    <dl class="fee-lines">
+      <div class="fee-line">
+        <dt>
+          <span class="fee-line__label">Members</span>
+          <span class="fee-line__note">Per visit, paid to the host farm</span>
+        </dt>
+        <dd class="fee-line__amount">{{ catering_member_cents|zar }}</dd>
+      </div>
+      <div class="fee-line">
+        <dt>
+          <span class="fee-line__label">Non-members</span>
+          <span class="fee-line__note">Per visit, inclusive of snacks</span>
+        </dt>
+        <dd class="fee-line__amount">{{ catering_non_member_cents|zar }}</dd>
+      </div>
+    </dl>
+
+    <p class="fee-tags">
+      <span class="tag tag--plain">Per person, per visit</span>
+      <span class="tag tag--note">Only where the host offers catering</span>
+    </p>
+
+    <p class="fee-table__note">
+      Where a host farm does not offer catering, no contribution applies and
+      participants bring their own snack.
+      <span class="cite cite--light">OPP §2.4</span>
+    </p>
+  </section>
+
+  <section class="fee-card fee-card--seal" aria-labelledby="fee-seal-heading">
+    <h2 class="fee-card__title" id="fee-seal-heading">Seal licence</h2>
+
+    <dl class="fee-lines">
+      <div class="fee-line">
+        <dt>
+          <span class="fee-line__label">Per farm, per year</span>
+          <span class="fee-line__note">Once the farm is certified and labels produce</span>
+        </dt>
+        <dd class="fee-line__amount">{{ seal_licence_cents|zar }}</dd>
+      </div>
+    </dl>
+
+    <p class="fee-tags">
+      <span class="tag tag--plain">Per farm, per annum</span>
+      <span class="tag tag--note">Passed on to SAOSO</span>
+    </p>
+
+    <p class="fee-table__note">
+      The licence is paid into the PGS fund, which pays it over to SAOSO. Printing the
+      seals is the farmer's own cost, and the farmer may not share the seal with anyone
+      else.
+      <span class="cite cite--light">OPP §2.5</span>
+    </p>
+  </section>
+
 </div>
+
+{% comment %}
+The floor of a first year, stated rather than left to be inferred. `FIRST_YEAR_FROM_CENTS`
+is the membership fee plus the lowest assessment band — arithmetic on two published
+figures, not a third fee — and the sentence says what it leaves out, because transport
+and catering are the two amounts nobody can quote without knowing the farm.
+{% endcomment %}
+<p class="fee-total">
+  <strong>A first year on the lowest turnover band comes to
+  {{ first_year_from_cents|zar }}</strong> — {{ membership_farmer_cents|zar }} membership plus the
+  {{ fee_bands.0.initial_cents|zar }} assessment. That is before the administrator's transport at
+  the AA rate and any catering, and before the {{ seal_licence_cents|zar }} seal licence if you
+  will label produce with the seal.
+</p>

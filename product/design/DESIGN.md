@@ -109,14 +109,15 @@ Depth comes from **alternating grounds**, not borders. In document order:
 | 3 | Six elements | *(none → page ground)* |
 | 4 | How it works | `brand-creamWarm` |
 | 5 | Farm gallery | *(none → page ground)* — **added 2026-10-19** |
-| 6 | Fees | *(none → page ground)* |
-| 7 | Documents | `brand-creamWarm` |
-| 8 | Ask the standard | `brand-forest` — the dark beat |
-| 9 | Members | *(none → page ground)* |
-| 10 | Footer | `brand-forestDeep` |
+| 6 | Why join | `brand-creamWarm` — **added 2026-10-29** |
+| 7 | Fees | *(none → page ground)* |
+| 8 | Documents | `brand-creamWarm` |
+| 9 | Ask the standard | `brand-forest` — the dark beat |
+| 10 | Members | *(none → page ground)* |
+| 11 | Footer | `brand-forestDeep` |
 
 **The rule:** a band either carries one of the four grounds above or is unset. Never invent a fifth.
-Only **one** dark band exists (#7) — a second would flatten the contrast that makes it read as a
+Only **one** dark band exists (#9) — a second would flatten the contrast that makes it read as a
 moment.
 
 ---
@@ -257,6 +258,44 @@ section carries a visible `farm attribution & consent to confirm` chip for the s
 Page ground. **The "Which band are you in?" panel comes first**, full width, on a cream card with
 two buttons; the two tables follow beneath. Turnover is **self-declared** — state that; never
 compute a band for the user. Real figures from OPP §II.
+
+**Four cards, not two** (2026-10-29). The fee section showed the membership and the assessment
+and omitted OPP §2.4 (visit catering, R30 member / R50 non-member) and §2.5 (R500 seal licence
+per farm per annum) — so a reader could budget twice and still be surprised. Catering and the
+seal licence are their own cards beneath the first two, never clauses inside them: both are
+conditional (a host must offer catering; the farm must be certified and labelling) and neither
+may inherit the standing of a fee the OPP sets for everyone.
+
+Closing the band is one **floor** paragraph, `{{ first_year_from_cents|zar }}`, which is
+arithmetic on two published figures — the membership plus the lowest assessment band — and
+names what it leaves out (transport at the AA rate, catering, the seal licence). It is a
+paragraph and not a fifth card, because it is a sum, not a fee.
+
+The **key-facts ribbon** may carry a fee, but never as the only price on the page: its fourth
+card reads `R100 / year` with the caption *"Membership, per member — assessment from R1 500"*.
+`R100 / year` beside "Farmer & consumer membership" read as the whole cost of joining, and was
+technically true — the worst kind of incomplete.
+
+### 7.7a Why join, and where it stands — **added 2026-10-29**
+
+`brand-creamWarm` band between the farm gallery and the fees. Two blocks under one band, because
+they are one argument: **why** a member pays, then **whether** the assurance stands up.
+
+- **Four reasons**, 2 × 2 (`.element-grid--pair` — four cards in a three-column grid leave a
+  ragged orphan on its own row), each with its OPP citation: farm visit committee, the recorded
+  decision, knowledge exchange, and the retailer/market presence on visits. No reason claims a
+  farm is certified.
+- **“Where this is recognised”** as a `.section__subtitle` (one step down from the band `h2`)
+  over a two-column `.role-list`: PGS South Africa membership and its status as the PGS control
+  body, SAOSO v2.1 in the IFOAM family, the standing of the PGS seals, and the DALRRD labelling
+  rule for animal products. It closes with a **“What we do not claim”** callout, because the two
+  things a reader may assume from "recognised" are the two the group cannot claim: the SAOSO
+  "Organic PGS Certified" logo (18 months + assessment + a licensing agreement) and
+  certification itself.
+
+**Seal names are never written.** Naming a seal's label is rendering the seal as far as
+`test_claim_discipline.py` is concerned, and MVP 0 publishes no seal. "The PGS seals" is a
+category; a label is a mark.
 
 ### 7.8 Documents
 

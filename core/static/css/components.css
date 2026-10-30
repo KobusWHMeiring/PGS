@@ -414,6 +414,14 @@
   .fee-card--assessment {
     grid-column: span 7;
   }
+
+  /* OPP §2.4 and §2.5 sit under the two cards they qualify, at equal width: a visit
+     contribution is not an assessment fee and a seal licence is conditional on
+     certification, so neither belongs inside the membership or assessment card. */
+  .fee-card--visit,
+  .fee-card--seal {
+    grid-column: span 6;
+  }
 }
 
 .fee-card {
@@ -472,6 +480,27 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1.5rem;
+}
+
+/* The floor of a first year, after the four cards. Deliberately a paragraph and not a
+   fifth card: it is arithmetic on the figures above, and a card would give it the
+   same standing as a fee the OPP sets. */
+.fee-total {
+  max-width: 62ch;
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--brand-sand);
+  border-left: 4px solid var(--brand-ochre);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background-color: var(--brand-creamWarm);
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.fee-total strong {
+  color: var(--brand-forestDark);
+  font-weight: 600;
 }
 
 .tag {

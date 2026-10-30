@@ -2,7 +2,7 @@
 {% load static %}
 
 {% comment %}
-The public home page: nine bands on four grounds, in the order DESIGN.md §3 fixes.
+The public home page: ten bands on four grounds, in the order DESIGN.md §3 fixes.
 One rule governs this file — **a band either carries one of the four grounds or is
 unset, and there is exactly one dark band.** `core/tests/test_public.py` asserts the
 order and the single dark band, because a second creamWarm section creeping in is the
@@ -110,6 +110,36 @@ different eyebrow from the page (Fees / Join), the literal is used.
       <p class="gallery__note">
         Photographs are from member farms.
         <span class="chip">farm attribution &amp; consent to confirm</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--warm" id="why-join">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">Why join</p>
+        <h2 class="serif-title section__title">What membership actually gives you</h2>
+        <p class="section__lede">
+          The fee buys assessment by people who farm, a group that meets and visits all
+          year, and a standard your customers can look up. It also buys a national
+          membership the group pays on your behalf.
+        </p>
+      </div>
+
+      {% include "public/sections/_why_join.html" %}
+
+      <div class="section__head">
+        <h3 class="serif-title section__subtitle">Where this is recognised</h3>
+        <p class="section__lede">
+          “Recognised” is a word worth being precise about. This is what is documented,
+          by whom — and, below the list, what we do not claim.
+        </p>
+      </div>
+
+      {% include "public/sections/_recognition.html" %}
+
+      <p class="section__more">
+        <a class="link-more" href="#fees">Every amount you will be asked for →</a>
       </p>
     </div>
   </section>

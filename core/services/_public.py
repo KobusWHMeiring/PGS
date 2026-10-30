@@ -13,10 +13,12 @@ Two rules from `build_principles.md` meet here:
   replaces it with `AssessmentFee` rows keyed by `turnover_band` (D29).
 
 **Provenance of every figure here:** `pgs_docs/Outeniqua pgs principles, policies and
-procedures 2026.pdf`, §2.1 (R100 farmer & consumer; R500 PGS South Africa) and §2.3
-(the six turnover bands, initial and renewal). Verified with `pdftotext -layout`, not
-against the design prototype — the prototype happens to agree, which is not the same
-as being the source of truth. If these numbers ever change, they change in the OPP
+procedures 2026.pdf`, §2.1 (R100 farmer & consumer; R500 PGS South Africa), §2.3
+(the six turnover bands, initial and renewal), §2.4 (R30 member / R50 non-member visit
+catering) and §2.5 (R500 seal licence per farm per annum). Verified with
+`pdftotext -layout`, not against the design prototype — the prototype happens to agree
+on §2.1 and §2.3, which is not the same as being the source of truth, and it carries
+neither §2.4 nor §2.5 at all. If these numbers ever change, they change in the OPP
 first.
 
 `section_ref` strings (`§2.3`, `S20.1.1`) follow D43: the citation as a human reads
@@ -72,6 +74,15 @@ MEMBERSHIP_FARMER_CENTS = 10_000  # R100
 #: OPP §2.1 — what the group pays PGS South Africa annually, funded from the above.
 MEMBERSHIP_PGS_SA_CENTS = 50_000  # R500
 
+#: OPP §2.4 — farm-visit catering, where the host farm offers it. Paid to the host
+#: farmer; the balance, if any, goes to the PGS fund. No catering, no contribution.
+VISIT_CATERING_MEMBER_CENTS = 3_000  # R30
+VISIT_CATERING_NON_MEMBER_CENTS = 5_000  # R50
+
+#: OPP §2.5 — the seal licence, per farm per annum, payable once the farm is
+#: certified. Printing the seals is the farmer's own cost.
+SEAL_LICENCE_CENTS = 50_000  # R500
+
 #: OPP §2.3 — the assessment sliding scale, initial certification and renewal.
 #: The order is the OPP's, and the labels are its own wording.
 FEE_BANDS: tuple[FeeBand, ...] = (
@@ -82,6 +93,29 @@ FEE_BANDS: tuple[FeeBand, ...] = (
     FeeBand("R2 500 001 – R5 000 000", 500_000, 500_000),
     FeeBand("Above R5 000 000", 800_000, 800_000),
 )
+
+#: What a member cannot avoid in a first year: the annual membership plus the lowest
+#: assessment band. **Arithmetic on the two figures above, not a third fee** — it
+#: exists so the public site can say what the floor actually is instead of leaving the
+#: R100 ribbon to read as the whole price. Transport (AA rate), visit catering and the
+#: seal licence are on top and are not folded in: the first two depend on distance and
+#: on whether a host offers catering, and the third only applies to a certified farm
+#: that labels produce.
+FIRST_YEAR_FROM_CENTS = MEMBERSHIP_FARMER_CENTS + FEE_BANDS[0].initial_cents
+
+#: Does the group hold the SAOSO **“Organic PGS Certified” logo** licensing agreement?
+#: **False until the agreement is on file**, and the public recognition copy follows this
+#: constant in both directions (`core/tests/test_public_costs.py` renders it both ways).
+#:
+#: Why this is a constant and not a sentence: the Certification landscape p6–p7 makes
+#: that logo a separate route from the PGS seals — at least 18 months as a compliant
+#: PGS SA member, then a PGS SA assessment, then a licensing agreement per farmer at
+#: R500 (R2 500 for a retailer). The marks a member group *does* issue are the PGS
+#: Organic and PGS Organic In-Conversion seals, which the OPP §V gives our own committee
+#: the authority to grant. A sticker in hand is therefore evidence of the seals, not of
+#: this licence, and claim discipline (DESIGN §1) says an unverified claim does not ship.
+#: When the signed agreement is produced, flip this to `True` — that is the whole change.
+SAOSO_LOGO_LICENSED = False
 
 
 @dataclass(frozen=True)
@@ -252,6 +286,11 @@ def chrome_context(page: Page) -> dict:
         "membership_farmer_cents": MEMBERSHIP_FARMER_CENTS,
         "membership_pgs_sa_cents": MEMBERSHIP_PGS_SA_CENTS,
         "fee_bands": FEE_BANDS,
+        "catering_member_cents": VISIT_CATERING_MEMBER_CENTS,
+        "catering_non_member_cents": VISIT_CATERING_NON_MEMBER_CENTS,
+        "seal_licence_cents": SEAL_LICENCE_CENTS,
+        "first_year_from_cents": FIRST_YEAR_FROM_CENTS,
+        "saoso_logo_licensed": SAOSO_LOGO_LICENSED,
     }
 
 

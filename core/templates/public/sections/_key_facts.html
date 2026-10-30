@@ -37,7 +37,13 @@
         <span class="fact-card__dot" aria-hidden="true"></span>
         <div>
           <p class="fact-card__figure">{{ membership_farmer_cents|zar }} / year</p>
-          <p class="fact-card__caption">Farmer &amp; consumer membership</p>
+          {% comment %}
+          The caption is load-bearing, not decoration. This card was read as *the*
+          price of joining; the assessment fee, the administrator's transport, catering
+          and the seal licence are all separate (OPP §2.3–2.5). Saying "membership"
+          three ways is cheaper than a visitor discovering it at the fee section.
+          {% endcomment %}
+          <p class="fact-card__caption">Membership, per member — assessment from {{ fee_bands.0.initial_cents|zar }}</p>
         </div>
       </div>
 

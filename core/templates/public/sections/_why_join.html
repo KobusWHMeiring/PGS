@@ -1,0 +1,62 @@
+{% comment %}
+The reasons a farmer or a consumer joins — four cards, every one traceable to the OPP.
+No reason here is a marketing claim about a farm: nothing says a member *is* certified,
+because membership is not certification (OPP §2.3; DESIGN §7.10).
+
+Kept as a partial because the home page's band and `/become-a-member/` must give the
+same four reasons; two copies of the copy drift the first time one is edited.
+
+This file is reasons only. The cost sentence and its link live in the pages that
+include it, because the home page has to link to `#fees` and `/become-a-member/` *is*
+the fee page.
+{% endcomment %}
+{% comment %}
+Four reasons in a 2 × 2 grid. `element-grid--pair` rather than the three-column
+`element-grid`: four cards in three columns leave a ragged single card on its own row,
+and the four reasons carry equal weight. (`.element-grid--pair` is declared after the
+1024 px three-column rule in `components.css`, so it wins there too — measured, not
+assumed.)
+{% endcomment %}
+<div class="element-grid element-grid--pair">
+
+  <article class="element-card">
+    <h3 class="element-card__title">Assessed by people who farm</h3>
+    <p class="element-card__body">
+      A farm visit is made by at least four people: the administrator, one consumer and
+      two farmers. Not a hired inspector, and the person whose farm is being visited can
+      see who is coming.
+    </p>
+    <p class="cite-row"><span class="cite cite--light">OPP §3.3</span></p>
+  </article>
+
+  <article class="element-card">
+    <h3 class="element-card__title">A decision, with the reasoning recorded</h3>
+    <p class="element-card__body">
+      The committee records one of four outcomes against the SAOSO standard. Where
+      findings need addressing, they are written down before the decision follows — so
+      "not yet" always comes with what would change it.
+    </p>
+    <p class="cite-row"><span class="cite cite--light">OPP §4</span></p>
+  </article>
+
+  <article class="element-card">
+    <h3 class="element-card__title">Knowledge that moves between farms</h3>
+    <p class="element-card__body">
+      Quarterly meetings, seed exchange and production problems solved by the people who
+      have already met them. Members attend at least two other farm visits a year. This
+      is the part of a PGS that never appears on a certificate.
+    </p>
+    <p class="cite-row"><span class="cite cite--light">OPP §3.2</span></p>
+  </article>
+
+  <article class="element-card">
+    <h3 class="element-card__title">A claim your customers can check</h3>
+    <p class="element-card__body">
+      Independent retailers and markets join the same group and attend the visits from
+      which they source. The people who sell your produce sit in the room where it is
+      assessed.
+    </p>
+    <p class="cite-row"><span class="cite cite--light">OPP §3.1, §3.3</span></p>
+  </article>
+
+</div>

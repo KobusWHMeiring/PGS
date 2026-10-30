@@ -1,0 +1,101 @@
+{% comment %}
+Where this group and the standard it assesses against are recognised — and, in the
+callout at the end, what this page does **not** claim.
+
+Every sentence below is a quotation or a paraphrase with a page reference from the two
+governing documents:
+
+  * OPP §2.1 — the group pays the annual PGS South Africa membership out of the fees it
+    collects.
+  * `PGS Certification landscape_Final.pdf` p3 — SAOSO's standard "forms part of the
+    IFOAM-Organics International family of standards".
+  * p4 — paid-up PGS SA member groups are entitled to the "member of PGS SA" logo.
+  * p6 — the two PGS seals "are as acceptable forms of organic certification, as any
+    other type of certification"; and the DALRRD labelling rule for animal products.
+  * p7 — the SAOSO "Organic PGS Certified" logo is a separate route: 18 months of
+    compliant membership, a PGS SA assessment, a licensing agreement per farmer.
+
+**The SAOSO logo is deliberately not claimed.** The product owner believes the group
+holds it (seen on stickers), but a sticker is not a licensing agreement, and the
+landscape is explicit that the logo follows an assessment this page has no record of.
+What the group demonstrably holds — the OPP's own §V — is the authority to issue the two
+PGS seals as a member group. Say that, and leave the SAOSO logo out until the agreement
+is on file; adding it later is one constant in `_public.py`, not a redesign.
+
+**The seals are not named.** `test_claim_discipline.py::test_no_seal_is_rendered_at_all`
+reads every `Seal.label` from the database and fails if it appears in rendered HTML, and
+MVP 0 publishes no seal at all (MVP0_PRD §3). "The PGS seals" is a category; a seal's own
+label is the mark itself.
+
+No farm, product or status is named. Membership is not certification (OPP §2.3,
+DESIGN §7.10), and MVP 0 publishes no seal and no certificate (MVP0_PRD §3).
+{% endcomment %}
+<ul class="role-list">
+
+  <li>
+    <span class="role-list__role">PGS South Africa — a member group, and the PGS control body</span>
+    <span class="role-list__duty">
+      The group pays the annual PGS South Africa membership out of the fees its members
+      pay, and paid-up member groups are entitled to the “member of PGS SA” mark.
+      SAOSO's own standard names PGS South Africa as the control body in the case of PGS
+      initiatives.
+      <span class="cite cite--light">OPP §2.1 · Certification landscape p4 · SAOSO p24</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="role-list__role">SAOSO Standard v2.1 (2026) — the standard we assess against</span>
+    <span class="role-list__duty">
+      SAOSO's Standard for Organic Production and Processing “forms part of the
+      IFOAM–Organics International family of standards”.
+      <span class="cite cite--light">Certification landscape p3</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="role-list__role">The PGS seals — a second-party guarantee with national standing</span>
+    <span class="role-list__duty">
+      PGS SA's own position is that its second-party seals “are as acceptable forms of
+      organic certification, as any other type of certification, only the process for
+      achieving the outcome of organic recognition is different.” Our committee may issue
+      those seals under the outcomes the procedures define.
+      <span class="cite cite--light">Certification landscape p6 · OPP §V</span>
+    </span>
+  </li>
+
+  <li>
+    <span class="role-list__role">Animal products — the DALRRD labelling rule</span>
+    <span class="role-list__duty">
+      Use of the word “organic” on animal products must be linked to protocols
+      registered with the Department of Agriculture, Land Reform and Rural Development,
+      and the IFOAM-recognised SAOSO standard covers those protocols.
+      <span class="cite cite--light">Certification landscape p6</span>
+    </span>
+  </li>
+
+</ul>
+
+<div class="callout">
+  <h3 class="callout__title">What we do not claim</h3>
+  <p class="callout__text">
+    {% if saoso_logo_licensed %}
+    The group holds the SAOSO “Organic PGS Certified” logo licence, which follows 18
+    months of compliant membership and an assessment by PGS SA. It covers the farmers the
+    group nominates, and it is a licence to use the logo — not a wider claim about any
+    product.
+    {% else %}
+    The SAOSO “Organic PGS Certified” logo is a separate route: eighteen months of
+    compliant membership, an assessment by PGS SA, and a licensing agreement. This page
+    makes no claim about it either way.
+    {% endif %}
+  </p>
+  <p class="callout__text">
+    Nothing here says that a farm, a product or a member is certified. Membership is not
+    certification: it is a requirement for assessment, and the committee records the
+    outcome separately after a visit. No farm status, certificate or seal is published
+    on this site.
+  </p>
+  <p class="callout__text">
+    <span class="cite cite--light">OPP §2.3, §V · Certification landscape p7</span>
+  </p>
+</div>

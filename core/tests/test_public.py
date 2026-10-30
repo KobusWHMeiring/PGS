@@ -195,6 +195,7 @@ BAND_IDS = [
     "organics",
     "how-it-works",
     "farm-gallery",
+    "why-join",
     "fees",
     "documents",
     "ask-standard",

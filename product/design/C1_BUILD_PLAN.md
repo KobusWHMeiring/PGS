@@ -321,3 +321,92 @@ python manage.py runserver             # then judge UAT scenarios 4, 6, 8 by eye
 Documents download (`/documents/`, C2) · the language switch (C3 — the pill renders, `AF` is
 inert) · the chatbot's behaviour (D) · seals, QR, registry (MVP 2) · an SVG of the mark and a real
 favicon (designer) · a reversed logo lockup (designer).
+
+---
+
+## C1f — Why join, where it stands, and the whole price (2026-10-29)
+
+**Trigger:** the product owner read the rendered home page and asked three questions the plan
+never answered: *why* join, *where* the assurance is recognised, and *what the price actually is* —
+noticing that `R100 / year` on the ribbon could not be the whole cost, because the page also
+mentions a subscription, a farm visit "and some other fees".
+
+They were right in substance and wrong about the number. Verified against the OPP with
+`pdftotext -layout` before writing a line: `R100` **is** the annual membership fee (§2.1), but it
+is **one of five** amounts the OPP lets the group ask for, and the fee section published two of
+them and omitted **two**:
+
+| Amount | OPP | Before | After |
+|---|---|---|---|
+| Annual farmer & consumer membership | §2.1 | ribbon + card | ribbon (framed) + card |
+| PGS SA membership, paid by the group | §2.1 | card | card |
+| Assessment, six turnover bands, initial + renewal | §2.3 | table | table |
+| Administrator transport, AA rate per km | §2.3 note | note | note (unchanged) |
+| Farm-visit catering, R30 member / R50 non-member | §2.4 | **absent** | own card |
+| Seal licence, R500 per farm per annum | §2.5 | **absent** | own card |
+
+**Decisions.**
+
+1. **No new route.** A seventh nav link risks the one-line-at-768 px constraint that
+   `tests/e2e/test_public_site.py` measures, and `/become-a-member/` already exists to answer
+   this. The reasons are a `brand-creamWarm` band on the home page (#why-join, between the
+   gallery and the fees) and two sections on the join page, sharing one partial each.
+2. **The ribbon's caption carries the second number.** `R100 / year` stays; the caption becomes
+   *"Membership, per member — assessment from R1 500"*, read from `FEE_BANDS[0]`, not typed.
+3. **A floor, not a total.** `FIRST_YEAR_FROM_CENTS` = membership + lowest band (R1 600), stated
+   with what it excludes — transport, catering, the seal licence. A real total is impossible
+   without knowing the farm's distance and whether a host offers catering, and a total that
+   quietly omits three fees is the original defect at ten times the size.
+4. **The two new fees are cards, not clauses.** Both are conditional (a host must offer catering;
+   the farm must be certified *and* labelling) and neither may inherit the standing of a fee the
+   OPP sets for everyone.
+5. **Recognition is a claim audit, not a boast.** Four grounds, each cited: PGS SA membership and
+   its status as the PGS control body (OPP §2.1; LANDSCAPE p4; SAOSO p24), SAOSO v2.1 in the
+   IFOAM family of standards (LANDSCAPE p3), the standing of the two PGS seals (p6; OPP §V), and
+   the DALRRD labelling rule for animal products (p6). It ends with **"What we do not claim"**,
+   because the two things "recognised" invites a reader to assume are the two the group cannot
+   currently claim.
+6. **The SAOSO "Organic PGS Certified" logo is not claimed.** The product owner believes the
+   group holds it — a sticker was seen — but LANDSCAPE p7 makes that logo a separate route
+   (18 months as a compliant member, a PGS SA assessment, a licensing agreement per farmer), and
+   a sticker is evidence of the **PGS seals** the OPP §V empowers our own committee to issue, not
+   of the SAOSO licence. It is therefore one constant, `SAOSO_LOGO_LICENSED = False`, and both
+   wordings are rendered in tests: when the signed agreement is produced, the flip is the whole
+   change. **Open question for the product owner: produce the agreement (or the sticker's
+   wording) and this becomes a positive sentence in one commit.**
+7. **Seal labels are not written.** `test_claim_discipline.py::test_no_seal_is_rendered_at_all`
+   reads every `Seal.label` from the database and fails if it appears in rendered HTML. "The PGS
+   seals" is a category; `PGS Organic In-Conversion` is a mark, and MVP 0 publishes none
+   (`MVP0_PRD` §3). The first draft of the recognition copy tripped this and was rewritten.
+
+**Tests.** `core/tests/test_public_costs.py` (new, 21 tests): every §II amount renders on
+both money surfaces; catering and the seal licence have headings of their own; the floor is
+arithmetic on the two published figures and names its three exclusions; the ribbon's framing is
+fixed inside the ribbon band (not page-wide — the phrase is still correct in the fee card); the
+recognition block names all four grounds; membership is never dressed as certification; and the
+logo copy renders correctly under both values of the constant. `BAND_IDS` in
+`test_public.py` gains `why-join`. The existing claim-discipline and no-typed-fee guards were
+what caught the two drafts that would otherwise have shipped.
+
+**UAT:** no new scenario. `tests/uat/mvp0_standards_and_public_site_uat.md` is signed (9 PASS,
+1 N/A) and `tests/tools/test_uat_parse.py` pins its ten scenarios — adding an unsigned eleventh
+would reopen the sign-off and break the sign-off tooling, which is a bigger change than this
+one. Instead, **re-read Scenarios 4 and 8 with the two new bands in view**: does the cost
+paragraph read as honest rather than as a disclaimer, and does "where this is recognised"
+read as precise rather than evasive? The five questions to put to a reviewer are in §C1g
+below. No test replaces that judgement.
+
+## C1g — The five questions this change should be judged by
+
+For the product owner, before or during the next committee walkthrough. Not a signature:
+a short list of the things a human can see and an assertion cannot.
+
+1. Read only the ribbon under the hero. What do you think joining costs? (If the answer is
+   "R100", the caption is not doing its job.)
+2. In the fees band, count the amounts and cross each off against OPP §2.1–§2.5. There should
+   be five, and no sixth.
+3. Read the closing paragraph of that band. Does it tell you what is *not* in the R1 600?
+4. On "Where this is recognised", can you find each ground in the document cited beside it?
+5. Read "What we do not claim". Does it read as precision, or as evasion? If the group holds
+   the SAOSO logo agreement, the sentence should be replaced — **one constant,
+   `SAOSO_LOGO_LICENSED`** — not softened.
