@@ -1,23 +1,111 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
+> ## START HERE — the table block
+>
+> The live site is deployed and the corpus is current. **The next slice is one thing:** teach the
+> corpus artefact format what a table row is, and prove it on the certification landscape's p4–p5.
+>
+> Read, in this order — nothing else:
+> 1. `Refinement/LANDSCAPE_TABLES_PRD.md` **§9 (execution steps)** — 7 ordered steps; step 0 is
+>    "reproduce, before touching anything" and step 1 is the build.
+> 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax, and the three measurements that
+>    constrain it (a pipe table chunks as **one** chunk; blank lines between rows still chunk as
+>    one; `<!-- cell -->` is **silently dropped** today because `ANNOTATION` matches only
+>    `corpus|page|ref`).
+> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73** — the decisions. All of
+>    them are taken; there is nothing to ask the product owner before step 1.
+>
+> **The first failing test to write** is the guard: a malformed `<!-- table … -->` annotation must
+> **raise**, not be silently ignored — that silent drop is how the marker would rot. Prove it red
+> before trusting it green.
+>
+> **Not this slice:** the OPP (P4, 15 pages) is blocked on the generator repair recorded in
+> `design/d71_p4_and_the_generator.html`; SAOSO's appendices (G4) are behind the same mechanism.
+> Do not start them first — the landscape is 10 pages and is the page a reader complained about.
+>
+> **Before your first commit:** `QR` — see §0l.4 (the tree carries another session's uncommitted
+> board work; do not stage it by hand).
+
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
 the answer-coverage session, the budget-and-instrument session, the deployment session,
-the reader-structure session, the corpus-artefact session, the corpus-drift session and
-the retrieval-baseline session — **2026-10-30**.
-**Repo state:** `main`, **96 commits ahead of `origin/main`** and **pushed on 2026-10-30**
-(see §0k; the "not pushed since `a9fc663`" line below was true for nine days and is not any
-more). `verify.sh` green on this tree — **1305 passed / 1 skipped** (1291 in `fast.sh` plus the
-14 `slow` ones), and `tests/e2e/test_public_site.py` green at **38**. The test lane's work
-(`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is now **committed**, which is where
+the reader-structure session, the corpus-artefact session, the corpus-drift session, the
+retrieval-baseline session and the deploy-and-close session — **2026-10-30**.
+**Repo state:** `main`, **pushed** (`3696f81` at the time of writing); `verify.sh` green —
+**1305 passed / 1 skipped**, and with the tree's uncommitted board work it is **1331 passed /
+1 skipped** (see §0l.4). `tests/e2e/test_public_site.py` green at **38**. The test lane's work
+(`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is **committed**, which is where
 the wall time went from ~4 min to 65 s.
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **pushed 2026-10-30**.
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`206f35f`** — **behind, and
-the gap just grew by this push**, because its corpus is the pre-D52/D53 poppler build (**364
-chunks**), so `manage.py corpus_check` (new: §0f) and `uat_seed --check` both correctly report it
-as not current until plan **P7.4** rebuilds it from artefacts. See §22, §0g and
-`product/backlog/In Progress/VPS_DEPLOYMENT.md` §4a.
+
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **in sync** (pushed 2026-10-30).
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
+2026-10-30 — and **its corpus is now current for the first time**: `corpus_check` reports
+`bpp current 9/9`, `saoso current 338/338`, `opp`/`landscape` `no artefact`, **384 chunks, 0
+unembedded**. It carries **no `CHAT_*` overrides** in `.env` (first-install never writes them), so
+the code defaults — 4096 output tokens, ceiling 8192, retrieval limit 8 — are what runs. Two
+gaps the box still has, both recorded: the 40 citation links the refresh dropped are
+**unrecoverable** (§0k.4), and `opp` + `landscape` hold 37 chunks where the dev box has 38 (§0k.4).
+
+---
+
+## 0l. 2026-10-30 — session close: deployed, verified, and a clean slate for the table block
+
+**State: green, pushed, deployed, and the next slice named in the block at the top of this file.**
+Nothing below is a proposal; each line is something that was run.
+
+### 0l.1 What shipped
+
+| | |
+|---|---|
+| `ce59e83` | **C1f** — the whole price (OPP §2.4/§2.5), why join, where it is recognised, `SAOSO_LOGO_LICENSED = False` |
+| `acf79aa` | the test lane — three budgets, fast hasher, measured `slow` marker |
+| `5ac2944` | the retrieval instrument + the baseline (R@1 **0.188** bare, **0.531** vector) |
+| `8d2839d` | D72/D73 — table rows are reviewed data, the vector is not the cells |
+| `c0ee0ca`, `c4eaadd`, `3696f81` | `relink_evidence --apply` (not `--write`); relink only saves turns after 2026-10-28; 384≠385 and why |
+
+**The deploy found one thing the gate could not:** `scripts/fast.sh` was `100644` in the index, and
+`verify.sh` refused to run — *"these scripts are not executable in the commit"*. Fail-safe, and
+still a wasted cycle had it reached the box. Fixed in the commit that added the file (history was
+rewritten before the push, so published history never carried the broken mode). **Windows cannot
+see a file mode; `git update-index --chmod=+x` is the only fix, and the gate is the only thing that
+will tell you** (`testing_hazards.md` §2.8).
+
+### 0l.2 What the box proved
+
+`corpus_check` → **`corpus is current`** for the first time since D56 landed; **384 chunks, 0
+unembedded**; `check --deploy` clean; `/health/` ok. The refresh rebuilt `bpp 16 → 9` (the box's 16
+predated the column transform) and `saoso 311 → 338` from the reviewed artefacts.
+
+### 0l.3 What is left, and is not this slice
+
+- **P7.4 cannot pass as written.** The artefact ingest still reads the PDF for the printed `toc`, so
+  "remove poppler-utils and refresh still works" is false. Two fixes recorded, neither built
+  (§0i). Fix it before trying to close P7.4, or the session will rediscover it.
+- **The 0∥ offline spike is still "not started"**, and D26 makes it a precondition for freezing
+  `visitPack`/`VisitSyncEnvelope`. It gates MVP 1a **sub-plan G** only; A–F can start.
+- **MVP 1a** is `ready/` and unbuilt (9 migrations, none of them a `Member`, `Farm` or `Visit`). Its
+  PRD predates D64/D71 — re-read it against §18.3 before writing the first model.
+- **Human gates**: the three empty UAT seats (D4), the restore rehearsal on the VPS (A9), and the
+  committee's no-claims confirmation (D60). None is a commit.
+
+### 0l.4 ⚠ The tree carried another session's work when this handover was written
+
+`core/services/_board.py`, `_board_data.py`, `core/templates/public/building.html`,
+`core/tests/test_board.py`, `tests/tools/test_board.py`, `scripts/board.py`,
+`Refinement/PUBLIC_BOARD_{PRD,PLAN}.md`, plus edits to `product/backlog.py` (+155 lines),
+`CONVENTION.md` (the `/building/` publishing rules), `deploy/deploy.sh` (+14 — **the next deploy
+will run `scripts/board.py` and a stale board will abort it**), `_public.py`, `urls.py`,
+`_footer.html`, and `Public title:`/`Summary:`/`Public:` headers added to nine PRDs.
+
+**It is uncommitted, it is not this session's, and it is green** — `fast.sh` reports **1331 passed
+/ 1 skipped** with it in the tree (1291 without), so it looks finished rather than half-written.
+It was **not staged**: this session staged its own paths by hand, and discarded its own
+regeneration of `backlog.md` because the index had begun listing two PRDs that are not committed.
+
+**So: if `git status` is not clean when you arrive, that is why.** Get it committed (or stashed) and
+attributed before you start the table block, and re-run `backlog.py --write` afterwards — an index
+that names untracked files is worse than a stale one.
 
 ---
 
