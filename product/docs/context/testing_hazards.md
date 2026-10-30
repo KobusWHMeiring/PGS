@@ -1649,6 +1649,40 @@ sys.stdout.reconfigure(errors="replace")   # a swallowed glyph is cheaper than a
 
 An instrument that crashes on a character is a tool people stop running.
 
+### 3.22 An inverted predicate empties the output, and every guard stays green
+
+`scripts/build_corpus.py` chose its line filter per branch. The generic branch — every document
+whose parser declares no `body_lines` (`bpp`, `opp`, `landscape`) — read:
+
+```python
+keep = is_page_furniture
+```
+
+`is_page_furniture`'s own docstring begins *"Content the artefact must not carry"* and returns
+`True` for the contact block, a blank line and a bare page stamp. So `keep` kept exactly the
+furniture and dropped the body.
+
+Evidence (`--doc landscape`, 2026-10-30):
+
+```text
+before:  0 body lines — five headings and the page stamps (`## R500`, `## PGS SA.`, `## SAOSO`)
+after:   316 body lines
+bpp regeneration vs the committed artefact: 57 diff lines, not 583
+```
+
+**Consequence:** the draft looked like *a document with no recipes*, and the review queue — which
+is built from what the draft contains — came back empty. `bpp.md`, `saoso.md` and both artefacts
+were already committed, so nothing failed; P4 was recorded as "blocked on the generator" and the
+landscape's artefact as "ten pages of hand-typing", both wrong by one word. An artefact with no
+body cannot be *wrong*, only *empty*, and every existing guard checked the body it did not have.
+
+**Rule:** a generator test asserts **presence** on the real output (the document's own words, a
+known sentence, a minimum line count), not merely that the command exits 0 — and when a helper's
+name and its docstring disagree (a function called `keep…` whose docstring says what must *not* be
+carried), the name is the suspect. The seam it now calls is a pure function, `body_filter(parser)`,
+so the four decisions are testable without a PDF or an extractor
+(`tests/tools/test_build_corpus.py`, written red first).
+
 ## 5. Template for a new entry
 
 ```markdown
