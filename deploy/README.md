@@ -196,8 +196,11 @@ is **not** drift.
 
 `--force` deletes the document, its chunks, and every `ChatMessage.retrieved_chunks`
 row that pointed at them. Each chat turn's stored grounding snapshot survives (P2.5a),
-and `manage.py relink_evidence --write` turns those snapshots back into links for the
+and `manage.py relink_evidence --apply` turns those snapshots back into links for the
 passages whose text did not change. That is why the refresh is never part of a deploy.
+(The command's report mode is the same command with no flag; `--apply` is what writes —
+there is no `--write`, and the deploy's own warning names `corpus_refresh --apply` for
+the same reason.)
 
 Re-run with `--force` — or `corpus_refresh --apply` — only when the corpus itself
 changed (a parser fix, a curated table). Without it a second run reports "already
