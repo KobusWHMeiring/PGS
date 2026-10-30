@@ -587,11 +587,16 @@ restored.
 
 **Two things the build found that change steps 2–3:**
 
-- **`scripts/build_corpus.py --doc landscape` still produces an unusable draft**: five headings and
-  the page numbers, no body text at all (`## R500`, `## PGS SA.`, `## SAOSO` — §1.2's false headings,
-  now with the text missing rather than scrambled). Step 2 is therefore a **hand-typed, reviewed
-  pass**, not a regeneration, and the generator repair recorded in
-  `product/design/d71_p4_and_the_generator.html` is a precondition for the OPP and SAOSO appendices.
+- **The generator was emptying every draft but SAOSO's — fixed the same day.** `--doc landscape`
+  produced five headings and the page numbers with no body text, because the generic branch set
+  `keep = is_page_furniture` and that helper returns what the artefact must *not* carry. The
+  predicate is now `body_filter(parser)` (`tests/tools/test_build_corpus.py`, red first) and the
+  draft carries **316 lines** — which are the §1.2 soup on p4–8, exactly as expected, and missing
+  p1–3 because no heading opens there. **Direction recorded as D75:** repair the generator, then
+  review as a verification pass. Two small steps remain before step 2 is a diff rather than a
+  transcription: the BPP body-furniture rule (regenerating `bpp.md` now differs by 57 lines) and a
+  regeneration test that runs under `PDFTOTEXT_BIN=/usr/bin/true`. Step 2 still needs D72.7's page
+  exclusion landed first, or the generated p4–8 is the mangled text rather than the printed grid.
 - **There is no `landscape` `-table` page fixture** (`knowledge/tests/fixtures/pages/` carries
   `layout` and `raw` only), so §8's requirement 3 — "each cell is a verbatim substring of `-table`
   output" — cannot be asserted yet. Step 3 must add `landscape.table` via

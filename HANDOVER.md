@@ -39,11 +39,11 @@ documents session, the chatbot session, the column session, the embedding sessio
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session and the deploy-and-close session — **2026-10-30**.
-**Repo state:** `main`; `verify.sh` green at **1387 passed / 1 skipped**, timed **110.7 s and then
-181.2 s on the same committed tree within the same session** — so quote *both* or neither
-(`testing_hazards.md` §3.17; a single number is a snapshot, not a measurement). `scripts/fast.sh` at
-**1373 passed / 1 skipped**, 64 s warm. The board work §0l.4 found uncommitted is committed
-(§0n.1), so the tree is clean. **Not pushed** — this session committed only. `tests/e2e/test_public_site.py` green at **38**. The test lane's work
+**Repo state:** `main`, **pushed** (`d4051d1` + the D75 repair); `verify.sh` green at **1392 passed /
+1 skipped**, timed **60.2 s, then 110.7 s, then 181.2 s** on the same tree within one session — so
+quote the range or nothing (`testing_hazards.md` §3.17; one number is a snapshot). `scripts/fast.sh`
+at 1373+ passed, 64 s warm. The board work §0l.4 found uncommitted is committed (§0n.1), so the tree
+is clean. `tests/e2e/test_public_site.py` green at **38**. The test lane's work
 (`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is **committed**, which is where
 the wall time went from ~4 min to 65 s.
 
@@ -106,11 +106,16 @@ measured at step 2 — deleting text to hit a predicted number is the worse trad
 
 ### 0n.4 Two findings that change the next session
 
-- **The generator cannot draft this document.** `scripts/build_corpus.py --doc landscape` emits five
-  headings and the page numbers, **no body text** (`## R500`, `## PGS SA.`, `## SAOSO` — §1.2's false
-  headings, now with the text missing rather than scrambled). Step 2 is a hand-typed reviewed pass.
-  That is also the generator repair `design/d71_p4_and_the_generator.html` describes, which the OPP
-  and SAOSO's appendices are blocked on.
+- **The generator was emptying every draft but SAOSO's — and that is fixed (D75).** The generic
+  branch set `keep = is_page_furniture`, a helper whose docstring begins *"Content the artefact must
+  not carry"*: the predicate was inverted, so `--doc landscape` wrote five headings and the page
+  stamps with no body, and `--doc opp` (P4) would have done the same. `body_filter(parser)` replaces
+  it, five assertions in `tests/tools/test_build_corpus.py` (red first), and the landscape draft now
+  carries **316 lines**. Two small steps still stand between step 2 and a reviewable diff: the BPP
+  body-furniture rule (regenerating `bpp.md` differs by **57 lines** — the repeated *The Principle Of
+  Health.* labels, blank-line collapse, one space from a dropped glyph) and a regeneration test that
+  runs under `PDFTOTEXT_BIN=/usr/bin/true`. Land D72.7's page exclusion first, or the generated
+  p4–8 is the frozen `de_column` soup rather than the printed grid.
 - **There is no `landscape` `-table` page fixture.** `knowledge/tests/fixtures/pages/` carries
   `layout` and `raw` only, so §8's "each cell is a verbatim substring of `-table`" is not assertable
   yet; step 3 must add it via `scripts/extract_fixtures.py`, or the guard degrades to a presence check

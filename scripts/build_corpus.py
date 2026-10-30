@@ -247,16 +247,28 @@ def locate_sections(
     return spans
 
 
-def is_page_furniture(line: str) -> bool:
-    """Content the artefact must not carry: the contact block and the printed page number.
+def body_filter(parser) -> "callable":
+    """Which lines of the body stream this document's artefact keeps.
 
-    The bare stamp is matched here for the same reason `HeadingParser` drops it: it is
-    page furniture. In `-raw` order it arrives on its own line *before* the body (the
-    producer writes the footer first), so leaving it in would put `02` at the top of the
-    introduction.
+    In:  `parser` — the section parser the document's scheme selects.
+    Out: a predicate over one line.
+    Fails: never.
+
+    **This was a one-word bug, and it emptied the draft.** Measured 2026-10-30: the generic
+    branch read `keep = is_page_furniture` — a helper whose docstring began *"Content the artefact
+    must not carry"*, i.e. the predicate was inverted — so `--doc landscape` wrote five headings and
+    the page stamps with no body text, and `--doc opp` (P4's blocked step) would have done the same. Every guard stayed green
+    because an empty artefact has nothing that can be wrong. `tests/tools/test_build_corpus.py`
+    pins the four decisions, and the second one is the easy one to get wrong: **a blank line is
+    content**, because it is the chunker's paragraph boundary (`build_corpus.py` rule 3).
+
+    A parser that declares `body_lines` owns its own furniture judgement — SAOSO's page is printed
+    double-spaced and a lone digit there is a superscript or a table cell, not a page stamp — so
+    the page-stamp rule must not be applied on top of it.
     """
-    returned = is_furniture(line) or not line.strip()
-    return returned or bool(BARE_PAGE_NUMBER.match(line))
+    if getattr(parser, "body_lines", None) is not None:
+        return lambda line: not is_furniture(line)
+    return lambda line: not (is_furniture(line) or BARE_PAGE_NUMBER.match(line))
 
 
 def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
@@ -279,15 +291,11 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
         stream = body_lines(joined)
         lines = [(pdf_page, line) for pdf_page, _page_number, line in stream]
         printed = {pdf_page: number for pdf_page, number, _line in stream}
-        # The parser's own furniture rule, and only it: SAOSO's page is printed
-        # double-spaced, so a blank line is a paragraph boundary the chunker needs, and a
-        # lone digit is a superscript or a table cell, not a page stamp. Dropping either
-        # here is how the first draft lost the `m²` superscript and the Appendix 6a values
-        # (`BugFixes/saoso_text_glyphs_and_boundaries.md` §2, §5).
-        keep = lambda line: not is_furniture(line)
     else:
         lines, _starts, _norm = flatten(pages)
-        keep = is_page_furniture
+    # The parser's own furniture rule where it has one, the page's where it does not — and the
+    # reason that distinction exists is in `body_filter`.
+    keep = body_filter(parser)
     starts, norm = offsets(lines)
     spans = locate_sections(sections, lines, starts, norm)
 
