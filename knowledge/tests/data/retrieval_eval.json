@@ -1,0 +1,388 @@
+{
+  "schema": 1,
+  "name": "retrieval-eval",
+  "about": [
+    "Ground truth for retrieval quality (spike: product/backlog/spike/RETRIEVAL_EVAL_SPIKE.md).",
+    "Every expected locator was read off the document, NOT off what retrieval currently returns",
+    "(spike §3.1 rule 1). A reviewer checks each grade-2 item against the artefact in knowledge/corpus/",
+    "or the paper PDF in pgs_docs/; grading retrieval against its own output is testing_hazards §2.7.",
+    "",
+    "JSON rather than the spike's suggested .yaml because the gate must run on a bare install and",
+    "PyYAML is not a dependency of this project (spike §3.1 permits either).",
+    "",
+    "grades:   2 = answers the question (any grade-2 passage counts as a hit)",
+    "          1 = relevant and supporting, not the answer",
+    "          0 = plausible but WRONG: its presence measures over-retrieval, never recall",
+    "expected: [] = a refusal IS the correct answer. These items are excluded from recall/MRR",
+    "          because there is nothing to find; they exist so over-retrieval stays measurable",
+    "          (spike §3.1 rule 3).",
+    "",
+    "locator:  the chunk's own locator, exactly as `locator_of()` renders it — a SAOSO section_ref",
+    "          (S20.1.2), an OPP section_ref (§2.1), a content anchor (pgs-sa), or p.<printed page>.",
+    "          `contains` (case-insensitive, whitespace-collapsed) narrows a locator shared by many",
+    "          chunks: Appendix 6a has 20 rows on one locator, Appendix 2 has 30, S1 has 8.",
+    "          A locator that resolves to nothing is a hard error in the runner, never a miss.",
+    "",
+    "asked_by: escalation (a real question a person typed and the bot refused) | probe | uat | curated | design"
+  ],
+  "items": [
+    {
+      "id": "escalated-traceability",
+      "asked_by": "escalation",
+      "question": "What does the standard say about traceability?",
+      "expected": [
+        {"doc": "saoso", "locator": "S20.1.2", "grade": 2},
+        {"doc": "saoso", "locator": "S20.1", "grade": 1},
+        {"doc": "opp", "locator": "§6.3", "grade": 1}
+      ],
+      "note": "EscalatedQuery NO_CITATIONS. S20.1.2 is the clause that says the word; §6.3 is the group's own traceability requirement for aggregated produce."
+    },
+    {
+      "id": "escalated-zebra-zoning",
+      "asked_by": "escalation",
+      "question": "What is the zoning rule for a herd of zebra in Alberta?",
+      "expected": [],
+      "note": "EscalatedQuery INSUFFICIENT_CONTEXT. Out of scope twice over: another country's zoning law, and a wild species. A refusal is the correct answer; the word `zoning`/`herd` must not buy a citation."
+    },
+    {
+      "id": "escalated-horse-manure-origin",
+      "asked_by": "escalation",
+      "question": "Do i need to know where horse manure comes from before I can use it?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "without prior permission", "grade": 2},
+        {"doc": "bpp", "locator": "general-principles", "contains": "60 days", "grade": 1},
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "not be the primary source", "grade": 1}
+      ],
+      "note": "EscalatedQuery NO_CITATIONS/INSUFFICIENT_CONTEXT, the most-asked real question in the set. Grade 2 is the Appendix 2 condition (conventional intensive livestock requires prior permission) — the UAT (mvp0 scenario 9) signs this question off on exactly that condition plus the BPP 60-day raw-manure rule."
+    },
+    {
+      "id": "escalated-input-sourcing",
+      "asked_by": "escalation",
+      "question": "Does it say anything about input sourcing?",
+      "expected": [
+        {"doc": "saoso", "locator": "S2.3.3", "grade": 2},
+        {"doc": "saoso", "locator": "S4.6.1", "grade": 1},
+        {"doc": "saoso", "locator": "Appendix 1", "contains": "CRITERIA FOR THE EVALUATION OF INPUTS", "grade": 1}
+      ],
+      "note": "EscalatedQuery NO_CITATIONS. S2.3.3 is the one-step-back tracing rule; Appendix 1 is how SAOSO says an input is evaluated at all."
+    },
+    {
+      "id": "escalated-horse-manure-short",
+      "asked_by": "escalation",
+      "question": "can i use horse manure?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "without prior permission", "grade": 2},
+        {"doc": "bpp", "locator": "general-principles", "contains": "60 days", "grade": 1}
+      ],
+      "note": "EscalatedQuery NO_CITATIONS (3 rows). The same subject as escalated-horse-manure-origin in five words — kept because a two-word paraphrase is where a lexical-first pipeline is most likely to fail."
+    },
+    {
+      "id": "escalated-cardboard",
+      "asked_by": "escalation",
+      "question": "can I use cardboard boxes from my neighbour?",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.4.4", "grade": 2},
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "Biodegradable processing by-products", "grade": 1}
+      ],
+      "note": "EscalatedQuery NO_CITATIONS, also UAT mvp0 scenario 10.1. The standard never says 'cardboard', so the governed answer is 4.4.4 + Appendix 2 — the UAT expected outcome is that the answer names the rule and does NOT say cardboard is allowed."
+    },
+    {
+      "id": "escalated-cardboard-followup",
+      "asked_by": "escalation",
+      "question": "thanks.  and cardboard boxes from my neighbour?",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.4.4", "grade": 2},
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "Biodegradable processing by-products", "grade": 1}
+      ],
+      "note": "EscalatedQuery INSUFFICIENT_CONTEXT — a real follow-up fragment. Graded standalone on purpose: the eval runner measures single-turn retrieval, so this row records how much a fragment loses when the parent question is not carried (the context arm's job, D49 stage 1)."
+    },
+    {
+      "id": "escalated-laying-hens-rest",
+      "asked_by": "escalation",
+      "question": "What does the standard say about the minimum rest period for laying hens without artificial light?",
+      "expected": [
+        {"doc": "saoso", "locator": "S5.1.9", "grade": 2},
+        {"doc": "saoso", "locator": "S5.1.8", "grade": 1},
+        {"doc": "saoso", "locator": "Appendix 6a", "contains": "laying hens", "grade": 0}
+      ],
+      "note": "EscalatedQuery — 18 of the 35 stored rows, the single largest source of refusals. Judgement (recorded, not assumed): the standard sets no minimum dark/rest period, so grade 2 is the clause that governs artificial light in livestock housing, which is what a grounded answer must quote instead of inventing a number. Grade 0 is Appendix 6a's `Laying hens 230` — a stocking density is a plausible-sounding answer to a rest-period question, and D73 makes that row easier to retrieve."
+    },
+    {
+      "id": "escalated-fertiliser-brand",
+      "asked_by": "escalation",
+      "question": "Which fertiliser brand should I buy for tomatoes in George?",
+      "expected": [],
+      "note": "EscalatedQuery INSUFFICIENT_CONTEXT, and UAT mvp0 scenario 3. The corpus governs substances, not brands or local shops. `fertiliser` will retrieve Appendix 2 rows — the refusal must come from the audit, not from an empty result set."
+    },
+    {
+      "id": "escalated-yearly-cost",
+      "asked_by": "escalation",
+      "question": "What is the yearly cost to get certified, including the farm visit?",
+      "expected": [
+        {"doc": "opp", "locator": "§2.1", "grade": 2},
+        {"doc": "opp", "locator": "§2.3", "grade": 2},
+        {"doc": "opp", "locator": "§2.2", "grade": 1},
+        {"doc": "opp", "locator": "§2.4", "grade": 1},
+        {"doc": "opp", "locator": "§2.5", "grade": 1}
+      ],
+      "note": "EscalatedQuery CITATION_AUDIT; also UAT mvp0 scenario 10.5, where the open gap G3 is that the R100 membership fee (§2.1) never arrives. Two grade-2 clauses because 'the yearly cost' is genuinely the sum of the membership fee and the sliding-scale assessment fee."
+    },
+    {
+      "id": "escalated-silica",
+      "asked_by": "escalation",
+      "question": "can i use purchased silica for supplementation?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "Trace elements", "grade": 2},
+        {"doc": "saoso", "locator": "S4.4.7", "grade": 1},
+        {"doc": "saoso", "locator": "S4.4.8", "grade": 1},
+        {"doc": "saoso", "locator": "Appendix 3", "contains": "silica", "grade": 0}
+      ],
+      "note": "EscalatedQuery CITATION_AUDIT. The Appendix 2 trace-elements row carries the documented-deficiency restriction; Appendix 3 lists a silica product for pest control, which is the wrong frame for a supplement — the only other chunk containing the word."
+    },
+    {
+      "id": "escalated-gmo-seed-saving",
+      "asked_by": "escalation",
+      "question": "what is the definition of genetically modified?  does selective seed saving count as GM?",
+      "expected": [
+        {"doc": "saoso", "locator": "S1", "contains": "Genetically Modified Organism", "grade": 2},
+        {"doc": "saoso", "locator": "S1", "contains": "Genetic Engineering", "grade": 1},
+        {"doc": "saoso", "locator": "S2.3.1", "grade": 1}
+      ],
+      "note": "EscalatedQuery CITATION_AUDIT. The definitions chunk also defines `Genetic Engineering` and excludes natural hybridisation — that exclusion is the answer to the second half, so both S1 passages are in the set. Resolved by `contains`: eight chunks share locator S1."
+    },
+    {
+      "id": "escalated-nutsedge",
+      "asked_by": "escalation",
+      "question": "are there any organic ways to manage nutweed/nutsedge? it's a perennial weed",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.5.1", "grade": 2},
+        {"doc": "saoso", "locator": "S4.5.2", "grade": 1},
+        {"doc": "saoso", "locator": "S4.5.4", "grade": 1}
+      ],
+      "note": "EscalatedQuery CITATION_AUDIT. `nutsedge` is absent from the corpus (document frequency 0), so this is the unknown-subject path: the answer must come from the weed-management clauses even though the word is not there."
+    },
+    {
+      "id": "probe-straw-mulch",
+      "asked_by": "probe",
+      "question": "can I use straw mulch?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "green manure, straw", "grade": 2},
+        {"doc": "saoso", "locator": "S4.4.4", "grade": 1},
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "sawdust", "grade": 0}
+      ],
+      "note": "UAT mvp0 scenario 10.2: permitted as a plant material with NO chemical-treatment condition — that condition belongs to the wood row, which is why the wood row is the grade-0 distractor."
+    },
+    {
+      "id": "probe-borax",
+      "asked_by": "probe",
+      "question": "can I use borax for boron supplements?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "Trace elements", "grade": 2},
+        {"doc": "saoso", "locator": "S4.4.7", "grade": 1}
+      ],
+      "note": "UAT mvp0 scenario 10.3: the answer is the trace-elements row plus its documented-deficiency restriction. `borax` itself is never printed — the row lists boric acid and sodium borate."
+    },
+    {
+      "id": "probe-duck-bedding",
+      "asked_by": "probe",
+      "question": "if my ducks aren't fed organic food and I make compost from their bedding, will I still pass?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 2", "contains": "Compost made from ingredients listed in this appendix", "grade": 2},
+        {"doc": "saoso", "locator": "S5.5.1", "grade": 1},
+        {"doc": "saoso", "locator": "S4.4.4", "grade": 1}
+      ],
+      "note": "UAT mvp0 scenario 10.6, recorded gap G1: currently refused for an unquotable enumeration. Two hops — the poultry feed rule and the compost-ingredient rule — so a single-clause ranker has no chance; that is the finding, not a grading error."
+    },
+    {
+      "id": "probe-sign-up",
+      "asked_by": "probe",
+      "question": "how do I sign up?",
+      "expected": [
+        {"doc": "opp", "locator": "§I", "grade": 2},
+        {"doc": "landscape", "locator": "establishing-a-pgs-group", "grade": 1}
+      ],
+      "note": "UAT mvp0 scenario 10.7. No distinctive noun at all — the hardest shape of question for a lexical-first pipeline."
+    },
+    {
+      "id": "probe-seed-saving",
+      "asked_by": "probe",
+      "question": "if I save seeds from a non-organic seed, are those seeds organic?",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.1.2", "grade": 2},
+        {"doc": "saoso", "locator": "S4.1.1", "grade": 1}
+      ],
+      "note": "UAT mvp0 scenario 10.7 expects 4.1.2 (one generation under organic management for annuals)."
+    },
+    {
+      "id": "probe-seed-not-organic",
+      "asked_by": "probe",
+      "question": "if a seed is not organic but I grow it organic will the crop be organic?",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.1.2", "grade": 2},
+        {"doc": "saoso", "locator": "S4.1.1", "grade": 1},
+        {"doc": "saoso", "locator": "S4.2.3", "grade": 1}
+      ],
+      "note": "UAT mvp0 scenario 10.6, recorded gap G2. The conversion-length clause (4.2.3) is genuinely part of the answer, which is why it is grade 1 rather than absent."
+    },
+    {
+      "id": "uat-self-claim",
+      "asked_by": "uat",
+      "question": "What does the OPP say about the 'Self-claim organic' labelling category?",
+      "expected": [
+        {"doc": "opp", "locator": "§6.5", "grade": 2},
+        {"doc": "opp", "locator": "§6.1", "grade": 1}
+      ],
+      "note": "UAT mvp0 scenario 9 step 4. The expected outcome there is a refusal that can still quote the §6.5 prose, so the passage must be retrievable even when the table cell is not."
+    },
+    {
+      "id": "uat-membership-fee",
+      "asked_by": "uat",
+      "question": "how much is the annual membership fee?",
+      "expected": [
+        {"doc": "opp", "locator": "§2.1", "grade": 2},
+        {"doc": "opp", "locator": "§2.2", "grade": 1}
+      ],
+      "note": "The R100 gap (G3) asked directly. If this question cannot reach §2.1, no amount of prompt work will fix the cost question."
+    },
+    {
+      "id": "uat-saoso-logo",
+      "asked_by": "uat",
+      "question": "can we use the SAOSO 'Organic PGS Certified' logo on our product?",
+      "expected": [
+        {"doc": "landscape", "locator": "pgs-sa", "contains": "Organic PGS Certified", "grade": 2},
+        {"doc": "landscape", "locator": "saoso-organic-certification", "grade": 1},
+        {"doc": "opp", "locator": "§V", "grade": 1}
+      ],
+      "note": "One of the new tables' questions (spike §8.5). The landscape prints no clause numbers, so the locator is a content anchor."
+    },
+    {
+      "id": "uat-seals-certificates",
+      "asked_by": "uat",
+      "question": "which certificates and seals can the committee issue to the farmer?",
+      "expected": [
+        {"doc": "opp", "locator": "§V", "grade": 2},
+        {"doc": "opp", "locator": "§2.5", "grade": 1},
+        {"doc": "landscape", "locator": "pgs-seals-and-their-use", "grade": 1}
+      ],
+      "note": "The seals table's question (spike §8.5) and the claim-discipline boundary: the corpus may describe the seals, the public site may publish only the active ones."
+    },
+    {
+      "id": "design-sheep-per-hectare",
+      "asked_by": "design",
+      "question": "how many sheep can I run per hectare?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 6a", "contains": "Ewes", "grade": 2},
+        {"doc": "saoso", "locator": "S2.2.4", "grade": 1}
+      ],
+      "note": "The row D73 re-embeds verbatim (`Ewes / 13,3`). The question says `sheep`, the table says `Ewes`: the shared-word problem in one line. S2.2.4 is the requirement the number serves."
+    },
+    {
+      "id": "design-laying-hens-per-hectare",
+      "asked_by": "design",
+      "question": "how many laying hens per hectare?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 6a", "contains": "Laying hens", "grade": 2},
+        {"doc": "saoso", "locator": "S2.2.4", "grade": 1}
+      ],
+      "note": "Measured 2026-10-29 in TABLES_AS_DATA_PRD §7 Q5: this exact question returns NO hits at all, because `websearch_to_tsquery` ANDs its terms. It is the baseline Q1 is measured against."
+    },
+    {
+      "id": "design-cattle-per-hectare",
+      "asked_by": "design",
+      "question": "how many cows per hectare?",
+      "expected": [
+        {"doc": "saoso", "locator": "Appendix 6a", "contains": "dairy cows", "grade": 2},
+        {"doc": "saoso", "locator": "S2.2.4", "grade": 1}
+      ],
+      "note": "Three Appendix 6a rows contain `cows` (Dairy cows, Cull dairy cows, Other cows). Grade 2 resolves on `dairy cows`; the ambiguity is the finding — row-level retrieval is what D73 is being priced for."
+    },
+    {
+      "id": "curated-conversion-period",
+      "asked_by": "curated",
+      "question": "how long is the conversion period for plant production?",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.2.3", "grade": 2},
+        {"doc": "saoso", "locator": "S4.2.2", "grade": 1}
+      ],
+      "note": "A question the standard answers with a number (12 months), and one a member asks in their first year."
+    },
+    {
+      "id": "curated-bee-distance",
+      "asked_by": "curated",
+      "question": "how far must my beehives be from conventional fields?",
+      "expected": [
+        {"doc": "saoso", "locator": "S7.1.2", "grade": 2},
+        {"doc": "saoso", "locator": "S7.1.1", "grade": 1}
+      ],
+      "note": "Two distances in adjacent clauses (5 km from contamination risk, 3 km organic foraging) — a rank-2 answer here is a wrong number, not a near miss, which is why MRR is reported alongside recall."
+    },
+    {
+      "id": "curated-slaughter-journey",
+      "asked_by": "curated",
+      "question": "how long can the trip to the slaughterhouse be?",
+      "expected": [
+        {"doc": "saoso", "locator": "S5.7.7", "grade": 2},
+        {"doc": "saoso", "locator": "S5.7.4", "grade": 1}
+      ],
+      "note": "Eight hours, with the derogation attached. `slaughterhouse` occurs in this clause and in the transport section only."
+    },
+    {
+      "id": "curated-child-labour",
+      "asked_by": "curated",
+      "question": "can my children help on the farm?",
+      "expected": [
+        {"doc": "saoso", "locator": "S23.9", "grade": 2},
+        {"doc": "saoso", "locator": "S23", "grade": 1}
+      ],
+      "note": "S23.9 sets the child-labour rule and the regional exception for family labour; the section opener (S23) carries the general principle."
+    },
+    {
+      "id": "curated-aggregation-conventional",
+      "asked_by": "curated",
+      "question": "can I buy in produce from a conventional neighbour and sell it as PGS certified?",
+      "expected": [
+        {"doc": "opp", "locator": "§6.4", "grade": 2},
+        {"doc": "opp", "locator": "§6.1", "grade": 1},
+        {"doc": "opp", "locator": "§6.2", "grade": 1}
+      ],
+      "note": "The aggregation boundary in the OPP's own words: permitted with minimum safeguards, never as 'certified organic'."
+    },
+    {
+      "id": "curated-unannounced-visit",
+      "asked_by": "curated",
+      "question": "can the PGS visit my farm without warning?",
+      "expected": [
+        {"doc": "opp", "locator": "§4.4", "grade": 2},
+        {"doc": "opp", "locator": "§4.1", "grade": 1}
+      ],
+      "note": "§4.1 gives 5 days' notice, §4.4 reserves the right to arrive unannounced. Both are needed for an honest answer."
+    },
+    {
+      "id": "curated-in-conversion-label",
+      "asked_by": "curated",
+      "question": "can I label my product as 'in conversion'?",
+      "expected": [
+        {"doc": "saoso", "locator": "S4.2.4", "grade": 2},
+        {"doc": "saoso", "locator": "S22.1.8", "grade": 1}
+      ],
+      "note": "Two clauses govern it (the 12-month minimum and the distinguishable label) and they live in different sections."
+    },
+    {
+      "id": "curated-honey-heat",
+      "asked_by": "curated",
+      "question": "at what temperature can I heat honey?",
+      "expected": [
+        {"doc": "saoso", "locator": "S7.5.3", "grade": 2},
+        {"doc": "saoso", "locator": "S7.5", "grade": 1}
+      ],
+      "note": "45 °C. Short numeric answer, so the top rank is the whole result."
+    },
+    {
+      "id": "curated-raw-milk-permit",
+      "asked_by": "curated",
+      "question": "do I need a permit to sell raw milk?",
+      "expected": [],
+      "note": "The spike's own example of an unanswerable question (§3.1). `permit` and `raw milk` do not occur in the corpus, but `permitted` does — so retrieval returns a full set and only the audit can refuse. This is the item that proves a non-empty result set is not evidence of coverage."
+    }
+  ]
+}
