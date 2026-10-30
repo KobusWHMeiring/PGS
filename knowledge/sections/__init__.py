@@ -107,6 +107,69 @@ class SubRef:
 
 
 @dataclass(frozen=True)
+class TableCell:
+    """One cell of a printed table, as a slice of its section's text.
+
+    `start`/`end` are offsets into the owning `ParsedSection.text`, exactly as `SubRef` carries
+    offsets rather than re-finding a clause: a cell boundary is structure, and re-deriving it
+    from text later is how a row silently loses a cell.
+    """
+
+    text: str
+    start: int
+    end: int
+
+
+@dataclass(frozen=True)
+class TableRowDivider:
+    """A label printed *between* rows, applying to the row beneath it.
+
+    `kind` is `part` (a table section: `I. PLANT AND ANIMAL ORIGIN`) or `qualifier`
+    (`South African specific`) — the two renderings `knowledge.tables.TableDivider` carries.
+    """
+
+    text: str
+    kind: str = "qualifier"
+
+
+@dataclass(frozen=True)
+class ParsedTableRow:
+    """One reviewed row: its cells in printed column order, and the page it starts on.
+
+    `label` is the reviewer's `<!-- row: … -->`, and is empty for a table whose first cell *is*
+    the label (Appendix 2). `label_text` is what a heading or an anchor is built from, so the
+    two cases do not need a branch at the call site.
+    """
+
+    cells: tuple[TableCell, ...]
+    label: str = ""
+    page: int | None = None
+    dividers: tuple[TableRowDivider, ...] = ()
+
+    @property
+    def label_text(self) -> str:
+        if self.label:
+            return self.label
+        if not self.cells:
+            return ""
+        return " ".join(self.cells[0].text.split())
+
+    @property
+    def text(self) -> str:
+        """The row's cells in reading order — the chunk text (D73)."""
+        return "\n".join(cell.text for cell in self.cells)
+
+
+@dataclass(frozen=True)
+class ParsedTable:
+    """A reviewed table: its printed column labels, its rows, and its legend."""
+
+    columns: tuple[str, ...]
+    rows: tuple[ParsedTableRow, ...]
+    legend: str = ""
+
+
+@dataclass(frozen=True)
 class ParsedSection:
     """One citation-bearing unit of a document, ready to become a `DocumentChunk`.
 
@@ -120,6 +183,10 @@ class ParsedSection:
     page: int | None = None
     anchor: str = ""
     sub_refs: tuple[SubRef, ...] = field(default=())
+    #: Reviewed tables in this section, in printed order. Empty for every section of a document
+    #: that prints no tables — and for the tables still held in `knowledge.tables.TABLE_ROWS`,
+    #: which are reviewed Python data rather than artefact data.
+    tables: tuple[ParsedTable, ...] = field(default=())
 
     def as_chunk_kwargs(self) -> dict:
         """The keyword arguments `DocumentChunk.objects.create(**…)` takes."""

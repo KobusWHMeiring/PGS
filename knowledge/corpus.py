@@ -41,6 +41,17 @@ Rules the reader enforces, because each one is a silent corruption otherwise:
    reader needs no per-document scheme — BPP has none, SAOSO emits one.
 4. **Everything else is text, verbatim.** Blank lines included: they are the chunker's
    paragraph boundaries, and a reader that "tidies" them changes chunk boundaries.
+5. **A table is a block, and its structure is parsed, never recovered from text** (D73).
+   `<!-- table` opens it with `cols:` (and an optional `legend:`), `<!-- row: Label -->`
+   starts a row, `<!-- cell -->` starts a cell, `<!-- row-divider: … -->` labels the row
+   beneath it, and `<!-- /table -->` closes it. The cells stay in `section.text` — a cell is
+   still a slice — while the column labels and the row/cell offsets travel beside it, the
+   way `sub_refs` carries offsets. **Measured, and the reason the block exists:** a GFM
+   pipe table chunks as *one* chunk, blank lines between rows change nothing (the chunker
+   packs paragraphs), and until 2026-10-30 `<!-- cell -->` was silently dropped as a
+   reviewer's note — the table kept all its text and lost every boundary, with every other
+   guard green. So a table annotation that does not parse **raises**, and a comment whose
+   first word is a format word it misspells (`cells`, `col:`) raises too.
 
 Reviewed edits are *not* annotated in the file. The artefact says what the document says;
 which lines needed a human is recorded as data in `knowledge/corpus.py` (`CORPUS_EDITS`),
@@ -58,7 +69,14 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from knowledge.sections import ParsedSection, slug
+from knowledge.sections import (
+    ParsedSection,
+    ParsedTable,
+    ParsedTableRow,
+    TableCell,
+    TableRowDivider,
+    slug,
+)
 
 
 class CorpusFormatError(ValueError):
@@ -71,6 +89,28 @@ PAGE = re.compile(r"^<!--\s*page:\s*(\d+)\s+printed:\s*(\d+|none)\s*-->\s*$")
 #: `<!-- ref: S20.1.1 -->` — the citation for the heading that follows.
 REF = re.compile(r"^<!--\s*ref:\s*(\S.*?)\s*-->\s*$")
 
+#: `<!-- cell -->` — a cell boundary inside a table row. Structural, not a paragraph break, so a
+#: cell may hold blank lines and lists: Appendix 2's conditions are five paragraphs each.
+CELL = re.compile(r"^<!--\s*cell\s*-->\s*$")
+
+#: `<!-- row: Step 1 -->`, or `<!-- row -->` when the paper prints no label column.
+ROW = re.compile(r"^<!--\s*row(?::\s*(.*?))?\s*-->\s*$")
+
+#: `<!-- row-divider: South African specific qualifier -->` — a label printed *between* rows,
+#: applying to the row beneath it. A trailing `part` or `qualifier` sets the kind; the rest is
+#: the printed text.
+DIVIDER = re.compile(r"^<!--\s*row-divider:\s*(.+?)\s*-->\s*$")
+
+#: `<!-- table` opens a block whose fields follow, `<!-- /table -->` closes it. The close is
+#: explicit because a table that ends by inference is a table whose last row can swallow the
+#: prose after it.
+TABLE_OPEN = re.compile(r"^<!--\s*table\s*$")
+TABLE_CLOSE = re.compile(r"^<!--\s*/table\s*-->\s*$")
+
+#: A field inside a `<!-- table` header. `cols` is required (`|`-separated); `legend` is the
+#: reviewed note the reader prints above the grid.
+TABLE_FIELD = re.compile(r"^\s*(cols|legend):\s*(.*?)\s*$")
+
 #: `<!-- corpus` … `-->` at the top of the file.
 HEADER_OPEN = re.compile(r"^<!--\s*corpus\s*$")
 HEADER_CLOSE = re.compile(r"^-->\s*$")
@@ -79,15 +119,66 @@ HEADER_FIELD = re.compile(r"^\s*([a-z0-9_]+):\s*(.*?)\s*$")
 #: `## INTRODUCTION`
 HEADING = re.compile(r"^(#{1,6})\s+(\S.*?)\s*$")
 
-#: A comment that *looks* like an annotation. It must parse strictly, or it is an error:
-#: silently ignoring `<!-- page: three -->` would drop the provenance of every block
-#: after it.
-ANNOTATION = re.compile(r"^<!--\s*(corpus|page|ref)\b")
+#: The annotation vocabulary, plus the field names a `<!-- table` header accepts. A comment
+#: that *starts* like one of these is an annotation attempt and must parse strictly; one that
+#: does not is a reviewer's note.
+#:
+#: This list is load-bearing, and the reason is measured: `ANNOTATION` matched only
+#: `corpus|page|ref` until 2026-10-30, so `<!-- cell -->` fell through to `COMMENT` and was
+#: dropped as a note. A table typed with it kept all of its text and lost every cell
+#: boundary, with every other guard green — a quote that can never be cited.
+ANNOTATION_WORDS = (
+    "corpus",
+    "page",
+    "ref",
+    "table",
+    "/table",
+    "row",
+    "row-divider",
+    "cell",
+    "cols",
+    "legend",
+)
 
 #: Any other HTML comment: a reviewer's note. Ignored, and never emitted as text.
 COMMENT = re.compile(r"^<!--.*-->\s*$")
 
 REQUIRED_HEADER_FIELDS = ("doc_key", "source", "sha256", "generator")
+
+
+def annotation_attempt(line: str) -> str | None:
+    """The format word a comment is a misspelling of, or `None` for a reviewer's note.
+
+    In:  `line` — one line that `COMMENT` already matched, e.g. `<!-- cells -->`.
+    Out: the annotation it was reaching for (`"cell"`), or `None`.
+
+    Why a prefix test and not edit distance: the vocabulary is closed and tiny, and the typos
+    that cost this repo a session are the ones a person actually types — `cells`, `col:`, an
+    annotation missing its colon. A reviewer's note whose first word happens to be `table` will
+    raise, which is the right way round: the note is easily reworded, and the silent drop is
+    not detectable afterwards.
+    """
+    body = line.strip()[4:]  # after `<!--`
+    if body.endswith("-->"):
+        body = body[:-3]
+    words = body.strip().split()
+    if not words:
+        return None
+    token = words[0].rstrip(":,").lower()
+    for name in ANNOTATION_WORDS:
+        if token == name:
+            return name
+        if len(token) >= 3 and (name.startswith(token) or token.startswith(name)):
+            return name
+    return None
+
+
+def row_divider(value: str):
+    """A `row-divider`'s text and kind. The kind trails, as the format says it does."""
+    words = value.split()
+    if words and words[-1].lower() in ("part", "qualifier"):
+        return TableRowDivider(" ".join(words[:-1]), words[-1].lower())
+    return TableRowDivider(value.strip(), "qualifier")
 
 #: `DocumentChunk.anchor` is a `CharField(max_length=128)`. A clause heading can be a whole
 #: sentence, so its slug overruns the column (the SAOSO artefact's first ingest failed with
@@ -214,22 +305,206 @@ def parse_blocks(text: str) -> CorpusDocument:
     printed: int | None = None
     current: dict | None = None
     new_block = True
+    #: The open `<!-- table … -->` block, if any. One at a time: a nested table is a typo, and a
+    #: table that never closes is an error rather than a section that quietly owns the rest.
+    table: dict | None = None
+
+    def add_text(line: str, where: int) -> int:
+        """Append one body line. Returns its index in `current["body"]`.
+
+        The index is what lets a cell keep a *slice* of the section rather than a copy: the
+        offsets are computed once, in `flush()`, from these indices.
+        """
+        nonlocal new_block
+        current["body"].append(line)
+        if line.strip() and pending_ref is not None:
+            # A `ref:` annotates the heading *below* it. Body text in between means the
+            # annotation was typed in the wrong place, and silently attaching it to a
+            # heading further down would give a section someone else's citation.
+            raise CorpusFormatError(
+                f"line {where}: `ref: {pending_ref}` must be immediately before its "
+                "heading, not followed by body text"
+            )
+        if not line.strip():
+            new_block = True
+            return len(current["body"]) - 1
+        if page is None:
+            raise CorpusFormatError(
+                f"block on line {where} has no page marker: {line[:60]!r}"
+            )
+        if new_block or not blocks or blocks[-1].page != page or blocks[-1].printed != printed:
+            blocks.append(Block(page=page, printed=printed, text=line))
+        else:
+            # Consecutive non-blank lines are one block; a blank line ends it.
+            previous = blocks[-1]
+            blocks[-1] = Block(
+                page=previous.page,
+                printed=previous.printed,
+                text=f"{previous.text}\n{line}",
+            )
+        new_block = False
+        return len(current["body"]) - 1
+
+    # -- the table block ------------------------------------------------------------------
+
+    def close_cell(where: int) -> None:
+        """Finish the open cell, trimming the blank lines that only space it out."""
+        nonlocal table
+        cell = table["cell"]
+        if cell is None:
+            return
+        body = current["body"]
+        while cell["lines"] and not body[cell["lines"][0]].strip():
+            cell["lines"].pop(0)
+        while cell["lines"] and not body[cell["lines"][-1]].strip():
+            cell["lines"].pop()
+        cell["first"] = cell["lines"][0] if cell["lines"] else None
+        cell["last"] = cell["lines"][-1] if cell["lines"] else None
+        table["row"]["cells"].append(cell)
+        table["cell"] = None
+
+    def close_row(where: int) -> None:
+        nonlocal table
+        if table["row"] is None:
+            return
+        close_cell(where)
+        row = table["row"]
+        columns = len(table["columns"])
+        if not row["cells"]:
+            raise CorpusFormatError(
+                f"line {where}: a `row` with no cells. A row that cites nothing is a row the "
+                "reviewer did not finish — two `<!-- row: … -->` annotations in a row lose the "
+                "one between them."
+            )
+        if len(row["cells"]) > columns:
+            raise CorpusFormatError(
+                f"line {where}: a `row` with more cells ({len(row['cells'])}) than the "
+                f"table's `cols` ({columns}). The extra cell would never be rendered or "
+                "quoted, because nothing knows which column it belongs to."
+            )
+        if all(not cell["lines"] for cell in row["cells"]):
+            raise CorpusFormatError(
+                f"line {where}: a `row` with no text in any cell. It would become a "
+                "zero-length chunk — a citation with nothing in it, and a row the reviewer "
+                "left unfinished."
+            )
+        table["rows"].append(row)
+        table["row"] = None
+
+    def close_table(where: int) -> None:
+        nonlocal table
+        close_row(where)
+        if not table["rows"]:
+            raise CorpusFormatError(
+                f"line {where}: a `table` block with no rows. Its column labels would render "
+                "as a table with nothing in it, and the page's text would be missing from the "
+                "corpus entirely — which is the defect this block exists to prevent."
+            )
+        if table["pending_dividers"]:
+            raise CorpusFormatError(
+                f"line {where}: a `row-divider` after the table's last row. A divider "
+                "qualifies the row beneath it, and there is none — the label would silently "
+                "vanish."
+            )
+        current["tables"].append(dict(table))
+        table = None
+
+    def open_row(where: int, label: str | None) -> None:
+        nonlocal table
+        close_row(where)
+        table["row"] = {
+            "label": (label or "").strip(),
+            "page": printed,
+            "cells": [],
+            # A divider is printed *between* rows and qualifies the one beneath it, so it is
+            # collected while no row is open and claimed by the next `<!-- row: … -->`.
+            "dividers": tuple(table["pending_dividers"]),
+            "cursor": len(current["body"]),
+        }
+        table["pending_dividers"] = []
+
+    def open_cell(where: int) -> None:
+        nonlocal table
+        if table["row"] is None:
+            raise CorpusFormatError(
+                f"line {where}: a `cell` annotation before any row. A cell belongs to a "
+                "row; outside one "
+                "its text would become a chunk no column label points at."
+            )
+        close_cell(where)
+        table["cell"] = {"lines": [], "first": None, "last": None,
+                         "cursor": len(current["body"])}
+
+    # -- flush ----------------------------------------------------------------------------
 
     def flush() -> None:
+        nonlocal table
         if current is None:
             return
+        if table is not None:
+            raise CorpusFormatError(
+                "a `table` block was never closed with `<!-- /table -->`. Its rows would be "
+                "read as body text from here to the end of the section, so the last row would "
+                "silently own every paragraph after it."
+            )
         body = current["body"]
         while body and not body[-1].strip():
             body.pop()
+        heading_text = _heading_text(current)
+        lines_in_text = [heading_text, *body]
+        text = "\n".join(lines_in_text).strip()
+        offsets: list[int] = []
+        cursor = 0
+        for line in lines_in_text:
+            offsets.append(cursor)
+            cursor += len(line) + 1
+
+        def char_offset(line_index: int) -> int:
+            """The character offset of a **body** line (`0` is the first after the heading)."""
+            position = line_index + 1
+            if position >= len(lines_in_text):
+                return len(text)
+            return min(offsets[position], len(text))
+
+        def cell_of(raw: dict) -> TableCell:
+            if raw["first"] is None:
+                # An empty cell means *silence*, which §4 item 3 requires to be distinguishable
+                # from a cell nobody filled in — so it is recorded, with a zero-width slice.
+                at = char_offset(raw["cursor"])
+                return TableCell("", at, at)
+            start = char_offset(raw["first"])
+            end = min(
+                char_offset(raw["last"]) + len(lines_in_text[raw["last"] + 1]), len(text)
+            )
+            return TableCell(text[start:end], start, end)
+
+        tables = tuple(
+            ParsedTable(
+                columns=raw["columns"],
+                legend=raw["fields"].get("legend", ""),
+                rows=tuple(
+                    ParsedTableRow(
+                        cells=tuple(cell_of(cell) for cell in row["cells"]),
+                        label=row["label"],
+                        page=row["page"],
+                        dividers=row["dividers"],
+                    )
+                    for row in raw["rows"]
+                ),
+            )
+            for raw in current["tables"]
+        )
+
         sections.append(
             ParsedSection(
                 section_ref=current["ref"],
-                text="\n".join([_heading_text(current), *body]).strip(),
+                text=text,
                 heading_path=(
                     " > ".join(title for _, title in stack) or current["title"]
                 ),
                 page=current["page"],
                 anchor=section_anchor(current["title"]),
+                tables=tables,
             )
         )
 
@@ -239,8 +514,127 @@ def parse_blocks(text: str) -> CorpusDocument:
 
         marker = PAGE.match(line)
         if marker:
+            if table is not None and table["header"]:
+                raise CorpusFormatError(
+                    f"line {index}: a page marker inside a table's header. The header is a list "
+                    "of `key: value` fields; a page marker there was meant for a row."
+                )
             page = int(marker.group(1))
             printed = None if marker.group(2) == "none" else int(marker.group(2))
+            continue
+
+        if table is not None and table["header"]:
+            if HEADER_CLOSE.match(line):
+                columns = table["fields"].get("cols", ())
+                if not columns:
+                    raise CorpusFormatError(
+                        f"line {index}: a `table` block with no `cols:` field. The column "
+                        "labels are what the reader prints above the grid and what tells a "
+                        "cell which column it belongs to."
+                    )
+                table["columns"] = columns
+                table["header"] = False
+                continue
+            field = TABLE_FIELD.match(line)
+            if not field:
+                raise CorpusFormatError(
+                    f"line {index}: a table header line that is not `cols: …`, `legend: …` or "
+                    f"`-->`: {line!r}"
+                )
+            key = field.group(1)
+            if key in table["fields"]:
+                raise CorpusFormatError(
+                    f"line {index}: `{key}:` appears twice in one table header. The second "
+                    "would silently replace the first."
+                )
+            if key == "cols":
+                value = tuple(part.strip() for part in field.group(2).split("|"))
+                if not value or not all(value):
+                    raise CorpusFormatError(
+                        f"line {index}: `cols:` names an empty column: {field.group(2)!r}. "
+                        "Columns are `|`-separated, and a blank one would make every cell "
+                        "beneath it unlabelled."
+                    )
+            else:
+                value = field.group(2)
+            table["fields"][key] = value
+            continue
+
+        if TABLE_OPEN.match(line):
+            if current is None:
+                raise CorpusFormatError(
+                    f"line {index}: a table before any heading. A table belongs to a section "
+                    "— without one there is no heading path and no page to cite it by."
+                )
+            if table is not None:
+                raise CorpusFormatError(
+                    f"line {index}: a second `<!-- table` while one is already open. Close the "
+                    "first with `<!-- /table -->`, or the rows run into each other."
+                )
+            table = {
+                "header": True,
+                "fields": {},
+                "columns": (),
+                "rows": [],
+                "row": None,
+                "cell": None,
+                "pending_dividers": [],
+            }
+            continue
+
+        if TABLE_CLOSE.match(line):
+            if table is None:
+                raise CorpusFormatError(
+                    f"line {index}: `<!-- /table -->` without an open table. A close with no "
+                    "open is a table whose rows the reviewer wrote but whose header is "
+                    "missing — the rows would be silently read as prose."
+                )
+            close_table(index)
+            continue
+
+        if table is not None:
+            divider = DIVIDER.match(line)
+            if divider:
+                close_cell(index)
+                table["pending_dividers"].append(row_divider(divider.group(1)))
+                continue
+            row = ROW.match(line)
+            if row:
+                open_row(index, row.group(1))
+                continue
+            if CELL.match(line):
+                open_cell(index)
+                continue
+            if HEADING.match(line):
+                raise CorpusFormatError(
+                    f"line {index}: a heading inside a table block. A heading opens a new "
+                    "section, and the table's cells after it would belong to that section "
+                    "with no row to carry them."
+                )
+            if COMMENT.match(line):
+                attempt = annotation_attempt(line)
+                if attempt:
+                    raise CorpusFormatError(
+                        f"line {index}: malformed annotation inside a table block — "
+                        f"`{line.strip()}` starts like `{attempt}` but does not parse. Only "
+                        "`<!-- row: … -->`, `<!-- row-divider: … -->`, `<!-- cell -->` and "
+                        "`<!-- /table -->` are allowed here."
+                    )
+                continue  # a reviewer's note, never text
+            if line.lstrip().startswith("<!--"):
+                raise CorpusFormatError(
+                    f"line {index}: malformed comment inside a table block: {line!r}"
+                )
+            if table["cell"] is None:
+                if line.strip():
+                    raise CorpusFormatError(
+                        f"line {index}: text inside a table block but outside any `cell`: "
+                        f"{line[:60]!r}. A cell is delimited by `<!-- cell -->`; text with no "
+                        "cell has no column, so no row could quote it."
+                    )
+                continue  # a blank line between rows, for the reviewer's eye only
+            add_text(line, index)
+            table["cell"]["lines"].append(len(current["body"]) - 1)
             continue
 
         ref = REF.match(line)
@@ -274,15 +668,28 @@ def parse_blocks(text: str) -> CorpusDocument:
                 "title": title,
                 "page": printed,
                 "body": [],
+                "tables": [],
             }
             pending_ref = None
             continue
 
+        if CELL.match(line) or ROW.match(line) or DIVIDER.match(line):
+            kind = "cell" if CELL.match(line) else ("row-divider" if DIVIDER.match(line) else "row")
+            raise CorpusFormatError(
+                f"line {index}: a `{kind}` annotation outside a table block. Open the block "
+                "with `<!-- table` and its `cols:` field first — an annotation outside one "
+                "has no table to belong to and would be dropped."
+            )
+
         if COMMENT.match(line):
-            if ANNOTATION.match(line):
+            attempt = annotation_attempt(line)
+            if attempt:
                 raise CorpusFormatError(
-                    f"line {index}: malformed annotation, expected "
-                    f"`<!-- page: N printed: M -->` or `<!-- ref: X -->`: {line!r}"
+                    f"line {index}: malformed annotation — `{line.strip()}` starts like "
+                    f"`{attempt}` but does not parse. A comment is either a known annotation "
+                    "(`corpus`, `page`, `ref`, `table`, `row`, `row-divider`, `cell`) or a "
+                    "reviewer's note; an annotation nobody parses is silently dropped, and a "
+                    "dropped `cell` is a row that can never be quoted."
                 )
             continue  # a reviewer's note, never text
 
@@ -296,33 +703,7 @@ def parse_blocks(text: str) -> CorpusDocument:
                 )
             continue
 
-        current["body"].append(line)
-        if line.strip() and pending_ref is not None:
-            # A `ref:` annotates the heading *below* it. Body text in between means the
-            # annotation was typed in the wrong place, and silently attaching it to a
-            # heading further down would give a section someone else's citation.
-            raise CorpusFormatError(
-                f"line {index}: `ref: {pending_ref}` must be immediately before its "
-                "heading, not followed by body text"
-            )
-        if not line.strip():
-            new_block = True
-            continue
-        if page is None:
-            raise CorpusFormatError(
-                f"block on line {index} has no page marker: {line[:60]!r}"
-            )
-        if new_block or not blocks or blocks[-1].page != page or blocks[-1].printed != printed:
-            blocks.append(Block(page=page, printed=printed, text=line))
-        else:
-            # Consecutive non-blank lines are one block; a blank line ends it.
-            previous = blocks[-1]
-            blocks[-1] = Block(
-                page=previous.page,
-                printed=previous.printed,
-                text=f"{previous.text}\n{line}",
-            )
-        new_block = False
+        add_text(line, index)
 
     flush()
     if not sections:

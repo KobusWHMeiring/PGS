@@ -42,7 +42,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Count
 
-from knowledge.chunking import chunk_sections
+from knowledge.chunking import chunk_section, chunk_sections
 from knowledge.columns import apply_layout
 from knowledge.corpus import load_document
 from knowledge.reflow import reflow_pages
@@ -51,7 +51,7 @@ from knowledge.extraction import extract_pages, sha256_of
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.sections import registry
 from knowledge.sections.toc import toc_from_pages
-from knowledge.tables import chunks_for_rows, rows_for
+from knowledge.tables import chunks_for_parsed_section, chunks_for_rows, rows_for
 
 logger = logging.getLogger(__name__)
 
@@ -465,23 +465,32 @@ def chunks_for_sections(sections) -> list:
     *would* produce without writing it (P2.2). A second copy of this rule would be a
     second answer to "is this box current?", and the two would drift apart silently.
 
-    `knowledge/tables.py` replaces a printed table's auto-chunks with one chunk per
-    reviewed row (Appendix 2 is the first). The rows are a reconstruction — the single
-    documented exception to "a chunk is a slice of the section" — because the `-layout`
-    text interleaves the condition column into the substance column. Data, not a branch: a
-    reviewed section is looked up in `TABLE_ROWS`.
+    Two mechanisms replace a printed table's auto-chunks with one chunk per reviewed row,
+    and both are data rather than branches in this function:
+
+    * `knowledge/tables.py::TABLE_ROWS` — reviewed rows held as Python literals (Appendix 2
+      and 6a). A section whose ref is in that table is looked up by ref.
+    * `knowledge/corpus.py`'s `<!-- table … -->` block — reviewed rows held in the artefact
+      itself (`ParsedSection.tables`, D73). A section carrying tables is chunked by
+      `chunks_for_parsed_section`, which keeps the prose around the grid.
+
+    The rows are a reconstruction — the single documented exception to "a chunk is a slice
+    of the section" — because the `-layout` text interleaves one column into another.
     """
     reviewed: set[str] = set()
     chunks: list = []
-    for chunk in chunk_sections(sections):
-        ref = chunk.section_ref
+    for section in sections:
+        if section.tables:
+            chunks.extend(chunks_for_parsed_section(section))
+            continue
+        ref = section.section_ref
         if rows_for(ref):
             if ref in reviewed:
                 continue  # the section's auto-chunks are replaced once, in order
             reviewed.add(ref)
             chunks.extend(chunks_for_rows(ref))
             continue
-        chunks.append(chunk)
+        chunks.extend(chunk_section(section))
     return chunks
 
 
