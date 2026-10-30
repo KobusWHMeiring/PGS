@@ -23,6 +23,16 @@ the generated index's "To Do" section.
 
 ## Corpus and chat — found while building
 
+- [ ] **`corpus_check` says nothing about a document with no artefact.** `knowledge/drift.py`
+      short-circuits at `if artefact is None → NO_ARTEFACT; continue`, so `opp` and `landscape`
+      get no chunk count, no comparison, and no warning — and the same "no artefact" line is
+      printed whether they hold 30 chunks from an old parser or **zero**. Measured on the VPS
+      2026-10-30: the report said `no artefact` while the box's `opp` + `landscape` held **37**
+      chunks against the dev box's **38**, built by whatever code ran on 2026-10-22 and never
+      rebuilt since. Not drift by the current definition (there is nothing to compare against),
+      and deliberately not fixed now: P4/P5 give both documents an artefact and the question
+      disappears. Reopen if either document is ever edited from the PDF again.
+
 - [ ] LLM classifier / alias routing for out-of-vocabulary subjects. **Deferred 2026-10-21**:
       it would not have fixed any of the round-3 failures. Reopen only when a suite question
       retrieves the *wrong section*; prefer a seeded alias table to a model call

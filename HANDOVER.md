@@ -110,6 +110,20 @@ predates it has nothing to rebuild from and the **40 citation links the refresh 
 answers did. `deploy/README.md` §4 now says so, because "relink exists" was being read as making a
 `--force` free on any install — it does not, on an old one.
 
+**`384`, not `385`, and the difference is a blind spot worth knowing.** `corpus_check` now says
+`corpus is current` and all 384 chunks are embedded, but `corpus_refresh --apply` only re-ingested
+the two documents that have artefacts. `opp` and `landscape` still hold **37** chunks (dev box:
+**38**) built by whatever code ran on 2026-10-22, and `corpus_check` cannot see them: `drift.py`
+short-circuits at `if artefact is None → NO_ARTEFACT; continue`, printing the same line whether
+those documents hold stale chunks or **none at all**. That is why the number differs and why the
+report is silent about it. P4/P5 close it — once both have artefacts, they are compared like the
+two that do — so it is filed in `todo.md` rather than fixed now.
+
+**Consequence for the instrument:** the eval baseline's "385 chunks, `sha256:dd90ea793953`" is the
+**dev box's** corpus. Do not run `scripts/eval_retrieval.py` on the VPS and compare it to §8a; the
+two corpora differ by a chunk in text that has no artefact. S2's comparison has to happen on one
+machine.
+
 **Also corrected here:** `DESIGN.md` still said "only one dark band exists (#7)" after the band
 rhythm grew to eleven rows — it is #9; `backlog.md` was regenerated (`--write`) rather than
 hand-edited; and `deploy/README.md` told the operator `relink_evidence --write`, a flag that does
