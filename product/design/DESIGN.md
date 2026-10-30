@@ -328,6 +328,33 @@ status is published on this page."*
 Social icons use the real published accounts — `instagram.com/pgs_outeniqua`,
 `facebook.com/profile.php?id=61579994608416`.
 
+### 7.12 The board — `/building/` — **added 2026-10-29**
+
+A roadmap, and the only page on this site whose words come from `product/backlog/`. It is
+**curated**: a card exists only where a PRD carries `**Public:** yes` (D74,
+`product/backlog/In Progress/PUBLIC_BOARD_PRD.md`). One `section--warm` band under a plain page
+head.
+
+**Structure.** A standpoint line (ochre left rule, `--brand-ochreLight` at 55 %), then a grid of
+columns: `In design` / `Up next` / `Building` / `Shipped`. Each column is a
+`--brand-sageLight` panel at 50 % with a sand hairline; each card is white with a
+`--shadow-hairline`. Column titles and card titles are Lora at `--text-base` and `--text-sm`;
+summaries are Mulish `--text-xs` in `--brand-muted`. Empty columns are not rendered.
+
+**Rules this component carries.**
+
+- **Stacks on a phone.** One column below 768 px, two to 1024 px, four above. Not a horizontal
+  rail: the e2e guard measures `documentElement.scrollWidth`, and a rail would pass it while
+  asking a phone user to swipe sideways to read a roadmap.
+- **`minmax(0, 1fr)`**, so a long word can never push the grid past its container.
+- **No card is a link**, so there is no 44 px target here and no affordance implying one.
+- **No date, percentage, count or ownership is printed**, even though the artefact stores an
+  `updated` value (it orders `Shipped`). A board that shows how long each item has sat there
+  invites a reader to judge velocity and abandonment.
+- **The standpoint line is not decoration.** A roadmap beside a certificate is easy to
+  over-read; the page says what it is not, and `core/tests/test_board.py` asserts the sentence
+  is rendered.
+
 ---
 
 ## 8. Assets

@@ -118,6 +118,30 @@ FIRST_YEAR_FROM_CENTS = MEMBERSHIP_FARMER_CENTS + FEE_BANDS[0].initial_cents
 SAOSO_LOGO_LICENSED = False
 
 
+#: The terms the OPP's credibility depends on **never** being used as a PGS endorsement.
+#: `pasture raised` appears twice — with and without the hyphen — because a copy edit that
+#: adds the hyphen must not slip past the check.
+#:
+#: **Why the canonical list lives here and not in the test.** Two consumers need it: the
+#: public-surface sweep (`core/tests/test_claim_discipline.py`) and the board generator
+#: (`scripts/board.py`), which must refuse a publishable summary containing one of these
+#: *before* it can reach a page. Two lists that are supposed to agree, and agree today, are
+#: two lists that will disagree the day one is edited — so there is one list, and the test
+#: asserts it is non-empty and lowercased rather than asserting its contents.
+#:
+#: `test_claim_discipline.test_the_forbidden_list_is_not_empty` is still the guard: an empty
+#: tuple makes every sweep below it pass vacuously (`testing_hazards.md` §1.6).
+FORBIDDEN_CLAIMS: tuple[str, ...] = (
+    "pasture raised",
+    "pasture-raised",
+    "gmo free",
+    "gmo-free",
+    "biodynamic",
+    "chemical-free",
+    "spray-free",
+)
+
+
 @dataclass(frozen=True)
 class Page:
     """One public page's metadata.
@@ -254,6 +278,28 @@ PAGES: dict[str, Page] = {
         # beside the window already says, in less room and further from the thing it
         # describes — and it pushed the composer below the fold on a laptop.
         lede="Ask any question about the organic standards. Answers from the documents only.",
+    ),
+    # D74a/D74b — the one page on this site whose content is generated from `product/backlog/`
+    # rather than typed or seeded. It reads a *release artefact* (`core/services/_board_data.py`),
+    # never the backlog directory, so a PRD edit cannot change the public site without a deploy.
+    # Deliberately absent from `NAV`: the header holds six links plus the CTA on one line at
+    # 768 px, measured by `tests/e2e/test_public_site.py`, and a roadmap is not why a farmer
+    # came. The footer carries it.
+    "building": Page(
+        key="building",
+        title="Building in the open — Outeniqua PGS",
+        description=(
+            "What the group has shipped, what it is building now and what is next — in the "
+            "order we intend to do it, with no dates promised."
+        ),
+        eyebrow="Roadmap",
+        heading="Building in the open",
+        lede=(
+            "This platform is being built in the open. Below is what has shipped, what is "
+            "being built now and what is next, in the order we intend to do it. Membership, "
+            "farm visits and certificates are the work; the standard and our procedures are "
+            "already readable, and stay readable while we build."
+        ),
     ),
     "contact": Page(
         key="contact",

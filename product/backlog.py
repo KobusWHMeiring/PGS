@@ -17,6 +17,8 @@ Rules:
 See product/backlog/CONVENTION.md.
 """
 import argparse
+import hashlib
+import json
 import re
 import sys
 from collections import defaultdict
@@ -70,6 +72,34 @@ STATUS_RULES = [
 
 SKIP_NAMES = {"backlog.md", "todo.md", "PRD_TEMPLATE.md", "CONVENTION.md", "README.md"}
 SKIP_TOP_DIRS = {"systems"}  # system docs are not backlog items
+
+# --- The public board (`--board-json`) -------------------------------------
+#
+# Classification only. This mode emits JSON and writes nothing: the *artefact* the public
+# page reads is `scripts/board.py`'s job, because a maintainer tool should not know the
+# shape of a Django module. Reusing `STATUS_RULES` here rather than writing a second
+# status table is the entire reason the seam exists.
+#
+# A card exists only where a person wrote `**Public:** yes`. The directory then chooses the
+# column; it does not choose visibility.
+BOARD_COLUMNS: tuple[tuple[str, str], ...] = (
+    ("refinement", "In design"),
+    ("ready", "Up next"),
+    ("in_progress", "Building"),
+    ("done", "Shipped"),
+)
+BOARD_BUCKETS = frozenset(bucket for bucket, _ in BOARD_COLUMNS)
+
+#: A card is one sentence. Past this it is a paragraph, and a column of paragraphs is a
+#: document nobody reads (`PUBLIC_BOARD_PRD.md` §4).
+SUMMARY_MAX = 180
+
+#: `# PRD: The concordance` is a heading; `The concordance` is a title. Cards print the
+#: second. A PRD whose *own* title is internal vocabulary ("MVP 1a — In-Office Visit Flow")
+#: carries a `**Public title:**` line instead, and that is the only reason the field exists.
+TITLE_PREFIX = re.compile(
+    r"^(?:PRD|Implementation Plan|Plan)\s*[:\u2014\u2013-]\s*", re.IGNORECASE
+)
 
 BUCKET_LABEL = {
     "ready": "Ready (up next)",
@@ -135,6 +165,8 @@ def scan():
             "status": status,
             "status_bucket": status_bucket,
             "dir_bucket": dir_bucket,
+            # Kept so `board_payload()` does not re-read 36 files to find a `Summary:` line.
+            "text": text,
         })
     return items
 
@@ -144,6 +176,119 @@ def effective_bucket(item):
     if db in TERMINAL_DIR_BUCKETS:
         return db  # directory wins for done/on_hold/system
     return item["status_bucket"] or db
+
+
+def extract_field(text, name):
+    """The value of a `**Name:** value` header line, or None. Case-insensitive on the name."""
+    pattern = re.compile(
+        r"^\*\*" + re.escape(name) + r":\*\*\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE
+    )
+    match = pattern.search(text)
+    return match.group(1) if match else None
+
+
+def is_public(text):
+    """Opted in only by an explicit `**Public:** yes`. Absent is not consent."""
+    value = extract_field(text, "Public")
+    return bool(value) and value.strip().strip("`*").lower() == "yes"
+
+
+def public_title(item):
+    """The card's title: `**Public title:**` if given, else the `h1` minus its `PRD:` prefix."""
+    override = extract_field(item["text"], "Public title")
+    if override:
+        return override.strip()
+    stripped = TITLE_PREFIX.sub("", item["title"]).strip()
+    return stripped or item["title"]
+
+
+def date_of(text):
+    """The date a card is ordered by, from the file itself — never from the filesystem.
+
+    A checkout's mtime is the clone time, so a `Done` column ordered by mtime reorders
+    itself on every deploy. Falls back to the first ISO date in the header block, which is
+    where `**Opened:**` and `Built 2026-10-27` both live.
+    """
+    for name in ("Last Updated", "Opened", "Opened date"):
+        value = extract_field(text, name)
+        if value:
+            match = re.search(r"\d{4}-\d{2}-\d{2}", value)
+            if match:
+                return match.group(0)
+    match = re.search(r"\d{4}-\d{2}-\d{2}", "\n".join(text.splitlines()[:12]))
+    return match.group(0) if match else ""
+
+
+def board_digest(cards):
+    """A fingerprint of the *published* set, so a stale artefact is a loud state.
+
+    Deliberately blind to unpublished PRDs: an internal edit must not force a board
+    regeneration, or the artefact churns in every unrelated commit.
+    """
+    blob = json.dumps(cards, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return "sha256:" + hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def board_payload(items=None):
+    """The published set as plain JSON-ready data, plus every opt-in that could not be one.
+
+    In:  `items` from `scan()` (or None to scan).
+    Out: {version, cards, rejected, digest}. A `rejected` entry is a **mistake to fix**, not
+         a state to record: `scripts/board.py` refuses to write an artefact while one exists.
+         Dropping such an item silently would make the board look complete while a
+         maintained PRD was missing.
+    Side effects: none.
+    Fails: never — a malformed PRD is reported, not raised, because this runs in tooling.
+    """
+    items = scan() if items is None else items
+    cards, rejected = [], []
+
+    for item in items:
+        if not is_public(item["text"]):
+            continue
+        bucket = effective_bucket(item)
+        rel = str(item["rel"]).replace("\\", "/")
+        if bucket not in BOARD_BUCKETS:
+            columns = ", ".join(sorted(BOARD_BUCKETS))
+            rejected.append({
+                "rel": rel,
+                "reason": (
+                    f"no board column for bucket {bucket!r} ({columns} only). Move the file to "
+                    f"a directory with a column, or drop its `Public:` line."
+                ),
+            })
+            continue
+        summary = (extract_field(item["text"], "Summary") or "").strip()
+        if not summary:
+            rejected.append({
+                "rel": rel,
+                "reason": "marked public but has no `**Summary:**` line; a card is a title and one sentence",
+            })
+            continue
+        if len(summary) > SUMMARY_MAX:
+            rejected.append({
+                "rel": rel,
+                "reason": f"summary is {len(summary)} characters; the board allows {SUMMARY_MAX}",
+            })
+            continue
+        cards.append({
+            "title": public_title(item),
+            "summary": summary,
+            "column": bucket,
+            "updated": date_of(item["text"]),
+            "rel": rel,
+        })
+
+    # Deterministic before the generator sorts: two runs over the same tree must produce the
+    # same digest, or `--check` fails on a tree nobody touched.
+    cards.sort(key=lambda card: (card["column"], card["title"].lower(), card["rel"]))
+    rejected.sort(key=lambda entry: entry["rel"])
+    return {
+        "version": 1,
+        "cards": cards,
+        "rejected": rejected,
+        "digest": board_digest(cards),
+    }
 
 
 def suggest_move(item):
@@ -387,7 +532,17 @@ def main():
     ap.add_argument("--write", action="store_true", help="regenerate backlog.md (no moves)")
     ap.add_argument("--apply", action="store_true", help="move files to match status + regenerate index")
     ap.add_argument("--fix-statuses", action="store_true", help="rewrite stale Status lines in Done/ and on_hold/ to match the directory")
+    ap.add_argument(
+        "--board-json",
+        action="store_true",
+        help="print the public board's reviewed set as JSON (no writes; see scripts/board.py)",
+    )
     args = ap.parse_args()
+
+    if args.board_json:
+        json.dump(board_payload(), sys.stdout, indent=2, ensure_ascii=False)
+        sys.stdout.write("\n")
+        return
 
     items = scan()
 

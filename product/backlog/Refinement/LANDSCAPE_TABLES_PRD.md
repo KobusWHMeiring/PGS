@@ -7,6 +7,9 @@ Decision artifact: `product/design/d72_landscape_tables_questions.html`.
 Finding §1.4 (pages 1–3 are not in the corpus at all) was found while verifying §1.3 and is **larger
 than the tables**; it is in this PRD because it is the same document and the same re-ingest.
 **Owner:** Corpus (D53 artefact review) · Build (the guards)
+**Public title:** Readable tables in the certification landscape
+**Summary:** Five table pages in the certification landscape document become readable rows, instead of text flattened into a paragraph.
+**Public:** yes
 **Last Updated:** 2026-10-29
 **MVP:** MVP 0 — the landscape is published on the public site *and* is in the chat corpus today, so
 this is a live defect on two surfaces, not a future one.

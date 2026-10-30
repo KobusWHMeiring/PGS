@@ -27,6 +27,7 @@ import pytest
 from django.core.management import call_command
 from django.test import Client
 
+from core.services._public import FORBIDDEN_CLAIMS
 from core.tests.test_public import PAGES
 
 pytestmark = pytest.mark.django_db
@@ -69,17 +70,11 @@ def public_surface(settings, _media_root):
 PUBLIC_URLS = [url for _, url, _ in PAGES]
 
 #: The six terms the OPP's credibility depends on never being used as a PGS
-#: endorsement. `pasture raised` appears twice — with and without the hyphen — because a
-#: copy edit that adds the hyphen must not slip past the check.
-FORBIDDEN = [
-    "pasture raised",
-    "pasture-raised",
-    "gmo free",
-    "gmo-free",
-    "biodynamic",
-    "chemical-free",
-    "spray-free",
-]
+#: endorsement. The list itself is **canonical in `core/services/_public.py`**, because the
+#: board generator (`scripts/board.py`) must refuse a publishable summary containing one of
+#: them before it can reach a page — two copies that agree today are two copies that
+#: disagree the day one is edited.
+FORBIDDEN = list(FORBIDDEN_CLAIMS)
 
 
 def test_the_forbidden_list_is_not_empty():

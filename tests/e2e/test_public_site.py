@@ -24,6 +24,9 @@ ROUTES = [
     ("/documents/", "What we publish"),
     ("/become-a-member/", "What membership and assessment cost"),
     ("/ask/", "Ask the standard"),
+    # D74. A four-column board is the shape most likely to overflow a phone, and it has
+    # no control to measure — so the browser checks are the whole guard here.
+    ("/building/", "Building in the open"),
     ("/contact/", "Who to talk to"),
 ]
 

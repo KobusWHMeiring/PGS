@@ -52,6 +52,11 @@ PAGES: list[tuple[str, str, str]] = [
     ("documents", "/documents/", "What we publish"),
     ("become-a-member", "/become-a-member/", "What membership and assessment cost"),
     ("ask", "/ask/", "Ask the standard"),
+    # D74. The only public route whose words arrive from `product/backlog/` — via a
+    # generated artefact, never at request time. It is in `PAGES` on purpose: this list
+    # is what `test_claim_discipline.py` sweeps, and a curated page is exactly the kind
+    # that grows an overclaim in a summary nobody re-read.
+    ("building", "/building/", "Building in the open"),
     ("contact", "/contact/", "Who to talk to"),
 ]
 

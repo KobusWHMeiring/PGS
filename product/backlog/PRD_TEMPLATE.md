@@ -3,6 +3,9 @@
 **Owner:** [Name / Role]
 **Last Updated:** YYYY-MM-DD
 **Scope:** [What is and isn't included]
+**Public title:** [Optional — a farmer-facing title, only when the PRD's own title is internal vocabulary such as "MVP 1a".]
+**Summary:** [One line, 180 characters or fewer, plain English, written for a farmer — no internal identifiers. Only read when `Public:` is `yes`.]
+**Public:** [yes — or delete this line. Absent means this PRD is never published on `/building/`.]
 **Reference:** [Related PRDs / docs / files]
 
 ---

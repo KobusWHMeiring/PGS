@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% comment %}
+`/building/` — the roadmap (D74).
+
+Every word about *what* is on the board arrives in the context: the column titles from
+`core/services/_board.py`, the cards from the generated `core/services/_board_data.py`,
+the standpoint line and the empty-state sentence from the service too. This template
+holds no card copy, no column name and no date — a PRD is published by adding
+`**Public:** yes` to it and running `python scripts/board.py`, never by editing markup.
+
+Two deliberate absences:
+
+  * **No dates, percentages or counts of "left to do".** The Shipped column is ordered
+    newest-first so it reads as history rather than as a prize, and the artefact's
+    `updated` value is never rendered (D74b).
+  * **No links out of a card.** The only honest target for "tell me more" would be a
+    public explainer per item, which does not exist; a card that opens a PRD would put
+    the notebook on the site through the back door.
+
+The column titles are `<h2>`s and the cards `<h3>`s so the page has one outline: a visitor
+using a screen reader hears four columns, then the items inside each.
+{% endcomment %}
+
+{% block content %}
+  {% include "public/_page_head.html" %}
+
+  <section class="section section--warm">
+    <div class="container">
+      <p class="board__standpoint">{{ board.standpoint }}</p>
+
+      {% if board.is_empty %}
+        <p class="board__empty">{{ board.empty_message }}</p>
+      {% else %}
+        <div class="board">
+          {% for column in board.columns %}
+            <section class="board__column" aria-labelledby="board-{{ column.key }}">
+              <h2 class="board__title" id="board-{{ column.key }}">{{ column.title }}</h2>
+              <ul class="board__cards">
+                {% for card in column.cards %}
+                  <li class="board__card">
+                    <h3 class="board__card-title">{{ card.title }}</h3>
+                    <p class="board__card-summary">{{ card.summary }}</p>
+                  </li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

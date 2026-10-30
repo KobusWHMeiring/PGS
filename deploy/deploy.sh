@@ -145,6 +145,20 @@ VERIFY_SECRET="$(openssl rand -hex 32)"
 # `PDFTOTEXT_BIN` travels with the gate: the parsers' golden page/wrap tables match
 # one extractor implementation, so a deployment that pins Xpdf must be verified with
 # Xpdf. `sudo -u` resets the environment, so it is named explicitly like the two above.
+# The public board (`/building/`, D74) is a *generated, committed* artefact, so the tree about
+# to be verified can ship a board that disagrees with the PRDs in the same commit. Check it
+# here — before the backup, before the pull, and before the expensive gate — because the fix is
+# one command and finding it after the migration is finding it too late. It runs inside
+# `$SCRATCH`, so it compares the *commit being deployed*, not the live checkout.
+echo "        board artefact (scripts/board.py --check)"
+if ! sudo -u "$APP_USER" bash -c "cd '$SCRATCH' && '$APP_DIR/venv/bin/python' scripts/board.py --check"; then
+    echo "" >&2
+    echo "❌ The public board artefact is stale on origin/$GIT_BRANCH ($VERIFY_COMMIT)." >&2
+    echo "   Run 'python scripts/board.py', commit core/services/_board_data.py, push, re-run." >&2
+    echo "   Nothing was deployed. The live tree and the schema are untouched." >&2
+    exit 1
+fi
+
 echo "        verify.sh (check + lint-imports + pytest --create-db)"
 if ! sudo -u "$APP_USER" env \
         DJANGO_SECRET_KEY="$VERIFY_SECRET" \

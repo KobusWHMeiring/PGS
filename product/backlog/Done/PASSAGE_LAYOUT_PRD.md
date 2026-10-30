@@ -4,6 +4,9 @@
 after the concordance shipped), and **UAT Scenario 8 signed PASS** on 2026-10-28 as part of the
 concordance signature (`tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).)
 **Owner:** Product (the verbatim rule) · Build (the formatter)
+**Public title:** Lists in the standard read as lists
+**Summary:** Lists inside the standard now read as lists: lettered conditions and definitions no longer run together as one block of text.
+**Public:** yes
 **Opened:** 2026-10-27
 **Origin:** reviewing `/documents/saoso-standard-v2.1/read/` at `S5.1.3` — lettered conditions render
 inline as `a Sufficient free movement…`, with the hard wraps and double spacing of the extracted page.

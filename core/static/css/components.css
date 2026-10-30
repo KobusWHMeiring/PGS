@@ -949,3 +949,111 @@ a.doc-row__action:hover {
 .steps + .callout {
   margin-top: 1.5rem;
 }
+
+/* ==========================================================================
+   The board — `/building/` (D74)
+   --------------------------------------------------------------------------
+   Four columns of one-sentence cards, in the same type roles as every other
+   component: Lora for the column and card titles, Mulish for the sentence, cream
+   grounds and `brand-*` tokens only (DESIGN rule 1).
+
+   **Stacks on a phone, and that is a decision, not a fallback.**
+   `tests/e2e/test_public_site.py` measures `document.documentElement.scrollWidth`
+   at 390 px, so a four-wide row would fail it — and a horizontal rail would pass it
+   while making a phone user swipe sideways to read a roadmap, which is the worse
+   answer to the same question. Two columns at 768 px and four at 1024 px, with
+   `minmax(0, 1fr)` so a long word can never push the grid wider than its container.
+
+   No card is a link: nothing here is clickable, so there is no 44 px target to
+   place and no affordance implying one.
+   ========================================================================== */
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.board__standpoint {
+  max-width: var(--container-prose);
+  padding: 0.875rem 1.125rem;
+  border-left: 3px solid var(--brand-ochre);
+  border-radius: var(--radius-xs);
+  background-color: rgb(var(--brand-ochreLight-rgb) / 0.55);
+  color: var(--brand-warmDark);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.board__empty {
+  margin-top: 1.5rem;
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.board__column {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1rem 1.25rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: rgb(var(--brand-sageLight-rgb) / 0.5);
+}
+
+.board__title {
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--brand-sand);
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.board__cards {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board__card {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: #fff;
+  box-shadow: var(--shadow-hairline);
+}
+
+.board__card-title {
+  margin-bottom: 0.375rem;
+  color: var(--brand-forestDark);
+  font-family: var(--font-serif);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.board__card-summary {
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+@media (min-width: 768px) {
+  .board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .board {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+  }
+}

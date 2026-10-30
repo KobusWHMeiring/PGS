@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from django.shortcuts import render
 
+from core.services._board import board_context
 from core.services._documents import documents_context
 from core.services._public import public_context
 
@@ -37,6 +38,13 @@ def members(request):
 
 def become_a_member(request):
     return render(request, "public/become_a_member.html", public_context("become_a_member"))
+
+
+def building(request):
+    # The board is a generated artefact (`core/services/_board_data.py`), not a query and not
+    # a read of `product/backlog/`: this view touches no database, so a PRD edit cannot change
+    # the public site between deploys (D74b).
+    return render(request, "public/building.html", public_context("building") | board_context())
 
 
 def contact(request):

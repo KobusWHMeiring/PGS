@@ -5,6 +5,9 @@
 judged at sign-off from the implementation and its guards; the result note says a hands-on pass is
 still owed before the P7.4 deploy, because a signature that claims a run nobody made is not evidence.
 **Owner:** Product (what a reader is promised) · Build (one row action)
+**Public title:** Every document can be opened and read
+**Summary:** Every document on the Documents page opens to be read on screen, not only to be downloaded.
+**Public:** yes
 **Opened:** 2026-10-28
 **Origin:** found while closing the reader-structure slice — the concordance is reachable from a chat
 citation and from nothing else. A reader who lands on `/documents/` sees eight downloads and no way to

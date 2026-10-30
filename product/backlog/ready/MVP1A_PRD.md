@@ -2,6 +2,9 @@
 
 **Status:** Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 **Owner:** Kobus Meiring (Product)
+**Public title:** Applying for assessment, online
+**Summary:** Applying for assessment becomes an online form — membership, pledge, turnover and the pre-visit questionnaire — instead of paper sent to the team.
+**Public:** yes
 **Last Updated:** 2026-10-20
 **MVP:** 1a of 2 within slice 1 (spec §19, D25)
 **Scope:** Application → membership and pledge → pre-visit questionnaire → scheduling with committee

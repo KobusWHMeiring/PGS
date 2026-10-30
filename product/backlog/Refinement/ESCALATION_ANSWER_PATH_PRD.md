@@ -2,6 +2,9 @@
 
 **Status:** Refinement — design needed, no code written
 **Owner:** Product owner + build
+**Public title:** A question we cannot answer reaches a person
+**Summary:** When the assistant cannot answer from the documents, its refusal should reach a person who can answer, instead of ending at a message.
+**Public:** yes
 **Last Updated:** 2026-10-21
 **MVP:** MVP 0 follow-up (`/ask/` D) — a refusal is not shippable if the person it points to cannot be reached.
 **Scope:** What happens after `EscalatedQuery` is written. **Not** in scope: the

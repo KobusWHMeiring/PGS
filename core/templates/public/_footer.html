@@ -36,6 +36,9 @@
           <li><a href="{% url 'core:how_it_works' %}">How it works</a></li>
           <li><a href="{% url 'core:members' %}">Members</a></li>
           <li><a href="{% url 'core:become_a_member' %}">Fees</a></li>
+          {% comment %} D74 — the roadmap lives in the footer, not the nav: six nav links plus
+             the CTA already fill one line at 768 px, and a build log is not why a farmer came. {% endcomment %}
+          <li><a href="{% url 'core:building' %}">Building in the open</a></li>
         </ul>
       </div>
 

@@ -7,6 +7,9 @@ Kobus (Product) against commit `4e02d71` and applied by `scripts/uat_signoff.py`
 open, a citation links to the line it quotes, and the page names the printed sections the corpus does
 not hold. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
 **Owner:** Product (shape, publication), Build (the derivation in §5)
+**Public title:** Reading the standard on this site
+**Summary:** The standard and our procedures can now be read as text on this site, and every citation in an answer opens the exact line it quotes.
+**Public:** yes
 **Opened:** 2026-10-27
 **Origin:** the ask-surface UAT, scenario *"Following a citation opens the document at the passage
 it quotes"* — the reviewer's answer was that a citation should offer **"View this line"**, open the
