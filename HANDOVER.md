@@ -1,30 +1,37 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the table block
+> ## START HERE — the table block, half landed
 >
-> The live site is deployed and the corpus is current. **The next slice is one thing:** teach the
-> corpus artefact format what a table row is, and prove it on the certification landscape's p4–p5.
+> **Step 0 and step 1 are built** (§0n). The artefact format now has a table block: structure parsed,
+> one chunk per row, and a malformed annotation **raises** (proved red first). What is left is the
+> document, not the mechanism.
 >
 > Read, in this order — nothing else:
-> 1. `Refinement/LANDSCAPE_TABLES_PRD.md` **§9 (execution steps)** — 7 ordered steps; step 0 is
->    "reproduce, before touching anything" and step 1 is the build.
-> 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax, and the three measurements that
->    constrain it (a pipe table chunks as **one** chunk; blank lines between rows still chunk as
->    one; `<!-- cell -->` is **silently dropped** today because `ANNOTATION` matches only
->    `corpus|page|ref`).
-> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73** — the decisions. All of
->    them are taken; there is nothing to ask the product owner before step 1.
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12a** (what landed, and the three deviations) then
+>    **§9** (the seven steps, with 0 and 1 marked done).
+> 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax as built, and the measurements behind it.
+> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73** — all decided; nothing to ask.
 >
-> **The first failing test to write** is the guard: a malformed `<!-- table … -->` annotation must
-> **raise**, not be silently ignored — that silent drop is how the marker would rot. Prove it red
-> before trusting it green.
+> **The next act is step 2, and it is a review, not a build.** `scripts/build_corpus.py --doc
+> landscape` produces **five headings and the page numbers, no body text** (measured 2026-10-30), so
+> the 10-page artefact is hand-typed from the page and reviewed as a diff. Do not run the generator
+> and call it done, and do not "fix" the generator first — the landscape is the smallest document and
+> the page a reader complained about.
 >
-> **Not this slice:** the OPP (P4, 15 pages) is blocked on the generator repair recorded in
-> `design/d71_p4_and_the_generator.html`; SAOSO's appendices (G4) are behind the same mechanism.
-> Do not start them first — the landscape is 10 pages and is the page a reader complained about.
+> **Before you curate p4–p5 (step 3):** add the `landscape` `-table` page fixture
+> (`scripts/extract_fixtures.py`), because §8's "each cell is a verbatim substring of `-table`" cannot
+> be asserted without it, and a presence check is the guard Appendix 6a already proved insufficient.
 >
-> **Before your first commit:** `QR` — see §0l.4 (the tree carries another session's uncommitted
-> board work; do not stage it by hand).
+> **Two numbers must be measured, not assumed:** the document's chunk count (§8 predicts **11**; the
+> lead-in prose makes it **12**, §12a) and `relink_evidence`'s three figures after the one re-ingest
+> D72.7 groups here.
+>
+> **Not this slice:** the OPP (P4) is blocked on the generator repair in
+> `design/d71_p4_and_the_generator.html`; SAOSO's appendices (G4) sit behind the same mechanism and
+> the same repair. Do not start them first.
+>
+> **The tree is clean as of this handover** (`git status` empty at `a3f0d1e`), so the board work §0l.4
+> warned about is committed (§0n.1).
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
@@ -32,9 +39,9 @@ documents session, the chatbot session, the column session, the embedding sessio
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session and the deploy-and-close session — **2026-10-30**.
-**Repo state:** `main`, **pushed** (`3696f81` at the time of writing); `verify.sh` green —
-**1305 passed / 1 skipped**, and with the tree's uncommitted board work it is **1331 passed /
-1 skipped** (see §0l.4). `tests/e2e/test_public_site.py` green at **38**. The test lane's work
+**Repo state:** `main`; `verify.sh` green at **1387 passed / 1 skipped** (110.7 s, measured
+2026-10-30 on this box with `--durations=15`); `scripts/fast.sh` at **1373 passed / 1 skipped**
+(64 s warm). The board work §0l.4 found uncommitted is committed (§0n.1), so the tree is clean. `tests/e2e/test_public_site.py` green at **38**. The test lane's work
 (`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is **committed**, which is where
 the wall time went from ~4 min to 65 s.
 
@@ -46,6 +53,74 @@ unembedded**. It carries **no `CHAT_*` overrides** in `.env` (first-install neve
 the code defaults — 4096 output tokens, ceiling 8192, retrieval limit 8 — are what runs. Two
 gaps the box still has, both recorded: the 40 citation links the refresh dropped are
 **unrecoverable** (§0k.4), and `opp` + `landscape` hold 37 chunks where the dev box has 38 (§0k.4).
+
+## 0n. 2026-10-30 — the table block landed, and step 1 is mechanism only
+
+**State: green, and the artefact format can hold a table.** Step 0 reproduced §1 of the landscape
+PRD exactly, and step 1 shipped the block. Nothing of the landscape itself is curated yet — the
+fixture that proves the format holds p4's real rows is a *draft*, and says so.
+
+### 0n.1 The board work got committed, in two attributed commits
+
+`c7a7df8` (the feature: `_board.py`, `_board_data.py`, `building.html`, `scripts/board.py`,
+`test_board.py`, the `Public:`/`Summary:`/`Public title:` headers, the deploy pre-check, the CSS and
+`DESIGN.md` §7.12) and `7678880` (D74, the regenerated `backlog.md`, §0m). Green before and after:
+`fast.sh` **1331 passed / 1 skipped** with the work in the tree, which is how §0l.4 described it.
+`backlog.py --write` was re-run **after** the PRDs were committed, so the index no longer names
+untracked files.
+
+### 0n.2 Step 0: every number in the landscape PRD reproduced, none corrected
+
+`_scratch/step0_landscape.py` (git-ignored) prints them all from one in-process build: 8 transformed
+pages with the band lists, **8 chunks / 6 branches** (`R500`, `PGS SA.` and the four real ones),
+**1 / 2 / 0 of 5** sentences quotable in raw / `de_column` / `-table`, the non-space multiset
+identical on **every** page 2–9, **0** chunks holding `Participatory Guarantee Systems`, `six basic
+elements`, `First-Party` or `Third-Party`, and the §5.7 simulation (exclusion alone → same 8 chunks,
+same 6 branches). **Xpdf 4.00 is on this box**, so `-table` works; the box's `pdftotext` is the same
+build the fixtures were made from.
+
+### 0n.3 Step 1: the block, the guard, and one chunk per row
+
+| File | What it now does |
+|---|---|
+| `knowledge/corpus.py` | parses `<!-- table` / `<!-- row: … -->` / `<!-- cell -->` / `<!-- row-divider: … -->` / `<!-- /table -->`; a cell is a **slice** of `section.text`; every malformed form raises with the line named |
+| `knowledge/sections/__init__.py` | `TableCell`, `ParsedTableRow`, `ParsedTable`, and `ParsedSection.tables` |
+| `knowledge/tables.py` | `chunks_for_parsed_section` (prose by the chunker, **one chunk per row** by the table code) and `row_chunk` (text = cells, heading_path and anchor from the row label, page = where the row starts) |
+| `knowledge/ingest.py` | `chunks_for_sections` walks **sections** now, not chunks — a table section can no longer be substituted by a same-ref section elsewhere |
+| `knowledge/tests/test_corpus_tables.py` | 29 tests: 19 refusals, 10 structure/chunk assertions |
+| `knowledge/tests/test_landscape_table_block.py` | 13 tests over **p4's real rows**: five columns, 400-character cells, two cells the paper leaves empty, the seal's printed label, and *"Annual membership fee (paid by the PGS group to PGS SA): R500"* quotable from **one** chunk |
+
+**The guard was written first and proved red** — that is the one instruction §0l's block insisted on.
+`<!-- cell -->` outside a block, `<!-- cells -->` inside one, `cols:` missing, a block never closed, a
+heading inside a block, a row with more cells than columns, a row that never closes, a divider with no
+row beneath it: each fails, naming the line. The word-pin guard was broken deliberately
+(`aggregate` → `agregate`) and went red before being restored.
+
+**Three deviations from §3a, all recorded in the PRD's §12a:** the block closes **explicitly** with
+`<!-- /table -->` (a table that ends by inference lets its last row own the prose after it); a
+divider's **kind trails** its text, as §3a writes it; and **prose outside the rows is its own chunk**,
+so §8's predicted **11** will be **12** unless a reviewer folds the lead-in in. The count gets
+measured at step 2 — deleting text to hit a predicted number is the worse trade.
+
+### 0n.4 Two findings that change the next session
+
+- **The generator cannot draft this document.** `scripts/build_corpus.py --doc landscape` emits five
+  headings and the page numbers, **no body text** (`## R500`, `## PGS SA.`, `## SAOSO` — §1.2's false
+  headings, now with the text missing rather than scrambled). Step 2 is a hand-typed reviewed pass.
+  That is also the generator repair `design/d71_p4_and_the_generator.html` describes, which the OPP
+  and SAOSO's appendices are blocked on.
+- **There is no `landscape` `-table` page fixture.** `knowledge/tests/fixtures/pages/` carries
+  `layout` and `raw` only, so §8's "each cell is a verbatim substring of `-table`" is not assertable
+  yet; step 3 must add it via `scripts/extract_fixtures.py`, or the guard degrades to a presence check
+  that Appendix 6a already proved insufficient.
+
+### 0n.5 What was deliberately not done
+
+No artefact for `landscape` or `opp` (P4/P5), no `TABLE_BANDS`, no front matter (D72.6), no reader
+grid (D72.3/step 6), no re-ingest and therefore **no `relink_evidence` run** — nothing this session
+wrote a `DocumentChunk`, so no evidence link was dropped and the live corpus is untouched. The two
+pytest counts above are the whole of the evidence.
+
 
 ---
 

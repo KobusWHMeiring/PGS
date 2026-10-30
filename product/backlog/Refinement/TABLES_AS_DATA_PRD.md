@@ -1,6 +1,11 @@
 # PRD: Tables as reviewed data — so the reader can display any table without new code
 
-**Status:** **Refinement** — **§7 Q1 answered 2026-10-29: option 2, the corpus artefact.**
+**Status:** **Refinement** — **§3a's format is BUILT (2026-10-30):** `<!-- table … -->` parses as
+structure, one chunk per row, and a malformed annotation raises (`LANDSCAPE_TABLES_PRD` §12a;
+`knowledge/tests/test_corpus_tables.py`). What §3a did *not* settle, and the build added:
+`<!-- /table -->` closes the block explicitly, and a row-divider's kind trails its text. Nothing of
+this PRD's own scope (6a, 6b, Appendices 3/4/7, migrating Appendix 2) is curated yet.
+**§7 Q1 answered 2026-10-29: option 2, the corpus artefact.**
 **§7 Q2 answered the same day (D72.3): the printed grid.** **§7 Q5 answered 2026-10-29: a stored context
 column** (D73). Q3 and Q4 can be answered inside the plan. **A plan can be written.**
 **Owner:** Product (what a table may claim) · Build (the format, the renderer, the vector)
