@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<!-- DESIGN EXAMPLES (not a production template) | Outeniqua PGS — C3, and the split
+     Companion to d76c_process_flow_variants.html; the process shape is C3 (horizontal cards),
+     and the branch is the third card split into two stacked cards. Self-contained: no network.
+     Real reviewed text from knowledge/corpus/landscape.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — C3, and the split</title>
+<style>
+  :root {
+    --bg:#f4f6f2; --surface:#fff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+    --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+    --text:#1c2620; --muted:#66756b; --warn:#8a5a1c; --warn-soft:#f7efe1;
+    --stop:#8a2f2f; --stop-soft:#f9ecec; --cream:#fdfbf7; --sand:#e6dece; --ochre:#b87b2e;
+    --radius-sm:9px; --radius-lg:14px; --radius-xl:20px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:0 2px 10px rgba(28,38,32,.10);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --serif:Georgia,"Times New Roman",serif;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1040px; margin:0 auto; padding:0 20px 180px; }
+  p, li { font-size:14.5px; }
+  code, kbd { font-family:var(--mono); font-size:12.5px; }
+  p code, li code { background:var(--surface-low); padding:1px 5px; border-radius:5px; }
+  a { color:var(--accent); }
+
+  header.hero { background:linear-gradient(160deg,var(--accent) 0%,#274936 100%); color:#fff; padding:44px 20px 38px; margin-bottom:26px; }
+  header.hero .inner { max-width:1040px; margin:0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 12px; font-size:30px; line-height:1.18; letter-spacing:-.01em; }
+  header.hero .question { margin:0; max-width:80ch; font-size:16px; opacity:.95; }
+  header.hero .question b { font-weight:650; }
+  header.hero .meta { margin-top:18px; font-size:13px; opacity:.82; display:flex; flex-wrap:wrap; gap:8px 20px; }
+
+  .panel { background:var(--surface); border-radius:var(--radius-xl); padding:20px 24px; box-shadow:var(--shadow); margin-bottom:24px; }
+  .panel h2 { margin:0 0 8px; font-size:17px; }
+  .panel > p:last-child { margin-bottom:0; }
+  .section-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:40px 0 12px; }
+  .section-head h2 { margin:0; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+  .section-head .rule { flex:1; height:1px; background:var(--surface-high); min-width:40px; }
+  .section-note { font-size:14px; color:var(--muted); margin:-4px 0 16px; max-width:80ch; }
+
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--surface-high); vertical-align:top; }
+  th { font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:12px 0; }
+  .scroll table { min-width:560px; }
+
+  .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:2px 8px; border-radius:999px; vertical-align:1px; }
+  .tag--rec { background:#f3e7cf; color:#7a4f12; }
+  .tag--reviewed { background:#e8eef9; color:#2f4f7a; }
+  .tag--checked { background:var(--accent-soft); color:var(--accent); }
+  .tag--warn { background:var(--warn-soft); color:var(--warn); }
+
+  .callout { border-left:3px solid var(--accent-line); background:var(--accent-soft); padding:12px 16px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:14px 0; }
+  .callout--warn { border-left-color:#d9b37a; background:var(--warn-soft); }
+  .callout p:first-child { margin-top:0; }
+  .callout p:last-child { margin-bottom:0; }
+
+  .example { background:var(--surface); border-radius:var(--radius-xl); box-shadow:var(--shadow); margin:0 0 24px; overflow:hidden; }
+  .example-head { display:flex; gap:12px; align-items:flex-start; padding:18px 22px 0; }
+  .example-letter { flex:0 0 34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:15px; }
+  .example-head h3 { margin:0 0 3px; font-size:16px; }
+  .example-head .one-line { margin:0; color:var(--muted); font-size:13.5px; }
+  .example-body { padding:10px 22px 18px 68px; }
+  @media (max-width:640px) { .example-body { padding-left:22px; } }
+
+  .pros-cons { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+  @media (max-width:720px) { .pros-cons { grid-template-columns:1fr; } }
+  .pros-cons h4 { margin:0 0 5px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .pros-cons .pro { border-top:3px solid var(--accent-line); padding-top:8px; }
+  .pros-cons .con { border-top:3px solid #d6c6a8; padding-top:8px; }
+  .pros-cons ul { margin:0; padding-left:1.1em; }
+  .pros-cons li { font-size:13.5px; margin-bottom:3px; }
+
+  .note { font-size:12.5px; color:var(--muted); margin:8px 0 0; }
+  .note strong { color:var(--text); }
+  .chip { display:inline-block; border:1px dashed var(--sand); border-radius:999px; padding:3px 10px; font-size:12px; color:var(--muted); font-style:italic; }
+  .meta-page { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.03em; }
+
+  /* ---------- C3: the horizontal cards ---------- */
+  .cards3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:start; }
+  .card3 { background:var(--cream); border:1px solid var(--sand); border-radius:var(--radius-sm); padding:14px; }
+  .card3 h4 { margin:0 0 6px; font-size:14px; line-height:1.3; }
+  .card3 h4 .n { color:var(--accent); font-weight:700; }
+  .card3 h4 .meta-page { margin-left:6px; }
+  .card3 > p { margin:0 0 .6em; font-size:13px; }
+  .card3 .facet { border-top:1px solid var(--sand); margin-top:10px; padding-top:8px; }
+  .card3 .facet h5 { margin:0 0 3px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .card3 .facet ul { margin:0; padding-left:1.05em; }
+  .card3 .facet li { font-size:12.5px; margin:0 0 .2em; }
+  .card3 .facet p { margin:0 0 .4em; font-size:12.5px; }
+  .cards3-fees { display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-top:12px; }
+  .fee-box { background:var(--accent-soft); border-radius:var(--radius-sm); padding:12px 14px; }
+  .fee-box h5 { margin:0 0 4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+  .fee-box p { margin:0 0 .35em; font-size:12.5px; }
+  @media (max-width:860px) { .cards3 { grid-template-columns:1fr; } .cards3-fees { grid-template-columns:1fr; } }
+
+  /* ---------- the split: two stacked cards in one column ---------- */
+  .split { display:grid; gap:10px; align-content:start; }
+  .split-head { margin:0 0 2px; font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .split .card3 { border-style:dashed; }
+  .split .card3.path-a { border-color:var(--accent-line); background:#f3f8f4; }
+  .split .card3.path-b { border-color:#d9c7a8; background:#fbf7ef; }
+  .fork-or { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .fork-or::before, .fork-or::after { content:""; flex:1; border-top:1px dashed var(--accent-line); }
+  .route-tag { display:inline-block; font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:999px; margin-bottom:4px; }
+  .route-tag--a { background:var(--accent-soft); color:var(--accent); }
+  .route-tag--b { background:#f3e7cf; color:#7a4f12; }
+  .route-link { display:inline-block; margin-top:6px; font-size:12px; font-weight:700; color:var(--accent); }
+
+  /* a stacked split where the two cards are equal-height peers, with the connector drawn */
+  .split-rail { position:relative; }
+  .split-rail::before { content:""; position:absolute; left:50%; top:46px; bottom:46px; border-left:2px dashed var(--accent-line); }
+  .split-rail .fork-or { position:relative; z-index:1; background:var(--surface); padding:4px 0; }
+
+  .matrix td, .matrix th { font-size:13px; }
+  .matrix .yes { color:var(--accent); font-weight:700; }
+  .matrix .no { color:var(--stop); font-weight:700; }
+  .matrix .part { color:var(--warn); font-weight:700; }
+
+  .rec { border:2px solid var(--accent); border-radius:var(--radius-xl); background:var(--surface); box-shadow:var(--shadow); padding:22px 24px; margin-bottom:24px; }
+  .rec h3 { margin:0 0 8px; font-size:19px; }
+  .rec .lede { font-size:15px; }
+
+  .choice { border:1px solid var(--surface-high); border-radius:var(--radius-lg); padding:14px 16px; margin-bottom:10px; background:var(--surface); }
+  .choice label { display:flex; gap:12px; align-items:flex-start; cursor:pointer; }
+  .choice input { margin-top:4px; flex:0 0 auto; }
+  .choice .title { font-weight:700; }
+  .choice .why { color:var(--muted); font-size:13px; display:block; }
+  textarea { width:100%; min-height:90px; font:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--surface-high); border-radius:var(--radius-sm); background:var(--cream); color:var(--text); resize:vertical; }
+  .export-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  button.btn { font:inherit; font-size:13.5px; font-weight:700; padding:10px 16px; border-radius:999px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; min-height:44px; }
+  button.btn--ghost { background:transparent; color:var(--accent); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline:3px solid var(--ochre); outline-offset:2px; }
+  #out { width:100%; min-height:180px; font-family:var(--mono); font-size:12.5px; margin-top:12px; }
+
+  .sticky { position:fixed; left:0; right:0; bottom:0; background:rgba(28,38,32,.94); color:#fff; padding:10px 16px; display:flex; gap:14px; align-items:center; justify-content:center; box-shadow:var(--shadow-sticky); z-index:10; }
+  .sticky .saved { font-size:12.5px; opacity:.85; }
+  .sticky button { font:inherit; font-size:13px; font-weight:700; padding:9px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.5); background:transparent; color:#fff; cursor:pointer; min-height:44px; }
+
+  @media print {
+    body { background:#fff; }
+    .sticky, .export-row, #out, .choice { display:none !important; }
+    .panel, .example, .rec { box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
+    header.hero { background:#274936 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; design examples &middot; C3 + the split</p>
+    <h1>C3, and the split</h1>
+    <p class="question">
+      C3 is the process shape: <b>three horizontal cards</b>, the four facets inside each, the
+      joining fee tied to Steps 1&ndash;2 and the certification fee to Step 3. The branch is one
+      more move: the third card position becomes <b>two stacked cards</b>, one above the other,
+      so the two paths are visible at once. This page settles both.
+    </p>
+    <p class="meta">
+      <span>Companion to <code>d76c_process_flow_variants.html</code></span>
+      <span>Real reviewed text</span>
+      <span>Self-contained &mdash; no network</span>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>How to read this</h2>
+    <p>Part 1 is C3 for the establishing table, unchanged from the iteration you picked.
+      Part 2 is the SAOSO split, in the position you asked for (the third column) and in the
+      position the content actually forks (the start), so you can see both with the same
+      two-card mechanism. Part 3 is the data question, Part 4 the details (titles, phone), Part 5
+      the decision.</p>
+  </div>
+
+  <!-- ============================ PART 1 ============================ -->
+  <div class="section-head"><h2>Part 1 &mdash; C3 for the establishing table</h2><div class="rule"></div></div>
+  <p class="section-note">The shape you picked. The one refinement kept from C3: the joining fee is
+    a box under Steps 1&ndash;2 and the certification fee is a box under Step 3, so each amount stays
+    with the step it qualifies.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">1</div>
+      <div>
+        <h3>Step 1 &middot; Step 2 &middot; Step 3</h3>
+        <p class="one-line">Three cards, facets inside, the fee tied to its steps.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="cards3">
+        <div class="card3">
+          <h4><span class="n">Step 1</span> &middot; Get together <span class="meta-page">p. 4</span></h4>
+          <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></div>
+          <div class="facet"><h5>Use of seals</h5><p style="color:var(--muted)">The paper is silent on this step.</p></div>
+        </div>
+        <div class="card3">
+          <h4><span class="n">Step 2</span> &middot; Agree and establish <span class="meta-page">p. 4</span></h4>
+          <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles &ndash; (SAOSO or equivalent)</li></ul></div>
+          <div class="facet"><h5>Use of seals</h5><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p></div>
+          <div class="facet"><h5>Seals</h5><span class="chip">Proud member of</span></div>
+        </div>
+        <div class="card3">
+          <h4><span class="n">Step 3</span> &middot; Visit and certify <span class="meta-page">p. 5</span></h4>
+          <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></div>
+          <div class="facet"><h5>Use of seals</h5><p>These two seals were developed by PGS SA in consultation with PGS groups. PGS groups are custodians of the manner in which the seals are used.</p></div>
+        </div>
+      </div>
+      <div class="cards3-fees">
+        <div class="fee-box"><h5>Fee &mdash; joining (Steps 1&ndash;2)</h5><p>The local group determines the membership fee; <b>annual membership R500</b> and <b>once-off customisation R1&nbsp;000</b> (paid to PGS SA).</p></div>
+        <div class="fee-box"><h5>Fee &mdash; certification (Step 3)</h5><p><b>Recommended annual sticker fee R350</b> (30% PGS SA / 70% group). Printing at own cost.</p></div>
+      </div>
+      <p class="note"><strong>Note on the titles:</strong> <em>Get together</em>, <em>Agree and
+        establish</em>, <em>Visit and certify</em> are <span class="tag tag--reviewed">reviewer-added</span>
+        &mdash; the paper prints only Step 1/2/3. The cards work without them; the titles are there
+        to make the row scannable.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 2 ============================ -->
+  <div class="section-head"><h2>Part 2 &mdash; The split, in the third column</h2><div class="rule"></div></div>
+  <p class="section-note">SAOSO is Step 1 &middot; Step 2 &middot; <em>two paths</em>: the PGS route
+    ends with the &ldquo;Organic PGS Certified&rdquo; logo; the direct route goes to an Accredited
+    Certifying Body. The third column holds both cards, stacked, with an <em>or</em> between them.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">2</div>
+      <div>
+        <h3>SAOSO &mdash; the two paths stacked in column three</h3>
+        <p class="one-line">Step 1 | Step 2 | [ Path A / or / Path B ], the two cards above one another.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="cards3">
+        <div class="card3">
+          <h4><span class="n">Step 1</span> <span class="meta-page">p. 7</span></h4>
+          <p>For a minimum of 18 months, the PGS will be operating as per its agreed procedures and approach PGS SA for support. Farmers are assessed during farm visits and the PGS coordinator keeps a record of farm visits. Groups that have been compliant PGS SA members for this period can apply to SAOSO and PGS SA for approval to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard</li><li>PGS SA Assessment of Group documents</li></ul></div>
+          <div class="facet"><h5>Fee</h5><p>Assessments by experienced PGS practitioners; fee determined case by case.</p></div>
+        </div>
+        <div class="card3" id="step2">
+          <h4><span class="n">Step 2</span> <span class="meta-page">p. 7</span></h4>
+          <p>If approved by PGS SA the group is entitled to determine which of its farmers qualify to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo. Qualifying farmers sign a licensing agreement with SAOSO; the logo can be used for PGS-to-PGS trade.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></div>
+          <div class="facet"><h5>Fee</h5><p>Licensing with SAOSO: <b>R500</b> farmer members / <b>R2&nbsp;500</b> retail members. Printing at the farmer&rsquo;s cost.</p></div>
+        </div>
+
+        <div class="split split-rail">
+          <p class="split-head">Two routes from here</p>
+          <div class="card3 path-a">
+            <span class="route-tag route-tag--a">Path A</span>
+            <h4>PGS certification</h4>
+            <p>The PGS route above ends with the SAOSO &ldquo;Organic PGS Certified&rdquo; logo: the group licenses it for its farmer members, and can use it for PGS-to-PGS trade.</p>
+            <div class="facet"><h5>Who it is for</h5><p>A PGS group that has been a compliant PGS SA member for 18 months.</p></div>
+            <a class="route-link" href="#step2">See Step 2 for the licence &rarr;</a>
+          </div>
+          <div class="fork-or"><span>or</span></div>
+          <div class="card3 path-b">
+            <span class="route-tag route-tag--b">Path B</span>
+            <h4>Direct third-party certification</h4>
+            <p>Farmers who are producing organically but are not able to join or establish a PGS group (geographic isolation, time constraints) can apply to SAOSO to use the SAOSO &ldquo;Organic Certified&rdquo; logo. This route excludes the social, knowledge-sharing and participatory approach of PGS groups and may not be cost effective for smallholder farmers.</p>
+            <div class="facet"><h5>Resources</h5><ul><li>Certification body application form</li><li>Licensing agreement</li></ul></div>
+            <div class="facet"><h5>Fee</h5><p>Quote from the Accredited Certifying Body; annual audit and licensing agreement on payment.</p></div>
+          </div>
+        </div>
+      </div>
+      <p class="note"><strong>What the split does:</strong> the two paths are visible at once, and the
+        third column carries both without a fourth card. The dashed card borders and the <em>or</em>
+        rule make it a fork, not two more steps. <strong>What it costs:</strong> Path A repeats the
+        Step 2 outcome in summary (it is a pointer, not a second claim); the third column is taller
+        than the first two; on a phone the split stacks after Step 2, so the two paths still read in
+        order.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Both paths visible; no fourth card pretending to be a step.</li><li>The fork is drawn (dashed borders + <em>or</em>).</li><li>The same mechanism works for any future branch.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Path A is a summary of Step 2; it can drift if Step 2 changes.</li><li>The third column is taller; the three columns are not equal.</li><li>Path A has no full text of its own &mdash; it points at Step 2.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 2b ============================ -->
+  <div class="section-head"><h2>Part 2b &mdash; The same split at the start, where the content forks</h2><div class="rule"></div></div>
+  <p class="section-note">The direct route is for farmers who <em>cannot join a PGS group</em>, so
+    the fork is really at the start, not after Step 2. The same two-card mechanism moves to column
+    one: &ldquo;join a PGS group&rdquo; or &ldquo;go direct&rdquo;, and only the first continues to
+    Steps 1&ndash;2.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">2b</div>
+      <div>
+        <h3>SAOSO &mdash; the split in column one</h3>
+        <p class="one-line">[ Path A / or / Path B ] | Step 1 | Step 2.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="cards3">
+        <div class="split split-rail">
+          <p class="split-head">Choose your route</p>
+          <div class="card3 path-a">
+            <span class="route-tag route-tag--a">Path A</span>
+            <h4>Join a PGS group</h4>
+            <p>A PGS group that has been a compliant PGS SA member for 18 months can apply for the SAOSO &ldquo;Organic PGS Certified&rdquo; logo for its farmers.</p>
+            <div class="facet"><h5>Continue</h5><p>Step 1 &rarr; Step 2, to the right.</p></div>
+          </div>
+          <div class="fork-or"><span>or</span></div>
+          <div class="card3 path-b">
+            <span class="route-tag route-tag--b">Path B</span>
+            <h4>Go direct</h4>
+            <p>Farmers who are producing organically but are not able to join or establish a PGS group (geographic isolation, time constraints) can apply to SAOSO for the &ldquo;Organic Certified&rdquo; logo. This route excludes the social, knowledge-sharing and participatory approach of PGS groups and may not be cost effective for smallholder farmers.</p>
+            <div class="facet"><h5>Fee</h5><p>Quote from the Accredited Certifying Body.</p></div>
+          </div>
+        </div>
+        <div class="card3">
+          <h4><span class="n">Step 1</span> <span class="meta-page">p. 7</span></h4>
+          <p>For a minimum of 18 months, the PGS will be operating as per its agreed procedures and approach PGS SA for support. Farmers are assessed during farm visits and the PGS coordinator keeps a record of farm visits. Groups that have been compliant PGS SA members for this period can apply to SAOSO and PGS SA for approval to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard</li><li>PGS SA Assessment of Group documents</li></ul></div>
+        </div>
+        <div class="card3">
+          <h4><span class="n">Step 2</span> <span class="meta-page">p. 7</span></h4>
+          <p>If approved by PGS SA the group is entitled to determine which of its farmers qualify to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo. Qualifying farmers sign a licensing agreement with SAOSO; the logo can be used for PGS-to-PGS trade.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></div>
+          <div class="facet"><h5>Fee</h5><p>Licensing with SAOSO: <b>R500</b> farmer members / <b>R2&nbsp;500</b> retail members.</p></div>
+        </div>
+      </div>
+      <p class="note"><strong>What it gets right:</strong> the fork is at the point the paper makes it
+        &mdash; whether you are in a PGS group. Path A visibly continues to Step 1; Path B ends in
+        its own card. <strong>What it costs:</strong> Path A&rsquo;s card is a short pointer, and the
+        reader must look right to follow it; the first column is taller than the other two.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Content-accurate: the direct route is an alternative to joining, not a third step.</li><li>The two paths are the first thing a reader chooses between.</li><li>No repetition of Step 2&rsquo;s outcome.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>The pointer card is thin; it spends a whole column on &ldquo;continue right&rdquo;.</li><li>The step numbers 1&ndash;2 now sit in columns two and three, which may read oddly.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 3 ============================ -->
+  <div class="section-head"><h2>Part 3 &mdash; The data the split needs</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p>The split is a <b>reviewed decision</b>, not an inference. Two fields on the reviewed block
+      are enough, and neither is a migration:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Field</th><th>Where</th><th>What it says</th></tr></thead>
+        <tbody>
+          <tr><td><code>layout: process</code></td><td>the <code>&lt;!-- table --&gt;</code> header</td><td>This table is a flow, not a grid (D77).</td></tr>
+          <tr><td><code>branch: 2</code> <em>or</em> <code>branch: &lt;row label&gt;</code></td><td>the same header</td><td>From this row on, the rows are an alternative path, not the next step. The renderer stacks them in the last column with an <em>or</em>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:12px"><strong>Why not infer it?</strong> A row without a
+      &ldquo;Step&rdquo; label is a hint, not a rule &mdash; and a future table may print a step
+      without the word. The reviewer chooses the fork, exactly as they choose the legend. The
+      production parser adds the two keys and the template branches on them; the corpus stays data.</p>
+    <div class="callout callout--warn">
+      <p><strong>The one claim-discipline risk in the split:</strong> Path A summarises Step 2&rsquo;s
+        outcome (the logo, the licence). Keep it a <em>pointer</em> &mdash; &ldquo;see Step 2 for the
+        licence&rdquo; &mdash; rather than a second statement of the fees. D72.2 already refused a fee
+        lifted out of its qualifying sentence; a summary card that repeats the amounts would be the
+        same mistake in a new place.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 4 ============================ -->
+  <div class="section-head"><h2>Part 4 &mdash; The small decisions</h2><div class="rule"></div></div>
+  <div class="panel">
+    <ul>
+      <li><b>Titles.</b> Keep them as <span class="tag tag--reviewed">reviewed data</span> (a
+        <code>title:</code> list on the table) or drop them and print <code>Step 1</code>. The
+        layout is identical; the titles buy scanning and cost a reviewed word each. My preference:
+        keep them, reviewable, because a flow without names is harder to navigate.</li>
+      <li><b>Phone.</b> The cards stack in order. In the third-column split, the two paths stack
+        after Step 2 (correct). In the start split, the two paths come before Step 1 (also correct).
+        No horizontal gesture either way.</li>
+      <li><b>Equal heights.</b> The three cards are unequal by content; use
+        <code>align-items:start</code> (as here) so a short card does not stretch, and let the
+        split column be taller. The fee boxes sit under the row, not inside a card, so the columns
+        do not have to match.</li>
+      <li><b>Page markers.</b> Step 3 is on p5 (D72.5); the card shows it once, in its heading.</li>
+    </ul>
+  </div>
+
+  <!-- ============================ PART 5 ============================ -->
+  <div class="section-head"><h2>Part 5 &mdash; Your decision</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p class="section-note">C3 is settled. Pick where the split lives, and whether the titles
+      stay.</p>
+    <div id="choices"></div>
+    <label for="notes"><b>Notes</b></label>
+    <textarea id="notes" placeholder="e.g. “split in column three, keep the titles”, or “start split, drop the titles”."></textarea>
+    <div class="export-row">
+      <button class="btn" type="button" id="export">Export markdown + §18.3 row</button>
+      <button class="btn btn--ghost" type="button" id="copy">Copy to clipboard</button>
+      <button class="btn btn--ghost" type="button" id="reset">Reset</button>
+    </div>
+    <textarea id="out" readonly aria-label="Exported decision"></textarea>
+  </div>
+
+</div>
+
+<div class="sticky">
+  <span class="saved" id="saved">Nothing chosen yet</span>
+  <button type="button" id="jump">Go to the decision &darr;</button>
+</div>
+
+<script>
+(function () {
+  var KEY = 'pgs.process-split.v1';
+  var CHOICES = [
+    { id: 'end', title: 'Split in column three (as asked)',
+      why: 'Step 1 | Step 2 | [Path A / or / Path B]. Both paths visible after Step 2; Path A is a pointer to Step 2.' },
+    { id: 'start', title: 'Split in column one (content-accurate)',
+      why: '[Path A / or / Path B] | Step 1 | Step 2. The fork is whether you are in a PGS group; Path A continues right.' },
+    { id: 'fourth', title: 'No split — the third row is a fourth card',
+      why: 'The direct route is simply the next card in the row. Simple, but it reads as Step 3.' }
+  ];
+  var TITLES = [
+    { id: 'titles', title: 'Keep the short titles (reviewed)' },
+    { id: 'no-titles', title: 'Print Step 1/2/3 only' }
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    document.getElementById('saved').textContent = state.split && state.titles
+      ? 'Saved: ' + state.split + ' / ' + state.titles
+      : 'Nothing chosen yet';
+  }
+
+  function renderChoices() {
+    var host = document.getElementById('choices');
+    function radios(name, items) {
+      return items.map(function (c) {
+        return '<div class="choice"><label>' +
+          '<input type="radio" name="' + name + '" value="' + c.id + '"' +
+          (state[name] === c.id ? ' checked' : '') + '>' +
+          '<span><span class="title">' + c.title + '</span>' +
+          (c.why ? '<span class="why">' + c.why + '</span>' : '') + '</span></label></div>';
+      }).join('');
+    }
+    host.innerHTML =
+      '<p class="section-note"><strong>Where does the split live?</strong></p>' +
+      radios('split', CHOICES) +
+      '<p class="section-note" style="margin-top:18px"><strong>Titles?</strong></p>' +
+      radios('titles', TITLES);
+    host.querySelectorAll('input[type=radio]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        state[input.name] = input.value;
+        save();
+      });
+    });
+  }
+
+  var notes = document.getElementById('notes');
+  notes.value = state.notes || '';
+  notes.addEventListener('input', function () { state.notes = notes.value; save(); });
+
+  function label(items, id) {
+    var found = items.find(function (c) { return c.id === id; });
+    return found ? found.title : '_(not chosen)_';
+  }
+
+  function exportText() {
+    var lines = [];
+    lines.push('# The process flow — C3 and the split');
+    lines.push('');
+    lines.push('- **Process shape:** C3 — horizontal cards, facets inside, the joining fee under Steps 1–2 and the certification fee under Step 3.');
+    lines.push('- **Split:** ' + label(CHOICES, state.split));
+    lines.push('- **Titles:** ' + label(TITLES, state.titles));
+    lines.push('');
+    lines.push('**§18.3 row**');
+    lines.push('');
+    lines.push('| D77 | How does the reader display the landscape\'s tables — and who controls the column widths? | **E + C3 + ' + (state.split || '?') + '** — a `layout: process | grid` field on the reviewed block. Process tables render as **horizontal cards** (the step body and its facets), with the joining fee under Steps 1–2 and the certification fee under Step 3; a `branch:` field marks where the rows become an alternative path, and the renderer stacks those cards in one column with an *or* between them (SAOSO\'s PGS and direct routes). The seals comparison renders as a **spreadsheet** with frozen header/first column, one 13.5 px type size, and mouse/keyboard column resizing persisted per document/table. | D76 chose the printed grid; the content says two of the three tables are processes, and the visitor should control the width where it is a grid. |');
+    if (state.notes) { lines.push(''); lines.push('**Notes:** ' + state.notes); }
+    return lines.join('\n');
+  }
+
+  function setOut() { document.getElementById('out').value = exportText(); }
+  document.getElementById('export').addEventListener('click', setOut);
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = exportText();
+    document.getElementById('out').value = text;
+    if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    notes.value = '';
+    document.getElementById('out').value = '';
+    renderChoices(); save();
+  });
+  document.getElementById('jump').addEventListener('click', function () {
+    document.getElementById('choices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  renderChoices();
+  save();
+})();
+</script>
+</body>
+</html>

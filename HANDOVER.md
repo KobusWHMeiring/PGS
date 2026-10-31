@@ -14,14 +14,14 @@
 >    choice is the product owner's to confirm;** the code follows the recommendation.
 > 3. `product/design/DESIGN.md` §7.13 for the component's rules.
 >
-> **E is chosen; the process shape is the open design.** The owner picked a `layout: process | grid`
-> field: a process flow for Establishing and SAOSO, a resizable spreadsheet for the seals
-> comparison. `product/design/d76c_process_flow_variants.html` iterates the process flow four ways —
-> a **vertical timeline** (recommended), a wizard, refined horizontal cards, and a minimal checklist
-> — plus the SAOSO branch, which is the test the establishing table cannot give. **Pick the shape
-> there.**
+> **C3 is the process shape; the split is the last design detail.** The owner chose **E** (a
+> `layout: process | grid` field) and **C3** (horizontal cards, the joining fee under Steps 1–2, the
+> certification fee under Step 3). The branch is **two stacked cards in one column**, with the
+> alternative path marked as data (`branch:`). `product/design/d76d_c3_and_the_split.html` shows
+> the split in column three (as asked) and in column one (where SAOSO actually forks: “can you join
+> a PGS group?”). **Pick the placement and the titles there.**
 >
-> **Then build E + the chosen shape**, then step 7: a `tests/uat/` scenario for the fee question, the
+> **Then build E + C3 + the split**, then step 7: a `tests/uat/` scenario for the fee question, the
 > backlog move, and the §5.7 exclusion verified as “reading order restored, nothing more”.
 >
 > **Two guards are still open, and named rather than hidden:** `TABLE_BANDS` (a transposition
@@ -123,10 +123,10 @@ worse than no grid, the same rule `structure_for` already follows. A test edits 
 ### 0r.4 What is left
 
 - **D77 — the display model.** The owner chose **E** (a `layout: process | grid` field; a process
-  flow for Establishing/SAOSO, a resizable spreadsheet for the seals comparison). The **process
-  shape** is open: `product/design/d76c_process_flow_variants.html` iterates C four ways and
-  recommends **C1** (vertical timeline, merged Fee band between Steps 2 and 3, a dashed fork for
-  SAOSO, no JS). The current reader is the fixed grid from §12e; it stays until the shape is picked.
+  flow for Establishing/SAOSO, a resizable spreadsheet for the seals comparison) and **C3** as the
+  process shape. The branch is two stacked cards in one column (`branch:` data), explored in
+  `product/design/d76d_c3_and_the_split.html`; the split placement and the short titles are the last
+  open details. The current reader is the fixed grid from §12e; it stays until those are picked.
 - **D76's confirmation** — the fit artifact; D77 revises it.
 - **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. A corpus
   guard, not a reader feature.
