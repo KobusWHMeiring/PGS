@@ -1,26 +1,30 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the table block, half landed
+> ## START HERE — step 2's two preconditions are met; the artefact is the work
 >
-> **Step 0 and step 1 are built** (§0n). The artefact format now has a table block: structure parsed,
-> one chunk per row, and a malformed annotation **raises** (proved red first). What is left is the
-> document, not the mechanism.
+> **Steps 0 and 1 are built** (§0n). **Step 2 is still not started**, but both things that blocked
+> it now exist (§0o): the `landscape` `-table` page fixture, and D72.7's page exclusion
+> (`apply_layout` on the landscape now changes **{2, 3, 9}**, so the generated p4–8 is the *printed
+> grid*, not the `de_column` soup).
 >
 > Read, in this order — nothing else:
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12a** (what landed, and the three deviations) then
->    **§9** (the seven steps, with 0 and 1 marked done).
-> 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax as built, and the measurements behind it.
-> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73** — all decided; nothing to ask.
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12b** (what landed 2026-10-30, session 2) then **§9**
+>    (the seven steps, with 0 and 1 marked done) then **§12a** for the block itself.
+> 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax as built.
+> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73** — all decided.
 >
-> **The next act is step 2, and it is a review, not a build.** `scripts/build_corpus.py --doc
-> landscape` produces **five headings and the page numbers, no body text** (measured 2026-10-30), so
-> the 10-page artefact is hand-typed from the page and reviewed as a diff. Do not run the generator
-> and call it done, and do not "fix" the generator first — the landscape is the smallest document and
-> the page a reader complained about.
+> **The next act is step 2, and it is a review, not a build.** With the exclusion in place,
+> `scripts/build_corpus.py --doc landscape` now produces **314 lines of the printed grid** — and the
+> first thing it shows that it could not show before: the parser opens **three false headings**,
+> `## R500`, `## PGS SA.` and `## SAOSO`, from a fee cell and two seal captions. The DoD already
+> forbids them (“no branch is `R500`”). Remove them first; that is what makes
+> `ESTABLISHING A PGS GROUP` one branch of three rows.
 >
-> **Before you curate p4–p5 (step 3):** add the `landscape` `-table` page fixture
-> (`scripts/extract_fixtures.py`), because §8's "each cell is a verbatim substring of `-table`" cannot
-> be asserted without it, and a presence check is the guard Appendix 6a already proved insufficient.
+> **§8 requirement 3 is wrong as written** — a *cell* is not a substring of `-table` output, because
+> `-table` renders row-lines; each cell's **line** is. The guard as built is in
+> `test_landscape_table_block.py`, proved red four ways (§12b.1). Do not “fix” it back to cells.
+> Two things it still cannot pin, and step 3 must: a transposition inside one row-line, and the
+> column a line is filed under (`TABLE_BANDS`).
 >
 > **Two numbers must be measured, not assumed:** the document's chunk count (§8 predicts **11**; the
 > lead-in prose makes it **12**, §12a) and `relink_evidence`'s three figures after the one re-ingest
@@ -30,22 +34,23 @@
 > `design/d71_p4_and_the_generator.html`; SAOSO's appendices (G4) sit behind the same mechanism and
 > the same repair. Do not start them first.
 >
-> **The tree is clean as of this handover** (`git status` empty at `a3f0d1e`), so the board work §0l.4
-> warned about is committed (§0n.1).
+> **The tree carries this session's work uncommitted** (§0o.4): 7 modified files and one new fixture.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
-retrieval-baseline session and the deploy-and-close session — **2026-10-30**.
-**Repo state:** `main`, **pushed** (`d4051d1` + the D75 repair); `verify.sh` green at **1392 passed /
-1 skipped**, timed **60.2 s, then 110.7 s, then 181.2 s** on the same tree within one session — so
-quote the range or nothing (`testing_hazards.md` §3.17; one number is a snapshot). `scripts/fast.sh`
-at 1373+ passed, 64 s warm. The board work §0l.4 found uncommitted is committed (§0n.1), so the tree
-is clean. `tests/e2e/test_public_site.py` green at **38**. The test lane's work
-(`scripts/fast.sh`, `pgs.settings_test`, the `slow` marker) is **committed**, which is where
-the wall time went from ~4 min to 65 s.
+retrieval-baseline session, the deploy-and-close session and the generator-and-fixture session
+**Repo state:** `main`, **pushed** at `35051e1`; the generator-and-fixture session's work (§0o) is
+**in two commits plus this documentation one** (`bfe64ed` the review path and the furniture,
+`d1cd8a2` the landscape fixture and the exclusion). On that tree: `scripts/fast.sh` green at **1393 passed / 1 skipped in 29 s** (warm) and
+`verify.sh` green at **1407 passed / 1 skipped in 46.2 s** (`--create-db`, 51 s wall, run as
+`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
+serves 5433, `testing_hazards.md` §3.1). Nothing was re-ingested, so the live corpus and its evidence
+links are as §0k/§0l left them. Before this session the gate was at 1392 passed, timed **60.2 s, then
+110.7 s, then 181.2 s** on one tree within one session — so quote the range or nothing
+(`testing_hazards.md` §3.17).
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **in sync** (pushed 2026-10-30).
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
@@ -55,6 +60,81 @@ unembedded**. It carries **no `CHAT_*` overrides** in `.env` (first-install neve
 the code defaults — 4096 output tokens, ceiling 8192, retrieval limit 8 — are what runs. Two
 gaps the box still has, both recorded: the 40 citation links the refresh dropped are
 **unrecoverable** (§0k.4), and `opp` + `landscape` hold 37 chunks where the dev box has 38 (§0k.4).
+
+## 0o. 2026-10-30 (session 2) — the two preconditions for step 2, and a corruption in the review path
+
+**State: green, committed, nothing re-ingested.** `fast.sh` **1393 passed / 1 skipped in 29 s**
+(warm) and `verify.sh` **1407 passed / 1 skipped in 46.2 s** (`--create-db`; quote both, and the
+range — `testing_hazards.md` §3.17). No landscape artefact, no `TABLE_BANDS`, no `--force`, no
+`relink_evidence`: no `DocumentChunk` was written, so the live corpus is untouched and **no evidence
+link was dropped**.
+
+### 0o.1 Task 3, and it was two one-liners plus an exclusion
+
+| Landed | Evidence |
+|---|---|
+| `landscape` `-table` fixture | `PAGE_MODES` in `scripts/extract_fixtures.py`; `pages/landscape.table.txt`, 10 pages, 30 494 bytes. **Every other page fixture byte-identical** (md5 before/after), so this is not a re-baseline |
+| D72.7's exclusion | `PAGE_LAYOUT_EXCLUSIONS["landscape"]`, pdf 4–8, one entry per page because the gutters differ page to page. `apply_layout` now changes **{2, 3, 9}** and `EXPECTED_TRANSFORMED_PAGES` says so |
+| a cell guard that means something | `test_landscape_table_block.py`: per-printed-**line** runs, plus order. 14 tests, proved red four ways |
+
+**§8 requirement 3 was false as written** and the fixture is what proved it. A *cell* is not a
+substring of `-table` output — `-table` renders row-lines, so one output line carries the current line
+of every column at once and the Step 1 description is interrupted twice. Each cell **line** is a run of
+one printed line, and a cell's lines appear in order; that is the guard, and it catches all four
+breaks including the two the existing word-presence test passes (a line swap and a reversal).
+
+### 0o.2 Task 2 found the review path corrupting the artefact
+
+Making `bpp.md` regenerable took the diff from **57 lines to 32, every one of them whitespace** — the
+non-space character multiset and the sequence of non-blank lines are identical. Three findings, and the
+first is the one to read:
+
+1. **`apply_review` was mangling page 4's most-quoted passage.** The footnote-2 correction was
+   `kind="move"`, and a move is not a text substitution: applying it *deleted* `must be preferably
+   composted` and reprinted `land available will not be allowed.` at the foot of page 4. Nothing
+   caught it because the traceability test compares `flat()` strings and `flat` joins lines. Now a lift
+   plus a place, and `apply_review` keeps a replacement's own line breaks. `MAX_EDITS` 7 → 8 with the
+   reason recorded (one review decision, two mechanical edits).
+2. **`apply_review`'s multiplicity guard was dead** — `subn(..., count=1)` reports one substitution
+   whenever the pattern matches at all, so "fails when an edit matches more than once" could never
+   fire. Fixed red-first. The function had **no test at all** before this session.
+3. **The furniture had to be data.** The inferential rule was measured and it destroys SAOSO
+   (`General Principle` on 26 pages, `Requirements:` on 25, `South African specific` on 18 — all
+   content; and one poultry derogation is printed verbatim on pages 45–47). So `BODY_FURNITURE` names
+   the BPP's four labels, and the filter keeps the block on the page that first carries it. Also: PUA
+   codepoints stripped, and a page whose only kept line is blank gets no marker.
+
+**Residual, not chased:** the 32 whitespace lines. Two causes, neither a generator defect — the BPP's
+reviewer removed blank lines before page markers and SAOSO's kept them (so a rule would have to be per
+document), and the artefact keeps one leading space where it dropped a glyph.
+
+### 0o.3 A window trap that cost ten minutes
+
+`scripts/build_corpus.py --stdout` dies on this box with `UnicodeEncodeError` on `\uf06e` — and it is
+`--file` that works, so the crash is in the console, not the artefact. `PYTHONIOENCODING=utf-8` fixes it;
+`--stdout` also emits **CRLF** where the writer emits LF, so diff against an artefact with
+`--strip-trailing-cr` or the real 32 lines hide inside 583 (`testing_hazards.md` §3.21, extended).
+
+### 0o.4 How it was committed, and the one thing that must still travel with the rows
+
+Two attributed commits, split by concern rather than by file count, because `corpus.py` and
+`build_corpus.py` carry both halves of §0o.2 and splitting a file across commits is not something a
+reviewer can read:
+
+- `bfe64ed` — the review path and the furniture: `knowledge/corpus.py`, `scripts/build_corpus.py`,
+  `tests/tools/test_build_corpus.py`, `knowledge/tests/test_corpus_bpp.py`, and the §3.21 addendum.
+- `d1cd8a2` — the landscape's fixture and exclusion: `scripts/extract_fixtures.py`, the new
+  `pages/landscape.table.txt` + manifest entry, `knowledge/columns.py`, and the three test files.
+- the documentation commit after them: the two PRDs, the spec's D72.7 row, this file, the index.
+
+**D72.7 still governs the exclusion.** It is inert until something re-ingests — no `DocumentChunk` was
+written this session — so committing it now costs nothing, and it must not be *deployed* as a "corpus
+fix": the live box's `landscape` chunks are built from whatever ran on 2026-10-22, and `corpus_check`
+cannot see them (`todo.md`, `drift.py` short-circuits at `no artefact`). The exclusion reaches the box
+only with the rows and the one re-ingest, in step 2. Until then the only way it can cause trouble is
+if somebody runs `corpus_refresh` and not `relink_evidence`.
+
+---
 
 ## 0n. 2026-10-30 — the table block landed, and step 1 is mechanism only
 

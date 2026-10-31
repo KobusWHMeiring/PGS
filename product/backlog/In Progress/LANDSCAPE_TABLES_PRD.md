@@ -605,6 +605,88 @@ restored.
 
 ---
 
+## 12b. Built 2026-10-30, session 2 — the two preconditions, and §8 requirement 3 corrected
+
+**Steps 2 and 3 are still not done. Both of their preconditions now are.** No artefact exists for the
+landscape, and nothing was re-ingested, so no evidence link was dropped and the live corpus is
+untouched.
+
+| Landed | Where | Evidence |
+|---|---|---|
+| the `landscape` `-table` page fixture | `scripts/extract_fixtures.py` `PAGE_MODES`, `pages/landscape.table.txt` | 10 pages, 30 494 bytes, `pdftotext version 4.00`; **every other page fixture byte-identical** (md5 checked before/after) |
+| D72.7's page exclusion | `knowledge/columns.py` `PAGE_LAYOUT_EXCLUSIONS["landscape"]` (pdf 4–8, one entry per page) | `apply_layout` now changes **{2, 3, 9}**, and `EXPECTED_TRANSFORMED_PAGES["landscape"]` says so |
+| a per-line cell guard | `knowledge/tests/test_landscape_table_block.py` | 14 tests; proved red four ways (below) |
+| the BPP body-furniture rule | `scripts/build_corpus.py` `BODY_FURNITURE` + `drop_body_furniture` | regenerating `bpp.md`: **57 → 32 diff lines, and every remaining line is whitespace** |
+
+### 12b.1 §8 requirement 3 is false as written, and the truth is what `TABLE_BANDS` was for
+
+Requirement 3 says *"each cell is a verbatim substring of `-table` output for its page"*. Measured
+2026-10-30 on p4: **no whole cell is contiguous in it.** `-table` renders row-*lines*, not cells — one
+output line carries the current line of every column at once:
+
+```text
+Farmers who are already producing    •  IFOAM PGS tool kit    …    Local PGS group determines the
+```
+
+So the Step 1 description is interrupted by two other columns' text. What is true, and what the
+requirement is reaching for, is **per printed line**: every line a cell carries is a contiguous run
+inside one line of the `-table` rendering, and a cell's lines appear on the page in order. That guard
+is now in `test_landscape_table_block.py`, and it was **proved red four ways**: `R500` → `R5OO` in the
+fee cell (4 tests fail), the seal label `Proud member of` → `Proud member for`, two Step 1 lines
+swapped, and a cell's lines reversed. The swap and the reversal are caught **only** by the order
+check — the word-presence test passes both, which is the Appendix 6a lesson repeating.
+
+The fixture's one declared join (`self-assessment`, hyphenated across a printed line break, with the
+continuation two interleaved rows later) is named in the test as data rather than cleaned out of the
+draft, so every other line stays literal.
+
+**Still not pinned, and it is step 3's job:** that two lines on the *same* printed row belong to the
+columns they are filed under. A transposition inside one row-line keeps its position, so it passes.
+
+### 12b.2 The generator is now a reviewable diff for the BPP — and it was corrupting the text
+
+Three things came out of making `bpp.md` regenerable, in descending order of seriousness:
+
+1. **`apply_review` was mangling the artefact's most important passage.** The footnote-2 entry was
+   `kind="move"`, and a move is not a substitution, so applying it deleted `must be preferably
+   composted` and printed `land available will not be allowed.` a second time at the foot of page 4.
+   Nothing caught it, because the traceability test compares `flat()` strings and `flat` joins lines —
+   a corruption that reintroduces the line above reads as a faithful move. Split into a lift and a
+   place (two edits, `MAX_EDITS` 7 → 8), and `apply_review` now preserves a replacement's own line
+   breaks so a moved paragraph keeps its shape.
+2. **Its multiplicity guard was dead.** The docstring promised `SystemExit` when an edit "matches more
+   than once"; the code called `subn(..., count=1)` and checked the *substituted* count, which is 1
+   whenever the pattern matches at all. The count is now taken before the substitution. Both fixed
+   red-first; `apply_review` had no test at all before this session.
+3. **The furniture is data, because inference was measured and it destroys SAOSO.** "A line printed
+   on N pages is furniture" — `General Principle` is on 26 pages of SAOSO, `Requirements:` on 25,
+   `South African specific` on 18, and all three are content. "A repeated block is furniture" —
+   SAOSO prints one poultry derogation verbatim on pages 45, 46 and 47. So `BODY_FURNITURE` names the
+   BPP's four `The Principle / Of X.` pairs and the filter keeps the block on the page that first
+   carries it. Same shape as `PAGE_LAYOUT_EXCLUSIONS` and `PAGE_LAYOUT_BANDS`.
+   Also here: private-use-area codepoints (U+F06E) are stripped — not quotable text, both shipped
+   artefacts carry none, and it is the character that kills `--stdout` on Windows
+   (`testing_hazards.md` §3.21); and a page whose only surviving line is blank no longer gets a page
+   marker (the BPP ended with `<!-- page: 13 printed: none -->` and nothing after it).
+
+**Residual, and deliberately not chased:** 32 diff lines for `bpp.md`, every one of them whitespace —
+the non-space character multiset and the sequence of non-blank lines are **identical**. Two causes,
+neither a generator defect: the reviewer removed blank lines before page markers (SAOSO's reviewer
+kept them, so a rule here would have to be per document), and the artefact keeps one leading space
+where it dropped a glyph. Chasing those would mean a per-document blank policy for no product gain.
+
+**What this session did not do:** no landscape artefact, no `TABLE_BANDS`, no front matter, no
+re-ingest, no `relink_evidence`. `fast.sh` **1393 passed / 1 skipped in 29 s** (warm; quote the range,
+`testing_hazards.md` §3.17).
+
+**The next act is unchanged and is step 2** — and one thing the draft now shows that it could not
+before: with p4–8 in printed order the parser opens **three false headings**, `## R500`, `## PGS SA.`
+and `## SAOSO`, because a fee cell and a seal caption are CAPS lines. The DoD already forbids them
+("no branch is `R500`"); they are the first thing the reviewer must remove, and their removal is what
+makes `ESTABLISHING A PGS GROUP` one branch of three rows.
+
+---
+
 ## Pre-Flight Checklist
 
 - [x] No `core/models.py` change, no new app — this is chunk *content*, not schema (**no migration**)
