@@ -26,7 +26,7 @@
 > **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
 > sit behind the same mechanism.
 >
-> **The tree is clean**, and the code is committed at `d37bd9f`; the documentation commit follows.
+> **The tree is clean**, and the code is committed at `d37bd9f`; the documentation and e2e commits follow it.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
@@ -35,8 +35,8 @@ the answer-coverage session, the budget-and-instrument session, the deployment s
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session
 and the landscape-artefact session
-**Repo state:** `main`, **9 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
-`d37bd9f` and the documentation commits follow it. On that tree: `scripts/fast.sh` green at **1434
+**Repo state:** `main`, **10 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
+`d37bd9f` and the documentation and e2e commits follow it. On that tree: `scripts/fast.sh` green at **1434
 passed / 1 skipped in 36.6 s** (warm) and `verify.sh` green at **1448 passed / 1 skipped in
 49.7 s** (`--create-db`, 49.7 s wall, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
@@ -51,7 +51,7 @@ same-locator-different-text / 0 no-longer-has**. The 30 are the pre-existing bpp
 and saoso still report `drift` on the dev box** because it was built from their PDFs, not from their
 artefacts. That is out of this slice and is the state `corpus_refresh --apply` exists to fix.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **9 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **10 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
 2026-10-30 — **and it does not have this session's landscape fix.** Its corpus is still the old
 PDF-built one (8 landscape chunks, six branches including `R500` and `PGS SA.`). A deploy pulls the
@@ -106,6 +106,9 @@ worse than no grid, the same rule `structure_for` already follows. A test edits 
   prose after it, the direct-route row, a prose branch with no grid, and the stale-corpus fallback.
 - `knowledge/tests/test_corpus_tables.py` (+3): `ArtefactGrid` columns/cells, alignment with prose
   around the row, and `None` on any disagreement.
+- `tests/e2e/test_reader_layout.py` (+2, browser): at 1280 px the grid wrapper does not scroll and
+  the Fee cell holds `R500`; at 390 px the same markup restacks, the page does not scroll sideways,
+  and the `Fee` label is on screen. The fit is a CSS question the Django client cannot answer.
 - `DESIGN.md` §7.13 records the rules: the table is the one place the 38 rem measure gives way; the
   first column is pinned; below 900 px the same markup restacks; empty cells disappear on the
   phone; page breaks are marked once.

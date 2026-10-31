@@ -199,3 +199,85 @@ def test_a_wrapped_clause_reads_and_selects_as_one_sentence(page, live_server, r
     assert measured["paragraphs"] == 2, (
         f"two printed clauses should be two paragraphs, got {measured['paragraphs']}"
     )
+
+
+# --- The landscape's five-column grid (D72.3, D76) --------------------------
+#
+# The fit is a CSS question, which is why it lives here and not in the gate: the Django client
+# can prove the table is in the markup, not that the fee is reachable at 1280 px or that a phone
+# does not get a horizontal scroll.
+
+LANDSCAPE_READER = "/documents/certification-landscape/read/?section=establishing-a-pgs-group"
+
+
+@pytest.fixture
+def landscape_corpus(db, monkeypatch):
+    """The reviewed landscape artefact, ingested, behind the published reader row."""
+    from pathlib import Path
+
+    from knowledge.ingest import ingest_standard
+    from knowledge.models import StandardSet
+    from knowledge.tests.page_fixtures import stub_ingest_extraction
+
+    root = Path(__file__).resolve().parents[2]
+    stub_ingest_extraction(monkeypatch)
+    corpus, _ = StandardSet.objects.get_or_create(
+        code="outeniqua", defaults={"label": "Outeniqua", "is_default": True}
+    )
+    ingest_standard(
+        pdf_path=root / "pgs_docs" / "PGS Certification landscape_Final.pdf",
+        standard_set=corpus,
+        doc_key="landscape",
+        embed=False,
+        corpus_path=root / "knowledge" / "corpus" / "landscape.md",
+    )
+
+
+def test_the_landscape_grid_fits_its_pane_on_a_desk(page, live_server, landscape_corpus):
+    """At 1280 px the passages pane holds the grid without a sideways scroll, and the fee is in it."""
+    page.set_viewport_size({"width": 1280, "height": 1400})
+    page.goto(live_server.url + LANDSCAPE_READER, wait_until="networkidle")
+
+    measured = page.evaluate(
+        r"""() => {
+            const wrap = document.querySelector('.reader__grid-wrap');
+            const grid = document.querySelector('.reader__grid');
+            const fee = document.querySelector('.reader__grid td[data-label="Fee"]');
+            if (!wrap || !grid || !fee) return null;
+            return {
+                wrapClient: wrap.clientWidth,
+                wrapScroll: wrap.scrollWidth,
+                feeText: fee.textContent,
+                rows: document.querySelectorAll('.reader__grid tbody tr').length,
+            };
+        }"""
+    )
+
+    assert measured, "the grid did not render"
+    assert measured["rows"] == 3, measured
+    assert "R500" in measured["feeText"], measured["feeText"][:120]
+    assert measured["wrapScroll"] <= measured["wrapClient"] + 1, (
+        f"the grid scrolls at 1280 px: {measured['wrapScroll']} > {measured['wrapClient']}"
+    )
+
+
+def test_the_landscape_grid_restacks_on_a_phone(phone_page, live_server, landscape_corpus):
+    """At 390 px the same markup is labelled blocks, and the page does not scroll sideways."""
+    phone_page.goto(live_server.url + LANDSCAPE_READER, wait_until="networkidle")
+
+    assert phone_page.locator(".reader__grid").count() == 1
+    assert phone_page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), (
+        "the page scrolls sideways on a phone"
+    )
+
+    fee = phone_page.locator('.reader__grid td[data-label="Fee"]').first
+    assert fee.is_visible()
+    assert "R500" in fee.inner_text()
+    # The column name is on screen (a pseudo-element), not only in the attribute.
+    label = phone_page.evaluate(
+        """() => {
+            const cell = document.querySelector('.reader__grid td[data-label="Fee"]');
+            return getComputedStyle(cell, '::before').content;
+        }"""
+    )
+    assert "Fee" in label, label

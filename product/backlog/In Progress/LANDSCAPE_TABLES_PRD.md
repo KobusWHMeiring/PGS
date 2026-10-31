@@ -831,7 +831,7 @@ choice is the product owner's: the artifact is the decision surface, not a ratif
 | the markup | `document_reader.html` | one `<table class="reader__grid">`, sticky `<th scope="row">`, `data-label` per cell, prose outside the grid |
 | the CSS | `reader.css` | full passages-pane width, 14 px, scroll + sticky, stacked below 900 px, no raw hex |
 | `DESIGN.md` | §7.13 | the component, its rules and the measured fit |
-| the guards | `core/tests/test_document_reader_grid.py` (12), `test_corpus_tables.py` (3) | five column names, fee in the grid, lead-in outside it, each row's anchor, the seals table, the fallback |
+| the guards | `core/tests/test_document_reader_grid.py` (12), `test_corpus_tables.py` (3), `tests/e2e/test_reader_layout.py` (+2 browser) | five column names, fee in the grid, lead-in outside it, each row's anchor, the seals table, the fallback; 1280 px no scroll, 390 px restack |
 
 ### 12e.1 §5.4's 323-character measurement was the page, not the row
 
