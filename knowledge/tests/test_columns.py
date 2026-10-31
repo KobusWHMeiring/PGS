@@ -110,7 +110,13 @@ PDFS = {
 #: (pdf 82-83) is excluded: its 4-column rows are already coherent on the raw page.
 EXPECTED_TRANSFORMED_PAGES = {
     "bpp": {3, 4, 5, 6, 7, 8, 9, 10},
-    "landscape": {2, 3, 4, 5, 6, 7, 8, 9},
+    # D72.7 (2026-10-29): pdf 4-8 are the certification landscape's five-column table pages and
+    # are excluded in `PAGE_LAYOUT_EXCLUSIONS`, so what the transform still changes is the prose
+    # around them — pdf 2 (the introduction), pdf 3 (the three certification routes) and pdf 9
+    # (the SAOSO route's closing pages). The exclusion and the reviewed rows ship in one commit:
+    # measured, the exclusion alone leaves the document at 8 chunks / 6 branches, still 1 of 5
+    # paper sentences quotable (`LANDSCAPE_TABLES_PRD` §5.7, §9 step 3).
+    "landscape": {2, 3, 9},
     # pdf 4 (§3.1 committee roles) and pdf 11 (§6.5) are excluded: both are 3-column
     # tables with two gutters, so a two-band split is column-major by construction. pdf 4
     # stopped being detected on 2026-10-27 only because the 66 bullets the extraction had

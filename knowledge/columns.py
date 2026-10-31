@@ -232,6 +232,47 @@ PAGE_LAYOUT_EXCLUSIONS: dict[str, dict[int, str]] = {
             "the organic claim is self- label or seal. | declared.` Measured 2026-10-19."
         ),
     },
+    # D72.7 (2026-10-29): the landscape's five table pages. One entry per page, because the
+    # gutters differ page to page — the same reason `PAGE_LAYOUT_BANDS` is per page. Measured
+    # 2026-10-30: with the exclusion alone the document is **still 8 chunks and 6 branches** and
+    # still 1 of 5 paper sentences quotable, so this restores the printed reading order and
+    # nothing more. That is deliberate: it ships in the same commit as the reviewed rows
+    # (step 2), and the rows are what make a cell quotable.
+    "landscape": {
+        4: (
+            "ESTABLISHING A PGS GROUP — the page the reader reported. Five columns, four "
+            "gutters ((32,40), (65,66), (99,100), (108,110)), so a two-band split is "
+            "column-major by construction: the fee cell's `Annual membership fee (paid` "
+            "lands on the same output line as `a surplus of organic produce and`, and the "
+            "resource column reads `•     PGS group`. Measured 2026-10-30."
+        ),
+        5: (
+            "ESTABLISHING A PGS GROUP (continued, Step 3) plus the first seal row. Five "
+            "gutters ((34,35), (36,38), (48,49), (64,66), (110,112)). The seal rows are "
+            "pictures in a cell, so de-columning interleaves their labels with the fee "
+            "column: `The use of the two seals is detailed … in which the seals are used "
+            "in their PGS … Recommended annual fe…`. Measured 2026-10-30."
+        ),
+        6: (
+            "PGS SEALS AND THEIR USE — the seal table itself (D72.1). Six gutters "
+            "((29,36), (40,43), (44,46), (47,49), (51,63)). A row here is a seal and its "
+            "printed label, so any column-major order puts the label under the wrong "
+            "seal: `the land or who are converting • 18 months before sowing …`. "
+            "Measured 2026-10-30."
+        ),
+        7: (
+            "SAOSO ORGANIC CERTIFICATION — ten gutters ((29,35), (60,68), (72,73), … "
+            "(99,127)), the most of any page in the four documents. The printed grid is "
+            "already the only readable form: `per its agreed procedures • Production and "
+            "Processing … The fee attached to thi…`. Measured 2026-10-30."
+        ),
+        8: (
+            "SAOSO ORGANIC CERTIFICATION (continued). Five gutters ((31,33), (41,42), "
+            "(44,45), (48,57), (97,99)); the licensing rows lose their own subject — "
+            "`chains. the farmer receives an annual audi…` is the tail of a cell whose "
+            "label is three columns away. Measured 2026-10-30."
+        ),
+    },
 }
 
 #: Per-page band overrides, measured. A band is data when the detector's *maximal* run

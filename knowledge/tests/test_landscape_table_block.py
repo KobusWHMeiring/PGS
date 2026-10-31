@@ -20,6 +20,7 @@ reviewed artefact first — a guard against a draft would only pin the draft.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -149,3 +150,83 @@ def test_every_cell_is_a_slice_of_the_section(index):
     for row in table.tables[0].rows:
         cell = row.cells[index]
         assert table.text[cell.start : cell.end] == cell.text
+
+
+def _printed_lines() -> list[str]:
+    """PDF 4 of the `-table` rendering, one entry per printed line, whitespace-normalised."""
+    return [" ".join(line.split()) for line in pages("landscape", "table")[3].splitlines()]
+
+
+#: The one join the draft declares (its own header names it). The page prints `… a self-` at the
+#: end of one column's line and `assessment form …` at the start of the same column's *next* line,
+#: two interleaved rows later — so a rejoinable word is not a run of any single printed line.
+#: Declared here with both halves rather than cleaned out of the fixture, so the guard stays
+#: literal for every other line and this exception has to be justified on the page.
+DECLARED_JOINS = {
+    "The group completes a self-assessment form (like a status": (
+        "The group completes a self-",
+        "assessment form (like a status",
+    ),
+}
+
+
+def _first_line_holding(wanted: str, printed: list[str], after: int) -> int | None:
+    """The first printed line *after* `after` that holds this run, or None.
+
+    `after` is why a short line that the page prints several times (`PGS group.`) does not break
+    the order check: the cell wants the next one, not the earliest.
+    """
+    for index in range(after + 1, len(printed)):
+        if wanted in printed[index]:
+            return index
+    halves = DECLARED_JOINS.get(wanted)
+    if halves:
+        return _first_line_holding(halves[0], printed, after)
+    return None
+
+
+def test_every_cell_line_is_a_verbatim_run_of_the_printed_table():
+    """§8 requirement 3, now that the `-table` page fixture exists — and **not** as it is written.
+
+    The requirement says *"each cell is a verbatim substring of `-table` output"*. Measured
+    2026-10-30: that is false for this table, and false for a reason that is not a defect.
+    `-table` renders row-lines, not cells — one output line carries the current line of every
+    column at once — so the Step 1 description runs
+
+        Farmers who are already producing    •  IFOAM PGS tool kit    …   Local PGS group determines the
+
+    and no whole cell is contiguous in it. What *is* true, and what the requirement is really
+    after, is **per printed line**: every line a cell carries is a contiguous run inside one
+    line of the `-table` rendering. That is the check that catches a swapped pairing, and it is
+    the check `TABLE_BANDS` tightens to "its own column range on its own line" at step 3.
+
+    Proved red 2026-10-30 four ways: `R500` → `R5OO` in the fee cell; the seal label
+    `Proud member of` → `Proud member for`; two Step 1 lines swapped, which the word-presence
+    test above still passes; and a row's lines reversed. The swap is caught by the **order**
+    check — a reordered cell is a cell the reviewer misread — and that check is why the indices
+    are compared rather than merely resolved.
+
+    What this still does *not* pin, and `TABLE_BANDS` will at step 3: that two lines sitting on
+    the *same* printed row belong to the columns they are filed under. A transposition inside one
+    row-line keeps its index, so it passes here.
+    """
+    page = _printed_lines()
+    checked = 0
+    for table in section().tables:
+        for row in table.rows:
+            for cell in row.cells:
+                cursor = -1
+                for line in cell.text.splitlines():
+                    if not line.strip():
+                        continue
+                    wanted = " ".join(line.split())
+                    found = _first_line_holding(wanted, page, cursor)
+                    assert found is not None, (
+                        f"this line is not a run of any printed line on PDF 4: {wanted[:70]!r}"
+                    )
+                    assert found > cursor, (
+                        f"printed out of order, {found} after {cursor}: {wanted[:70]!r}"
+                    )
+                    cursor = found
+                    checked += 1
+    assert checked > 40, "two rows x five columns of prose — a sampled handful proves nothing"

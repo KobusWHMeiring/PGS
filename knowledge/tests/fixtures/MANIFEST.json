@@ -315,6 +315,16 @@
       "sha256": "3fb5ac180e62eedea30c96d3881dfbef33320649c19f855a9f1d5e17edce0c57",
       "source": "pgs_docs/PGS Certification landscape_Final.pdf"
     },
+    "landscape.table": {
+      "bytes": 30494,
+      "extractor": "pdftotext version 4.00",
+      "file": "knowledge/tests/fixtures/pages/landscape.table.txt",
+      "mode": "table",
+      "pages": 10,
+      "pdf_sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+      "sha256": "d75e70beaeddae41fdbe3044c0797634051fa57ee42980e6abb5d43eaf787dc9",
+      "source": "pgs_docs/PGS Certification landscape_Final.pdf"
+    },
     "opp.layout": {
       "bytes": 34010,
       "extractor": "pdftotext version 4.00",

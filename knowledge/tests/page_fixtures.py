@@ -30,8 +30,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures"
 MANIFEST = json.loads((FIXTURE_DIR / "MANIFEST.json").read_text(encoding="utf-8"))
 
-#: What each fixture may be read as. `table` is SAOSO-only: it exists to verify Appendix 2's
-#: reviewed cells against the printed page, and no other document has a table under test.
+#: What each fixture may be read as. `table` exists for SAOSO (Appendix 2's reviewed cells) and,
+#: since 2026-10-30, for the landscape (its five-column table pages, `LANDSCAPE_TABLES_PRD` §8
+#: requirement 3). Asking for a mode a document has not committed fails loudly rather than
+#: returning an empty page.
 MODES = {"layout": "layout", "raw": "raw", "table": "table"}
 
 

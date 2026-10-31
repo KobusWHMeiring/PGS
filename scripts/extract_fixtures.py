@@ -102,11 +102,15 @@ DOC_KEYS = {SAOSO: "saoso", OPP: "opp", BPP: "bpp", LANDSCAPE: "landscape"}
 #: themselves, so committing the pages removes the extractor from the gate without
 #: touching a single assertion (D57).
 #:
-#: `table` exists only for SAOSO: `-table` is an **Xpdf-4-only flag** (poppler exits 99 with
-#: a usage message), and Appendix 2's cells are verified against it. Committing that output
-#: is what lets the gate run on a machine whose extractor cannot produce it.
+#: `table` exists for SAOSO and, since 2026-10-30, for the landscape: `-table` is an
+#: **Xpdf-4-only flag** (poppler exits 99 with a usage message), and Appendix 2's cells are
+#: verified against it. The landscape needs it for the same reason one layer down —
+#: `LANDSCAPE_TABLES_PRD` §8 requires **every reviewed cell to be a verbatim substring of
+#: `-table` output for its page**, and a word-presence check on `-layout` was measured to pass
+#: on a broken pairing (Appendix 6a). Committing that output is what lets the gate run on a
+#: machine whose extractor cannot produce it.
 PAGE_MODES = {SAOSO: ("layout", "raw", "table"), OPP: ("layout", "raw"),
-              BPP: ("layout", "raw"), LANDSCAPE: ("layout", "raw")}
+              BPP: ("layout", "raw"), LANDSCAPE: ("layout", "raw", "table")}
 
 
 def extractor_banner() -> str:
