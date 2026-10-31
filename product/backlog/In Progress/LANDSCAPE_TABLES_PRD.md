@@ -852,16 +852,14 @@ should go full-bleed below the tree; if the reading measure must be inviolable, 
 
 ### 12e.3 What is still open
 
-- **D77 — the display model (new, 2026-10-31).** The product owner reframed the question: not
-  “how do we extract tables” but “now that they are in markdown, how do we display them”. The
-  content answers part of it: **two of the three tables are processes** (Step 1 → 2 → 3), not
-  records, and the third is a comparison. `product/design/d76b_reader_table_examples.html` has six
-  live examples (a **resizable spreadsheet** with frozen header/first column and a compact toggle;
-  the spreadsheet with a process spine; a **process stepper**; accordion cards; a per-table
-  composition) and recommends **E**: a `layout: process | grid` field on the reviewed block —
-  process steppers for the establishing and SAOSO tables, a resizable spreadsheet for the seals
-  comparison — with one 13.5&nbsp;px type size for all five columns. **The current reader (fixed
-  grid) stays until the owner picks;** the recommendation is not a decision.
+- **D77 — the display model (new, 2026-10-31).** The owner chose **E**: a `layout: process | grid`
+  field on the reviewed block, process for the establishing and SAOSO tables, a resizable
+  spreadsheet for the seals comparison. **The process shape is the open design:**
+  `product/design/d76c_process_flow_variants.html` iterates C four ways — a **vertical timeline**
+  (recommended: full pane width per step, the merged Fee band between Steps 2 and 3, a dashed fork
+  for SAOSO, no JS), a wizard, the refined horizontal cards, and a minimal checklist. **C1 is the
+  recommendation, not a decision.** The current reader is the fixed grid from §12e; it stays until
+  the owner picks the process shape.
 - **D76's confirmation** — the fit artifact is still the surface for A–D; D77 revises it.
 - **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. A corpus
   guard, not a reader feature.

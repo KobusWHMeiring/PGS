@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<!-- DESIGN EXAMPLES (not a production template) | Outeniqua PGS — the process flow, iterated
+     Companion to product/design/d76b_reader_table_examples.html and LANDSCAPE_TABLES_PRD.md.
+     D77 is settled: a layout per table (process for Establishing/SAOSO, spreadsheet for the seals
+     comparison). This page decides the **process shape**. Self-contained: no network, no CDN.
+     The content is the real reviewed text from knowledge/corpus/landscape.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — The process flow, four iterations</title>
+<style>
+  :root {
+    --bg:#f4f6f2; --surface:#fff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+    --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+    --text:#1c2620; --muted:#66756b; --warn:#8a5a1c; --warn-soft:#f7efe1;
+    --stop:#8a2f2f; --stop-soft:#f9ecec; --cream:#fdfbf7; --sand:#e6dece; --ochre:#b87b2e;
+    --radius-sm:9px; --radius-lg:14px; --radius-xl:20px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:0 2px 10px rgba(28,38,32,.10);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --serif:Georgia,"Times New Roman",serif;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1020px; margin:0 auto; padding:0 20px 180px; }
+  p, li { font-size:14.5px; }
+  code, kbd { font-family:var(--mono); font-size:12.5px; }
+  p code, li code { background:var(--surface-low); padding:1px 5px; border-radius:5px; }
+  a { color:var(--accent); }
+
+  header.hero { background:linear-gradient(160deg,var(--accent) 0%,#274936 100%); color:#fff; padding:44px 20px 38px; margin-bottom:26px; }
+  header.hero .inner { max-width:1020px; margin:0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 12px; font-size:30px; line-height:1.18; letter-spacing:-.01em; }
+  header.hero .question { margin:0; max-width:80ch; font-size:16px; opacity:.95; }
+  header.hero .question b { font-weight:650; }
+  header.hero .meta { margin-top:18px; font-size:13px; opacity:.82; display:flex; flex-wrap:wrap; gap:8px 20px; }
+
+  .panel { background:var(--surface); border-radius:var(--radius-xl); padding:20px 24px; box-shadow:var(--shadow); margin-bottom:24px; }
+  .panel h2 { margin:0 0 8px; font-size:17px; }
+  .panel > p:last-child { margin-bottom:0; }
+  .section-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:40px 0 12px; }
+  .section-head h2 { margin:0; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+  .section-head .rule { flex:1; height:1px; background:var(--surface-high); min-width:40px; }
+  .section-note { font-size:14px; color:var(--muted); margin:-4px 0 16px; max-width:80ch; }
+
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--surface-high); vertical-align:top; }
+  th { font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:12px 0; }
+  .scroll table { min-width:560px; }
+
+  .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:2px 8px; border-radius:999px; vertical-align:1px; }
+  .tag--rec { background:#f3e7cf; color:#7a4f12; }
+  .tag--reviewed { background:#e8eef9; color:#2f4f7a; }
+  .tag--checked { background:var(--accent-soft); color:var(--accent); }
+  .tag--warn { background:var(--warn-soft); color:var(--warn); }
+
+  .callout { border-left:3px solid var(--accent-line); background:var(--accent-soft); padding:12px 16px; border-radius:0 var(--radius-sm) var(--radius-sm) 0; margin:14px 0; }
+  .callout--warn { border-left-color:#d9b37a; background:var(--warn-soft); }
+  .callout p:first-child { margin-top:0; }
+  .callout p:last-child { margin-bottom:0; }
+
+  .example { background:var(--surface); border-radius:var(--radius-xl); box-shadow:var(--shadow); margin:0 0 24px; overflow:hidden; }
+  .example-head { display:flex; gap:12px; align-items:flex-start; padding:18px 22px 0; }
+  .example-letter { flex:0 0 34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:15px; }
+  .example-head h3 { margin:0 0 3px; font-size:16px; }
+  .example-head .one-line { margin:0; color:var(--muted); font-size:13.5px; }
+  .example-body { padding:10px 22px 18px 68px; }
+  @media (max-width:640px) { .example-body { padding-left:22px; } }
+
+  .pros-cons { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+  @media (max-width:720px) { .pros-cons { grid-template-columns:1fr; } }
+  .pros-cons h4 { margin:0 0 5px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .pros-cons .pro { border-top:3px solid var(--accent-line); padding-top:8px; }
+  .pros-cons .con { border-top:3px solid #d6c6a8; padding-top:8px; }
+  .pros-cons ul { margin:0; padding-left:1.1em; }
+  .pros-cons li { font-size:13.5px; margin-bottom:3px; }
+
+  .note { font-size:12.5px; color:var(--muted); margin:8px 0 0; }
+  .note strong { color:var(--text); }
+  .chip { display:inline-block; border:1px dashed var(--sand); border-radius:999px; padding:3px 10px; font-size:12px; color:var(--muted); font-style:italic; }
+  .meta-page { font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.03em; }
+
+  /* ---------- C1: vertical timeline ---------- */
+  .tl { position:relative; }
+  .tl::before { content:""; position:absolute; left:18px; top:20px; bottom:26px; width:2px; background:var(--sand); }
+  .tl-step { position:relative; padding:0 0 24px 54px; }
+  .tl-step:last-child { padding-bottom:0; }
+  .tl-marker { position:absolute; left:0; top:0; width:38px; height:38px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-weight:700; font-size:15px; }
+  .tl-step h4 { margin:5px 0 8px; font-size:15px; line-height:1.3; }
+  .tl-step h4 .tl-title { font-weight:400; color:var(--muted); }
+  .tl-step h4 .meta-page { margin-left:8px; }
+  .tl-body > p { margin:0 0 .65em; font-size:13.5px; }
+  .tl-facets { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 18px; margin-top:10px; padding-top:10px; border-top:1px solid var(--sand); }
+  .tl-facets h5 { margin:0 0 4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .tl-facets ul { margin:0; padding-left:1.05em; }
+  .tl-facets li { font-size:13px; margin:0 0 .2em; }
+  .tl-facets p { margin:0 0 .4em; font-size:13px; }
+  .tl-fee { margin:0 0 24px 54px; background:var(--accent-soft); border-radius:var(--radius-sm); padding:12px 14px; }
+  .tl-fee h5 { margin:0 0 5px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+  .tl-fee p { margin:0 0 .4em; font-size:13px; }
+  .tl-fee p:last-child { margin-bottom:0; }
+  @media (max-width:640px) {
+    .tl::before { left:14px; }
+    .tl-step { padding-left:44px; }
+    .tl-marker { width:30px; height:30px; font-size:13px; }
+    .tl-fee { margin-left:44px; }
+    .tl-facets { grid-template-columns:1fr; }
+  }
+
+  /* ---------- C2: stepper + detail (wizard) ---------- */
+  .wizard { border:1px solid var(--sand); border-radius:var(--radius-sm); overflow:hidden; }
+  .wizard-tabs { display:flex; background:var(--surface-low); }
+  .wizard-tabs button { flex:1; padding:12px 10px; font:inherit; font-size:13px; line-height:1.3; border:0; background:transparent; color:var(--text); cursor:pointer; text-align:left; min-height:52px; }
+  .wizard-tabs button b { display:block; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .wizard-tabs button[aria-selected="true"] { background:#fff; box-shadow:inset 0 -3px 0 var(--accent); }
+  .wizard-tabs button[aria-selected="true"] b { color:var(--accent); }
+  .wizard-panel { padding:16px; }
+  .wizard-panel h4 { margin:0 0 6px; font-size:15px; }
+  .wizard-panel > p { margin:0 0 .65em; font-size:13.5px; }
+  .wizard-facets { display:grid; grid-template-columns:1fr 1fr; gap:12px 18px; margin-top:12px; padding-top:10px; border-top:1px solid var(--sand); }
+  .wizard-facets h5 { margin:0 0 4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .wizard-facets ul { margin:0; padding-left:1.05em; }
+  .wizard-facets li, .wizard-facets p { font-size:13px; }
+  .wizard-fee { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px 16px; background:var(--accent-soft); border-top:1px solid var(--sand); }
+  .wizard-fee h5 { margin:0 0 4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+  .wizard-fee p { margin:0 0 .3em; font-size:12.5px; }
+  @media (max-width:720px) { .wizard-tabs { flex-direction:column; } .wizard-facets, .wizard-fee { grid-template-columns:1fr; } }
+
+  /* ---------- C3: horizontal cards, refined ---------- */
+  .cards3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+  .card3 { background:var(--cream); border:1px solid var(--sand); border-radius:var(--radius-sm); padding:14px; }
+  .card3 h4 { margin:0 0 6px; font-size:14px; line-height:1.3; }
+  .card3 h4 .n { color:var(--accent); font-weight:700; }
+  .card3 > p { margin:0 0 .6em; font-size:13px; }
+  .card3 .facet { border-top:1px solid var(--sand); margin-top:10px; padding-top:8px; }
+  .card3 .facet h5 { margin:0 0 3px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .card3 .facet ul { margin:0; padding-left:1.05em; }
+  .card3 .facet li { font-size:12.5px; margin:0 0 .2em; }
+  .card3 .facet p { margin:0 0 .4em; font-size:12.5px; }
+  .cards3-fees { display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-top:12px; }
+  .cards3-fees .fee-box { background:var(--accent-soft); border-radius:var(--radius-sm); padding:12px 14px; }
+  .cards3-fees h5 { margin:0 0 4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
+  .cards3-fees p { margin:0 0 .35em; font-size:12.5px; }
+  @media (max-width:860px) { .cards3 { grid-template-columns:1fr; } .cards3-fees { grid-template-columns:1fr; } }
+
+  /* ---------- C5: minimal checklist ---------- */
+  .check-step { display:grid; grid-template-columns:2.5rem minmax(0,1fr); gap:14px; padding:0 0 22px; }
+  .check-step:last-child { padding-bottom:0; }
+  .check-num { font-family:var(--serif); font-size:30px; line-height:1; color:var(--accent); }
+  .check-step h4 { margin:0 0 5px; font-size:14px; }
+  .check-step > div > p { margin:0 0 .55em; font-size:13.5px; }
+  .check-facets { margin:8px 0 0; }
+  .check-facets p { margin:0 0 .35em; font-size:13px; }
+  .check-facets b { color:var(--muted); font-size:11px; letter-spacing:.05em; text-transform:uppercase; display:inline-block; min-width:7.5rem; }
+  .check-fee { margin:10px 0 0; padding:9px 12px; background:var(--accent-soft); border-radius:var(--radius-sm); font-size:13px; }
+  .check-fee b { color:var(--accent); }
+
+  /* ---------- C4: branch ---------- */
+  .fork { position:relative; margin:6px 0 0 54px; padding:14px 16px; border:1px dashed var(--accent-line); border-radius:var(--radius-sm); background:var(--cream); }
+  .fork::before { content:""; position:absolute; left:-36px; top:50%; width:30px; border-top:2px dashed var(--accent-line); }
+  .fork-label { margin:0 0 8px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .fork h4 { margin:0 0 6px; font-size:14px; }
+  .fork p { margin:0 0 .5em; font-size:13px; }
+  .fork .facet { border-top:1px solid var(--sand); margin-top:8px; padding-top:8px; }
+  .fork .facet h5 { margin:0 0 3px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  @media (max-width:640px) { .fork { margin-left:44px; } .fork::before { left:-30px; width:24px; } }
+
+  .matrix td, .matrix th { font-size:13px; }
+  .matrix .yes { color:var(--accent); font-weight:700; }
+  .matrix .no { color:var(--stop); font-weight:700; }
+  .matrix .part { color:var(--warn); font-weight:700; }
+
+  .rec { border:2px solid var(--accent); border-radius:var(--radius-xl); background:var(--surface); box-shadow:var(--shadow); padding:22px 24px; margin-bottom:24px; }
+  .rec h3 { margin:0 0 8px; font-size:19px; }
+  .rec .lede { font-size:15px; }
+
+  .choice { border:1px solid var(--surface-high); border-radius:var(--radius-lg); padding:14px 16px; margin-bottom:10px; background:var(--surface); }
+  .choice label { display:flex; gap:12px; align-items:flex-start; cursor:pointer; }
+  .choice input { margin-top:4px; flex:0 0 auto; }
+  .choice .title { font-weight:700; }
+  .choice .why { color:var(--muted); font-size:13px; display:block; }
+  textarea { width:100%; min-height:90px; font:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--surface-high); border-radius:var(--radius-sm); background:var(--cream); color:var(--text); resize:vertical; }
+  .export-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  button.btn { font:inherit; font-size:13.5px; font-weight:700; padding:10px 16px; border-radius:999px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; min-height:44px; }
+  button.btn--ghost { background:transparent; color:var(--accent); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline:3px solid var(--ochre); outline-offset:2px; }
+  #out { width:100%; min-height:180px; font-family:var(--mono); font-size:12.5px; margin-top:12px; }
+
+  .sticky { position:fixed; left:0; right:0; bottom:0; background:rgba(28,38,32,.94); color:#fff; padding:10px 16px; display:flex; gap:14px; align-items:center; justify-content:center; box-shadow:var(--shadow-sticky); z-index:10; }
+  .sticky .saved { font-size:12.5px; opacity:.85; }
+  .sticky button { font:inherit; font-size:13px; font-weight:700; padding:9px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.5); background:transparent; color:#fff; cursor:pointer; min-height:44px; }
+
+  @media print {
+    body { background:#fff; }
+    .sticky, .export-row, #out, .choice { display:none !important; }
+    .panel, .example, .rec { box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
+    header.hero { background:#274936 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; design examples &middot; D77, the process shape</p>
+    <h1>The process flow, four iterations</h1>
+    <p class="question">
+      <b>E is chosen:</b> a layout per table &mdash; a process flow for <em>Establishing a PGS group</em>
+      and <em>SAOSO organic certification</em>, a spreadsheet for the seals comparison. This page is
+      only about the process shape. C was the first attempt; here it is with its narrow columns
+      widened, its fee put back where the paper puts it, its invented titles marked, and the SAOSO
+      branch shown. Pick the one that reads best.
+    </p>
+    <p class="meta">
+      <span>Companion to <code>d76b_reader_table_examples.html</code></span>
+      <span>Real Step 1/2/3 text</span>
+      <span>Self-contained &mdash; no network</span>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>How to read this</h2>
+    <p>Four shapes for the same three steps. Each is the real reviewed text, so the difference is
+      the layout. Part 1 is what C got right and wrong; Parts 2&ndash;5 are the iterations; Part 6 is
+      the SAOSO branch, which is the test the establishing table cannot give; Part 7 recommends.</p>
+    <p><b>One thing to decide while you read:</b> the short step titles (<em>Get together</em>,
+      <em>Agree and establish</em>, <em>Visit and certify</em>) are <span class="tag tag--reviewed">reviewer-added</span>
+      &mdash; the paper prints only <code>Step 1</code>, <code>Step 2</code>, <code>Step 3</code>.
+      They are useful for scanning, but they are data a person must write and defend. Each example
+      works without them; the titles are shown so you can judge whether they earn their place.</p>
+  </div>
+
+  <!-- ============================ PART 1 ============================ -->
+  <div class="section-head"><h2>Part 1 &mdash; What C got right, and what it got wrong</h2><div class="rule"></div></div>
+  <div class="panel">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>C&rsquo;s choice</th><th>Verdict</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>A numbered step, a connector, a card</td><td class="yes">Keep</td><td>The sequence is the content; the number and the line are what make it a flow rather than a grid.</td></tr>
+          <tr><td>The four other columns become facets of the step</td><td class="yes">Keep</td><td>Resources, seals and fee are properties of a step, not independent variables.</td></tr>
+          <tr><td>Three equal columns at the 52.5&nbsp;rem pane</td><td class="no">Change</td><td>Each card is ~16&nbsp;rem (~30 characters), so the 400-character Step 2 body becomes a 14-line narrow column. The pane has width; C spends it on three gutters.</td></tr>
+          <tr><td>The fee band below all three cards</td><td class="part">Change</td><td>The merged Fee cell belongs to Steps 1&ndash;2. Below Step 3 it is detached from the steps it qualifies. It should sit *between* Step 2 and Step 3.</td></tr>
+          <tr><td>The invented titles, unlabelled</td><td class="no">Change</td><td>They read as the paper&rsquo;s words. They are a review decision, so they must be marked (and stored, if kept).</td></tr>
+          <tr><td>Only the establishing table</td><td class="no">Missing</td><td>SAOSO has a <b>branch</b> (the direct-certification route). The shape has to survive a fork, or it is not the process layout, it is a three-card trick.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================ PART 2 ============================ -->
+  <div class="section-head"><h2>Part 2 &mdash; C1: the vertical timeline</h2><div class="rule"></div></div>
+  <p class="section-note">The same connector, turned vertical, with the full pane width for each step.
+    The fee sits between Step 2 and Step 3, where the paper's merged cell starts.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">C1</div>
+      <div>
+        <h3>Vertical timeline &mdash; the document shape</h3>
+        <p class="one-line">A rail on the left, one full-width step per block, the facets in a two-column grid.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="tl">
+        <section class="tl-step">
+          <div class="tl-marker">1</div>
+          <div class="tl-body">
+            <h4>Step 1 <span class="tl-title">&middot; Get together</span> <span class="meta-page">p. 4</span></h4>
+            <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+            <div class="tl-facets">
+              <div><h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></div>
+              <div><h5>Use of seals</h5><p style="color:var(--muted)">The paper is silent on this step.</p></div>
+              <div><h5>Seals</h5><span class="chip">none yet</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tl-step">
+          <div class="tl-marker">2</div>
+          <div class="tl-body">
+            <h4>Step 2 <span class="tl-title">&middot; Agree and establish</span> <span class="meta-page">p. 4</span></h4>
+            <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed.</p>
+            <p>The members sign pledges and formally establish the PGS group at a general meeting.</p>
+            <p>The group completes a self-assessment form (like a status report), shares the required information with PGS SA and pays an annual membership fee.</p>
+            <div class="tl-facets">
+              <div><h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles based on organic standards &ndash; (SAOSO standard or equivalent)</li></ul></div>
+              <div><h5>Use of seals</h5><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo. Groups may also create their own local logo and use the &ldquo;member of PGS SA&rdquo; logo on their communication and certificates.</p><p>Groups that do not wish to design their own logo may make use of a PGS SA logo customized to the name of their PGS group.</p></div>
+              <div><h5>Seals</h5><span class="chip">Proud member of</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="tl-fee">
+          <h5>Fee &mdash; joining (Steps 1&ndash;2, one printed cell)</h5>
+          <p>The local PGS group determines the membership fee for farmers/consumers/traders that are part of the group.</p>
+          <p><b>Annual membership fee (paid by the group to PGS SA): R500</b> &middot; <b>Once-off customisation of logo, seals and certificates: R1&nbsp;000</b>.</p>
+        </div>
+
+        <section class="tl-step">
+          <div class="tl-marker">3</div>
+          <div class="tl-body">
+            <h4>Step 3 <span class="tl-title">&middot; Visit and certify</span> <span class="meta-page">p. 5</span></h4>
+            <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed alongside.</p>
+            <div class="tl-facets">
+              <div><h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate granted to approved farms, which lists all the products and displays the relevant seal</li></ul></div>
+              <div><h5>Use of seals</h5><p>These two seals were developed by PGS SA in consultation with PGS groups. Groups may also create their own seals. PGS groups are custodians of the manner in which the seals are used. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submitted to PGS SA.</p><p>PGS SA is not responsible for monitoring the use of these seals.</p></div>
+              <div><h5>Seals</h5><span class="chip">two seals (picture not stored)</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="tl-fee">
+          <h5>Fee &mdash; certification (Step 3)</h5>
+          <p><b>Recommended annual fee for the use of stickers (paid by individual farmers): R350</b>, divided between PGS SA (30%) and PGS groups (70%). Printing of seals is at own cost.</p>
+        </div>
+      </div>
+      <p class="note"><strong>What it fixes:</strong> the step body gets the pane&rsquo;s width (~90
+        characters per line, not 30), the fee sits where the merged cell sits, and the phone shape is
+        already vertical &mdash; no re-layout. <strong>What it costs:</strong> it is tall (about
+        1.5 screens on a desktop, 2.5 on a phone), and comparing Step 1&rsquo;s resources with Step
+        3&rsquo;s is still a scroll.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Reads like the document: a step, its facets, the next step.</li><li>The fee is in reading order, not in a band after the last step.</li><li>Works on the phone with no second layout.</li><li>The rail is one CSS pseudo-element.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Tall; three steps is a long scroll.</li><li>Lateral comparison is still weak.</li><li>The connector is less visible than in C&rsquo;s horizontal cards.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 3 ============================ -->
+  <div class="section-head"><h2>Part 3 &mdash; C2: the stepper with a detail pane</h2><div class="rule"></div></div>
+  <p class="section-note">Compact: one step at a time, a persistent fee strip, no long scroll. The
+    cost is that the reader has to click to see the next step.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">C2</div>
+      <div>
+        <h3>Stepper + detail &mdash; the wizard</h3>
+        <p class="one-line">Three tabs, one panel, the fee always visible. The phone shape is the same.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="wizard" data-wizard>
+        <div class="wizard-tabs" role="tablist" aria-label="Establishing a PGS group: steps">
+          <button type="button" role="tab" aria-selected="true" data-tab="0"><b>Step 1 &middot; p. 4</b>Get together</button>
+          <button type="button" role="tab" aria-selected="false" data-tab="1"><b>Step 2 &middot; p. 4</b>Agree and establish</button>
+          <button type="button" role="tab" aria-selected="false" data-tab="2"><b>Step 3 &middot; p. 5</b>Visit and certify</button>
+        </div>
+
+        <div class="wizard-panel" data-panel="0">
+          <h4>Step 1 &middot; Get together</h4>
+          <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+          <div class="wizard-facets">
+            <div><h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></div>
+            <div><h5>Use of seals / seals</h5><p style="color:var(--muted)">The paper is silent on this step.</p></div>
+          </div>
+        </div>
+
+        <div class="wizard-panel" data-panel="1" hidden>
+          <h4>Step 2 &middot; Agree and establish</h4>
+          <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed.</p>
+          <p>The members sign pledges and formally establish the PGS group at a general meeting.</p>
+          <p>The group completes a self-assessment form (like a status report), shares the required information with PGS SA and pays an annual membership fee.</p>
+          <div class="wizard-facets">
+            <div><h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles &ndash; (SAOSO or equivalent)</li></ul></div>
+            <div><h5>Use of seals</h5><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo. Groups may also create their own local logo.</p><h5 style="margin-top:8px">Seals</h5><span class="chip">Proud member of</span></div>
+          </div>
+        </div>
+
+        <div class="wizard-panel" data-panel="2" hidden>
+          <h4>Step 3 &middot; Visit and certify</h4>
+          <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed alongside.</p>
+          <div class="wizard-facets">
+            <div><h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></div>
+            <div><h5>Use of seals</h5><p>These two seals were developed by PGS SA in consultation with PGS groups. PGS groups are custodians of the manner in which the seals are used. PGS SA is not responsible for monitoring the use of these seals.</p><h5 style="margin-top:8px">Seals</h5><span class="chip">two seals (picture not stored)</span></div>
+          </div>
+        </div>
+
+        <div class="wizard-fee">
+          <div><h5>Joining (Steps 1&ndash;2)</h5><p><b>R500</b> annual membership &middot; <b>R1&nbsp;000</b> once-off customisation.</p></div>
+          <div><h5>Certification (Step 3)</h5><p><b>R350</b> recommended annual sticker fee (30% PGS SA / 70% group).</p></div>
+        </div>
+      </div>
+      <p class="note"><strong>What it fixes:</strong> the fee is always visible, the page is short, and
+        the phone gets the same panel. <strong>What it costs:</strong> the reader cannot see Step 3
+        while reading Step 1; a citation to Step 1 lands on a tab that may be closed. And the fee
+        strip repeats the amounts outside their qualifying sentence &mdash; a claim-discipline cost
+        D72.2 warns about.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Compact; the fee never leaves the screen.</li><li>One panel, full pane width.</li><li>The step bar is a natural phone control.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Hides two-thirds of the process; comparison is impossible.</li><li>Needs JS + URL state so a citation opens the right step.</li><li>The fee strip lifts amounts out of their conditions &mdash; the very thing D72.2 refused.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 4 ============================ -->
+  <div class="section-head"><h2>Part 4 &mdash; C3: the horizontal cards, refined</h2><div class="rule"></div></div>
+  <p class="section-note">C&rsquo;s shape, fixed: the cards keep three columns but the fee is a band
+    after Step 2 (spanning the first two columns) and the Step 3 fee sits under the third.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">C3</div>
+      <div>
+        <h3>Horizontal cards, refined</h3>
+        <p class="one-line">Keep C&rsquo;s cards; tie the joining fee to Steps 1&ndash;2, and the certification fee to Step 3.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="cards3">
+        <div class="card3">
+          <h4><span class="n">Step 1</span> &middot; Get together</h4>
+          <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></div>
+          <div class="facet"><h5>Use of seals</h5><p style="color:var(--muted)">Silent on this step.</p></div>
+        </div>
+        <div class="card3">
+          <h4><span class="n">Step 2</span> &middot; Agree and establish</h4>
+          <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles &ndash; (SAOSO or equivalent)</li></ul></div>
+          <div class="facet"><h5>Use of seals</h5><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p></div>
+          <div class="facet"><h5>Seals</h5><span class="chip">Proud member of</span></div>
+        </div>
+        <div class="card3">
+          <h4><span class="n">Step 3</span> &middot; Visit and certify</h4>
+          <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></div>
+          <div class="facet"><h5>Use of seals</h5><p>These two seals were developed by PGS SA in consultation with PGS groups. PGS groups are custodians of the manner in which the seals are used.</p></div>
+        </div>
+      </div>
+      <div class="cards3-fees">
+        <div class="fee-box"><h5>Fee &mdash; joining (Steps 1&ndash;2)</h5><p>The local group determines the membership fee; <b>annual membership R500</b> and <b>once-off customisation R1&nbsp;000</b> (paid to PGS SA).</p></div>
+        <div class="fee-box"><h5>Fee &mdash; certification (Step 3)</h5><p><b>Recommended annual sticker fee R350</b> (30% PGS SA / 70% group). Printing at own cost.</p></div>
+      </div>
+      <p class="note"><strong>What it fixes:</strong> the two fee boxes now sit under the steps they
+        qualify, and the cards are a little wider (the pane is still split three ways, so the body is
+        still ~30 characters per line). On a phone the fees stack after Step 3, which loses the
+        ordering again &mdash; the cost of a horizontal shape.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Closest to C; little new CSS.</li><li>The fee is tied to its steps on a desktop.</li><li>The horizontal reading of three steps is immediate.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>The 30-character column is still the main cost.</li><li>On a phone the fee order is wrong again (after Step 3).</li><li>The cards are unequal heights; the third has less to say.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 5 ============================ -->
+  <div class="section-head"><h2>Part 5 &mdash; C5: the minimal checklist</h2><div class="rule"></div></div>
+  <p class="section-note">The cheapest shape: no cards, no connector art, a numbered margin and a
+    definition list. The most document-like and the least app-like.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">C5</div>
+      <div>
+        <h3>Checklist &mdash; the step as a section</h3>
+        <p class="one-line">A large numeral in the margin, the step body, the facets as labelled lines, the fee inline.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="check-step">
+        <div class="check-num">1</div>
+        <div>
+          <h4>Step 1 &middot; Get together <span class="meta-page">p. 4</span></h4>
+          <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+          <div class="check-facets">
+            <p><b>Resources</b> IFOAM PGS tool kit; PGS SA: How to set up a PGS group.</p>
+            <p><b>Use of seals</b> The paper is silent on this step.</p>
+            <p><b>Seals</b> none yet.</p>
+          </div>
+        </div>
+      </div>
+      <div class="check-step">
+        <div class="check-num">2</div>
+        <div>
+          <h4>Step 2 &middot; Agree and establish <span class="meta-page">p. 4</span></h4>
+          <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p>
+          <div class="check-facets">
+            <p><b>Resources</b> PGS operational procedure guidelines; farmer/consumer pledge example; PGS SA self-assessment form; Basic Production principles on organic standards &ndash; (SAOSO or equivalent).</p>
+            <p><b>Use of seals</b> Once formally established and paid-up members of PGS SA, groups may use the &ldquo;member of PGS SA&rdquo; logo, and may create their own local logo.</p>
+            <p><b>Seals</b> Proud member of.</p>
+          </div>
+          <div class="check-fee"><b>Fee (Steps 1&ndash;2)</b> Annual membership <b>R500</b>; once-off customisation <b>R1&nbsp;000</b>. The local group sets its own membership fee.</div>
+        </div>
+      </div>
+      <div class="check-step">
+        <div class="check-num">3</div>
+        <div>
+          <h4>Step 3 &middot; Visit and certify <span class="meta-page">p. 5</span></h4>
+          <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.</p>
+          <div class="check-facets">
+            <p><b>Resources</b> Farm visit assessment form; farm visit checklist; farm visit certificate.</p>
+            <p><b>Use of seals</b> The two seals were developed by PGS SA; the group is their custodian and must submit exception reports to PGS SA.</p>
+          </div>
+          <div class="check-fee"><b>Fee (Step 3)</b> Recommended annual sticker fee <b>R350</b> (30% PGS SA / 70% group). Printing at own cost.</div>
+        </div>
+      </div>
+      <p class="note"><strong>What it fixes:</strong> everything about the wide, narrow-column and
+        fee-order problems, with about 20 lines of CSS and no JavaScript. <strong>What it costs:</strong>
+        the process is implied by the numerals, not drawn; a reader who needs the flow at a glance
+        gets less than C gave them. It is also the shape closest to a &ldquo;document&rdquo;, which
+        may be exactly right for a public trust page.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Cheapest to build; no JS, no connector art.</li><li>The most document-like; reads like the paper.</li><li>The fee is inline and in order.</li><li>Degrades perfectly on a phone.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>The sequence is weaker: the numeral is not a connector.</li><li>No visual moment for a step; a long scroll of same-looking sections.</li><li>The SAOSO branch has nowhere obvious to go.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 6 ============================ -->
+  <div class="section-head"><h2>Part 6 &mdash; The test C cannot pass: SAOSO&rsquo;s branch</h2><div class="rule"></div></div>
+  <p class="section-note">SAOSO is Step 1 &rarr; Step 2 &rarr; <em>or</em> the direct-certification
+    route. If the process shape cannot show a fork, it is not the process shape.</p>
+
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">C4</div>
+      <div>
+        <h3>C1 with a fork</h3>
+        <p class="one-line">The same timeline; the third route branches after Step 2 instead of continuing it.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="tl">
+        <section class="tl-step">
+          <div class="tl-marker">1</div>
+          <div class="tl-body">
+            <h4>Step 1 <span class="meta-page">p. 7</span></h4>
+            <p>For a minimum of 18 months, the PGS will be operating as per its agreed procedures and approach PGS SA for support. Farmers are assessed during farm visits and the PGS coordinator keeps a record of farm visits. Groups that have been compliant PGS SA members for this period can apply to SAOSO and PGS SA for approval to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo.</p>
+            <div class="tl-facets">
+              <div><h5>Resources</h5><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard for Organic Production and Processing</li><li>PGS SA Assessment of Group documents</li></ul></div>
+              <div><h5>Fee</h5><p>Assessments by experienced PGS practitioners; fee determined on a case-by-case basis.</p></div>
+            </div>
+          </div>
+        </section>
+        <section class="tl-step">
+          <div class="tl-marker">2</div>
+          <div class="tl-body">
+            <h4>Step 2 <span class="meta-page">p. 7</span></h4>
+            <p>If approved by PGS SA the group is entitled to determine which farmers qualify to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo. Qualifying farmers sign a licensing agreement with SAOSO; the logo can be used for PGS-to-PGS trade.</p>
+            <div class="tl-facets">
+              <div><h5>Resources</h5><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></div>
+              <div><h5>Fee</h5><p>Licensing agreement with SAOSO: <b>R500</b> (farmer members) / <b>R2&nbsp;500</b> (retail members). Printing at the farmer&rsquo;s cost.</p></div>
+            </div>
+          </div>
+        </section>
+        <p class="fork-label">or, for farmers who cannot join a PGS group</p>
+        <div class="fork">
+          <h4>Direct third-party certification <span class="meta-page">p. 8</span></h4>
+          <p>Farmers who are producing organically but are not able to join or establish a PGS group (geographic isolation, time constraints) can apply to SAOSO to use the SAOSO &ldquo;Organic Certified&rdquo; logo. This route excludes the social, knowledge-sharing and participatory approach of PGS groups and may not be cost effective for smallholder farmers.</p>
+          <div class="facet"><h5>Resources</h5><ul><li>Certification body application form</li><li>Licensing agreement</li></ul></div>
+          <div class="facet"><h5>Fee</h5><p>Quote from the Accredited Certifying Body; annual audit and licensing agreement on payment.</p></div>
+        </div>
+      </div>
+      <p class="note"><strong>What it shows:</strong> the timeline survives the branch with one dashed
+        connector and one label. C3&rsquo;s three cards would need a fourth card that reads as a fourth
+        step, which is wrong; C2&rsquo;s tabs would hide the alternative. <strong>This is the strongest
+        argument for C1</strong> as the process shape.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>A fork is legible: dashed line, &ldquo;or&rdquo;, an indented card.</li><li>The same component serves both tables.</li><li>No new data: the branch row is just another row.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>The direct route&rsquo;s card is narrower than the steps (indented).</li><li>On a phone the dash and the indent need care.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 7 ============================ -->
+  <div class="section-head"><h2>Part 7 &mdash; Comparison and recommendation</h2><div class="rule"></div></div>
+  <div class="panel">
+    <div class="scroll">
+      <table class="matrix">
+        <thead><tr><th>Criterion</th><th>C1 &middot; timeline</th><th>C2 &middot; wizard</th><th>C3 &middot; cards</th><th>C5 &middot; checklist</th></tr></thead>
+        <tbody>
+          <tr><td>Step body gets the pane width</td><td class="yes">Yes (~90 ch)</td><td class="yes">Yes (~90 ch)</td><td class="no">No (~30 ch)</td><td class="yes">Yes</td></tr>
+          <tr><td>Fee in reading order</td><td class="yes">Between 2 and 3</td><td class="part">Always visible</td><td class="yes">Desktop only</td><td class="yes">Inline</td></tr>
+          <tr><td>Shows the whole process at once</td><td class="yes">Yes</td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Survives the SAOSO fork</td><td class="yes">Yes</td><td class="no">Poorly</td><td class="part">Awkward</td><td class="part">Weak</td></tr>
+          <tr><td>Phone shape</td><td class="yes">Already vertical</td><td class="part">Same, but tabs</td><td class="no">Fees re-order</td><td class="yes">Already vertical</td></tr>
+          <tr><td>Scroll length</td><td class="part">Tall</td><td class="yes">Short</td><td class="no">Very tall</td><td class="part">Tall</td></tr>
+          <tr><td>JS needed</td><td class="yes">None</td><td class="no">Tabs + URL state</td><td class="yes">None</td><td class="yes">None</td></tr>
+          <tr><td>Feels like a document</td><td class="yes">Yes</td><td class="part">An app</td><td class="part">A deck</td><td class="yes">Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="rec">
+    <h3><span class="tag tag--rec">recommend</span> &nbsp;C1 &mdash; the vertical timeline, with C4&rsquo;s fork</h3>
+    <p class="lede">A number-and-rail timeline; each step is a full-width block with its body, then
+      its facets in a two-column grid; the merged Fee cell is a band <b>between Step 2 and Step 3</b>
+      (where the paper&rsquo;s cell starts), and the Step 3 fee follows Step 3. The SAOSO table uses the
+      same shape with a dashed fork for the direct route. All text is 13.5&nbsp;px, the step label is
+      bold, and the short titles are either kept as <span class="tag tag--reviewed">reviewed data</span>
+      or dropped &mdash; the layout works either way.</p>
+    <ul>
+      <li><b>It is the only shape that gives the step body the pane.</b> C&rsquo;s narrow columns were
+        the real cost; C1 spends the width on the words, which is what a document reader is here for.</li>
+      <li><b>The fee is where the paper puts it.</b> The merged cell belongs to Steps 1&ndash;2, so
+        the band sits after Step 2, not after Step 3. No amount is lifted out of its qualifying
+        sentence (D72.2).</li>
+      <li><b>The fork is the proof.</b> SAOSO needs it; C1 carries it with one dashed line. C2 cannot,
+        and C3 has to add a fourth card.</li>
+      <li><b>It is the cheapest of the good shapes.</b> No JS, one pseudo-element for the rail, and
+        the phone is the same layout at a narrower measure.</li>
+    </ul>
+    <p><b>What would change my mind:</b> if the UAT shows the scroll is too long (open the page on a
+      phone and count the screens), then the wizard (C2) is the compactness answer &mdash; but it
+      must solve the fee-out-of-context problem and the citation-opens-a-closed-tab problem first.
+      If the product owner wants the three steps visible side by side, C3 is the refinement of C;
+      keep the fee ordering fix and accept the narrow columns.</p>
+  </div>
+
+  <!-- ============================ PART 8 ============================ -->
+  <div class="section-head"><h2>Part 8 &mdash; Your decision</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p class="section-note">Pick the process shape; the E architecture (layout per table + the
+      resizable spreadsheet for the seals comparison) is already chosen. Notes autosave; export
+      produces a §18.3 row for D77.</p>
+    <div id="choices"></div>
+    <label for="notes"><b>Notes</b></label>
+    <textarea id="notes" placeholder="e.g. “C1, but drop the short titles”, or “C1 with the Step 3 fee inside the card”. "></textarea>
+    <div class="export-row">
+      <button class="btn" type="button" id="export">Export markdown + §18.3 row</button>
+      <button class="btn btn--ghost" type="button" id="copy">Copy to clipboard</button>
+      <button class="btn btn--ghost" type="button" id="reset">Reset</button>
+    </div>
+    <textarea id="out" readonly aria-label="Exported decision"></textarea>
+  </div>
+
+</div>
+
+<div class="sticky">
+  <span class="saved" id="saved">Nothing chosen yet</span>
+  <button type="button" id="jump">Go to the decision &darr;</button>
+</div>
+
+<script>
+(function () {
+  /* C2's tabs: one panel at a time. */
+  document.querySelectorAll('[data-wizard]').forEach(function (wizard) {
+    var tabs = wizard.querySelectorAll('[role=tab]');
+    var panels = wizard.querySelectorAll('[data-panel]');
+    function select(index) {
+      tabs.forEach(function (tab, i) {
+        var selected = i === index;
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.tabIndex = selected ? 0 : -1;
+      });
+      panels.forEach(function (panel, i) { panel.hidden = i !== index; });
+    }
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { select(i); });
+      tab.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowRight') { event.preventDefault(); var next = (i + 1) % tabs.length; select(next); tabs[next].focus(); }
+        if (event.key === 'ArrowLeft') { event.preventDefault(); var prev = (i - 1 + tabs.length) % tabs.length; select(prev); tabs[prev].focus(); }
+      });
+    });
+    select(0);
+  });
+
+  var KEY = 'pgs.process-flow.v1';
+  var CHOICES = [
+    { id: 'C1', title: 'C1 — vertical timeline (recommended)',
+      why: 'Full pane width per step, the fee between Steps 2 and 3, the fork for SAOSO, no JS.' },
+    { id: 'C2', title: 'C2 — stepper + detail (the wizard)',
+      why: 'Compact and always-visible fee, but hides steps and needs JS + URL state; the fee strip lifts amounts out of context.' },
+    { id: 'C3', title: 'C3 — the horizontal cards, refined',
+      why: 'Closest to C; ties the fee to its steps on desktop, but keeps the ~30-character columns and re-orders the fees on a phone.' },
+    { id: 'C5', title: 'C5 — the minimal checklist',
+      why: 'Cheapest and most document-like; the sequence is a numeral, not a connector, and the fork is weak.' },
+    { id: 'C1+', title: 'C1, without the short titles',
+      why: 'The timeline with only Step 1/2/3 — no reviewer-added titles, no extra data.' }
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    var chosen = CHOICES.find(function (c) { return c.id === state.choice; });
+    document.getElementById('saved').textContent = chosen ? 'Saved: ' + chosen.id : 'Nothing chosen yet';
+  }
+
+  function renderChoices() {
+    var host = document.getElementById('choices');
+    host.innerHTML = CHOICES.map(function (c) {
+      return '<div class="choice"><label>' +
+        '<input type="radio" name="shape" value="' + c.id + '"' +
+        (state.choice === c.id ? ' checked' : '') + '>' +
+        '<span><span class="title">' + c.title + '</span>' +
+        '<span class="why">' + c.why + '</span></span></label></div>';
+    }).join('');
+    host.querySelectorAll('input[type=radio]').forEach(function (input) {
+      input.addEventListener('change', function () { state.choice = input.value; save(); });
+    });
+  }
+
+  var notes = document.getElementById('notes');
+  notes.value = state.notes || '';
+  notes.addEventListener('input', function () { state.notes = notes.value; save(); });
+
+  function exportText() {
+    var chosen = CHOICES.find(function (c) { return c.id === state.choice; });
+    var lines = [];
+    lines.push('# The process flow — shape decision (D77)');
+    lines.push('');
+    lines.push('**Question:** with a layout per table chosen for the landscape, what should the process tables (Establishing, SAOSO) look like?');
+    lines.push('');
+    lines.push('- **Choice:** ' + (chosen ? chosen.title : '_(not chosen)_'));
+    lines.push('- **What C got right:** the numbered step, the connector, the facets-of-a-step model.');
+    lines.push('- **What C got wrong:** 30-character columns, the fee detached below Step 3, unlabelled reviewer titles, no fork for SAOSO.');
+    lines.push('');
+    lines.push('**§18.3 row**');
+    lines.push('');
+    lines.push('| D77 | How does the reader display the landscape\'s tables — and who controls the column widths? | **E + ' + (chosen ? chosen.id : '?') + '** — a `layout: process | grid` field on the reviewed block. Process tables render as a **vertical timeline**: a numbered rail, each step full width with its body and a two-column facet grid, the merged Fee cell as a band between Steps 2 and 3, and a dashed fork for SAOSO\'s direct route. The seals comparison renders as a **spreadsheet** with frozen header/first column, one 13.5 px type size, and mouse/keyboard column resizing persisted per document/table. | D76 chose the printed grid; the content says two of the three tables are processes, and the visitor should control the width where it is a grid. |');
+    if (state.notes) { lines.push(''); lines.push('**Notes:** ' + state.notes); }
+    return lines.join('\n');
+  }
+
+  function setOut() { document.getElementById('out').value = exportText(); }
+  document.getElementById('export').addEventListener('click', setOut);
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = exportText();
+    document.getElementById('out').value = text;
+    if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    notes.value = '';
+    document.getElementById('out').value = '';
+    renderChoices(); save();
+  });
+  document.getElementById('jump').addEventListener('click', function () {
+    document.getElementById('choices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  renderChoices();
+  save();
+})();
+</script>
+</body>
+</html>
