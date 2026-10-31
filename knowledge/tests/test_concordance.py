@@ -244,9 +244,10 @@ def test_the_landscape_branches_are_named_for_what_they_are(standard_set):
     them.
 
     **Since 2026-10-30 the reviewed artefact is the text of record** (`LANDSCAPE_TABLES_PRD`
-    step 2): the false headings do not exist, so `REVIEWED_BRANCH_TITLES` is empty and the
-    document's three real branches are the whole tree. A table's rows are passages *within*
-    their branch, not branches of their own (§11) — `_branch_of` strips the row label.
+    steps 2–5): the false headings do not exist, so `REVIEWED_BRANCH_TITLES` is empty and the
+    document's branches are the six printed/reviewed headings plus the three table headings. A
+    table's rows are passages *within* their branch, not branches of their own (§11) —
+    `_branch_of` strips the row label.
 
     Ingested, not hand-built: the claim is about what the ingest and the derivation produce
     together (`testing_hazards.md` §1.32).
@@ -259,9 +260,15 @@ def test_the_landscape_branches_are_named_for_what_they_are(standard_set):
     titles = [section.title for section in concordance_sections(document)]
 
     assert titles == [
+        "INTRODUCTION",
+        "SIX BASIC ELEMENTS",
+        "First-Party Claim",
+        "Second-Party Certification",
+        "Third-Party Certification",
         "ESTABLISHING A PGS GROUP",
         "PGS SEALS AND THEIR USE",
         "SAOSO ORGANIC CERTIFICATION",
+        "COLOPHON",
     ], titles
     assert "R500" not in titles, "a fee cell is still a branch title"
     assert "PGS SA." not in titles, "a seal caption is still a branch title"

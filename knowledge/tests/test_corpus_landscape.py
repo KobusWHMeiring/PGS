@@ -1,26 +1,26 @@
-"""The landscape artefact: reviewed, traceable, and the document's three real branches.
+"""The landscape artefact: reviewed, traceable, and the document's own branches.
 
-`LANDSCAPE_TABLES_PRD` step 2 turned the certification landscape from a PDF-path document into a
-reviewed artefact. This file answers the questions that make a transcription trustworthy, in the
+`LANDSCAPE_TABLES_PRD` steps 2–5 turned the certification landscape from a PDF-path document
+into a reviewed artefact: three tables of reviewed rows, then the front matter the PDF parser
+could never open. This file answers the questions that make a transcription trustworthy, in the
 same order `test_corpus_bpp.py` does:
 
 1. **Is it the same document?** The header's sha256 is the shipped PDF's, and the page markers
    stay inside it.
 2. **Does it open the document's real branches?** The PDF path read a fee cell (`R500`) and two
    seal captions (`PGS SA.`, `SAOSO`) as headings, because they are CAPS lines. The artefact
-   carries the paper's three table headings and nothing else.
+   carries the paper's headings and the three the reviewer adds for pages that print none.
 3. **Is every prose block on the page it names?** A block that cannot be found on paper is a
    quote nobody can verify; the table cells are proved line by line in
-   `test_landscape_table_block.py`.
+   `test_landscape_table_block.py`, the front matter here.
 4. **Does it invent a character?** Every non-space character in a body block must be on the
    pages the artefact covers (§8 requirement 4).
-5. **Is the chunk count the measured one?** §12a warned that 11 was a prediction. Eleven is what
-   eight reviewed rows and three prose blocks produce; the number is asserted here, as measured.
+5. **Is the chunk count the measured one?** §8/§12a's 11 was a prediction about a different
+   composition. Seventeen is what 8 rows, 3 table-prose blocks and 6 front-matter sections
+   produce; the number is asserted here, as measured.
 
-**What is deliberately absent:** pages 1–3 (the introduction, the six basic elements and the three
-certification routes) and page 9's colophon are front matter, not tables, and are step 5 of the
-PRD (`D72.6`). The artefact starts at PDF 4, and `test_the_front_matter_is_still_absent` records
-that as a gap rather than pretending the document is complete.
+**What is deliberately absent:** page 1 (a cover whose only line is the running header, which is
+furniture) and page 10 (blank). Both contribute no chunk, and `COVERED` says so.
 """
 
 from __future__ import annotations
@@ -39,14 +39,16 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PDF = REPO_ROOT / "pgs_docs" / "PGS Certification landscape_Final.pdf"
 ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "landscape.md"
 
-#: The PDF pages the artefact covers. 1-3 and 9 are step 5 (front matter and colophon).
-COVERED = (4, 5, 6, 7, 8)
+#: The PDF pages the artefact covers. 1 is a cover (its only line is the running header, which
+#: is furniture) and 10 is blank; both stay out and contribute no chunk.
+COVERED = (2, 3, 4, 5, 6, 7, 8, 9)
 
-#: Measured 2026-10-30: eight reviewed rows plus the three prose blocks that surround them
-#: (the p4 lead-in, the p6 trailing paragraphs, the p7 lead-in). §12a's 11/12 was eight rows
-#: plus three front-matter passages and the lead-in; the front matter is step 5 and will raise
-#: this number when it lands, which is why the count is asserted after the artefact, not before.
-EXPECTED_CHUNKS = 11
+#: Measured 2026-10-30: **17 chunks** — 8 reviewed rows, 3 prose blocks around the tables (the p4
+#: lead-in, the p6 trailing paragraphs, the p7 lead-in), and 6 front-matter sections (the intro,
+#: the six basic elements, the three certification routes, the colophon). §8's predicted 11 was 8
+#: rows + 3 front-matter passages; the routes are three sections because the paper prints three
+#: headings, and the six elements is its own section so its probe resolves to one chunk.
+EXPECTED_CHUNKS = 17
 
 
 @pytest.fixture(scope="module")
@@ -81,14 +83,26 @@ def test_the_page_markers_are_monotonic_and_inside_the_document(document):
 # --- 2. The document's real branches ----------------------------------------
 
 
-def test_it_opens_the_three_printed_branches(document):
+def test_it_opens_the_documents_branches(document):
+    """Three printed table headings, three printed route headings, and three reviewed ones.
+
+    Pages 1–3 print no heading the PDF parser will open, so `INTRODUCTION`, `SIX BASIC ELEMENTS`
+    and `COLOPHON` are the reviewer's (`D72.6`); the routes and the tables are the paper's own.
+    """
     assert [
         (section.anchor, section.heading_path, section.page, section.section_ref)
         for section in document.sections
     ] == [
+        ("introduction", "INTRODUCTION", 2, None),
+        ("six-basic-elements", "SIX BASIC ELEMENTS", 2, None),
+        ("first-party-claim", "First-Party Claim", 3, None),
+        ("second-party-certification", "Second-Party Certification", 3, None),
+        ("third-party-certification", "Third-Party Certification", 3, None),
         ("establishing-a-pgs-group", "ESTABLISHING A PGS GROUP", 4, None),
         ("pgs-seals-and-their-use", "PGS SEALS AND THEIR USE", 6, None),
         ("saoso-organic-certification", "SAOSO ORGANIC CERTIFICATION", 7, None),
+        # Page 9 prints no page number, so D42's `page` is None; the block is on PDF 9.
+        ("colophon", "COLOPHON", None, None),
     ]
 
 
@@ -98,12 +112,6 @@ def test_it_carries_no_false_heading(document):
     assert "r500" not in anchors
     assert "pgs-sa" not in anchors
     assert "saaso" not in anchors, "the seal caption after SAOSO ORGANIC CERTIFICATION"
-    headings = {section.heading_path for section in document.sections}
-    assert headings == {
-        "ESTABLISHING A PGS GROUP",
-        "PGS SEALS AND THEIR USE",
-        "SAOSO ORGANIC CERTIFICATION",
-    }
 
 
 # --- 3. The prose is on the page it names -----------------------------------
@@ -164,14 +172,15 @@ def test_it_invents_no_character(document):
 # --- 5. The measured chunk count --------------------------------------------
 
 
-def test_the_chunk_count_is_the_measured_eleven(document):
+def test_the_chunk_count_is_the_measured_seventeen(document):
     chunks = chunks_for_sections(list(document.sections))
     assert len(chunks) == EXPECTED_CHUNKS, [
         (chunk.page, chunk.heading_path) for chunk in chunks
     ]
-    rows = sum(len(section.tables[0].rows) for section in document.sections)
-    prose = len(chunks) - rows
-    assert (rows, prose) == (8, 3), "eight reviewed rows and three prose blocks"
+    rows = sum(len(section.tables[0].rows) for section in document.sections if section.tables)
+    front_matter = 6
+    prose = len(chunks) - rows - front_matter
+    assert (rows, prose, front_matter) == (8, 3, 6)
 
 
 def test_a_table_that_opens_straight_into_its_rows_gets_no_heading_only_chunk(document):
@@ -185,17 +194,99 @@ def test_a_table_that_opens_straight_into_its_rows_gets_no_heading_only_chunk(do
     ]
 
 
-# --- The gap that step 5 closes ---------------------------------------------
+# --- Step 5: the front matter, and the four probes that returned zero ---------
+
+#: `LANDSCAPE_TABLES_PRD` §1.4: before step 5 these four probes matched **0** chunks, because the
+#: PDF parser opens no section on pages 2–3. Each must now resolve to exactly one chunk.
+FRONT_MATTER_PROBES = (
+    ("Participatory Guarantee Systems", "introduction"),
+    ("six basic elements", "six-basic-elements"),
+    ("First-Party", "first-party-claim"),
+    ("Third-Party", "third-party-certification"),
+)
 
 
-def test_the_front_matter_is_still_absent(document):
-    """Pages 1-3 and 9 are step 5 (`D72.6`), and this test is the honest record of the gap.
+@pytest.mark.parametrize(
+    "probe,anchor", FRONT_MATTER_PROBES, ids=[probe for probe, _ in FRONT_MATTER_PROBES]
+)
+def test_the_front_matter_probes_each_resolve_to_one_chunk(document, probe, anchor):
+    """§1.4's four zeros, measured again after the review.
 
-    When the front matter lands, this test is **deleted with the gap**: the four probes in
-    `LANDSCAPE_TABLES_PRD` §9 step 5 that return zero today must then return one chunk each.
+    The probe is case-insensitive on purpose: the paper prints `6 basic elements` and the reviewer's
+    heading supplies the word `six`, which is what a full-text search for the *question's* wording
+    needs. FTS is case-insensitive, so the test is too.
     """
-    body = flat(" ".join(block.text for block in document.blocks))
-    assert "Participatory Guarantee Systems" not in body
-    assert "First-Party Claim" not in body
-    assert "Gesellschaft für" not in body, "the p9 colophon"
-    assert min(block.page for block in document.blocks) == 4
+    chunks = chunks_for_sections(list(document.sections))
+    holders = [
+        chunk
+        for chunk in chunks
+        if probe.lower() in " ".join(chunk.text.lower().split())
+    ]
+    assert len(holders) == 1, [chunk.anchor for chunk in holders]
+    assert holders[0].anchor == anchor
+
+
+#: The printed page for each front-matter section, because page 9 prints no page number and
+#: `ParsedSection.page` is therefore None (D42) even though the block is on PDF 9.
+FRONT_MATTER_PAGES = {
+    "INTRODUCTION": 2,
+    "SIX BASIC ELEMENTS": 2,
+    "First-Party Claim": 3,
+    "Second-Party Certification": 3,
+    "Third-Party Certification": 3,
+    "COLOPHON": 9,
+}
+
+
+@pytest.mark.parametrize("heading", sorted(FRONT_MATTER_PAGES))
+def test_each_front_matter_line_is_a_printed_line(document, heading):
+    """The review reads the page; the test only checks that it did not type its own words.
+
+    One paragraph at a time (a page's two columns put one column's lines out of page order, the
+    same reason the table guard resets per cell), every line must be a contiguous run of a
+    printed `-layout` line, and a paragraph's lines must keep their order.
+    """
+    section = next(section for section in document.sections if section.heading_path == heading)
+    printed = [
+        " ".join(line.split())
+        for line in pages("landscape", "layout")[FRONT_MATTER_PAGES[heading] - 1].splitlines()
+    ]
+    body = section.text.partition("\n")[2]
+    checked = 0
+    for paragraph in body.split("\n\n"):
+        cursor = -1
+        for line in paragraph.splitlines():
+            if not line.strip():
+                continue
+            wanted = " ".join(line.split())
+            found = next(
+                (index for index in range(cursor + 1, len(printed)) if wanted in printed[index]),
+                None,
+            )
+            assert found is not None, (
+                f"{heading}: this line is not a run of any printed line on PDF "
+                f"{FRONT_MATTER_PAGES[heading]}: {wanted[:70]!r}"
+            )
+            assert found > cursor, (
+                f"{heading}: printed out of order, {found} after {cursor}: {wanted[:70]!r}"
+            )
+            cursor = found
+            checked += 1
+    assert checked > 5, f"{heading} checked only {checked} lines"
+
+
+def test_the_reviewer_added_headings_are_not_printed(document):
+    """D72.6: three headings are the reviewer's, and the review says so instead of pretending."""
+    printed = " ".join(pages("landscape", "layout")).lower()
+    assert "introduction" not in printed
+    assert "six basic elements" not in printed
+    assert "colophon" not in printed
+    assert "first-party claim" in printed, "a route heading IS printed (Title case)"
+
+
+def test_the_colophon_carries_the_funders_and_the_copyright(document):
+    section = next(section for section in document.sections if section.anchor == "colophon")
+    body = " ".join(section.text.split())
+    assert "Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ)" in body
+    assert "© PGS South Africa/South African Organic Sector Organisation (SAOSO), 2021" in body
+    assert "These organisations are not responsible for the content nor the accuracy" in body

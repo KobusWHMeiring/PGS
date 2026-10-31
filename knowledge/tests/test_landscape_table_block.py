@@ -65,6 +65,7 @@ def test_the_document_opens_three_tables_and_eight_reviewed_rows(document):
     assert [
         (section.anchor, [row.label for row in section.tables[0].rows])
         for section in document.sections
+        if section.tables
     ] == [
         ("establishing-a-pgs-group", ["Step 1", "Step 2", "Step 3"]),
         ("pgs-seals-and-their-use", ["PGS Organic In-Conversion", "PGS Organic"]),

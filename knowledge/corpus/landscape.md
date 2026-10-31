@@ -5,6 +5,121 @@ sha256: 93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f
 generator: knowledge corpusgen v2
 raw_pages: none
 -->
+<!-- page: 2 printed: 2 -->
+## INTRODUCTION
+
+The South African Organic Certification Landscape is a
+document describing the use of logos and seals in the
+organic sector.
+
+It includes recognition for smallholder organic farmers selling
+into local markets (short supply chain), and is intended
+to provide an enabling environment for the adoption of
+organic agriculture in the South African context, through the
+implementation of Participatory Guarantee Systems.
+
+“Participatory Guarantee Systems” (PGS) are
+locally focused quality assurance systems.
+
+They certify producers based on active
+participation of stakeholders and are built
+on a foundation of trust, social networks and
+knowledge exchange.”
+
+(IFOAM-Organics International)
+
+This document:
+
+• Outlines the different types of certification.
+• Describes steps for the establishment of PGS groups and
+membership to PGS SA for organic farmers selling into
+local markets.
+• Offers two seals for PGS groups to use to recognise
+farmer members’ alignment with a group’s chosen
+organic standard and for consumer transparency.
+• Describes the process for PGS groups to follow when
+applying for approval to use the SAOSO “Organic PGS
+Certified” logo.
+
+## SIX BASIC ELEMENTS
+
+PGS groups are guided by 6 basic elements:
+
+Shared Vision – the members of the PGS share a common goal based on
+a shared need and collectively embrace the principles of PGS and organic
+agriculture.
+
+Trust - “integrity-based approach” – trust and integrity form the ethical
+basis of the system.
+
+Horizontality – the group has a flat equitable organisational structure, it is
+developed and managed by peers and not by a top-heavy management
+structure. All are responsible, all are accountable.
+
+Transparency – the system is open to public, stakeholder and peer scrutiny
+at all levels.
+
+Participatory – the members participate in the development and
+management of the process and procedures of the PGS which is “owned’
+and controlled and determined by the collective.
+
+Learning Process – the assessments and the site visit process focus on
+skills and knowledge exchange, both in traditional knowledge as well as
+innovations. Local knowledge and experience from fellow farmers that
+consider the specific characteristics of the soil, the climatic conditions and
+the market is particularly useful and relevant for all farmers in the group.
+
+<!-- page: 3 printed: 3 -->
+## First-Party Claim
+
+A verbal declaration is made by a farmer/producer directly to
+the consumer that their produce is produced in alignment with
+organic principles. There is no verification of the claim; it is a
+trust-based acknowledgment between the farmer/producer
+and the consumer. This is a critical step in the process as this is
+when the farmer/producer makes a commitment to produce
+according to organic practices and principles as best as they
+understand them. The consumer chooses to trust the claim
+based on direct contact and the relationship.
+
+## Second-Party Certification
+
+The farmer/producer wants recognition that their production
+practices have been assessed by others and that they are in line
+with organic practices, processes and principles. The consumer
+wants assurance that the produce is grown organically. There
+is generally an intermediary (a local market, agrihub, pack
+house or independent retailer) in the supply chain between the
+farmer/producer and consumer. Typically, the farmer/producer
+joins a local PGS group. Regular farm assessments are held
+during which stakeholders in the supply chain (other farmers,
+consumers and local markets) meet and assess the compliance
+of the farmer/producer’s production methods against the
+groups’ chosen internationally recognised organic standard.
+
+## Third-Party Certification
+
+Third-party certification means that an independent
+organisation (typically referred to as an Accredited Certification
+Body or ACB or CB) has reviewed the production processes
+of a product and has independently verified that the final
+product complies with specific standards for safety, quality or
+performance. This third-party procedure verifies the production
+processes of a product and determines whether the final product
+is produced in accordance with an internationally recognised
+organic standard. In SAOSO’s case, the South African Organic
+Sector Organisation (SAOSO) Standard for Organic Production
+and Processing.
+
+This standard forms part of the IFOAM-Organics International
+family of standards. Third-party certification to the SAOSO
+standard provides alignment to global standards, communicates
+to consumers, has immediate credibility with new customers and
+facilitates marketing and the creation of product identity. It is
+suitable for long supply chains nationally, and export.
+
+Please contact SAOSO for more details at info@saoso.org
+
 <!-- page: 4 printed: 4 -->
 ## ESTABLISHING A PGS GROUP
 The table below outlines the steps for the establishment of a PGS group and its membership to PGS SA.
@@ -418,3 +533,46 @@ farmer will be signed upon payment
 of the fee for use of the trademarked
 logo.
 <!-- /table -->
+<!-- page: 9 printed: none -->
+## COLOPHON
+
+The production of this document was funded by the
+South African Organic Sector Organisation (SAOSO), PGS
+South Africa (PGS SA) and the Knowledge Hub for Organic
+Agriculture in Southern Africa (KHSA) as part of the global
+project Knowledge Centre for Organic Agriculture in Africa
+(KCOA), implemented by the Deutsche Gesellschaft
+für Internationale Zusammenarbeit (GIZ) GmbH in
+partnership with in-country organisations on behalf of the
+German Federal Ministry for Economic Cooperation and
+Development (BMZ).
+
+© PGS South Africa/South African Organic Sector
+Organisation (SAOSO), 2021
+
+This knowledge product can be copied, reproduced,
+adapted, translated, used to make derivatives; and
+disseminated for not-for-profit and/or educational
+purposes only. It cannot be used for commercial purposes
+in any way, shape or form.
+
+The copyright holder identified on this knowledge product,
+the Knowledge Centre for Organic Agriculture in Africa
+(KCOA), the Federal Ministry for Economic Cooperation
+and Development (BMZ) of Germany and the Deutsche
+Gesellschaft für Internationale Zusammenarbeit (GIZ)
+GmbH, must be acknowledged as its source; but the logos
+of these organisations must not appear on any adaptation,
+translation nor derivative.
+
+The following disclaimer must appear on any adaptations,
+translations and derivatives of this knowledge product:
+
+This work is based on a knowledge product created by
+the copyright holder identified in the framework of the
+Knowledge Centre for Organic Agriculture in Africa (KCOA),
+a project implemented by the Deutsche Gesellschaft für
+Internationale Zusammenarbeit (GIZ) on behalf of the
+Federal Ministry for Economic Cooperation and Development
+(BMZ) of Germany. These organisations are not responsible
+for the content nor the accuracy of this work.
