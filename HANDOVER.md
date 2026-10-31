@@ -1,37 +1,32 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the document is whole; next is the reader
+> ## START HERE — the reader draws the grid; the slice is one step from done
 >
-> **Steps 2–5 landed 2026-10-30 (§0p, §0q).** The landscape is a reviewed artefact of **17 chunks**:
-> three tables (8 rows), the front matter the PDF parser could never open (intro, six elements,
-> three routes), and the colophon. The four probes §1.4 measured at **0** each resolve to one chunk.
-> The dev box is current at **17 / 17**, with **0 evidence links dropped**.
+> **Steps 2–6 landed 2026-10-30/31 (§0p–§0r).** The landscape is a 17-chunk reviewed artefact
+> (three tables, the front matter the parser could never open, the colophon) and the reader now
+> renders its five-column tables as a real `<table>`: a sticky step column, a focusable scroll
+> region, and a stacked phone layout. **The fee is in view.**
 >
 > Read, in this order — nothing else:
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12d** (step 5), then **§12c** (steps 2–4), then **§9
->    steps 6–7** and **§11** (the DoD, with the open boxes named).
-> 2. `product/design/DESIGN.md` — **only when you build the reader** (step 6). §5.4 measured the
->    problem: the printed row is **323 characters** wide against a **38 rem** measure.
-> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73**.
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12e** (the reader), then **§12d** (front matter),
+>    then **§9 step 7** and **§11** (the DoD, with the guards still open).
+> 2. `product/design/d76_reader_table_fit.html` — the fit decision, with live mocks. **The D76
+>    choice is the product owner's to confirm;** the code follows the recommendation.
+> 3. `product/design/DESIGN.md` §7.13 for the component's rules.
 >
-> **The next act is step 6: the reader (D72.3).** The corpus is quotable; the page a reader lands on
-> still renders the five-column table as a definition list. The fit is a design decision — §5.4 lists
-> four options, and one must be chosen in a mock in `product/design/` before any template changes.
+> **The next act is step 7, the close:** a `tests/uat/` scenario for the fee question, the backlog
+> move, and the §5.7 exclusion verified as “reading order restored, nothing more”.
 >
-> **Step 7 closes the slice:** a `tests/uat/` fee scenario, the backlog move, and the §5.7 exclusion
-> verified as “reading order restored, nothing more”.
->
-> **Two things still open from step 3, and they belong with the reader:** `TABLE_BANDS` (a
-> transposition *inside one printed row-line* is unpinned) and the corpus-level table-page guard.
+> **Two guards are still open, and named rather than hidden:** `TABLE_BANDS` (a transposition
+> *inside one printed row-line* is unpinned) and the corpus-level table-page guard.
 >
 > **Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
-> rule, so it would replace the review with the p4–8 column soup. The per-line guard fails loudly if
-> that happens, but the command has no other defence.
+> rule, so it would replace the review with the p4–8 column soup.
 >
 > **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
 > sit behind the same mechanism.
 >
-> **The tree is clean**, and the code is committed at `8674d7a`; the documentation commits follow it.
+> **The tree is clean**, and the code is committed at `d37bd9f`; the documentation commit follows.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
@@ -40,13 +35,13 @@ the answer-coverage session, the budget-and-instrument session, the deployment s
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session
 and the landscape-artefact session
-**Repo state:** `main`, **7 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
-`8674d7a` and the documentation commits follow it. On that tree: `scripts/fast.sh` green at **1419
-passed / 1 skipped in 38.6 s** (warm) and
-`verify.sh` green at **1433 passed / 1 skipped in 53.3 s** (`--create-db`, 53.3 s wall, run as
+**Repo state:** `main`, **9 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
+`d37bd9f` and the documentation commits follow it. On that tree: `scripts/fast.sh` green at **1434
+passed / 1 skipped in 36.6 s** (warm) and `verify.sh` green at **1448 passed / 1 skipped in
+49.7 s** (`--create-db`, 49.7 s wall, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same tree measured 92.6 s an hour earlier — quote the
-range, not one number (`testing_hazards.md` §3.17).
+serves 5433, `testing_hazards.md` §3.1). The same tree measured 92.6 s and 53.3 s earlier in the
+session — quote the range, not one number (`testing_hazards.md` §3.17).
 
 **The dev box was re-ingested twice this session and its landscape is current:**
 `corpus_check` reports `landscape current 17 / 17`, **394 chunks, 0 unembedded**. Both `--force`
@@ -56,7 +51,7 @@ same-locator-different-text / 0 no-longer-has**. The 30 are the pre-existing bpp
 and saoso still report `drift` on the dev box** because it was built from their PDFs, not from their
 artefacts. That is out of this slice and is the state `corpus_refresh --apply` exists to fix.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **7 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **9 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
 2026-10-30 — **and it does not have this session's landscape fix.** Its corpus is still the old
 PDF-built one (8 landscape chunks, six branches including `R500` and `PGS SA.`). A deploy pulls the
@@ -64,6 +59,70 @@ artefact but **does not re-ingest**: `deploy.sh` never runs `ingest_standard`, s
 `landscape drift 8 / 17` until someone runs `corpus_refresh --apply` deliberately. Measure its
 landscape link count with `relink_evidence` (report-only) before that refresh; the dev box's answer
 was zero, but the live box is a different corpus.
+
+## 0r. 2026-10-31 — step 6: the reader draws the printed grid, and the fit was measured wrong
+
+**State: green, committed.** `fast.sh` **1434 passed / 1 skipped in 36.6 s** (warm) and
+`verify.sh` **1448 passed / 1 skipped in 49.7 s** (`--create-db`, 5433). Code at `d37bd9f`; this
+documentation commit follows. The dev corpus is unchanged (17 / 17, 394 chunks); the live box is
+still `8d2839d`.
+
+### 0r.1 The decision artifact, and the number it corrected
+
+`product/design/d76_reader_table_fit.html` lays out four options with **live mocks built from the
+real Step 1 / Step 2 rows**, gives each its strongest case and its weakness, and recommends
+**A + B + C, with D as the multiplier**: a real `<table>` at the passages pane's full width, a
+14 px grid, a focusable scroll region with a sticky first column, and the same markup stacked
+below 900 px with `data-label` column names. The D76 choice is the **product owner's** to confirm;
+the implementation follows the recommendation and is one CSS/template change away from any of A–D.
+
+**The artifact's Part 1 corrected the PRD's own measurement.** §5.4 said the widest row is
+**323 characters** and “2× too wide”. `max(len(line))` on the `-layout` page returns the page's
+**blank padding line**, not a row: the printed row's last non-space character sits at
+**153–169**. And the grid's pane is **52.5 rem**, not 72 — the tree takes 17 rem and the gap 2.5.
+So the fee starts at the pane's edge and only its **last 25–40 characters** scroll. One column's
+worth, not two. §5.4 is corrected in place, with the command quoted in the artifact.
+
+### 0r.2 What the reader does now
+
+| Piece | Where |
+|---|---|
+| the artefact grid (columns + cells) | `knowledge/tables.ArtefactGrid`, `artefact_grid_for`, `align_artefact_grid` |
+| the reader's grid | `core/services/_documents._artefact_grid`, `ReaderGrid`, `ReaderPassage.in_grid` |
+| the markup | `document_reader.html`: one `<table class="reader__grid">`, sticky `<th scope="row">`, `data-label` per cell |
+| the CSS | `reader.css`: full passages-pane width, 14 px, scroll + sticky, stacked below 900 px |
+| the map | `knowledge/ingest.source` + `doc_key_for` — a stored document to its artefact, no title guessing |
+| `DESIGN.md` | §7.13 — the component and the rules it carries |
+
+**The fallback is the plain page.** `align_artefact_grid` returns `None` when any row's chunk no
+longer matches the artefact, and the reader renders the passages it has — a mislabelled row is
+worse than no grid, the same rule `structure_for` already follows. A test edits a stored chunk
+(`R500` → `R5OO`) and proves the grid disappears while the text still renders.
+
+### 0r.3 The guards
+
+- `core/tests/test_document_reader_grid.py` (12): five column names, the fee inside the grid, the
+  lead-in outside it, each row's citation anchor exactly once, the seals table's two rows and the
+  prose after it, the direct-route row, a prose branch with no grid, and the stale-corpus fallback.
+- `knowledge/tests/test_corpus_tables.py` (+3): `ArtefactGrid` columns/cells, alignment with prose
+  around the row, and `None` on any disagreement.
+- `DESIGN.md` §7.13 records the rules: the table is the one place the 38 rem measure gives way; the
+  first column is pinned; below 900 px the same markup restacks; empty cells disappear on the
+  phone; page breaks are marked once.
+
+### 0r.4 What is left
+
+- **D76's confirmation** — read the artifact and pick. The recommendation is already implemented.
+- **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. A corpus
+  guard, not a reader feature.
+- **The corpus-level table-page guard.**
+- **Step 7** — the `tests/uat/` fee scenario, the backlog move, and the §5.7 exclusion verified as
+  “reading order restored, nothing more”.
+
+**Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
+rule; the per-line guard fails loudly if it does, but the command has no other defence.
+
+---
 
 ## 0q. 2026-10-30 (session 4) — step 5: the front matter, and four probes that were zero
 

@@ -310,15 +310,24 @@ measured, not argued:
 
 | Measurement | Value |
 |---|---|
-| Widest row in `-layout`, PDF 4 / 5 / 7 / 8 | **323 characters** (PDF 6: 186) |
+| Widest row in `-layout`, PDF 4 / 5 / 7 / 8 | **323 characters** (PDF 6: 186) — **the page's blank padding line, not a row**: corrected below |
+| Printed row **content**, PDF 4 / 5 / 6 / 7 / 8 | **157 / 162 / 157 / 169 / 153** characters (last printed character) |
 | The reader's reading measure (`core/static/css/reader.css`) | **38 rem ≈ 85 characters** at 16 px |
 | The reader's outer working column | **72 rem ≈ 160 characters** |
+| The **passages pane** the grid actually gets | **52.5 rem ≈ 117–134 characters** (72 − 17 tree − 2.5 gap) |
 | Where the **Fee** column starts, per page | **127 / 129 / 149 / 127 / 116** |
 
+**Corrected 2026-10-31.** The 323 figure is `max(len(line))` on the page, which is the blank
+padding line; the printed row's last non-space character sits at **153–169**. The problem is one
+column's worth, not two. And the grid cannot use 72 rem: it lives in the passages pane, 52.5 rem,
+because the tree takes 17 rem and the gap 2.5. At 14 px that pane holds ~134 characters, so the
+Fee column starts at the edge and finishes **25–40 characters past it** — a short scroll, not a
+voyage. The full argument and live mocks are `product/design/d76_reader_table_fit.html` (D76).
+
 Read the last two rows together: the Fee column — the one holding `R500`, the thing the reader
-reported — starts **beyond the measure on every page**, so at the current shape every row scrolls
-sideways to reach the answer. At full working width (160 characters) the arrow is still ~2× too
-wide. So "render the printed grid" needs one more answer, and there are four honest ways:
+reported — starts **beyond the 38 rem measure on every page**, so at the current shape every row
+scrolls sideways to reach the answer. At the passages pane's full width (52.5 rem at 14 px) the
+fee starts at the edge and only its last **25–40 characters** scroll.
 
 1. **Break the grid out to the 72 rem working column**, overflowing the reading measure on purpose.
    Still scrolls at 323 characters, but only ~2×, and only for tables.
@@ -499,6 +508,11 @@ PRD did not start with.
    cover and p10 is blank, so neither contributes a chunk.
 6. **The reader** (§5.4): mock in `product/design/` for the printed grid and its fit, `DESIGN.md`
    conformance, `css-alignment`.
+   ✅ **Built 2026-10-31** (§12e): `product/design/d76_reader_table_fit.html` decides the fit (D76);
+   the reader renders a real `<table>` with a sticky first column, a scroll region and a stacked
+   phone layout. It also corrected §5.4's 323-character measurement (the page's blank line, not the
+   row). The decision is the product owner's to confirm in the artifact; the implementation follows
+   the recommendation (A + B + C, with 14 px as the multiplier).
 7. **Close the loop**: `tests/uat/` scenario for the fee question, backlog move, spec §4.5 update, and
    the §5.7 exclusion verified as *reading order restored, nothing more*.
 
@@ -536,8 +550,11 @@ existed because the rows were going to live in Python; §5.2a retires it.
 - [x] "what does it cost to join a PGS group?" is quotable from one chunk, verbatim, and passes
       `audit_citations` — **proved on the artefact 2026-10-30**
       (`test_the_landscape_fee_is_quotable_from_its_reviewed_row`)
-- [ ] the reader shows the printed grid (D72.3), and the Fee column is reachable without a scroll
-      longer than the table itself (§5.4's four options, one of them chosen in a mock) — **step 6**
+- [x] the reader shows the printed grid (D72.3), and the Fee column is reachable without a scroll
+      longer than the table itself — **done 2026-10-31** (§12e): `d76_reader_table_fit.html` chose
+      the fit, and the reader renders the grid with a sticky first column and a stacked phone
+      layout. The fee is in view at the pane's full width; only its last 25–40 characters scroll.
+      **The D76 choice itself is the product owner's to confirm in the artifact.**
 - [ ] the corpus-level guard fails on a newly-added uncurated table page — **open**: it needs a
       cross-document definition of "table-shaped page", and the landscape's pages are the only ones
       curated so far
@@ -796,6 +813,52 @@ port 5433; the same tree measured 92.6 s an hour earlier — quote the range,
 **Not built, and named:** `TABLE_BANDS` (step 3's ⚠ — a transposition inside one printed row-line),
 the corpus-level table-page guard, the printed-grid reader (step 6), and the UAT scenario/backlog
 move (step 7).
+
+---
+
+## 12e. Built 2026-10-31 — step 6: the reader draws the printed grid, and the fit is measured
+
+**State: green, committed, and the dev box's reader is live.** `fast.sh` **1434 passed / 1 skipped**
+(36.6 s warm) and `verify.sh` **1448 passed / 1 skipped in 49.7 s** (`--create-db`, 5433; quote the
+range, `testing_hazards.md` §3.17). The D76 decision is **recommended and implemented**, but the
+choice is the product owner's: the artifact is the decision surface, not a ratification.
+
+| Landed | Where | Evidence |
+|---|---|---|
+| the decision artifact | `product/design/d76_reader_table_fit.html` | four options with live mocks from the real Step 1/Step 2 rows; recommendation; radio + notes + export |
+| the artefact grid | `knowledge/tables.ArtefactGrid`, `artefact_grid_for`, `align_artefact_grid` | columns + cells from the reviewed artefact, aligned to the passages the reader has; `None` on any disagreement |
+| the reader grid | `core/services/_documents.py` (`_artefact_grid`, `ReaderGrid`) | five columns, 3/2/3 rows, per-row anchors and pages |
+| the markup | `document_reader.html` | one `<table class="reader__grid">`, sticky `<th scope="row">`, `data-label` per cell, prose outside the grid |
+| the CSS | `reader.css` | full passages-pane width, 14 px, scroll + sticky, stacked below 900 px, no raw hex |
+| `DESIGN.md` | §7.13 | the component, its rules and the measured fit |
+| the guards | `core/tests/test_document_reader_grid.py` (12), `test_corpus_tables.py` (3) | five column names, fee in the grid, lead-in outside it, each row's anchor, the seals table, the fallback |
+
+### 12e.1 §5.4's 323-character measurement was the page, not the row
+
+The decision artifact's Part 1 re-ran the measurement (its command is quoted there). `max(len(line))`
+on a `-layout` page returns the **blank padding line** (323 on PDF 4/5/7/8, 186 on PDF 6), not the
+printed row. The row's last non-space character sits at **153–169**. And the grid's real pane is
+**52.5 rem**, not 72: the tree takes 17 rem and the gap 2.5. So the fit is **one column's worth**,
+not two — the fee starts at the pane's edge and only its last 25–40 characters scroll. The PRD's
+§5.4 is corrected in place.
+
+### 12e.2 The recommendation, and what would change it
+
+**A + B + C, with D as the multiplier:** a real `<table>` at the passages pane's full width, a
+14 px grid; a scroll region with a sticky first column for the remainder and for zoom; the same
+markup stacked below 900 px with `data-label` column names. What would change it: if the fee wraps
+so far that the amount is not visible with a short scroll (check the mock at 840 px), the grid
+should go full-bleed below the tree; if the reading measure must be inviolable, stack everywhere.
+
+### 12e.3 What is still open
+
+- **D76's confirmation** — the product owner reads `d76_reader_table_fit.html` and picks; the
+  implementation is one CSS/template change away from any of A–D.
+- **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. It is a
+  corpus guard, not a reader feature; it was step 3's ⚠ and is still open.
+- **The corpus-level table-page guard** — still needs a cross-document definition of “table-shaped”.
+- **Step 7** — the `tests/uat/` fee scenario, the backlog move, and the §5.7 exclusion verified as
+  “reading order restored, nothing more”.
 
 ---
 
