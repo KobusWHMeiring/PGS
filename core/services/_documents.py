@@ -38,6 +38,8 @@ from django.urls import reverse
 
 from core.models import PublicDocument
 from knowledge.concordance import ConcordanceSection, build_concordance
+from knowledge.corpus import load_document
+from knowledge.ingest import CORPUS_DOCUMENTS, corpus_artifact, doc_key_for
 from knowledge.models import DocumentChunk, StandardDocument
 from knowledge.passages import passage_blocks, row_blocks
 from knowledge.reading import (
@@ -52,7 +54,13 @@ from knowledge.reading import (
 )
 from knowledge.glossary import GLOSSARY_BRANCH, glossary_entries, with_term_anchors
 from knowledge.references import annotate, build_reference_index
-from knowledge.tables import TableDivider, TableStructure, structure_for
+from knowledge.tables import (
+    TableDivider,
+    TableStructure,
+    align_artefact_grid,
+    artefact_grid_for,
+    structure_for,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -305,9 +313,45 @@ class ReaderPassage:
     dividers: tuple[TableDivider, ...] = ()
     #: What the paper's condition cell says where it says nothing: a label, never a condition.
     note: str = ""
+    #: True when this passage is a row of `Reader.grid`, whose cells carry its text. The template
+    #: draws the grid once, at `grid.first_anchor`, and skips the row passages.
+    in_grid: bool = False
     #: False when the passage above prints the same locator and page — one line per run, and the
     #: passage keeps its `id` either way.
     show_locator: bool = True
+
+
+@dataclass(frozen=True)
+class ReaderGridRow:
+    """One reviewed artefact row, ready for a `<table>`.
+
+    `cells` pairs each printed column's label with that cell's blocks, so the stacked phone layout
+    can print the label beside the value (`data-label`) without the template indexing two tuples.
+    Empty cells are kept (an empty list of blocks): the paper is silent there, and the template is
+    what decides not to draw an empty labelled field.
+    """
+
+    anchor: str
+    page: int | None
+    cells: tuple[tuple[str, tuple], ...]
+    #: True when this row starts on a different printed page from the row above — a table that
+    #: crosses a page break (Step 3 is on p5) says so once.
+    show_page: bool = True
+
+
+@dataclass(frozen=True)
+class ReaderGrid:
+    """The printed grid for a reviewed artefact table (D72.3).
+
+    `first_anchor` is where the template draws it: the first row's passage. Prose before and after
+    the rows is rendered as ordinary passages, so the grid lands between them without the template
+    tracking a cursor.
+    """
+
+    columns: tuple[str, ...]
+    legend: str
+    first_anchor: str
+    rows: tuple[ReaderGridRow, ...]
 
 
 @dataclass(frozen=True)
@@ -333,6 +377,9 @@ class Reader:
     #: The branch's reviewed structure, when its rows were curated: the printed caption, the
     #: legend sentence and the dividers (D70.1). None for every other branch.
     table: TableStructure | None = None
+    #: The printed grid for a reviewed artefact table (D72.3) — the landscape's five columns.
+    #: Distinct from `table`: that is the two-column appendix shape, this is a real grid.
+    grid: ReaderGrid | None = None
 
     @property
     def title(self) -> str:
@@ -363,6 +410,82 @@ def corpus_for(document: PublicDocument) -> StandardDocument | None:
         .select_related("standard_set")
         .order_by("-standard_set__is_default", "id")
         .first()
+    )
+
+
+def _artefact_grid(
+    document_row: StandardDocument,
+    selected: ConcordanceSection | None,
+    texts: tuple[str, ...],
+    anchors: list[str],
+    pages: list[int | None],
+) -> tuple[ReaderGrid | None, set[int]]:
+    """The printed grid for a branch whose rows live in a reviewed artefact, or `(None, set())`.
+
+    In:  `document_row` — the ingested twin; `selected` — the open branch; `texts` — the passage
+         texts about to be rendered; `anchors`/`pages` — their locators and pages.
+    Out: the grid (columns, legend, rows with per-cell blocks) and the passage positions it covers.
+         `(None, set())` for every branch that is not a reviewed artefact table, and for a corpus
+         that disagrees with the artefact (a stale row, a re-ordered branch) — the plain page is
+         what the reader renders today, and a mislabelled grid is worse than none.
+    Side effects: one file read (`knowledge/corpus/<doc>.md`), no queries.
+    Fails: never. A missing or malformed artefact falls back, because a published document whose
+        review is absent must still render its corpus text.
+    """
+    if selected is None:
+        return None, set()
+    doc_key = doc_key_for(document_row.source_file)
+    path = corpus_artifact(doc_key) if doc_key else None
+    if path is None or not path.is_file():
+        return None, set()
+    try:
+        reviewed = load_document(path)
+    except (OSError, ValueError):
+        return None, set()
+    section = next(
+        (
+            section
+            for section in reviewed.sections
+            # The branch's anchor is its **first passage's** anchor, which for a table whose first
+            # chunk is a row is the row's anchor (the seals table has no lead-in). The section's
+            # own anchor survives on the prose passage after the rows, so match either.
+            if section.anchor == selected.anchor or section.anchor in anchors
+        ),
+        None,
+    )
+    if section is None:
+        return None, set()
+    grid = artefact_grid_for(section)
+    if grid is None:
+        return None, set()
+    positions = align_artefact_grid(grid, texts)
+    if positions is None:
+        return None, set()
+
+    rows: list[ReaderGridRow] = []
+    previous_page: int | None = None
+    for position, cells in zip(positions, grid.rows):
+        page = pages[position]
+        rows.append(
+            ReaderGridRow(
+                anchor=anchors[position],
+                page=page,
+                show_page=page != previous_page,
+                cells=tuple(
+                    (column, passage_blocks(cell_text))
+                    for column, cell_text in zip(grid.columns, cells)
+                ),
+            )
+        )
+        previous_page = page
+    return (
+        ReaderGrid(
+            columns=grid.columns,
+            legend=grid.legend,
+            first_anchor=anchors[positions[0]],
+            rows=tuple(rows),
+        ),
+        set(positions),
     )
 
 
@@ -428,6 +551,16 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # of the next one. The stored text is untouched; only what this page renders is trimmed.
     branch_pairs = selected.passages if selected is not None else ()
     texts = branch_texts(branch_pairs)
+    # The printed grid, when this branch's rows were reviewed into the artefact (D72.3). Built from
+    # the same texts the page is about to render, so a corpus that disagrees falls back instead of
+    # labelling a row it cannot vouch for — `align_artefact_grid` returns None, not a guess.
+    grid, grid_positions = _artefact_grid(
+        document_row,
+        selected,
+        texts,
+        [pairs[chunk.pk] for chunk, _anchor in branch_pairs],
+        [chunk.page for chunk, _anchor in branch_pairs],
+    )
 
     # The reviewed structure is looked up against the text that is about to be rendered, so a
     # corpus that no longer matches the reviewed rows falls back to today's page instead of
@@ -484,6 +617,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
                 dividers=structure.dividers[position] if structure is not None else (),
                 note=structure.labels[position] if structure is not None else "",
                 show_locator=show_locator[position],
+                in_grid=position in grid_positions,
             )
         )
     passages = tuple(rows)
@@ -498,6 +632,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
         query=query.strip(),
         section=section.strip(),
         table=structure,
+        grid=grid,
     )
 
 

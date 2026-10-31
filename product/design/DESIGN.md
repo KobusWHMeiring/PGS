@@ -357,6 +357,48 @@ summaries are Mulish `--text-xs` in `--brand-muted`. Empty columns are not rende
 
 ---
 
+### 7.13 The reader's printed grid — `/documents/<code>/read/` — **added 2026-10-31**
+
+The certification landscape prints its data as five-column tables. D72.3 chose the printed grid
+over a definition list; **D76 is how it fits** (`product/design/d76_reader_table_fit.html`,
+`knowledge/tables.ArtefactGrid`). One `section--reader` pane, no new band.
+
+**The measured problem.** The reader's prose measure is 38 rem (~85 characters), and the passages
+pane is 52.5 rem once the tree takes 17 rem and the gap 2.5. The landscape's printed row content
+ends at **153–169 characters** — the PRD's 323 is the page's blank padding line, not a row. The Fee
+column starts at **116–149**, so at the prose measure it is entirely off-screen; at the pane's full
+width its last 25–40 characters are.
+
+**Structure.** A `<table class="reader__grid">` inside a focusable
+`<div class="reader__grid-wrap">` (the scroll region). `<thead>` carries the paper's five column
+names. Each row is a `<tr id="<row anchor>">`, so a citation to a row still lands on it. The first
+cell is `<th scope="row">` (`Step 1`) and is **sticky**; the other four are `<td>` with
+`data-label` set to their column name. The legend is a paragraph above the table. Cells reuse
+`_passage_blocks.html`, so lists and links render as they do everywhere else.
+
+**Rules this component carries.**
+
+- **The table is the one place the 38 rem measure gives way.** A table is reference, not prose.
+  It uses the passages pane's full width and wraps its cells; it does not try to reach the 72 rem
+  page width, which would put it under the sticky tree.
+- **The first column is pinned**, because the fee is the question and the step label must not leave
+  the screen while it scrolls in. The wrapper is `tabindex="0"` and `role="region"`, so a keyboard
+  user can scroll it.
+- **Below 900 px the same markup restacks** (`display: block`), each `<td>` printing its
+  `data-label` above the value. No horizontal gesture on a phone — the e2e guard measures
+  `scrollWidth`, and a sideways table would be the failure WCAG 1.4.10 names.
+- **Empty cells disappear on the phone** and stay empty on the desktop: the paper's silence is not a
+  value, and the table's legend says so once.
+- **Page breaks are marked once**, not per row: `printed p. 5` appears on the row that starts there
+  (Step 3), because D72.5 makes a page-crossing row keep the page it starts on.
+- **No JavaScript.** The scroll and the restack are CSS; the only script on the page is the site's
+  vendored shell.
+- **The fallback is the plain page.** If the corpus disagrees with the artefact (a failed
+  re-ingest), `align_artefact_grid` returns `None` and the reader renders the passages it has —
+  unlabelled rows beat mislabelled ones, the same rule `structure_for` follows.
+
+---
+
 ## 8. Assets
 
 Full provenance, sizes and constraints: **`assets/README.md`**.

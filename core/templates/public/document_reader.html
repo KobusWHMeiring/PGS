@@ -167,6 +167,49 @@
                 </div>
               {% endif %}
               {% for passage in reader.passages %}
+                {% if reader.grid and passage.anchor == reader.grid.first_anchor %}
+                {% comment %}
+                  The printed grid (D72.3). The columns and legend are the artefact's reviewed
+                  table; the rows are the chunks this branch already rendered from, aligned by
+                  `knowledge.tables.align_artefact_grid` — a corpus that disagrees falls back to
+                  the plain passages rather than labelling a row it cannot vouch for.
+
+                  It is drawn here, at the first row's passage, so the lead-in prose before it and
+                  the trailing prose after it stay ordinary passages in document order.
+
+                  One `<table>` serves both shapes: above 900 px it is the grid, broken out of the
+                  38 rem measure; below 900 px CSS restacks the same rows, and each cell carries its
+                  column name in `data-label`. No JavaScript. The scroll wrapper is focusable so a
+                  keyboard user can scroll it (WCAG 1.4.10 / 2.1.1).
+                {% endcomment %}
+                {% if reader.grid.legend %}
+                  <p class="reader__grid-legend">{{ reader.grid.legend }}</p>
+                {% endif %}
+                <div class="reader__grid-wrap" tabindex="0" role="region"
+                     aria-label="{{ reader.selected.title }} — the printed table">
+                  <table class="reader__grid">
+                    <thead>
+                      <tr>
+                        {% for column in reader.grid.columns %}<th scope="col">{{ column }}</th>{% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for row in reader.grid.rows %}
+                        <tr id="{{ row.anchor }}">
+                          {% for column, blocks in row.cells %}
+                            {% if forloop.first %}
+                              <th scope="row">{% include "public/_passage_blocks.html" with blocks=blocks %}{% if row.show_page and row.page %}<span class="reader__grid-page">printed p. {{ row.page }}</span>{% endif %}</th>
+                            {% else %}
+                              <td data-label="{{ column }}"{% if not blocks %} class="is-empty"{% endif %}>{% include "public/_passage_blocks.html" with blocks=blocks %}</td>
+                            {% endif %}
+                          {% endfor %}
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% endif %}
+                {% if not passage.in_grid %}
                 <article class="passage" id="{{ passage.anchor }}">
                   {% comment %}
                     The divider the paper prints immediately above this row — a part heading, or a
@@ -191,6 +234,7 @@
                     <p class="passage__note">{{ passage.note }}</p>
                   {% endif %}
                 </article>
+                {% endif %}
               {% empty %}
                 <p class="reader__no-hits">
                   This branch is reserved and blank in the printed standard.

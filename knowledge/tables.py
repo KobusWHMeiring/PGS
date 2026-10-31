@@ -667,6 +667,70 @@ def chunks_for_rows(section_ref: str) -> list[Chunk]:
     return [row.as_chunk() for row in rows_for(section_ref)]
 
 
+@dataclass(frozen=True)
+class ArtefactGrid:
+    """A reviewed artefact table, in the shape the reader draws.
+
+    The two-column `TableStructure` above is Appendix 2's shape: a substance cell and a condition
+    cell, rendered as a heading over a paragraph. The landscape's tables have five columns, so the
+    reader needs the printed column labels and every cell — not a label per row. The data is the
+    artefact's own (`ParsedTable`), never a reconstruction: the rows are the chunks the reader has.
+    """
+
+    columns: tuple[str, ...]
+    legend: str
+    #: One entry per row; each is that row's cells in printed column order.
+    rows: tuple[tuple[str, ...], ...]
+
+    @property
+    def row_texts(self) -> tuple[str, ...]:
+        """Each row as the chunk text the ingest stores (`ParsedTableRow.text`)."""
+        return tuple("\n".join(cells) for cells in self.rows)
+
+
+def artefact_grid_for(section) -> ArtefactGrid | None:
+    """In: a `ParsedSection` from a reviewed artefact. Out: its table as a grid, or None.
+
+    A section with more than one table returns the first: every landscape section has one, and a
+    section with two would need the template to place them, which is a different design question.
+    """
+    if not section.tables:
+        return None
+    table = section.tables[0]
+    return ArtefactGrid(
+        columns=table.columns,
+        legend=table.legend,
+        rows=tuple(tuple(cell.text for cell in row.cells) for row in table.rows),
+    )
+
+
+def align_artefact_grid(
+    grid: ArtefactGrid, texts: tuple[str, ...]
+) -> tuple[int, ...] | None:
+    """In: a grid and the passage texts about to be rendered. Out: a position per row, or None.
+
+    In:  `texts` — one entry per passage in the branch, in printed order. Prose before, between or
+         after the rows is allowed and ignored.
+    Out: the index of each row's passage, in row order; **None** unless every row matches exactly
+         (whitespace-normalised) and the matches keep their order.
+    Fails: never. A corpus that disagrees with the artefact renders the plain page it renders today,
+        for the same reason `structure_for` does: a mislabelled row is worse than no grid.
+    """
+    positions: list[int] = []
+    cursor = 0
+    for wanted in grid.row_texts:
+        needle = _squash(wanted)
+        found = next(
+            (index for index in range(cursor, len(texts)) if _squash(texts[index]) == needle),
+            None,
+        )
+        if found is None:
+            return None
+        positions.append(found)
+        cursor = found + 1
+    return tuple(positions)
+
+
 __all__ = [
     "APPENDIX_2_ROWS",
     "APPENDIX_6A_ROWS",
@@ -675,10 +739,13 @@ __all__ = [
     "TABLE_BANDS",
     "TABLE_ROWS",
     "TABLE_SECTIONS",
+    "ArtefactGrid",
     "TableDivider",
     "TableRow",
     "TableSection",
     "TableStructure",
+    "align_artefact_grid",
+    "artefact_grid_for",
     "chunks_for_parsed_section",
     "chunks_for_rows",
     "row_chunk",

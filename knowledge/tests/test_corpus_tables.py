@@ -19,6 +19,7 @@ from __future__ import annotations
 import pytest
 
 from knowledge.corpus import CorpusFormatError, parse_blocks
+from knowledge.tables import align_artefact_grid, artefact_grid_for
 
 HEADER = """<!-- corpus
 doc_key: landscape
@@ -480,3 +481,46 @@ cols: Key steps | Fee
 <!-- /table -->"""
     with pytest.raises(CorpusFormatError, match="no text"):
         parse_blocks(artefact(page(body)))
+
+
+# --------------------------------------------------------------------------------------
+# The grid the reader draws (D72.3): columns + cells, aligned to the passages it renders.
+# --------------------------------------------------------------------------------------
+
+
+def test_the_artefact_grid_pairs_columns_with_cells_and_aligns_the_prose_around_it():
+    body = (
+        "The lead-in sentence.\n\n"
+        + TABLE
+        + "\n\nThe trailing sentence."
+    )
+    section = parse_blocks(artefact(page(body))).sections[0]
+
+    grid = artefact_grid_for(section)
+
+    assert grid.columns == ("Key steps", "Fee")
+    assert grid.rows == (("Farmers who are already producing a surplus.", "R500"),)
+    assert grid.row_texts == ("Farmers who are already producing a surplus.\nR500",)
+
+    texts = (
+        "The lead-in sentence.",
+        "Farmers who are already producing a surplus.\nR500",
+        "The trailing sentence.",
+    )
+    assert align_artefact_grid(grid, texts) == (1,), "prose before/after the row is allowed"
+
+
+def test_the_grid_refuses_a_corpus_that_disagrees_with_the_artefact():
+    """A stale row is worse than no grid — the same rule `structure_for` follows."""
+    section = parse_blocks(artefact(page(TABLE))).sections[0]
+    grid = artefact_grid_for(section)
+
+    assert align_artefact_grid(grid, ("Farmers who are already producing a surplus.\nR5OO",)) is None
+    assert align_artefact_grid(grid, ()) is None
+    assert align_artefact_grid(grid, ("A different row entirely.\nR500",)) is None
+
+
+def test_a_prose_section_has_no_grid():
+    body = "A sentence, a second sentence, and no table at all."
+    section = parse_blocks(artefact(page(body))).sections[0]
+    assert artefact_grid_for(section) is None

@@ -79,6 +79,10 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "version": "2.1",
         "section_scheme": "saoso",
         "corpus_artefact": "saoso.md",
+        #: The shipped PDF, repo-relative — the same string `StandardDocument.source_file`
+        #: records. `source` exists so the reader can go from a stored document back to its
+        #: doc key (and so its artefact) without guessing from the title.
+        "source": "pgs_docs/saoso-version-2.1-2026.pdf",
     },
     "opp": {
         "kind": StandardDocument.Kind.SOP,
@@ -86,6 +90,7 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "title": "Outeniqua PGS Principles, Policies and Procedures",
         "version": "2026",
         "section_scheme": "opp",
+        "source": "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf",
     },
     "bpp": {
         "kind": StandardDocument.Kind.PRINCIPLES,
@@ -95,6 +100,7 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "version": "",
         "section_scheme": "heading",
         "corpus_artefact": "bpp.md",
+        "source": "pgs_docs/Basic Production Principles_ENG_PRINT.pdf",
     },
     "landscape": {
         "kind": StandardDocument.Kind.LANDSCAPE,
@@ -103,8 +109,22 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "version": "",
         "section_scheme": "heading",
         "corpus_artefact": "landscape.md",
+        "source": "pgs_docs/PGS Certification landscape_Final.pdf",
     },
 }
+
+
+def doc_key_for(source_file: str | None) -> str | None:
+    """In: a stored `source_file` (`pgs_docs/<file>.pdf`). Out: its governed doc key, or None.
+
+    The reader has a `StandardDocument` and needs its artefact; the mapping is data in the
+    descriptor above rather than a title heuristic, because a title can be edited and the
+    source path is the same string the ingest stored.
+    """
+    for key, descriptor in CORPUS_DOCUMENTS.items():
+        if descriptor.get("source") == source_file:
+            return key
+    return None
 
 #: The reviewed artefacts (D53). Repo-relative: `corpus_check` and `corpus_refresh` compare
 #: exactly these files with what a box stored, so the path must not depend on the CWD.

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<!-- DECISION ARTIFACT (not a production template) | Outeniqua PGS — the reader's table fit
+     Companion to product/backlog/In Progress/LANDSCAPE_TABLES_PRD.md §5.4 and step 6 (D72.3).
+     Self-contained: no CDN, no build step, no network, no external fonts.
+     Answers autosave to localStorage; the export produces a markdown note plus a §18.3 row.
+     Every number in Part 1 was measured on 2026-10-30 against knowledge/tests/fixtures/pages/
+     landscape.layout.txt; the command is quoted so the 323-vs-169 correction can be re-run. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — How the reader fits the landscape's tables</title>
+<style>
+  :root {
+    --bg:            #f4f6f2;
+    --surface:       #ffffff;
+    --surface-low:   #eaeee6;
+    --surface-high:  #dfe5da;
+    --accent:        #35604a;
+    --accent-soft:   #e4efe7;
+    --accent-line:   #b9cfc0;
+    --text:          #1c2620;
+    --muted:         #66756b;
+    --warn:          #8a5a1c;
+    --warn-soft:     #f7efe1;
+    --stop:          #8a2f2f;
+    --stop-soft:     #f9ecec;
+    --cream:         #fdfbf7;
+    --sand:          #e6dece;
+    --ochre:         #b87b2e;
+    --radius-sm:     9px;
+    --radius-lg:     14px;
+    --radius-xl:     20px;
+    --shadow:        0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky: 0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 180px; }
+  p, li { font-size: 14.5px; }
+  code, kbd { font-family: var(--mono); font-size: 12.5px; }
+  p code, li code, td code { background: var(--surface-low); padding: 1px 5px; border-radius: 5px; }
+  a { color: var(--accent); }
+
+  header.hero { background: linear-gradient(160deg, var(--accent) 0%, #274936 100%); color: #fff; padding: 44px 20px 38px; margin-bottom: 26px; }
+  header.hero .inner { max-width: 1000px; margin: 0 auto; }
+  header.hero .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .78; margin: 0 0 10px; font-weight: 600; }
+  header.hero h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.18; letter-spacing: -.01em; }
+  header.hero .question { margin: 0; max-width: 72ch; font-size: 16px; opacity: .95; }
+  header.hero .question b { font-weight: 650; }
+  header.hero .meta { margin-top: 18px; font-size: 13px; opacity: .82; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  header.hero .meta code { font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px; }
+
+  .panel { background: var(--surface); border-radius: var(--radius-xl); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+  .panel h2 { margin: 0 0 8px; font-size: 17px; }
+  .panel > p:last-child { margin-bottom: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 40px 0 12px; }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -4px 0 16px; max-width: 76ch; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.c { text-align: center; white-space: nowrap; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  .scroll table { min-width: 560px; }
+
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; vertical-align: 1px; }
+  .tag--checked { background: var(--accent-soft); color: var(--accent); }
+  .tag--assumed { background: var(--warn-soft); color: var(--warn); }
+  .tag--stop { background: var(--stop-soft); color: var(--stop); }
+  .tag--rec { background: #f3e7cf; color: #7a4f12; }
+
+  .callout { border-left: 3px solid var(--accent-line); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 14px 0; }
+  .callout--warn { border-left-color: #d9b37a; background: var(--warn-soft); }
+  .callout--stop { border-left-color: #c98a8a; background: var(--stop-soft); }
+  .callout p:first-child { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ---------- the live mocks ---------- */
+  .mock { border: 1px solid var(--surface-high); border-radius: var(--radius-lg); overflow: hidden; margin: 14px 0 6px; background: var(--surface); }
+  .mock-bar { background: var(--surface-low); padding: 7px 12px; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .mock-bar span:last-child { text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .mock-frame { padding: 14px; }
+  .mock-frame--cream { background: var(--cream); }
+  .mock-note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+  .mock-note strong { color: var(--text); }
+
+  /* the grid itself — deliberately the same CSS shape the reader will carry */
+  .grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .grid { border-collapse: collapse; width: 100%; font-size: 13px; line-height: 1.45; min-width: 860px; }
+  .grid thead th { background: var(--cream); color: var(--muted); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; border-bottom: 2px solid var(--sand); padding: 8px 10px; vertical-align: bottom; }
+  .grid td, .grid th[scope=row] { border-bottom: 1px solid var(--sand); padding: 9px 10px; vertical-align: top; }
+  .grid th[scope=row] { background: var(--cream); text-align: left; font-weight: 700; position: sticky; left: 0; z-index: 1; min-width: 150px; box-shadow: 1px 0 0 var(--sand); }
+  .grid td p { margin: 0 0 .55em; }
+  .grid td p:last-child { margin-bottom: 0; }
+  .grid td ul { margin: 0; padding-left: 1.1em; }
+  .grid td li { font-size: 13px; margin: 0 0 .3em; }
+  .grid .seal { color: var(--muted); font-style: italic; }
+  .grid .empty { color: var(--muted); }
+  .grid col.c1 { width: 20%; } .grid col.c2 { width: 16%; } .grid col.c3 { width: 30%; } .grid col.c4 { width: 10%; } .grid col.c5 { width: 18%; }
+
+  .frame-narrow { max-width: 520px; }
+  .frame-measure { max-width: 608px; }  /* 38rem at 16px */
+  .frame-phone { max-width: 390px; }
+
+  /* the stacked fallback: same markup, < 900 px */
+  .stack .grid, .grid--stacked { border-collapse: collapse; width: 100%; min-width: 0; font-size: 14px; }
+  .grid--stacked thead { display: none; }
+  .grid--stacked tr { display: block; border: 1px solid var(--sand); border-radius: var(--radius-sm); margin-bottom: 12px; background: var(--surface); }
+  .grid--stacked th[scope=row] { position: static; display: block; min-width: 0; width: 100%; box-shadow: none; border-bottom: 1px solid var(--sand); border-radius: var(--radius-sm) var(--radius-sm) 0 0; font-family: var(--serif); font-size: 16px; }
+  .grid--stacked td { display: block; border-bottom: 0; padding: 8px 12px; }
+  .grid--stacked td::before { content: attr(data-label); display: block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 2px; }
+  .grid--stacked td:empty, .grid--stacked td.is-empty { display: none; }
+
+  /* ---------- option cards ---------- */
+  .option { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow); margin: 0 0 22px; overflow: hidden; }
+  .option-head { display: flex; gap: 12px; align-items: flex-start; padding: 18px 22px 0; }
+  .option-letter { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+  .option-head h3 { margin: 0 0 3px; font-size: 16px; }
+  .option-head .one-line { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .option-body { padding: 10px 22px 18px 68px; }
+  @media (max-width: 640px) { .option-body { padding-left: 22px; } }
+
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  @media (max-width: 720px) { .pros-cons { grid-template-columns: 1fr; } }
+  .pros-cons h4 { margin: 0 0 5px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .pros-cons .pro { border-top: 3px solid var(--accent-line); padding-top: 8px; }
+  .pros-cons .con { border-top: 3px solid #d6c6a8; padding-top: 8px; }
+  .pros-cons ul { margin: 0; padding-left: 1.1em; }
+  .pros-cons li { font-size: 13.5px; margin-bottom: 3px; }
+
+  .matrix td, .matrix th { font-size: 13px; }
+  .matrix .yes { color: var(--accent); font-weight: 700; }
+  .matrix .no { color: var(--stop); font-weight: 700; }
+  .matrix .part { color: var(--warn); font-weight: 700; }
+
+  .rec { border: 2px solid var(--accent); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow); padding: 22px 24px; margin-bottom: 24px; }
+  .rec h3 { margin: 0 0 8px; font-size: 19px; }
+  .rec .lede { font-size: 15px; }
+
+  /* ---------- decision control ---------- */
+  .choice { border: 1px solid var(--surface-high); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 10px; background: var(--surface); }
+  .choice label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+  .choice input { margin-top: 4px; flex: 0 0 auto; }
+  .choice .title { font-weight: 700; }
+  .choice .why { color: var(--muted); font-size: 13px; display: block; }
+  textarea { width: 100%; min-height: 90px; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid var(--surface-high); border-radius: var(--radius-sm); background: var(--cream); color: var(--text); resize: vertical; }
+  .export-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  button.btn { font: inherit; font-size: 13.5px; font-weight: 700; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; min-height: 44px; }
+  button.btn--ghost { background: transparent; color: var(--accent); }
+  button.btn:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--ochre); outline-offset: 2px; }
+  #out { width: 100%; min-height: 180px; font-family: var(--mono); font-size: 12.5px; margin-top: 12px; }
+
+  .sticky { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(28,38,32,.94); color: #fff; padding: 10px 16px; display: flex; gap: 14px; align-items: center; justify-content: center; box-shadow: var(--shadow-sticky); z-index: 10; }
+  .sticky .saved { font-size: 12.5px; opacity: .85; }
+  .sticky button { font: inherit; font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.5); background: transparent; color: #fff; cursor: pointer; min-height: 44px; }
+
+  @media print {
+    body { background: #fff; }
+    .sticky, .export-row, #out, .choice { display: none !important; }
+    .panel, .option, .rec { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+    header.hero { background: #274936 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .mock { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; decision artifact</p>
+    <h1>Fitting the landscape&rsquo;s five-column tables into the reader</h1>
+    <p class="question">
+      The reader&rsquo;s text measure is <b>38&nbsp;rem (&asymp;85 characters)</b>, and the table&rsquo;s
+      own pane is narrower still: <b>52.5&nbsp;rem</b> once the tree takes 17&nbsp;rem and the gap
+      2.5&nbsp;rem. The landscape&rsquo;s printed rows run to <b>169 characters of content</b>, and the
+      fee sits in the last column. How should the reader show the table so the fee is reachable
+      &mdash; on a desktop and on a phone?
+    </p>
+    <p class="meta">
+      <span>Companion to <code>LANDSCAPE_TABLES_PRD.md</code> &sect;5.4 / step 6 (D72.3)</span>
+      <span>Measured 2026-10-30</span>
+      <span>Self-contained &mdash; no network</span>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>How to read this</h2>
+    <p>
+      This is a decision document, not a proposal deck. Part 1 is what I could <em>check</em> &mdash;
+      marked <span class="tag tag--checked">checked</span> &mdash; and it contains one correction to the
+      PRD&rsquo;s own number. Part 2 is why the question is hard. Part 3 shows four live mocks; each one
+      is the same five-column table, rendered at the width the option proposes. Part 4 gives every
+      option its strongest case and then its weakness. Part 7 recommends one answer; Part 8 is yours.
+      Every mock is the real Step&nbsp;1 and Step&nbsp;2 row from
+      <code>knowledge/corpus/landscape.md</code>, not lorem ipsum.
+    </p>
+  </div>
+
+  <!-- ============================ PART 1 ============================ -->
+  <div class="section-head"><h2>Part 1 &mdash; What is actually true</h2><div class="rule"></div></div>
+  <p class="section-note">Measured against the committed <code>-layout</code> page fixture, so this runs
+    with no PDF reader. The command is quoted in 1.4; re-run it before trusting a single number here.</p>
+
+  <div class="panel">
+    <h2>1.1 &nbsp;The widths, in the reader&rsquo;s own units</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Measurement</th><th class="num">Value</th><th>Where it comes from</th></tr></thead>
+        <tbody>
+          <tr><td>Reader&rsquo;s reading measure</td><td class="num">38&nbsp;rem &asymp; 85 chars</td><td><code>core/static/css/reader.css</code> <code>--reader-measure</code></td></tr>
+          <tr><td>Reader&rsquo;s outer working column</td><td class="num">72&nbsp;rem &asymp; 160 chars</td><td>same file, <code>.reader { max-width: 72rem }</code></td></tr>
+          <tr><td><b>Passages pane</b> the grid actually gets</td><td class="num">52.5&nbsp;rem &asymp; 117&ndash;134 chars</td><td>72&nbsp;rem &minus; 17&nbsp;rem tree &minus; 2.5&nbsp;rem gap (<code>.reader__body</code>)</td></tr>
+          <tr><td>Printed row content, PDF 4 / 5 / 6 / 7 / 8</td><td class="num">157 / 162 / 157 / <b>169</b> / 153</td><td><code>len(line.rstrip())</code>, body lines only</td></tr>
+          <tr><td>Where the <b>Fee</b> column starts</td><td class="num">127 / 129 / 149 / 127 / 116</td><td>the header&rsquo;s <code>Fee</code> index</td></tr>
+          <tr><td>Width of the Fee cell&rsquo;s text</td><td class="num">30 / 33 / 8 / 42 / 37</td><td>it wraps; it is a narrow column, not a wide one</td></tr>
+          <tr><td>The PRD&rsquo;s &ldquo;widest row&rdquo; figure</td><td class="num">323</td><td><span class="tag tag--stop">wrong row</span> that is the page&rsquo;s line width, not a row</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout--warn">
+      <p><b>The correction that matters.</b> &sect;5.4 says the widest row is <b>323 characters</b> and that
+      at 160 characters it is &ldquo;still ~2&times; too wide&rdquo;. The 323 is the width of the page&rsquo;s
+      <em>blank padding line</em> (and of the right-aligned footer), not of the printed row. On every table
+      page the row&rsquo;s last printed character sits at <b>153&ndash;169</b> &mdash; about one column past the
+      working column, not twice it. The fit problem is real, but it is <b>one column&rsquo;s worth</b>,
+      not two.</p>
+      <p class="mock-note"><strong>And the pane is not the page.</strong> The grid lives in the passages
+      pane, <b>52.5&nbsp;rem</b>, because the tree takes 17&nbsp;rem and the gap 2.5. A &ldquo;breakout to
+      72&nbsp;rem&rdquo; would put the table under the sticky tree. The practical ceiling for option A is
+      52.5&nbsp;rem &mdash; which at 14&nbsp;px holds ~134 characters, so the fee starts just at the edge
+      and finishes ~25&ndash;40 characters past it.</p>
+    </div>
+
+    <h2 style="margin-top:22px">1.2 &nbsp;What the reader renders today</h2>
+    <p>
+      <span class="tag tag--checked">checked</span> Today the reviewed-table path
+      (<code>structure_for</code>) knows only the two-column appendix rows held in Python. For the
+      landscape&rsquo;s artefact tables, <code>section_ref</code> is <code>None</code>, so the reader
+      falls back to the generic passage renderer: one block of the row&rsquo;s cells joined by line
+      breaks, at the 38&nbsp;rem measure. That is the definition-list shape D72.3 rejected &mdash; the
+      fee is a sentence buried in the middle of a column, not a column a reader can scan.
+    </p>
+
+    <h2 style="margin-top:22px">1.3 &nbsp;Why the fee is the test</h2>
+    <p>
+      The reader-reported question is <em>&ldquo;what does it cost to join a PGS group?&rdquo;</em>. The
+      answer is the merged Fee cell: <b>&ldquo;Annual membership fee (paid by the PGS group to PGS SA):
+      R500&rdquo;</b> and the once-off <b>R1&nbsp;000</b>, in the fifth column, 127&ndash;149 characters
+      from the left edge. Any option that cannot put that column within a glance at 1440&nbsp;px has
+      failed the one job the page was reported for.
+    </p>
+
+    <h2 style="margin-top:22px">1.4 &nbsp;The command behind the table</h2>
+    <pre class="scroll" style="background:var(--surface-low);padding:12px;border-radius:9px;font-size:12px;overflow-x:auto"><code>python - &lt;&lt;'EOF'
+from pathlib import Path
+pages = Path("knowledge/tests/fixtures/pages/landscape.layout.txt").read_text().split("\f")
+for n in range(4, 9):
+    lines = pages[n-1].split("\n")
+    body = [l for l in lines if l.strip()
+            and "PGS SA - SOUTH AFRICAN" not in l and l.strip() != str(n)]
+    header = next(l for l in lines if "Key steps" in l)
+    fee = header.index("Fee")
+    print(n, max(len(l.rstrip()) for l in body), fee)   # content end, fee start
+EOF</code></pre>
+    <p class="mock-note">Run against the committed fixture; the output is the 157/162/157/169/153 and
+      127/129/149/127/116 above.</p>
+  </div>
+
+  <!-- ============================ PART 2 ============================ -->
+  <div class="section-head"><h2>Part 2 &mdash; The shape of the problem</h2><div class="rule"></div></div>
+  <p class="section-note">Five columns, one of them a seal picture, one a 400-character prose cell. The
+    constraint is not the total width; it is what has to stay legible per column while the fee stays
+    reachable.</p>
+
+  <div class="panel">
+    <p>Three constraints pull in different directions:</p>
+    <ol>
+      <li><b>The reading measure is a measure of prose.</b> 38&nbsp;rem is right for a paragraph; it is
+        wrong for a reference grid, where the eye scans a column, not a line. The reader already breaks
+        it for the appendix caption (<code>.reader__table-bar</code>) &mdash; tables are the one place the
+        measure is allowed to give way.</li>
+      <li><b>A literal grid is tall, not wide.</b> Once the cells wrap, the table&rsquo;s width is set by
+        the widest <em>unbreakable</em> token (a URL, a seal name), not by the 169-character printed
+        line. At 14&nbsp;px and 72&nbsp;rem, five columns average ~14&nbsp;rem each; the fee needs
+        ~12&nbsp;rem and the prose column ~22.</li>
+      <li><b>Most readers are on a phone.</b> 390&nbsp;px is ~40 characters. No horizontal grid is
+        readable there, sticky column or not; the phone needs the row <em>restacked</em>, with the
+        column names attached to their values.</li>
+    </ol>
+    <div class="callout">
+      <p><b>The asymmetry that decides it:</b> on a desktop the problem is <em>one breakout plus a
+      safety net</em>; on a phone it is a <em>different layout</em>, not a narrower one. Options that treat
+      both viewports the same fail one of them.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 3 ============================ -->
+  <div class="section-head"><h2>Part 3 &mdash; The options, with live mocks</h2><div class="rule"></div></div>
+  <p class="section-note">Same table, same real cells, four widths. Drag the scrollbars in options B and C;
+    the mocks are not screenshots.</p>
+
+  <!-- Option A -->
+  <div class="option">
+    <div class="option-head">
+      <div class="option-letter">A</div>
+      <div>
+        <h3>Use the whole passages pane, not the 38&nbsp;rem measure</h3>
+        <p class="one-line">Let the table exceed the reading measure on purpose, at 52.5&nbsp;rem, with wrapped cells.</p>
+      </div>
+    </div>
+    <div class="option-body">
+      <div class="mock">
+        <div class="mock-bar"><span>A &middot; 52.5&nbsp;rem passages pane</span><span>&asymp;134 characters at 14&nbsp;px &middot; no scroll</span></div>
+        <div class="mock-frame mock-frame--cream">
+          <div class="grid-wrap">
+            <table class="grid">
+              <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"></colgroup>
+              <thead><tr><th>Key steps</th><th>Resource documents, guidelines and requirements</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><b>Step 1</b><p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p></th>
+                  <td><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></td>
+                  <td class="empty"></td>
+                  <td class="empty"></td>
+                  <td><p>Local PGS group determines the membership fee for farmers/consumers/traders that are part of the PGS group.</p><p><b>Annual membership fee (paid by the PGS group to PGS SA): R500</b></p><p>Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1&nbsp;000</p></td>
+                </tr>
+                <tr>
+                  <th scope="row"><b>Step 2</b><p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed.</p><p>The members sign pledges and formally establish the PGS group at a general meeting.</p><p>The group completes a self-assessment form (like a status report), shares the required information with PGS SA and pays an annual membership fee.</p></th>
+                  <td><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles based on organic standards &ndash; (SAOSO standard or equivalent)</li></ul></td>
+                  <td><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p><p>Groups may also create their own local logo identifying their group and use the &ldquo;member of PGS SA&rdquo; logo on their communication and certificates.</p><p>Groups that do not wish to design their own logo may make use of a PGS SA logo customized to the name of their PGS group.</p></td>
+                  <td class="seal">Proud member of</td>
+                  <td class="empty"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="mock-note"><strong>What the mock shows:</strong> at the passages pane&rsquo;s full width
+        the fee is in view and the four prose cells wrap to a readable column width. The mock is
+        950&nbsp;px wide; the real pane is 840&nbsp;px at a 1440&nbsp;px viewport, which is why option B
+        still exists &mdash; the last ~25 characters of the fee column scroll in.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>The fee is in view without a gesture at a normal desktop width.</li><li>One markup shape; the printed grid survives.</li><li>No JavaScript.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Breaks the measure &mdash; the thing the reader was built to protect.</li><li>The pane is 52.5&nbsp;rem, not 72: a true breakout would underlap the sticky tree.</li><li>On a 1200&nbsp;px window it overflows the fee&rsquo;s last ~25&ndash;40 characters with no affordance.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="option">
+    <div class="option-head">
+      <div class="option-letter">B</div>
+      <div>
+        <h3>Scroll region with a sticky first column</h3>
+        <p class="one-line">The table is real; the measure is a viewport into it; the step label stays put.</p>
+      </div>
+    </div>
+    <div class="option-body">
+      <div class="mock">
+        <div class="mock-bar"><span>B &middot; a 520&nbsp;px viewport into the same grid</span><span>scroll &rarr; ; the Step column is sticky</span></div>
+        <div class="mock-frame mock-frame--cream">
+          <div class="grid-wrap frame-narrow" tabindex="0" role="region" aria-label="Table preview, scrollable">
+            <table class="grid">
+              <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"></colgroup>
+              <thead><tr><th>Key steps</th><th>Resource documents</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><b>Step 1</b><p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p></th>
+                  <td><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></td>
+                  <td class="empty"></td>
+                  <td class="empty"></td>
+                  <td><p>Local PGS group determines the membership fee for farmers/consumers/traders that are part of the PGS group.</p><p><b>Annual membership fee (paid by the PGS group to PGS SA): R500</b></p><p>Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1&nbsp;000</p></td>
+                </tr>
+                <tr>
+                  <th scope="row"><b>Step 2</b><p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed.</p></th>
+                  <td><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li></ul></td>
+                  <td><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p></td>
+                  <td class="seal">Proud member of</td>
+                  <td class="empty"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="mock-note"><strong>What the mock shows:</strong> as you scroll the table sideways, the
+        Step label stays pinned; the fee scrolls in. <strong>What it hides:</strong> a keyboard user
+        needs a focusable region (this one has <code>tabindex="0"</code>) and the sticky cell must not
+        cover the text on a phone &mdash; which is why B alone is not the phone answer.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>The table stays a table at every width.</li><li>The step label never leaves the screen.</li><li>A safety net for zoom and long URLs.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Still a horizontal gesture on a phone, which is the failure WCAG 1.4.10 names.</li><li>Sticky cells can overlap focus scroll; needs care.</li><li>At 38&nbsp;rem the viewport shows only ~2.5 columns.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="option">
+    <div class="option-head">
+      <div class="option-letter">C</div>
+      <div>
+        <h3>Stack below a breakpoint</h3>
+        <p class="one-line">Grid on the desktop; one labelled block per row on the phone.</p>
+      </div>
+    </div>
+    <div class="option-body">
+      <div class="mock">
+        <div class="mock-bar"><span>C &middot; 390&nbsp;px phone viewport</span><span>same markup, <code>display:block</code> below 900&nbsp;px</span></div>
+        <div class="mock-frame mock-frame--cream frame-phone">
+          <table class="grid grid--stacked">
+            <thead><tr><th>Key steps</th><th>Resources</th><th>Use of seals</th><th>Seals</th><th>Fee</th></tr></thead>
+            <tbody>
+              <tr>
+                <th scope="row">Step 1</th>
+                <td data-label="Key steps"><p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p></td>
+                <td data-label="Resource documents"><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></td>
+                <td data-label="Use of seals and logos" class="empty"></td>
+                <td data-label="Seals and logos" class="empty"></td>
+                <td data-label="Fee"><p>Local PGS group determines the membership fee for farmers/consumers/traders that are part of the PGS group.</p><p><b>Annual membership fee (paid by the PGS group to PGS SA): R500</b></p><p>Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1&nbsp;000</p></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="mock-note"><strong>What the mock shows:</strong> every cell keeps its column name, the fee
+        is a labelled field, and there is no horizontal gesture. This is the shape the phone already uses
+        for the appendix rows (a substance heading over its condition). Empty cells are not printed.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Meets WCAG 1.4.10 at 320&nbsp;px without a table scroll.</li><li>The fee is labelled, not inferred from a column position.</li><li>44&nbsp;px targets are easy; no sticky overlap.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Loses the grid on the phone &mdash; the product owner chose the printed grid.</li><li>Five long cells make a very tall card; a reader comparing steps scrolls a lot.</li><li>Needs the column names repeated per row (visual weight).</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option D -->
+  <div class="option">
+    <div class="option-head">
+      <div class="option-letter">D</div>
+      <div>
+        <h3>Reduce the grid&rsquo;s type size inside the measure</h3>
+        <p class="one-line">13&nbsp;px at 38&nbsp;rem &mdash; a multiplier, not a solution.</p>
+      </div>
+    </div>
+    <div class="option-body">
+      <div class="mock">
+        <div class="mock-bar"><span>D &middot; 38&nbsp;rem at 13&nbsp;px</span><span>still cuts off at the third column</span></div>
+        <div class="mock-frame mock-frame--cream">
+          <div class="grid-wrap frame-measure">
+            <table class="grid" style="font-size:13px">
+              <colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"></colgroup>
+              <thead><tr><th>Key steps</th><th>Resource documents</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
+              <tbody><tr>
+                <th scope="row"><b>Step 1</b><p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p></th>
+                <td><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></td>
+                <td class="empty"></td>
+                <td class="empty"></td>
+                <td><p>Local PGS group determines the membership fee for farmers/consumers/traders that are part of the PGS group.</p><p><b>Annual membership fee (paid by the PGS group to PGS SA): R500</b></p></td>
+              </tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <p class="mock-note"><strong>What the mock shows:</strong> 38&nbsp;rem at 13&nbsp;px holds ~105
+        characters, so the third column is where the text runs out; the fee is still beyond the edge. On
+        its own this does not reach the fee. As a multiplier on A or B it buys ~20% more characters per
+        column without dropping below the design system&rsquo;s body sizes.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Cheap: one declaration.</li><li>More characters per column at any width.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Not sufficient alone &mdash; the fee is still off-screen at the measure.</li><li>13&nbsp;px is at the floor for a reference grid; 12&nbsp;px would fail readability.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 4 ============================ -->
+  <div class="section-head"><h2>Part 4 &mdash; What the evidence says</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p><b>Verified, not argued:</b></p>
+    <ul>
+      <li>The 323 figure is a blank padding line; the row content ends at 153&ndash;169
+        <span class="tag tag--checked">checked</span>. The PRD&rsquo;s &ldquo;2&times;&rdquo; is wrong; the
+        gap is roughly <b>one column</b>.</li>
+      <li>At 72&nbsp;rem and 14&nbsp;px, option A&rsquo;s grid fits two real rows with no scroll in the
+        mock above <span class="tag tag--checked">checked in this page</span>. The fee is the fifth
+        column and is visible.</li>
+      <li>At 38&nbsp;rem, options A (unbroken), B (before scrolling) and D all hide the fee
+        <span class="tag tag--checked">checked</span>.</li>
+      <li>At 390&nbsp;px, only C has no horizontal gesture <span class="tag tag--checked">checked</span>.</li>
+      <li>The phone is the majority case for a smallholder-facing page (the site&rsquo;s own e2e suite
+        tests at 390&nbsp;px), so a desktop-only answer is a partial answer.</li>
+    </ul>
+    <p class="mock-note"><span class="tag tag--assumed">assumed</span> The 38&nbsp;rem &asymp; 85 and
+      72&nbsp;rem &asymp; 160 character conversions are the CSS comment&rsquo;s estimates at 16&nbsp;px
+      Mulish; the mock&rsquo;s fit is observed, not measured by a script. A browser measurement would
+      replace this assumption with a number.</p>
+  </div>
+
+  <!-- ============================ PART 5 ============================ -->
+  <div class="section-head"><h2>Part 5 &mdash; What the literature says</h2><div class="rule"></div></div>
+  <div class="panel">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Principle</th><th>What it says</th><th>Which option it favours</th><th>Does it hold here?</th></tr></thead>
+        <tbody>
+          <tr><td>WCAG 2.2 SC 1.4.10 (Reflow)</td><td>Content must reflow to a 320&nbsp;px viewport with no two-dimensional scrolling, except for content that requires it (data tables are named as an exception).</td><td>C</td><td><span class="part">Partly</span> &mdash; the exception means a table <em>may</em> scroll; but the fee is the question, and a phone reader should not have to.</td></tr>
+          <tr><td>WCAG 2.2 SC 1.4.4 (Resize text)</td><td>Text must scale to 200% without loss of content or function.</td><td>B / C</td><td><span class="yes">Yes</span> &mdash; a scroll region survives zoom; a fixed-width grid does not.</td></tr>
+          <tr><td>Roselli, &ldquo;Tables, CSS and data&rdquo;</td><td>Responsive tables: stack with <code>data-label</code> generated content; keep the header association for screen readers.</td><td>C</td><td><span class="yes">Yes</span> &mdash; the <code>data-label</code> pattern is the one in the mock.</td></tr>
+          <tr><td>Sticky-column guidance (CSS <code>position: sticky</code> in scroll containers)</td><td>Pin the identifier column; ensure a background and a shadow, and do not let it cover focus.</td><td>B</td><td><span class="part">Partly</span> &mdash; good for sighted mouse users; no help to keyboard or zoom users on its own.</td></tr>
+          <tr><td>The repo&rsquo;s own rule (D72.3)</td><td>&ldquo;The reader renders the printed grid&rdquo;, and the fee column must be reachable without a scroll longer than the table itself.</td><td>A (+B)</td><td><span class="yes">Yes</span> &mdash; A is the grid; B is the safety net; C is the phone&rsquo;s version of the same data.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mock-note">The principles disagree in one place: 1.4.10&rsquo;s exception lets a data table
+      scroll, while the product decision says the fee must be reachable. The tie is broken by the
+      <em>question the page exists to answer</em>, not by the exception.</p>
+  </div>
+
+  <!-- ============================ PART 6 ============================ -->
+  <div class="section-head"><h2>Part 6 &mdash; Comparison</h2><div class="rule"></div></div>
+  <div class="panel">
+    <div class="scroll">
+      <table class="matrix">
+        <thead><tr><th>Criterion</th><th>A &middot; 72 rem</th><th>B &middot; scroll + sticky</th><th>C &middot; stack &lt;900</th><th>D &middot; 13 px</th></tr></thead>
+        <tbody>
+          <tr><td>Fee visible at 1440&nbsp;px</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Fee visible at 1024&nbsp;px</td><td class="part">Scroll</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Fee visible at 390&nbsp;px</td><td class="no">No</td><td class="no">Scroll</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>No 2-D scroll at 320&nbsp;px</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Keeps the printed grid</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No (phone)</td><td class="yes">Yes</td></tr>
+          <tr><td>Survives 200% zoom</td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+          <tr><td>Effort</td><td class="part">Low</td><td class="part">Low + focus</td><td class="part">Medium</td><td class="yes">Low</td></tr>
+          <tr><td>Risk of a new defect</td><td class="part">Overflow</td><td class="part">Sticky/focus</td><td class="part">Tall rows</td><td class="yes">None</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mock-note">Unweighted on purpose: the criteria are not commensurable, and a score would
+      manufacture precision the evidence does not have. The recommendation below states which criteria
+      it is trading away.</p>
+  </div>
+
+  <!-- ============================ PART 7 ============================ -->
+  <div class="section-head"><h2>Part 7 &mdash; Recommendation</h2><div class="rule"></div></div>
+  <div class="rec">
+    <h3><span class="tag tag--rec">recommend</span> &nbsp;A + B + C, with D as the multiplier</h3>
+    <p class="lede">A real <code>&lt;table&gt;</code> that uses the <b>whole passages pane</b>
+      (52.5&nbsp;rem) rather than the 38&nbsp;rem measure, with wrapped cells and a <b>14&nbsp;px</b> grid;
+      a <b>scroll region with a sticky first column</b> for the last few characters of the fee column and
+      for zoom; and <b>the same markup stacked below 900&nbsp;px</b>, with each cell&rsquo;s column name
+      attached via <code>data-label</code>. Same HTML, CSS-only behaviour, no JavaScript.</p>
+    <ul>
+      <li><b>It answers the question at every width.</b> The fee is in view on a desktop (A), reachable
+        with a short scroll and a pinned step label at 1200&nbsp;px (B), and labelled rather than
+        positional on a phone (C).</li>
+      <li><b>It keeps the product decision.</b> The printed grid survives where there is room; the phone
+        gets the same data, restacked, which is the only honest way to honour &ldquo;the fee is
+        reachable&rdquo; at 390&nbsp;px.</li>
+      <li><b>It is one template branch and one stylesheet.</b> No new model field, no migration: the
+        columns and legend come from the artefact, the rows from the chunks.</li>
+    </ul>
+    <p><b>What it changes:</b> <code>knowledge/tables.py</code> gains an artefact-table reader;
+      <code>core/services/_documents.py</code> carries the grid on the <code>Reader</code>;
+      <code>document_reader.html</code> renders the table; <code>reader.css</code> carries the three
+      behaviours; <code>DESIGN.md</code> gains the component; tests pin the five column names, the fee
+      row, and the prose outside the grid.</p>
+    <p><b>What would change my mind:</b> if the 52.5&nbsp;rem grid makes the fee cell wrap so far that
+      the amount is not visible without a long scroll (verify in the mock at 840&nbsp;px), then the
+      breakout is not enough and the grid should be full-bleed below the tree instead. If the product
+      owner prefers the reading measure to be inviolable, then C everywhere is the coherent answer, and
+      we lose the grid on the desktop too.</p>
+  </div>
+
+  <!-- ============================ PART 8 ============================ -->
+  <div class="section-head"><h2>Part 8 &mdash; Your decision</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p class="section-note">Pick one; notes and the choice autosave in this browser. Export produces a
+      markdown note and a §18.3 row for the spec.</p>
+    <div id="choices"></div>
+    <label for="notes"><b>Notes</b></label>
+    <textarea id="notes" placeholder="Anything the recommendation missed &mdash; e.g. a width you actually read at, or a constraint from the UAT."></textarea>
+    <div class="export-row">
+      <button class="btn" type="button" id="export">Export markdown + §18.3 row</button>
+      <button class="btn btn--ghost" type="button" id="copy">Copy to clipboard</button>
+      <button class="btn btn--ghost" type="button" id="reset">Reset</button>
+    </div>
+    <textarea id="out" readonly aria-label="Exported decision"></textarea>
+  </div>
+
+</div>
+
+<div class="sticky">
+  <span class="saved" id="saved">Nothing chosen yet</span>
+  <button type="button" id="jump">Go to the decision &darr;</button>
+</div>
+
+<script>
+(function () {
+  var KEY = 'pgs.reader-table-fit.v1';
+  var CHOICES = [
+    { id: 'A', title: 'A — break out to the 72 rem working column',
+      why: 'The fee is in view on a desktop; the printed grid survives; one markup shape.' },
+    { id: 'B', title: 'B — scroll region with a sticky first column',
+      why: 'The table stays a table at every width; the step label never leaves.' },
+    { id: 'C', title: 'C — stack below 900 px',
+      why: 'No horizontal gesture on a phone; every cell keeps its column name.' },
+    { id: 'D', title: 'D — 13 px type inside the measure',
+      why: 'Cheap, but not sufficient alone; a multiplier.' },
+    { id: 'E', title: 'A + B + C, with D (14 px) as the multiplier',
+      why: 'Recommended: the grid at the passages pane’s full width, a short scroll with a pinned step label for the remainder and zoom, and the labelled stack on the phone.' }
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    var label = document.getElementById('saved');
+    var chosen = CHOICES.find(function (c) { return c.id === state.choice; });
+    label.textContent = chosen ? 'Saved: option ' + chosen.id : 'Nothing chosen yet';
+  }
+
+  function renderChoices() {
+    var host = document.getElementById('choices');
+    host.innerHTML = CHOICES.map(function (c) {
+      return '<div class="choice"><label>' +
+        '<input type="radio" name="fit" value="' + c.id + '"' +
+        (state.choice === c.id ? ' checked' : '') + '>' +
+        '<span><span class="title">' + c.title + '</span>' +
+        '<span class="why">' + c.why + '</span></span></label></div>';
+    }).join('');
+    host.querySelectorAll('input[type=radio]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        state.choice = input.value;
+        save();
+      });
+    });
+  }
+
+  var notes = document.getElementById('notes');
+  notes.value = state.notes || '';
+  notes.addEventListener('input', function () { state.notes = notes.value; save(); });
+
+  function exportText() {
+    var chosen = CHOICES.find(function (c) { return c.id === state.choice; });
+    var lines = [];
+    lines.push('# The reader\'s table fit — decision');
+    lines.push('');
+    lines.push('**Question:** how does the reader show the certification landscape\'s five-column tables so the fee is reachable on a desktop and a phone?');
+    lines.push('');
+    lines.push('- **Choice:** ' + (chosen ? chosen.title : '_(not chosen)_'));
+    lines.push('- **Measured correction:** the PRD\'s 323-character "widest row" is the page\'s blank padding line; the printed row content ends at 153–169 characters. The gap is one column, not two.');
+    lines.push('');
+    lines.push('**§18.3 row**');
+    lines.push('');
+    lines.push('| D76 | How does the reader render the landscape\'s five-column tables? | **' + (chosen ? chosen.id : '?') + '** — a real `<table>` at the passages pane’s full width (52.5 rem; 14 px grid), a scroll region with a sticky first column for the last ~25–40 characters of the fee column and for zoom, and the same markup stacked below 900 px with `data-label` column names. Measured: the printed row content is 153–169 characters, not the PRD’s 323 (that is the page’s blank line); the Fee column starts at 116–149, and the pane holds ~134 characters at 14 px. | D72.3 chose the printed grid; this is how it fits. |');
+    if (state.notes) { lines.push(''); lines.push('**Notes:** ' + state.notes); }
+    return lines.join('\n');
+  }
+
+  function setOut() { document.getElementById('out').value = exportText(); }
+
+  document.getElementById('export').addEventListener('click', setOut);
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = exportText();
+    document.getElementById('out').value = text;
+    if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    notes.value = '';
+    document.getElementById('out').value = '';
+    renderChoices(); save();
+  });
+  document.getElementById('jump').addEventListener('click', function () {
+    document.querySelector('#choices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  renderChoices();
+  save();
+})();
+</script>
+</body>
+</html>

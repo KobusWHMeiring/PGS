@@ -539,6 +539,210 @@ html:has(.section--reader) {
   line-height: var(--leading-body);
 }
 
+/* -------------------------------------------------------------------------------------------------
+   The printed grid — the landscape's five-column tables (D72.3, D76).
+
+   A table is reference, not prose, so it is the one place `.passage__text`'s 38 rem measure gives
+   way. It uses the passages pane's full width and wraps its cells; below 900 px the same markup
+   restacks into labelled blocks, because a horizontal gesture is the phone failure WCAG 1.4.10
+   names. No JavaScript in either shape.
+
+   The first column is the row's identifier (`Step 1`), so it is a `<th scope="row">` and it is
+   sticky: as the fee scrolls in, the step it belongs to stays on screen. The scroll wrapper is
+   focusable in the template, which is what lets a keyboard user reach the columns a pointer user
+   drags to.
+------------------------------------------------------------------------------------------------- */
+.reader__grid-legend {
+  margin: 0 0 0.9rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
+}
+
+.reader__grid-wrap {
+  margin: 0 0 1.6rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+  scrollbar-width: thin;
+}
+
+.reader__grid-wrap:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+}
+
+.reader__grid {
+  width: 100%;
+  /* Below this the columns stop being readable, so the wrapper scrolls instead. */
+  min-width: 46rem;
+  border-collapse: collapse;
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.reader__grid thead th {
+  background-color: var(--brand-creamWarm);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  vertical-align: bottom;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 2px solid var(--brand-sand);
+}
+
+.reader__grid td,
+.reader__grid tbody th {
+  padding: 0.7rem 0.75rem;
+  vertical-align: top;
+  text-align: left;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.reader__grid tbody tr:last-child td,
+.reader__grid tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+/* The identifier column: pinned while the fee column scrolls into view. */
+.reader__grid tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 10rem;
+  background-color: var(--brand-cream);
+  box-shadow: 1px 0 0 var(--brand-sand);
+  font-weight: 400;
+}
+
+/* `Step 1` is the first paragraph of its cell; the description below it is body text. */
+.reader__grid tbody th > p:first-child {
+  font-weight: 700;
+}
+
+/* A cell is its own measure: undo the prose measure and the block sizes the passage renderer sets. */
+.reader__grid .passage__text,
+.reader__grid .passage__heading,
+.reader__grid .passage__term,
+.reader__grid .passage__qualifier,
+.reader__grid .passage__row,
+.reader__grid .passage__note {
+  max-width: none;
+  font-size: inherit;
+}
+
+.reader__grid .passage__heading,
+.reader__grid .passage__term {
+  margin: 0 0 0.45rem;
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+.reader__grid .passage__list {
+  margin: 0.35rem 0 0.35rem 1.1rem;
+}
+
+.reader__grid td.is-empty {
+  color: var(--brand-muted);
+}
+
+/* The IFOAM URL is longer than its column; break it rather than widen the grid. */
+.reader__grid a {
+  overflow-wrap: anywhere;
+}
+
+.reader__grid-page {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--brand-muted);
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-micro);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 899px) {
+  /* The phone: the same markup restacked, each cell carrying its column name. No horizontal
+     gesture — the only shape that satisfies WCAG 1.4.10 at 320 px. The header row is visually
+     hidden (not `display:none`: keeping it in the tree is what a screen reader reads), and each
+     cell's `data-label` is the name a sighted reader sees. */
+  .reader__grid-wrap {
+    overflow-x: visible;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+  }
+
+  .reader__grid {
+    min-width: 0;
+  }
+
+  .reader__grid thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .reader__grid,
+  .reader__grid tbody,
+  .reader__grid tr,
+  .reader__grid td,
+  .reader__grid tbody th {
+    display: block;
+    width: auto;
+  }
+
+  .reader__grid tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--brand-sand);
+    border-radius: var(--radius-sm);
+    background-color: var(--brand-cream);
+  }
+
+  .reader__grid tbody th {
+    position: static;
+    box-shadow: none;
+    border-bottom: 1px solid var(--brand-sand);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background-color: var(--brand-creamWarm);
+  }
+
+  .reader__grid td {
+    padding: 0.55rem 0.85rem;
+    border-bottom: 0;
+  }
+
+  .reader__grid td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--brand-muted);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* An empty cell is the paper's silence, and the legend says so; on a phone it does not need a
+     labelled field of its own. */
+  .reader__grid td.is-empty {
+    display: none;
+  }
+}
+
 .passage > :first-child {
   margin-top: 0;
 }
