@@ -68,8 +68,9 @@ class IngestError(RuntimeError):
 #: file-exists probe: D55's question is "is this document *supposed* to come from a
 #: review?", and a probe answers "is there a file lying around?" — the two disagree
 #: exactly when the file is missing, which is the failure the declaration catches. `opp`
-#: and `landscape` gain theirs when P4 and P5 review them; until then they parse their
-#: PDFs, which is a recorded gap and not a silent fallback.
+#: gains its declaration when P4 reviews it; until then it parses its PDF, which is a
+#: recorded gap and not a silent fallback. The landscape's artefact landed 2026-10-30
+#: (`LANDSCAPE_TABLES_PRD` steps 2-4).
 CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
     "saoso": {
         "kind": StandardDocument.Kind.STANDARD,
@@ -101,6 +102,7 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "title": "The South African Organic Certification Landscape",
         "version": "",
         "section_scheme": "heading",
+        "corpus_artefact": "landscape.md",
     },
 }
 

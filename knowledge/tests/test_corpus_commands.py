@@ -44,7 +44,11 @@ PDFS = {
     "bpp": REPO_ROOT / "pgs_docs" / "Basic Production Principles_ENG_PRINT.pdf",
     "landscape": REPO_ROOT / "pgs_docs" / "PGS Certification landscape_Final.pdf",
 }
-ARTEFACTS = {"saoso": CORPUS_DIR / "saoso.md", "bpp": CORPUS_DIR / "bpp.md"}
+ARTEFACTS = {
+    "saoso": CORPUS_DIR / "saoso.md",
+    "bpp": CORPUS_DIR / "bpp.md",
+    "landscape": CORPUS_DIR / "landscape.md",
+}
 
 
 @pytest.fixture(autouse=True)
@@ -107,9 +111,11 @@ def test_an_empty_box_reports_every_governed_document_and_fails(standard_set):
     states = states_by_key(standard_set)
     assert states["saoso"].state == NOT_INGESTED
     assert states["bpp"].state == NOT_INGESTED
-    # Not converted yet (P4, P5): a recorded gap, never drift.
+    # Not converted yet (P4): a recorded gap, never drift. The landscape converted on
+    # 2026-10-30, so on an empty box it is "not ingested" instead — a different state with a
+    # different fix.
     assert states["opp"].state == NO_ARTEFACT
-    assert states["landscape"].state == NO_ARTEFACT
+    assert states["landscape"].state == NOT_INGESTED
     assert not states["opp"].is_broken
 
 

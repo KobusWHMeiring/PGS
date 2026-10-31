@@ -249,7 +249,7 @@
       "asked_by": "uat",
       "question": "can we use the SAOSO 'Organic PGS Certified' logo on our product?",
       "expected": [
-        {"doc": "landscape", "locator": "pgs-sa", "contains": "Organic PGS Certified", "grade": 2},
+        {"doc": "landscape", "locator": "saoso-organic-certification-step-2", "contains": "Organic PGS Certified", "grade": 2},
         {"doc": "landscape", "locator": "saoso-organic-certification", "grade": 1},
         {"doc": "opp", "locator": "§V", "grade": 1}
       ],

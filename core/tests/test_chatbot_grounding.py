@@ -651,6 +651,51 @@ def test_the_quote_schema_describes_the_same_contract():
     assert "separate citation" in description
 
 
+def test_the_landscape_fee_is_quotable_from_its_reviewed_row(chat_corpus, chat_standard_set):
+    """The reader's question (`LANDSCAPE_TABLES_PRD` §11): what does it cost to join?
+
+    The reviewed artefact carries the whole merged Fee cell in **one** row chunk, so the annual
+    membership fee, the once-off customisation and the local fee are citable together — the
+    condition that makes the amounts readable (D72.2: a fee is a cell, never a derived fact).
+    The chunk is read from `knowledge/corpus/landscape.md`, the artefact the box now serves;
+    a hand-built chunk would prove the audit, not the artefact.
+    """
+    from knowledge.corpus import load_document
+    from knowledge.ingest import chunks_for_sections
+    from knowledge.models import DocumentChunk
+
+    art = Path(__file__).resolve().parents[2] / "knowledge" / "corpus" / "landscape.md"
+    sections = list(load_document(art).sections)
+    chunk = next(
+        candidate
+        for candidate in chunks_for_sections(sections)
+        if "R500" in candidate.text and "R1 000" in candidate.text
+    )
+    row = DocumentChunk.objects.create(
+        document=chat_corpus.document,
+        section_ref=chunk.section_ref,
+        heading_path=chunk.heading_path,
+        page=chunk.page,
+        anchor=chunk.anchor,
+        text=chunk.text,
+    )
+
+    citations, problems = audit_citations(
+        [
+            {
+                "section_ref": chunk.anchor,
+                "quote": "Annual membership fee (paid by the PGS group to PGS SA): R500",
+            }
+        ],
+        [_retrieved_from_stored(row, chat_standard_set)],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    assert problems == ()
+    assert citations[0].page == 4
+    assert citations[0].anchor == chunk.anchor
+
+
 def test_a_reviewed_table_row_is_one_citable_passage(chat_corpus, chat_standard_set):
     """A row chunk joins two printed cells; a quote may cover the row.
 

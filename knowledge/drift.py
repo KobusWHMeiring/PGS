@@ -14,9 +14,10 @@ document nobody ingested are all "not current", but the fixes differ: the first 
 are `corpus_refresh --apply`, the third is an `ingest_standard` that has never run. The
 report says which.
 
-**A document with no reviewed artefact is not drift** (P4/P5 have not converted `opp` and
-`landscape` yet). It is a recorded gap: the corpus is parsed from the PDF, the ingest says
-so in its report, and no exit status should nag about work that has not been done.
+**A document with no reviewed artefact is not drift** (`opp` has not converted yet). It is a
+recorded gap: the corpus is parsed from the PDF, the ingest says so in its report, and no exit
+status should nag about work that has not been done. The landscape converted on 2026-10-30, so
+an unconverted landscape is now drift like any other document.
 
 `knowledge` must not import `core` (`build_principles.md` §I), so the citation-link count
 below walks Django's relation metadata rather than naming `ChatMessage`: the corpus is

@@ -178,11 +178,17 @@ def _prose_chunks(section, start: int, end: int) -> list[Chunk]:
             for ref in refs
         ),
     )
-    return [
+    heading = section.text.partition("\n")[0]
+    chunks = [
         replace(chunk, source_start=chunk.source_start + start,
                 source_end=chunk.source_end + start)
         for chunk in chunk_section(shifted)
     ]
+    # A table section that opens straight into its rows has no prose before the first cell
+    # except the heading, and the chunker then yields a chunk that is *only* the heading. It
+    # would be retrievable and citable while saying nothing. Measured 2026-10-30 on the
+    # landscape's `PGS SEALS AND THEIR USE` table, which prints no lead-in sentence.
+    return [chunk for chunk in chunks if chunk.text.removeprefix(heading).strip()]
 
 
 def row_chunk(section, row) -> Chunk:

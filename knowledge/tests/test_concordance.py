@@ -238,9 +238,15 @@ def test_the_printed_page_is_the_branchs_first_page(document):
 
 
 def test_the_landscape_branches_are_named_for_what_they_are(standard_set):
-    """Measured 2026-10-27: the certification landscape's heading scheme reads a price line
+    """Measured 2026-10-27: the certification landscape's heading scheme read a price line
     (`R500`) and a truncation (`PGS SA.`) as headings, so two of six branches were named after
-    table cells (§10.5). Reviewed titles live in `REVIEWED_BRANCH_TITLES`.
+    table cells (§10.5). The PDF path still does that; a reviewed branch title used to rename
+    them.
+
+    **Since 2026-10-30 the reviewed artefact is the text of record** (`LANDSCAPE_TABLES_PRD`
+    step 2): the false headings do not exist, so `REVIEWED_BRANCH_TITLES` is empty and the
+    document's three real branches are the whole tree. A table's rows are passages *within*
+    their branch, not branches of their own (§11) — `_branch_of` strips the row label.
 
     Ingested, not hand-built: the claim is about what the ingest and the derivation produce
     together (`testing_hazards.md` §1.32).
@@ -252,14 +258,42 @@ def test_the_landscape_branches_are_named_for_what_they_are(standard_set):
 
     titles = [section.title for section in concordance_sections(document)]
 
-    assert "R500" not in titles, "a price line is still a branch title"
-    assert "Cost of joining a PGS group" in titles
-    assert "Working with PGS South Africa" in titles
+    assert titles == [
+        "ESTABLISHING A PGS GROUP",
+        "PGS SEALS AND THEIR USE",
+        "SAOSO ORGANIC CERTIFICATION",
+    ], titles
+    assert "R500" not in titles, "a fee cell is still a branch title"
+    assert "PGS SA." not in titles, "a seal caption is still a branch title"
+
+
+def test_a_tables_rows_are_passages_of_their_branch(standard_set):
+    """§11's definition of done: `ESTABLISHING A PGS GROUP` holds all three steps as one branch.
+
+    Before the artefact each row did not exist; before `_branch_of` each row would have become
+    a branch of its own, because `row_chunk` appends its label to the heading trail.
+    """
+    report = ingest_standard(
+        pdf_path=PDFS["landscape"], standard_set=standard_set, doc_key="landscape", embed=False
+    )
+    document = StandardDocument.objects.get(pk=report.document_id)
+    branches = {section.title: section for section in concordance_sections(document)}
+
+    establishing = branches["ESTABLISHING A PGS GROUP"]
+    labels = [at.heading_path for at, _ in establishing.passages]
+
+    assert len(establishing.passages) == 4, f"lead-in + Step 1, 2 and 3: {labels}"
+    assert any(label.endswith("Step 3") for label in labels), labels
+    assert {at.page for at, _ in establishing.passages} == {4, 5}
 
 
 def test_every_reviewed_title_matches_a_real_branch(standard_set):
     """A reviewed correction that matches nothing is a stale entry: it must fail rather than
-    sit there looking authoritative (the `CORPUS_EDITS` idiom)."""
+    sit there looking authoritative (the `CORPUS_EDITS` idiom).
+
+    The loop is empty today (the landscape's two entries retired with the false headings), and
+    it stays as the ratchet for the next document with no TOC.
+    """
     report = ingest_standard(
         pdf_path=PDFS["landscape"], standard_set=standard_set, doc_key="landscape", embed=False
     )

@@ -62,19 +62,32 @@ def _ref_key(section_ref: str) -> str:
     return ref
 
 
+#: `row_chunk` appends a reviewed row's label to its section's heading trail with an em dash
+#: (`ESTABLISHING A PGS GROUP — Step 1`), so a citation can say which row it quoted. The
+#: *branch* is the trail before that label: a table's rows are one branch, not one branch each
+#: (`LANDSCAPE_TABLES_PRD` §11). No printed heading in the four governed documents contains an
+#: em dash, so the split cannot take a real heading apart.
+ROW_LABEL = " — "
+
+
+def _branch_of(heading_path: str) -> str:
+    """The branch a heading trail names: nested headings joined by ` > `, rows by ` — `."""
+    return heading_path.split(" > ", 1)[0].split(ROW_LABEL, 1)[0].strip()
+
+
 def _branch_key(at: DocumentChunk) -> str:
     """Which branch a chunk belongs to: its reference, else its first heading, else the front."""
     if at.section_ref:
         return _ref_key(at.section_ref)
     if at.heading_path:
-        return at.heading_path.split(" > ", 1)[0].strip()
+        return _branch_of(at.heading_path)
     return PRELIMINARY
 
 
 def _first_heading(chunks: list[DocumentChunk]) -> str | None:
     for at in chunks:
         if at.heading_path:
-            return at.heading_path.split(" > ", 1)[0].strip()
+            return _branch_of(at.heading_path)
     return None
 
 
@@ -140,10 +153,14 @@ class Concordance:
 #: correction lives beside the corpus that needs it, and a test proves each entry both matches
 #: a real branch and is used. Only entries for a document with *no* TOC belong here — where a
 #: printed TOC exists it is the source of names, never a hand-written map (D68 §7.5).
-REVIEWED_BRANCH_TITLES: dict[tuple[str, str], str] = {
-    ("pgs_docs/PGS Certification landscape_Final.pdf", "R500"): "Cost of joining a PGS group",
-    ("pgs_docs/PGS Certification landscape_Final.pdf", "PGS SA."): "Working with PGS South Africa",
-}
+#:
+#: **Empty since 2026-10-30, and that is the fix.** The two landscape entries (`R500` → “Cost of
+#: joining a PGS group”, `PGS SA.` → “Working with PGS South Africa”) renamed branches that only
+#: existed because `HeadingParser` read a fee cell and a seal caption as headings. With the
+#: reviewed artefact (`knowledge/corpus/landscape.md`) the document opens three real branches, so
+#: the corrections match nothing. Leaving them would fail `test_every_reviewed_title_matches_a_
+#: real_branch`, which is exactly the test doing its job.
+REVIEWED_BRANCH_TITLES: dict[tuple[str, str], str] = {}
 
 
 def build_concordance(document: StandardDocument) -> Concordance:

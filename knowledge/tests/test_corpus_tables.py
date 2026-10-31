@@ -396,6 +396,30 @@ def test_the_prose_around_a_table_is_kept_and_ordered():
     assert any("R1 000" in text for text in texts), "the last row is last"
 
 
+def test_a_table_section_with_no_lead_in_does_not_become_a_heading_only_chunk():
+    """Measured 2026-10-30 on the landscape's `PGS SEALS AND THEIR USE` table.
+
+    The chunker treats the heading as section text, so the prose before the first cell is a
+    chunk that is *only* the heading. It is retrievable and citable and says nothing, which is
+    worse than a missing chunk: the citation audit would accept a quote that names the table and
+    no rule in it.
+    """
+    body = """<!-- page: 6 printed: 6 -->
+## PGS SEALS AND THEIR USE
+<!-- table
+cols: Key steps | Fee
+-->
+<!-- row: PGS Organic -->
+<!-- cell -->
+Farmers who are fully compliant.
+<!-- cell -->
+As above
+<!-- /table -->
+"""
+    chunks = chunks_for_sections(list(parse_blocks(artefact(body)).sections))
+    assert [chunk.text for chunk in chunks] == ["Farmers who are fully compliant.\nAs above"]
+
+
 def test_a_row_chunk_carries_the_page_and_a_label_derived_heading():
     body = two_row_section().replace(
         "<!-- row: Step 2 -->", "<!-- page: 5 printed: 5 -->\n<!-- row: Step 2 -->"

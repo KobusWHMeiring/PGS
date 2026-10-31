@@ -891,8 +891,9 @@ def test_asking_for_both_sources_at_once_is_refused(standard_set):
 
 
 def test_a_document_with_no_declared_artefact_still_parses_its_pdf(standard_set):
-    """The declaration is data, not a file-exists probe: `opp` and `landscape` have no
-    review yet (P4, P5) and must keep working exactly as they did before D55.
+    """The declaration is data, not a file-exists probe: `opp` has no review yet (P4) and
+    must keep working exactly as it did before D55. (The landscape gained its artefact on
+    2026-10-30, so it is no longer the example here.)
     """
     report = ingest_standard(
         pdf_path=PDFS["opp"], standard_set=standard_set, doc_key="opp", embed=False
