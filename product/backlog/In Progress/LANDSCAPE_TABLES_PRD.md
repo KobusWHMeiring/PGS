@@ -495,6 +495,8 @@ PRD did not start with.
 5. **Front matter (D72.6)** — the intro, the six elements and the three routes, as reviewed passages
    with reviewer-added headings in the same artefact. Independently testable: four probes that return
    **0** today must return 1 chunk each afterwards.
+   ✅ **Done 2026-10-30** (§12d): four probes, each 1 chunk; the colophon (p9) came with it. p1 is a
+   cover and p10 is blank, so neither contributes a chunk.
 6. **The reader** (§5.4): mock in `product/design/` for the printed grid and its fit, `DESIGN.md`
    conformance, `css-alignment`.
 7. **Close the loop**: `tests/uat/` scenario for the fee question, backlog move, spec §4.5 update, and
@@ -528,8 +530,9 @@ existed because the rows were going to live in Python; §5.2a retires it.
       *within one printed row-line* is not yet caught
 - [x] `ESTABLISHING A PGS GROUP` is one branch containing all three steps, and no branch is `R500`
       — **done 2026-10-30** (`test_a_tables_rows_are_passages_of_their_branch`)
-- [ ] *"Participatory Guarantee Systems are locally focused quality assurance systems"* and *"First-Party
-      Claim"* are quotable from the corpus (they are in **0** chunks today, §1.4) — **step 5**
+- [x] *"Participatory Guarantee Systems are locally focused quality assurance systems"* and *"First-Party
+      Claim"* are quotable from the corpus (they are in **0** chunks today, §1.4) — **done 2026-10-30**
+      (§12d): the four probes each resolve to one chunk, and `First-Party Claim` is its own branch
 - [x] "what does it cost to join a PGS group?" is quotable from one chunk, verbatim, and passes
       `audit_citations` — **proved on the artefact 2026-10-30**
       (`test_the_landscape_fee_is_quotable_from_its_reviewed_row`)
@@ -754,6 +757,45 @@ run it to "refresh" this file. The generator's table-block emission is a separat
 **Not built, and named rather than hidden:** `TABLE_BANDS` (a transposition inside one printed
 row-line is unpinned), the corpus-level table-page guard, front matter (p1–3, p9), the printed-grid
 reader, and the UAT scenario. Steps 5–7 of §9.
+
+---
+
+## 12d. Built 2026-10-30, session 4 — step 5: the front matter, and four probes that were zero
+
+**State: green, re-ingested, and the landscape is current at 17 chunks.** `fast.sh` **1419 passed /
+1 skipped in 38.6 s** (warm) and `verify.sh` **1433 passed / 1 skipped in 53.3 s** (`--create-db`,
+port 5433; the same tree measured 92.6 s an hour earlier — quote the range,
+`testing_hazards.md` §3.17).
+
+| Landed | Evidence |
+|---|---|
+| the intro (p2) | `## INTRODUCTION`; `Participatory Guarantee Systems` resolves to **1 chunk** |
+| the six elements (p2) | `## SIX BASIC ELEMENTS` (reviewer-added, because the paper says `6`); the probe `six basic elements` resolves to **1 chunk** |
+| the three routes (p3) | `## First-Party Claim`, `## Second-Party Certification`, `## Third-Party Certification` — the paper's own Title-case headings, which the PDF parser deliberately ignores |
+| the colophon (p9) | `## COLOPHON`; funders, copyright and disclaimer, pinned to PDF 9 |
+| the count | **17 chunks**: 8 rows + 3 table-prose + 6 front-matter sections |
+| D72.7's second re-ingest | dev box: **11 → 17 chunks**, all embedded, **0 evidence links dropped**, `relink_evidence --apply` **0 relinked / 0 no-longer-has**; **394 chunks, 0 unembedded** |
+
+### 12d.1 What the front matter cost, and what it found
+
+1. **Three headings are the reviewer's, three are the paper's.** `INTRODUCTION`, `SIX BASIC
+   ELEMENTS` and `COLOPHON` are not printed; `test_the_reviewer_added_headings_are_not_printed`
+   asserts that on the page, and the three route headings are Title case and *are* printed — which
+   is exactly why `HeadingParser` (UPPERCASE only) opened no section on p3.
+2. **Page 1 is a cover and page 10 is blank.** Page 1's only line is the running header (furniture),
+   so it contributes no chunk; `COVERED` in `test_corpus_landscape.py` says so.
+3. **The no-invention guard caught a glyph the extraction lost.** The paper's text layer has
+   `which is “owned’` — a double open quote closed by a *single* quote (U+2019), on both
+   renderings. The artefact first typed `”`, and `test_it_invents_no_character` failed on exactly one
+   character. It now reproduces the page rather than correcting it; whether that is the paper's
+   typo or the extractor's is a `CORPUS_EDITS` decision, not a silent fix.
+4. **The routes are three sections, not one.** The paper prints three headings, so they are three
+   branches; folding them into one would have required a fourth, unprinted `##` heading with no body
+   — the heading-only chunk `PGS SEALS` already taught us to avoid.
+
+**Not built, and named:** `TABLE_BANDS` (step 3's ⚠ — a transposition inside one printed row-line),
+the corpus-level table-page guard, the printed-grid reader (step 6), and the UAT scenario/backlog
+move (step 7).
 
 ---
 

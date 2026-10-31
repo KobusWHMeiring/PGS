@@ -1,27 +1,28 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the landscape's tables are real; next is its front matter
+> ## START HERE — the document is whole; next is the reader
 >
-> **Steps 2–4 landed 2026-10-30 (§0p).** `knowledge/corpus/landscape.md` carries PDF 4–8 as three
-> tables (8 rows), the document declares it, and the dev box is re-ingested: **11 chunks, all
-> embedded, 0 evidence links dropped**. The three false headings are gone with their
-> `REVIEWED_BRANCH_TITLES` entries, and `ESTABLISHING A PGS GROUP` is one branch of three rows.
+> **Steps 2–5 landed 2026-10-30 (§0p, §0q).** The landscape is a reviewed artefact of **17 chunks**:
+> three tables (8 rows), the front matter the PDF parser could never open (intro, six elements,
+> three routes), and the colophon. The four probes §1.4 measured at **0** each resolve to one chunk.
+> The dev box is current at **17 / 17**, with **0 evidence links dropped**.
 >
 > Read, in this order — nothing else:
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12c** (what landed), then **§9 steps 5–7** (what is
->    left), then **§11** (the DoD, with the four open boxes named).
-> 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax as built.
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12d** (step 5), then **§12c** (steps 2–4), then **§9
+>    steps 6–7** and **§11** (the DoD, with the open boxes named).
+> 2. `product/design/DESIGN.md` — **only when you build the reader** (step 6). §5.4 measured the
+>    problem: the printed row is **323 characters** wide against a **38 rem** measure.
 > 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73**.
 >
-> **The next act is step 5: the front matter.** Pages 1–3 print no heading, so today **0 chunks**
-> hold “Participatory Guarantee Systems”, the six basic elements or the three certification routes —
-> the §10 risk table calls this “the more useful half”. It is a review like step 2: text plus a
-> reviewer-added heading in the same artefact, with four probes that return 0 today and 1 chunk each
-> afterwards. Page 9's colophon is in the same step.
+> **The next act is step 6: the reader (D72.3).** The corpus is quotable; the page a reader lands on
+> still renders the five-column table as a definition list. The fit is a design decision — §5.4 lists
+> four options, and one must be chosen in a mock in `product/design/` before any template changes.
 >
-> **Two things still open from step 3, and neither is the next act:** `TABLE_BANDS` (a transposition
-> *inside one printed row-line* is unpinned; it belongs with the reader, step 6) and the corpus-level
-> table-page guard (it needs a cross-document definition of “table-shaped”).
+> **Step 7 closes the slice:** a `tests/uat/` fee scenario, the backlog move, and the §5.7 exclusion
+> verified as “reading order restored, nothing more”.
+>
+> **Two things still open from step 3, and they belong with the reader:** `TABLE_BANDS` (a
+> transposition *inside one printed row-line* is unpinned) and the corpus-level table-page guard.
 >
 > **Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
 > rule, so it would replace the review with the p4–8 column soup. The per-line guard fails loudly if
@@ -30,7 +31,7 @@
 > **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
 > sit behind the same mechanism.
 >
-> **The tree is clean**, and the code is committed at `7e67492` (this documentation commit follows).
+> **The tree is clean**, and the code is committed at `8674d7a`; the documentation commits follow it.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
@@ -39,29 +40,88 @@ the answer-coverage session, the budget-and-instrument session, the deployment s
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session
 and the landscape-artefact session
-**Repo state:** `main`, **2 commits ahead of `origin/main`** at `7e67492` plus this documentation
-commit. On that tree: `scripts/fast.sh` green at **1407 passed / 1 skipped in 78 s** (warm) and
-`verify.sh` green at **1421 passed / 1 skipped in 92.6 s** (`--create-db`, 92.6 s wall, run as
+**Repo state:** `main`, **7 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
+`8674d7a` and the documentation commits follow it. On that tree: `scripts/fast.sh` green at **1419
+passed / 1 skipped in 38.6 s** (warm) and
+`verify.sh` green at **1433 passed / 1 skipped in 53.3 s** (`--create-db`, 53.3 s wall, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). Quote the range, not one number
-(`testing_hazards.md` §3.17).
+serves 5433, `testing_hazards.md` §3.1). The same tree measured 92.6 s an hour earlier — quote the
+range, not one number (`testing_hazards.md` §3.17).
 
-**The dev box was re-ingested this session and its landscape is current for the first time:**
-`corpus_check` reports `landscape current 11 / 11`, **388 chunks, 0 unembedded**. `--force` dropped
-**0** evidence links (no message had ever cited a landscape chunk); `relink_evidence --apply`
-reported **0 relinked / 66 already linked / 30 same-locator-different-text / 0 no-longer-has**. The
-30 are the pre-existing bpp/saoso drift: **bpp and saoso still report `drift` on the dev box**
-because it was built from their PDFs, not from their artefacts. That is out of this slice and is the
-state `corpus_refresh --apply` exists to fix.
+**The dev box was re-ingested twice this session and its landscape is current:**
+`corpus_check` reports `landscape current 17 / 17`, **394 chunks, 0 unembedded**. Both `--force`
+runs dropped **0** evidence links (no message has ever cited a landscape chunk);
+`relink_evidence --apply` reported **0 relinked / 66 already linked / 30
+same-locator-different-text / 0 no-longer-has**. The 30 are the pre-existing bpp/saoso drift: **bpp
+and saoso still report `drift` on the dev box** because it was built from their PDFs, not from their
+artefacts. That is out of this slice and is the state `corpus_refresh --apply` exists to fix.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **2 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **7 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
 2026-10-30 — **and it does not have this session's landscape fix.** Its corpus is still the old
 PDF-built one (8 landscape chunks, six branches including `R500` and `PGS SA.`). A deploy pulls the
 artefact but **does not re-ingest**: `deploy.sh` never runs `ingest_standard`, so the box will show
-`landscape drift 8 / 11` until someone runs `corpus_refresh --apply` deliberately. Measure its
+`landscape drift 8 / 17` until someone runs `corpus_refresh --apply` deliberately. Measure its
 landscape link count with `relink_evidence` (report-only) before that refresh; the dev box's answer
 was zero, but the live box is a different corpus.
+
+## 0q. 2026-10-30 (session 4) — step 5: the front matter, and four probes that were zero
+
+**State: green, committed, and the dev box's landscape is current at 17 chunks.** `fast.sh` **1419
+passed / 1 skipped in 38.6 s** (warm) and `verify.sh` **1433 passed / 1 skipped in 53.3 s**
+(`--create-db`, 5433). Code at `8674d7a`; this documentation commit follows. The live box is still
+`8d2839d` (see the top).
+
+### 0q.1 The four zeros, and what each resolves to now
+
+§1.4 measured four probes at **0 chunks** because the PDF parser opens no section on pages 2–3.
+They are now one chunk each, asserted in `test_corpus_landscape.py`:
+
+| Probe | Chunk |
+|---|---|
+| `Participatory Guarantee Systems` | `## INTRODUCTION` (p2) |
+| `six basic elements` | `## SIX BASIC ELEMENTS` (p2; the reviewer's heading supplies “six” — the paper prints `6`) |
+| `First-Party` | `## First-Party Claim` (p3) |
+| `Third-Party` | `## Third-Party Certification` (p3) |
+
+The three route headings are the paper's own Title case — `First-Party Claim`, `Second-Party
+Certification`, `Third-Party Certification` — which is exactly why the UPPERCASE-only
+`HeadingParser` skipped them. `INTRODUCTION`, `SIX BASIC ELEMENTS` and `COLOPHON` are the
+reviewer's; a test asserts those three words are **not** printed on the page. The colophon carries
+the funders, the copyright and the disclaimer on p9 (which prints no page number, so D42's `page`
+is `None` while the block is on PDF 9).
+
+### 0q.2 The one glyph the no-invention guard caught
+
+The paper's text layer closes `“owned` with a **single** quote (U+2019) on both renderings. The
+artefact first typed `”`, and `test_it_invents_no_character` failed on exactly one character. It now
+reproduces the page rather than correcting it — whether it is the paper's typo or the extractor's is
+a `CORPUS_EDITS` decision, not a silent fix. This is the first thing the no-invention guard has
+caught since it was written, and it is the kind of thing a per-line word check cannot see (every
+word was right).
+
+### 0q.3 The count, and the second re-ingest
+
+**17 chunks**: 8 rows + 3 table-prose blocks + 6 front-matter sections. Page 1 is a cover whose only
+line is the running header, and page 10 is blank; neither contributes a chunk, and `COVERED` says
+so. The dev box: **11 → 17 chunks**, all embedded, **0 evidence links dropped**,
+`relink_evidence --apply` **0 relinked / 0 no-longer-has**; **394 chunks, 0 unembedded**.
+
+### 0q.4 What the reader (step 6) will need
+
+- The rows are quotable, but the public page still renders the five columns as a definition list.
+  §5.4's measurement stands: the printed row is **323 characters** wide against a **38 rem**
+  measure, so the fit is a design decision (four options; choose one in a mock in `product/design/`).
+- **`TABLE_BANDS`** — the measured column offsets — is still unbuilt. It is what pins a line to the
+  column it is filed under, and it belongs with the reader because that is the surface that measures
+  the columns.
+- The corpus-level table-page guard is still unbuilt; it needs a cross-document definition of
+  “table-shaped”.
+
+**Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
+rule; the per-line guard fails loudly if it does, but the command has no other defence.
+
+---
 
 ## 0p. 2026-10-30 (session 3) — the landscape is a reviewed artefact, and the false headings are gone
 
