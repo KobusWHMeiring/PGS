@@ -1,65 +1,137 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — step 2's two preconditions are met; the artefact is the work
+> ## START HERE — the landscape's tables are real; next is its front matter
 >
-> **Steps 0 and 1 are built** (§0n). **Step 2 is still not started**, but both things that blocked
-> it now exist (§0o): the `landscape` `-table` page fixture, and D72.7's page exclusion
-> (`apply_layout` on the landscape now changes **{2, 3, 9}**, so the generated p4–8 is the *printed
-> grid*, not the `de_column` soup).
+> **Steps 2–4 landed 2026-10-30 (§0p).** `knowledge/corpus/landscape.md` carries PDF 4–8 as three
+> tables (8 rows), the document declares it, and the dev box is re-ingested: **11 chunks, all
+> embedded, 0 evidence links dropped**. The three false headings are gone with their
+> `REVIEWED_BRANCH_TITLES` entries, and `ESTABLISHING A PGS GROUP` is one branch of three rows.
 >
 > Read, in this order — nothing else:
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12b** (what landed 2026-10-30, session 2) then **§9**
->    (the seven steps, with 0 and 1 marked done) then **§12a** for the block itself.
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12c** (what landed), then **§9 steps 5–7** (what is
+>    left), then **§11** (the DoD, with the four open boxes named).
 > 2. `Refinement/TABLES_AS_DATA_PRD.md` **§3a** — the syntax as built.
-> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73** — all decided.
+> 3. `Refinement/PGS_PLATFORM_SPEC.md` §18.3 **D72.1–D72.7** and **D73**.
 >
-> **The next act is step 2, and it is a review, not a build.** With the exclusion in place,
-> `scripts/build_corpus.py --doc landscape` now produces **314 lines of the printed grid** — and the
-> first thing it shows that it could not show before: the parser opens **three false headings**,
-> `## R500`, `## PGS SA.` and `## SAOSO`, from a fee cell and two seal captions. The DoD already
-> forbids them (“no branch is `R500`”). Remove them first; that is what makes
-> `ESTABLISHING A PGS GROUP` one branch of three rows.
+> **The next act is step 5: the front matter.** Pages 1–3 print no heading, so today **0 chunks**
+> hold “Participatory Guarantee Systems”, the six basic elements or the three certification routes —
+> the §10 risk table calls this “the more useful half”. It is a review like step 2: text plus a
+> reviewer-added heading in the same artefact, with four probes that return 0 today and 1 chunk each
+> afterwards. Page 9's colophon is in the same step.
 >
-> **§8 requirement 3 is wrong as written** — a *cell* is not a substring of `-table` output, because
-> `-table` renders row-lines; each cell's **line** is. The guard as built is in
-> `test_landscape_table_block.py`, proved red four ways (§12b.1). Do not “fix” it back to cells.
-> Two things it still cannot pin, and step 3 must: a transposition inside one row-line, and the
-> column a line is filed under (`TABLE_BANDS`).
+> **Two things still open from step 3, and neither is the next act:** `TABLE_BANDS` (a transposition
+> *inside one printed row-line* is unpinned; it belongs with the reader, step 6) and the corpus-level
+> table-page guard (it needs a cross-document definition of “table-shaped”).
 >
-> **Two numbers must be measured, not assumed:** the document's chunk count (§8 predicts **11**; the
-> lead-in prose makes it **12**, §12a) and `relink_evidence`'s three figures after the one re-ingest
-> D72.7 groups here.
+> **Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
+> rule, so it would replace the review with the p4–8 column soup. The per-line guard fails loudly if
+> that happens, but the command has no other defence.
 >
-> **Not this slice:** the OPP (P4) is blocked on the generator repair in
-> `design/d71_p4_and_the_generator.html`; SAOSO's appendices (G4) sit behind the same mechanism and
-> the same repair. Do not start them first.
+> **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
+> sit behind the same mechanism.
 >
-> **The tree carries this session's work uncommitted** (§0o.4): 7 modified files and one new fixture.
+> **The tree is clean**, and the code is committed at `7e67492` (this documentation commit follows).
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
-retrieval-baseline session, the deploy-and-close session and the generator-and-fixture session
-**Repo state:** `main`, **pushed** at `35051e1`; the generator-and-fixture session's work (§0o) is
-**in two commits plus this documentation one** (`bfe64ed` the review path and the furniture,
-`d1cd8a2` the landscape fixture and the exclusion). On that tree: `scripts/fast.sh` green at **1393 passed / 1 skipped in 29 s** (warm) and
-`verify.sh` green at **1407 passed / 1 skipped in 46.2 s** (`--create-db`, 51 s wall, run as
+retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session
+and the landscape-artefact session
+**Repo state:** `main`, **2 commits ahead of `origin/main`** at `7e67492` plus this documentation
+commit. On that tree: `scripts/fast.sh` green at **1407 passed / 1 skipped in 78 s** (warm) and
+`verify.sh` green at **1421 passed / 1 skipped in 92.6 s** (`--create-db`, 92.6 s wall, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). Nothing was re-ingested, so the live corpus and its evidence
-links are as §0k/§0l left them. Before this session the gate was at 1392 passed, timed **60.2 s, then
-110.7 s, then 181.2 s** on one tree within one session — so quote the range or nothing
+serves 5433, `testing_hazards.md` §3.1). Quote the range, not one number
 (`testing_hazards.md` §3.17).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **in sync** (pushed 2026-10-30).
+**The dev box was re-ingested this session and its landscape is current for the first time:**
+`corpus_check` reports `landscape current 11 / 11`, **388 chunks, 0 unembedded**. `--force` dropped
+**0** evidence links (no message had ever cited a landscape chunk); `relink_evidence --apply`
+reported **0 relinked / 66 already linked / 30 same-locator-different-text / 0 no-longer-has**. The
+30 are the pre-existing bpp/saoso drift: **bpp and saoso still report `drift` on the dev box**
+because it was built from their PDFs, not from their artefacts. That is out of this slice and is the
+state `corpus_refresh --apply` exists to fix.
+
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **2 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — and **its corpus is now current for the first time**: `corpus_check` reports
-`bpp current 9/9`, `saoso current 338/338`, `opp`/`landscape` `no artefact`, **384 chunks, 0
-unembedded**. It carries **no `CHAT_*` overrides** in `.env` (first-install never writes them), so
-the code defaults — 4096 output tokens, ceiling 8192, retrieval limit 8 — are what runs. Two
-gaps the box still has, both recorded: the 40 citation links the refresh dropped are
-**unrecoverable** (§0k.4), and `opp` + `landscape` hold 37 chunks where the dev box has 38 (§0k.4).
+2026-10-30 — **and it does not have this session's landscape fix.** Its corpus is still the old
+PDF-built one (8 landscape chunks, six branches including `R500` and `PGS SA.`). A deploy pulls the
+artefact but **does not re-ingest**: `deploy.sh` never runs `ingest_standard`, so the box will show
+`landscape drift 8 / 11` until someone runs `corpus_refresh --apply` deliberately. Measure its
+landscape link count with `relink_evidence` (report-only) before that refresh; the dev box's answer
+was zero, but the live box is a different corpus.
+
+## 0p. 2026-10-30 (session 3) — the landscape is a reviewed artefact, and the false headings are gone
+
+**State: green, committed, and the dev box's landscape is current.** `fast.sh` **1407 passed / 1
+skipped in 78 s** (warm) and `verify.sh` **1421 passed / 1 skipped in 92.6 s** (`--create-db`, 5433).
+Code at `7e67492`; this documentation commit follows. The live box is still `8d2839d` (see the top).
+
+### 0p.1 Steps 2–4 landed together, because a partial artefact cannot be ingested
+
+`knowledge/corpus/landscape.md` carries **PDF 4–8** as three `<!-- table -->` blocks — 8 rows:
+`ESTABLISHING A PGS GROUP` (Step 1–3, p4–5), `PGS SEALS AND THEIR USE` (2 seal rows), `SAOSO
+ORGANIC CERTIFICATION` (Step 1–2 and the direct third-party route on p8). `CORPUS_DOCUMENTS["landscape"]`
+declares it, so ingest reads the review; `corpus_check` says `landscape current 11 / 11`.
+
+**The three false headings are gone, and with them the reviewed titles.** `R500` is a fee cell,
+`PGS SA.` and `SAOSO` are seal captions. `REVIEWED_BRANCH_TITLES` is now **empty** — the two
+landscape entries renamed branches that no longer exist — and the document has its three printed
+branches. `ESTABLISHING A PGS GROUP` holds all three steps as one branch (proved in
+`test_concordance.py`).
+
+**The measured count is 11, not the predicted 11/12, because the composition is different:** 8
+rows + 3 prose blocks (p4 lead-in, p6 trailing paragraphs, p7 lead-in). The PRD's 11 was 8 rows +
+3 front-matter passages, plus the lead-in as a 12th — the front matter is step 5, so it is simply not
+in the count yet. The number is asserted as measured (`test_corpus_landscape.py`), and will rise
+when step 5 lands.
+
+### 0p.2 Three defects the review found, all proved red
+
+1. **A table section with no lead-in produced a heading-only chunk.** `PGS SEALS AND THEIR USE`
+   opens straight into its rows; `_prose_chunks` chunked the pre-cell gap as the heading alone. It
+   was retrievable, citable, and said nothing. Fixed in `knowledge/tables.py`; reverting it makes
+   the count 11 → 12 and fails both the count and the heading-only guard.
+2. **`row_chunk`'s em-dash label was becoming a branch.** `heading_path` is `ESTABLISHING A PGS
+   GROUP — Step 1`, and `_branch_key` split only on ` > `, so the concordance would have shown eight
+   branches. `_branch_of` strips the row label; no printed heading in the four governed documents
+   contains an em dash. Proved red.
+3. **The eval set named a locator the fix deletes.** `uat-saoso-logo` expected `pgs-sa`; it now
+   names `saoso-organic-certification-step-2`. `test_every_locator_resolves_against_the_ingested_corpus`
+   is what caught it — the gate, not a review.
+
+Also worth knowing: **the Fee column is one merged box** in `ESTABLISHING A PGS GROUP`. `-table`
+renders `Annual membership fee … R500` level with `Step 2`, and the paper prints no row rule there,
+so the cell cannot be split. It is filed under **Step 1**, where it starts, and the table's legend
+says so — which is what makes the reader's fee question answerable from one chunk. The audit accepts
+the verbatim sentence through `test_the_landscape_fee_is_quotable_from_its_reviewed_row`.
+
+### 0p.3 D72.7's one re-ingest, measured on the dev box
+
+`--force` re-ingest from the artefact: **8 → 11 chunks**, all embedded. **0 evidence links were
+dropped** — no message had ever cited a landscape chunk on this box. `relink_evidence --apply`:
+**0 relinked / 66 already linked / 30 same-locator-different-text / 0 no-longer-has**; the 30 are
+the pre-existing bpp/saoso drift (that box was built from their PDFs). Totals: **388 chunks, 0
+unembedded**. **bpp and saoso still report `drift` on dev**, which is out of this slice.
+
+### 0p.4 What is still open from the PRD, and the one command that will hurt
+
+- **`TABLE_BANDS`** — the measured column offsets. A transposition *inside one printed row-line*
+  is still unpinned. It belongs with the reader (step 6), which is the surface that measures columns.
+- **The corpus-level table-page guard** — needs a cross-document definition of “table-shaped”; only
+  the landscape's pages are curated so far.
+- **Front matter (p1–3) and the colophon (p9)** — step 5, the next act.
+- **The printed-grid reader** — step 6; and the **UAT scenario + backlog move** — step 7.
+
+**`scripts/build_corpus.py --force --doc landscape` destroys the review.** The generator has no
+rule that emits a `<!-- table -->` block, and `CORPUS_EDITS` is a text substitution, so `--force`
+would write the p4–8 column soup over the artefact. The per-line guard fails immediately if it does,
+but nothing stops the command. Regeneration of a table artefact is a separate piece of work
+(`TABLES_AS_DATA_PRD`).
+
+---
 
 ## 0o. 2026-10-30 (session 2) — the two preconditions for step 2, and a corruption in the review path
 

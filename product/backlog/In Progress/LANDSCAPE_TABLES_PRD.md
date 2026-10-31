@@ -469,19 +469,29 @@ PRD did not start with.
    different story.
 1. **The table block lands in the artefact format** (`TABLES_AS_DATA_PRD` §3a): parse-time structure,
    one chunk per row from the table code, and a *failing* guard on a malformed table annotation.
-   ✅ **Mechanism done 2026-10-30, and proved red first.** ⚠ **Not yet proved against a shipped table:**
-   the landscape has no artefact (step 2), so p4's rows exist only as a test fixture. Three deviations
+   ✅ **Mechanism done 2026-10-30, and proved red first.** ✅ **Now proved against a shipped table**
+   (2026-10-30): all 8 landscape rows live in `knowledge/corpus/landscape.md` and
+   `test_landscape_table_block.py` pins 286 cell lines to their printed lines. Three deviations
    from §3a's draft syntax, all recorded in §12a.
 2. **Convert the landscape: 10 pages.** The smallest of the four documents (OPP 15, SAOSO 101) and
    already "next" in the P5 rollout, so pulling it forward costs the least. It is also the only
    document whose *front matter* needs a reviewer's heading, which is the second thing this slice is
    for (D72.6). Reviewed diff, `sha256` pinned, `CORPUS_EDITS` for anything the generator cannot
-do.
+   do.
+   ✅ **The three tables landed 2026-10-30** (`knowledge/corpus/landscape.md`, pdf 4–8; §12c).
+   **Front matter (pdf 1–3) and the colophon (p9) are still step 5**, so the artefact deliberately
+   starts at p4 and `test_the_front_matter_is_still_absent` records the gap.
 3. **Curate p4–p5 (`ESTABLISHING A PGS GROUP`, 3 rows)** — the page the reader reported. The review is
-a human reading the page image; `-table` output is a drafting aid, per D70.2. Add the measured column
-offsets and the line-pinned test. `EXPECTED_TRANSFORMED_PAGES["landscape"] == {2,3,9}` lands here, with
-D72.7's single re-ingest and `relink_evidence`.
+   a human reading the page image; `-table` output is a drafting aid, per D70.2. Add the measured column
+   offsets and the line-pinned test. `EXPECTED_TRANSFORMED_PAGES["landscape"] == {2,3,9}` lands here, with
+   D72.7's single re-ingest and `relink_evidence`.
+   ⚠ **Partially done 2026-10-30** (§12c): three rows, the per-line/order guard, D72.7's one re-ingest
+   (8 → 11 chunks) and `relink_evidence`. **`TABLE_BANDS` — the measured column offsets — is not
+   built**, so a transposition *inside one printed row-line* is still unpinned; it is deferred to the
+   reader (step 6), which is the surface that measures the columns.
 4. **Curate p7–p8 and p6** — with D72.1 (the seal row) and D72.5 (the page break) settled.
+   ✅ **Done 2026-10-30** (§12c): p6 is 2 seal rows; p7–p8 is one table of 3 rows (the third has no
+   printed step number).
 5. **Front matter (D72.6)** — the intro, the six elements and the three routes, as reviewed passages
    with reviewer-added headings in the same artefact. Independently testable: four probes that return
    **0** today must return 1 chunk each afterwards.
@@ -511,22 +521,30 @@ existed because the rows were going to live in Python; §5.2a retires it.
 
 ## 11. Definition of done
 
-- [ ] `de_column` no longer transforms PDF 4–8; `EXPECTED_TRANSFORMED_PAGES["landscape"] == {2,3,9}`
-- [ ] 8 reviewed rows across 3 tables, each cell pinned to its printed line
-- [ ] `ESTABLISHING A PGS GROUP` is one branch containing all three steps, and no branch is `R500`
+- [x] `de_column` no longer transforms PDF 4–8; `EXPECTED_TRANSFORMED_PAGES["landscape"] == {2,3,9}`
+      — **done 2026-10-30** (§12b)
+- [x] 8 reviewed rows across 3 tables, each cell **line** pinned to its printed line — **done
+      2026-10-30** (§12c). `TABLE_BANDS`' column pin is still open (step 3's ⚠), so a transposition
+      *within one printed row-line* is not yet caught
+- [x] `ESTABLISHING A PGS GROUP` is one branch containing all three steps, and no branch is `R500`
+      — **done 2026-10-30** (`test_a_tables_rows_are_passages_of_their_branch`)
 - [ ] *"Participatory Guarantee Systems are locally focused quality assurance systems"* and *"First-Party
-      Claim"* are quotable from the corpus (they are in **0** chunks today, §1.4)
-- [ ] "what does it cost to join a PGS group?" is quotable from one chunk, verbatim, and passes
-      `audit_citations` — **proved on p4's draft fixture** (`test_landscape_table_block.py`), so what
-      is left is the artefact, not the mechanism
+      Claim"* are quotable from the corpus (they are in **0** chunks today, §1.4) — **step 5**
+- [x] "what does it cost to join a PGS group?" is quotable from one chunk, verbatim, and passes
+      `audit_citations` — **proved on the artefact 2026-10-30**
+      (`test_the_landscape_fee_is_quotable_from_its_reviewed_row`)
 - [ ] the reader shows the printed grid (D72.3), and the Fee column is reachable without a scroll
-      longer than the table itself (§5.4's four options, one of them chosen in a mock)
-- [ ] the corpus-level guard fails on a newly-added uncurated table page
+      longer than the table itself (§5.4's four options, one of them chosen in a mock) — **step 6**
+- [ ] the corpus-level guard fails on a newly-added uncurated table page — **open**: it needs a
+      cross-document definition of "table-shaped page", and the landscape's pages are the only ones
+      curated so far
+
 - [x] `knowledge/tables.py`'s docstring assumption 7 (*"This covers Appendix 2 only"*) is rewritten —
       it has been false since 6a; it must not stay false for a third table. **Done 2026-10-30**: it
       now names both storages (Python literals and the artefact block) and which appendices remain
       uncurated
-- [ ] UAT scenario signed; backlog moved; `PGS_PLATFORM_SPEC.md` §4.5 updated
+- [ ] UAT scenario signed; backlog moved; `PGS_PLATFORM_SPEC.md` §4.5 updated — **§4.5 updated
+      2026-10-30**; the `tests/uat/` fee scenario and the sign-off are **step 7**
 
 ---
 
@@ -684,6 +702,58 @@ before: with p4–8 in printed order the parser opens **three false headings**, 
 and `## SAOSO`, because a fee cell and a seal caption are CAPS lines. The DoD already forbids them
 ("no branch is `R500`"); they are the first thing the reviewer must remove, and their removal is what
 makes `ESTABLISHING A PGS GROUP` one branch of three rows.
+
+---
+
+## 12c. Built 2026-10-30, session 3 — steps 2–4: the landscape is a reviewed artefact
+
+**State: green, re-ingested, and the landscape is current.** `fast.sh` **1407 passed / 1 skipped**
+(78 s warm) and `verify.sh` **1421 passed / 1 skipped in 92.6 s** (`--create-db`, port 5433). The
+artefact covers **PDF 4–8**; front matter (1–3), the colophon (9), `TABLE_BANDS` and the reader are
+not built.
+
+| Landed | Where | Evidence |
+|---|---|---|
+| the artefact | `knowledge/corpus/landscape.md` | 3 sections, 3 tables, **8 rows**, sha256 pinned; each cell is a slice of its section |
+| the declaration | `CORPUS_DOCUMENTS["landscape"]["corpus_artefact"]` | `corpus_check`: `landscape 11 / 11 current` |
+| the three false headings gone | the artefact | `R500`, `PGS SA.` and `SAOSO` are a fee cell and two seal captions; `REVIEWED_BRANCH_TITLES` is empty |
+| the rows guard | `test_landscape_table_block.py` | **286 cell lines**, each a verbatim *ordered* run of a printed `-table` line; proved red four ways |
+| the traceability guard | `test_corpus_landscape.py` | identity, no invented character, prose contiguity, the measured count, the recorded front-matter gap |
+| the count | **11 chunks** | 8 rows + 3 prose blocks (p4 lead-in, p6 trailing, p7 lead-in). §12a's 11/12 was 8 rows + 3 front matter + the lead-in; front matter is step 5 |
+| D72.7's single re-ingest | dev box | **8 → 11 chunks**, all embedded, **0 evidence links dropped**; `relink_evidence --apply`: **0 relinked / 0 no-longer-has** |
+
+### 12c.1 What the review found that the draft could not
+
+1. **The Fee column is one merged box.** `-table` renders `Annual membership fee … R500` level with
+   `Step 2`, and `Local PGS group determines…` a line above `Step 1`. The paper prints no row rule in
+   that column, so the cell cannot be split: it is filed under **Step 1**, where it starts, and the
+   table's legend says so. The reader's fee question is therefore answerable from one chunk.
+2. **A table section with no lead-in produced a heading-only chunk.** `PGS SEALS AND THEIR USE` opens
+   straight into its rows, and `_prose_chunks` chunked the pre-cell gap as `## PGS SEALS AND THEIR
+   USE` — retrievable, citable, and saying nothing. `_prose_chunks` now drops a chunk that is only
+   the section's heading. Proved red by reverting it: the count goes 11 → 12 and both guards fail.
+3. **`row_chunk`'s em-dash label was becoming a branch.** `heading_path` is
+   `ESTABLISHING A PGS GROUP — Step 1` and `_branch_key` split only on ` > `, so the concordance
+   would have listed eight branches instead of three. `_branch_of` strips the row label; no printed
+   heading in the four governed documents contains an em dash, so the split cannot take a real
+   heading apart. Proved red by reverting it.
+4. **The eval set named a locator this fix deletes.** `uat-saoso-logo` expected `pgs-sa`, the false
+   branch anchor. It now names `saoso-organic-certification-step-2`, which contains the phrase the
+   item asks for; `test_every_locator_resolves_against_the_ingested_corpus` is what caught it.
+
+### 12c.2 Regeneration is still manual, and `--force` is hazardous
+
+`scripts/build_corpus.py --doc landscape` still emits the **soup**, not a `<!-- table -->` block: the
+generator has no rule that produces one and `CORPUS_EDITS` is a text substitution. So
+`--force --doc landscape` would overwrite the review with the p4–8 column interleave. The per-line
+guard fails immediately if that happens (the cells are gone), so it cannot ship silently — but do not
+run it to "refresh" this file. The generator's table-block emission is a separate piece of work
+(`TABLES_AS_DATA_PRD`), and until it exists the landscape is reviewed by hand and protected by
+`--force`'s own refusal.
+
+**Not built, and named rather than hidden:** `TABLE_BANDS` (a transposition inside one printed
+row-line is unpinned), the corpus-level table-page guard, front matter (p1–3, p9), the printed-grid
+reader, and the UAT scenario. Steps 5–7 of §9.
 
 ---
 
