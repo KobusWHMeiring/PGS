@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<!-- DESIGN EXAMPLES (not a production template) | Outeniqua PGS — displaying the landscape's tables
+     Companion to product/design/d76_reader_table_fit.html and LANDSCAPE_TABLES_PRD.md §5.4/step 6.
+     Self-contained: no CDN, no build step, no network, no external fonts.
+     The spreadsheet demo has working drag/keyboard column resizing and a compact toggle.
+     Every cell is the real reviewed text from knowledge/corpus/landscape.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — Displaying the tables: six examples</title>
+<style>
+  :root {
+    --bg:            #f4f6f2;
+    --surface:       #ffffff;
+    --surface-low:   #eaeee6;
+    --surface-high:  #dfe5da;
+    --accent:        #35604a;
+    --accent-soft:   #e4efe7;
+    --accent-line:   #b9cfc0;
+    --text:          #1c2620;
+    --muted:         #66756b;
+    --warn:          #8a5a1c;
+    --warn-soft:     #f7efe1;
+    --stop:          #8a2f2f;
+    --stop-soft:     #f9ecec;
+    --cream:         #fdfbf7;
+    --sand:          #e6dece;
+    --ochre:         #b87b2e;
+    --radius-sm:     9px;
+    --radius-lg:     14px;
+    --radius-xl:     20px;
+    --shadow:        0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky: 0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 180px; }
+  p, li { font-size: 14.5px; }
+  code, kbd { font-family: var(--mono); font-size: 12.5px; }
+  p code, li code, td code { background: var(--surface-low); padding: 1px 5px; border-radius: 5px; }
+  a { color: var(--accent); }
+  body.is-resizing { cursor: col-resize; user-select: none; }
+
+  header.hero { background: linear-gradient(160deg, var(--accent) 0%, #274936 100%); color: #fff; padding: 44px 20px 38px; margin-bottom: 26px; }
+  header.hero .inner { max-width: 1060px; margin: 0 auto; }
+  header.hero .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .78; margin: 0 0 10px; font-weight: 600; }
+  header.hero h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.18; letter-spacing: -.01em; }
+  header.hero .question { margin: 0; max-width: 78ch; font-size: 16px; opacity: .95; }
+  header.hero .question b { font-weight: 650; }
+  header.hero .meta { margin-top: 18px; font-size: 13px; opacity: .82; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  header.hero .meta code { font-family: var(--mono); font-size: 12px; background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px; }
+
+  .panel { background: var(--surface); border-radius: var(--radius-xl); padding: 20px 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+  .panel h2 { margin: 0 0 8px; font-size: 17px; }
+  .panel > p:last-child { margin-bottom: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 40px 0 12px; }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -4px 0 16px; max-width: 80ch; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 12px 0; }
+  .scroll table { min-width: 560px; }
+
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; vertical-align: 1px; }
+  .tag--checked { background: var(--accent-soft); color: var(--accent); }
+  .tag--assumed { background: var(--warn-soft); color: var(--warn); }
+  .tag--rec { background: #f3e7cf; color: #7a4f12; }
+  .tag--new { background: #e8eef9; color: #2f4f7a; }
+
+  .callout { border-left: 3px solid var(--accent-line); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 14px 0; }
+  .callout--warn { border-left-color: #d9b37a; background: var(--warn-soft); }
+  .callout p:first-child { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ---------- the example cards ---------- */
+  .example { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow); margin: 0 0 24px; overflow: hidden; }
+  .example-head { display: flex; gap: 12px; align-items: flex-start; padding: 18px 22px 0; }
+  .example-letter { flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+  .example-head h3 { margin: 0 0 3px; font-size: 16px; }
+  .example-head .one-line { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .example-body { padding: 10px 22px 18px 68px; }
+  @media (max-width: 640px) { .example-body { padding-left: 22px; } }
+  .example-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 0; }
+  .example-tools button { font: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; min-height: 40px; }
+  .example-tools button:hover { background: var(--accent-soft); }
+  .example-tools .hint { font-size: 12px; color: var(--muted); }
+
+  .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  @media (max-width: 720px) { .pros-cons { grid-template-columns: 1fr; } }
+  .pros-cons h4 { margin: 0 0 5px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  .pros-cons .pro { border-top: 3px solid var(--accent-line); padding-top: 8px; }
+  .pros-cons .con { border-top: 3px solid #d6c6a8; padding-top: 8px; }
+  .pros-cons ul { margin: 0; padding-left: 1.1em; }
+  .pros-cons li { font-size: 13.5px; margin-bottom: 3px; }
+
+  /* ============================================================
+     THE SPREADSHEET (Excel / Grist feel) — resizable, frozen
+     ============================================================ */
+  .ss-wrap {
+    position: relative;
+    max-height: 560px;
+    overflow: auto;
+    border: 1px solid var(--sand);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    scrollbar-width: thin;
+  }
+  .ss-wrap:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  .ss { border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 980px; font-size: 13.5px; line-height: 1.45; color: var(--text); }
+  .ss th, .ss td { padding: 9px 11px; border-right: 1px solid var(--sand); border-bottom: 1px solid var(--sand); vertical-align: top; text-align: left; }
+  .ss thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: var(--surface-low); color: var(--muted);
+    font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    white-space: normal; vertical-align: bottom;
+  }
+  .ss thead th:first-child { left: 0; z-index: 4; }
+  .ss tbody th {
+    position: sticky; left: 0; z-index: 2;
+    background: #fff; font-weight: 400;
+    box-shadow: 1px 0 0 var(--sand);
+  }
+  .ss tbody tr:nth-child(even) td, .ss tbody tr:nth-child(even) th { background: #fbfaf6; }
+  .ss tbody tr:hover td, .ss tbody tr:hover th { background: var(--accent-soft); }
+  .ss tbody tr:last-child th, .ss tbody tr:last-child td { border-bottom: 0; }
+  .ss th { position: relative; }
+  .ss tbody th > p:first-child { font-weight: 700; }
+  .ss p { margin: 0 0 .5em; }
+  .ss p:last-child { margin-bottom: 0; }
+  .ss ul { margin: 0; padding-left: 1.05em; }
+  .ss li { font-size: 13.5px; margin: 0 0 .25em; }
+  .ss tr:target { outline: 2px solid var(--ochre); outline-offset: -2px; }
+
+  .ss-resizer {
+    position: absolute; top: 0; right: -4px; z-index: 5;
+    width: 9px; height: 100%;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .ss-resizer::after {
+    content: ""; position: absolute; top: 18%; bottom: 18%; left: 4px;
+    width: 1px; background: transparent;
+  }
+  .ss thead th:hover .ss-resizer::after, .ss-resizer:focus-visible::after { background: var(--ochre); }
+  .ss-resizer:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; border-radius: 2px; }
+
+  /* the compact multiplier — same content, less air */
+  .ss-wrap.is-compact .ss { font-size: 12.5px; }
+  .ss-wrap.is-compact .ss th, .ss-wrap.is-compact .ss td { padding: 6px 9px; }
+  .ss-wrap.is-compact .ss li { font-size: 12.5px; }
+
+  /* ============================================================
+     THE PROCESS FLOW — the step, its facets, and a connector
+     ============================================================ */
+  .flow { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-top: 18px; }
+  .flow::before {
+    content: ""; position: absolute; top: 38px; left: 12%; right: 12%; height: 2px;
+    background: linear-gradient(90deg, var(--accent-line), var(--sand)); border-radius: 2px;
+  }
+  .flow-step { position: relative; background: var(--cream); border: 1px solid var(--sand); border-radius: var(--radius-sm); padding: 18px 16px 14px; }
+  .flow-num {
+    position: absolute; top: -18px; left: 14px;
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent); color: #fff; display: grid; place-items: center;
+    font-weight: 700; font-size: 15px; box-shadow: 0 0 0 4px var(--surface);
+  }
+  .flow-step h4 { margin: 22px 0 8px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .flow-step > p { margin: 0 0 .6em; font-size: 13.5px; }
+  .flow-field { margin-top: 10px; border-top: 1px solid var(--sand); padding-top: 9px; }
+  .flow-field h5 { margin: 0 0 4px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .flow-field ul { margin: 0; padding-left: 1.05em; }
+  .flow-field li { font-size: 13px; margin: 0 0 .2em; }
+  .flow-field details summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+  .flow-field details p { margin: 4px 0 .5em; font-size: 13px; }
+  .flow-seal { display: inline-block; border: 1px dashed var(--sand); border-radius: 999px; padding: 3px 10px; font-size: 12px; color: var(--muted); font-style: italic; }
+  .flow-fees { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  @media (max-width: 780px) {
+    .flow { grid-template-columns: 1fr; padding-top: 0; padding-left: 22px; }
+    .flow::before { top: 0; bottom: 0; left: 8px; right: auto; width: 2px; height: auto; background: linear-gradient(180deg, var(--accent-line), var(--sand)); }
+    .flow-num { position: static; margin: 0 0 8px; box-shadow: none; }
+    .flow-fees { grid-template-columns: 1fr; }
+  }
+  .fee-box { background: var(--accent-soft); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .fee-box h5 { margin: 0 0 5px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .fee-box p { margin: 0 0 .45em; font-size: 13px; }
+  .fee-box p:last-child { margin-bottom: 0; }
+  .fee-amount { font-weight: 700; }
+
+  /* ============================================================
+     THE GRID + PROCESS SPINE
+     ============================================================ */
+  .ribbon { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; padding: 8px 12px; background: var(--accent-soft); border-radius: 999px; font-size: 12.5px; }
+  .ribbon b { color: var(--accent); }
+  .ribbon .conn { color: var(--muted); letter-spacing: .1em; }
+  .spine-step { display: flex; gap: 10px; align-items: flex-start; }
+  .spine-dot { flex: 0 0 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .spine-line { flex: 0 0 2px; background: var(--sand); margin: 4px 0 0 12px; }
+  .spine-body { min-width: 0; }
+
+  /* ============================================================
+     THE ACCORDION
+     ============================================================ */
+  .acc { display: grid; gap: 10px; }
+  .acc details { border: 1px solid var(--sand); border-radius: var(--radius-sm); background: var(--cream); }
+  .acc summary { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; cursor: pointer; padding: 12px 14px; min-height: 44px; }
+  .acc summary .n { font-weight: 700; color: var(--accent); }
+  .acc summary .amount { margin-left: auto; font-weight: 700; }
+  .acc .acc-body { padding: 0 14px 14px; }
+  .acc .acc-body h5 { margin: 10px 0 4px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .acc .acc-body p { margin: 0 0 .5em; font-size: 13.5px; }
+  .acc .acc-body ul { margin: 0; padding-left: 1.05em; }
+  .acc .acc-body li { font-size: 13.5px; }
+
+  /* type parity */
+  .type-strip { display: grid; gap: 10px; }
+  .type-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 12px; align-items: start; border-bottom: 1px solid var(--surface-high); padding-bottom: 9px; }
+  .type-row .size { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; }
+  .type-row .sample { border-left: 3px solid var(--sand); padding-left: 10px; }
+  .type-row .sample p { margin: 0 0 .3em; }
+
+  .matrix td, .matrix th { font-size: 13px; }
+  .matrix .yes { color: var(--accent); font-weight: 700; }
+  .matrix .no { color: var(--stop); font-weight: 700; }
+  .matrix .part { color: var(--warn); font-weight: 700; }
+
+  .rec { border: 2px solid var(--accent); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow); padding: 22px 24px; margin-bottom: 24px; }
+  .rec h3 { margin: 0 0 8px; font-size: 19px; }
+  .rec .lede { font-size: 15px; }
+
+  .choice { border: 1px solid var(--surface-high); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 10px; background: var(--surface); }
+  .choice label { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
+  .choice input { margin-top: 4px; flex: 0 0 auto; }
+  .choice .title { font-weight: 700; }
+  .choice .why { color: var(--muted); font-size: 13px; display: block; }
+  textarea { width: 100%; min-height: 90px; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid var(--surface-high); border-radius: var(--radius-sm); background: var(--cream); color: var(--text); resize: vertical; }
+  .export-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  button.btn { font: inherit; font-size: 13.5px; font-weight: 700; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; min-height: 44px; }
+  button.btn--ghost { background: transparent; color: var(--accent); }
+  button.btn:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--ochre); outline-offset: 2px; }
+  #out { width: 100%; min-height: 180px; font-family: var(--mono); font-size: 12.5px; margin-top: 12px; }
+
+  .sticky { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(28,38,32,.94); color: #fff; padding: 10px 16px; display: flex; gap: 14px; align-items: center; justify-content: center; box-shadow: var(--shadow-sticky); z-index: 10; }
+  .sticky .saved { font-size: 12.5px; opacity: .85; }
+  .sticky button { font: inherit; font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.5); background: transparent; color: #fff; cursor: pointer; min-height: 44px; }
+
+  @media print {
+    body { background: #fff; }
+    .sticky, .export-row, #out, .choice, .example-tools { display: none !important; }
+    .panel, .example, .rec { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+    header.hero { background: #274936 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ss-wrap { max-height: none; overflow: visible; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 12px 170px; }
+    .ss-wrap { border-radius: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; design examples &middot; companion to D76</p>
+    <h1>Displaying the table, not extracting it</h1>
+    <p class="question">
+      The extraction problem is solved: the landscape&rsquo;s three tables are reviewed text in
+      <code>landscape.md</code>. The display question is different. Two of the three tables are
+      <b>processes</b> (Step&nbsp;1 &rarr; Step&nbsp;2 &rarr; Step&nbsp;3), not records — which is
+      why the grid reads like a flowchart with columns. What should a reader see, and who should
+      control the column widths?
+    </p>
+    <p class="meta">
+      <span>Companion to <code>d76_reader_table_fit.html</code></span>
+      <span>The spreadsheet demo is live &mdash; drag a column edge</span>
+      <span>Self-contained &mdash; no network</span>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel">
+    <h2>How to read this</h2>
+    <p>
+      This is a set of <b>design examples</b>, not a proposal. Each one renders the same real
+      content &mdash; Step&nbsp;1, Step&nbsp;2 and Step&nbsp;3 of <em>Establishing a PGS group</em>
+      &mdash; so the difference you see is the display, not the data. The spreadsheet example is
+      genuinely interactive: drag a column edge, or focus an edge and use
+      <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>. At the end there is a recommendation and a place to pick.
+    </p>
+    <p>
+      Your two observations are the starting point: the text reads like a <b>flowchart</b>, and an
+      <b>Excel-like grid the reader can resize</b> feels right. Both are tested below, separately
+      and together.
+    </p>
+  </div>
+
+  <!-- ============================ PART 1 ============================ -->
+  <div class="section-head"><h2>Part 1 &mdash; What the content actually is</h2><div class="rule"></div></div>
+  <p class="section-note">Read from <code>knowledge/corpus/landscape.md</code>, not from memory. The
+    shape differs by table, and that is the whole argument.</p>
+
+  <div class="panel">
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Table</th><th>Rows</th><th>What it is</th><th>What it reads like</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Establishing a PGS group</b></td>
+            <td>3</td>
+            <td><b>A process.</b> Each row is a step; the other four columns are what that step needs, how it uses seals, and what it costs.</td>
+            <td>A stepper / flowchart with facets.</td>
+          </tr>
+          <tr>
+            <td><b>SAOSO organic certification</b></td>
+            <td>3</td>
+            <td><b>A process with a branch.</b> Step&nbsp;1, Step&nbsp;2, then a third route (&ldquo;For farmers wanting direct 3rd party certification&rdquo;) that has no step number.</td>
+            <td>A flow with an alternative ending.</td>
+          </tr>
+          <tr>
+            <td><b>PGS seals and their use</b></td>
+            <td>2</td>
+            <td><b>A comparison.</b> Two seals side by side, the same five facets each.</td>
+            <td>A small reference grid, not a flow.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p><b>So the observation is right, and it is measurable.</b> Two of the three tables are
+      processes; one is a comparison. The grid is not wrong &mdash; it is just doing a
+      <em>record</em> job for <em>process</em> content. The step number is the row label, the
+      resources are a list, the fee is a condition, and the seal is a picture. A reader is not
+      scanning a spreadsheet; they are following steps.</p>
+      <p class="mock-note"><strong>The data already says this.</strong> The reviewed block carries
+      the row labels (<code>Step 1</code>, <code>Step 2</code>, <code>Step 3</code>) and the
+      columns; what it does <em>not</em> carry is a hint that the rows are sequential. That is a
+      one-field review decision, not a parser problem: <code>layout: process</code> or
+      <code>layout: grid</code> in the <code>&lt;!-- table --&gt;</code> header, reviewed with the
+      rows. No migration, and the next table can be different.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 2 ============================ -->
+  <div class="section-head"><h2>Part 2 &mdash; The two questions inside the display</h2><div class="rule"></div></div>
+  <div class="panel">
+    <ol>
+      <li><b>What is the reading model?</b> A record grid (rows &times; columns) or a process
+        (steps with facets)? The content answers &ldquo;process&rdquo; for two tables and
+        &ldquo;grid&rdquo; for one.</li>
+      <li><b>Who controls the width?</b> A fixed layout (the reader decides) or a resizable one
+        (the <em>visitor</em> decides). Your instinct &mdash; the Excel/Grist feel &mdash; is the
+        second, and it changes the fit problem into an interaction problem. The pane is 52.5&nbsp;rem
+        and the printed row is 153&ndash;169 characters (<code>d76</code> Part&nbsp;1); a reader who
+        can widen the Fee column has solved the fit for themselves.</li>
+    </ol>
+    <p class="mock-note">They are independent. You can have a resizable record grid, a fixed process
+      flow, or a resizable process. The examples below separate them so you can see which one is
+      doing the work.</p>
+  </div>
+
+  <!-- ============================ PART 3 ============================ -->
+  <div class="section-head"><h2>Part 3 &mdash; Six examples</h2><div class="rule"></div></div>
+  <p class="section-note">Same content, same pane. Example A is the Excel/Grist idea; C is the
+    flowchart; E is the composition I would build.</p>
+
+  <!-- A: spreadsheet -->
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">A</div>
+      <div>
+        <h3>The spreadsheet &mdash; resizable, frozen, uniform type</h3>
+        <p class="one-line">A real table with Excel-like column resizing. The reader controls the fit; the header and Step column stay put.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="ss-wrap" data-spreadsheet="establishing" tabindex="0" role="region" aria-label="Spreadsheet example: Establishing a PGS group">
+        <table class="ss">
+          <colgroup>
+            <col style="width:220px"><col style="width:190px"><col style="width:250px"><col style="width:150px"><col style="width:210px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Key steps<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Key steps" aria-valuemin="80" aria-valuemax="560" aria-valuenow="220" tabindex="0"></span></th>
+              <th scope="col">Resource documents<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Resource documents" aria-valuemin="80" aria-valuemax="560" aria-valuenow="190" tabindex="0"></span></th>
+              <th scope="col">Use of seals and logos<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Use of seals and logos" aria-valuemin="80" aria-valuemax="560" aria-valuenow="250" tabindex="0"></span></th>
+              <th scope="col">Seals and logos<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Seals and logos" aria-valuemin="80" aria-valuemax="560" aria-valuenow="150" tabindex="0"></span></th>
+              <th scope="col">Fee<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Fee" aria-valuemin="80" aria-valuemax="560" aria-valuenow="210" tabindex="0"></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><p>Step 1</p><p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p></th>
+              <td><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></td>
+              <td></td><td></td>
+              <td><p>Local PGS group determines the membership fee for farmers/consumers/traders that are part of the PGS group.</p><p><b>Annual membership fee (paid by the PGS group to PGS SA): R500</b></p><p>Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1&nbsp;000</p></td>
+            </tr>
+            <tr>
+              <th scope="row"><p>Step 2</p><p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting. The group completes a self-assessment form (like a status report), shares the required information with PGS SA and pays an annual membership fee.</p></th>
+              <td><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles based on organic standards &ndash; (SAOSO standard or equivalent)</li></ul></td>
+              <td><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p><p>Groups may also create their own local logo identifying their group and use the &ldquo;member of PGS SA&rdquo; logo on their communication and certificates.</p><p>Groups that do not wish to design their own logo may make use of a PGS SA logo customized to the name of their PGS group.</p></td>
+              <td><span style="font-style:italic;color:var(--muted)">Proud member of</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th scope="row"><p>Step 3</p><p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed alongside.</p></th>
+              <td><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate granted to approved farms, which lists all the products and displays the relevant seal</li></ul></td>
+              <td><p>These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed below. Groups may also create their own seals.</p><p>PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submitted to PGS SA.</p></td>
+              <td></td>
+              <td><p><b>Recommended annual fee for the use of stickers (paid by individual farmers): R350</b> [to be divided between PGS SA (30%) and PGS groups (70%) &ndash; the portion of the fee accruing to PGS SA should be paid when the PGS group renews its membership]</p></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="example-tools">
+        <button type="button" data-reset="establishing">Reset widths</button>
+        <button type="button" data-compact="establishing">Compact / comfortable</button>
+        <span class="hint">Drag a header&rsquo;s right edge, or focus it and use &larr;/&rarr; (Shift = 24&nbsp;px, Home = reset).</span>
+      </div>
+      <p class="mock-note" style="margin-top:10px">
+        <strong>What you get:</strong> every column is the reader&rsquo;s to size; the first column and
+        the header stay pinned while the rest scrolls; the type is the same 13.5&nbsp;px in all five
+        columns (only the step label is bold). <strong>What it costs:</strong> about 100 lines of
+        vanilla JS, the WAI-ARIA separator pattern, and a persisted width per document/table in
+        <code>localStorage</code>. The repo already vendors plain JS (<code>chat.js</code>) and
+        endorses <code>localStorage</code> for view state.
+      </p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Familiar: it behaves like Excel/Grist, so nobody needs a manual.</li><li>The visitor solves the fee reach themselves; the pane no longer decides.</li><li>Uniform column type makes the five columns peers, which they are.</li><li>Works for the seals comparison unchanged.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>It still presents a process as a record &mdash; the flowchart feeling remains.</li><li>JS + the ARIA resizer pattern is real work, and a resizer that lies to a screen reader is worse than none.</li><li>Persisted widths are state: a reset and a sensible default both matter.</li><li>On a phone it still has to restack; resizing is a desktop gesture.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: spreadsheet + spine -->
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">B</div>
+      <div>
+        <h3>The spreadsheet with a process spine</h3>
+        <p class="one-line">Keep the resizable grid; add a numbered step rail and a ribbon so the sequence is visible.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="ribbon"><b>Step 1</b> <span class="conn">&rarr;</span> <b>Step 2</b> <span class="conn">&rarr;</span> <b>Step 3</b> <span style="color:var(--muted)">&middot; then seals &amp; fees</span></div>
+      <div class="ss-wrap" data-spreadsheet="spine" tabindex="0" role="region" aria-label="Spreadsheet with a process spine">
+        <table class="ss">
+          <colgroup>
+            <col style="width:260px"><col style="width:180px"><col style="width:240px"><col style="width:140px"><col style="width:200px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Key steps<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Key steps" aria-valuemin="80" aria-valuemax="560" aria-valuenow="260" tabindex="0"></span></th>
+              <th scope="col">Resources<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Resources" aria-valuemin="80" aria-valuemax="560" aria-valuenow="180" tabindex="0"></span></th>
+              <th scope="col">Use of seals<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Use of seals" aria-valuemin="80" aria-valuemax="560" aria-valuenow="240" tabindex="0"></span></th>
+              <th scope="col">Seals<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Seals" aria-valuemin="80" aria-valuemax="560" aria-valuenow="140" tabindex="0"></span></th>
+              <th scope="col">Fee<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Fee" aria-valuemin="80" aria-valuemax="560" aria-valuenow="200" tabindex="0"></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><div class="spine-step"><span class="spine-dot">1</span><div class="spine-body"><p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p></div></div></th>
+              <td><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></td>
+              <td></td><td></td>
+              <td><p><b>Annual membership fee: R500</b></p><p>Once-off customisation: R1&nbsp;000</p></td>
+            </tr>
+            <tr>
+              <th scope="row"><div class="spine-step"><span class="spine-dot">2</span><div class="spine-body"><p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p></div></div></th>
+              <td><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li></ul></td>
+              <td><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p></td>
+              <td><span style="font-style:italic;color:var(--muted)">Proud member of</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <th scope="row"><div class="spine-step"><span class="spine-dot">3</span><div class="spine-body"><p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.</p></div></div></th>
+              <td><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></td>
+              <td><p>These two seals were developed by PGS SA in consultation with PGS groups. PGS groups are custodians of the manner in which the seals are used.</p></td>
+              <td></td>
+              <td><p><b>Recommended annual fee for stickers: R350</b> (30% PGS SA / 70% group)</p></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mock-note" style="margin-top:10px"><strong>What it changes:</strong> two small things
+        &mdash; a numbered dot instead of a plain &ldquo;Step 1&rdquo;, and a ribbon above the grid.
+        The table is still the table, and the resizers are the same. <strong>What it does not fix:</strong>
+        the Step 2 &ldquo;Use of seals&rdquo; cell is still a paragraph in a column; a reader
+        following the process still scans sideways.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Cheap: a dot, a ribbon, no new layout.</li><li>Signals the sequence without hiding the columns.</li><li>The resizable grid keeps its benefits.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>The flow is decoration; the reading order is still row-major grid.</li><li>Two visual languages (stepper + spreadsheet) in one component can feel busy.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C: process flow -->
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">C</div>
+      <div>
+        <h3>The process flow &mdash; the flowchart reading</h3>
+        <p class="one-line">Three steps as a stepper, each with its own resources, seals and fee facets. No grid.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <h4>Get together</h4>
+          <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+          <div class="flow-field"><h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></div>
+          <div class="flow-field"><h5>Seals</h5><span class="flow-seal">none yet</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <h4>Agree and establish</h4>
+          <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p>
+          <div class="flow-field"><h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles on organic standards &ndash; (SAOSO or equivalent)</li></ul></div>
+          <div class="flow-field"><h5>Use of seals</h5><details><summary>Read the seal rule</summary><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo. Groups may also create their own local logo and use the &ldquo;member of PGS SA&rdquo; logo on their communication and certificates. Groups that do not wish to design their own logo may use a PGS SA logo customized to the name of their PGS group.</p></details></div>
+          <div class="flow-field"><h5>Seals</h5><span class="flow-seal">Proud member of</span></div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <h4>Visit and certify</h4>
+          <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed alongside.</p>
+          <div class="flow-field"><h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></div>
+          <div class="flow-field"><h5>Use of seals</h5><details><summary>Read the seal rule</summary><p>These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed below. Groups may also create their own seals. PGS groups are custodians of the manner in which the seals are used. Where exceptions are granted, a copy of the farm visit assessment report must be submitted to PGS SA.</p></details></div>
+        </div>
+      </div>
+      <div class="flow-fees">
+        <div class="fee-box"><h5>Fee &mdash; joining (Steps 1&ndash;2)</h5><p>The local group determines the membership fee for farmers/consumers/traders.</p><p><span class="fee-amount">Annual membership fee: R500</span> (paid by the group to PGS SA).</p><p><span class="fee-amount">Once-off customisation: R1&nbsp;000</span> (logo, seals and certificates).</p></div>
+        <div class="fee-box"><h5>Fee &mdash; certification (Step 3)</h5><p><span class="fee-amount">Recommended annual fee for stickers: R350</span>, divided 30% PGS SA / 70% group.</p><p>Printing of seals is at own cost. The group customises the two seals in its own name.</p></div>
+      </div>
+      <p class="mock-note" style="margin-top:10px"><strong>What it gets right:</strong> the reading
+        model matches the content. A step is a card; the four other columns become facets of that
+        step; the merged Fee cell stays merged as a band, which is honest to the paper.
+        <strong>What it costs:</strong> the cards are tall (the Step 2 body is 400 characters), and
+        comparing two steps is lateral rather than a row scan. On a phone the stepper turns vertical
+        (the connector becomes a left rail).</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>It reads like what it is: a process.</li><li>The fee is a band, not a hidden fifth column.</li><li>No horizontal scroll, ever.</li><li>The merged Fee cell can stay merged.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Tall cards; a lot of scrolling on a phone.</li><li>You cannot compare &ldquo;Step 1&rsquo;s resources&rdquo; with &ldquo;Step 3&rsquo;s resources&rdquo; at a glance.</li><li>The seal artwork column has no home; it becomes a label.</li><li>It needs a per-table layout decision in the data.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D: accordion -->
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">D</div>
+      <div>
+        <h3>Accordion steps &mdash; content on demand</h3>
+        <p class="one-line">One card per step; the fee is in the summary, the detail opens on demand. Phone-first.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <div class="acc">
+        <details open>
+          <summary><span class="n">Step 1</span> Get together <span class="amount">R500 + R1&nbsp;000</span></summary>
+          <div class="acc-body">
+            <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
+            <h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul>
+            <h5>Fee</h5><p>Local group determines the membership fee. <b>Annual membership fee: R500</b>; once-off customisation: <b>R1&nbsp;000</b>.</p>
+          </div>
+        </details>
+        <details>
+          <summary><span class="n">Step 2</span> Agree and establish <span class="amount">included above</span></summary>
+          <div class="acc-body">
+            <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p>
+            <h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li></ul>
+            <h5>Use of seals</h5><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p>
+            <h5>Seals</h5><p>Proud member of</p>
+          </div>
+        </details>
+        <details>
+          <summary><span class="n">Step 3</span> Visit and certify <span class="amount">R350</span></summary>
+          <div class="acc-body">
+            <p>The group conducts farm visits and on approval grants certificates to its farmer members. Farmers may label their products accordingly.</p>
+            <h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul>
+            <h5>Fee</h5><p><b>Recommended annual sticker fee: R350</b>, 30% PGS SA / 70% group.</p>
+          </div>
+        </details>
+      </div>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>The fee is visible without opening anything.</li><li>Very little vertical space until the reader asks.</li><li>No JS: native <code>&lt;details&gt;</code>.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Hides the document&rsquo;s own text behind a click &mdash; a reader checking a quote must open a card.</li><li>Comparison across steps is impossible without opening all three.</li><li>Feels like an app, not a document.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- E: composition -->
+  <div class="example">
+    <div class="example-head">
+      <div class="example-letter">E</div>
+      <div>
+        <h3>The composition &mdash; a layout per table, chosen as data</h3>
+        <p class="one-line">Process for the two process tables; resizable spreadsheet for the seals comparison.</p>
+      </div>
+    </div>
+    <div class="example-body">
+      <p><span class="tag tag--rec">recommended</span> &nbsp;The reviewed table block gains one
+        field: <code>layout: process</code> or <code>layout: grid</code>. The reviewer chooses it with
+        the rows, exactly as the legend is chosen. The reader keeps one component with two shapes.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Table</th><th><code>layout</code></th><th>What the reader gets</th></tr></thead>
+          <tbody>
+            <tr><td>Establishing a PGS group</td><td><code>process</code></td><td>The stepper (example C), with the Fee band</td></tr>
+            <tr><td>SAOSO organic certification</td><td><code>process</code></td><td>The stepper, with the direct route as a branch card</td></tr>
+            <tr><td>PGS seals and their use</td><td><code>grid</code></td><td>The spreadsheet (example A), two seals side by side</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px"><b>The seals table is the control</b> &mdash; a real comparison, and
+        it stays a grid. Here it is in the spreadsheet shape, so the same component is doing both
+        jobs:</p>
+      <div class="ss-wrap" data-spreadsheet="seals" style="max-height:360px">
+        <table class="ss">
+          <colgroup><col style="width:220px"><col style="width:200px"><col style="width:320px"><col style="width:150px"><col style="width:130px"></colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Seal<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Seal" aria-valuemin="80" aria-valuemax="560" aria-valuenow="220" tabindex="0"></span></th>
+              <th scope="col">Use<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Use" aria-valuemin="80" aria-valuemax="560" aria-valuenow="200" tabindex="0"></span></th>
+              <th scope="col">Condition<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Condition" aria-valuemin="80" aria-valuemax="560" aria-valuenow="320" tabindex="0"></span></th>
+              <th scope="col">Artwork<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Artwork" aria-valuemin="80" aria-valuemax="560" aria-valuenow="150" tabindex="0"></span></th>
+              <th scope="col">Fee<span class="ss-resizer" role="separator" aria-orientation="vertical" aria-label="Resize Fee" aria-valuemin="80" aria-valuemax="560" aria-valuenow="130" tabindex="0"></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row"><p>PGS Organic In-Conversion</p><p>Farmers who cannot support/attest to the organic history of the land, or who are converting from chemical to organic agriculture, may be granted this seal by their group.</p></th><td><p>Granted by the group.</p></td><td><p>If the production is in accordance with organic principles, but the land has been under organic management for less than 18 months (annual), 12 months (pastures), or 12 months (other perennials).</p></td><td><span style="font-style:italic;color:var(--muted)">picture</span></td><td><p>As above</p></td></tr>
+            <tr><th scope="row"><p>PGS Organic</p><p>Farmers who are fully compliant with their group&rsquo;s choice of an internationally accepted organic standard may be granted this seal.</p></th><td><p>Granted by the group.</p></td><td><p>Labelling regulations require protocols for animal products; the IFOAM-recognised SAOSO standard covers them. Exceptions are time-limited and notified to PGS SA.</p></td><td><span style="font-style:italic;color:var(--muted)">picture</span></td><td><p>As above</p></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mock-note" style="margin-top:10px"><strong>Why this is the recommendation:</strong>
+        the shape follows the content, and the reviewer &mdash; not a heuristic &mdash; decides it.
+        The spreadsheet is kept for the one table that is genuinely a grid. The Fee band in the
+        process layout preserves the merged cell the paper prints.</p>
+      <div class="pros-cons">
+        <div class="pro"><h4>For</h4><ul><li>Each table gets the display its content asks for.</li><li>No heuristics, no model call: one reviewed field.</li><li>One component, two shapes; the fallback stays the plain page.</li></ul></div>
+        <div class="con"><h4>Against</h4><ul><li>Two layouts to build, test and UAT &mdash; roughly double the reader work.</li><li>The reviewer has one more decision per table.</li><li>The stepper&rsquo;s tall cards are a phone cost.</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 4 ============================ -->
+  <div class="section-head"><h2>Part 4 &mdash; The font sizes, which you raised</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p>In the current reader grid the cells are 14&nbsp;px, the header 11&nbsp;px, and the first
+      cell&rsquo;s <em>first</em> paragraph is bold. That is close to parity already; the thing that
+      made the earlier mocks look unequal was the <b>stacked</b> phone view, where the step label
+      became a 16&nbsp;px serif heading and every other cell stayed 13&nbsp;px. The fix is simple:
+      <b>all five columns are the same size</b>; the step label is a label (bold, same size), not a
+      headline.</p>
+    <div class="type-strip">
+      <div class="type-row"><span class="size">16 px</span><div class="sample" style="font-size:16px"><p><b>Step 1</b> Farmers who are already producing a surplus &hellip; &middot; <span style="color:var(--muted)">~78 chars/line in the pane</span></p></div></div>
+      <div class="type-row"><span class="size">14 px</span><div class="sample" style="font-size:14px"><p><b>Step 1</b> Farmers who are already producing a surplus &hellip; &middot; <span style="color:var(--muted)">~90 chars/line</span></p></div></div>
+      <div class="type-row"><span class="size">13.5 px</span><div class="sample" style="font-size:13.5px"><p><b>Step 1</b> Farmers who are already producing a surplus &hellip; &middot; <span style="color:var(--muted)">~93 chars/line</span></p></div></div>
+      <div class="type-row"><span class="size">12.5 px</span><div class="sample" style="font-size:12.5px"><p><b>Step 1</b> Farmers who are already producing a surplus &hellip; &middot; <span style="color:var(--muted)">~100 chars/line, the floor</span></p></div></div>
+    </div>
+    <p class="mock-note" style="margin-top:12px"><strong>Recommendation:</strong> 13.5&nbsp;px for the
+      grid at comfortable density, 12.5&nbsp;px in the compact toggle; the header 10.5&ndash;11&nbsp;px
+      uppercase; the step label bold at the cell&rsquo;s own size. Never a larger first column. The
+      compact toggle in example A is the honest version of &ldquo;make it fit&rdquo; &mdash; it buys
+      ~10% more characters without shrinking the type below the design system&rsquo;s floor.</p>
+  </div>
+
+  <!-- ============================ PART 5 ============================ -->
+  <div class="section-head"><h2>Part 5 &mdash; Comparison</h2><div class="rule"></div></div>
+  <div class="panel">
+    <div class="scroll">
+      <table class="matrix">
+        <thead><tr><th>Criterion</th><th>A &middot; spreadsheet</th><th>B &middot; + spine</th><th>C &middot; process</th><th>D &middot; accordion</th><th>E &middot; per table</th></tr></thead>
+        <tbody>
+          <tr><td>Matches a process table</td><td class="no">No</td><td class="part">Signals</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Matches a comparison table</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td><td class="part">Weak</td><td class="yes">Yes</td></tr>
+          <tr><td>Fee reachable at 1280&nbsp;px</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Fee reachable at 390&nbsp;px</td><td class="part">Restack</td><td class="part">Restack</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+          <tr><td>Compare two rows at a glance</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes (grid)</td></tr>
+          <tr><td>Reader controls the width</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes (grid)</td></tr>
+          <tr><td>JS + a11y cost</td><td class="part">~100 lines</td><td class="part">~100 lines</td><td class="yes">None</td><td class="yes">None</td><td class="part">~100 lines</td></tr>
+          <tr><td>Hides the document&rsquo;s text</td><td class="yes">No</td><td class="yes">No</td><td class="part">Some</td><td class="no">Yes</td><td class="part">Some</td></tr>
+          <tr><td>Feels like a document</td><td class="part">A tool</td><td class="part">A tool</td><td class="yes">A page</td><td class="part">An app</td><td class="part">Mixed</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mock-note">Unweighted. The trade that decides it: <b>A</b> is familiar and gives the
+      reader control, but it keeps the flowchart-as-columns feeling; <b>C</b> reads right but gives
+      up the row comparison and the reader&rsquo;s control; <b>E</b> pays for both.</p>
+  </div>
+
+  <!-- ============================ PART 6 ============================ -->
+  <div class="section-head"><h2>Part 6 &mdash; Recommendation</h2><div class="rule"></div></div>
+  <div class="rec">
+    <h3><span class="tag tag--rec">recommend</span> &nbsp;E &mdash; a layout per table, and a resizable grid wherever it is a grid</h3>
+    <p class="lede">Add <code>layout: process | grid</code> to the reviewed table block. The two
+      process tables render as a stepper (example C) with the fee as a band; the seals table renders
+      as the resizable spreadsheet (example A). All five columns share one type size; the step label
+      is bold, not larger. The spreadsheet keeps the frozen header and first column, a
+      <b>Reset widths</b> and a <b>Compact</b> toggle, and persists widths per document/table in
+      <code>localStorage</code>. Below 900&nbsp;px both shapes restack.</p>
+    <ul>
+      <li><b>It takes your two observations seriously.</b> The flowchart feeling is the content, so
+        the process tables get a flow; the grid stays a grid only where it is a comparison. The
+        reader can resize, so the pane no longer decides how much of the fee they see.</li>
+      <li><b>It is one reviewed field, not a heuristic.</b> <code>layout:</code> in the block is
+        chosen by the reviewer with the rows, exactly like the legend. No model call, no inference
+        from the text.</li>
+      <li><b>It is a bounded build.</b> A parser field, a second template branch, ~100 lines of
+        vanilla JS and the ARIA resizer pattern, plus tests at 1280/390 and a keyboard test. No
+        migration: the data is the artefact.</li>
+    </ul>
+    <p><b>What it changes:</b> <code>knowledge/corpus.py</code> parses <code>layout:</code>;
+      <code>ParsedTable</code>/<code>ArtefactGrid</code> carry it; <code>document_reader.html</code>
+      branches on it; <code>reader.css</code> carries the stepper and the spreadsheet; a small
+      <code>reader-grid.js</code> carries the resizers; <code>DESIGN.md</code> §7.13 gains the two
+      shapes; the tests pin the field, the shapes and the fallback.</p>
+    <p><b>What would change my mind:</b> if the process cards read as too tall in the UAT (open three
+      step cards on a phone and judge), then keep the grid for the process tables and use the spine
+      (B) instead &mdash; the resizable grid is still the base. If the resizer&rsquo;s accessibility
+      cost is judged too high, drop to fixed widths and the compact toggle, and keep only the
+      per-table layout. If the product owner wants one renderer for all three tables, the spreadsheet
+      (A) is the safe single answer.</p>
+  </div>
+
+  <!-- ============================ PART 7 ============================ -->
+  <div class="section-head"><h2>Part 7 &mdash; Your decision</h2><div class="rule"></div></div>
+  <div class="panel">
+    <p class="section-note">Pick one; notes and the choice autosave in this browser. Export produces
+      a markdown note and a §18.3 row (this revises D76).</p>
+    <div id="choices"></div>
+    <label for="notes"><b>Notes</b></label>
+    <textarea id="notes" placeholder="e.g. “E, but the stepper’s cards are too tall — use the spine instead”, or a width you actually read at."></textarea>
+    <div class="export-row">
+      <button class="btn" type="button" id="export">Export markdown + §18.3 row</button>
+      <button class="btn btn--ghost" type="button" id="copy">Copy to clipboard</button>
+      <button class="btn btn--ghost" type="button" id="reset">Reset</button>
+    </div>
+    <textarea id="out" readonly aria-label="Exported decision"></textarea>
+  </div>
+
+</div>
+
+<div class="sticky">
+  <span class="saved" id="saved">Nothing chosen yet</span>
+  <button type="button" id="jump">Go to the decision &darr;</button>
+</div>
+
+<script>
+(function () {
+  /* ---------- the spreadsheet: drag or keyboard a column edge ---------- */
+  function setupSpreadsheet(wrap) {
+    var table = wrap.querySelector('table.ss');
+    if (!table) return;
+    var cols = table.querySelectorAll('colgroup col');
+    var key = 'pgs.demo.' + (wrap.dataset.spreadsheet || 'table');
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (e) { saved = {}; }
+
+    function apply() {
+      cols.forEach(function (col, i) { if (saved[i]) col.style.width = saved[i] + 'px'; });
+    }
+    apply();
+
+    table.querySelectorAll('thead th').forEach(function (th, i) {
+      var handle = th.querySelector('.ss-resizer');
+      if (!handle || !cols[i]) return;
+
+      function width() { return Math.round(cols[i].getBoundingClientRect().width); }
+      function set(px) {
+        var value = Math.max(80, Math.min(560, Math.round(px)));
+        cols[i].style.width = value + 'px';
+        handle.setAttribute('aria-valuenow', String(value));
+        saved[i] = value;
+        try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {}
+      }
+
+      var startX = 0, startW = 0, dragging = false;
+      handle.addEventListener('pointerdown', function (event) {
+        event.preventDefault();
+        dragging = true; startX = event.clientX; startW = width();
+        try { handle.setPointerCapture(event.pointerId); } catch (e) {}
+        document.body.classList.add('is-resizing');
+      });
+      handle.addEventListener('pointermove', function (event) {
+        if (!dragging) return;
+        set(startW + (event.clientX - startX));
+      });
+      function end(event) {
+        if (!dragging) return;
+        dragging = false;
+        try { handle.releasePointerCapture(event.pointerId); } catch (e) {}
+        document.body.classList.remove('is-resizing');
+      }
+      handle.addEventListener('pointerup', end);
+      handle.addEventListener('pointercancel', end);
+
+      handle.addEventListener('keydown', function (event) {
+        var step = event.shiftKey ? 24 : 8;
+        if (event.key === 'ArrowLeft') { event.preventDefault(); set(width() - step); }
+        else if (event.key === 'ArrowRight') { event.preventDefault(); set(width() + step); }
+        else if (event.key === 'Home') {
+          event.preventDefault();
+          cols[i].style.width = '';
+          delete saved[i];
+          try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {}
+          handle.setAttribute('aria-valuenow', String(width()));
+        }
+      });
+    });
+
+    var reset = document.querySelector('[data-reset="' + wrap.dataset.spreadsheet + '"]');
+    if (reset) reset.addEventListener('click', function () {
+      saved = {};
+      try { localStorage.removeItem(key); } catch (e) {}
+      cols.forEach(function (col) { col.style.width = ''; });
+    });
+    var compact = document.querySelector('[data-compact="' + wrap.dataset.spreadsheet + '"]');
+    if (compact) compact.addEventListener('click', function () {
+      wrap.classList.toggle('is-compact');
+    });
+  }
+  document.querySelectorAll('[data-spreadsheet]').forEach(setupSpreadsheet);
+
+  /* ---------- the decision control ---------- */
+  var KEY = 'pgs.reader-table-examples.v1';
+  var CHOICES = [
+    { id: 'A', title: 'A — spreadsheet for all three tables',
+      why: 'The Excel/Grist idea, uniform type, resizable. Familiar, but keeps the process-as-columns feeling.' },
+    { id: 'B', title: 'B — spreadsheet with a process spine',
+      why: 'The grid plus a numbered rail and ribbon. Signals the flow without leaving the table.' },
+    { id: 'C', title: 'C — process flow for the process tables',
+      why: 'A stepper for the two process tables; the grid is gone. Reads right, compares worse.' },
+    { id: 'D', title: 'D — accordion steps',
+      why: 'One card per step, fee in the summary. Phone-first, but hides the document text.' },
+    { id: 'E', title: 'E — a layout per table, and a resizable grid (recommended)',
+      why: 'Process for the two process tables, spreadsheet for the seals comparison; one type size; the reader controls the grid width.' }
+  ];
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    var chosen = CHOICES.find(function (c) { return c.id === state.choice; });
+    document.getElementById('saved').textContent = chosen
+      ? 'Saved: option ' + chosen.id
+      : 'Nothing chosen yet';
+  }
+
+  function renderChoices() {
+    var host = document.getElementById('choices');
+    host.innerHTML = CHOICES.map(function (c) {
+      return '<div class="choice"><label>' +
+        '<input type="radio" name="display" value="' + c.id + '"' +
+        (state.choice === c.id ? ' checked' : '') + '>' +
+        '<span><span class="title">' + c.title + '</span>' +
+        '<span class="why">' + c.why + '</span></span></label></div>';
+    }).join('');
+    host.querySelectorAll('input[type=radio]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        state.choice = input.value;
+        save();
+      });
+    });
+  }
+
+  var notes = document.getElementById('notes');
+  notes.value = state.notes || '';
+  notes.addEventListener('input', function () { state.notes = notes.value; save(); });
+
+  function exportText() {
+    var chosen = CHOICES.find(function (c) { return c.id === state.choice; });
+    var lines = [];
+    lines.push('# Displaying the landscape\'s tables — decision (revises D76)');
+    lines.push('');
+    lines.push('**Question:** now that the tables are accurately in markdown, how should a reader see them — a spreadsheet they can resize, a process flow, or a layout per table?');
+    lines.push('');
+    lines.push('- **Choice:** ' + (chosen ? chosen.title : '_(not chosen)_'));
+    lines.push('- **Observation:** two of the three tables are processes (Establishing, SAOSO), not records; the seals table is a comparison. The grid is doing a record job for process content.');
+    lines.push('- **Type:** 13.5 px in the grid, 12.5 px compact, 10.5–11 px header; one size for all five columns, the step label bold rather than larger.');
+    lines.push('');
+    lines.push('**§18.3 row**');
+    lines.push('');
+    lines.push('| D77 | How does the reader display the landscape\'s tables — and who controls the column widths? | **' + (chosen ? chosen.id : '?') + '** — a `layout: process | grid` field on the reviewed block: process tables render as a stepper with the merged fee as a band, the seals comparison renders as a spreadsheet with frozen header/first column, one 13.5 px type size, and mouse/keyboard column resizing persisted per document/table. This revises D76 (the fixed-grid fit). | D76 chose the printed grid; the content says two of the three tables are processes, and the visitor should control the width where it is a grid. |');
+    if (state.notes) { lines.push(''); lines.push('**Notes:** ' + state.notes); }
+    return lines.join('\n');
+  }
+
+  function setOut() { document.getElementById('out').value = exportText(); }
+  document.getElementById('export').addEventListener('click', setOut);
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = exportText();
+    document.getElementById('out').value = text;
+    if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    notes.value = '';
+    document.getElementById('out').value = '';
+    renderChoices(); save();
+  });
+  document.getElementById('jump').addEventListener('click', function () {
+    document.getElementById('choices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  renderChoices();
+  save();
+})();
+</script>
+</body>
+</html>

@@ -852,13 +852,27 @@ should go full-bleed below the tree; if the reading measure must be inviolable, 
 
 ### 12e.3 What is still open
 
-- **D76's confirmation** — the product owner reads `d76_reader_table_fit.html` and picks; the
-  implementation is one CSS/template change away from any of A–D.
-- **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. It is a
-  corpus guard, not a reader feature; it was step 3's ⚠ and is still open.
-- **The corpus-level table-page guard** — still needs a cross-document definition of “table-shaped”.
+- **D77 — the display model (new, 2026-10-31).** The product owner reframed the question: not
+  “how do we extract tables” but “now that they are in markdown, how do we display them”. The
+  content answers part of it: **two of the three tables are processes** (Step 1 → 2 → 3), not
+  records, and the third is a comparison. `product/design/d76b_reader_table_examples.html` has six
+  live examples (a **resizable spreadsheet** with frozen header/first column and a compact toggle;
+  the spreadsheet with a process spine; a **process stepper**; accordion cards; a per-table
+  composition) and recommends **E**: a `layout: process | grid` field on the reviewed block —
+  process steppers for the establishing and SAOSO tables, a resizable spreadsheet for the seals
+  comparison — with one 13.5&nbsp;px type size for all five columns. **The current reader (fixed
+  grid) stays until the owner picks;** the recommendation is not a decision.
+- **D76's confirmation** — the fit artifact is still the surface for A–D; D77 revises it.
+- **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. A corpus
+  guard, not a reader feature.
+- **The corpus-level table-page guard.**
 - **Step 7** — the `tests/uat/` fee scenario, the backlog move, and the §5.7 exclusion verified as
   “reading order restored, nothing more”.
+
+**A note on the type sizes (the owner raised it).** The grid's cells are 14&nbsp;px and its header
+11&nbsp;px; the inequality people notice comes from the *stacked phone* view, where the step label
+became a 16&nbsp;px serif heading. The fix is the rule in `d76b` Part 4: all five columns at one
+size, the step label **bold rather than larger**.
 
 ---
 

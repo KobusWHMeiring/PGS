@@ -14,8 +14,16 @@
 >    choice is the product owner's to confirm;** the code follows the recommendation.
 > 3. `product/design/DESIGN.md` §7.13 for the component's rules.
 >
-> **The next act is step 7, the close:** a `tests/uat/` scenario for the fee question, the backlog
-> move, and the §5.7 exclusion verified as “reading order restored, nothing more”.
+> **The next act is a decision, not a build: how the tables should display (D77).** The product
+> owner's reframing: two of the three tables are **processes** (Step 1 → 2 → 3), not records, so a
+> grid reads like a flowchart with columns. `product/design/d76b_reader_table_examples.html` has six
+> live examples — a **resizable spreadsheet** (Excel/Grist feel), a process spine, a **stepper**, an
+> accordion, and a per-table composition — and recommends **E**: a `layout: process | grid` field on
+> the reviewed block (process steppers for establishing/SAOSO, a resizable spreadsheet for the seals
+> comparison), with one 13.5 px type size for all five columns. **Pick A–E there.**
+>
+> **Then step 7, the close:** a `tests/uat/` scenario for the fee question, the backlog move, and the
+> §5.7 exclusion verified as “reading order restored, nothing more”.
 >
 > **Two guards are still open, and named rather than hidden:** `TABLE_BANDS` (a transposition
 > *inside one printed row-line* is unpinned) and the corpus-level table-page guard.
@@ -115,7 +123,12 @@ worse than no grid, the same rule `structure_for` already follows. A test edits 
 
 ### 0r.4 What is left
 
-- **D76's confirmation** — read the artifact and pick. The recommendation is already implemented.
+- **D77 — the display model.** The owner's reframing: not extraction, but display. Two of the three
+  tables are processes, not records. `product/design/d76b_reader_table_examples.html` has six live
+  examples and recommends **E** (a `layout: process | grid` field, a stepper for the process tables,
+  a resizable spreadsheet for the seals comparison, one 13.5 px type size). The current reader is
+  the fixed grid from §12e; it stays until the owner picks.
+- **D76's confirmation** — the fit artifact; D77 revises it.
 - **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. A corpus
   guard, not a reader feature.
 - **The corpus-level table-page guard.**
