@@ -45,7 +45,12 @@ ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "bpp.md"
 #: 2026-10-27: seven — two private-use Dingbats bullets (U+F06E) that the artefact only
 #: started receiving once the extraction asked for `-enc UTF-8`; before that, Xpdf dropped
 #: them silently, so there was nothing to review (`knowledge/corpus.py`).
-MAX_EDITS = 7
+#: 2026-10-30: **eight, and no new review decision** — the footnote-2 `move` became a lift plus a
+#: place. `apply_review` is a text substitution, so the one `move` entry was silently deleting
+#: `must be preferably composted` and reprinting `land available will not be allowed.`, and the
+#: guard below was checking a count that `subn(count=1)` always reports as 1. One decision, two
+#: mechanical edits; the count is the smell budget, not the review's tally.
+MAX_EDITS = 8
 
 
 @pytest.fixture(scope="module")

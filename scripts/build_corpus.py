@@ -271,6 +271,108 @@ def body_filter(parser) -> "callable":
     return lambda line: not (is_furniture(line) or BARE_PAGE_NUMBER.match(line))
 
 
+#: Running side labels, per document: text printed down the margin of every page of a section, so
+#: it is furniture *repeated* rather than body text. Measured 2026-10-30 — the four
+#: `The Principle / Of Health. …` pairs sit at the foot of BPP pages 6, 8 and 10, and the reviewed
+#: artefact keeps them once.
+#:
+#: **Data, not inference, and the inference was measured first.** "A line printed on N different
+#: pages is furniture" destroys SAOSO: `General Principle` is on 26 pages, `Requirements:` on 25,
+#: `South African specific` on 18, and all three are content. The block-repetition version is worse:
+#: SAOSO prints one poultry derogation verbatim on pages 45, 46 and 47. So the document's reviewer
+#: names its running labels, exactly as `PAGE_LAYOUT_EXCLUSIONS` and `PAGE_LAYOUT_BANDS` work.
+BODY_FURNITURE: dict[str, tuple[str, ...]] = {
+    "bpp": ("The Principle", "Of Health.", "Of Ecology.", "Of Fairness.", "Of Care."),
+}
+
+
+#: Unicode's private use areas. Nothing a corpus can quote lives here: the BPP's `U+F06E` is a
+#: Wingdings bullet in the text layer, and it is also the character that killed `--stdout` on the
+#: Windows console (`testing_hazards.md` §3.21). Both shipped artefacts already carry none.
+PRIVATE_USE = re.compile(r"[\ue000-\uf8ff]")
+
+
+def strip_private_use(text: str) -> str:
+    """Drop private-use-area codepoints: they are glyph slots, not characters.
+
+    In:  `text` — a draft or a line.
+    Out: the same text without `U+E000`–`U+F8FF`.
+    Fails: never.
+
+    The space a dropped glyph leaves behind is kept, because that is what the reviewed BPP
+    artefact does (`\uf06e Planting:` → ` Planting:`) and a diff against it must be silence.
+    """
+    return PRIVATE_USE.sub("", text)
+
+
+def drop_body_furniture(lines, labels) -> list[tuple[int, str]]:
+    """Remove a running label's repeats, keeping the block where it first appears.
+
+    In:  `lines` — `(pdf_page, text)` pairs in reading order; `labels` — the document's
+         `BODY_FURNITURE` entry, or `()`.
+    Out: the same lines, minus every label printed on a page *after* the first page that
+         carries one.
+    Fails: never — a label the text no longer prints is a smaller diff, not a corpus failure
+         (deliberately unlike `apply_review`, where a correction that stops matching means the
+         document has moved).
+
+    The unit is the **page**, not the label's first line: the paper prints four pairs on one
+    page, so a per-line "keep the first occurrence" rule would halve the block. Keeping the
+    first page rather than dropping the block entirely is what makes regeneration silent
+    against the reviewed artefact; if a reviewer would rather carry none of it, that is one
+    line here plus eight lines of `bpp.md`.
+    """
+    labels = frozenset(labels)
+    if not labels:
+        return list(lines)
+    first = next((page for page, line in lines if line.strip() in labels), None)
+    if first is None:
+        return list(lines)
+    return [
+        (page, line) for page, line in lines if line.strip() not in labels or page == first
+    ]
+
+
+def page_marker(number: int, printed: dict[int, int | None]) -> str:
+    """`<!-- page: 7 printed: 6 -->` — the locator every downstream citation uses."""
+    value = printed.get(number)
+    return f"<!-- page: {number} printed: {'none' if value is None else value} -->"
+
+
+def assemble_body(lines, printed, keep, *, after=None, with_content=None):
+    """The body lines of an artefact, with a page marker before each page that has text.
+
+    In:  `lines` — this section's `(pdf_page, text)` pairs; `printed` — pdf page → the number the
+         paper prints; `keep` — `body_filter(parser)`; `after` — the page whose marker `build()`
+         has already emitted for this section's heading; `with_content` — the pages that carry
+         text **anywhere in this document**, so a page boundary is not judged section by section
+         (default: judged from `lines` alone).
+    Out: the lines to write, and the last page emitted (so the next section does not repeat it).
+    Fails: never.
+
+    A page whose only surviving lines are **blank** contributes none of its own: the blank is
+    the previous page's trailing boundary. Measured on the BPP before this rule existed, the
+    artefact ended with `<!-- page: 13 printed: none -->` and nothing after it — a locator
+    pointing at the end of the document.
+
+    `with_content` is document-wide because it has to be: SAOSO page 31's text opens the *next*
+    section, so judging the page from one section's slice moved a blank line across the marker and
+    changed 13 lines of a reviewed 338-chunk artefact. The caller computes it once.
+    """
+    if with_content is None:
+        with_content = {number for number, line in lines if line.strip() and keep(line)}
+    out: list[str] = []
+    current_page = after
+    for number, line in lines:
+        if not keep(line):
+            continue
+        if number in with_content and number != current_page:
+            out.append(page_marker(number, printed))
+            current_page = number
+        out.append(line.rstrip())
+    return out, current_page
+
+
 def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     """The artefact text for one document."""
     descriptor = CORPUS_DOCUMENTS[doc_key]
@@ -293,9 +395,13 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
         printed = {pdf_page: number for pdf_page, number, _line in stream}
     else:
         lines, _starts, _norm = flatten(pages)
+    # The document's own running side labels, named as data (`BODY_FURNITURE`). Filtered here,
+    # before `offsets`/`locate_sections`, so the section spans and the body it slices agree.
+    lines = drop_body_furniture(lines, BODY_FURNITURE.get(doc_key, ()))
     # The parser's own furniture rule where it has one, the page's where it does not — and the
     # reason that distinction exists is in `body_filter`.
     keep = body_filter(parser)
+    content_pages = {number for number, line in lines if line.strip() and keep(line)}
     starts, norm = offsets(lines)
     spans = locate_sections(sections, lines, starts, norm)
 
@@ -311,20 +417,13 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
 
     current_page: int | None = None
 
-    def marker(number: int) -> str:
-        value = printed.get(number)
-        return (
-            f"<!-- page: {number} "
-            f"printed: {'none' if value is None else value} -->"
-        )
-
     for index, section in enumerate(sections):
         heading_line, _ = spans[index]
         body_start = spans[index][1] + 1
         body_end = spans[index + 1][0] if index + 1 < len(spans) else len(lines)
         heading_page = lines[heading_line][0]
         if heading_page != current_page:
-            out.append(marker(heading_page))
+            out.append(page_marker(heading_page, printed))
             current_page = heading_page
         if section.section_ref:
             out.append(f"<!-- ref: {section.section_ref} -->")
@@ -341,15 +440,19 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
         depth = section.heading_path.count(" > ") + 2
         out.append(f"{'#' * depth} {title}")
 
-        for number, line in lines[body_start:body_end]:
-            if not keep(line):
-                continue
-            if number != current_page:
-                out.append(marker(number))
-                current_page = number
-            out.append(line.rstrip())
+        body, current_page = assemble_body(
+            lines[body_start:body_end],
+            printed,
+            keep,
+            after=current_page,
+            with_content=content_pages,
+        )
+        out.extend(body)
 
     text = "\n".join(out) + "\n"
+    # A private-use codepoint is a glyph slot, not a character: drop it before the reviewed
+    # corrections run, so the edits and the artefact see the same text.
+    text = strip_private_use(text)
     # Collapse runs of blank lines to one: a page break between two paragraphs must not
     # invent a second boundary the chunker would treat as a separate paragraph.
     while "\n\n\n" in text:
@@ -373,6 +476,17 @@ def apply_review(text: str, edits) -> str:
 
     The match is **whitespace-tolerant**, because a correction can join lines: the `m²`
     superscript sits on its own line, so the edit names the sentence by its words.
+
+    The **replacement keeps its own line breaks** (2026-10-30). It used to be `flat()`tened, which
+    is fine for a one-line correction and wrong for the only kind that needs two edits: a footnote
+    that has to sit three printed lines below the point where the extraction glued it. Collapsed
+    onto one line it is the same words in a different paragraph, and `flat()` comparison in
+    `test_corpus_bpp` cannot tell the difference — which is how a corrupting `move` shipped.
+
+    **The multiplicity guard was dead** (fixed 2026-10-30). It read `subn(..., count=1)` and
+    checked the substituted count, which is 1 whenever the pattern matches at all — so an edit
+    whose anchor occurred twice applied silently to the first. The count is now taken before the
+    substitution, which is the only place it can be taken.
     """
     for edit in edits:
         if not edit.replacement:
@@ -380,13 +494,14 @@ def apply_review(text: str, edits) -> str:
         pattern = re.compile(
             r"\s+".join(re.escape(word) for word in flat(edit.original).split())
         )
-        text, replaced = pattern.subn(flat(edit.replacement), text, count=1)
-        if replaced != 1:
+        found = len(pattern.findall(text))
+        if found != 1:
             raise SystemExit(
-                f"the reviewed edit for PDF page {edit.page} matched {replaced} times in the "
+                f"the reviewed edit for PDF page {edit.page} matched {found} times in the "
                 f"draft: {edit.original[:60]!r}. A reprint has moved the text — re-review it "
                 "rather than deleting the edit."
             )
+        text = pattern.sub(edit.replacement, text, count=1)
     return text
 
 

@@ -1649,6 +1649,23 @@ sys.stdout.reconfigure(errors="replace")   # a swallowed glyph is cheaper than a
 
 An instrument that crashes on a character is a tool people stop running.
 
+**A second instance, 2026-10-30, and it looks different enough to be worth the three lines:**
+`scripts/build_corpus.py --doc bpp --stdout` died the same way, on U+F06E — a *private-use-area*
+bullet in the BPP's text layer, not a tick the script chose to print:
+
+```text
+UnicodeEncodeError: 'charmap' codec can't encode character '\uf06e' in position 6306
+```
+
+The diagnostic tell is that **`--file` works and only `--stdout` fails**: the writer opens the
+target with `encoding="utf-8"`, so the crash is in the *console*, not the artefact — and the
+command that failed is the one a reviewer reaches for to see a draft without overwriting reviewed
+text. Two rules: run it as `PYTHONIOENCODING=utf-8 python scripts/build_corpus.py … --stdout`, and
+remember that `--stdout` on this box also emits **CRLF** while the writer emits LF, so a diff
+against a committed artefact must be taken with `--strip-trailing-cr` or it is 583 lines of noise
+and the real 57 are invisible. A PUA codepoint is not quotable text at all; the generator now
+strips the range.
+
 ### 3.22 An inverted predicate empties the output, and every guard stays green
 
 `scripts/build_corpus.py` chose its line filter per branch. The generic branch — every document
