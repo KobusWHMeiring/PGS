@@ -20,7 +20,13 @@ from django.test import Client
 from django.urls import reverse
 
 from core.models import EscalatedQuery  # noqa: F401  (import cost is a smoke test)
-from core.services._uat_console import ACTIONS, MANUAL_ONLY, run_action
+from core.services._uat_console import (
+    ACTIONS,
+    MANUAL_ONLY,
+    links_in,
+    run_action,
+    uat_for,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -223,3 +229,105 @@ def _Report():
             ),
         )
     )
+
+
+# ------------------------------------------------- which UAT the page prepares
+#
+# The console used to name one file. It now prepares a **registered** UAT chosen with
+# `?uat=<slug>` — a choice among files the code owns, refused when it is anything else, so a
+# request still cannot name what gets rebuilt.
+
+
+def test_the_console_opens_on_the_first_registered_uat(staff):
+    client = Client()
+    client.force_login(staff)
+
+    body = client.get(URL).content.decode()
+
+    assert uat_for(None).slug in body
+    assert 'href="?uat=landscape_tables"' in body, "every registered UAT is offered"
+
+
+def test_the_console_can_prepare_each_registered_uat(staff):
+    client = Client()
+    client.force_login(staff)
+
+    body = client.get(URL + "?uat=landscape_tables").content.decode()
+
+    assert "tests/uat/landscape_tables_uat.md" in body
+    assert 'name="uat" value="landscape_tables"' in body, "the buttons carry the selection"
+    assert "product/design/uat/landscape_tables.html" in body, "the artefact it regenerates"
+
+
+def test_an_unknown_uat_slug_is_refused_before_the_page_renders(staff):
+    client = Client()
+    client.force_login(staff)
+
+    response = client.get(URL + "?uat=../../etc/passwd")
+
+    assert response.status_code == 400
+    assert b"unknown UAT" in response.content
+
+
+def test_a_post_naming_an_unknown_uat_runs_nothing(staff, monkeypatch):
+    ran: list[str] = []
+    monkeypatch.setattr(
+        "core.services._uat_console.call_command", lambda *a, **k: ran.append(a[0])
+    )
+
+    client = Client()
+    client.force_login(staff)
+    response = client.post(RUN.format(action="publish_documents"), {"uat": "nope"})
+
+    assert response.status_code == 400
+    assert ran == [], "a refused UAT must not reach a command"
+
+
+@pytest.mark.slow  # measured >=0.6s warm: spawns a process (see pytest.ini `slow`)
+def test_rebuild_rebuilds_the_uat_the_page_is_showing(staff, monkeypatch):
+    """The button used to rebuild the MVP 0 page whatever the reviewer was reading."""
+    seen: list[tuple] = []
+
+    class _Done:
+        returncode = 0
+        stdout = "wrote: product/design/uat/landscape_tables.html"
+        stderr = ""
+
+    def _fake_run(args, **kwargs):
+        seen.append(tuple(args))
+        return _Done()
+
+    monkeypatch.setattr("core.services._uat_console.subprocess.run", _fake_run)
+
+    client = Client()
+    client.force_login(staff)
+    client.post(RUN.format(action="regenerate"), {"uat": "landscape_tables"})
+
+    runner = next(args for args in seen if "scripts/uat_runner.py" in args)
+    assert "--file" in runner
+    assert "tests/uat/landscape_tables_uat.md" in runner, runner
+
+
+def test_the_page_offers_the_addresses_its_uat_tells_the_reviewer_to_open(staff):
+    client = Client()
+    client.force_login(staff)
+
+    body = client.get(URL + "?uat=landscape_tables").content.decode()
+
+    for branch in ("establishing-a-pgs-group", "saoso-organic-certification", "pgs-seals-and-their-use"):
+        assert branch in body, branch
+    assert 'href="/documents/certification-landscape/read/' in body
+
+
+def test_only_in_site_paths_are_offered_as_links():
+    """The list is read from a markdown file, so an external URL must never become a button."""
+    links = links_in(uat_for("landscape_tables"))
+
+    assert links, "the UAT names its addresses"
+    assert all(link.startswith("/") and not link.startswith("//") for link in links)
+
+
+def test_uat_for_is_a_registry_and_raises_outside_it():
+    assert uat_for(None).slug == uat_for("").slug
+    with pytest.raises(KeyError):
+        uat_for("mvp9")

@@ -42,6 +42,36 @@
 
 <main class="uat__wrap">
 
+  <section>
+    <h2>Preparing</h2>
+    <p class="uat__note">
+      One page, one instance, one reviewer's list. Choose the UAT you are preparing: the
+      buttons below are the same four questions for every one of them, because every
+      reviewer's setup is.
+    </p>
+    <ul class="uat__uats">
+      {% for item in uats %}
+        <li class="uat__uat{% if item.slug == uat.slug %} is-current{% endif %}">
+          <a href="?uat={{ item.slug }}"{% if item.slug == uat.slug %} aria-current="page"{% endif %}>
+            {{ item.label }}
+          </a>
+          <span class="uat__uat-note">Prepares {{ item.prepares }}.</span>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if links %}
+      <p class="uat__note">
+        Open while you judge — these are the addresses the UAT itself tells the reviewer to
+        open, read from <code>{{ uat.path }}</code>:
+      </p>
+      <ul class="uat__links">
+        {% for link in links %}
+          <li><a href="{{ link }}"><code>{{ link }}</code></a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
   {% if outcome %}
     <section class="callout {% if outcome.ok %}callout--ok{% else %}callout--bad{% endif %}">
       <h2 class="callout__title">
@@ -98,15 +128,16 @@
     <ul class="uat__actions">
       {% for action in actions %}
         <li class="uat__action">
-          <form method="post" action="{% url 'core:uat_run' action.key %}">
+          <form method="post" action="{% url 'core:uat_run' action.item.key %}">
             {% csrf_token %}
+            <input type="hidden" name="uat" value="{{ uat.slug }}">
             <button type="submit" class="btn btn--forest btn--upper">
-              {{ action.label }}{% if action.writes %} · writes{% endif %}
+              {{ action.item.label }}{% if action.item.writes %} · writes{% endif %}
             </button>
           </form>
           <div class="uat__action-body">
             <code class="uat__command">{{ action.command }}</code>
-            <p>{{ action.description }}</p>
+            <p>{{ action.item.description }}</p>
           </div>
         </li>
       {% endfor %}
@@ -118,11 +149,11 @@
     <p class="uat__note">
       These are the commands a button must not press. The reason is on each one.
     </p>
-    {% for item in manual_only %}
+    {% for row in manual_only %}
       <div class="uat__manual">
-        <h3>{{ item.label }}</h3>
-        <code class="uat__command">{{ item.command }}</code>
-        <p>{{ item.reason }}</p>
+        <h3>{{ row.item.label }}</h3>
+        <code class="uat__command">{{ row.command }}</code>
+        <p>{{ row.item.reason }}</p>
       </div>
     {% endfor %}
   </section>
@@ -130,10 +161,9 @@
   <section>
     <h2>Then judge it</h2>
     <p class="uat__note">
-      Press <b>Rebuild the UAT page</b>, then open
-      <code>product/design/uat/mvp0_standards_and_public_site.html</code> from disk. Its
-      header records the commit, the working-tree state and the database above, so a
-      signature can be traced to what you were looking at.
+      Press <b>Rebuild the UAT page</b>, then open <code>{{ artefact }}</code> from disk. Its
+      header records the commit, the working-tree state and the database above, so a signature
+      can be traced to what you were looking at.
     </p>
   </section>
 

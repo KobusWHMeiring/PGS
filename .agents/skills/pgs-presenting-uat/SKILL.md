@@ -17,7 +17,7 @@ It is **three moves**, and they are separate on purpose:
 
 | Move | Where | What it produces |
 |---|---|---|
-| **Prepare** | the console at `/uat/` (staff-only), or `manage.py uat_seed --check` in a shell | observed vs expected, and the setup commands **as buttons** |
+| **Prepare** | the console at `/uat/?uat=<slug>` (staff-only), or `manage.py uat_seed --check` in a shell | observed vs expected, the setup commands **as buttons**, and the addresses the UAT says to open |
 | **Present** | `scripts/uat_runner.py`, or the console's *Rebuild the UAT page* | `product/design/uat/<slug>.html` |
 | **Close** | `scripts/uat_signoff.py` | `**Result:**` lines + the sign-off table, in the UAT file |
 
@@ -60,9 +60,14 @@ to the file.
 
 ## The sequence
 
-With the app running, open **`/uat/`** (staff login) and press the buttons — that is the
-path for anyone who does not want a terminal. The commands below are what the buttons run,
-and the only way to do it on a machine where the console is not reachable.
+With the app running, open **`/uat/?uat=<slug>`** (staff login) and press the buttons — that
+is the path for anyone who does not want a terminal. The console prepares **one registered
+UAT at a time**: the slug is `tests/uat/<slug>.md`'s, and a new UAT is one entry in
+`UATS` (`core/services/_uat_console.py`) — a registry, not a path from the request, so an
+unknown slug is a 400 and never a rebuild of some other file.
+
+The commands below are what the buttons run, and the only way to do it on a machine where
+the console is not reachable.
 
 ```bash
 # 1. Prepare, and keep the output — the reviewer sees what the instance looked like.

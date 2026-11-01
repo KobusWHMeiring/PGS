@@ -36,8 +36,81 @@ from django.db import connection
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-#: The UAT file the console rebuilds. One file in MVP 0; a tuple when 1a lands.
-UAT_FILE = "tests/uat/mvp0_standards_and_public_site_uat.md"
+@dataclass(frozen=True)
+class UatFileRef:
+    """One UAT this console can prepare.
+
+    A **registry, not a path from the request.** The page offers these; a slug outside it is a
+    400 before anything runs, which is the same rule the action keys follow and for the same
+    reason: a request must never be able to name a file for a rebuild.
+    """
+
+    slug: str
+    path: str
+    label: str
+    prepares: str
+
+
+#: Every UAT the console knows. Adding a `tests/uat/<slug>.md` is this one entry — the buttons
+#: themselves are generic (check, seed, publish, rebuild), because every reviewer's setup is the
+#: same four questions about the same instance.
+UATS: tuple[UatFileRef, ...] = (
+    UatFileRef(
+        slug="mvp0_standards_and_public_site",
+        path="tests/uat/mvp0_standards_and_public_site_uat.md",
+        label="MVP 0 — the standards reader and the public site",
+        prepares="the reader, the site's pages and the grounded answers those pages cite",
+    ),
+    UatFileRef(
+        slug="landscape_tables",
+        path="tests/uat/landscape_tables_uat.md",
+        label="The certification landscape's tables — cards, a fork, a spreadsheet",
+        prepares="the landscape reader's three branches; no re-ingest is needed for it",
+    ),
+)
+
+
+def uat_files() -> tuple[UatFileRef, ...]:
+    """Every UAT in the registry, whether or not its file exists on this checkout."""
+    return UATS
+
+
+def uat_for(slug: str | None) -> UatFileRef:
+    """The UAT a request names, or the first one when it names none.
+
+    Fails: `KeyError` for a slug outside the registry — the view turns that into a 400, so a
+        stale page or a hand-made request cannot name an arbitrary file to rebuild.
+    """
+    if not slug:
+        return UATS[0]
+    for candidate in UATS:
+        if candidate.slug == slug:
+            return candidate
+    raise KeyError(slug)
+
+
+def links_in(uat: UatFileRef) -> tuple[str, ...]:
+    """The same-instance addresses a UAT's setup tells the reviewer to open.
+
+    Read from the file, not restated here: the reviewer's "open these three branches" list is
+    the UAT author's, and a second copy would drift. Only absolute in-site paths are returned —
+    a `#fragment`, a relative path or an `http(s)://` URL is not a link this console offers.
+    """
+    path = REPO_ROOT / uat.path
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    found: list[str] = []
+    for token in text.replace("`", " ").split():
+        address = token.strip("()[]<>,.")
+        if not address.startswith("/") or address.startswith("//"):
+            continue
+        if "://" in address or not address[1:2].isalpha():
+            continue
+        if address not in found:
+            found.append(address)
+    return tuple(found)
 
 
 @dataclass(frozen=True)
@@ -69,6 +142,8 @@ class ActionOutcome:
     ok: bool
     output: str
     duration_ms: int
+    #: The UAT the action ran for — the page keeps showing that one afterwards.
+    uat: str = ""
 
 
 #: Buttons. Each runs a command that is idempotent or read-only.
@@ -100,10 +175,11 @@ ACTIONS: tuple[UatAction, ...] = (
     UatAction(
         key="regenerate",
         label="Rebuild the UAT page",
-        command=f"python scripts/uat_runner.py --file {UAT_FILE}",
+        command="python scripts/uat_runner.py --file {uat}",
         description=(
-            "Regenerates product/design/uat/mvp0_standards_and_public_site.html with this "
-            "instance's commit, database name and preflight."
+            "Regenerates the artefact for the UAT selected above, with this instance's commit, "
+            "database name and preflight — so the page a reviewer judges is the page this "
+            "instance produced."
         ),
         writes=True,
     ),
@@ -127,7 +203,7 @@ MANUAL_ONLY: tuple[ManualCommand, ...] = (
         label="Apply a sign-off export",
         command=(
             "python scripts/uat_signoff.py "
-            f"--file {UAT_FILE} --from <the export>.json --dry-run"
+            "--file {uat} --from <the export>.json --dry-run"
         ),
         reason="It needs the JSON the reviewer downloaded, which lives on their machine.",
     ),
@@ -189,17 +265,17 @@ def _call(command: str) -> tuple[bool, str]:
     return True, buffer.getvalue().strip() or "(the command produced no output)"
 
 
-def _regenerate() -> tuple[bool, str]:
-    """Rebuild the artefact by running the runner exactly as an operator would.
+def _regenerate(uat: UatFileRef) -> tuple[bool, str]:
+    """Rebuild the *selected* UAT's artefact by running the runner exactly as an operator would.
 
     A **subprocess**, not an import: `scripts/` is developer tooling and product code must
     not depend on it, and running the real command means this button cannot drift from the
     CLI. The preflight is written to a temp file and passed in, so the artefact carries the
     values observed at the moment it was built.
     """
-    uat_path = REPO_ROOT / UAT_FILE
+    uat_path = REPO_ROOT / uat.path
     if not uat_path.exists():
-        return False, f"{UAT_FILE} does not exist"
+        return False, f"{uat.path} does not exist"
 
     preflight_text = render_preflight(preflight())
     handle = tempfile.NamedTemporaryFile(
@@ -213,7 +289,7 @@ def _regenerate() -> tuple[bool, str]:
                 sys.executable,
                 "scripts/uat_runner.py",
                 "--file",
-                UAT_FILE,
+                uat.path,
                 "--preflight",
                 handle.name,
                 "--database",
@@ -235,10 +311,11 @@ def _regenerate() -> tuple[bool, str]:
     ).strip() or "(the runner produced no output)"
 
 
-def run_action(key: str) -> ActionOutcome:
-    """Run one whitelisted action and report what it did.
+def run_action(key: str, uat: UatFileRef | None = None) -> ActionOutcome:
+    """Run one whitelisted action, for one registered UAT, and report what it did.
 
-    In: `key` — one of `ACTIONS`' keys. Anything else is refused.
+    In: `key` — one of `ACTIONS`' keys, refused otherwise; `uat` — the UAT selected on the
+         console, defaulting to the first.
     Out: `ActionOutcome` carrying the command's own output.
     Side Effects: per action; see `ACTIONS` and `MANUAL_ONLY`.
     Fails: `KeyError` for a key outside the whitelist. The view turns that into a 400,
@@ -247,18 +324,20 @@ def run_action(key: str) -> ActionOutcome:
     action = next((candidate for candidate in ACTIONS if candidate.key == key), None)
     if action is None:
         raise KeyError(key)
+    selected = uat or uat_for(None)
 
     started = time.monotonic()
     if key == "check":
         ok, output = True, render_preflight(preflight())
     elif key == "regenerate":
-        ok, output = _regenerate()
+        ok, output = _regenerate(selected)
     else:
         ok, output = _call(key)
 
     return ActionOutcome(
         key=action.key,
         label=action.label,
+        uat=selected.slug,
         ok=ok,
         output=output,
         duration_ms=int((time.monotonic() - started) * 1000),

@@ -260,3 +260,60 @@
     width: 100%;
   }
 }
+
+/* --- Choosing which UAT this page prepares -------------------------------
+   One console serves every reviewer's list, so the page opens with the choice and the
+   addresses the selected UAT says to open. A link, not a form: selecting a UAT writes
+   nothing, and the buttons below it are the ones that do. */
+.uat__uats,
+.uat__links {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.9rem 0 1.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.uat__uat {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+}
+
+.uat__uat.is-current {
+  border-color: var(--brand-ochre);
+  background-color: var(--brand-ochreLight);
+}
+
+.uat__uat a {
+  display: inline-block;
+  min-height: 24px;
+  color: var(--brand-forest);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.uat__uat a:focus-visible,
+.uat__links a:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.uat__uat-note {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+}
+
+.uat__links li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.uat__links a {
+  color: var(--brand-forest);
+}

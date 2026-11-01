@@ -31,6 +31,14 @@ guard.
 
 ## Pre-test setup
 
+**The setup is buttons now.** Open **`/uat/?uat=landscape_tables`** on the instance you are judging
+(staff login), press *Seed the deployment*, *Publish the documents*, *Re-check the instance*, then
+*Rebuild the UAT page*. The page shows each preflight check with its observed and expected value,
+the three reader addresses below as links, and the exact command behind every button. Nothing there
+decides a verdict — that stays yours.
+
+The commands, if you prefer a terminal or the console is unreachable:
+
 1. `python manage.py seed_deployment && python manage.py publish_documents`, then
    `python manage.py runserver`.
 2. **No re-ingest is needed for this slice.** The artefact gained four header fields
