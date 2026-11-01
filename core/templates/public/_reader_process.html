@@ -1,0 +1,121 @@
+{% comment %}
+  A printed process, as cards (D77 E + C3, `LANDSCAPE_TABLES_PRD` §12f.2).
+
+  Used only when the reviewed `<!-- table -->` block declares `layout: process`. The data is the
+  artefact's: `ReaderCard` carries the printed label, the reviewer's title, the step body and one
+  facet per printed column; `ReaderFeeBox` carries a Fee cell and the cards it is printed under.
+  Nothing here infers a step, a fork or a fee amount.
+
+  Three rules the markup carries, and why:
+
+  - **The step body leads.** Resources and Seals fold (`<details>`, closed); *Use of seals* stays
+    visible, because it is the rule a reader checks. A folded facet with no text is not drawn at
+    all — a closed control with nothing inside is a dead control.
+  - **The fork is two cards in the last column.** Path A is a *pointer* to the step the paper's
+    direct route branches from (§12f.5): it repeats no fee and states no outcome, because the
+    only words it may add are UI ones ("Path A", "See …"). Path B, C … are the paper's own rows.
+  - **A fee is a box under the card(s) it belongs to, and it is the whole cell** (D72.2). The
+    merged cell on `ESTABLISHING A PGS GROUP` is one printed box across Steps 1–2; the span comes
+    from the artefact's recorded empty cells, never from the legend's prose.
+{% endcomment %}
+<div class="reader__process" style="--card-columns: {{ grid.card_columns }}">
+
+  <div class="reader__cards">
+    {% for card in grid.steps %}
+      <article class="reader__card" id="{{ card.anchor }}">
+        <h3 class="reader__card-head">
+          <span class="reader__card-step">{{ card.label }}</span>
+          {% if card.title %}<span class="reader__card-title">{{ card.title }}</span>{% endif %}
+          {% if card.show_page and card.page %}<span class="reader__card-page">printed p. {{ card.page }}</span>{% endif %}
+        </h3>
+        {% if card.body %}
+          <div class="reader__card-body">
+            {% include "public/_passage_blocks.html" with blocks=card.body %}
+          </div>
+        {% endif %}
+        {% for facet in card.facets %}
+          {% if facet.blocks %}
+            {% if facet.folded %}
+              <details class="reader__facet">
+                <summary class="reader__facet-summary">{{ facet.label }}</summary>
+                <div class="reader__facet-body">
+                  {% include "public/_passage_blocks.html" with blocks=facet.blocks %}
+                </div>
+              </details>
+            {% else %}
+              <div class="reader__facet">
+                <h4 class="reader__facet-label">{{ facet.label }}</h4>
+                {% include "public/_passage_blocks.html" with blocks=facet.blocks %}
+              </div>
+            {% endif %}
+          {% elif not facet.folded %}
+            <div class="reader__facet">
+              <h4 class="reader__facet-label">{{ facet.label }}</h4>
+              <p class="reader__facet-silent">The paper is silent on this step.</p>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </article>
+    {% endfor %}
+
+    {% if grid.paths %}
+      <div class="reader__split" role="group" aria-label="Alternative path">
+        <p class="reader__split-head">Alternative path</p>
+        <article class="reader__card reader__card--pointer">
+          <h3 class="reader__card-head"><span class="reader__route">Path A</span></h3>
+          <p class="reader__pointer">
+            <a href="#{{ grid.pointer_anchor }}">See {{ grid.pointer_label }} &rarr;</a>
+          </p>
+        </article>
+        {% for card in grid.paths %}
+          <div class="reader__or" aria-hidden="true"><span>or</span></div>
+          <article class="reader__card reader__card--path" id="{{ card.anchor }}">
+            <h3 class="reader__card-head">
+              <span class="reader__route">Path {{ card.route }}</span>
+              {% if card.title %}<span class="reader__card-title">{{ card.title }}</span>{% endif %}
+              {% if card.show_page and card.page %}<span class="reader__card-page">printed p. {{ card.page }}</span>{% endif %}
+            </h3>
+            {% if card.body %}
+              <div class="reader__card-body">
+                {% include "public/_passage_blocks.html" with blocks=card.body %}
+              </div>
+            {% endif %}
+            {% for facet in card.facets %}
+              {% if facet.blocks %}
+                {% if facet.folded %}
+                  <details class="reader__facet">
+                    <summary class="reader__facet-summary">{{ facet.label }}</summary>
+                    <div class="reader__facet-body">
+                      {% include "public/_passage_blocks.html" with blocks=facet.blocks %}
+                    </div>
+                  </details>
+                {% else %}
+                  <div class="reader__facet">
+                    <h4 class="reader__facet-label">{{ facet.label }}</h4>
+                    {% include "public/_passage_blocks.html" with blocks=facet.blocks %}
+                  </div>
+                {% endif %}
+              {% elif not facet.folded %}
+                <div class="reader__facet">
+                  <h4 class="reader__facet-label">{{ facet.label }}</h4>
+                  <p class="reader__facet-silent">The paper is silent on this route.</p>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </article>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if grid.fee_boxes %}
+    <div class="reader__fees">
+      {% for box in grid.fee_boxes %}
+        <div class="reader__fee" style="--fee-start: {{ box.start|add:1 }}; --fee-span: {{ box.span }}">
+          <h4 class="reader__fee-label">{{ box.label }}</h4>
+          {% include "public/_passage_blocks.html" with blocks=box.blocks %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>

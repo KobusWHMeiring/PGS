@@ -1,0 +1,741 @@
+/*
+ * reader-tables.css — the two shapes a reviewed table takes in the reader (D72.3, D76, D77).
+ *
+ * Split out of `reader.css` when the process cards pushed that file over §II's 30 KB cap. The
+ * seam is the one the design already has: `reader.css` is the reader (panes, tree, passages,
+ * provenance); this is the **printed table**, which the reader draws in one of two shapes.
+ *
+ *   layout: grid     the seals comparison — a spreadsheet with a frozen header and first column,
+ *                    one type size, and column widths the reader can drag (reader-grid.js).
+ *   layout: process  establishing a group and SAOSO certification — a card per step, its facets
+ *                    folded where they are reference, its fee in a box under the cards it
+ *                    qualifies, and (where the paper forks) the alternative paths stacked in one
+ *                    column.
+ *
+ * Both shapes read the artefact's reviewed rows. A table that declares neither gets `grid`,
+ * which is what every table was before D77.
+ */
+
+/* The caption and the claim, once, above the rows. */
+.reader__table-bar {
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.reader__table-caption {
+  margin: 0;
+  max-width: var(--reader-measure);
+  color: var(--brand-forestDark);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reader__table-join {
+  margin: 0 0.4rem;
+  color: var(--brand-muted);
+}
+
+.reader__table-legend {
+  margin: 0.45rem 0 0;
+  max-width: var(--reader-measure);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
+}
+
+/* -------------------------------------------------------------------------------------------------
+   The printed grid — the landscape's five-column tables (D72.3, D76).
+
+   A table is reference, not prose, so it is the one place `.passage__text`'s 38 rem measure gives
+   way. It uses the passages pane's full width and wraps its cells; below 900 px the same markup
+   restacks into labelled blocks, because a horizontal gesture is the phone failure WCAG 1.4.10
+   names. No JavaScript in either shape.
+
+   The first column is the row's identifier (`Step 1`), so it is a `<th scope="row">` and it is
+   sticky: as the fee scrolls in, the step it belongs to stays on screen. The scroll wrapper is
+   focusable in the template, which is what lets a keyboard user reach the columns a pointer user
+   drags to.
+------------------------------------------------------------------------------------------------- */
+.reader__grid-legend {
+  margin: 0 0 0.9rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
+}
+
+.reader__grid-wrap {
+  margin: 0 0 1.6rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+  scrollbar-width: thin;
+}
+
+.reader__grid-wrap:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+}
+
+.reader__grid {
+  width: 100%;
+  /* Below this the columns stop being readable, so the wrapper scrolls instead. */
+  min-width: 46rem;
+  border-collapse: collapse;
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.reader__grid thead th {
+  background-color: var(--brand-creamWarm);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  vertical-align: bottom;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 2px solid var(--brand-sand);
+}
+
+.reader__grid td,
+.reader__grid tbody th {
+  padding: 0.7rem 0.75rem;
+  vertical-align: top;
+  text-align: left;
+  border-bottom: 1px solid var(--brand-sand);
+}
+
+.reader__grid tbody tr:last-child td,
+.reader__grid tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+/* The identifier column: pinned while the fee column scrolls into view. */
+.reader__grid tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 10rem;
+  background-color: var(--brand-cream);
+  box-shadow: 1px 0 0 var(--brand-sand);
+  font-weight: 400;
+}
+
+/* `Step 1` is the first paragraph of its cell; the description below it is body text. */
+.reader__grid tbody th > p:first-child {
+  font-weight: 700;
+}
+
+/* A cell is its own measure: undo the prose measure and the block sizes the passage renderer sets. */
+.reader__grid .passage__text,
+.reader__grid .passage__heading,
+.reader__grid .passage__term,
+.reader__grid .passage__qualifier,
+.reader__grid .passage__row,
+.reader__grid .passage__note {
+  max-width: none;
+  font-size: inherit;
+}
+
+.reader__grid .passage__heading,
+.reader__grid .passage__term {
+  margin: 0 0 0.45rem;
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+.reader__grid .passage__list {
+  margin: 0.35rem 0 0.35rem 1.1rem;
+}
+
+.reader__grid td.is-empty {
+  color: var(--brand-muted);
+}
+
+/* The IFOAM URL is longer than its column; break it rather than widen the grid. */
+.reader__grid a {
+  overflow-wrap: anywhere;
+}
+
+.reader__grid-page {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--brand-muted);
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-micro);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 899px) {
+  /* The phone: the same markup restacked, each cell carrying its column name. No horizontal
+     gesture — the only shape that satisfies WCAG 1.4.10 at 320 px. The header row is visually
+     hidden (not `display:none`: keeping it in the tree is what a screen reader reads), and each
+     cell's `data-label` is the name a sighted reader sees. */
+  .reader__grid-wrap {
+    overflow-x: visible;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+  }
+
+  .reader__grid {
+    min-width: 0;
+  }
+
+  .reader__grid thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .reader__grid,
+  .reader__grid tbody,
+  .reader__grid tr,
+  .reader__grid td,
+  .reader__grid tbody th {
+    display: block;
+    width: auto;
+  }
+
+  .reader__grid tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--brand-sand);
+    border-radius: var(--radius-sm);
+    background-color: var(--brand-cream);
+  }
+
+  .reader__grid tbody th {
+    position: static;
+    box-shadow: none;
+    border-bottom: 1px solid var(--brand-sand);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    background-color: var(--brand-creamWarm);
+  }
+
+  .reader__grid td {
+    padding: 0.55rem 0.85rem;
+    border-bottom: 0;
+  }
+
+  .reader__grid td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--brand-muted);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* An empty cell is the paper's silence, and the legend says so; on a phone it does not need a
+     labelled field of its own. */
+  .reader__grid td.is-empty {
+    display: none;
+  }
+}
+
+.passage > :first-child {
+  margin-top: 0;
+}
+
+/* A printed list. The marker (`a.`, `1.`, `i.`) is the browser's list marker, never text added to
+   the document; the hanging indent is what makes a wrapped item read as one item. */
+.passage__list {
+  margin: 0.9rem 0 0.9rem 1.6rem;
+  padding-left: 0.35rem;
+}
+
+.passage__list .passage__list {
+  margin: 0.45rem 0 0.45rem 1.2rem;
+}
+
+/* The printed marker family. The corpus prints a bare `a`; the period a reader sees here is the
+   browser's list marker, which is why it is presentation and not text (knowledge/passages.py). */
+.passage__list--lower-alpha {
+  list-style-type: lower-alpha;
+}
+
+.passage__list--upper-alpha {
+  list-style-type: upper-alpha;
+}
+
+.passage__list--lower-roman {
+  list-style-type: lower-roman;
+}
+
+.passage__list--upper-roman {
+  list-style-type: upper-roman;
+}
+
+.passage__list--decimal {
+  list-style-type: decimal;
+}
+
+.passage__list--disc {
+  list-style-type: disc;
+}
+
+.passage__item {
+  margin: 0.4rem 0;
+  padding-left: 0.15rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-charcoal);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.passage__item::marker {
+  color: var(--brand-ochreInk);
+  font-weight: 700;
+}
+
+/* --- Missing text, provenance -------------------------------------------- */
+
+.reader__missing {
+  max-width: var(--container-narrow);
+  padding: 1.5rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-creamWarm);
+}
+
+.reader__missing h2 {
+  margin-top: 0;
+  color: var(--brand-forestDark);
+  font-size: var(--text-xl);
+}
+
+.reader__missing p {
+  color: var(--brand-charcoal);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.reader__provenance {
+  max-width: var(--reader-measure);
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--brand-sand);
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+/* A reference the document makes to itself — a section, an appendix, a defined word. It opens in a
+   new tab so the reader keeps the clause they were reading (D70.3), and it must read as a link in
+   the text rather than as a control: an offset hairline underline, no colour change beyond the
+   darker forest on hover, and no icon. The announcement is the visually-hidden suffix in the
+   template, which is one mechanism rather than three. */
+.passage__ref {
+  color: var(--brand-forest);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--brand-muted);
+  text-underline-offset: 0.2em;
+}
+
+.passage__ref:hover {
+  color: var(--brand-forestDark);
+  text-decoration-color: var(--brand-forestDark);
+}
+
+.passage__ref:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* A reference with no target but something to say: bare `Appendix 4` is printed in two tables.
+   Dotted rather than solid, so it never looks like a link that failed. */
+.passage__ref-note {
+  border-bottom: 1px dotted var(--brand-muted);
+  cursor: help;
+}
+
+/* --- The spreadsheet: a grid the reader can size (D77) --------------------
+   The seals comparison is a *comparison*, so it is a spreadsheet rather than a flow: frozen
+   header and first column, one type size for every column, and column widths the reader sets.
+
+   Everything here is an **enhancement**. `reader-grid.js` adds `data-resizable` and the tools
+   once it has measured the columns the browser laid out; before that the table is exactly the
+   grid above, which is what a reader with no JavaScript gets. Sizing is therefore a progressive
+   layer, never a precondition — a broken script must not break the table.
+------------------------------------------------------------------------------------------------- */
+.reader__grid thead th {
+  /* The resizer is positioned against its header cell. */
+  position: relative;
+}
+
+/* `table-layout: fixed` only once a column has a width: with `auto` the browser's own sizing is
+   better than any default this file could guess. */
+.reader__grid[data-resizable] {
+  table-layout: fixed;
+}
+
+.reader__grid-head {
+  display: block;
+  /* The resize handle sits at the right edge; keep the label off it. */
+  padding-right: 0.75rem;
+}
+
+.reader__grid-resizer {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+  z-index: 2;
+}
+
+.reader__grid-resizer::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 50%;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--brand-sand);
+}
+
+.reader__grid-resizer:hover::after,
+.reader__grid-resizer:focus-visible::after {
+  background-color: var(--brand-ochre);
+}
+
+.reader__grid-resizer:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 1px;
+}
+
+/* Compact is one step down, not a second design: the columns stay one size and the padding
+   tightens, so more of the comparison fits without changing its shape. */
+.reader__grid[data-compact] {
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.reader__grid[data-compact] td,
+.reader__grid[data-compact] tbody th {
+  padding: 0.45rem 0.55rem;
+}
+
+.reader__grid-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+}
+
+.reader__grid-tool {
+  min-height: 44px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+  color: var(--brand-charcoal);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.reader__grid-tool:hover {
+  border-color: var(--brand-moss);
+  color: var(--brand-forestDark);
+}
+
+.reader__grid-tool[aria-pressed="true"] {
+  background-color: var(--brand-ochreLight);
+  border-color: var(--brand-ochre);
+  color: var(--brand-forestDeep);
+}
+
+.reader__grid-tool:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+}
+
+/* --- The process: one card per step (D77 C3) ------------------------------
+   `ESTABLISHING A PGS GROUP` and `SAOSO ORGANIC CERTIFICATION` are *processes*, not records: the
+   reader is being told what happens, in order, and the paper's five columns are one step with four
+   facets hanging off it. So the step body leads, the facets follow, and the fee is a box under the
+   card(s) it is printed against.
+
+   Three columns above 900 px — the step, the next step, and (for SAOSO) the fork — and one column
+   below it, in printed order, so the split stacks after the step it branches from. No JavaScript,
+   no horizontal gesture.
+------------------------------------------------------------------------------------------------- */
+.reader__process {
+  margin: 0 0 1.8rem;
+}
+
+.reader__cards {
+  display: grid;
+  grid-template-columns: repeat(var(--card-columns, 3), minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.reader__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem 1.05rem 1.15rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-cream);
+}
+
+.reader__card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  color: var(--brand-forestDark);
+}
+
+.reader__card-step {
+  color: var(--brand-ochreInk);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reader__card-title {
+  font-weight: 700;
+}
+
+.reader__card-page {
+  margin-left: auto;
+  color: var(--brand-muted);
+  font-family: ui-monospace, "SFMono-Regular", "Cascadia Mono", monospace;
+  font-size: var(--text-micro);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+/* A card is its own measure: undo the prose measure and the block sizes the passage renderer
+   sets, the way a grid cell does. */
+.reader__card .passage__text,
+.reader__card .passage__heading,
+.reader__card .passage__term,
+.reader__card .passage__qualifier,
+.reader__card .passage__row,
+.reader__card .passage__note {
+  max-width: none;
+  font-size: var(--text-sm);
+}
+
+.reader__card .passage__text {
+  line-height: var(--leading-body);
+}
+
+.reader__facet {
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--brand-sand);
+}
+
+.reader__facet-label,
+.reader__facet-summary {
+  margin: 0 0 0.3rem;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Folding is a touch control on a phone, so the summary is a 44 px target, and the affordance is
+   drawn rather than left to the browser's marker — one mechanism, not two. */
+.reader__facet-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.reader__facet-summary::-webkit-details-marker {
+  display: none;
+}
+
+.reader__facet-summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--brand-ochreInk);
+}
+
+.reader__facet[open] > .reader__facet-summary::after {
+  content: "\2212"; /* a minus sign, not a hyphen */
+}
+
+.reader__facet-summary:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.reader__facet-silent {
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+/* The fork: both routes visible at once, in the last column, one above the other. Dashed borders
+   and the `or` make it a choice rather than two more steps. */
+.reader__split {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  /* Placed in the last card column: the steps fill the columns before it. */
+  grid-column: var(--card-columns, 3);
+}
+
+.reader__split-head {
+  margin: 0;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reader__card--path,
+.reader__card--pointer {
+  border-style: dashed;
+}
+
+.reader__route {
+  color: var(--brand-ochreInk);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reader__pointer {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.reader__pointer a {
+  color: var(--brand-forest);
+  text-underline-offset: 0.2em;
+}
+
+.reader__pointer a:hover {
+  color: var(--brand-forestDark);
+}
+
+.reader__pointer a:focus-visible {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.reader__or {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reader__or::before,
+.reader__or::after {
+  content: "";
+  flex: 1;
+  border-top: 1px dashed var(--brand-sand);
+}
+
+/* A fee box sits under the card(s) it is printed against, and it holds the whole cell, never an
+   amount on its own (D72.2). `--fee-start`/`--fee-span` come from the template, and the template
+   reads them off the reviewed empty cells: the joining fee covers Steps 1-2 because the paper
+   leaves Step 2's Fee cell empty, not because this file knows what a joining fee is. */
+.reader__fees {
+  display: grid;
+  grid-template-columns: repeat(var(--card-columns, 3), minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+
+.reader__fee {
+  grid-column: var(--fee-start, auto) / span var(--fee-span, 1);
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--brand-ochre);
+  border-radius: var(--radius-sm);
+  background-color: var(--brand-creamWarm);
+}
+
+.reader__fee-label {
+  margin: 0 0 0.35rem;
+  color: var(--brand-ochreInk);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reader__fee .passage__text,
+.reader__fee .passage__term,
+.reader__fee .passage__heading {
+  max-width: none;
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 899px) {
+  /* The phone: the cards stack in printed order, so the fork reads after the step it branches
+     from, and every fee box is its own row. An offset box would need a horizontal gesture to
+     read, which is the failure WCAG 1.4.10 names. */
+  .reader__cards,
+  .reader__fees {
+    grid-template-columns: 1fr;
+  }
+
+  .reader__split {
+    grid-column: auto;
+  }
+
+  .reader__fee {
+    grid-column: auto;
+  }
+
+  /* A phone has no pointer to drag with and the same markup restacks, so the resizer is not shown
+     where it cannot do its job. */
+  .reader__grid-resizer {
+    display: none;
+  }
+}

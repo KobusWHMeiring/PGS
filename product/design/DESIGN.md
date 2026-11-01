@@ -357,7 +357,7 @@ summaries are Mulish `--text-xs` in `--brand-muted`. Empty columns are not rende
 
 ---
 
-### 7.13 The reader's printed grid — `/documents/<code>/read/` — **added 2026-10-31**
+### 7.13 The reader's printed table — `/documents/<code>/read/` — **added 2026-10-31, two shapes 2026-11-01**
 
 The certification landscape prints its data as five-column tables. D72.3 chose the printed grid
 over a definition list; **D76 is how it fits** (`product/design/d76_reader_table_fit.html`,
@@ -396,6 +396,61 @@ cell is `<th scope="row">` (`Step 1`) and is **sticky**; the other four are `<td
 - **The fallback is the plain page.** If the corpus disagrees with the artefact (a failed
   re-ingest), `align_artefact_grid` returns `None` and the reader renders the passages it has —
   unlabelled rows beat mislabelled ones, the same rule `structure_for` follows.
+
+#### 7.13a Two shapes, and the table chooses — **D77, 2026-11-01**
+
+The content settled what one renderer could not: **two of the landscape's three tables are
+processes** (*establishing a PGS group*, *SAOSO organic certification*), and one is a comparison
+(the seals). So the reviewed `<!-- table -->` block declares `layout: process | grid`, and
+`reader-tables.css` has a shape for each. Design record: `d76d_c3_and_the_split.html`.
+
+**`layout: process` — a card per step.** One card holds the step body, then its facets in printed
+column order, and the **fee is a box under the card(s) it belongs to**.
+
+- The card head is `Step N · <reviewer title>` plus the printed page. The titles (`Get together`,
+  `Agree and establish`, `Visit and certify`) are **reviewed data**, not inference; without them the
+  head is the printed label alone.
+- **Resources and Seals fold** (`<details>`, closed), because the step body leads. *Use of seals*
+  stays visible: it is the rule a reader checks. A folded facet with no text is not drawn — a closed
+  control with nothing inside is a dead control. `<summary>` is a **44 px** target.
+- **The step body does not repeat its own label.** The paper prints `Step 1` as the cell's first
+  line and the reviewer copies it into the row label, so the heading prints it and the body drops
+  it. A path card's heading is `Path B`, and its label is the opening of its own sentence, so it
+  keeps it.
+- **The fork is two cards in the last column.** Path A is a **pointer** to the step it branches from
+  (`See Step 2 →`) — it repeats no fee and states no outcome, because the only words it may add are
+  UI ones. Path B is the paper's own row, dashed, with an `or` between them. `branch:` is reviewed
+  data; a missing `Step` prefix is a hint, never a rule.
+- **A fee is a box, and it is the whole cell** (D72.2). The merged joining fee on *establishing*
+  covers Steps 1–2 because the paper prints one box across them and leaves Step 2's Fee cell empty —
+  read from the **recorded empty cells**, not from the legend's prose. Box widths are
+  `--fee-start`/`--fee-span` custom properties set by the template; no hex, no new classes.
+- Below 900 px the cards stack in printed order, so the fork reads **after** the step it branches
+  from. No JavaScript at all.
+
+**`layout: grid` — the spreadsheet.** The seals comparison is the one table a reader compares rather
+than reads, so it gets the controls:
+
+- A real `<table>` at the passages pane's full width, `<colgroup>` for the columns, frozen header
+  and frozen first column, **one type size in every column** (14 px; 12 px compact — `--text-sm` and
+  `--text-xs`, because the type steps are named), header 11 px uppercase. The first cell's label is
+  **bold, never larger**: the 16 px serif step heading the owner saw in the stacked phone view is
+  the inequality this rule exists to prevent.
+- A resizer on every boundary **between** columns — not on the first (the pinned row label) and not
+  on the last (nothing to its right to widen against). `role="separator"`,
+  `aria-orientation="vertical"`, `aria-valuemin/max/now`, `tabindex="0"`; pointer drag and
+  `ArrowLeft/Right` (±8 px, Shift ±24), `Home` to reset. It takes the arrow keys **only while it has
+  focus**.
+- Widths persist per **document and table** under `pgs.reader.<doc_key>.<section anchor>`, with a
+  Compact toggle and a Reset. The key here is deliberately not the branch anchor: a table with
+  no lead-in takes its first row's anchor as the branch anchor, and a width must not move because a
+  row was re-labelled.
+- **The script is an enhancement, and the file says so.** `reader-grid.js` measures the columns the
+  browser laid out, freezes them, and only then adds `data-resizable` (`table-layout: fixed`). It
+  also builds the toolbar, because a button rendered in the template but not wired is a dead
+  control. Without it the table is exactly what 7.13 describes, at the browser's own widths.
+- Below 900 px the same markup restacks with `data-label`, and the resizer is hidden: a phone has no
+  pointer to drag with.
 
 ---
 

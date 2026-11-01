@@ -207,7 +207,9 @@ def test_a_wrapped_clause_reads_and_selects_as_one_sentence(page, live_server, r
 # can prove the table is in the markup, not that the fee is reachable at 1280 px or that a phone
 # does not get a horizontal scroll.
 
-LANDSCAPE_READER = "/documents/certification-landscape/read/?section=establishing-a-pgs-group"
+PROCESS_READER = "/documents/certification-landscape/read/?section=establishing-a-pgs-group"
+SEALS_READER = "/documents/certification-landscape/read/?section=pgs-seals-and-their-use"
+SAOSO_READER = "/documents/certification-landscape/read/?section=saoso-organic-certification"
 
 
 @pytest.fixture
@@ -233,10 +235,13 @@ def landscape_corpus(db, monkeypatch):
     )
 
 
-def test_the_landscape_grid_fits_its_pane_on_a_desk(page, live_server, landscape_corpus):
-    """At 1280 px the passages pane holds the grid without a sideways scroll, and the fee is in it."""
+# --- layout: grid — the seals comparison is a spreadsheet (D77) --------------
+
+
+def test_the_seals_spreadsheet_fits_its_pane_on_a_desk(page, live_server, landscape_corpus):
+    """D77: the comparison is the spreadsheet, and at 1280 px it holds without a sideways scroll."""
     page.set_viewport_size({"width": 1280, "height": 1400})
-    page.goto(live_server.url + LANDSCAPE_READER, wait_until="networkidle")
+    page.goto(live_server.url + SEALS_READER, wait_until="networkidle")
 
     measured = page.evaluate(
         r"""() => {
@@ -249,21 +254,23 @@ def test_the_landscape_grid_fits_its_pane_on_a_desk(page, live_server, landscape
                 wrapScroll: wrap.scrollWidth,
                 feeText: fee.textContent,
                 rows: document.querySelectorAll('.reader__grid tbody tr').length,
+                sized: grid.hasAttribute('data-resizable'),
             };
         }"""
     )
 
     assert measured, "the grid did not render"
-    assert measured["rows"] == 3, measured
-    assert "R500" in measured["feeText"], measured["feeText"][:120]
+    assert measured["rows"] == 2, measured
+    assert "As above" in measured["feeText"], measured["feeText"][:120]
+    assert measured["sized"], "reader-grid.js did not freeze the columns"
     assert measured["wrapScroll"] <= measured["wrapClient"] + 1, (
         f"the grid scrolls at 1280 px: {measured['wrapScroll']} > {measured['wrapClient']}"
     )
 
 
-def test_the_landscape_grid_restacks_on_a_phone(phone_page, live_server, landscape_corpus):
+def test_the_seals_spreadsheet_restacks_on_a_phone(phone_page, live_server, landscape_corpus):
     """At 390 px the same markup is labelled blocks, and the page does not scroll sideways."""
-    phone_page.goto(live_server.url + LANDSCAPE_READER, wait_until="networkidle")
+    phone_page.goto(live_server.url + SEALS_READER, wait_until="networkidle")
 
     assert phone_page.locator(".reader__grid").count() == 1
     assert phone_page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1"), (
@@ -272,7 +279,7 @@ def test_the_landscape_grid_restacks_on_a_phone(phone_page, live_server, landsca
 
     fee = phone_page.locator('.reader__grid td[data-label="Fee"]').first
     assert fee.is_visible()
-    assert "R500" in fee.inner_text()
+    assert "As above" in fee.inner_text()
     # The column name is on screen (a pseudo-element), not only in the attribute.
     label = phone_page.evaluate(
         """() => {
@@ -281,3 +288,105 @@ def test_the_landscape_grid_restacks_on_a_phone(phone_page, live_server, landsca
         }"""
     )
     assert "Fee" in label, label
+    # A phone has no pointer to drag with, so the handle is not offered where it cannot work.
+    assert not phone_page.locator(".reader__grid-resizer").first.is_visible()
+
+
+def test_a_column_can_be_resized_with_the_keyboard_and_kept(page, live_server, landscape_corpus):
+    """§12f.5: the separator is keyboard-operable, and the width persists per document and table."""
+    page.set_viewport_size({"width": 1280, "height": 1200})
+    page.goto(live_server.url + SEALS_READER, wait_until="networkidle")
+
+    def second_column_width() -> float:
+        return page.evaluate(
+            "() => document.querySelectorAll('.reader__grid thead th')[1]"
+            ".getBoundingClientRect().width"
+        )
+
+    before = second_column_width()
+    handle = page.locator(".reader__grid-resizer").first
+    handle.press("ArrowRight")
+    handle.press("Shift+ArrowRight")
+    after = second_column_width()
+
+    assert after >= before + 24, f"{before} -> {after}"
+    stored = page.evaluate(
+        "() => localStorage.getItem('pgs.reader.landscape.pgs-seals-and-their-use')"
+    )
+    assert stored, "the width was not persisted"
+
+    page.reload(wait_until="networkidle")
+    assert abs(second_column_width() - after) <= 2, "the width did not survive a reload"
+
+    page.get_by_role("button", name="Reset columns").click()
+    assert second_column_width() < after - 8, "Reset did not give the browser its own sizing back"
+
+
+def test_the_compact_toggle_tightens_the_same_columns(page, live_server, landscape_corpus):
+    page.set_viewport_size({"width": 1280, "height": 1200})
+    page.goto(live_server.url + SEALS_READER, wait_until="networkidle")
+
+    size = "() => getComputedStyle(document.querySelector('.reader__grid')).fontSize"
+    before = page.evaluate(size)
+    page.get_by_role("button", name="Compact").click()
+    after = page.evaluate(size)
+
+    assert page.locator(".reader__grid[data-compact]").count() == 1
+    assert float(after.removesuffix("px")) < float(before.removesuffix("px")), (before, after)
+
+
+# --- layout: process — the steps are cards (D77 C3) -------------------------
+
+
+def test_the_process_cards_sit_three_across_at_1280(page, live_server, landscape_corpus):
+    """The steps are columns, and the fee boxes sit under the cards they belong to."""
+    page.set_viewport_size({"width": 1280, "height": 1600})
+    page.goto(live_server.url + PROCESS_READER, wait_until="networkidle")
+
+    boxes = page.locator(".reader__card").evaluate_all(
+        "els => els.map(e => { const r = e.getBoundingClientRect();"
+        " return {x: r.x, y: r.y, w: r.width}; })"
+    )
+    assert len(boxes) == 3, boxes
+    assert len({round(box["y"]) for box in boxes}) == 1, f"the cards are not in one row: {boxes}"
+    assert boxes[0]["x"] < boxes[1]["x"] < boxes[2]["x"]
+
+    fees = page.locator(".reader__fee").evaluate_all(
+        "els => els.map(e => { const r = e.getBoundingClientRect();"
+        " return {x: r.x, y: r.y, w: r.width}; })"
+    )
+    assert len(fees) == 2, fees
+    assert fees[0]["y"] > boxes[0]["y"], "the fee boxes are below the cards"
+    assert fees[0]["w"] > fees[1]["w"], "the merged box spans Steps 1-2; the other spans one"
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+
+
+def test_the_process_cards_stack_on_a_phone(phone_page, live_server, landscape_corpus):
+    phone_page.goto(live_server.url + PROCESS_READER, wait_until="networkidle")
+
+    boxes = phone_page.locator(".reader__card").evaluate_all(
+        "els => els.map(e => { const r = e.getBoundingClientRect();"
+        " return {x: r.x, y: r.y}; })"
+    )
+    assert len(boxes) == 3
+    assert len({round(box["x"]) for box in boxes}) == 1, f"the cards do not stack: {boxes}"
+    assert boxes[0]["y"] < boxes[1]["y"] < boxes[2]["y"], "printed order"
+    assert phone_page.evaluate("document.documentElement.scrollWidth <= window.innerWidth + 1")
+    # The folded facets are 44 px touch targets (DESIGN.md §7.13).
+    summary = phone_page.locator(".reader__facet-summary").first.bounding_box()
+    assert summary and summary["height"] >= 44, summary
+
+
+def test_the_saoso_fork_stacks_both_paths_in_the_last_column(page, live_server, landscape_corpus):
+    """Two paths, one column, an `or` between them — not a fourth card in a fourth column."""
+    page.set_viewport_size({"width": 1280, "height": 1600})
+    page.goto(live_server.url + SAOSO_READER, wait_until="networkidle")
+
+    split = page.locator(".reader__split").bounding_box()
+    assert split, "the split did not render"
+    paths = page.locator(".reader__split .reader__card")
+    assert paths.count() == 2, "Path A (the pointer) and Path B (the direct route)"
+    positions = paths.evaluate_all("els => els.map(e => e.getBoundingClientRect().x)")
+    assert len({round(x) for x in positions}) == 1, "the two paths are stacked, not side by side"
+    assert page.locator(".reader__or").count() == 1
+    assert page.locator(".reader__fees .reader__fee").count() == 3

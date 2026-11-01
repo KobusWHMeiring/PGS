@@ -987,19 +987,22 @@ sequence, a comparison, or a branch without a parser change.
 
 ### 12f.4 Acceptance criteria
 
-- [ ] `ESTABLISHING A PGS GROUP` renders **3 cards**; Resources and Seals are `<details>` **closed**
+> **Ticked 2026-11-01 (§12g).** Each is asserted by `core/tests/test_document_reader_grid.py`,
+> `knowledge/tests/test_corpus_landscape.py` or `tests/e2e/test_reader_layout.py`.
+
+- [x] `ESTABLISHING A PGS GROUP` renders **3 cards**; Resources and Seals are `<details>` **closed**
       by default; Use of seals is visible; the joining Fee box is under Steps 1–2 and the
       certification Fee box under Step 3, each with the **full** cell text.
-- [ ] `SAOSO ORGANIC CERTIFICATION` renders **2 step cards + a split** in column three: Path A
+- [x] `SAOSO ORGANIC CERTIFICATION` renders **2 step cards + a split** in column three: Path A
       (PGS) and Path B (direct) stacked with an `or`; Path A points at Step 2 and repeats **no**
       fee.
-- [ ] `PGS SEALS AND THEIR USE` renders the **spreadsheet**: frozen header and first column, one
+- [x] `PGS SEALS AND THEIR USE` renders the **spreadsheet**: frozen header and first column, one
       type size, mouse and keyboard resizing, compact toggle, reset, persisted widths; below
       900 px it restacks with `data-label`.
-- [ ] Every fee amount sits inside its printed sentence; no amount appears alone, and no label
+- [x] Every fee amount sits inside its printed sentence; no amount appears alone, and no label
       says “joining” or “certification” unless the reviewer wrote it.
-- [ ] A corpus that disagrees with the artefact renders the plain page (no cards, no grid).
-- [ ] `TABLE_BANDS` (a transposition *inside* one printed row-line) and the corpus-level table-page
+- [x] A corpus that disagrees with the artefact renders the plain page (no cards, no grid).
+- [x] `TABLE_BANDS` (a transposition *inside* one printed row-line) and the corpus-level table-page
       guard are **still open** and named in the handover.
 
 ### 12f.5 Traps for the implementing session
@@ -1021,6 +1024,77 @@ sequence, a comparison, or a branch without a parser change.
   reviewer wrote a label.
 
 ---
+
+## 12g. Built 2026-11-01 — §12f.3 steps 1–8, and the one number the design did not decide
+
+**State: green, committed in two slices.** `e6d7b17` is the data (parser, alignment, reader shape);
+the shape itself (template, CSS, JS, tests) follows it. `fast.sh` **1467 passed / 1 skipped in
+34.4 s** warm; `verify.sh` green (numbers in the handover); `pytest tests/e2e` **71 passed**. Step 7
+is deliberately untouched.
+
+### 12g.1 What the artefact now says, and the one thing it does not
+
+| Table | `layout:` | Reviewed fields |
+|---|---|---|
+| `ESTABLISHING A PGS GROUP` | `process` | `title: Get together \| Agree and establish \| Visit and certify`, `fee_label: Steps 1–2 \| Step 3` |
+| `PGS SEALS AND THEIR USE` | `grid` | — |
+| `SAOSO ORGANIC CERTIFICATION` | `process` | `branch: For farmers wanting direct 3rd party certification` |
+
+**The chunk text is byte-identical** after the edit (17 chunks, same sha256), so nothing needed a
+re-ingest. `corpus_check` nonetheless reports `landscape drift`: `CorpusDocument.digest` is sha256 of
+the artefact **file**, so a header-only edit moves it. Same class of report as the `opp` blind spot
+in `todo.md`; the refresh belongs with step 7.
+
+### 12g.2 The judgement the design left open, and how it was closed
+
+§12f.1 says `fee_label:` is "one per fee box" but not how a box knows **which cards it covers**. The
+merged joining fee must sit under Steps 1–2, and a fourth data field was not among the four the owner
+approved. It is read from the **recorded empty cells** instead: a fee box runs until the next printed
+Fee cell (Step 2's is printed empty, and `knowledge/tables` records silence as empty rather than
+missing). So the span is data, not prose — the legend still says it in words, but the renderer does
+not parse the legend. Pinned in `test_the_merged_fee_cell_is_one_box_under_steps_1_and_2`.
+
+Two further readings, both with a fallback that loses nothing:
+
+- **Which facet folds.** Named by the paper's own column heading (`Resource…`, `Seals and logos`);
+  every other heading renders visible. An unrecognised heading is a taller card, never a lost cell.
+- **Which column is the fee.** The one printed `Fee`. A `process` table with no such column renders
+  every cell as a facet.
+
+### 12g.3 Three things the real rows taught, none of which a mock could
+
+1. **The label is printed twice** — the paper's `Step 1` is the first cell's first line *and* the
+   reviewer's row label. The card heading prints it, the body drops it. But it arrives in two
+   shapes: its own block for Step 1 (`passage_blocks` reads it as a `Term`) and merged into the
+   following sentence for Step 2, whose blank line the PDF's text layer lost. Handled as a prefix,
+   and **not** stripped when the block carries cross-reference segments.
+2. **A path card must keep its label.** Path B's first cell is one sentence — *"For farmers wanting
+   direct 3rd party certification to the SAOSO standard. …"* — so stripping the label there leaves a
+   fragment. The rule is therefore tied to what the heading prints: a step's heading prints the
+   label, a path's prints `Path B`.
+3. **`reader.css` hit §II's 30 KB cap** at 35.4 KB. The table domain moved to `reader-tables.css`
+   (the seam the design already has: the reader vs the printed table), and the reader template links
+   both.
+
+### 12g.4 The four guards, and how each was proved
+
+| Guard | Fails when… |
+|---|---|
+| `test_an_unknown_layout_value_is_an_error` | `layout: cards` — an unknown shape would render as whatever the template's `else` guessed |
+| `test_a_branch_label_that_names_no_row_is_an_error` | the fork points at nothing, so both paths are the same path |
+| `test_a_title_list_of_the_wrong_length_is_an_error` | a short list silently shifts every title onto the row above |
+| `test_each_table_declares_the_shape_the_owner_chose` | the artefact is edited back to `grid`/`joining` (mutated, watched red, restored) |
+
+The last one exists because **a missing title and a forgotten one look identical** to the reader.
+
+### 12g.5 What is still open
+
+- **Step 7** — the `tests/uat/` fee scenario, the backlog move, and §5.7 verified as "reading order
+  restored, nothing more".
+- **`TABLE_BANDS`** — a transposition *inside* one printed row-line is still unpinned.
+- **The corpus-level table-page guard** — still needs a cross-document definition of "table-shaped".
+- **`scripts/build_corpus.py --force --doc landscape` still destroys the review.** The generator has
+  no table-block (or card) rule, and nothing this session changed that.
 
 ## Pre-Flight Checklist
 

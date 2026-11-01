@@ -433,12 +433,19 @@ Three things make it standard-agnostic rather than SAOSO-shaped:
   `heading_path` carries the row label after an em dash so a citation can say which step it quoted.
   The BPP remains a headings-only document.
 
-  **D77 (decided 2026-10-31, not yet built)** makes the reviewed table's shape a per-table
-  decision: `layout: process` renders the process tables as horizontal cards (the step body
-  with Resources and Seals folded), and `layout: grid` renders the seals comparison as a
-  resizable spreadsheet (frozen header/first column, one 13.5 px type size, pointer + keyboard
-  resizing). The reader built on 2026-10-31 (§12e) is the interim fixed grid; the build is
-  `LANDSCAPE_TABLES_PRD` §12f.3.
+  **D77 (decided 2026-10-31, built 2026-11-01 — `LANDSCAPE_TABLES_PRD` §12g)** makes the reviewed
+  table's shape a per-table decision, declared in the artefact's `<!-- table -->` header:
+
+  | Field | Example | Meaning |
+  |---|---|---|
+  | `layout:` | `process` \| `grid` | `process` draws a card per step; `grid` draws a spreadsheet. A table that declares nothing is a grid, which is what every table was before D77. |
+  | `branch:` | `branch: 2` or `branch: Step 3` | The 0-based row index (or its label) at which the remaining rows become an **alternative path**. Refused when it names no row. |
+  | `title:` | `title: Get together \| Agree and establish` | One reviewer title per row. Refused at any other length, because a short list silently shifts every title onto the row above. |
+  | `fee_label:` | `fee_label: Steps 1–2 \| Step 3` | One heading per fee box. The renderer never invents `joining`/`certification`; the paper does not print them. |
+
+  The parser normalises `branch:` to a row index, `align_artefact_grid` returns the row positions
+  **and** the passage the fork starts at, and the reader renders cards or a spreadsheet from the
+  same aligned rows. A corpus that disagrees with the artefact still renders the plain page.
 
   **Verified against the shipped PDFs, 2026-10-18.** A throwaway parser was run over both documents before any code was written; it invalidated several assumptions that read plausibly in review. These are the realities Sub-plan B must be written against:
 

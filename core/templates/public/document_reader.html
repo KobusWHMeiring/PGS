@@ -22,6 +22,12 @@
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/reader.css' %}">
+  {% comment %}
+    The printed table — the grid and the cards — is its own stylesheet: `reader.css` is the reader,
+    and a review that reads one small file is worth more than one large one (§II's 30 KB cap, and
+    the reason `chat.css` exists).
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'css/reader-tables.css' %}">
 {% endblock %}
 
 {% block head_extra %}
@@ -185,12 +191,46 @@
                 {% if reader.grid.legend %}
                   <p class="reader__grid-legend">{{ reader.grid.legend }}</p>
                 {% endif %}
+                {% if reader.grid.layout == "process" %}
+                {% comment %}
+                  The reviewed block asked for a **process** (D77): a card per step, with the
+                  paper's other columns as its facets. The rows are still the text's rows, so the
+                  grid's alignment rule still applies — a corpus that disagrees with the artefact
+                  renders the plain passages instead (see `_artefact_grid`).
+                {% endcomment %}
+                {% include "public/_reader_process.html" with grid=reader.grid %}
+                {% else %}
+                {% comment %}
+                  The printed grid (D72.3). The columns and legend are the artefact's reviewed
+                  table; the rows are the chunks this branch already rendered from, aligned by
+                  `knowledge.tables.align_artefact_grid` — a corpus that disagrees falls back to
+                  the plain passages rather than labelling a row it cannot vouch for.
+
+                  It is drawn here, at the first row's passage, so the lead-in prose before it and
+                  the trailing prose after it stay ordinary passages in document order.
+
+                  One `<table>` serves both shapes: above 900 px it is the grid, broken out of the
+                  38 rem measure; below 900 px CSS restacks the same rows, and each cell carries its
+                  column name in `data-label`. No JavaScript. The scroll wrapper is focusable so a
+                  keyboard user can scroll it (WCAG 1.4.10 / 2.1.1).
+
+                  D77 adds two **enhancements** on top, never prerequisites: `reader-grid.js` sizes
+                  the columns and lets a reader resize them (pointer or arrow keys, widths kept per
+                  document and table), and `<colgroup>` gives the script a column to size. With no
+                  JavaScript the table is exactly what it was before the script existed.
+                {% endcomment %}
                 <div class="reader__grid-wrap" tabindex="0" role="region"
                      aria-label="{{ reader.selected.title }} — the printed table">
-                  <table class="reader__grid">
+                  <table class="reader__grid" data-reader-grid
+                         data-grid-key="{{ reader.grid.key }}">
+                    <colgroup>
+                      {% for column in reader.grid.columns %}<col>{% endfor %}
+                    </colgroup>
                     <thead>
                       <tr>
-                        {% for column in reader.grid.columns %}<th scope="col">{{ column }}</th>{% endfor %}
+                        {% for column in reader.grid.columns %}
+                          <th scope="col"><span class="reader__grid-head">{{ column }}</span>{% if not forloop.first and not forloop.last %}<span class="reader__grid-resizer" role="separator" aria-orientation="vertical" aria-label="Resize {{ column }}" aria-valuemin="6" aria-valuemax="120" aria-valuenow="0" tabindex="0" data-column="{{ forloop.counter0 }}"></span>{% endif %}</th>
+                        {% endfor %}
                       </tr>
                     </thead>
                     <tbody>
@@ -208,6 +248,7 @@
                     </tbody>
                   </table>
                 </div>
+                {% endif %}
                 {% endif %}
                 {% if not passage.in_grid %}
                 <article class="passage" id="{{ passage.anchor }}">
@@ -256,4 +297,13 @@
       </p>
     </div>
   </section>
+{% endblock %}
+
+{% block extra_js %}
+  {% comment %}
+    Column sizing for `layout: grid` tables (D77). Loaded on every reader page and inert on the
+    ones with no grid: a table gains `data-reader-grid` only in the grid branch below, and the
+    script looks for exactly that attribute. Deferred, so it never delays the text.
+  {% endcomment %}
+  <script src="{% static 'js/reader-grid.js' %}" defer></script>
 {% endblock %}
