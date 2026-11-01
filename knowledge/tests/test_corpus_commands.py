@@ -109,14 +109,14 @@ def test_an_empty_box_reports_every_governed_document_and_fails(standard_set):
     for doc_key in PDFS:
         assert doc_key in output
     states = states_by_key(standard_set)
+    # Every governed document now declares a reviewed artefact — the OPP was the last
+    # (P4, 2026-11-01) — so on an empty box all four are "not ingested", which is a different
+    # state with a different fix from "drift". `NO_ARTEFACT` stays in the enum for the
+    # document nobody has reviewed yet.
     assert states["saoso"].state == NOT_INGESTED
     assert states["bpp"].state == NOT_INGESTED
-    # Not converted yet (P4): a recorded gap, never drift. The landscape converted on
-    # 2026-10-30, so on an empty box it is "not ingested" instead — a different state with a
-    # different fix.
-    assert states["opp"].state == NO_ARTEFACT
+    assert states["opp"].state == NOT_INGESTED
     assert states["landscape"].state == NOT_INGESTED
-    assert not states["opp"].is_broken
 
 
 def test_a_corpus_built_from_the_pdf_is_drift_and_says_so(standard_set):

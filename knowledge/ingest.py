@@ -67,10 +67,10 @@ class IngestError(RuntimeError):
 #: (D53, D55) and names the file under `knowledge/corpus/`. A declaration, not a
 #: file-exists probe: D55's question is "is this document *supposed* to come from a
 #: review?", and a probe answers "is there a file lying around?" — the two disagree
-#: exactly when the file is missing, which is the failure the declaration catches. `opp`
-#: gains its declaration when P4 reviews it; until then it parses its PDF, which is a
-#: recorded gap and not a silent fallback. The landscape's artefact landed 2026-10-30
-#: (`LANDSCAPE_TABLES_PRD` steps 2-4).
+#: exactly when the file is missing, which is the failure the declaration catches. The
+#: landscape's artefact landed 2026-10-30 (`LANDSCAPE_TABLES_PRD` steps 2-4); the OPP's
+#: landed 2026-11-01 (P4), and it is the last of the four — every governed document is now
+#: read from a reviewed artefact.
 CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
     "saoso": {
         "kind": StandardDocument.Kind.STANDARD,
@@ -90,6 +90,7 @@ CORPUS_DOCUMENTS: dict[str, dict[str, str]] = {
         "title": "Outeniqua PGS Principles, Policies and Procedures",
         "version": "2026",
         "section_scheme": "opp",
+        "corpus_artefact": "opp.md",
         "source": "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf",
     },
     "bpp": {

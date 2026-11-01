@@ -16,7 +16,7 @@ being an open-ended read.
     python scripts/build_corpus.py --doc bpp
     python scripts/build_corpus.py --doc bpp --force   # overwrite a reviewed artefact
 
-Four rules that matter:
+Five rules that matter:
 
 1. **Never overwrite a reviewed artefact without `--force`.** The generator cannot tell a
    fresh draft from a file a human corrected; only the operator can, so the default is to
@@ -30,6 +30,11 @@ Four rules that matter:
    directly and uses the parser only for *which headings exist, in what order*.
 4. **Furniture never reaches the artefact.** Registration block, page footer and the
    printed page number are dropped here, exactly as the parsers drop them.
+5. **Sub-clauses the paper prints inside a section get a marker, and the generator writes
+   it** (`insert_sub_refs`, corpus format rule 6). The parser has already found every item of
+   `4.5`, with its offsets; hand-typing the markers would be a transcription of a
+   transcription. The artefact is still reviewed in the diff, and the round-trip is proved by
+   `test_corpus_opp.py`: each marker's span must quote the words the PDF path quoted.
 """
 
 from __future__ import annotations
@@ -373,6 +378,45 @@ def assemble_body(lines, printed, keep, *, after=None, with_content=None):
     return out, current_page
 
 
+def insert_sub_refs(section, body: list[str]) -> list[str]:
+    """Put a `<!-- sub: … -->` marker before the line each sub-clause opens on (rule 6).
+
+    In:  `section` — the parsed section, whose `sub_refs` carry offsets into `section.text`;
+         `body` — the lines `assemble_body` produced for the artefact.
+    Out: the same lines, with one marker before the first line of each sub-clause's slice.
+    Fails: `SystemExit` when an opening line is not among the body lines. A marker placed by
+         guess would move a citation's span and no other guard would see it.
+
+    Why the generator writes these rather than the reviewer: the parser already knows every
+    sub-clause and its text, so hand-typing twenty-four markers would be a transcription of a
+    transcription. The review still happens — in the diff, as for every other line — and
+    `knowledge/tests/test_corpus_opp.py` proves each span still quotes the same words the PDF
+    path quoted.
+    """
+    if section is None or not getattr(section, "sub_refs", ()):
+        return body
+
+    marked: list[str] = []
+    cursor = 0
+    for ref in section.sub_refs:
+        opening = " ".join(
+            section.text[ref.start : ref.end].split("\n", 1)[0].split()
+        )
+        for index in range(cursor, len(body)):
+            if " ".join(body[index].split()) == opening:
+                marked.extend(body[cursor:index])
+                marked.append(f"<!-- sub: {ref.ref} -->")
+                cursor = index
+                break
+        else:  # pragma: no cover - a corpus change, not a code path
+            raise SystemExit(
+                f"sub-clause {ref.ref} opens on a line the artefact does not carry: "
+                f"{opening!r}. The marker would have to guess."
+            )
+    marked.extend(body[cursor:])
+    return marked
+
+
 def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     """The artefact text for one document."""
     descriptor = CORPUS_DOCUMENTS[doc_key]
@@ -382,6 +426,20 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     sections = parser.parse(joined)
     if not sections:
         raise SystemExit(f"{pdf_path.name} parsed to zero sections; nothing to write")
+
+    # Sub-clauses are **indentation-sensitive** (`OppParser`'s item and letter rules), and the
+    # ingestion path parses the de-columned `-layout` rendering — not the `-raw` pages this body
+    # may have been drafted from. Measured 2026-11-01: drafted from `-raw`, the OPP's §4.5 lost
+    # five of its nine sub-clauses, because the raw rendering resets the left margin that the
+    # letters `a.`–`c.` hang off. So the markers are derived from the rendering the product
+    # actually parses, and matched to this section by reference.
+    layout_pages, _ = apply_layout(extract_pages(pdf_path), doc_key=doc_key)
+    layout_pages, _ = reflow_pages(layout_pages)
+    ref_sections = {
+        section.section_ref: section
+        for section in parser.parse("".join(layout_pages))
+        if section.section_ref
+    }
 
     # Slice from the stream the **parser** reads. A parser that declares `body_lines`
     # knows which pages are this document's body (SAOSO: Part B only, the TOC skipped) and
@@ -447,7 +505,7 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
             after=current_page,
             with_content=content_pages,
         )
-        out.extend(body)
+        out.extend(insert_sub_refs(ref_sections.get(section.section_ref), body))
 
     text = "\n".join(out) + "\n"
     # A private-use codepoint is a glyph slot, not a character: drop it before the reviewed

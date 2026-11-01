@@ -253,6 +253,151 @@ def test_two_refs_in_a_row_are_an_error():
         )
 
 
+# --- Rule 6: a sub-clause a document prints inside a section -----------------
+
+
+def test_a_sub_marker_opens_a_slice_at_the_next_line():
+    """`(ref, start, end)` into the section text, exactly as the PDF parsers emit."""
+    document = parse_blocks(
+        artefact(
+            """<!-- page: 6 printed: 6 -->
+<!-- ref: 4.1 -->
+### 4.1 Preparation for the assessment:
+Intro line.
+<!-- sub: 4.1(1) -->
+1. The first item.
+<!-- sub: 4.1(2) -->
+2. The second item."""
+        )
+    )
+    section = document.sections[0]
+    assert [ref.ref for ref in section.sub_refs] == ["4.1(1)", "4.1(2)"]
+    first, second = section.sub_refs
+    assert section.text[first.start : first.end].strip() == "1. The first item."
+    assert section.text[second.start : second.end].strip() == "2. The second item."
+    assert second.end == len(section.text), "the last slice runs to the end of the section"
+
+
+def test_a_parent_sub_clause_still_contains_its_children():
+    """The `any_level_end` rule: depth comes from the address, not from indentation."""
+    document = parse_blocks(
+        artefact(
+            """<!-- page: 6 printed: 6 -->
+<!-- ref: 4.5 -->
+### 4.5 Non-compliance and discipline:
+<!-- sub: 4.5(2) -->
+2. Type of complaint:
+<!-- sub: 4.5(2)(a) -->
+a. The first kind.
+<!-- sub: 4.5(2)(b) -->
+b. The second kind.
+<!-- sub: 4.5(4) -->
+4. The next item."""
+        )
+    )
+    section = document.sections[0]
+    spans = {ref.ref: section.text[ref.start : ref.end] for ref in section.sub_refs}
+    assert "a. The first kind." in spans["4.5(2)"]
+    assert "b. The second kind." in spans["4.5(2)"]
+    assert "4. The next item." not in spans["4.5(2)"], (
+        "a sibling at depth 2 must close the parent"
+    )
+    assert spans["4.5(2)(b)"].strip().endswith("b. The second kind."), (
+        "a leaf stops at the next sibling"
+    )
+
+
+def test_a_sub_marker_with_no_text_is_an_error():
+    """A marker with nothing under it is a slice that quotes nothing."""
+    with pytest.raises(CorpusFormatError, match="has no text"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 6 printed: 6 -->
+<!-- ref: 4.1 -->
+### 4.1 Preparation for the assessment:
+Intro line.
+<!-- sub: 4.1(1) -->
+## Next section"""
+            )
+        )
+
+
+def test_two_sub_markers_in_a_row_are_an_error():
+    with pytest.raises(CorpusFormatError, match="without text between them"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 6 printed: 6 -->
+### 4.1 Preparation for the assessment:
+<!-- sub: 4.1(1) -->
+<!-- sub: 4.1(2) -->
+1. The first item."""
+            )
+        )
+
+
+def test_a_sub_marker_repeating_an_address_is_an_error():
+    """One address, two slices: a citation could not say which span it quoted."""
+    with pytest.raises(CorpusFormatError, match="repeated in one section"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 6 printed: 6 -->
+### 4.1 Preparation for the assessment:
+<!-- sub: 4.1(1) -->
+1. The first item.
+<!-- sub: 4.1(1) -->
+1. The first item again."""
+            )
+        )
+
+
+def test_a_sub_marker_that_repeats_the_section_reference_is_an_error():
+    """`sub: 4.1` is a second heading for a section that already has one."""
+    with pytest.raises(CorpusFormatError, match="no parenthesised level"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 6 printed: 6 -->
+<!-- ref: 4.1 -->
+### 4.1 Preparation for the assessment:
+<!-- sub: 4.1 -->
+1. The first item."""
+            )
+        )
+
+
+def test_a_sub_marker_inside_a_table_is_an_error():
+    """A row is its own chunk with its own address; a sub-clause has no span to open."""
+    with pytest.raises(CorpusFormatError, match="inside a table block"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 3 printed: 3 -->
+### SEALS
+<!-- table
+cols: A | B
+-->
+<!-- sub: 4.5(1) -->
+<!-- row: one -->
+<!-- cell -->
+a
+<!-- cell -->
+b
+<!-- /table -->"""
+            )
+        )
+
+
+def test_a_malformed_sub_annotation_is_an_error_not_a_note():
+    """`<!-- sub 4.1(1) -->` must not be silently dropped: the span would vanish."""
+    with pytest.raises(CorpusFormatError, match="starts like"):
+        parse_blocks(
+            artefact(
+                """<!-- page: 6 printed: 6 -->
+### 4.1 Preparation for the assessment:
+<!-- sub 4.1(1) -->
+1. The first item."""
+            )
+        )
+
+
 def test_a_long_clause_heading_gets_an_anchor_that_fits_the_column():
     """`DocumentChunk.anchor` is 128 characters; a clause heading is a whole sentence.
 

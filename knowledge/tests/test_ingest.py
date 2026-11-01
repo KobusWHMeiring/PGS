@@ -47,6 +47,21 @@ from knowledge.tests.test_columns import EXPECTED_TRANSFORMED_PAGES
 
 pytestmark = pytest.mark.django_db
 
+
+@pytest.fixture
+def undeclared_opp(monkeypatch):
+    """`CORPUS_DOCUMENTS["opp"]` with its `corpus_artefact` declaration removed (D55).
+
+    The behaviour is not a historical accident: a deployment may add a fifth governed document
+    before anyone has reviewed it, and then it must parse its PDF. With all four shipped
+    documents reviewed, that path needs an explicit fixture rather than a live example.
+    """
+    from knowledge import ingest
+
+    descriptor = dict(ingest.CORPUS_DOCUMENTS["opp"])
+    descriptor.pop("corpus_artefact")
+    monkeypatch.setitem(ingest.CORPUS_DOCUMENTS, "opp", descriptor)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PDF_DIR = REPO_ROOT / "pgs_docs"
 MANIFEST = json.loads(
@@ -774,9 +789,15 @@ def test_an_artefact_ingest_records_the_digest_on_the_document(standard_set):
     assert document.corpus_digest == hashlib.sha256(CORPUS_ARTEFACT.read_bytes()).hexdigest()
 
 
-def test_a_pdf_ingest_records_no_artefact_digest(standard_set):
+def test_a_pdf_ingest_records_no_artefact_digest(standard_set, undeclared_opp):
     """Empty, not absent: "parsed from the PDF at ingest" is the fact drift is measured
-    against, and a guess would hide the difference between the two paths."""
+    against, and a guess would hide the difference between the two paths.
+
+    The declaration is removed for this test (`undeclared_opp`): from 2026-11-01 all four
+    governed documents declare a reviewed artefact, so the no-declaration path has no live
+    example — and the behaviour still matters, because a deployment may add a fifth document
+    before it has been reviewed.
+    """
     report = ingest_standard(
         pdf_path=PDFS["opp"], standard_set=standard_set, doc_key="opp", embed=False
     )
@@ -929,10 +950,13 @@ def test_asking_for_both_sources_at_once_is_refused(standard_set):
         )
 
 
-def test_a_document_with_no_declared_artefact_still_parses_its_pdf(standard_set):
-    """The declaration is data, not a file-exists probe: `opp` has no review yet (P4) and
-    must keep working exactly as it did before D55. (The landscape gained its artefact on
-    2026-10-30, so it is no longer the example here.)
+def test_a_document_with_no_declared_artefact_still_parses_its_pdf(standard_set, undeclared_opp):
+    """The declaration is data, not a file-exists probe — and it must stay that way.
+
+    The OPP was the last governed document without an artefact (P4 landed 2026-11-01), so the
+    fixture removes its declaration rather than pointing at a document that has none. A test
+    that needed an unreviewed governed document would fail the day the last one is reviewed,
+    which is exactly what happened here.
     """
     report = ingest_standard(
         pdf_path=PDFS["opp"], standard_set=standard_set, doc_key="opp", embed=False

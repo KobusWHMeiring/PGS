@@ -52,6 +52,17 @@ Rules the reader enforces, because each one is a silent corruption otherwise:
    reviewer's note — the table kept all its text and lost every boundary, with every other
    guard green. So a table annotation that does not parse **raises**, and a comment whose
    first word is a format word it misspells (`cells`, `col:`) raises too.
+6. **A sub-clause is a marker, and its slice is computed like the parser's** (rule 6; added
+   for P4, 2026-11-01). `<!-- sub: 4.5(2)(c) -->` says the *next* text line opens a
+   sub-clause an artefact can otherwise only lose: the OPP prints items `1)`/`a.` inside
+   `4.5` and they have no heading of their own, so a heading-only transcription would turn
+   twenty-four citable addresses into one. The depth comes from the address itself
+   (`sub_ref_depth`), and the end of a slice is the next marker of the same or shallower
+   depth — the same `any_level_end` rule `OppParser` uses, because the artefact must
+   reproduce the parser's spans, not merely its text. **The failure this prevents is silent
+   and it was measured:** converting the OPP to an artefact without this rule dropped
+   `4.5(1)`, `4.5(2)(c)` and `4.5(4)` while every other guard stayed green
+   (`test_opp_sub_refs_survive_into_the_database` caught it, 2026-11-01).
 
 Reviewed edits are *not* annotated in the file. The artefact says what the document says;
 which lines needed a human is recorded as data in `knowledge/corpus.py` (`CORPUS_EDITS`),
@@ -75,6 +86,7 @@ from knowledge.sections import (
     ParsedTableRow,
     TableCell,
     TableRowDivider,
+    any_level_end,
     slug,
 )
 
@@ -88,6 +100,10 @@ PAGE = re.compile(r"^<!--\s*page:\s*(\d+)\s+printed:\s*(\d+|none)\s*-->\s*$")
 
 #: `<!-- ref: S20.1.1 -->` — the citation for the heading that follows.
 REF = re.compile(r"^<!--\s*ref:\s*(\S.*?)\s*-->\s*$")
+
+#: `<!-- sub: 4.5(2)(c) -->` — a sub-clause printed *inside* a section, opening at the next text
+#: line. See rule 6: the OPP's items are the case, and dropping them costs 24 citable addresses.
+SUB = re.compile(r"^<!--\s*sub:\s*(\S.*?)\s*-->\s*$")
 
 #: `<!-- cell -->` — a cell boundary inside a table row. Structural, not a paragraph break, so a
 #: cell may hold blank lines and lists: Appendix 2's conditions are five paragraphs each.
@@ -139,6 +155,7 @@ ANNOTATION_WORDS = (
     "corpus",
     "page",
     "ref",
+    "sub",
     "table",
     "/table",
     "row",
@@ -232,6 +249,29 @@ def branch_row(value: str, rows: list[dict], where: int) -> int:
 #: sentence, so its slug overruns the column (the SAOSO artefact's first ingest failed with
 #: `value too long`, 2026-10-28).
 ANCHOR_MAX = 128
+
+
+def sub_ref_depth(ref: str) -> int:
+    """How deep a printed sub-clause sits, from its own address: `4.5(2)(c)` is depth 3.
+
+    A depth is what `any_level_end` needs in order to decide where a slice stops, and the
+    address is where it already lives. **Derived from the reference, never from indentation:**
+    `OppParser`'s calibration to the OPP's printed margins is exactly the kind of per-document
+    rule the artefact exists to stop repeating.
+
+    Fails: `CorpusFormatError` for an address with no parenthesised level. A `sub:` that reads
+    `4.5` is a second heading for a section that already has one, and the duplicate would be a
+    citation that resolves to two spans.
+    """
+    ref = (ref or "").strip()
+    depth = ref.count("(") + 1
+    if depth == 1:
+        raise CorpusFormatError(
+            f"`sub: {ref}` has no parenthesised level. A sub-clause is `4.5(2)` or "
+            "`4.5(2)(c)`; a `sub:` that repeats the section's own reference would give one "
+            "address two spans."
+        )
+    return depth
 
 
 def section_anchor(title: str) -> str:
@@ -349,6 +389,9 @@ def parse_blocks(text: str) -> CorpusDocument:
     blocks: list[Block] = []
     stack: list[tuple[int, str]] = []
     pending_ref: str | None = None
+    #: A `sub:` waiting for the text line it opens. One at a time: a marker with no text is a
+    #: slice of nothing, and a second marker before the first line would silently drop one.
+    pending_sub: str | None = None
     page: int | None = None
     printed: int | None = None
     current: dict | None = None
@@ -363,8 +406,11 @@ def parse_blocks(text: str) -> CorpusDocument:
         The index is what lets a cell keep a *slice* of the section rather than a copy: the
         offsets are computed once, in `flush()`, from these indices.
         """
-        nonlocal new_block
+        nonlocal new_block, pending_sub
         current["body"].append(line)
+        if line.strip() and pending_sub is not None:
+            current["subs"].append((pending_sub, len(current["body"]) - 1))
+            pending_sub = None
         if line.strip() and pending_ref is not None:
             # A `ref:` annotates the heading *below* it. Body text in between means the
             # annotation was typed in the wrong place, and silently attaching it to a
@@ -497,9 +543,21 @@ def parse_blocks(text: str) -> CorpusDocument:
     # -- flush ----------------------------------------------------------------------------
 
     def flush() -> None:
-        nonlocal table
+        nonlocal table, pending_sub
         if current is None:
             return
+        if pending_sub is not None:
+            raise CorpusFormatError(
+                f"`sub: {pending_sub}` has no text. A sub-clause marker opens the line below "
+                "it, and a marker with nothing under it is a slice that quotes nothing."
+            )
+        refs = [ref for ref, _ in current["subs"]]
+        duplicates = sorted({ref for ref in refs if refs.count(ref) > 1})
+        if duplicates:
+            raise CorpusFormatError(
+                f"`sub` marker repeated in one section: {', '.join(duplicates)}. Two markers "
+                "with one address give a citation two spans, and the audit cannot quote both."
+            )
         if table is not None:
             raise CorpusFormatError(
                 "a `table` block was never closed with `<!-- /table -->`. Its rows would be "
@@ -537,6 +595,18 @@ def parse_blocks(text: str) -> CorpusDocument:
             )
             return TableCell(text[start:end], start, end)
 
+        # Rule 6: markers become offsets through the same helper the PDF parsers use, so an
+        # artefact reproduces the parser's *slices* and not just its words. `lines_in_text`
+        # puts the heading at 0 and the first body line at 1, which is what `char_offset`
+        # already assumes.
+        subs = tuple(
+            any_level_end(
+                [(ref, sub_ref_depth(ref), line_index + 1) for ref, line_index in current["subs"]],
+                offsets,
+                len(text),
+            )
+        )
+
         tables = tuple(
             ParsedTable(
                 columns=raw["columns"],
@@ -568,6 +638,7 @@ def parse_blocks(text: str) -> CorpusDocument:
                 page=current["page"],
                 anchor=section_anchor(current["title"]),
                 tables=tables,
+                sub_refs=subs,
             )
         )
 
@@ -693,6 +764,12 @@ def parse_blocks(text: str) -> CorpusDocument:
                     "section, and the table's cells after it would belong to that section "
                     "with no row to carry them."
                 )
+            if SUB.match(line):
+                raise CorpusFormatError(
+                    f"line {index}: a `sub:` marker inside a table block. A row is its own "
+                    "chunk and carries its own address, so a sub-clause has no span to open "
+                    "here. Move the marker above the table."
+                )
             if COMMENT.match(line):
                 attempt = annotation_attempt(line)
                 if attempt:
@@ -730,6 +807,17 @@ def parse_blocks(text: str) -> CorpusDocument:
             pending_ref = ref.group(1)
             continue
 
+        sub = SUB.match(line)
+        if sub:
+            if pending_sub is not None:
+                raise CorpusFormatError(
+                    f"line {index}: two `sub:` markers in a row without text between them "
+                    f"({pending_sub!r}, then {sub.group(1)!r}). The first would open a slice "
+                    "with no words in it."
+                )
+            pending_sub = sub.group(1)
+            continue
+
         heading = HEADING.match(line)
         if heading:
             flush()
@@ -751,6 +839,8 @@ def parse_blocks(text: str) -> CorpusDocument:
                 "page": printed,
                 "body": [],
                 "tables": [],
+                #: Rule 6: `(ref, body-line index)` for each `<!-- sub: … -->` marker.
+                "subs": [],
             }
             pending_ref = None
             continue

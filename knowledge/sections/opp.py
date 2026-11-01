@@ -97,7 +97,16 @@ class OppParser:
                 ParsedSection(
                     section_ref=current["ref"],
                     text="\n".join(lines),
-                    heading_path=" > ".join(title for _, title in stack[:-1]),
+                    # The path **includes the section itself**, which is the corpus
+                    # format's rule (`knowledge/corpus.py`) and the reason the reviewed
+                    # artefact can be checked against this parser: the artefact derives
+                    # `heading_path` from the `#` depth, and a transcription of the paper's
+                    # headings has to produce the same path or the identity gate compares a
+                    # sentence to a breadcrumb. SAOSO was corrected to this rule on
+                    # 2026-10-28; the OPP kept `stack[:-1]` until 2026-11-01, which also made
+                    # `build_corpus.py` give every subsection its parent's depth (`## 2.1`
+                    # beside `## II.`), because the generator reads the depth off this path.
+                    heading_path=" > ".join(title for _, title in stack),
                     page=current["page"],
                     sub_refs=subs,
                 )
