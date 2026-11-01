@@ -373,6 +373,27 @@ repeated `The Principle Of Health.` side labels against 4 in the committed file)
 needs a furniture rule for the generic path before it can be green. The choice of what to do first is
 D71 (`product/design/d71_p4_and_the_generator.html`, four options, one recommendation).
 
+**Status 2026-11-01 — the blocker named above is fixed; the note was stale.** The inverted `keep`
+was the defect `git log -S` put in `e6f4464`, and it was repaired on 2026-10-30 (`body_filter(parser)`
+replaces `is_page_furniture` on the generic branch, D75, with five assertions in
+`tests/tools/test_build_corpus.py` written red first). The furniture rule the paragraph above asks
+for — the BPP's four repeated labels — is `BODY_FURNITURE`, also landed 2026-10-30: it names the
+labels and keeps each block on the page that first carries it, because the inferential rule was
+measured and it destroys SAOSO (*General Principle* on 26 pages, *Requirements:* on 25, and one
+poultry derogation printed verbatim on pages 45–47).
+
+**What P4 still cannot do, and what now motivates it.** `build_corpus.py` has no rule that emits a
+`<!-- table -->` block, so a table page can only be curated by hand — which is what the landscape's
+three tables did (`LANDSCAPE_TABLES_PRD` §12c). The OPP has two of them: **§2.3's sliding scale** on
+pdf 2 (three columns, six turnover bands) and pdf 11's 3-column table, which is still in
+`PAGE_LAYOUT_EXCLUSIONS`. Until then §2.3 is one 1,613-character chunk whose columns are spaces and
+which the reader renders as prose — reported by the product owner on 2026-11-01 and measured in
+`CHAT_ANSWER_COVERAGE_PRD.md` **G10**.
+
+**Re-measure before choosing between D71's options.** Its two open items — the `heading_path`
+disagreement (0 of 28) and the BPP's 45 diff lines — predate both fixes, so whichever of the four
+options was recommended was recommended against a measurement that is no longer the measurement.
+
 ---
 
 ### P5 — Landscape, 10 pages

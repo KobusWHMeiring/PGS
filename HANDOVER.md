@@ -20,10 +20,21 @@
 > **verified** (`e7a331a`): the page exclusion never reaches the ingest, and the Step 1 cell is still
 > not quotable off the excluded page, which is the "nothing more" half of the claim.
 >
-> **What is not done:**
+> **What is not done, in the order the owner asked for (2026-11-01):**
 >
-> 1. **The sign-off, then the move** — `scripts/uat_signoff.py`, the PRD to `Done/` with its
->    `Status:` rewritten, `python product/backlog.py --apply`.
+> 1. **The UAT sign-off, then the backlog move** — `tests/uat/landscape_tables_uat.md` is drafted
+>    and presented; judge six scenarios at `/uat/?uat=landscape_tables`, then
+>    `scripts/uat_signoff.py`, the PRD to `Done/` with its `Status:` rewritten, and
+>    `python product/backlog.py --apply`. **Nothing else blocks it.**
+> 2. **A cost-question answer rule** — `/ask/` answers "what does it cost to join" completely and
+>    "what is the yearly cost of membership" with the membership fee alone, because it answers the
+>    question asked. When one citation of ten fails to verify, it refuses a correct answer. Both
+>    measured, both in `CHAT_ANSWER_COVERAGE_PRD` **G10**; the shape to copy is C1f's published
+>    "a floor, not a total".
+> 3. **P4 — the OPP artefact, with §2.3 as a `layout: grid` table** — the reader-side half of the
+>    same report: the sliding scale is one 1,613-character PDF-parsed chunk whose columns are spaces,
+>    so six turnover bands render as prose. **P4's own "blocked as written" note is stale** — the
+>    inverted `keep` it names was fixed on 2026-10-30 (D75) — see its new status paragraph.
 > 2. **`TABLE_BANDS`** — a transposition *inside* one printed row-line is still unpinned.
 > 3. **The corpus-level table-page guard** — still needs a cross-document definition of
 >    "table-shaped".
@@ -87,9 +98,10 @@ corpus.
 
 ## 0t. 2026-11-01 (session 6) — the two shapes are built, and one number the design did not decide
 
-**State: green, committed in three slices.** `e6d7b17` is the data (parser, alignment, reader
-shape); `e29a27b` is the shape itself (template, CSS, JS, tests); the documentation commit follows
-them. `fast.sh` **1467 passed / 1 skipped in 34.4 s** (warm), `verify.sh` **1481 passed / 1 skipped
+**State: green, committed in six slices.** `e6d7b17` is the data (parser, alignment, reader shape);
+`e29a27b` is the shape itself (template, CSS, JS, tests); `a0254be`/`8d6f61b` are the handover and
+the UAT; `e7a331a` is §5.7 verified; `e14c616` is the `/uat/` registry and the preflight pin;
+`a1358c7` records `testing_hazards` §3.23. `fast.sh` **1467 passed / 1 skipped in 34.4 s** (warm), `verify.sh` **1481 passed / 1 skipped
 in 48.3 s** (`--create-db`, 5433), `pytest tests/e2e` **71 passed**. §12f.3 steps 1–8 are done;
 **step 7 is untouched** and is the whole of what remains, apart from the two guards.
 
@@ -152,10 +164,69 @@ fee spans, the fork, the resizer markup). The gate's collected count went **1449
 browser lane gained 5, to **71 collected**. Every refusal was mutated and watched red before it was
 trusted.
 
-### 0t.6 What is left, and the one command that still hurts
+### 0t.6 Step 7, half done — and a preflight that was lying
 
-- **Step 7** — the `tests/uat/` fee scenario, the backlog move, §5.7 verified as "reading order
-  restored, nothing more".
+**§5.7 is verified** (`e7a331a`). Three guards now hold "reading order restored, *nothing more*":
+p4–8 are still detected as column-laid-out and the exclusion leaves them byte-identical;
+`apply_layout` is replaced with a bomb during a landscape **artefact** ingest and never runs, so the
+exclusion cannot reach the shipped corpus; and the Step 1 cell is still **not** a contiguous run of
+the excluded page, which is the "nothing more" half. The claim was designed in §5.7 and had never
+been re-measured.
+
+**The UAT is drafted and unsigned** — `tests/uat/landscape_tables_uat.md`, six judgment scenarios,
+presented to `product/design/uat/landscape_tables.html`, pinned in `tests/tools/test_uat_parse.py`
+so a scenario cannot vanish. It stays in `In Progress/` until a signature exists.
+
+**The preflight was failing on its own stale constant.** `EXPECTED_CHUNKS` read 385 (SAOSO 319 +
+landscape 8) — which is what the *live* box holds. This dev box holds **394**, because SAOSO and
+landscape are now built from their reviewed artefacts (319 → 338, 8 → 17). So `uat_seed --check`
+reported `NOT ready` against a corpus that is exactly right: a blocking failure that was the
+check's fault, which is the worst shape a preflight can take. Now 394, composition and reason
+written beside it, pin moved with it (`e14c616`). OPP (30) is the one component still parsed from
+its PDF.
+
+**`/uat/` prepares any registered UAT.** It already ran the setup as buttons but was pinned to the
+MVP 0 file, so *Rebuild the UAT page* would have regenerated the wrong artefact. `UATS` is now a
+**registry** (`core/services/_uat_console.py`), chosen with `?uat=<slug>`; an unknown slug is a 400
+on GET and POST, because a request must never name a file for a rebuild. The console also lists the
+addresses the selected UAT tells the reviewer to open, read from the markdown.
+
+**Two operational notes for whoever starts the dev box.** Start `runserver` **without**
+`--noreload` when editing Python and templates together: with it, the running process executes the
+old view and renders the new template, which produced a `NoReverseMatch` on `/uat/` while every
+test passed (`testing_hazards.md` §3.23). And `scripts/probe_chat.py` prints a `●` — on this console
+that is `UnicodeEncodeError` unless you run it as `PYTHONIOENCODING=utf-8 python
+scripts/probe_chat.py …` (§3.21).
+
+### 0t.7 The fee question, measured — three answers and one refusal
+
+The owner asked `/ask/` what the yearly cost is, got the R100 membership fee, followed the citation
+to the OPP and found §2.3's sliding scale rendered as prose. Five runs through the product's own
+path, same day, 394 chunks:
+
+| Question | Answer |
+|---|---|
+| *"What is the yearly cost to get certified, including the farm visit?"* (the eval set's wording) | complete — membership, assessment (all six bands), transport, licence — **3 of 3 runs**, grounded |
+| *"what does it cost to join"* | complete — §2.1, §2.3, §2.4, grounded |
+| *"what is the yearly cost of membership"* | **membership only** — R100 + R500 |
+| *"what is the yearly cost"* | one run **REFUSED** (7 raw / 6 audited), one complete (10 raw / 8 audited) |
+
+**Retrieval is not the cause**: the top eight are §2.3 (1), §2.4 (2), §2.2 (3), §2.5 (4), §2.6,
+§4.7, §2.1 (7), §4.6 — every locator `escalated-yearly-cost` grades. The thin answer is a scope
+choice, and G3's acceptance therefore holds only when the question names certification or the visit.
+The refusal is a **second, unlocated** finding: a correct answer discarded because two of ten
+citations failed, cause not captured before the session ended — reproduce with
+`scripts/why_refused.py`, which is how G9 was named. Both are `CHAT_ANSWER_COVERAGE_PRD` **G10**,
+and the instrument cannot see either, because `eval_retrieval` grades where a clause *ranks*.
+
+### 0t.8 What is left, and the one command that still hurts
+
+- **Step 7's signature, then the move** — the UAT is drafted, presented and pinned; §5.7 is
+  verified. What is left is a person judging six scenarios and `scripts/uat_signoff.py`.
+- **A cost-question answer rule**, then **P4's OPP artefact with §2.3 as a table** — the two halves
+  of the owner's report, measured in §0t.7 and filed as `CHAT_ANSWER_COVERAGE_PRD` G10 and
+  `CORPUS_CANONICAL_FORMAT_PLAN` P4 (whose "blocked as written" note is stale: the inverted `keep`
+  it names was fixed on 2026-10-30).
 - **`TABLE_BANDS`** and **the corpus-level table-page guard** — both still open, both still named.
 - **`scripts/build_corpus.py --force --doc landscape` still destroys the review.** Nothing this
   session changed that, and the generator still has no table-block rule.

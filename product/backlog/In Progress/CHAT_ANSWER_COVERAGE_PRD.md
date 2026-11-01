@@ -423,6 +423,61 @@ and a grounding snapshot that survives `--force`).
 the box held the refreshed corpus — hours, not days, because the corpus only reached the box
 today. It would have been invisible forever without `why_refused.py`.
 
+### G10. The same fee question is answered three ways, and one answer in five is refused — **found 2026-11-01**
+
+**Reported by the product owner**, reading `/ask/` and then the citation it gave: *"when I ask what
+the yearly cost is it only mentions the R100"*, and §2.3 — which they then opened — *"looks like
+there should be a table involved, it doesn't read great"*.
+
+**Measured**: five runs through `scripts/probe_chat.py` (the product's own path), dev box, 394
+chunks, 2026-11-01.
+
+| Question | Answer | Citations |
+|---|---|---|
+| *"What is the yearly cost to get certified, including the farm visit?"* — the eval set's own wording | complete: membership, assessment (all six bands), transport, licence | 5 audited, **grounded, 3 of 3 runs** |
+| *"what does it cost to join"* | complete: §2.1, §2.3, §2.4 | 5 audited, grounded |
+| *"what is the yearly cost of membership"* | **membership only** — R100 + R500 | 3 audited, grounded |
+| *"what is the yearly cost"* | run A **REFUSED** (7 raw / 6 audited); run B complete (10 raw / 8 audited) | — |
+
+**Retrieval is not the cause, and that is the part worth keeping.** For the question the top eight
+clauses are §2.3 (rank 1), §2.4 (2), §2.2 (3), §2.5 (4), §2.6, §4.7, **§2.1 (7)**, §4.6 — every
+locator `escalated-yearly-cost` grades is in the set. So **G3's acceptance criterion holds only when
+the question names certification or the visit**, and fails when it names membership alone. That is
+faithful to the question rather than a retrieval defect, which is a different thing from G3 and
+should not be closed as a re-open of it.
+
+**Second finding, and it is not located.** One of the two *"yearly cost"* runs produced ten
+citations of which two failed verification, and the product **refused a correct answer** — the
+user-visible outcome G9 describes, from a cause I did not capture before the session ended. It is
+not the G9 header-decoration cause (that fix holds; every audited citation in the good runs is a
+`§2.x` locator with no decoration). Reproduce with `scripts/why_refused.py "what is the yearly
+cost"` and `scripts/probe_chat.py "<the same>"`, which is how G9 was named — do not guess at it.
+
+**The instrument cannot see either.** `eval_retrieval` grades **locators**: on this question it is
+green while the answer narrows and while one run in five is refused. G3's acceptance criterion is an
+answer-level sentence with no automated assertion behind it — the same residual-risk shape as G8 and
+G9, and the reason this is filed here rather than closed.
+
+**Neither fix is "more corpus."** Two changes, in this order:
+
+1. **A cost-question answer rule.** When a cost question does not name a component, state the
+   components and say what cannot be totalled. The **public page already publishes this shape** —
+   C1f's `FIRST_YEAR_FROM_CENTS` is *"a floor, not a total"*, with its three exclusions named — so
+   the site and the assistant currently disagree in spirit, and this aligns them. Testable at
+   answer level across the four phrasings above; do **not** widen the retrieval limit to chase it
+   (G3's own warning: that trades this defect for noise).
+2. **P4 — the OPP artefact with §2.3 as a `layout: grid` table.** The reader-side half of the same
+   report: the sliding scale is one **1,613-character** PDF-parsed chunk whose columns are spaces,
+   and HTML collapses them, so six turnover bands render as prose. `CORPUS_CANONICAL_FORMAT_PLAN.md`
+   P4; the parser, both layouts and the resizable spreadsheet are built (`LANDSCAPE_TABLES_PRD`
+   §12g), so what is missing is the artefact and one hand-written table block.
+
+**Third, a decision rather than code.** When one citation of ten fails, the product refuses the
+whole answer. That is deliberate (a claim must be grounded), but the user experience is
+indistinguishable from "the corpus cannot answer this", and G9 showed how expensive that confusion
+is. Decide: refuse everything, or drop the unverified sentence and answer. Write the answer down in
+§18.3 before changing the behaviour.
+
 ## 8. Deployment note
 
 `ingest_standard` is a no-op when the PDF's sha256 is already stored, so **shipping this

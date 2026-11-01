@@ -150,7 +150,7 @@
     <p class="eyebrow">Outeniqua PGS - user acceptance testing</p>
     <h1>UAT — The certification landscape's tables: cards, a fork, and a spreadsheet</h1>
     <p>6 scenarios to judge. Read the judgement question, run the scenario in the app, then record what you saw.</p>
-    <div class="meta"><span>Slug <code>landscape_tables</code></span><span>Commit <code>a0254be (modified)</code></span><span>Database <code>not stated</code></span><span>Generated <code>2026-11-01</code></span><span>Source <code>landscape_tables_uat.md</code></span></div>
+    <div class="meta"><span>Slug <code>landscape_tables</code></span><span>Commit <code>a1358c7 (clean)</code></span><span>Database <code>pgs</code></span><span>Generated <code>2026-11-01</code></span><span>Source <code>landscape_tables_uat.md</code></span></div>
   </div>
 </header>
 
@@ -176,7 +176,23 @@
     <p>Observed against expected. To run a setup command or re-check, use the staff console at
        <code>/uat/</code> on this instance - it has them as buttons, so nothing here has to be
        copied. This panel is the snapshot taken when the page was built.</p>
-    <p class="hint">No preflight output was pasted in. Generate this file with <code>--preflight preflight.txt</code> after running <code>python manage.py uat_seed --check</code>, so the reviewer can see what the instance looked like when the UAT ran.</p>
+    <pre class="preflight">[ok  ] settings and app     no issues
+       expected: no issues
+[warn] dependencies         db=ok redis=ok celery_broker=ok celery_worker=error
+       expected: db, redis, celery_broker, celery_worker all ok
+       note: a dev box often has no Celery worker; it must be ok on the instance being signed
+[ok  ] corpus present       394 chunks
+       expected: 394 chunks
+[ok  ] corpus embedded      0 chunk(s) without a vector
+       expected: 0 chunks without a vector
+       note: a corpus ingested with --no-embed answers from the lexical arm only (D48)
+[ok  ] documents published  8 published
+       expected: 8 published
+[ok  ] extraction tool      pdftotext version 4.00 (Xpdf)
+       expected: installed; the same implementation the fixtures pin
+       note: poppler and Xpdf 4.00 wrap lines differently: the live corpus holds 316 SAOSO chunks where Xpdf builds 319 (measured 2026-10-22). Scenario 9 compares against paper, so the reader must be the one the corpus was built with.
+
+preflight: ready - no blocking failure</pre>
   </div>
 
   <div class="panel">
@@ -197,7 +213,7 @@
 
   <div class="panel">
     <h2>Pre-test setup</h2>
-    <div class="prose"><ol><li><code>python manage.py seed_deployment &amp;amp;&amp;amp; python manage.py publish_documents</code>, then <code>python manage.py runserver</code>. 2. <strong>No re-ingest is needed for this slice.</strong> The artefact gained four header fields (<code>layout:</code>, <code>branch:</code>, <code>title:</code>, <code>fee_label:</code>) and its chunk text is byte-identical; the reader reads the artefact from disk. <code>python manage.py corpus_check</code> will still say <code>landscape drift</code> — that is the artefact file's hash moving, not the text (see the handover). Judging on a drifting corpus is fine here; judging on a <em>stale</em> one is not, so if you re-ingest first, use <code>corpus_refresh --apply</code>. 3. Keep these three branches open in tabs — one per table: - <code>/documents/certification-landscape/read/?section=establishing-a-pgs-group</code> - <code>/documents/certification-landscape/read/?section=saoso-organic-certification</code> - <code>/documents/certification-landscape/read/?section=pgs-seals-and-their-use</code> 4. Have a <strong>real phone</strong> in hand for Scenario 5, and judge it in daylight if you can.</li></ol><p>---</p></div>
+    <div class="prose"><p><strong>The setup is buttons now.</strong> Open <strong><code>/uat/?uat=landscape_tables</code></strong> on the instance you are judging (staff login), press <em>Seed the deployment</em>, <em>Publish the documents</em>, <em>Re-check the instance</em>, then <em>Rebuild the UAT page</em>. The page shows each preflight check with its observed and expected value, the three reader addresses below as links, and the exact command behind every button. Nothing there decides a verdict — that stays yours.</p><p>The commands, if you prefer a terminal or the console is unreachable:</p><ol><li><code>python manage.py seed_deployment &amp;amp;&amp;amp; python manage.py publish_documents</code>, then <code>python manage.py runserver</code>. 2. <strong>No re-ingest is needed for this slice.</strong> The artefact gained four header fields (<code>layout:</code>, <code>branch:</code>, <code>title:</code>, <code>fee_label:</code>) and its chunk text is byte-identical; the reader reads the artefact from disk. <code>python manage.py corpus_check</code> will still say <code>landscape drift</code> — that is the artefact file's hash moving, not the text (see the handover). Judging on a drifting corpus is fine here; judging on a <em>stale</em> one is not, so if you re-ingest first, use <code>corpus_refresh --apply</code>. 3. Keep these three branches open in tabs — one per table: - <code>/documents/certification-landscape/read/?section=establishing-a-pgs-group</code> - <code>/documents/certification-landscape/read/?section=saoso-organic-certification</code> - <code>/documents/certification-landscape/read/?section=pgs-seals-and-their-use</code> 4. Have a <strong>real phone</strong> in hand for Scenario 5, and judge it in daylight if you can.</li></ol><p>---</p></div>
   </div>
 
   <div id="clip" class="clip" hidden></div>
@@ -225,9 +241,9 @@
  "slug": "landscape_tables",
  "title": "UAT — The certification landscape's tables: cards, a fork, and a spreadsheet",
  "environment": {
-  "commit": "a0254be",
-  "working_tree": "modified",
-  "database": "not stated",
+  "commit": "a1358c7",
+  "working_tree": "clean",
+  "database": "pgs",
   "generated_on": "2026-11-01"
  },
  "scenarios": [
