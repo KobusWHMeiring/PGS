@@ -1,42 +1,49 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the design is settled; the build is step 6, then step 7
+> ## START HERE — the two shapes are built; what is left is step 7, and one guard
 >
-> **The design gate is closed (D76, D77).** The landscape is a 17-chunk reviewed artefact, and the
-> reader currently renders the **interim fixed grid** from §12e. The settled display model is:
+> **The build landed (2026-11-01).** The reader now draws what the reviewed `<!-- table -->` block
+> asks for, so `LANDSCAPE_TABLES_PRD` §12f.3 steps 1–8 are done (`e6d7b17` + `e29a27b`):
 >
-> - **`layout: process`** → **C3 horizontal cards** for *Establishing a PGS group* and *SAOSO
->   organic certification*. The step body leads; **Resources and Seals are folded** `<details>`;
->   *Use of seals* stays visible; the merged Fee is a box under Steps 1–2 and Step 3's Fee under
->   Step 3. `branch:` marks SAOSO's alternative path, rendered as **two stacked path cards in
->   column three** with an `or` (Path A points at Step 2; it repeats no fee).
-> - **`layout: grid`** → the seals comparison as a **resizable spreadsheet**: frozen header and
->   first column, one 13.5 px type size, pointer + keyboard column resizing, a compact toggle, a
->   reset, widths persisted per document/table.
+> - **`layout: process`** → **C3 horizontal cards** for *Establishing a PGS group* and *SAOSO organic
+>   certification*: the step body leads, Resources and Seals fold (`<details>`), *Use of seals* stays
+>   visible, the merged Fee is a box under Steps 1–2 and Step 3's Fee under Step 3, and SAOSO's fork
+>   is two **stacked path cards in the last column** with an `or` (Path A points at Step 2 and
+>   repeats no fee).
+> - **`layout: grid`** → the seals comparison as a **resizable spreadsheet**: frozen header and first
+>   column, one type size (14 px, 12 px compact), pointer + keyboard resizing, Compact and Reset,
+>   widths persisted per `pgs.reader.<doc_key>.<section anchor>`.
 >
-> Read, in this order — nothing else:
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12f** — the decision, the four data fields, the work
->    order (§12f.3), the acceptance criteria (§12f.4) and the traps (§12f.5).
-> 2. `product/design/d76d_c3_and_the_split.html` — the final design (C3, folded facets, the split).
->    `d76b` has the six display shapes, `d76c` the process iterations, `d76` the fit.
-> 3. `product/design/DESIGN.md` §7.13 — the component rules the interim grid already follows.
+> **What is not done, and is now the whole of the slice:**
 >
-> **The work order is §12f.3:** parser → alignment → reader → template → CSS → `reader-grid.js` →
-> tests → docs → step 7. **Step 6 is not done**; the fixed grid is the interim. Step 7 is the UAT
-> fee scenario, the backlog move, and the §5.7 exclusion verified as “reading order restored,
-> nothing more”.
+> 1. **Step 7** — the `tests/uat/` fee scenario, the backlog move, and §5.7 verified as "reading
+>    order restored, nothing more".
+> 2. **`TABLE_BANDS`** — a transposition *inside* one printed row-line is still unpinned.
+> 3. **The corpus-level table-page guard** — still needs a cross-document definition of
+>    "table-shaped".
 >
-> **Two guards are still open, and named rather than hidden:** `TABLE_BANDS` (a transposition
-> *inside one printed row-line* is unpinned) and the corpus-level table-page guard.
+> **A re-ingest is wanted but is not urgent, and it is not free.** The artefact's header gained four
+> fields; the chunk text is byte-identical (17 chunks, same sha256), so the reader renders the new
+> shapes without one. `corpus_check` still says `landscape drift` because `CorpusDocument.digest`
+> is sha256 of the **file** — a header-only edit moves it. Run `corpus_refresh --apply` with
+> `relink_evidence` at step 7, not before: the dev box has carried bpp/saoso drift since it was
+> built from their PDFs, and a refresh rebuilds all three.
+>
+> **Read, in this order — nothing else:**
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12g** — what landed, the one judgement the design left
+>    open and how it was closed, the three things the real rows taught, and the four guards.
+> 2. `product/design/DESIGN.md` **§7.13** — the component rules both shapes carry.
+> 3. `product/design/d76d_c3_and_the_split.html` — the design (C3, folded facets, the split).
 >
 > **Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
-> rule, so it would replace the review with the p4–8 column soup.
+> (or card) rule, so it would replace the review with the p4–8 column soup. Nothing this session
+> changed that.
 >
 > **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
 > sit behind the same mechanism.
 >
-> **The tree is clean.** The design artifacts are at `2190279`; the final fold (Resources/Seals) and
-> this documentation commit are the tip of `main`.
+> **The tree is clean**, 16 commits ahead of `origin/main`, and the live box is still `8d2839d` —
+> it does **not** have the landscape fix. See the repo-state block below.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
@@ -44,32 +51,111 @@ documents session, the chatbot session, the column session, the embedding sessio
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session,
-the landscape-artefact session and the display-model session
-**Repo state:** `main`, **14 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
-`d37bd9f` and the design/documentation commits follow it. On that tree: `scripts/fast.sh` green at
-**1434 passed / 1 skipped in 36.6 s** (warm) and `verify.sh` green at **1448 passed / 1 skipped in
-49.7 s** (`--create-db`, 49.7 s wall, run as
+the landscape-artefact session, the display-model session and the shapes-build session
+**Repo state:** `main`, **16 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
+`e29a27b`, and this documentation commit follows it. On that tree: `scripts/fast.sh` green at
+**1467 passed / 1 skipped in 34.4 s** (warm) and `verify.sh` green at **1481 passed / 1 skipped in
+48.3 s** (`--create-db`, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same tree measured 92.6 s and 53.3 s earlier in the
-session — quote the range, not one number (`testing_hazards.md` §3.17). **No code changed after
-those measurements** — the display-model sessions added design artifacts and documentation only.
+serves 5433, `testing_hazards.md` §3.1). `pytest tests/e2e` (not in the gate: it needs a browser)
+**71 passed in 107 s**. Earlier in the same day the same file set measured 48.2 s and 34.4 s —
+quote the range, not one number (`testing_hazards.md` §3.17).
 
-**The dev box was re-ingested twice this session and its landscape is current:**
-`corpus_check` reports `landscape current 17 / 17`, **394 chunks, 0 unembedded**. Both `--force`
-runs dropped **0** evidence links (no message has ever cited a landscape chunk);
-`relink_evidence --apply` reported **0 relinked / 66 already linked / 30
-same-locator-different-text / 0 no-longer-has**. The 30 are the pre-existing bpp/saoso drift: **bpp
-and saoso still report `drift` on the dev box** because it was built from their PDFs, not from their
-artefacts. That is out of this slice and is the state `corpus_refresh --apply` exists to fix.
+**The dev box has NOT been re-ingested, and does not need to be for this session's work.** The
+landscape artefact gained four header fields; the chunk text is **byte-identical** (17 chunks, the
+same sha256 over `anchor|heading_path|page|text`), so the reader renders the new shapes from the
+artefact it reads directly. `corpus_check` nonetheless reports `landscape drift`: `CorpusDocument.
+digest` is sha256 of the artefact **file**, so a header-only edit moves it. bpp and saoso still
+report `drift` too — they have been PDF-built since before this slice. One
+`corpus_refresh --apply` with `relink_evidence` fixes all three; it belongs with step 7, not before.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **14 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **16 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — **and it does not have this session's landscape fix.** Its corpus is still the old
-PDF-built one (8 landscape chunks, six branches including `R500` and `PGS SA.`). A deploy pulls the
-artefact but **does not re-ingest**: `deploy.sh` never runs `ingest_standard`, so the box will show
-`landscape drift 8 / 17` until someone runs `corpus_refresh --apply` deliberately. Measure its
-landscape link count with `relink_evidence` (report-only) before that refresh; the dev box's answer
-was zero, but the live box is a different corpus.
+2026-10-30 — **and it now misses two sessions' work**: the interim grid (§12e) and both shapes
+(§12g). Its corpus is still the old PDF-built one (8 landscape chunks, six branches including `R500`
+and `PGS SA.`). A deploy pulls the artefact but **does not re-ingest**: `deploy.sh` never runs
+`ingest_standard`, so the box will show `landscape drift 8 / 17` until someone runs
+`corpus_refresh --apply` deliberately. Measure its landscape link count with `relink_evidence`
+(report-only) before that refresh; the dev box's answer was zero, but the live box is a different
+corpus.
+
+## 0t. 2026-11-01 (session 6) — the two shapes are built, and one number the design did not decide
+
+**State: green, committed in three slices.** `e6d7b17` is the data (parser, alignment, reader
+shape); `e29a27b` is the shape itself (template, CSS, JS, tests); the documentation commit follows
+them. `fast.sh` **1467 passed / 1 skipped in 34.4 s** (warm), `verify.sh` **1481 passed / 1 skipped
+in 48.3 s** (`--create-db`, 5433), `pytest tests/e2e` **71 passed**. §12f.3 steps 1–8 are done;
+**step 7 is untouched** and is the whole of what remains, apart from the two guards.
+
+### 0t.1 What the reader does now
+
+| Table | `layout:` | What it draws |
+|---|---|---|
+| `ESTABLISHING A PGS GROUP` | `process` | 3 cards (`Step N · title`), Resources and Seals folded, Use of seals visible, the merged joining Fee as one box under Steps 1–2 and certification Fee under Step 3 |
+| `PGS SEALS AND THEIR USE` | `grid` | the spreadsheet: frozen header and first column, resizable columns, Compact, Reset, widths persisted |
+| `SAOSO ORGANIC CERTIFICATION` | `process` | 2 step cards + a split in the last column: Path A (a pointer to Step 2, no fees) `or` Path B (the paper's direct route) |
+
+`ReaderCard`, `ReaderFacet`, `ReaderFeeBox` and `ReaderGrid.cards` are the display model;
+`knowledge/tables.GridAlignment` now carries the row positions **and** the passage the fork starts
+at. No migration, no model change.
+
+### 0t.2 The judgement that was not in the design
+
+§12f.1 says `fee_label:` is "one per fee box" but never says **how a box knows which cards it
+covers**. The merged joining fee must sit under Steps 1–2 and a fifth data field was not among the
+four the owner approved. It is read from the **recorded empty cells**: a fee box runs until the next
+printed Fee cell, which is Step 3 — Step 2's Fee cell is printed empty and the artefact records
+silence as empty. The legend still says it in prose; the renderer does not parse the legend. Pinned
+by `test_the_merged_fee_cell_is_one_box_under_steps_1_and_2`.
+
+Two smaller readings, each with a fallback that loses nothing: the **folded facets** are the ones
+the paper's own headings name (`Resource…`, `Seals and logos`) and any other heading renders visible;
+the **fee column** is the one printed `Fee`, and a `process` table without one renders every cell as
+a facet.
+
+### 0t.3 Three things the real rows taught, and a mock could not
+
+1. **The label is printed twice**, and arrives in two shapes. `Step 1` is its own block
+   (`passage_blocks` reads it as a `Term`); `Step 2`'s blank line is lost in the PDF's text layer, so
+   it merged into the following sentence and had to be stripped as a prefix. Not stripped when the
+   block carries cross-reference segments — those point into the text they were built from.
+2. **A path card keeps its label.** Path B's first cell is one sentence — *"For farmers wanting
+   direct 3rd party certification to the SAOSO standard. …"* — so stripping the label there leaves a
+   fragment. The rule is tied to what the heading prints: a step's heading prints the label, a
+   path's prints `Path B`.
+3. **`reader.css` crossed §II's 30 KB cap** at 35.4 KB and the gate said so by name. The table
+   domain moved to `reader-tables.css` — the seam the design already had: the reader, and the
+   printed table.
+
+### 0t.4 What the browser lane found that nothing else could
+
+- **A 6 px sideways scroll at 1280 px.** `reader-grid.js` measured the auto layout, froze it, and
+  `table-layout: fixed` added the collapsed borders back — so the wrapper scrolled by the borders'
+  width. Fixed two ways: the resizer is not attached to the **last** column (it overflowed the
+  table's right edge by half its width), and `apply()` now takes any residual excess off the widest
+  column.
+- **The CSS split changed nothing visually** but would have gone unnoticed as a 500 or a missing
+  rule; the e2e suite is what confirms both shapes still render from the new stylesheet.
+
+### 0t.5 Guards, and the count
+
+**+36 test functions** (against `a01f698`), of which 31 are in the gate: 16 in
+`knowledge/tests/test_corpus_tables.py` (four fields, four refusals), 4 in `test_corpus_landscape.py`
+(the artefact's own declarations), 11 in `core/tests/test_document_reader_grid.py` (cards, facets,
+fee spans, the fork, the resizer markup). The gate's collected count went **1449 → 1482**. The
+browser lane gained 5, to **71 collected**. Every refusal was mutated and watched red before it was
+trusted.
+
+### 0t.6 What is left, and the one command that still hurts
+
+- **Step 7** — the `tests/uat/` fee scenario, the backlog move, §5.7 verified as "reading order
+  restored, nothing more".
+- **`TABLE_BANDS`** and **the corpus-level table-page guard** — both still open, both still named.
+- **`scripts/build_corpus.py --force --doc landscape` still destroys the review.** Nothing this
+  session changed that, and the generator still has no table-block rule.
+- The **live box** now misses two sessions (grid + shapes) and its corpus is still PDF-built.
+
+---
 
 ## 0s. 2026-10-31 (session 5) — the display model settled: C3, the split, the spreadsheet
 
