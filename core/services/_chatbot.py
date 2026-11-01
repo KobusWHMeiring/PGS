@@ -159,7 +159,12 @@ MAX_OUTPUT_TOKENS_CEILING = 8192
 #: the audit cannot see that, because it checks quotes and not entailment. Measured after:
 #: the fruit question declines the verdict, and the seeds question opens with the rule in
 #: 3 runs of 3 (it answered "No, …" in 2 of 2 before the leading-verdict clause).
-PROMPT_VERSION = "d50-2"
+#: `d78-1` (2026-11-01): rule 9 — a cost question is answered with the components the
+#: passages supply and what cannot be totalled (G10, D78). Measured before, on the
+#: 394-chunk dev corpus: *"what is the yearly cost of membership"* answered with §2.1's
+#: R100 + R500 alone while §2.2, §2.3, §2.4 and §2.5 were all among the eight passages
+#: supplied — faithful to the question, and the R100 read as the price of a year.
+PROMPT_VERSION = "d78-1"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -219,6 +224,31 @@ deployment. If a passage mentions one, say only what the passage says and do not
 endorse it.
 
 The application renders its own refusal wording, so do not write a refusal yourself.
+"""
+
+#: Rule 9 for a **cost** question, and only a cost question. Rendered by `build_prompt`
+#: rather than written into `SYSTEM_PROMPT` because it is an answer-shape instruction: on
+#: every other question it is prompt tokens that pay for a disclaimer nobody asked for.
+#:
+#: **It names no section reference and no amount, deliberately.** A rule that volunteered
+#: `§2.3` or `R100` would invite the model to cite an address retrieval did not supply, and
+#: the audit refuses the whole answer for one such citation — the F3 lesson in
+#: `CHAT_TRUTHFULNESS_PRD.md`, and the shape of G10's own unlocated refusal. The components
+#: are named because they are the documents' own categories and the passages that carry
+#: them are what the model was given; the money belongs to the passages.
+#:
+#: The defect it answers, measured 2026-11-01: *"what is the yearly cost of membership"*
+#: answered with the R100 and the R500 alone while the assessment scale, the visit catering
+#: and the seal licence were all in the eight passages supplied. The answer was faithful to
+#: the question and still told the reader the R100 was the price of a year.
+COST_QUESTION_RULE = """Cost questions. The documents set out several separate amounts, and \
+no single one of them is the price of a year. When the question names one component, or \
+names none, state every component the passages supply — membership, the assessment fee for \
+the farm's turnover band, the administrator's travel, the visit's catering, and the seal \
+licence — and say plainly what the passages leave out or leave undetermined: travel and \
+catering depend on the farm and the visit, and the licence applies only once a farm is \
+certified and labels produce. Never present one component as the price of the whole, and \
+never add the amounts into a total the passages do not state.
 """
 
 #: Gemini's structured-output schema (SPEC Â§13). `sub_ref` is optional because most
@@ -722,6 +752,37 @@ def looks_like_follow_up(question: str, parent_question: str) -> bool:
     )
 
 
+#: The words that make a question a question about money. Deliberately about the *asking*
+#: and not about the answer: "what does membership cost" and "how much is membership" are
+#: the same question, and only one of them contains a word the fee sections use. `rand` is
+#: in the list because South African visitors type it and the fee sections print `R`.
+COST_QUESTION_PATTERN = re.compile(
+    r"\b(costs?|fees?|prices?|pricing|pay|pays|paid|payments?|payable|charges?|charged|"
+    r"expensive|afford|cheaper|cheapest|rand)\b|\bhow much\b",
+    re.IGNORECASE,
+)
+
+
+def looks_like_cost_question(question: str) -> bool:
+    """Is this a question about money? — the trigger for `COST_QUESTION_RULE`.
+
+    In:  the visitor's question.
+    Out: True when it asks what something costs, is paid, or is charged.
+    Fails: never. **It fails quiet**: a question it does not recognise gets exactly the
+         prompt it got before D78, so a miss costs nothing and there is no wrong branch
+         to hedge against. The inverse error — a cost rule rendered on a question about
+         cardboard — spends prompt tokens and invites a disclaimer, and that is the
+         cheaper mistake of the two.
+
+    Why a word list and not the model: the rule is a *shape* instruction that has to be in
+    the prompt before the model reads the passages, so the decision has to be made without
+    a model call. The list is the question's own vocabulary, not the documents' — measured
+    2026-11-01, *"what is the yearly cost of membership"* is recognised, and so is the
+    informal *"what does it cost to join"*, which shares no word with §2.1's heading.
+    """
+    return bool(COST_QUESTION_PATTERN.search(normalise_question(question)))
+
+
 def build_retrieval_query(question: str) -> str:
     """Turn a natural-language question into a lexical OR query.
 
@@ -1060,6 +1121,61 @@ OUTCOME_PHRASES = (
 )
 
 
+def cost_question_warnings(question: str, answer: str) -> tuple[str, ...]:
+    """A cost answer that names an amount and says nothing about what it leaves out.
+
+    In:  the question as asked; the answer as shown.
+    Out: one advisory string, or an empty tuple. **Never a reason to refuse** — the caller
+         writes it to `ChatMessage.review_notes` and the log, and a person reads it, exactly
+         as `outcome_claim_warnings` does.
+
+    Why advisory: the requirement is that the answer says what cannot be totalled, and
+    whether a sentence *means* that is an entailment question — a second model call and a
+    threshold, which is the shape of check that turns grounded answers into refusals
+    (G10's second finding: one run in five refused a correct answer, and the visitor could
+    not tell it from "the corpus cannot answer this").
+
+    Why a phrase list rather than the components: the components are what the passages say,
+    not what the code knows, and the code must not become a second source for the fee
+    schedule (§I: data encodes the standard). The list is the vocabulary of *limitation*, so
+    it fires on the measured defect — an answer of two fees and no exclusion — and stays
+    quiet on an answer that says the assessment is "charged separately". It is a tripwire,
+    not a proof: a false negative is quiet, which is the right way for a tripwire to fail.
+    """
+    if not looks_like_cost_question(question) or not (answer or "").strip():
+        return ()
+    lowered = answer.lower()
+    if any(phrase in lowered for phrase in COST_LIMIT_PHRASES):
+        return ()
+    return (
+        "a cost answer states no limit — nothing says what the answer leaves out or what "
+        f"cannot be totalled: {answer.strip()[:160]!r}",
+    )
+
+
+#: The vocabulary of a stated limit. Not a grammar of exclusions: one of these in the answer
+#: is evidence that the model said, in some words, "and this is not the whole". Measured
+#: 2026-11-01 against the two answers G10 recorded — the membership-only answer contains
+#: none of them and is recorded; the complete answer's "charged separately" is in the list
+#: and is not.
+COST_LIMIT_PHRASES = (
+    "separate",
+    "not include",
+    "doesn't include",
+    "does not include",
+    "exclud",
+    "in addition to",
+    "on top of",
+    "not a total",
+    "only applies",
+    "depends on",
+    "additional fee",
+    "aside from",
+    "beyond the",
+    "plus the",
+)
+
+
 def outcome_claim_warnings(
     answer: str, citations: Sequence[Citation]
 ) -> tuple[str, ...]:
@@ -1314,6 +1430,12 @@ def build_prompt(
     conversation = "\n".join(
         f"{message.role.title()}: {message.content}" for message in history
     )
+    # D78: the cost rule rides with the question, not with the system prompt. It is only
+    # rendered for a cost question — see `COST_QUESTION_RULE` for why the components are
+    # named and the money is not.
+    cost_block = (
+        f"{COST_QUESTION_RULE}\n\n" if looks_like_cost_question(question) else ""
+    )
     # Stage 1: a conversation is not evidence. Without this line the model treats the
     # earlier turns as answer material and cites a clause the audit never saw; with it,
     # the earlier turns resolve the reference and the supplied passages carry the claim.
@@ -1329,6 +1451,7 @@ def build_prompt(
     return (
         f"{history_block}"
         f"Passages:\n\n{'\n\n'.join(blocks)}\n\n"
+        f"{cost_block}"
         f"Question: {question}\n\n"
         "Return JSON only, using the supplied schema."
     )
@@ -1847,13 +1970,16 @@ def answer_question(
             timeout=int(getattr(settings, "CHAT_ANSWER_CACHE_TTL", ANSWER_CACHE_TTL)),
         )
 
-    # D-3: the audit verified the quotes, not the claims built on them. An outcome verdict
-    # the quotes do not state is recorded for a person, never used to refuse — the refusal
-    # would punish the visitor for a limit of the audit (`§5.5`).
-    review_notes = outcome_claim_warnings(answer_text, citations)
+    # D-3 and D78: the audit verified the quotes, not the claims built on them. An outcome
+    # verdict the quotes do not state, and a cost answer that states no limit, are recorded
+    # for a person, never used to refuse — the refusal would punish the visitor for a limit
+    # of the audit (`§5.5`, G10).
+    review_notes = outcome_claim_warnings(answer_text, citations) + cost_question_warnings(
+        text, answer_text
+    )
     if review_notes:
         logger.warning(
-            "chatbot answer states an outcome its quotes do not",
+            "chatbot answer needs a person to read it",
             extra={
                 "chat_session": str(session.public_uuid),
                 "chat_review_notes": len(review_notes),
@@ -1891,6 +2017,8 @@ def answer_question(
 __all__ = [
     "ANSWER_SCHEMA",
     "CONFIGURATION_MESSAGE",
+    "COST_QUESTION_RULE",
+    "COST_LIMIT_PHRASES",
     "Citation",
     "AnswerTruncatedError",
     "ChatConfigurationError",
@@ -1910,6 +2038,7 @@ __all__ = [
     "answer_question",
     "attach_user",
     "audit_citations",
+    "cost_question_warnings",
     "outcome_claim_warnings",
     "build_prompt",
     "build_retrieval_query",

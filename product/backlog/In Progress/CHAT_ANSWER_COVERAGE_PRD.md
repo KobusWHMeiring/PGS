@@ -466,6 +466,42 @@ G9, and the reason this is filed here rather than closed.
    the site and the assistant currently disagree in spirit, and this aligns them. Testable at
    answer level across the four phrasings above; do **not** widen the retrieval limit to chase it
    (G3's own warning: that trades this defect for noise).
+
+   **Landed 2026-11-01 — D78, `PROMPT_VERSION` `d78-1`.** A rule rendered **only for a cost
+   question**: the model is told to state every component the passages supply and what they leave
+   out, and never to present one component as the price of the whole. Two choices are worth keeping:
+
+   - **The rule names no section reference and no amount.** A rule that volunteered `§2.3` or
+     `R100` would invite a citation retrieval did not supply, and the audit refuses the whole
+     answer for one of those — F3's lesson, and the shape of this gap's own unlocated refusal. The
+     components are the documents' categories; the money belongs to the passages.
+   - **The rule is conditional, not in `SYSTEM_PROMPT`.** On every other question it is prompt
+     tokens paying for a disclaimer nobody asked for.
+
+   `cost_question_warnings()` is the tripwire for when the prompt stops working: a cost answer whose
+   text contains no limit phrase is written to `ChatMessage.review_notes`. It **never refuses** —
+   advisory, exactly like `outcome_claim_warnings`, because G10's second finding is that a refusal
+   and "the corpus cannot answer" look the same to the visitor.
+
+   **Re-measured 2026-11-01, same corpus (394 chunks), after the rule:**
+
+   | Question | Before | After |
+   |---|---|---|
+   | *"what is the yearly cost of membership"* | membership only, 2 citations | **complete** — R100, the scale, transport, catering, the licence; 6 audited, grounded |
+   | *"what is the yearly cost"* | complete (1 run of 5 refused) | complete, 8 audited, grounded |
+   | *"what does it cost to join"* | complete | complete, 7 audited, grounded |
+   | *"What is the yearly cost to get certified, including the farm visit?"* | complete | complete, 8 audited, grounded |
+
+   The default probe suite is **9 of 9 grounded** afterwards, including cardboard and the rest-period
+   question, so the added rule cost no other question its answer. **The second finding is still
+   open and still not located** — one run in five refused on *"what is the yearly cost"* and it did
+   not reproduce in this session's runs; reproduce with `scripts/why_refused.py`, do not guess.
+
+   **The R900 the old answer gave was this same defect, one layer down.** Before the rule, the
+   membership phrasing answered "farms with an annual turnover below R250,000 pay a renewal fee of
+   R900" — the model was guessing which of two unlabelled numbers in the column soup was the
+   initial fee. §2.3's reviewed table (below) is what fixes that, which is why the two changes are
+   one report rather than two.
 2. **P4 — the OPP artefact with §2.3 as a `layout: grid` table.** The reader-side half of the same
    report: the sliding scale is one **1,613-character** PDF-parsed chunk whose columns are spaces,
    and HTML collapses them, so six turnover bands render as prose. `CORPUS_CANONICAL_FORMAT_PLAN.md`
