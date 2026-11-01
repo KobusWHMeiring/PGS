@@ -35,6 +35,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PDF = REPO_ROOT / "pgs_docs" / "PGS Certification landscape_Final.pdf"
 SOURCE = "pgs_docs/PGS Certification landscape_Final.pdf"
 ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "landscape.md"
+OPP_PDF = REPO_ROOT / "pgs_docs" / (
+    "Outeniqua pgs principles, policies and procedures 2026.pdf"
+)
+OPP_SOURCE = "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf"
+OPP_ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "opp.md"
 
 
 @pytest.fixture
@@ -212,6 +217,77 @@ def test_the_direct_route_keeps_its_own_full_fee_cell(client, landscape):
     assert len(boxes) == 3, "a fee per printed row"
     assert "--fee-start: 3; --fee-span: 1" in page, "the direct route's box is under column 3"
     assert "Quote to be provided by the Accredited Certifying Body" in " ".join(boxes[2].split())
+
+
+# --- The OPP's sliding scale: a grid in a *numbered* document (P4) ----------
+
+
+@pytest.fixture
+def opp(standard_set, monkeypatch):
+    """The OPP artefact, ingested, plus its published row — the second artefact grid.
+
+    Until P4 this branch was prose: §2.3's six turnover bands were one PDF-parsed chunk whose
+    columns were spaces (`CHAT_ANSWER_COVERAGE_PRD.md` G10).
+    """
+    stub_ingest_extraction(monkeypatch)
+    ingest_standard(
+        pdf_path=OPP_PDF,
+        standard_set=standard_set,
+        doc_key="opp",
+        embed=False,
+        corpus_path=OPP_ARTEFACT,
+    )
+    return PublicDocument.objects.create(
+        code="opp",
+        title="Outeniqua PGS Principles, Policies and Procedures",
+        file_path="public/documents/opp.pdf",
+        source_path=OPP_SOURCE,
+        is_published=True,
+    )
+
+
+def test_the_scales_branch_renders_the_printed_columns(client, opp):
+    """The grid is found through the branch's **clause refs**, not its anchors.
+
+    A numbered clause's reading anchor is its reference (`2-3`), while the artefact's section
+    carries a heading slug; the landscape's sections are unnumbered, so the anchor join found
+    them and this one silently fell back to prose (measured 2026-11-01).
+    """
+    page = client.get("/documents/opp/read/?section=ii")
+    assert page.status_code == 200
+    body = page.content.decode()
+
+    assert '<table class="reader__grid"' in body
+    assert "Annual farm turnover (gross sales)" in body
+    assert "Initial certification fee (R)" in body
+    assert "Renewal fee (R)" in body
+    assert body.count("<tbody>") == 1
+
+
+def test_every_band_is_a_row_and_the_notes_stay_outside_the_table(client, opp):
+    body = client.get("/documents/opp/read/?section=ii").content.decode()
+
+    for band in (
+        "Below R 250,000",
+        "R 250,001 – R 500,000",
+        "R 1,000,001 – R 2,500,000",
+        "Above R 5,000,000",
+    ):
+        assert band in body, band
+    assert body.count("<tr") >= 6
+    # The prose before and after the grid is still rendered, and outside it.
+    assert "The farm assessment visit fee is set based on a sliding scale" in body
+    assert body.index("Transport costs for the PGS administrator") > body.index("</table>")
+    # The rest of the branch is not swallowed by the table.
+    assert "2.1 Membership Fees" in body and "2.5 Fee for the use of seal" in body
+
+
+def test_the_scale_is_a_grid_not_a_process(client, opp):
+    """D77: the shape is reviewed data. §2.3 declares `layout: grid`, so no card may appear."""
+    body = client.get("/documents/opp/read/?section=ii").content.decode()
+    assert '<table class="reader__grid"' in body, "the positive control for the two below"
+    assert "reader__process" not in body
+    assert "reader__card" not in body
 
 
 # --- Branches that are not tables -------------------------------------------

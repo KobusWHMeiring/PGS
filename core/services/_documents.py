@@ -643,11 +643,13 @@ def _artefact_grid(
     texts: tuple[str, ...],
     anchors: list[str],
     pages: list[int | None],
+    section_refs: frozenset[str] = frozenset(),
 ) -> tuple[ReaderGrid | None, set[int]]:
     """The printed grid for a branch whose rows live in a reviewed artefact, or `(None, set())`.
 
     In:  `document_row` — the ingested twin; `selected` — the open branch; `texts` — the passage
-         texts about to be rendered; `anchors`/`pages` — their locators and pages.
+         texts about to be rendered; `anchors`/`pages` — their locators and pages;
+         `section_refs` — the clause references the branch's own passages carry.
     Out: the grid (columns, legend, rows with per-cell blocks) and the passage positions it covers.
          `(None, set())` for every branch that is not a reviewed artefact table, and for a corpus
          that disagrees with the artefact (a stale row, a re-ordered branch) — the plain page is
@@ -673,7 +675,20 @@ def _artefact_grid(
             # The branch's anchor is its **first passage's** anchor, which for a table whose first
             # chunk is a row is the row's anchor (the seals table has no lead-in). The section's
             # own anchor survives on the prose passage after the rows, so match either.
-            if section.anchor == selected.anchor or section.anchor in anchors
+            if (
+                section.anchor == selected.anchor
+                or section.anchor in anchors
+                # A numbered clause's reading anchor is its reference (`2-3`), not the
+                # artefact's heading slug, so the anchor join cannot find it. The OPP's
+                # §2.3 is the first table in a *numbered* document; the landscape's sections
+                # are unnumbered, which is why the anchor alone was enough there.
+                or (section.section_ref and section.section_ref in section_refs)
+            )
+            # A branch may hold several sections and one of them may be a table. The OPP's
+            # `II. Membership fees` branch is §2.1–§2.5 with §2.3's sliding scale in the middle:
+            # matching on the branch alone picked §2.1, which has no table, and returned no grid
+            # (measured 2026-11-01, P4). The first section that *has* a table is the one to draw.
+            and section.tables
         ),
         None,
     )
@@ -798,6 +813,9 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
         texts,
         [pairs[chunk.pk] for chunk, _anchor in branch_pairs],
         [chunk.page for chunk, _anchor in branch_pairs],
+        frozenset(
+            chunk.section_ref for chunk, _anchor in branch_pairs if chunk.section_ref
+        ),
     )
 
     # The reviewed structure is looked up against the text that is about to be rendered, so a
