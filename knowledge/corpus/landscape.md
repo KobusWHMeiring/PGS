@@ -126,6 +126,9 @@ The table below outlines the steps for the establishment of a PGS group and its 
 
 <!-- table
 cols: Key steps | Resource documents, guidelines and requirements | Use of seals and logos | Seals and logos | Fee
+layout: process
+title: Get together | Agree and establish | Visit and certify
+fee_label: Steps 1–2 | Step 3
 legend: The Fee column is one printed box spanning the Step 1 and Step 2 rows, and it is filed under Step 1, the row it starts beside. Two cells on Step 1 are printed empty: the paper is silent, and silence is not permission. A seal is a picture; where the paper prints its name beside it that name is the cell, and the artwork itself is not stored.
 -->
 <!-- row: Step 1 -->
@@ -294,6 +297,7 @@ renews its membership]
 
 <!-- table
 cols: Key steps | Resource documents, guidelines and requirements | Use of seals and logos | Seals and logos | Fee
+layout: grid
 legend: Each row is one seal. This table's “Seals and logos” column holds the seal's picture and no text: the seal's printed name heads the “Use of seals and logos” column beside it, and the artwork itself is not stored. Both rows' Fee cell reads “As above”, which is the fee stated on the previous table.
 -->
 <!-- row: PGS Organic In-Conversion -->
@@ -370,6 +374,8 @@ PGS groups that wish to enter more formal markets and use the nationally recogni
 
 <!-- table
 cols: Key steps | Resource documents, guidelines and requirements | Use of seals and logos | Seals and logos | Fee
+layout: process
+branch: For farmers wanting direct 3rd party certification
 legend: The third row has no printed step number; its first cell names the route. This table's “Seals and logos” column holds a logo picture and no text: the logo's printed name heads the “Use of seals and logos” column beside it, and the artwork itself is not stored.
 -->
 <!-- row: Step 1 -->

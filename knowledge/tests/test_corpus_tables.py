@@ -507,7 +507,9 @@ def test_the_artefact_grid_pairs_columns_with_cells_and_aligns_the_prose_around_
         "Farmers who are already producing a surplus.\nR500",
         "The trailing sentence.",
     )
-    assert align_artefact_grid(grid, texts) == (1,), "prose before/after the row is allowed"
+    alignment = align_artefact_grid(grid, texts)
+    assert alignment.positions == (1,), "prose before/after the row is allowed"
+    assert alignment.split is None, "a table with no `branch:` has no alternative path"
 
 
 def test_the_grid_refuses_a_corpus_that_disagrees_with_the_artefact():
@@ -524,3 +526,158 @@ def test_a_prose_section_has_no_grid():
     body = "A sentence, a second sentence, and no table at all."
     section = parse_blocks(artefact(page(body))).sections[0]
     assert artefact_grid_for(section) is None
+
+
+# --------------------------------------------------------------------------------------
+# D77: the shape the reader draws. Four fields in the header, each reviewed data — a row
+# without a `Step` prefix is a hint, not a rule, so the fork and the titles are written.
+# --------------------------------------------------------------------------------------
+
+
+PROCESS = """<!-- table
+cols: Key steps | Resource documents | Fee
+{fields}-->
+<!-- row: Step 1 -->
+<!-- cell -->
+Step 1
+
+Get together.
+<!-- cell -->
+IFOAM PGS tool kit
+<!-- cell -->
+R500
+<!-- row: Step 2 -->
+<!-- cell -->
+Step 2
+
+Agree and establish.
+<!-- cell -->
+Farmer/consumer pledge example
+<!-- cell -->
+<!-- row: Step 3 -->
+<!-- cell -->
+Step 3
+
+Visit and certify.
+<!-- cell -->
+Farm visit assessment form
+<!-- cell -->
+R350
+<!-- /table -->"""
+
+
+def process_table(fields: str = "") -> str:
+    return PROCESS.format(fields=fields)
+
+
+def test_a_table_with_no_layout_field_is_a_grid():
+    """Backward compatibility, and the reason it is a default rather than a required field."""
+    grid = artefact_grid_for(parse_blocks(artefact(page(TABLE))).sections[0])
+    assert grid.layout == "grid"
+    assert grid.branch is None
+    assert grid.titles == ()
+    assert grid.fee_labels == ()
+
+
+def test_a_process_table_declares_its_layout_and_keeps_its_cells():
+    section = parse_blocks(artefact(page(process_table("layout: process\n")))).sections[0]
+    grid = artefact_grid_for(section)
+    assert grid.layout == "process"
+    assert len(grid.rows) == 3, "the cards are the rows; the layout changes no cell"
+    assert grid.rows[0][0].startswith("Step 1"), grid.rows[0][0]
+
+
+def test_the_titles_are_one_per_row_and_ride_beside_the_rows():
+    fields = "layout: process\ntitle: Get together | Agree and establish | Visit and certify\n"
+    grid = artefact_grid_for(parse_blocks(artefact(page(process_table(fields)))).sections[0])
+    assert grid.titles == ("Get together", "Agree and establish", "Visit and certify")
+    assert grid.rows[0][0].split("\n")[0] == "Step 1", "the printed label is untouched by a title"
+
+
+def test_a_branch_names_the_row_where_the_remaining_rows_become_an_alternative_path():
+    fields = "layout: process\nbranch: 2\n"
+    grid = artefact_grid_for(parse_blocks(artefact(page(process_table(fields)))).sections[0])
+    assert grid.branch == 2, "0-based, as the format says: row index 2 is the third row"
+
+
+def test_a_branch_may_name_its_row_by_the_label_instead_of_its_index():
+    """The index is a position; the label is what the reviewer reading the paper writes."""
+    fields = "layout: process\nbranch: Step 3\n"
+    grid = artefact_grid_for(parse_blocks(artefact(page(process_table(fields)))).sections[0])
+    assert grid.branch == 2
+
+
+def test_the_fee_labels_are_one_per_fee_box():
+    fields = "layout: process\nfee_label: Steps 1–2 | Step 3\n"
+    grid = artefact_grid_for(parse_blocks(artefact(page(process_table(fields)))).sections[0])
+    assert grid.fee_labels == ("Steps 1–2", "Step 3"), (
+        "the reviewer's own words; the renderer must not invent `joining`/`certification`"
+    )
+
+
+def test_the_new_header_fields_are_structure_and_not_text():
+    fields = (
+        "layout: process\nbranch: Step 3\ntitle: A | B | C\nfee_label: One | Two\n"
+    )
+    section = parse_blocks(artefact(page(process_table(fields)))).sections[0]
+    for value in ("layout:", "branch:", "title:", "fee_label:"):
+        assert value not in section.text, value
+
+
+def test_an_unknown_layout_value_is_an_error():
+    """A shape nobody drew would render as whatever the template's `else` branch guesses."""
+    with pytest.raises(CorpusFormatError, match="layout.*cards"):
+        parse_blocks(artefact(page(process_table("layout: cards\n"))))
+
+
+def test_a_branch_index_past_the_last_row_is_an_error():
+    with pytest.raises(CorpusFormatError, match="branch"):
+        parse_blocks(artefact(page(process_table("layout: process\nbranch: 7\n"))))
+
+
+def test_a_branch_label_that_names_no_row_is_an_error():
+    with pytest.raises(CorpusFormatError, match="branch"):
+        parse_blocks(artefact(page(process_table("layout: process\nbranch: Step 9\n"))))
+
+
+def test_a_branch_at_the_last_row_is_an_error():
+    """A fork whose alternative path has no row is a split with nothing on one side."""
+    with pytest.raises(CorpusFormatError, match="branch"):
+        parse_blocks(artefact(page(process_table("layout: process\nbranch: 3\n"))))
+
+
+def test_a_title_list_of_the_wrong_length_is_an_error():
+    with pytest.raises(CorpusFormatError, match="title"):
+        parse_blocks(artefact(page(process_table("layout: process\ntitle: A | B\n"))))
+
+
+def test_an_empty_title_is_an_error():
+    with pytest.raises(CorpusFormatError, match="title"):
+        parse_blocks(artefact(page(process_table("layout: process\ntitle: A |  | C\n"))))
+
+
+def test_an_empty_fee_label_is_an_error():
+    with pytest.raises(CorpusFormatError, match="fee_label"):
+        parse_blocks(artefact(page(process_table("layout: process\nfee_label: Steps 1–2 |\n"))))
+
+
+def test_the_alignment_carries_the_position_of_the_split():
+    """The renderer stacks the paths in one column, so it needs the passage, not the row index."""
+    fields = "layout: process\nbranch: 2\n"
+    section = parse_blocks(artefact(page(process_table(fields)))).sections[0]
+    grid = artefact_grid_for(section)
+    texts = (
+        "Step 1\n\nGet together.\nIFOAM PGS tool kit\nR500",
+        "Step 2\n\nAgree and establish.\nFarmer/consumer pledge example\n",
+        "Step 3\n\nVisit and certify.\nFarm visit assessment form\nR350",
+    )
+    alignment = align_artefact_grid(grid, texts)
+    assert alignment.positions == (0, 1, 2)
+    assert alignment.split == 2, "the third row's passage is where the alternative path begins"
+
+
+def test_a_disagreeing_corpus_has_no_split_either():
+    fields = "layout: process\nbranch: 2\n"
+    section = parse_blocks(artefact(page(process_table(fields)))).sections[0]
+    grid = artefact_grid_for(section)
+    assert align_artefact_grid(grid, ("Step 1\n\nGet together.\nIFOAM PGS tool kit\nR50O",)) is None

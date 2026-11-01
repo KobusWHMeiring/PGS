@@ -162,11 +162,28 @@ class ParsedTableRow:
 
 @dataclass(frozen=True)
 class ParsedTable:
-    """A reviewed table: its printed column labels, its rows, and its legend."""
+    """A reviewed table: its printed column labels, its rows, and its legend.
+
+    The four D77 fields travel here because they are **reviewed data**, not inference: a row
+    without a `Step` prefix is a hint, not a rule, so the reviewer writes where the rows fork and
+    what each step is called. `layout` says which shape the reader draws; a table that declares
+    none is a grid, which is what every table was before D77.
+    """
 
     columns: tuple[str, ...]
     rows: tuple[ParsedTableRow, ...]
     legend: str = ""
+    #: `process` (cards) or `grid` (a spreadsheet). See `TABLE_LAYOUTS`.
+    layout: str = "grid"
+    #: The row index at which the remaining rows become an **alternative path**, or None for a
+    #: linear table. Normalised to a 0-based index by the parser, whichever way it was written.
+    branch: int | None = None
+    #: One reviewer title per row, in row order, or empty. The paper prints `Step 1`; the title is
+    #: what makes the card scannable, and it is reviewed data for that reason.
+    titles: tuple[str, ...] = ()
+    #: One heading per fee box, in printed order, or empty. Never `joining`/`certification`
+    #: unless the reviewer wrote it — the paper does not print those words (D72.2).
+    fee_labels: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

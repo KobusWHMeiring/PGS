@@ -290,3 +290,58 @@ def test_the_colophon_carries_the_funders_and_the_copyright(document):
     assert "Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ)" in body
     assert "© PGS South Africa/South African Organic Sector Organisation (SAOSO), 2021" in body
     assert "These organisations are not responsible for the content nor the accuracy" in body
+
+
+# --- 6. The shape the review chose (D77, §12f) ------------------------------
+#
+# These four fields are the reviewer's, and they are the reason the renderer infers nothing:
+# a row without a `Step` prefix is a hint, not a rule, so where the rows fork and what each
+# step is called are written down. Pinned here because they are *decisions*, not defaults —
+# the reader cannot tell a missing title from a forgotten one.
+
+
+def _tables(document):
+    return [section for section in document.sections if section.tables]
+
+
+def test_each_table_declares_the_shape_the_owner_chose(document):
+    """D77 E: the two processes are cards, the comparison is a spreadsheet."""
+    shapes = {
+        section.heading_path: section.tables[0].layout for section in _tables(document)
+    }
+    assert shapes == {
+        "ESTABLISHING A PGS GROUP": "process",
+        "PGS SEALS AND THEIR USE": "grid",
+        "SAOSO ORGANIC CERTIFICATION": "process",
+    }
+
+
+def test_the_saoso_fork_is_the_row_where_the_paper_stops_printing_steps(document):
+    """Not inferred from the missing `Step 3`: the reviewer marked it, and here is which row."""
+    table = next(
+        section.tables[0]
+        for section in _tables(document)
+        if section.tables[0].branch is not None
+    )
+    assert table.branch == 2, "0-based, as the format says: the third row"
+    assert table.rows[table.branch].label.startswith("For farmers wanting direct")
+    assert all(row.label.startswith("Step") for row in table.rows[: table.branch])
+
+
+def test_the_step_titles_are_the_ones_the_owner_picked(document):
+    table = next(
+        section.tables[0]
+        for section in _tables(document)
+        if section.heading_path == "ESTABLISHING A PGS GROUP"
+    )
+    assert table.titles == ("Get together", "Agree and establish", "Visit and certify")
+    assert len(table.titles) == len(table.rows), "one per row, or the cards shift"
+
+
+def test_the_fee_labels_name_no_route_the_paper_does_not_name(document):
+    """D72.2: the paper prints `Fee`. `joining` and `certification` are not its words."""
+    labels = [label for section in _tables(document) for label in section.tables[0].fee_labels]
+    assert labels == ["Steps 1–2", "Step 3"]
+    for label in labels:
+        lowered = label.lower()
+        assert "joining" not in lowered and "certification" not in lowered, label

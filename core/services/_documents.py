@@ -337,21 +337,39 @@ class ReaderGridRow:
     #: True when this row starts on a different printed page from the row above — a table that
     #: crosses a page break (Step 3 is on p5) says so once.
     show_page: bool = True
+    #: D77: the row's printed label (`Step 1`), or its first cell where the paper prints no
+    #: number. The card's heading, when the reviewer wrote no title.
+    label: str = ""
+    #: D77: the reviewer's title for this row (`Get together`), or "" — the card then prints the
+    #: label alone. Derived from the artefact, never from the row's words.
+    title: str = ""
+    #: D77: True when this row is an **alternative path** rather than a step — the rows from the
+    #: reviewer's `branch:` onward. The template stacks these in the last column, dashed, with an
+    #: `or` between them.
+    is_path: bool = False
 
 
 @dataclass(frozen=True)
 class ReaderGrid:
-    """The printed grid for a reviewed artefact table (D72.3).
+    """The printed grid for a reviewed artefact table (D72.3, D77).
 
     `first_anchor` is where the template draws it: the first row's passage. Prose before and after
     the rows is rendered as ordinary passages, so the grid lands between them without the template
     tracking a cursor.
+
+    `layout` says which shape: `grid` is one `<table>` (the seals comparison, D76), `process` is a
+    card per step with its facets (D77). Both shapes read the same rows — only the markup differs.
     """
 
     columns: tuple[str, ...]
     legend: str
     first_anchor: str
     rows: tuple[ReaderGridRow, ...]
+    #: `grid` or `process`, from the artefact's own `layout:` field.
+    layout: str = "grid"
+    #: One heading per fee box, in printed order, or empty — the reviewer's words (`Steps 1–2`),
+    #: never a label the renderer invented (D72.2).
+    fee_labels: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -464,13 +482,19 @@ def _artefact_grid(
 
     rows: list[ReaderGridRow] = []
     previous_page: int | None = None
-    for position, cells in zip(positions, grid.rows):
+    for index, (position, cells) in enumerate(zip(positions.positions, grid.rows)):
         page = pages[position]
         rows.append(
             ReaderGridRow(
                 anchor=anchors[position],
                 page=page,
                 show_page=page != previous_page,
+                label=grid.labels[index] if index < len(grid.labels) else "",
+                title=grid.title_for(index),
+                # The split is a *passage*, so a branch row is one whose passage is at or after
+                # it — which is the same thing as `index >= grid.branch`, said in the terms the
+                # corpus agreed to.
+                is_path=positions.split is not None and position >= positions.split,
                 cells=tuple(
                     (column, passage_blocks(cell_text))
                     for column, cell_text in zip(grid.columns, cells)
@@ -482,10 +506,12 @@ def _artefact_grid(
         ReaderGrid(
             columns=grid.columns,
             legend=grid.legend,
-            first_anchor=anchors[positions[0]],
+            layout=grid.layout,
+            fee_labels=grid.fee_labels,
+            first_anchor=anchors[positions.positions[0]],
             rows=tuple(rows),
         ),
-        set(positions),
+        set(positions.positions),
     )
 
 

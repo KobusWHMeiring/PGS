@@ -185,3 +185,52 @@ def test_a_source_file_maps_to_its_doc_key():
     assert doc_key_for(SOURCE) == "landscape"
     assert doc_key_for("pgs_docs/not-a-governed-document.pdf") is None
     assert doc_key_for(None) is None
+
+
+# --- D77: the shape the artefact declares, carried to the reader ------------
+
+
+def grid_for(landscape, section: str):
+    """The reader's grid for a branch, from the service — the shape the template will draw."""
+    from core.services._documents import reader_for
+
+    grid = reader_for(landscape, section=section).grid
+    assert grid is not None, f"{section} is a reviewed artefact table"
+    return grid
+
+
+def test_the_establishing_table_asks_for_the_process_shape(landscape):
+    """D77 E+C3: three cards, each with the reviewer's title, one fee box per reviewed label."""
+    grid = grid_for(landscape, "establishing-a-pgs-group")
+
+    assert grid.layout == "process"
+    assert [row.label for row in grid.rows] == ["Step 1", "Step 2", "Step 3"]
+    assert [row.title for row in grid.rows] == [
+        "Get together",
+        "Agree and establish",
+        "Visit and certify",
+    ]
+    assert not any(row.is_path for row in grid.rows), "three steps in a row: there is no fork"
+    assert grid.fee_labels == ("Steps 1–2", "Step 3"), (
+        "the reviewer's words — the paper does not print 'joining' or 'certification'"
+    )
+
+def test_the_saoso_table_splits_after_step_2(landscape):
+    """The direct route is an alternative path, not a fourth step (D77, §12f item 4)."""
+    grid = grid_for(landscape, "saoso-organic-certification")
+
+    assert grid.layout == "process"
+    assert [row.is_path for row in grid.rows] == [False, False, True]
+    assert grid.rows[2].label == "For farmers wanting direct 3rd party certification"
+    assert grid.rows[2].title == "", "the fourth field is optional; the label is the fallback"
+    assert grid.fee_labels == (), (
+        "SAOSO states a fee per row, so no fee box is merged and no label is needed"
+    )
+
+
+def test_the_seals_table_asks_for_the_grid_shape(landscape):
+    grid = grid_for(landscape, "pgs-seals-and-their-use")
+
+    assert grid.layout == "grid"
+    assert [row.label for row in grid.rows] == ["PGS Organic In-Conversion", "PGS Organic"]
+    assert not any(row.is_path for row in grid.rows), "a comparison has no fork"

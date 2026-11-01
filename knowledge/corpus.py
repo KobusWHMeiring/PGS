@@ -108,8 +108,16 @@ TABLE_OPEN = re.compile(r"^<!--\s*table\s*$")
 TABLE_CLOSE = re.compile(r"^<!--\s*/table\s*-->\s*$")
 
 #: A field inside a `<!-- table` header. `cols` is required (`|`-separated); `legend` is the
-#: reviewed note the reader prints above the grid.
-TABLE_FIELD = re.compile(r"^\s*(cols|legend):\s*(.*?)\s*$")
+#: reviewed note the reader prints above the grid; the other four are D77's shape fields —
+#: `layout` (which shape), `branch` (where the rows fork), `title` (one per row) and `fee_label`
+#: (one per fee box). Every one is reviewed data: the renderer infers none of them.
+TABLE_FIELD = re.compile(
+    r"^\s*(cols|legend|layout|branch|title|fee_label):\s*(.*?)\s*$"
+)
+
+#: The shapes the reader can draw (D77). `grid` is the default so every table written before D77
+#: keeps the shape it had; `process` is the cards.
+TABLE_LAYOUTS = ("grid", "process")
 
 #: `<!-- corpus` … `-->` at the top of the file.
 HEADER_OPEN = re.compile(r"^<!--\s*corpus\s*$")
@@ -179,6 +187,46 @@ def row_divider(value: str):
     if words and words[-1].lower() in ("part", "qualifier"):
         return TableRowDivider(" ".join(words[:-1]), words[-1].lower())
     return TableRowDivider(value.strip(), "qualifier")
+
+
+def branch_row(value: str, rows: list[dict], where: int) -> int:
+    """In: a `branch:` field, the table's raw rows, and the line. Out: a 0-based row index.
+
+    Why two spellings: the reviewer reading the paper writes the row's **label** (`branch: Step
+    3`), and the artefact format's own vocabulary is the **index** (`branch: 2`). Both resolve to
+    the same thing here, so nothing downstream has to know which was typed.
+
+    Refuses an index past the last row and a label that names no row. Silence is the failure this
+    guards against: a fork pointing at nothing renders a linear table that looks like it has an
+    alternative path, and the two paths would be the same path.
+    """
+    count = len(rows)
+    wanted = value.strip()
+    if wanted.isdigit():
+        index = int(wanted)
+        if index >= count:
+            raise CorpusFormatError(
+                f"line {where}: `branch: {wanted}` names row {index} of a {count}-row table "
+                "(the index is 0-based). The alternative path would start past the last row, "
+                "so no row would be one."
+            )
+        return index
+    index = next(
+        (
+            position
+            for position, row in enumerate(rows)
+            if row["label"].strip().casefold() == wanted.casefold()
+        ),
+        -1,
+    )
+    if index < 0:
+        labels = ", ".join(repr(row["label"]) for row in rows)
+        raise CorpusFormatError(
+            f"line {where}: `branch: {wanted}` names no row of this table. Its rows are "
+            f"{labels}, and a fork that points at none of them would render as two paths that "
+            "are the same path."
+        )
+    return index
 
 #: `DocumentChunk.anchor` is a `CharField(max_length=128)`. A clause heading can be a whole
 #: sentence, so its slug overruns the column (the SAOSO artefact's first ingest failed with
@@ -406,6 +454,17 @@ def parse_blocks(text: str) -> CorpusDocument:
                 "qualifies the row beneath it, and there is none — the label would silently "
                 "vanish."
             )
+        fields = table["fields"]
+        rows = table["rows"]
+        if "branch" in fields:
+            table["branch"] = branch_row(fields["branch"], rows, where)
+        titles = fields.get("title", ())
+        if titles and len(titles) != len(rows):
+            raise CorpusFormatError(
+                f"line {where}: `title:` names {len(titles)} titles for {len(rows)} rows. "
+                "Titles are `|`-separated, one per row in printed order, or omitted entirely — "
+                "a short list would silently shift every title onto the row above."
+            )
         current["tables"].append(dict(table))
         table = None
 
@@ -482,6 +541,10 @@ def parse_blocks(text: str) -> CorpusDocument:
             ParsedTable(
                 columns=raw["columns"],
                 legend=raw["fields"].get("legend", ""),
+                layout=raw["fields"].get("layout", "grid"),
+                branch=raw.get("branch"),
+                titles=raw["fields"].get("title", ()),
+                fee_labels=raw["fields"].get("fee_label", ()),
                 rows=tuple(
                     ParsedTableRow(
                         cells=tuple(cell_of(cell) for cell in row["cells"]),
@@ -538,8 +601,8 @@ def parse_blocks(text: str) -> CorpusDocument:
             field = TABLE_FIELD.match(line)
             if not field:
                 raise CorpusFormatError(
-                    f"line {index}: a table header line that is not `cols: …`, `legend: …` or "
-                    f"`-->`: {line!r}"
+                    f"line {index}: a table header line that is not one of `cols:`, `legend:`, "
+                    f"`layout:`, `branch:`, `title:`, `fee_label:` or `-->`: {line!r}"
                 )
             key = field.group(1)
             if key in table["fields"]:
@@ -555,7 +618,26 @@ def parse_blocks(text: str) -> CorpusDocument:
                         "Columns are `|`-separated, and a blank one would make every cell "
                         "beneath it unlabelled."
                     )
+            elif key == "layout":
+                value = field.group(2)
+                if value not in TABLE_LAYOUTS:
+                    raise CorpusFormatError(
+                        f"line {index}: `layout: {value}` is not a shape the reader draws. "
+                        f"Use one of: {', '.join(TABLE_LAYOUTS)}. An unknown shape would "
+                        "render as whatever the template's fallback branch guessed."
+                    )
+            elif key in ("title", "fee_label"):
+                value = tuple(part.strip() for part in field.group(2).split("|"))
+                if not all(value):
+                    raise CorpusFormatError(
+                        f"line {index}: `{key}:` has an empty entry: {field.group(2)!r}. "
+                        f"The entries are `|`-separated, one per "
+                        f"{'row' if key == 'title' else 'fee box'}, and a blank one would "
+                        "render a heading with no words in it."
+                    )
             else:
+                # `legend` and `branch`. `branch` is resolved when the table closes, because
+                # until then there are no rows for it to point at.
                 value = field.group(2)
             table["fields"][key] = value
             continue
