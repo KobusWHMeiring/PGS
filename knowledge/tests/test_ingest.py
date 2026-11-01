@@ -716,6 +716,45 @@ def test_ingesting_from_the_artefact_uses_its_sections(standard_set):
     assert DocumentChunk.objects.filter(anchor="general-principles").exists()
 
 
+LANDSCAPE_ARTEFACT = REPO_ROOT / "knowledge" / "corpus" / "landscape.md"
+
+
+def test_the_landscape_page_exclusion_has_no_reach_into_the_ingest(
+    standard_set, monkeypatch
+):
+    """D72.7 verified as "reading order restored, nothing more" — the ingest half.
+
+    `PAGE_LAYOUT_EXCLUSIONS["landscape"] = {4:…, 5:…, 6:…, 7:…, 8:…}` is a statement about how
+    the **artefact was authored**, not about how the corpus is read: an artefact ingest parses
+    the reviewed sections and touches the PDF only for the printed table of contents, so the
+    column transform never runs. Proved by making it explode rather than by reading the code —
+    the day someone routes artefact documents through `apply_layout`, the exclusion starts
+    changing what ships and this test says so.
+    """
+
+    def bomb(*args, **kwargs):  # pragma: no cover - only runs when the guard fires
+        raise AssertionError(
+            "apply_layout ran during an artefact ingest: the landscape's page exclusion is "
+            "no longer inert (LANDSCAPE_TABLES_PRD §5.7)"
+        )
+
+    monkeypatch.setattr("knowledge.ingest.apply_layout", bomb)
+
+    report = ingest_standard(
+        pdf_path=PDFS["landscape"],
+        standard_set=standard_set,
+        doc_key="landscape",
+        embed=False,
+        corpus_path=LANDSCAPE_ARTEFACT,
+    )
+
+    assert report.created is True
+    assert report.chunk_count == 17, "the reviewed artefact's measured count"
+    assert report.layout_pages == () and report.reflow_pages == (), (
+        "nothing is transformed at ingest when the text is reviewed data"
+    )
+
+
 def test_an_artefact_ingest_records_the_digest_on_the_document(standard_set):
     """The report is for the operator; the *row* is what a deploy can compare (D56).
 

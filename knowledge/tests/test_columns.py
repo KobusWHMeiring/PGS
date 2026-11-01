@@ -25,6 +25,8 @@ from knowledge.columns import (
     column_bands,
     de_column,
 )
+from knowledge.corpus import load_document
+from knowledge.tables import artefact_grid_for
 
 # --- 1. The synthetic contract ----------------------------------------------
 
@@ -293,3 +295,63 @@ def test_every_detected_page_is_either_transformed_or_excluded(corpus):
             excluded = number in PAGE_LAYOUT_EXCLUSIONS.get(doc_key, {})
             transformed = number in EXPECTED_TRANSFORMED_PAGES[doc_key]
             assert excluded or transformed, f"{doc_key} pdf {number} is unaccounted for"
+
+
+# --- 3. D72.7 / §5.7: the landscape's exclusion, re-measured -----------------
+#
+# `LANDSCAPE_TABLES_PRD` §5.7 made a claim at design time: excluding the landscape's five
+# table pages stops the column reordering and does **nothing else** — it is not the fix.
+# These three assertions re-measure that claim against the shipped state, because a claim
+# about what a piece of data does not do is exactly the kind that quietly stops being true.
+
+LANDSCAPE_ARTEFACT = (
+    Path(__file__).resolve().parents[2] / "knowledge" / "corpus" / "landscape.md"
+)
+LANDSCAPE_TABLE_PAGES = range(4, 9)
+
+
+def test_the_landscape_exclusion_restores_reading_order(corpus):
+    """The 'reading order restored' half: p4-8 are column-laid-out, and the exclusion keeps them.
+
+    The first loop is the guard on the guard: if a future extractor stops detecting columns
+    on those pages, the exclusion becomes inert and this test would otherwise pass while
+    measuring nothing.
+    """
+    pages = corpus["landscape"]
+    for number in LANDSCAPE_TABLE_PAGES:
+        assert de_column(pages[number - 1]) != pages[number - 1], (
+            f"landscape pdf {number} is no longer column-laid-out: the exclusion is inert "
+            "and this test is measuring nothing"
+        )
+
+    fixed, changed = apply_layout(pages, doc_key="landscape")
+    assert set(changed) == {2, 3, 9}
+    for number in LANDSCAPE_TABLE_PAGES:
+        assert fixed[number - 1] == pages[number - 1], (
+            f"landscape pdf {number} must keep its printed line order"
+        )
+
+
+def test_the_landscape_exclusion_is_not_what_made_a_cell_quotable(corpus):
+    """The 'nothing more' half: a reviewed cell is still not a run of the excluded page.
+
+    Excluding a page leaves its lines in printed order; it does not join a row's five columns,
+    so the Step 1 cell the reader complained about cannot be quoted off the page. That is the
+    measurement that makes the rows reviewed data — and it is why the exclusion must never be
+    credited with the fix.
+    """
+    document = load_document(LANDSCAPE_ARTEFACT)
+    section = next(
+        section
+        for section in document.sections
+        if section.heading_path == "ESTABLISHING A PGS GROUP"
+    )
+    grid = artefact_grid_for(section)
+    assert grid is not None, "the branch must still be a reviewed table"
+
+    cell = flat(grid.rows[0][0])
+    page_text = flat(corpus["landscape"][3])  # pdf 4: the page the reader reported
+    assert cell not in page_text, (
+        "the Step 1 cell reads contiguously off the excluded page, so the exclusion is doing "
+        "more than restoring reading order — re-open §5.7 before believing that"
+    )
