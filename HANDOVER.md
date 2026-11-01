@@ -14,10 +14,16 @@
 >   column, one type size (14 px, 12 px compact), pointer + keyboard resizing, Compact and Reset,
 >   widths persisted per `pgs.reader.<doc_key>.<section anchor>`.
 >
-> **What is not done, and is now the whole of the slice:**
+> **Step 7 is half done, and the half that is left is a signature.** `tests/uat/landscape_tables_uat.md`
+> is drafted (six judgement scenarios), presented as `product/design/uat/landscape_tables.html`, and
+> **unsigned** — so the PRD stays in `In Progress/`, because the directory is the truth. §5.7 is
+> **verified** (`e7a331a`): the page exclusion never reaches the ingest, and the Step 1 cell is still
+> not quotable off the excluded page, which is the "nothing more" half of the claim.
 >
-> 1. **Step 7** — the `tests/uat/` fee scenario, the backlog move, and §5.7 verified as "reading
->    order restored, nothing more".
+> **What is not done:**
+>
+> 1. **The sign-off, then the move** — `scripts/uat_signoff.py`, the PRD to `Done/` with its
+>    `Status:` rewritten, `python product/backlog.py --apply`.
 > 2. **`TABLE_BANDS`** — a transposition *inside* one printed row-line is still unpinned.
 > 3. **The corpus-level table-page guard** — still needs a cross-document definition of
 >    "table-shaped".

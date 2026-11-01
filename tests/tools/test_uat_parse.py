@@ -295,6 +295,25 @@ def test_the_real_mvp0_uat_still_has_nine_applicable_scenarios():
     assert all(s.judgement for s in uat.applicable)
 
 
+def test_the_landscape_tables_uat_is_six_judged_scenarios_and_no_less():
+    """Pinned like the other real files: a scenario that vanishes is a promise that shrank.
+
+    Six is what this slice asks a reviewer to judge — the fee answer, the fold, the fork, the
+    spreadsheet, a real phone, and the words the pages refuse to use. Scenario 2 carries a
+    decision (`§12f` item 3: fold *Use of seals* too if the cards are too tall), which is why
+    it must not be quietly dropped.
+    """
+    from .conftest import REPO_ROOT
+
+    uat = parse_uat(REPO_ROOT / "tests/uat/landscape_tables_uat.md")
+
+    assert uat.slug == "landscape_tables"
+    assert [s.number for s in uat.scenarios] == [1, 2, 3, 4, 5, 6]
+    assert all(s.judgement for s in uat.scenarios)
+    assert all(s.steps for s in uat.scenarios), "each scene must say what to do"
+    assert scan_applicability(uat, {}) == []
+
+
 def test_every_real_mvp1a_scenario_carries_a_judgement():
     """1a is not buildable yet, and its UAT is still held to the gate."""
     from .conftest import REPO_ROOT

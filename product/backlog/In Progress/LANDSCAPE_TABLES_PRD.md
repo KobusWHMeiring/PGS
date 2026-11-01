@@ -552,12 +552,10 @@ existed because the rows were going to live in Python; §5.2a retires it.
 - [x] "what does it cost to join a PGS group?" is quotable from one chunk, verbatim, and passes
       `audit_citations` — **proved on the artefact 2026-10-30**
       (`test_the_landscape_fee_is_quotable_from_its_reviewed_row`)
-- [ ] the reader shows the tables as the product owner decided — **the fit is built (§12e), the
-      display model is decided and not yet built (D77, §12f).** The interim reader renders the
-      fixed grid with a sticky first column and a stacked phone layout. The settled shape is C3
-      (cards, Resources/Seals folded, the split in column three) for the process tables and the
-      resizable spreadsheet for the seals comparison. **Build §12f.3's work order; then tick this
-      box and sign the UAT.**
+- [x] the reader shows the tables as the product owner decided — **built 2026-11-01** (§12g):
+      C3 cards with Resources/Seals folded and the join in column three for the two process tables,
+      the resizable spreadsheet for the seals comparison. Asserted by
+      `core/tests/test_document_reader_grid.py` and `tests/e2e/test_reader_layout.py`.
 - [ ] the corpus-level guard fails on a newly-added uncurated table page — **open**: it needs a
       cross-document definition of "table-shaped page", and the landscape's pages are the only ones
       curated so far
@@ -567,7 +565,11 @@ existed because the rows were going to live in Python; §5.2a retires it.
       now names both storages (Python literals and the artefact block) and which appendices remain
       uncurated
 - [ ] UAT scenario signed; backlog moved; `PGS_PLATFORM_SPEC.md` §4.5 updated — **§4.5 updated
-      2026-10-30**; the `tests/uat/` fee scenario and the sign-off are **step 7**
+      2026-10-30 and again 2026-11-01**. `tests/uat/landscape_tables_uat.md` is **drafted**
+      (6 scenarios, presented as `product/design/uat/landscape_tables.html`) and **unsigned**, so
+      this file stays in `In Progress/` — the directory is the truth. On sign-off:
+      `python scripts/uat_signoff.py --file tests/uat/landscape_tables_uat.md …`, then move this
+      PRD to `Done/` with its `Status:` line rewritten, then `python product/backlog.py --apply`.
 
 ---
 
@@ -1089,8 +1091,15 @@ The last one exists because **a missing title and a forgotten one look identical
 
 ### 12g.5 What is still open
 
-- **Step 7** — the `tests/uat/` fee scenario, the backlog move, and §5.7 verified as "reading order
-  restored, nothing more".
+- **Step 7** — **the UAT is drafted and unsigned** (`tests/uat/landscape_tables_uat.md`, six
+  scenarios, presented in `product/design/uat/landscape_tables.html`), and **§5.7 is verified**
+  (below). The sign-off and the backlog move are what remain.
+- **§5.7, verified 2026-11-01, not repeated.** Two guards now hold the claim that the page exclusion
+  is "reading order restored, nothing more": `test_the_landscape_page_exclusion_has_no_reach_into_the_ingest`
+  (`apply_layout` is made to explode during a landscape artefact ingest, and it does not run) and, in
+  `test_columns.py`, the measured pair — p4–8 are column-laid-out and the exclusion leaves them
+  byte-identical, while the Step 1 cell is still **not** a contiguous run of that page. The
+  exclusion therefore cannot be credited with the fix, which is the whole point of the claim.
 - **`TABLE_BANDS`** — a transposition *inside* one printed row-line is still unpinned.
 - **The corpus-level table-page guard** — still needs a cross-document definition of "table-shaped".
 - **`scripts/build_corpus.py --force --doc landscape` still destroys the review.** The generator has
