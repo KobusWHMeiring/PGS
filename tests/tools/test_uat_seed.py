@@ -25,12 +25,13 @@ pytestmark = pytest.mark.django_db
 def test_the_expected_counts_are_pinned():
     """If the corpus changes, this test should be the thing that says so.
 
-    394 = SAOSO 338 + OPP 30 + BPP 9 + landscape 17 — SAOSO and landscape both built from
-    their reviewed artefacts, OPP still parsed from its PDF (P4). Eight published documents is
-    C2's list (D22). This constant read 385 until 2026-11-01; the two documents that moved are
-    named in `core/services/_uat.py`.
+    401 = SAOSO 338 + OPP 37 + BPP 9 + landscape 17 — all four built from their reviewed
+    artefacts since P4 landed the OPP's on 2026-11-01 (30 → 37: §2.3's one chunk became a
+    lead-in, six reviewed bands and the notes under the table). Eight published documents is
+    C2's list (D22). This constant read 385 until 2026-11-01; every document that has moved
+    is named in `core/services/_uat.py`.
     """
-    assert EXPECTED_CHUNKS == 394
+    assert EXPECTED_CHUNKS == 401
     assert EXPECTED_DOCUMENTS == 8
 
 
@@ -64,7 +65,7 @@ def test_an_empty_corpus_is_a_blocking_failure(monkeypatch):
 
     corpus = next(row for row in report.rows if row.name == "corpus present")
     assert corpus.observed == "0 chunks"
-    assert corpus.expected == "394 chunks"
+    assert corpus.expected == "401 chunks"
     assert corpus.ok is False
     assert corpus.blocking is True
     assert report.is_ready is False

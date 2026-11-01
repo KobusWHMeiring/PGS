@@ -163,7 +163,17 @@ def _prose_chunks(section, start: int, end: int) -> list[Chunk]:
 
     Offsets are shifted back into the owning section so `source_start` keeps meaning "where
     this chunk sits in the section" — the offsets are the only evidence that nothing was lost.
+    Leading whitespace is skipped rather than kept: a segment that starts at a row's end starts
+    with the newline that ended that row, and a chunk whose first line is blank is noise in the
+    reader and in the prompt.
     """
+    # A segment that begins at a row's end begins with the newline that ended the row, so the
+    # chunk would start with a blank line — shown by the reader and read by the model as an
+    # empty first line. Measured 2026-11-01 on the OPP's §2.3, whose notes under the sliding
+    # scale are the sentences that qualify every amount above them. The offsets move with the
+    # text, so `source_start` still says exactly where the slice sits.
+    while start < end and section.text[start].isspace():
+        start += 1
     piece = section.text[start:end]
     if not piece.strip():
         return []

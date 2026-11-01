@@ -397,6 +397,18 @@ def test_the_prose_around_a_table_is_kept_and_ordered():
     assert any("R1 000" in text for text in texts), "the last row is last"
 
 
+def test_the_prose_after_a_table_does_not_start_with_a_blank_line():
+    """Measured 2026-11-01 on the OPP's §2.3: the notes under the scale began with a newline.
+
+    A chunk's first line is what the reader shows and what the model reads first, and a row's
+    end is the newline that closed it — so the slice has to skip whitespace, not keep it.
+    """
+    document = parse_blocks(artefact(two_row_section()))
+    chunks = chunks_for_sections(list(document.sections))
+    after = next(c for c in chunks if "Closing prose after the grid." in c.text)
+    assert not after.text.startswith(("\n", " ", "\t")), repr(after.text[:40])
+
+
 def test_a_table_section_with_no_lead_in_does_not_become_a_heading_only_chunk():
     """Measured 2026-10-30 on the landscape's `PGS SEALS AND THEIR USE` table.
 

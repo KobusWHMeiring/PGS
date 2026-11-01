@@ -31,7 +31,7 @@ from core.services._health import check_health
 from django.core.checks import run_checks
 from knowledge.models import DocumentChunk
 
-#: The shipped corpus: SAOSO 338 + OPP 30 + BPP 9 + landscape 17.
+#: The shipped corpus: SAOSO 338 + OPP 37 + BPP 9 + landscape 17.
 #:
 #: Deliberately a constant rather than a query: the point of the row is to compare against a
 #: number somebody decided, and a test pins it, so a corpus change shows up as a failing
@@ -39,9 +39,11 @@ from knowledge.models import DocumentChunk
 #: landscape 8 — and both moved for the same reason the numbers are worth having: the
 #: reviewed artefacts (`knowledge/corpus/*.md`) replaced what the PDF parser produced. SAOSO
 #: 319 → 338 with the 2026-10-30 refresh, landscape 8 → 17 as its tables became reviewed
-#: rows and its front matter entered the corpus. OPP (30) is still parsed from its PDF
-#: because it has no artefact yet (P4), so it is the one component that cannot be re-derived.
-EXPECTED_CHUNKS = 394
+#: rows and its front matter entered the corpus. **OPP 30 → 37 the same day**: P4 landed its
+#: artefact last, and §2.3's sliding scale became six reviewed bands — 30 as the PDF path
+#: produced them, plus a lead-in, six rows and the notes under the table (+7). With it, every
+#: governed document is now read from an artefact, so a refresh can re-derive all four.
+EXPECTED_CHUNKS = 401
 
 #: The eight documents C2 publishes (D22). "SOP's" is assumed to be the OPP (C1 §6 #6);
 #: if it turns out to be a ninth document, this number moves with the tuple.
