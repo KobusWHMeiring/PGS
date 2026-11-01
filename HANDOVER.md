@@ -1,66 +1,62 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the two shapes are built; what is left is step 7, and one guard
+> ## START HERE — the assistant answers the cost question, and the OPP's scale is a grid
 >
-> **The build landed (2026-11-01).** The reader now draws what the reviewed `<!-- table -->` block
-> asks for, so `LANDSCAPE_TABLES_PRD` §12f.3 steps 1–8 are done (`e6d7b17` + `e29a27b`):
+> **Two slices landed (2026-11-01, session 7).** Both were on the owner's list, in order.
 >
-> - **`layout: process`** → **C3 horizontal cards** for *Establishing a PGS group* and *SAOSO organic
->   certification*: the step body leads, Resources and Seals fold (`<details>`), *Use of seals* stays
->   visible, the merged Fee is a box under Steps 1–2 and Step 3's Fee under Step 3, and SAOSO's fork
->   is two **stacked path cards in the last column** with an `or` (Path A points at Step 2 and
->   repeats no fee).
-> - **`layout: grid`** → the seals comparison as a **resizable spreadsheet**: frozen header and first
->   column, one type size (14 px, 12 px compact), pointer + keyboard resizing, Compact and Reset,
->   widths persisted per `pgs.reader.<doc_key>.<section anchor>`.
+> 1. **G10's cost-question rule — built (D78, `PROMPT_VERSION` `d78-1`).** Reported by the owner:
+>    *"when I ask what the yearly cost is it only mentions the R100"*. Measured before: *"what is
+>    the yearly cost of membership"* answered with §2.1's R100 + R500 alone while §2.2, §2.3, §2.4
+>    and §2.5 were all among the eight passages supplied. A rule rendered **only for a cost
+>    question** now says: state every component the passages supply, say what they leave out,
+>    never present one component as the whole. It names **no section and no amount** — a rule that
+>    volunteered `§2.3` invites a citation retrieval did not supply, which the audit refuses.
+>    After: all four phrasings complete and grounded, and the default probe suite **9 of 9
+>    grounded**, so no other question lost its answer.
+> 2. **P4 — the OPP artefact, with §2.3 as a `layout: grid` table.** The reader-side half of the
+>    same report. `knowledge/corpus/opp.md` is the OPP's text of record, §2.3 is three printed
+>    columns and six reviewed bands (**OPP 30 → 37 chunks; corpus now 401**), and **all four
+>    governed documents are artefact-backed** — `corpus_check` says *current* for the first time.
+>    The conversion needed a **`<!-- sub: … -->` marker** in the corpus format: without it,
+>    `4.5(1)`, `4.5(2)(c)` and `4.5(4)` vanished (24 spans, now asserted). The reader needed two
+>    joins it had never needed — a numbered clause's reading anchor is its *reference*, not the
+>    artefact's heading slug, and a branch may hold several sections of which one has a table.
 >
-> **Step 7 is half done, and the half that is left is a signature.** `tests/uat/landscape_tables_uat.md`
-> is drafted (six judgement scenarios), presented as `product/design/uat/landscape_tables.html`, and
-> **unsigned** — so the PRD stays in `In Progress/`, because the directory is the truth. §5.7 is
-> **verified** (`e7a331a`): the page exclusion never reaches the ingest, and the Step 1 cell is still
-> not quotable off the excluded page, which is the "nothing more" half of the claim.
+> **G10's second finding is now LOCATED, and it is one space.** The refusal that hid for a session:
+> the model quoted `…set out in 1.o Currently R500`; the passage prints `1.` and `o Currently R500`
+> on two lines, and `flat()`-normalisation keeps a space where the model dropped one.
+> Whitespace-*removed*, the quote is an exact substring. **The audit was not changed** — G10 says
+> decide in §18.3 first, so both candidate answers are written into G10 and the choice is the
+> owner's. It is the third item below.
 >
-> **What is not done, in the order the owner asked for (2026-11-01):**
+> **What is left, in the owner's order:**
 >
-> 1. **The UAT sign-off, then the backlog move** — `tests/uat/landscape_tables_uat.md` is drafted
->    and presented; judge six scenarios at `/uat/?uat=landscape_tables`, then
->    `scripts/uat_signoff.py`, the PRD to `Done/` with its `Status:` rewritten, and
->    `python product/backlog.py --apply`. **Nothing else blocks it.**
-> 2. **A cost-question answer rule** — `/ask/` answers "what does it cost to join" completely and
->    "what is the yearly cost of membership" with the membership fee alone, because it answers the
->    question asked. When one citation of ten fails to verify, it refuses a correct answer. Both
->    measured, both in `CHAT_ANSWER_COVERAGE_PRD` **G10**; the shape to copy is C1f's published
->    "a floor, not a total".
-> 3. **P4 — the OPP artefact, with §2.3 as a `layout: grid` table** — the reader-side half of the
->    same report: the sliding scale is one 1,613-character PDF-parsed chunk whose columns are spaces,
->    so six turnover bands render as prose. **P4's own "blocked as written" note is stale** — the
->    inverted `keep` it names was fixed on 2026-10-30 (D75) — see its new status paragraph.
-> 2. **`TABLE_BANDS`** — a transposition *inside* one printed row-line is still unpinned.
-> 3. **The corpus-level table-page guard** — still needs a cross-document definition of
->    "table-shaped".
+> 1. **The landscape UAT sign-off** (`tests/uat/landscape_tables_uat.md`, presented at
+>    `product/design/uat/landscape_tables.html`; judge at `/uat/?uat=landscape_tables`, then
+>    `scripts/uat_signoff.py`, the PRD to `Done/`, `python product/backlog.py --apply`).
+>    **Nothing else blocks it** — unchanged from session 6.
+> 2. **G10's refusal decision.** Refuse the whole answer, or compare quotes whitespace-insensitively
+>    (`squash`, as the corpus traceability tests already do)? The finding, the exact strings and
+>    both options are in `CHAT_ANSWER_COVERAGE_PRD` G10; write the answer in §18.3 before changing
+>    behaviour.
+> 3. **P4's one open item** — pdf 11's §6.5 labelling table, still prose and still in
+>    `PAGE_LAYOUT_EXCLUSIONS`. Same mechanism, one more table block.
+> 4. **`TABLE_BANDS`** (a transposition *inside* one printed row-line) and the **corpus-level
+>    table-page guard** — both still unpinned, unchanged.
 >
-> **A re-ingest is wanted but is not urgent, and it is not free.** The artefact's header gained four
-> fields; the chunk text is byte-identical (17 chunks, same sha256), so the reader renders the new
-> shapes without one. `corpus_check` still says `landscape drift` because `CorpusDocument.digest`
-> is sha256 of the **file** — a header-only edit moves it. Run `corpus_refresh --apply` with
-> `relink_evidence` at step 7, not before: the dev box has carried bpp/saoso drift since it was
-> built from their PDFs, and a refresh rebuilds all three.
+> **Do not run `scripts/build_corpus.py --force` on a document with a table block.** The generator
+> has no table-block rule, so it replaces the review with the PDF's column soup and every guard
+> stays green (`testing_hazards.md` §3.25 — hit and repaired this session, on `opp.md`).
 >
-> **Read, in this order — nothing else:**
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12g** — what landed, the one judgement the design left
->    open and how it was closed, the three things the real rows taught, and the four guards.
-> 2. `product/design/DESIGN.md` **§7.13** — the component rules both shapes carry.
-> 3. `product/design/d76d_c3_and_the_split.html` — the design (C3, folded facets, the split).
+> **"corpus is current" does not mean "rebuilt".** `corpus_check` compares the artefact's file hash
+> and the chunk count, so a change to the *derivation* (chunker, a parser, `_prose_chunks`) needs
+> `ingest_standard --doc <x> --force` and `relink_evidence --apply`; the report will say current
+> while the box serves the old text (`testing_hazards.md` §3.24).
 >
-> **Do not run `scripts/build_corpus.py --force --doc landscape`.** The generator has no table-block
-> (or card) rule, so it would replace the review with the p4–8 column soup. Nothing this session
-> changed that.
->
-> **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
-> sit behind the same mechanism.
->
-> **The tree is clean**, 16 commits ahead of `origin/main`, and the live box is still `8d2839d` —
-> it does **not** have the landscape fix. See the repo-state block below.
+> **Deploy note:** the live box is still `8d2839d` and now misses **three** sessions. A deploy pulls
+> the artefacts but **never re-ingests**, so its corpus stays the old PDF-built one until someone
+> runs `corpus_refresh --apply` there deliberately — and the OPP's 30 → 37 is a corpus change, not
+> a code change.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
@@ -68,33 +64,136 @@ documents session, the chatbot session, the column session, the embedding sessio
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
 retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session,
-the landscape-artefact session, the display-model session and the shapes-build session
-**Repo state:** `main`, **16 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
-`e29a27b`, and this documentation commit follows it. On that tree: `scripts/fast.sh` green at
-**1467 passed / 1 skipped in 34.4 s** (warm) and `verify.sh` green at **1481 passed / 1 skipped in
-48.3 s** (`--create-db`, run as
+the landscape-artefact session, the display-model session, the shapes-build session and the
+cost-rule-and-P4 session
+**Repo state:** `main`, **27 commits ahead of `origin/main`** (which is at `35051e1`); the last code
+commit is `61b640c` and the documentation commit follows it. On that tree: `scripts/fast.sh` green at
+**1533 passed / 1 skipped in 96.8 s** (cold API cache; the same file set measured 90.5 s minutes
+earlier) and `verify.sh` green at **1545 passed / 1 skipped in 114.1 s** (`--create-db`, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). `pytest tests/e2e` (not in the gate: it needs a browser)
-**71 passed in 107 s**. Earlier in the same day the same file set measured 48.2 s and 34.4 s —
-quote the range, not one number (`testing_hazards.md` §3.17).
+**71 passed in 146.6 s**. The gate's collected count went **1481 → 1545**; **+40 test functions**,
+which the parameters take to +64 collected (14 in `test_cost_question.py` — 29 collected —, 14
+`test_corpus_opp.py`, 8 corpus-format, 3 reader-grid, 1 chunker). Every new guard was broken and
+watched red before it was trusted — the 8 format tests and 2 of the 3 reader tests were proved by
+removing the feature.
 
-**The dev box has NOT been re-ingested, and does not need to be for this session's work.** The
-landscape artefact gained four header fields; the chunk text is **byte-identical** (17 chunks, the
-same sha256 over `anchor|heading_path|page|text`), so the reader renders the new shapes from the
-artefact it reads directly. `corpus_check` nonetheless reports `landscape drift`: `CorpusDocument.
-digest` is sha256 of the artefact **file**, so a header-only edit moves it. bpp and saoso still
-report `drift` too — they have been PDF-built since before this slice. One
-`corpus_refresh --apply` with `relink_evidence` fixes all three; it belongs with step 7, not before.
+**The dev box has been re-ingested — this time it had to be.** `corpus_refresh --apply` rebuilt all
+four documents from their artefacts (bpp 9, landscape 17, opp 37, saoso 338 = **401 chunks, 0
+unembedded**), and `corpus_check` now says **current** for all four. `relink_evidence` reports **0
+relinkable / 73 already linked / 31 with the same locator but different text** — the 31 are the
+transition cost of the *first* refresh that moves bpp, opp and saoso off their PDF parses, and they
+are left unlinked on purpose. Two documents were then force-re-ingested once more for the chunker
+fix (§3.24), so the stored text is what today's code produces.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **16 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **27 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — **and it now misses two sessions' work**: the interim grid (§12e) and both shapes
-(§12g). Its corpus is still the old PDF-built one (8 landscape chunks, six branches including `R500`
-and `PGS SA.`). A deploy pulls the artefact but **does not re-ingest**: `deploy.sh` never runs
-`ingest_standard`, so the box will show `landscape drift 8 / 17` until someone runs
-`corpus_refresh --apply` deliberately. Measure its landscape link count with `relink_evidence`
-(report-only) before that refresh; the dev box's answer was zero, but the live box is a different
-corpus.
+2026-10-30 — **it now misses three sessions' work**: the interim grid (§12e), both shapes (§12g)
+and this one. Its corpus is the old PDF-built one (8 landscape chunks, 30 OPP chunks, six branches
+including `R500` and `PGS SA.`). A deploy pulls the artefacts but **does not re-ingest**:
+`deploy.sh` never runs `ingest_standard`, so the box will show drift on all four — and the OPP's
+30 → 37 is a corpus change, not a code change. Measure its link count with `relink_evidence`
+(report-only) *before* the refresh; the dev box's transition dropped 81 links and relinked none.
+
+## 0u. 2026-11-01 (session 7) — the cost rule, the OPP's printed scale, and the refusal located
+
+**State: green, committed in five slices.** `01bfec3` is the cost rule; `37b682a` is the OPP
+artefact; `c255882` is the chunker fix; `61b640c` is the reader's two joins; `821efae` is the docs.
+`fast.sh` **1533 passed / 1 skipped**, `verify.sh` **1545 passed / 1 skipped**, `pytest tests/e2e`
+**71 passed**.
+
+### 0u.1 What the assistant does now
+
+| Question | Before | After |
+|---|---|---|
+| *"what is the yearly cost of membership"* | R100 + R500, 2 citations | **complete** — R100, the scale, transport, catering, the licence; grounded |
+| *"what is the yearly cost"* | complete, 1 run of 5 refused | complete, grounded |
+| *"what does it cost to join"* | complete | complete, grounded |
+| *"What is the yearly cost to get certified, including the farm visit?"* | complete | complete, grounded — and it now separates initial from renewal |
+
+`COST_QUESTION_RULE` is rendered by `build_prompt` **only** when `looks_like_cost_question()` fires,
+so every other question's prompt is unchanged (the two prompt tests pin both directions).
+`cost_question_warnings()` writes an advisory `review_notes` entry when a cost answer states no
+limit; it never refuses, because a refusal and "the corpus cannot answer" look the same to a
+visitor — which is this gap's own second finding.
+
+**The four phrasings were re-measured, not assumed.** Before the rule, the membership phrasing also
+answered *"farms below R250 000 pay a **renewal** fee of R900"*: the R900 is the renewal column, and
+the chunk had two bare numbers with no labels. That is the same defect one layer down, and §2.3's
+reviewed table is what fixed it. The two items were one report, and they are one session.
+
+### 0u.2 What the reader does now
+
+`/documents/opp/read/?section=ii` renders §2.3 as the printed grid — three column headers, six
+bands, one row per band, then the notes under the table as prose. **Two joins were missing and
+neither was visible from the landscape**, whose sections are unnumbered and one per branch:
+
+- the branch was matched by the **section anchor**, but a numbered clause's reading anchor is its
+  reference (`2-3`), while the artefact's section carries a heading slug; so the OPP fell back to
+  prose with no error anywhere;
+- the OPP's `II. Membership fees` branch holds §2.1–§2.5, and the match took the **first** section —
+  §2.1, which has no table. A branch now resolves to its first section that has one.
+
+### 0u.3 The corpus format gained rule 6, because the conversion was silently lossy
+
+The OPP is the only governed document whose citations go three levels deep — `4.5(1)`,
+`4.5(2)(c)` — and an artefact had nowhere to put a sub-clause printed *inside* a section. Converting
+without it dropped three of §4.5's five addresses and left `test_opp_sub_refs_survive_into_the_database`
+as the only thing that noticed. So:
+
+- `<!-- sub: 4.5(2)(c) -->` opens a slice at the next text line, depth from the address, end from
+  the next marker at the same or shallower depth — `any_level_end`, the rule `OppParser` already
+  used, so the artefact reproduces the parser's **spans**, not merely its words;
+- **the generator writes the markers**, from the parse of the de-columned `-layout` rendering the
+  ingest uses. Drafted from `-raw`, the OPP lost five of §4.5's nine, because the raw rendering
+  resets the left margin that the letters `a.`–`c.` hang off. Measured: 24 markers, 24 spans, each
+  quoting the same words the PDF path quoted.
+
+Also fixed, because it was found in the same place: the prose after a table row started with the
+newline that ended the row, so §2.3's notes — the sentences that qualify every amount above them —
+began with a blank line. `_prose_chunks` now skips leading whitespace, offsets and all.
+
+### 0u.4 G10's second finding: one space, at a line break
+
+    passage: … from our membership
+             fees set out in 1.
+             o Currently R500
+    quote  : … from our membership fees set out in 1.o Currently R500
+
+`audit_citations` compares `flat()`-normalised text, so the passage's newline is a space and the
+model's `1.o` has none. Whitespace-removed it is an exact substring. The model invented nothing and
+the corpus is right; the audit's normal form met a line-wrapped passage, and the visitor was told
+the documents were silent. **Not fixed** — the PRD requires the decision in §18.3 first, and both
+options are now written beside the evidence. This is the session's most useful finding: the refusal
+had been invisible for a day because nothing records *why* a quote failed except the operator's log.
+
+### 0u.5 Guards
+
+**+40 test functions** (+64 collected) in the gate, and the ones that matter are the ones that were
+watched failing:
+8 corpus-format refusals (`sub:` with no text, a duplicate address, a `sub:` that repeats the
+section, inside a table, misspelt), 2 of the 3 reader tests (removing `_documents.py`'s two joins
+turns them red), `test_every_sub_clause_survives_with_the_same_span` (24 spans compared to the PDF
+path), `test_each_band_is_its_own_chunk_and_still_cites_the_scale`, and the two prompt tests that
+pin the cost rule's *absence* on an ordinary question.
+
+### 0u.6 Two hazards the session paid for
+
+`testing_hazards.md` §3.24: **"corpus is current" compares the artefact's hash and the chunk count,
+not the derived text.** The chunker fix changed two chunks and `corpus_refresh --apply` said
+"nothing to refresh"; only `ingest_standard --force` + `relink_evidence` replaced the stored text.
+§3.25: **`build_corpus.py --force` silently deletes a reviewed table block** — it happened here, to
+`opp.md`, and was caught only by the shape assertions.
+
+### 0u.7 What is deliberately not done
+
+- **The audit is unchanged** (0u.4) and **G10 stays open**: its acceptance criterion was an
+  answer-level sentence with no automated assertion behind it, and the rule plus the advisory note
+  is as far as that goes without a decision.
+- **pdf 11's §6.5 labelling table** is still prose — the second table P4 names.
+- **The OPP's row anchors are truncated at 128 characters** with the band's distinguishing words
+  last (`…-initial-certification-and-renewal-r-250`). They are unique today and `reading_anchor`
+  prefers `section_ref`, but a future band could collide; `test_anchors.py` is the guard.
 
 ## 0t. 2026-11-01 (session 6) — the two shapes are built, and one number the design did not decide
 
