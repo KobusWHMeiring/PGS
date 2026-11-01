@@ -1700,6 +1700,32 @@ carried), the name is the suspect. The seam it now calls is a pure function, `bo
 so the four decisions are testable without a PDF or an extractor
 (`tests/tools/test_build_corpus.py`, written red first).
 
+### 3.23 `runserver --noreload` serves the new templates against the old Python
+
+A dev server started with `--noreload` caches the Python modules at start and never re-imports
+them, but Django reads a template **per request**. So after editing a view and its template
+together, the running process executes the old view and renders the new template. Nothing warns:
+the two halves are individually correct, and the mistake looks like a code bug in the half that
+was never reloaded.
+
+Evidence (2026-11-01, the UAT console):
+
+    NoReverseMatch at /uat/
+    Reverse for 'uat_run' with arguments '('',)' not found.
+    1 pattern(s) tried: ['uat/run/(?P<action>[^/]+)/\Z']
+
+The view had been changed to build `actions` as `{"item": …, "command": …}` and the template to
+read `action.item.key`. The stale view supplied bare `UatAction` objects, `action.item` resolved
+to the empty string (Django's `string_if_invalid`), and `{% url %}` was handed `('',)`. Every
+test passed, because tests import the current code.
+
+Consequence: a live-looking 500 on a page whose tests are green, and a hunt through a template
+that is not the problem.
+
+Rule: start the dev server **without** `--noreload` when you are editing Python and templates
+together (the same applies to a shell session that has imported a module you just changed). If a
+running page and the test suite disagree, restart the process before reading the traceback.
+
 ## 5. Template for a new entry
 
 ```markdown
