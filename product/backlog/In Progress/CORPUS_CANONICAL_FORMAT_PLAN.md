@@ -350,6 +350,47 @@ quotes contiguous and audited. `MAX_EDITS` set from the review, not guessed.
 **Gate:** `ingest_standard --doc opp --from-corpus` produces the **same** `(section_ref, anchor,
 page, heading_path)` set as `--from-pdf`, and the cardinality test still passes.
 
+**Landed 2026-11-01 — the last of the four.** `knowledge/corpus/opp.md` is the text of record and
+`CORPUS_DOCUMENTS["opp"]` declares it, so `corpus_check` now says all four documents are current.
+
+- **The gate passed in full.** `test_corpus_opp.py` asserts the `(section_ref, page, heading_path)`
+  identity, the character multiset (minus the one printed line that a table block carries as
+  `cols:`), the measured **37 chunks** and the **24 sub-clause spans**. It needed the parser fix
+  the blocked note below names: `OppParser` now includes the section in its `heading_path`, which
+  also stops `build_corpus.py` giving every subsection its parent's `#` depth.
+- **`sub_refs` had no home in the artefact format, and that was silent.** Converting `opp` without
+  a new annotation dropped `4.5(1)`, `4.5(2)(c)` and `4.5(4)` — the OPP is the one governed
+  document whose citations go three levels deep (D15). The format gained **rule 6**, a
+  `<!-- sub: 4.5(2)(c) -->` marker, and the generator writes the markers from the parse of the
+  **de-columned layout** rendering the ingest uses (drafted from `-raw`, the OPP lost five of
+  §4.5's nine sub-clauses because the raw rendering resets the left margin). Measured: 24 markers,
+  24 spans, each quoting the same words the PDF path quoted.
+- **§2.3 is a `layout: grid` table** — three printed columns, six reviewed bands, one chunk per
+  band, plus a legend. **30 → 37 chunks.** Two things it fixed beyond the reader: the model no
+  longer has to guess which of two bare numbers is the initial fee (it answered "renewal fee of
+  R900" for a below-R250 000 farm on `/ask/` before, 2026-11-01), and the notes under the table
+  are now their own chunk.
+- **One chunker defect surfaced and was fixed in the same slice.** The prose after a table row
+  began with the newline that ended the row, so the OPP's §2.3 notes — the sentences that qualify
+  every amount — started with a blank line. `_prose_chunks` now skips leading whitespace; the
+  landscape had one such chunk too.
+- **The reader needed two joins it had never needed.** The grid is found from the branch, and the
+  branch was matched by the section *anchor*: a numbered clause's reading anchor is its reference
+  (`2-3`), while the artefact's section carries a heading slug — the landscape's sections are
+  unnumbered, which is why the anchor was enough there and this one silently fell back to prose.
+  The OPP's `II. Membership fees` branch also holds §2.1–§2.5, and the match returned the first
+  section, which has no table. Both fixed in `_documents._artefact_grid`, with three reader tests
+  that go red without it.
+- **Still P4's open item:** pdf 11's §6.5 labelling table, still in `PAGE_LAYOUT_EXCLUSIONS` and
+  still prose. It is the second table P4 names, and it is not this slice.
+- **Known cost, measured:** the OPP's heading paths are long, so a row's anchor is truncated at 128
+  characters with the band's distinguishing words at the very end
+  (`…-initial-certification-and-renewal-r-250`). They are unique today — `reading_anchor` prefers
+  `section_ref` in any case — but a future band could collide, and `test_anchors.py` is the guard
+  that would say so.
+
+**The blocked note below is kept for provenance — every claim in it was true on 2026-10-28.**
+
 **Blocked as written — measured 2026-10-28, before spending a session on it.** Step 1 above does
 not work: `scripts/build_corpus.py:290` assigns `keep = is_page_furniture` in the **generic** branch
 (the SAOSO branch one line up negates it, `keep = lambda line: not is_furniture(line)`), and the

@@ -1726,6 +1726,54 @@ Rule: start the dev server **without** `--noreload` when you are editing Python 
 together (the same applies to a shell session that has imported a module you just changed). If a
 running page and the test suite disagree, restart the process before reading the traceback.
 
+### 3.24 "corpus is current" compares the artefact and the count, not the chunks
+
+`corpus_check` decides drift from two things: the sha256 of the **artefact file** and the chunk
+**count** the artefact would produce. Neither is the derived text, so a change to a *derivation* —
+the chunker, `knowledge/tables.py`'s prose slicing, a parser — leaves a stale corpus that reports
+itself current.
+
+Evidence (2026-11-01, P4): `_prose_chunks` was fixed to skip the newline that ends a table row,
+which changed two chunks' text (`opp` §2.3's notes, one landscape chunk). After the change:
+
+    $ python manage.py corpus_refresh --apply
+    nothing to refresh
+      bpp: current
+      landscape: current
+      opp: current
+      saoso: current
+
+The stored text was the old text. Only `ingest_standard --doc <x> --force` replaced it — and
+`--force` deletes the chunks and their `retrieved_chunks` links, so `relink_evidence` has to run
+afterwards. Note the second half of this: `CorpusDocument.digest` being a *file* hash is why a
+header-only edit reports drift for an artefact whose chunk text is byte-identical
+(`LANDSCAPE_TABLES_PRD` §12g), so the report is wrong in both directions.
+
+Consequence: a fix that only changes the derived text ships green, and the deployed corpus keeps
+the old sentences.
+
+Rule: after touching anything between the artefact and `DocumentChunk` (chunker, `_prose_chunks`,
+`row_chunk`, a section parser), force-re-ingest the affected documents and `relink_evidence
+--apply`; do not read `corpus_check`'s "current" as "rebuilt".
+
+### 3.25 `build_corpus.py --force` silently deletes the reviewed table blocks
+
+The generator has no rule that emits a `<!-- table … -->` block: the rows are a human's review
+(`LANDSCAPE_TABLES_PRD` §12c, D73). So regenerating any document that has one replaces the review
+with the PDF's column soup, and nothing warns — the file is still a valid artefact, the section
+still has its text, and every guard that compares *characters* still passes.
+
+Evidence (2026-11-01): `build_corpus.py --doc opp --force` was run to pick up a parser fix, and
+`opp.md`'s §2.3 table block was gone (`grep -c '<!-- table' knowledge/corpus/opp.md` → `0`) while
+`test_corpus_opp.py` failed only on the shape assertions, not on the text.
+
+Consequence: a re-generated artefact loses the one thing a review added, and the reader silently
+goes back to prose.
+
+Rule: after `--force` on any document with a table block, re-apply the block (it is in `git diff`
+HEAD~1, or in the review commit) **before** ingesting. The guard that catches the *shape* is
+`test_corpus_landscape.py`/`test_corpus_opp.py`'s table assertions.
+
 ## 5. Template for a new entry
 
 ```markdown

@@ -3,7 +3,7 @@
 **Status:** In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
 **2026-10-22:** **G8 is closed by measurement**, and the retrieval budget it depended on was wrong in a way nobody had measured — the product was retrieving five passages, not eight (§7 G8, `testing_hazards.md` §2.7). G3, G4, G6 and G7 remain open.
 **Owner:** Build — grounded chat (sub-plan D), corpus ingestion (sub-plan B)
-**Last Updated:** 2026-10-21
+**Last Updated:** 2026-11-01
 **MVP:** MVP 0 — defect fix and a deliberate widening of D17.
 **Scope:** What the assistant may answer, and the corpus behind it. Retrieval query
 construction, the answer-mode prompt, and Appendix 2 as reviewed rows. **Not** in scope:
@@ -453,6 +453,39 @@ not the G9 header-decoration cause (that fix holds; every audited citation in th
 `§2.x` locator with no decoration). Reproduce with `scripts/why_refused.py "what is the yearly
 cost"` and `scripts/probe_chat.py "<the same>"`, which is how G9 was named — do not guess at it.
 
+**The second finding is located, 2026-11-01 — and it is one space, not a paraphrase.** Reproduced
+twice on the same question (`probe_chat`, 401-chunk corpus, after both fixes): the answer was
+complete and correct, one citation failed, and the product refused it. The failing quote:
+
+```
+passage: … from our membership
+         fees set out in 1.
+         o Currently R500
+quote  : … from our membership fees set out in 1.o Currently R500
+                                             ^ one space missing, at the line break
+```
+
+`audit_citations` compares `flat()`-normalised text, so the passage's newline is a **space** and
+the model's `1.o` is not. Whitespace-*removed*, the quote is an exact substring — the model copied
+the words and joined a line break without a space, which is what a line starting with the `o`
+bullet invites. So **G10's second finding is not the model inventing anything and not the corpus**:
+it is the audit's normal form meeting a line-wrapped passage.
+
+Two candidate answers, and the choice is the third item below, not a build decision:
+
+- **Compare whitespace-insensitively** (`squash`, as the corpus traceability tests already do).
+  Catches paraphrase and invention exactly as now — the words and their order are still compared —
+  and stops refusing an answer for a missing space. The cost: a quote could also match with spaces
+  removed *between* words, which is a display defect, not a grounding one.
+- **Leave the audit alone and improve the passage**, if a narrower corpus-side cause is found. None
+  was: the two lines are printed on two lines, so joining them in the artefact would be a
+  transcription error, not a repair.
+
+Do **not** change either without writing the answer in §18.3 first (the rule this PRD already
+sets). Note the ordering that matters: the refusal costs the visitor a correct answer, and the
+`EscalatedQuery` it writes says `CITATION_AUDIT`, which reads to an operator as "the model made
+something up".
+
 **The instrument cannot see either.** `eval_retrieval` grades **locators**: on this question it is
 green while the answer narrows and while one run in five is refused. G3's acceptance criterion is an
 answer-level sentence with no automated assertion behind it — the same residual-risk shape as G8 and
@@ -507,6 +540,17 @@ G9, and the reason this is filed here rather than closed.
    and HTML collapses them, so six turnover bands render as prose. `CORPUS_CANONICAL_FORMAT_PLAN.md`
    P4; the parser, both layouts and the resizable spreadsheet are built (`LANDSCAPE_TABLES_PRD`
    §12g), so what is missing is the artefact and one hand-written table block.
+
+   **Landed 2026-11-01, the same day.** `knowledge/corpus/opp.md` is the OPP's text of record and
+   §2.3 is a reviewed grid — three printed columns, six bands, one chunk per band (OPP **30 → 37**
+   chunks, all four governed documents now artefact-backed). The format needed a **`<!-- sub: … -->`
+   marker** on the way: without it the conversion silently dropped `4.5(1)`, `4.5(2)(c)` and
+   `4.5(4)`, and 24 sub-clause spans are now asserted to quote the same words the PDF path quoted.
+   **The ambiguity this PRD opened with is gone at its cause:** before, the model answered "farms
+   with an annual turnover below R250,000 pay a **renewal** fee of R900" — the R900 is the renewal
+   column, and the two numbers had no labels in the chunk. After, it answers "initial certification
+   … ranging from R1,500 to R8,000, and for renewal … R900 to R8,000", grounded.
+   `CORPUS_CANONICAL_FORMAT_PLAN.md` P4 carries the full record.
 
 **Third, a decision rather than code.** When one citation of ten fails, the product refuses the
 whole answer. That is deliberate (a claim must be grounded), but the user experience is
