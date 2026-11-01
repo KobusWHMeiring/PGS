@@ -96,6 +96,18 @@
   .card3 .facet ul { margin:0; padding-left:1.05em; }
   .card3 .facet li { font-size:12.5px; margin:0 0 .2em; }
   .card3 .facet p { margin:0 0 .4em; font-size:12.5px; }
+  /* The owner's refinement (2026-10-31): Resources and Seals fold away, so the step body leads. */
+  .card3 details.facet { padding-top:0; }
+  .card3 details.facet > summary {
+    list-style:none; cursor:pointer; min-height:44px; display:flex; align-items:center; gap:6px;
+    font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700;
+  }
+  .card3 details.facet > summary::-webkit-details-marker { display:none; }
+  .card3 details.facet > summary::after { content:"+"; margin-left:auto; font-size:15px; color:var(--accent); line-height:1; }
+  .card3 details.facet[open] > summary::after { content:"–"; }
+  .card3 details.facet > ul,
+  .card3 details.facet > p { margin:0 0 .5em; }
+  .card3 details.facet > .chip { margin:0 0 .5em; }
   .cards3-fees { display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-top:12px; }
   .fee-box { background:var(--accent-soft); border-radius:var(--radius-sm); padding:12px 14px; }
   .fee-box h5 { margin:0 0 4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); }
@@ -160,10 +172,11 @@
     <p class="eyebrow">Outeniqua PGS &middot; design examples &middot; C3 + the split</p>
     <h1>C3, and the split</h1>
     <p class="question">
-      C3 is the process shape: <b>three horizontal cards</b>, the four facets inside each, the
-      joining fee tied to Steps 1&ndash;2 and the certification fee to Step 3. The branch is one
-      more move: the third card position becomes <b>two stacked cards</b>, one above the other,
-      so the two paths are visible at once. This page settles both.
+      <b>Settled 2026-10-31.</b> C3 is the process shape: <b>three horizontal cards</b>, with
+      <b>Resources and Seals folded</b> so the step body leads, the joining fee tied to
+      Steps 1&ndash;2 and the certification fee to Step 3. The branch is <b>two stacked cards in
+      column three</b>, one above the other, so the two paths are visible at once. Part 2b stays as
+      the content-accurate alternative, recorded but not chosen.
     </p>
     <p class="meta">
       <span>Companion to <code>d76c_process_flow_variants.html</code></span>
@@ -203,20 +216,20 @@
         <div class="card3">
           <h4><span class="n">Step 1</span> &middot; Get together <span class="meta-page">p. 4</span></h4>
           <p>Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>IFOAM PGS tool kit</li><li>PGS SA: How to set up a PGS group</li></ul></details>
           <div class="facet"><h5>Use of seals</h5><p style="color:var(--muted)">The paper is silent on this step.</p></div>
         </div>
         <div class="card3">
           <h4><span class="n">Step 2</span> &middot; Agree and establish <span class="meta-page">p. 4</span></h4>
           <p>The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles &ndash; (SAOSO or equivalent)</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>PGS operational procedure guidelines</li><li>Farmer/consumer pledge example</li><li>PGS SA self-assessment form</li><li>Basic Production principles &ndash; (SAOSO or equivalent)</li></ul></details>
           <div class="facet"><h5>Use of seals</h5><p>Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the &ldquo;member of PGS SA&rdquo; logo.</p></div>
-          <div class="facet"><h5>Seals</h5><span class="chip">Proud member of</span></div>
+          <details class="facet"><summary>Seals</summary><span class="chip">Proud member of</span></details>
         </div>
         <div class="card3">
           <h4><span class="n">Step 3</span> &middot; Visit and certify <span class="meta-page">p. 5</span></h4>
           <p>The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>Farm visit assessment form</li><li>Farm visit checklist</li><li>Farm visit certificate</li></ul></details>
           <div class="facet"><h5>Use of seals</h5><p>These two seals were developed by PGS SA in consultation with PGS groups. PGS groups are custodians of the manner in which the seals are used.</p></div>
         </div>
       </div>
@@ -250,13 +263,13 @@
         <div class="card3">
           <h4><span class="n">Step 1</span> <span class="meta-page">p. 7</span></h4>
           <p>For a minimum of 18 months, the PGS will be operating as per its agreed procedures and approach PGS SA for support. Farmers are assessed during farm visits and the PGS coordinator keeps a record of farm visits. Groups that have been compliant PGS SA members for this period can apply to SAOSO and PGS SA for approval to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard</li><li>PGS SA Assessment of Group documents</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard</li><li>PGS SA Assessment of Group documents</li></ul></details>
           <div class="facet"><h5>Fee</h5><p>Assessments by experienced PGS practitioners; fee determined case by case.</p></div>
         </div>
         <div class="card3" id="step2">
           <h4><span class="n">Step 2</span> <span class="meta-page">p. 7</span></h4>
           <p>If approved by PGS SA the group is entitled to determine which of its farmers qualify to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo. Qualifying farmers sign a licensing agreement with SAOSO; the logo can be used for PGS-to-PGS trade.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></details>
           <div class="facet"><h5>Fee</h5><p>Licensing with SAOSO: <b>R500</b> farmer members / <b>R2&nbsp;500</b> retail members. Printing at the farmer&rsquo;s cost.</p></div>
         </div>
 
@@ -274,7 +287,7 @@
             <span class="route-tag route-tag--b">Path B</span>
             <h4>Direct third-party certification</h4>
             <p>Farmers who are producing organically but are not able to join or establish a PGS group (geographic isolation, time constraints) can apply to SAOSO to use the SAOSO &ldquo;Organic Certified&rdquo; logo. This route excludes the social, knowledge-sharing and participatory approach of PGS groups and may not be cost effective for smallholder farmers.</p>
-            <div class="facet"><h5>Resources</h5><ul><li>Certification body application form</li><li>Licensing agreement</li></ul></div>
+            <details class="facet"><summary>Resources</summary><ul><li>Certification body application form</li><li>Licensing agreement</li></ul></details>
             <div class="facet"><h5>Fee</h5><p>Quote from the Accredited Certifying Body; annual audit and licensing agreement on payment.</p></div>
           </div>
         </div>
@@ -294,7 +307,7 @@
 
   <!-- ============================ PART 2b ============================ -->
   <div class="section-head"><h2>Part 2b &mdash; The same split at the start, where the content forks</h2><div class="rule"></div></div>
-  <p class="section-note">The direct route is for farmers who <em>cannot join a PGS group</em>, so
+  <p class="section-note"><b>Not chosen (2026-10-31).</b> The direct route is for farmers who <em>cannot join a PGS group</em>, so
     the fork is really at the start, not after Step 2. The same two-card mechanism moves to column
     one: &ldquo;join a PGS group&rdquo; or &ldquo;go direct&rdquo;, and only the first continues to
     Steps 1&ndash;2.</p>
@@ -328,12 +341,12 @@
         <div class="card3">
           <h4><span class="n">Step 1</span> <span class="meta-page">p. 7</span></h4>
           <p>For a minimum of 18 months, the PGS will be operating as per its agreed procedures and approach PGS SA for support. Farmers are assessed during farm visits and the PGS coordinator keeps a record of farm visits. Groups that have been compliant PGS SA members for this period can apply to SAOSO and PGS SA for approval to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard</li><li>PGS SA Assessment of Group documents</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>SAOSO application form</li><li>Appendix 9 of the SAOSO Standard</li><li>PGS SA Assessment of Group documents</li></ul></details>
         </div>
         <div class="card3">
           <h4><span class="n">Step 2</span> <span class="meta-page">p. 7</span></h4>
           <p>If approved by PGS SA the group is entitled to determine which of its farmers qualify to use the SAOSO &ldquo;Organic PGS Certified&rdquo; logo. Qualifying farmers sign a licensing agreement with SAOSO; the logo can be used for PGS-to-PGS trade.</p>
-          <div class="facet"><h5>Resources</h5><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></div>
+          <details class="facet"><summary>Resources</summary><ul><li>List of eligible farmers in the group</li><li>SAOSO licensing agreement</li><li>Downloadable stickers</li></ul></details>
           <div class="facet"><h5>Fee</h5><p>Licensing with SAOSO: <b>R500</b> farmer members / <b>R2&nbsp;500</b> retail members.</p></div>
         </div>
       </div>
@@ -397,8 +410,9 @@
   <!-- ============================ PART 5 ============================ -->
   <div class="section-head"><h2>Part 5 &mdash; Your decision</h2><div class="rule"></div></div>
   <div class="panel">
-    <p class="section-note">C3 is settled. Pick where the split lives, and whether the titles
-      stay.</p>
+    <p class="section-note"><b>The record of the decision:</b> C3, Resources and Seals folded, the split
+      in column three, the short titles kept. The controls below export that as a §18.3 row; change
+      them only if the decision changes.</p>
     <div id="choices"></div>
     <label for="notes"><b>Notes</b></label>
     <textarea id="notes" placeholder="e.g. “split in column three, keep the titles”, or “start split, drop the titles”."></textarea>
@@ -432,8 +446,11 @@
     { id: 'titles', title: 'Keep the short titles (reviewed)' },
     { id: 'no-titles', title: 'Print Step 1/2/3 only' }
   ];
-  var state = {};
-  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  var state = { split: 'end', titles: 'titles' };
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) state = saved;
+  } catch (e) {}
 
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}

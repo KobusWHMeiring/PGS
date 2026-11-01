@@ -508,11 +508,13 @@ PRD did not start with.
    cover and p10 is blank, so neither contributes a chunk.
 6. **The reader** (§5.4): mock in `product/design/` for the printed grid and its fit, `DESIGN.md`
    conformance, `css-alignment`.
-   ✅ **Built 2026-10-31** (§12e): `product/design/d76_reader_table_fit.html` decides the fit (D76);
-   the reader renders a real `<table>` with a sticky first column, a scroll region and a stacked
-   phone layout. It also corrected §5.4's 323-character measurement (the page's blank line, not the
-   row). The decision is the product owner's to confirm in the artifact; the implementation follows
-   the recommendation (A + B + C, with 14 px as the multiplier).
+   ✅ **The fit was built 2026-10-31** (§12e): the reader renders a real `<table>` with a sticky
+   first column, a scroll region and a stacked phone layout, and §5.4's 323-character measurement
+   was corrected. **That is the interim shape only.**
+   ✅ **The display model was settled the same day (D77, §12f):** a layout per table — **C3
+   horizontal cards** with Resources and Seals folded for the two process tables, a **split** of
+   two stacked path cards in column three for SAOSO, and a **resizable spreadsheet** for the seals
+   comparison. **The build is §12f.3's work order**; the current reader is still the fixed grid.
 7. **Close the loop**: `tests/uat/` scenario for the fee question, backlog move, spec §4.5 update, and
    the §5.7 exclusion verified as *reading order restored, nothing more*.
 
@@ -550,11 +552,12 @@ existed because the rows were going to live in Python; §5.2a retires it.
 - [x] "what does it cost to join a PGS group?" is quotable from one chunk, verbatim, and passes
       `audit_citations` — **proved on the artefact 2026-10-30**
       (`test_the_landscape_fee_is_quotable_from_its_reviewed_row`)
-- [x] the reader shows the printed grid (D72.3), and the Fee column is reachable without a scroll
-      longer than the table itself — **done 2026-10-31** (§12e): `d76_reader_table_fit.html` chose
-      the fit, and the reader renders the grid with a sticky first column and a stacked phone
-      layout. The fee is in view at the pane's full width; only its last 25–40 characters scroll.
-      **The D76 choice itself is the product owner's to confirm in the artifact.**
+- [ ] the reader shows the tables as the product owner decided — **the fit is built (§12e), the
+      display model is decided and not yet built (D77, §12f).** The interim reader renders the
+      fixed grid with a sticky first column and a stacked phone layout. The settled shape is C3
+      (cards, Resources/Seals folded, the split in column three) for the process tables and the
+      resizable spreadsheet for the seals comparison. **Build §12f.3's work order; then tick this
+      box and sign the UAT.**
 - [ ] the corpus-level guard fails on a newly-added uncurated table page — **open**: it needs a
       cross-document definition of "table-shaped page", and the landscape's pages are the only ones
       curated so far
@@ -852,26 +855,170 @@ should go full-bleed below the tree; if the reading measure must be inviolable, 
 
 ### 12e.3 What is still open
 
-- **D77 — the display model (2026-10-31).** The owner chose **E**: a `layout: process | grid`
-  field on the reviewed block, process for the establishing and SAOSO tables, a resizable
-  spreadsheet for the seals comparison. **The process shape is C3** — horizontal cards, the step
-  body and its facets inside each, the joining fee under Steps 1–2 and the certification fee under
-  Step 3. **The branch is two stacked cards in one column** (`branch:` marks where the rows become
-  an alternative path), explored in `product/design/d76d_c3_and_the_split.html`: the split in
-  column three (as asked) and in column one (where the content forks). **The split placement and
-  the titles are the last open details.** The current reader is the fixed grid from §12e; it stays
-  until those are picked.
-- **D76's confirmation** — the fit artifact is still the surface for A–D; D77 revises it.
+- **D77 — the display model — SETTLED 2026-10-31, see §12f.** E (a `layout: process | grid` field),
+  C3 (horizontal cards), Resources and Seals folded, the split as two stacked cards in column
+  three, and a resizable spreadsheet for the seals comparison. The current reader is still the fixed
+  grid from §12e; the build is §12f.3's work order.
+- **D76 — the fit — is built and interim; D77 amends it.** The fixed grid (sticky first
+  column, scroll region, stacked phone) is in the reader; D77 replaces it for the process tables
+  with cards and for the seals table with the resizable spreadsheet.
 - **`TABLE_BANDS`** — a transposition *inside one printed row-line* is still unpinned. A corpus
   guard, not a reader feature.
 - **The corpus-level table-page guard.**
 - **Step 7** — the `tests/uat/` fee scenario, the backlog move, and the §5.7 exclusion verified as
   “reading order restored, nothing more”.
 
-**A note on the type sizes (the owner raised it).** The grid's cells are 14&nbsp;px and its header
-11&nbsp;px; the inequality people notice comes from the *stacked phone* view, where the step label
-became a 16&nbsp;px serif heading. The fix is the rule in `d76b` Part 4: all five columns at one
-size, the step label **bold rather than larger**.
+**A note on the type sizes (the owner raised it).** The interim grid's cells are 14&nbsp;px and its
+header 11&nbsp;px; the inequality people notice comes from the *stacked phone* view, where the step
+label became a 16&nbsp;px serif heading. The settled rule (§12f) is **13.5&nbsp;px comfortable /
+12.5&nbsp;px compact in every column**, the step label **bold rather than larger**, header
+10.5–11&nbsp;px.
+
+---
+
+## 12f. Design settled 2026-10-31 (D77, amending D72.3) — the implementation brief
+
+**The design gate is closed; the build is the next session's work.** The product owner chose, in
+this order:
+
+1. **E — a layout per table, chosen as data.** The seals comparison is a spreadsheet; the two
+   process tables are cards. It is not one renderer bent to fit three shapes.
+2. **C3 — the process shape is horizontal cards.** Each card is a step: its body, then its facets
+   (Resources, Use of seals, Seals), then the Fee. The joining Fee (the merged cell) sits under
+   Steps 1–2; the certification Fee under Step 3.
+3. **Resources and Seals fold away.** They are `<details>` inside the card, closed by default, so
+   the step body leads and the card is short. **Use of seals stays visible** — it is the rule a
+   reader checks. If the cards are still too tall at UAT, fold Use of seals with the same element;
+   it is one attribute, not a redesign.
+4. **The split is two stacked cards in column three.** SAOSO's third row (the direct route) is an
+   alternative path, not a fourth step: the two paths are stacked in the third column with an
+   `or` rule between them, dashed card borders, and a `branch:` marker on the reviewed block.
+5. **The short step titles stay**, as reviewed data: `Get together`, `Agree and establish`,
+   `Visit and certify`. If the review decides against them, `Step 1/2/3` alone renders identically.
+6. **The seals comparison is a resizable spreadsheet**: frozen header and first column, uniform
+   13.5 px type in every column, mouse and keyboard column resizing, a compact toggle, a reset, and
+   widths persisted per document/table in `localStorage`.
+
+**The record:** `product/design/d76_reader_table_fit.html` (the fit), `d76b_reader_table_examples.html`
+(the six display shapes, E chosen), `d76c_process_flow_variants.html` (the four process iterations),
+`d76d_c3_and_the_split.html` (**the final**: C3 with Resources/Seals folded, the split in column
+three). Read `d76d` before writing code; its Part 5 is the decision record and its export is the
+§18.3 row.
+
+### 12f.1 The data the renderer needs (no migration)
+
+All four fields live in the reviewed `<!-- table … -->` header, beside `cols:` and `legend:`:
+
+| Field | Example | Meaning |
+|---|---|---|
+| `layout:` | `layout: process` / `layout: grid` | Which shape this table asks for. **Required** for a table that has rows; default `grid` for backward compatibility. |
+| `branch:` | `branch: 2` (or `branch: For farmers wanting direct …`) | The row index (0-based) or the row label at which the remaining rows become an **alternative path**. Absent for a linear table. |
+| `title:` | `title: Get together \| Agree and establish \| Visit and certify` | One reviewer title per row, `\|`-separated, aligned to the rows. Optional; absent → render the row label (`Step 1`). |
+| `fee_label:` | `fee_label: Steps 1–2 \| Step 3` | Optional, one per **fee box**, for the box heading. Absent → use the table legend. **Do not invent "joining" / "certification"**; the paper does not print them. |
+
+**Why data and not inference:** a row without a `Step` prefix is a hint, not a rule; the reviewer
+marks the fork and writes the title, exactly as they write the legend. A future table can be a
+sequence, a comparison, or a branch without a parser change.
+
+### 12f.2 The two shapes
+
+**`layout: grid` — the spreadsheet** (the seals table).
+
+- A real `<table>` with `<colgroup>` widths; `table-layout: fixed`.
+- Frozen header (`position: sticky; top: 0` inside a scroll wrapper) and frozen first column
+  (`th[scope=row] { position: sticky; left: 0 }`).
+- Every column at one size (13.5 px comfortable, 12.5 px compact); header 10.5–11 px uppercase; the
+  first cell's first paragraph bold, **not larger**. The 16 px serif step heading from the stacked
+  phone view is the inequality the owner noticed — do not reintroduce it.
+- A resizer on each header's right edge: `role="separator"`, `aria-orientation="vertical"`,
+  `aria-valuemin/max/now`, `tabindex="0"`; pointer drag, `ArrowLeft/Right` (±8 px, Shift ±24),
+  `Home` resets; widths persisted under `pgs.reader.<doc_key>.<anchor>`. Below 900 px the table
+  restacks (`display: block`, `td::before { content: attr(data-label) }`) and the resizer is hidden.
+- The JS is an **enhancement**: without it the table scrolls at its default widths and is fully
+  readable. No-JS is not a broken state.
+
+**`layout: process` — the cards** (the establishing and SAOSO tables).
+
+- One card per step, in printed order, up to the `branch:` row. A card is:
+  `Step N · <title>` + the printed page, the step body, then the facets.
+- Facets in printed column order, with the two that fold closed by default:
+  - **Resources** — `<details>` (closed).
+  - **Use of seals** — visible prose.
+  - **Seals** — `<details>` (closed); the seal is a picture, so the cell is its printed label and
+    the legend says the picture is not stored.
+  - **Fee** — a box **under the card(s)** it belongs to. The merged Fee cell belongs to Step 1 and
+    covers Steps 1–2 (the legend says so); Step 3's Fee is its own box. The box shows the **full
+    cell**, never an amount on its own (D72.2).
+- `branch:` rows are the alternative path: stacked in the **last column** (the third), one above
+  the other, dashed borders, an `or` rule between them. The first path card (Path A) is a
+  **pointer** to the step it branches from — "see Step 2 for the licence" — not a second statement
+  of that step's fees. The alternative (Path B) carries its own full cell.
+- No JavaScript; the phone is the same cards at a narrower measure (stacked in order, the two paths
+  after the step they branch from).
+
+### 12f.3 The work order for the implementing session
+
+1. **Parser** — `knowledge/corpus.py`: accept `layout:`, `branch:`, `title:`, `fee_label:` in the
+   table header; add them to `ParsedTable`; refuse an unknown `layout:` value, a `branch:` that
+   names no row, and a `title:` list whose length is neither 0 nor the row count. Tests first
+   (red), in `knowledge/tests/test_corpus_tables.py`.
+2. **Alignment** — `knowledge/tables.py`: `ArtefactGrid` gains `layout`, `branch`, `titles`,
+   `fee_labels`; `align_artefact_grid` returns the row positions **and** the split position. A
+   corpus that disagrees still returns `None` (the fallback is the plain page).
+3. **Reader** — `core/services/_documents.py`: `ReaderGrid` (or a sibling) carries the shape; build
+   it only for a branch whose artefact has tables, as `_artefact_grid` does today.
+4. **Template** — `core/templates/public/document_reader.html`: branch on the layout. Keep the
+   current grid path for `grid`; add the cards + split + fee boxes for `process`. Reuse
+   `_passage_blocks.html` for a cell's blocks; `<details>` for the folded facets; `aria` labels on
+   the split.
+5. **CSS** — `core/static/css/reader.css`: the cards (3 columns above 900 px, one below), the
+   facets, the 44 px `<summary>` targets, the split, the fee boxes, the spreadsheet (frozen
+   header/first column, resizer affordance). No raw hex; `brand-*` tokens only.
+6. **JS** — `core/static/js/reader-grid.js` (vanilla, vendored like `chat.js`): resizable columns
+   for `layout: grid` only; pointer + keyboard; `localStorage`; reset + compact; progressive
+   enhancement. Include it from the reader template with `defer`.
+7. **Tests** — parser, alignment, reader rendering (establishing 3 cards, SAOSO 2 + split, seals
+   grid), the fallback (a stale chunk removes the shape), and e2e at 1280/390 plus a keyboard
+   resize. The existing `test_document_reader_grid.py` and `test_reader_layout.py` are the place.
+8. **Docs** — `DESIGN.md` §7.13 (both shapes, the folded facets, the resizer rules),
+   `PGS_PLATFORM_SPEC` §4.5 (the per-table layout), this PRD's §12f, the handover.
+9. **Step 7** — the UAT fee scenario, the backlog move, and the §5.7 exclusion verified as
+   "reading order restored, nothing more".
+
+### 12f.4 Acceptance criteria
+
+- [ ] `ESTABLISHING A PGS GROUP` renders **3 cards**; Resources and Seals are `<details>` **closed**
+      by default; Use of seals is visible; the joining Fee box is under Steps 1–2 and the
+      certification Fee box under Step 3, each with the **full** cell text.
+- [ ] `SAOSO ORGANIC CERTIFICATION` renders **2 step cards + a split** in column three: Path A
+      (PGS) and Path B (direct) stacked with an `or`; Path A points at Step 2 and repeats **no**
+      fee.
+- [ ] `PGS SEALS AND THEIR USE` renders the **spreadsheet**: frozen header and first column, one
+      type size, mouse and keyboard resizing, compact toggle, reset, persisted widths; below
+      900 px it restacks with `data-label`.
+- [ ] Every fee amount sits inside its printed sentence; no amount appears alone, and no label
+      says “joining” or “certification” unless the reviewer wrote it.
+- [ ] A corpus that disagrees with the artefact renders the plain page (no cards, no grid).
+- [ ] `TABLE_BANDS` (a transposition *inside* one printed row-line) and the corpus-level table-page
+      guard are **still open** and named in the handover.
+
+### 12f.5 Traps for the implementing session
+
+- **The merged Fee cell is Step 1's.** The legend already says it spans Steps 1–2. Do not split it
+  into per-step amounts, and do not duplicate it in Step 2.
+- **Path A is a pointer.** If it repeats Step 2's licence fees, D72.2 is broken in a new place.
+- **`branch:` is reviewed data.** Do not infer a fork from a missing `Step` prefix.
+- **The resizer must be an enhancement.** Without JS the grid must still read; the ARIA separator
+  must be keyboard-operable and must not steal the arrow keys from the page.
+- **44 px `<summary>` targets.** Folding Resources/Seals is a touch control on a phone; the design
+  system's target rule applies.
+- **The `structure_for` path is Appendix 2's.** Do not route the artefact tables through it; the two
+  shapes are separate (2-column appendix vs artefact grid/cards).
+- **`scripts/build_corpus.py --force --doc landscape` still destroys the review.** The generator has
+  no table-block (or card) rule.
+- **Claim discipline.** The cards carry the paper's words; the labels the renderer adds (fee box
+  headings, “Path A/B”) are UI, not claims. Use neutral wording (`Steps 1–2`, `Step 3`) unless the
+  reviewer wrote a label.
 
 ---
 

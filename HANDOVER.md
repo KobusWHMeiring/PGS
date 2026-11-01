@@ -1,28 +1,30 @@
 # Handover — MVP 0: A, B, C1, C2, C4 and D landed; UAT signed; G8 closed
 
-> ## START HERE — the reader draws the grid; the slice is one step from done
+> ## START HERE — the design is settled; the build is step 6, then step 7
 >
-> **Steps 2–6 landed 2026-10-30/31 (§0p–§0r).** The landscape is a 17-chunk reviewed artefact
-> (three tables, the front matter the parser could never open, the colophon) and the reader now
-> renders its five-column tables as a real `<table>`: a sticky step column, a focusable scroll
-> region, and a stacked phone layout. **The fee is in view.**
+> **The design gate is closed (D76, D77).** The landscape is a 17-chunk reviewed artefact, and the
+> reader currently renders the **interim fixed grid** from §12e. The settled display model is:
+>
+> - **`layout: process`** → **C3 horizontal cards** for *Establishing a PGS group* and *SAOSO
+>   organic certification*. The step body leads; **Resources and Seals are folded** `<details>`;
+>   *Use of seals* stays visible; the merged Fee is a box under Steps 1–2 and Step 3's Fee under
+>   Step 3. `branch:` marks SAOSO's alternative path, rendered as **two stacked path cards in
+>   column three** with an `or` (Path A points at Step 2; it repeats no fee).
+> - **`layout: grid`** → the seals comparison as a **resizable spreadsheet**: frozen header and
+>   first column, one 13.5 px type size, pointer + keyboard column resizing, a compact toggle, a
+>   reset, widths persisted per document/table.
 >
 > Read, in this order — nothing else:
-> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12e** (the reader), then **§12d** (front matter),
->    then **§9 step 7** and **§11** (the DoD, with the guards still open).
-> 2. `product/design/d76_reader_table_fit.html` — the fit decision, with live mocks. **The D76
->    choice is the product owner's to confirm;** the code follows the recommendation.
-> 3. `product/design/DESIGN.md` §7.13 for the component's rules.
+> 1. `In Progress/LANDSCAPE_TABLES_PRD.md` **§12f** — the decision, the four data fields, the work
+>    order (§12f.3), the acceptance criteria (§12f.4) and the traps (§12f.5).
+> 2. `product/design/d76d_c3_and_the_split.html` — the final design (C3, folded facets, the split).
+>    `d76b` has the six display shapes, `d76c` the process iterations, `d76` the fit.
+> 3. `product/design/DESIGN.md` §7.13 — the component rules the interim grid already follows.
 >
-> **C3 is the process shape; the split is the last design detail.** The owner chose **E** (a
-> `layout: process | grid` field) and **C3** (horizontal cards, the joining fee under Steps 1–2, the
-> certification fee under Step 3). The branch is **two stacked cards in one column**, with the
-> alternative path marked as data (`branch:`). `product/design/d76d_c3_and_the_split.html` shows
-> the split in column three (as asked) and in column one (where SAOSO actually forks: “can you join
-> a PGS group?”). **Pick the placement and the titles there.**
->
-> **Then build E + C3 + the split**, then step 7: a `tests/uat/` scenario for the fee question, the
-> backlog move, and the §5.7 exclusion verified as “reading order restored, nothing more”.
+> **The work order is §12f.3:** parser → alignment → reader → template → CSS → `reader-grid.js` →
+> tests → docs → step 7. **Step 6 is not done**; the fixed grid is the interim. Step 7 is the UAT
+> fee scenario, the backlog move, and the §5.7 exclusion verified as “reading order restored,
+> nothing more”.
 >
 > **Two guards are still open, and named rather than hidden:** `TABLE_BANDS` (a transposition
 > *inside one printed row-line* is unpinned) and the corpus-level table-page guard.
@@ -33,22 +35,24 @@
 > **Not this slice:** the OPP (P4) is still blocked on the generator repair; SAOSO's appendices (G4)
 > sit behind the same mechanism.
 >
-> **The tree is clean**, and the code is committed at `d37bd9f`; the documentation and e2e commits follow it.
+> **The tree is clean.** The design artifacts are at `2190279`; the final fold (Resources/Seals) and
+> this documentation commit are the tip of `main`.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval session, the public-site session, the
 documents session, the chatbot session, the column session, the embedding session,
 the answer-coverage session, the budget-and-instrument session, the deployment session,
 the reader-structure session, the corpus-artefact session, the corpus-drift session, the
-retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session
-and the landscape-artefact session
-**Repo state:** `main`, **10 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
-`d37bd9f` and the documentation and e2e commits follow it. On that tree: `scripts/fast.sh` green at **1434
-passed / 1 skipped in 36.6 s** (warm) and `verify.sh` green at **1448 passed / 1 skipped in
+retrieval-baseline session, the deploy-and-close session, the generator-and-fixture session,
+the landscape-artefact session and the display-model session
+**Repo state:** `main`, **14 commits ahead of `origin/main`** (which is at `35051e1`); the code is at
+`d37bd9f` and the design/documentation commits follow it. On that tree: `scripts/fast.sh` green at
+**1434 passed / 1 skipped in 36.6 s** (warm) and `verify.sh` green at **1448 passed / 1 skipped in
 49.7 s** (`--create-db`, 49.7 s wall, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` — the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). The same tree measured 92.6 s and 53.3 s earlier in the
-session — quote the range, not one number (`testing_hazards.md` §3.17).
+session — quote the range, not one number (`testing_hazards.md` §3.17). **No code changed after
+those measurements** — the display-model sessions added design artifacts and documentation only.
 
 **The dev box was re-ingested twice this session and its landscape is current:**
 `corpus_check` reports `landscape current 17 / 17`, **394 chunks, 0 unembedded**. Both `--force`
@@ -58,7 +62,7 @@ same-locator-different-text / 0 no-longer-has**. The 30 are the pre-existing bpp
 and saoso still report `drift` on the dev box** because it was built from their PDFs, not from their
 artefacts. That is out of this slice and is the state `corpus_refresh --apply` exists to fix.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **10 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **14 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
 2026-10-30 — **and it does not have this session's landscape fix.** Its corpus is still the old
 PDF-built one (8 landscape chunks, six branches including `R500` and `PGS SA.`). A deploy pulls the
@@ -66,6 +70,57 @@ artefact but **does not re-ingest**: `deploy.sh` never runs `ingest_standard`, s
 `landscape drift 8 / 17` until someone runs `corpus_refresh --apply` deliberately. Measure its
 landscape link count with `relink_evidence` (report-only) before that refresh; the dev box's answer
 was zero, but the live box is a different corpus.
+
+## 0s. 2026-10-31 (session 5) — the display model settled: C3, the split, the spreadsheet
+
+**State: green, and no code changed.** The gate is the same tree as §0r: `fast.sh` **1434 passed /
+1 skipped in 36.6 s** (warm), `verify.sh` **1448 passed / 1 skipped in 49.7 s**. The session
+produced **design artifacts and a decision**; the reader still renders the interim fixed grid from
+§12e. Design artifacts at `2190279`; this documentation commit follows it. The live box is still
+`8d2839d`.
+
+### 0s.1 What the owner decided
+
+1. **E — a layout per table, as reviewed data.** `layout: process | grid` on the
+   `<!-- table -->` block. The seals comparison is a grid; the two process tables are cards. One
+   renderer bent to fit three shapes was rejected.
+2. **C3 — horizontal cards** for *Establishing a PGS group* and *SAOSO organic certification*: the
+   step body, then its facets, then the fee. The merged Fee cell is a box under Steps 1–2 and
+   Step 3's Fee a box under Step 3.
+3. **Resources and Seals fold away** (`<details>`, closed by default) so the step body leads.
+   *Use of seals* stays visible; if the cards are still too tall at UAT, fold it with the same
+   element.
+4. **The split is two stacked cards in column three.** SAOSO's direct route is an alternative
+   path, not a fourth step: Path A (PGS) and Path B (direct), stacked with an `or`, dashed borders,
+   and a `branch:` marker on the block. Path A points at Step 2 and repeats no fee.
+5. **The seals comparison is a resizable spreadsheet**: frozen header and first column, one
+   13.5 px type size, pointer + keyboard column resizing, compact toggle, reset, persisted widths.
+6. **The short step titles stay** as reviewed data; `Step 1/2/3` alone is the fallback.
+
+**Why:** two of the three tables are **processes**, not records — that is what the owner saw as
+“flowchart-type content”. The artifacts are `d76_reader_table_fit.html` (the fit),
+`d76b_reader_table_examples.html` (six display shapes; E chosen), `d76c_process_flow_variants.html`
+(four process iterations) and `d76d_c3_and_the_split.html` (**the final**: C3, folded facets, the
+split). The fit's 323-character figure was the page's **blank padding line**; the printed row ends
+at **153–169**, and the pane is **52.5 rem**. The type inequality the owner noticed came from the
+stacked phone view's 16 px serif heading — the rule is one size for every column, the step label
+bold rather than larger.
+
+### 0s.2 What was not done, deliberately
+
+- **No parser field, no template branch, no JS, no CSS.** The reader is still the fixed grid from
+  §12e. The implementation is `LANDSCAPE_TABLES_PRD` **§12f.3**, with acceptance criteria in
+  **§12f.4** and traps in **§12f.5**.
+- **`TABLE_BANDS`** and the corpus-level table-page guard are still open.
+- **Step 7** (the UAT fee scenario, the backlog move, the §5.7 exclusion check) is untouched.
+
+### 0s.3 The one command that still hurts
+
+`scripts/build_corpus.py --force --doc landscape` replaces the review with the p4–8 column soup —
+the generator has no table-block rule. The per-line guard fails loudly if it does; the command has
+no other defence.
+
+---
 
 ## 0r. 2026-10-31 — step 6: the reader draws the printed grid, and the fit was measured wrong
 
