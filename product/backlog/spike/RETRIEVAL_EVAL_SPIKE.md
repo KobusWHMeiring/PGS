@@ -402,14 +402,31 @@ Provenance for the pair below — **one corpus, one run each way**, so the compa
 
 - `curated-unannounced-visit` — **not found → rank 3**, by the vector arm's rank 1. A question the
   product could not answer at all now has its clause; that is the seat doing its job.
-- `how much does membership cost` — the OPP's fee band is now **in the eight passages**. It is the
-  last passage, and it is the first time any band has ever reached the model (G10's remaining half).
+- The OPP's fee band is now **reachable at all**, which it was not: it appears in no lexical
+  ranking and ranked 15th fused, so before the fix no rule could have put it among the eight
+  passages.
+- `escalated-horse-manure-short` 2 → 5, `design-cattle-per-hectare` 3 → 5,
+  `design-laying-hens-per-hectare` 3 → 2.
 - `curated-conversion-period` — **rank 7 → not found.** The answer sat at fused rank 2 (`S4.2.3`)
   and 4 (`S4.2.2`) and arrived through the old fused-order seats; the vector arm's own top three
   are different chunks. This is the cost, and it is the shape S2 has to solve: a table's rows need
   the *table*, and one row's similarity is not a ranking.
-- `escalated-horse-manure-short` 2 → 5, `design-cattle-per-hectare` 3 → 5,
-  `design-laying-hens-per-hectare` 3 → 2.
+
+**“Reachable” is not “reliably seated”, and the difference is the whole of S2.** Measured on the
+live surface the same day (`probe_chat.py --chunks-only`, limit 8):
+
+| Phrasing | Band in the eight passages? |
+|---|---|
+| *what is the yearly cost of membership* | **yes — rank 8**, vector rank 4 |
+| *what is the yearly cost of membership?* | **no** — the question mark alone moves §2.3's lead-in to vector rank 4, and the fill loop takes §4.7 |
+| *how much does it cost to be certified?* | **no** — the vector ranks reorder entirely (§2.2 vec1, lead-in vec2, notes vec3) |
+
+The band is the **last** of eight seats on its best phrasing, and the six bands sit within 0.023
+of each other in the vector arm, so their order is noise. This is `g11_row_labels_exploration.html`
+Part 4's warning, confirmed empirically: **no similarity ranking chooses a band.** Slice 1 makes a
+row reachable; it does not make the reader's number reliable, and the obvious next move for slice 2
+is not a bigger reservation — it is the table: when a chunk belongs to a reviewed table, the table
+is the unit, and its rows travel with it.
 
 **A variant was tried and rejected**, and its number is recorded so it is not re-proposed as an
 obvious improvement: filling the seats with vector-only chunks first ("the ones the lexical arms

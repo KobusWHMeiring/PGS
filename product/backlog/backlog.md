@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-02 13:55
+> Generated: 2026-11-02 13:59
 
 ## Ready (up next)
 
@@ -95,10 +95,14 @@ the generated index's "To Do" section.
       render the row's context from the artefact at cite time. **Slice 1 landed 2026-11-02:** the
       reserved seat is now filled in the vector arm's own order (it was filled from the fused head,
       which was truncated to `limit`, so a vector-only chunk could never be seated) and a
-      heading-only chunk cannot consume one. Measured: the OPP's fee band is in the eight passages
-      for the first time, and `curated-unannounced-visit` went from not-found to rank 3; R@8
-      unchanged at 0.812, MRR 0.387 → 0.385, and `curated-conversion-period` lost (rank 7 → not
-      found) — `RETRIEVAL_EVAL_SPIKE.md` §8b. **Left:** (2) the prompt shape plus a row identity on
+      heading-only chunk cannot consume one. Measured: a fee band is **reachable at all** for the
+      first time (it appeared in no lexical ranking and ranked 15th fused) and
+      `curated-unannounced-visit` went from not-found to rank 3; R@8 unchanged at 0.812, MRR
+      0.387 → 0.385, and `curated-conversion-period` lost (rank 7 → not found) —
+      `RETRIEVAL_EVAL_SPIKE.md` §8b. **Reachable is not reliable:** the band is the last of eight
+      seats on one phrasing and out on two others, so **slice 2's unit is the table** — when a chunk
+      belongs to a reviewed table its rows travel with it — not a bigger reservation. **Left:** (2) the
+      prompt shape plus a row identity on
       `Citation` (`artefact_grid_for` and `align_artefact_grid` already resolve this path for the
       reader); (3) the *context, not quotation* UI distinction — if it cannot be made legible, fall
       back to A. Mechanism: `product/design/g11_option_e_explainer.html`; argument:

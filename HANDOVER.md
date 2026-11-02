@@ -17,11 +17,13 @@
 > 4. **G11 is answered: D79 = E** (2026-11-02). Show the table as structure, quote cells only, render
 >    the row's context from the artefact at cite time; `product/design/g11_option_e_explainer.html`
 >    teaches the mechanism. **Slice 1 (the reserved seat) landed:** the seats are filled in the vector
->    arm's own order and a heading cannot take one — the OPP's fee band is now among the eight
->    passages for the first time (G10's remaining half), R@8 unchanged at 0.812, and
->    `curated-conversion-period` lost (rank 7 → not found). Cuts 2 and 3 (the prompt shape, the
->    *context, not quotation* UI) are **not built**. `g12` is decided as **D80** (X2 now, X3 when
->    demanded).
+>    arm's own order and a heading cannot take one — `curated-unannounced-visit` went from not-found to
+>    rank 3, and a fee band is now *reachable at all*; R@8 unchanged at 0.812, and
+>    `curated-conversion-period` lost (rank 7 → not found). **Reachable is not reliable** — the band is
+>    the last of eight seats on one phrasing and out on two others, because no similarity ranking
+>    chooses a band. Cuts 2 and 3 (the prompt shape, the *context, not quotation* UI) are **not
+>    built**; slice 2's unit should be the table, not a bigger reservation. `g12` is decided as
+>    **D80** (X2 now, X3 when demanded).
 > 5. **Context budget measured, the handover split, and the loop measured**
 >    (`product/docs/context/CONTEXT_BUDGET.md`): the six files this repo told every session to read
 >    totalled **509 KB ≈ 144k tokens**; `HANDOVER.md` was 2,553 lines of which 72 were state. **This
