@@ -1,9 +1,11 @@
-# Handover — D79's three slices are built; UAT Scenario 8 is the judgement; the context cuts are next
+# Handover — D79's three slices are built and signed; the landscape sign-off and the context cuts are next
 
-> ## START HERE — slice 3 is built; the judgement is unsigned
+> ## START HERE — slice 3 is closed; the context cuts are next
 >
-> **Where the work stands (2026-11-02, session 11).** The owner answered G11 and all three of its
-> slices are now built. The session record is
+> **Where the work stands (2026-11-02, session 11).** The owner answered G11, all three of its
+> slices are built, and **UAT Scenario 8 is signed — PASS**: the context line reads as context, not
+> a quotation, on the transcript, the answer page and the reader. `D79` option E stands; the
+> option A fallback is not taken. The session record is
 > `product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`; this
 > block is state only.
 >
@@ -28,9 +30,9 @@
 >    (`chatbot/_citation_context.html`, `_citation_legend.html`), and the reader counterpart —
 >    `&quote=` on the link, the row washed and the quoted cell marked in the printed grid. **The G10
 >    fees answer works:** *"…below R250,000 would pay a renewal fee of R900"*, *"…initial
->    certification fee of R1,500 or a renewal fee of R900"*. **What is left is the judgement, not the
->    code:** UAT Scenario 8 is the legibility call, and if the dashed line reads as a quotation, D79
->    falls back to option A (written down in the spec row and the PRD). R@8 unchanged at 0.812.
+>    certification fee of R1,500 or a renewal fee of R900"*. **Scenario 8 signed 2026-11-02:** the
+>    dashed row/column line reads as context around the paper's own cell, so slice 3 is closed and
+>    the fallback to option A is **not** taken. R@8 unchanged at 0.812.
 > 5. **Context budget measured, the handover split, and the loop measured**
 >    (`product/docs/context/CONTEXT_BUDGET.md`): the six files this repo told every session to read
 >    totalled **509 KB ≈ 144k tokens**; `HANDOVER.md` was 2,553 lines of which 72 were state. **This
@@ -47,13 +49,10 @@
 >
 > **What is next, in order:**
 >
-> 1. **UAT Scenario 8 — the legibility judgement** (`tests/uat/ask_surface_uat.md`, updated to the
->    shipped wording). A person must look: does the dashed `Table row: … · Column: …` line read as
->    context the page supplies, and the solid quote as the document's own? Check the answer page and
->    the reader mark as well as the transcript. **If it cannot be made legible, D79 falls back to
->    option A** — and that fallback is already written in the spec row and the PRD. Then the
->    **landscape UAT sign-off**, still unsigned and still the only thing keeping
->    `LANDSCAPE_TABLES_PRD` out of `Done/`.
+> 1. **The landscape UAT sign-off** (`tests/uat/landscape_tables_uat.md`) — still unsigned, still
+>    unblocked, and still the only thing keeping `LANDSCAPE_TABLES_PRD` out of `Done/`. The ask
+>    surface's own Scenario 8 is signed; the other seats on that file (PGS administrator, committee
+>    reviewer, second reader) remain open and are not blocking.
 > 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
 >    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
 >    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`
@@ -83,8 +82,9 @@
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget and context-frame sessions
-**Repo state:** `main`, **42 commits ahead of `origin/main`**. On this tree (2026-11-02, after
-D79's three slices): `scripts/verify.sh` **green at 1593 passed / 1 skipped in 59.50 s** with
+**Repo state:** `main`, **45 commits ahead of `origin/main`**. On this tree (2026-11-02, after
+D79's three slices — the sign-off added docs only, so the code gate below still stands):
+`scripts/verify.sh` **green at 1593 passed / 1 skipped in 59.50 s** with
 `--create-db`, and `scripts/fast.sh` **1578 passed, 1 skipped in 42.40 s**,
 `scripts/fast.sh --critical` **217 passed, 4 deselected in 11.28 s** — run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/…` (the gate defaults to 5432 and this box serves
@@ -114,7 +114,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
-- `0y` 2026-11-02 (session 11) — slice 3: the context is a row and a column, and both surfaces say so — [`SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`](product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md)
+- `0y` 2026-11-02 (session 11) — slice 3: the context is a row and a column, both surfaces say so, and Scenario 8 is signed — [`SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`](product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md)
 - `0x` 2026-11-02 (session 10) — G11 answered, and two of its three slices landed — [`SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md`](product/docs/handover/SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md)
 - `0w` 2026-11-02 (session 9) — the context balloon is the loop, not the handover — [`SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md`](product/docs/handover/SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md)
 - `0v` 2026-11-02 (session 8) — the cost rule, P4's printed scale, two decision pages, and the handover becomes state — [`SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md`](product/docs/handover/SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md)

@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-02 20:03
+> Generated: 2026-11-02 20:49
 
 ## Ready (up next)
 
@@ -91,7 +91,7 @@ the generated index's "To Do" section.
       (Docling / Document AI) against it, then the generator emitting `<!-- table -->` blocks, then
       the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
       and Appendix 7's interleaved chunks.
-- [ ] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
+- [x] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
       render the row's context from the artefact at cite time. **All three slices landed** (2026-11-02;
       session record `SESSION_0y_…`). **Slice 1:** the reserved seat is now filled in the vector arm's
       own order (it was filled from the fused head, which was truncated to `limit`, so a
@@ -112,8 +112,9 @@ the generated index's "To Do" section.
       landed:** `Citation.column_label` names the printed column (only when exactly one cell holds the
       quote), the snapshot keeps row+column so the answer page stops disagreeing with the transcript,
       one legend per answer explains the dashed/solid pair, and the reader marks the cited row and
-      cell. **Left: the UAT Scenario 8 judgement** — if the distinction cannot be made legible, D79
-      falls back to option A. Mechanism: `product/design/g11_option_e_explainer.html`; argument:
+      cell. **Signed 2026-11-02:** the product owner judged UAT Scenario 8 — the dashed line reads as
+      context, not a quotation — so D79 option E stands and the fallback to option A is not taken.
+      Mechanism: `product/design/g11_option_e_explainer.html`; argument:
       `g11_row_labels_exploration.html`. The fee answer G10 opened now works.
 
 ## Product, deferred from the aimed spec

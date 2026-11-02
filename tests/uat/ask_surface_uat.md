@@ -183,13 +183,20 @@ be context. Check the legend on the answer page as well as in the transcript, an
 mark: if either reads as a quotation, the answer to `D79` is option A and the fallback is already
 written down.
 
+**Result:** PASS · Kobus Meiring (Product owner) · 2026-11-02 — judged against `97cd8a2`: the row/column line on the transcript and the answer page, and the marked cell in the reader, all read as context around the paper's own cell; the fallback to option A is not taken.
+
 ---
 
 ## Sign-off
 
 | Role | Name | Date | Result | Notes |
 |---|---|---|---|---|
-| Product owner | | | | |
+| Product owner | Kobus Meiring | 2026-11-02 | **Scenario 8 — PASS** | D79 option E stands; option A fallback not taken. Scenarios 1–7 and 9–10 not re-judged this session. |
 | PGS administrator | | | | |
 | Committee reviewer | | | | |
 | Second reader (Scenario 4) | | | | |
+
+**Decision (product owner, 2026-11-02):** Scenario 8 was the only open judgement on `D79` option E,
+and it passes — a reader can tell the dashed context line from the solid quotation on all three
+surfaces. Slice 3 is closed, and the fallback to option A written into the spec row and
+`CHAT_ANSWER_COVERAGE_PRD.md` is **not** taken.

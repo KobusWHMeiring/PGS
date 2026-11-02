@@ -1,6 +1,7 @@
 # PRD: Chat answer coverage — governing rules, table rows, and the gaps left
 
 **Status:** In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
+**2026-11-02:** **Scenario 8 (D79 option E) signed by the product owner — PASS.** The context line reads as context, not a quotation, on the transcript, the answer page and the reader; G11's three slices are closed and the option A fallback is not taken.
 **2026-10-22:** **G8 is closed by measurement**, and the retrieval budget it depended on was wrong in a way nobody had measured — the product was retrieving five passages, not eight (§7 G8, `testing_hazards.md` §2.7). G3, G4, G6 and G7 remain open.
 **Owner:** Build — grounded chat (sub-plan D), corpus ingestion (sub-plan B)
 **Last Updated:** 2026-11-02
@@ -576,6 +577,12 @@ the label. The reader got its counterpart — `&quote=` on the citation's link, 
 resolving it against the grid, the row washed and the quoted cell marked, and a note naming the
 column; a quote that matches no cell marks nothing. **Not yet judged:** UAT Scenario 8 is the
 legibility call, and D79's fallback to option A stays on record until a human signs it.
+
+**Scenario 8 signed 2026-11-02 — `D79` option E stands.** The product owner judged it on the
+shipped tree: the dashed row/column line and the solid quote read as *context around the paper's
+own cell* on the transcript, the answer page and the reader mark alike. Slice 3 is closed and the
+fallback to option A is **not** taken. (`tests/uat/ask_surface_uat.md`, Scenario 8 result line and
+sign-off table.)
 
 **Also measured, and worth keeping:** D73's rendition is for rows whose cells are **numbers**.
 Applying it to Appendix 2's reviewed literals — whose cells are already prose — took the probe

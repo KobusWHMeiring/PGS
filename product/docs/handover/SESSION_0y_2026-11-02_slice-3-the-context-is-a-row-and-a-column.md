@@ -75,15 +75,24 @@ from, not a rendering of it.
 Ten new tests in all (knowledge 2, grounding 4, answer page 2, reader 3, chat surface 2 — two
 existing fixtures were extended rather than duplicated).
 
+### Scenario 8 — signed
+
+**PASS, product owner, 2026-11-02.** The judgement clause was the only thing between the code and
+done, and it is made: the dashed row/column line reads as **context** around the paper's own cell,
+not as a quotation, on the transcript, the answer page and the reader mark. `D79` option E stands;
+the option A fallback is not taken. Recorded as a `**Result:**` line under Scenario 8 and in the
+file's sign-off table; `CHAT_ANSWER_COVERAGE_PRD.md` carries the same decision.
+
+The other seats on that file (PGS administrator, committee reviewer, second reader) remain
+unsigned. They are not blocking: Scenario 8 was the only open judgement this slice created.
+
 ### What is left
 
-- **The judgement is still a human's.** UAT Scenario 8 (`tests/uat/ask_surface_uat.md`) has been
-  updated to the shipped wording and now also checks the reader mark. D79's fallback to option A
-  stays on record until someone signs it. **This is the only thing between slice 3 and "done".**
+- **The landscape UAT sign-off** (`tests/uat/landscape_tables_uat.md`) — still the only thing
+  keeping `LANDSCAPE_TABLES_PRD` out of `Done/`.
 - **Context cuts 4.2/4.3** — `_chatbot.py` is 99 KB and `_documents.py` 48 KB, both far over §II's
   cap; both grew again here. 4.2 (`--check`'s 14 over-budget spec rows) is untouched.
 - **G12/X2** — the eight-shape fixture set is D80's first commit.
-- The landscape UAT sign-off is still the only thing keeping `LANDSCAPE_TABLES_PRD` out of `Done/`.
 
 ### Gate
 
