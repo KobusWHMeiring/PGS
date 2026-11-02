@@ -1134,3 +1134,70 @@ def test_the_stored_citation_can_still_link_after_a_re_ingest(
 
     assert stored["document_code"] == "saoso-standard-v2.1"
     assert stored["reading_anchor"] == "s20-1-1"
+
+
+# --- D79 option E, slice 2: a table is shown as a table ----------------------#
+
+
+def _table_row_chunk(chat_corpus):
+    """A stored row chunk carrying its reviewed table's columns, as retrieval labels it."""
+    from dataclasses import replace
+
+    from knowledge.table_context import TableContext
+
+    chunk = chat_corpus.fee
+    table = TableContext(
+        title="2.3 PGS assessment fee structure (initial certification and renewal)",
+        columns=(
+            "Annual farm turnover (gross sales)",
+            "Initial certification fee (R)",
+            "Renewal fee (R)",
+        ),
+        section_ref=chunk.section_ref,
+        row_label="Below R 250,000",
+    )
+    return replace(
+        _retrieved_from_stored(chunk, chunk.document.standard_set), table=table
+    )
+
+
+def test_a_reviewed_table_is_shown_as_structure(chat_corpus, chat_standard_set):
+    """Columns once, above the rows, and the row's cells exactly as printed (D79/E).
+
+    This is option E's whole mechanism: the model can see which cell is which column, and
+    the quote it copies is still a substring of the row's own chunk text — so the audit
+    needs no new rule. Option A (pasting the heading into each row) is what this replaces;
+    it repeats a line the paper prints once.
+    """
+    from core.services._chatbot import build_prompt
+
+    row = _table_row_chunk(chat_corpus)
+    prompt = build_prompt("What does the passage say?", [row], [])
+
+    assert "TABLE: 2.3 PGS assessment fee structure" in prompt
+    assert "Annual farm turnover (gross sales) | Initial certification fee (R)" in prompt
+    assert prompt.count("Renewal fee (R)") == 1, "the headings were repeated per row"
+    assert row.text in prompt, "the row was reformatted, so its quote would be refused"
+    assert "|" not in row.text
+
+
+def test_a_quote_of_the_row_cells_is_still_accepted(chat_corpus, chat_standard_set):
+    row = _table_row_chunk(chat_corpus)
+    citations, problems = audit_citations(
+        [{"section_ref": row.section_ref or row.anchor, "quote": row.text}],
+        [row],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    assert problems == ()
+    assert citations[0].row_label == "Below R 250,000", (
+        "the citation must know which row it quotes; slice 3 renders its context from it"
+    )
+
+
+def test_the_system_prompt_says_the_headings_are_not_quotable():
+    """Without this rule the model quotes the heading it was shown, and the audit refuses."""
+    lowered = SYSTEM_PROMPT.lower()
+    assert "8b." in lowered
+    assert "context, not evidence" in lowered
+    assert "never include a column heading" in lowered

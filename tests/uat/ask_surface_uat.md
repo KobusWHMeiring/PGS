@@ -161,6 +161,26 @@ the group says?* `test_claim_discipline.py` catches the six forbidden terms and 
 
 ---
 
+## Scenario 8 — A number, and where it came from
+
+**Setup:** on an instance with the current corpus, ask `/ask/` **"what is the yearly cost of
+membership?"**, then open the citation on the answer that names a fee. Ask **"how much does it cost
+to be certified?"** as a second phrasing.
+
+**Expected:** each answer states a real amount from the OPP's §2.3 scale — a renewal fee of R900 for
+turnover below R250 000, or an initial fee of R1 500 — rather than "the specific scale is not
+provided". The citation that carries the number shows a muted, dashed **"Table row: Below
+R 250,000"** line above the quote, and the quote itself is the paper's own cell (`900`), not a
+sentence the assistant wrote.
+
+**Judgement:** *Does the reader understand that the dashed line is context the page supplies, and
+that the solid quote is what the document prints?* This is `D79` option E's one real risk, and no
+test can make the call: a citation that displays text the passage does not contain must be seen to
+be context. If it reads as a quotation, the answer to `D79` is option A and the fallback is already
+written down.
+
+---
+
 ## Sign-off
 
 | Role | Name | Date | Result | Notes |

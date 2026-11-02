@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-02 13:59
+> Generated: 2026-11-02 14:54
 
 ## Ready (up next)
 
@@ -101,12 +101,17 @@ the generated index's "To Do" section.
       0.387 → 0.385, and `curated-conversion-period` lost (rank 7 → not found) —
       `RETRIEVAL_EVAL_SPIKE.md` §8b. **Reachable is not reliable:** the band is the last of eight
       seats on one phrasing and out on two others, so **slice 2's unit is the table** — when a chunk
-      belongs to a reviewed table its rows travel with it — not a bigger reservation. **Left:** (2) the
-      prompt shape plus a row identity on
-      `Citation` (`artefact_grid_for` and `align_artefact_grid` already resolve this path for the
-      reader); (3) the *context, not quotation* UI distinction — if it cannot be made legible, fall
-      back to A. Mechanism: `product/design/g11_option_e_explainer.html`; argument:
-      `g11_row_labels_exploration.html`. Unblocks the fee answer G10 opened.
+      belongs to a reviewed table its rows travel with it — not a bigger reservation. **Slice 2
+      landed the same day:** `knowledge/table_context.py` gives a passage its reviewed table and
+      `search_terms` appends its rows (after the passages, so no rank moves and `eval_retrieval` is
+      unchanged); `build_prompt` renders the table once with its printed headings above one-cell-per-
+      line rows; `Citation.row_label` carries the row's printed label and both citation templates
+      render it as context. Both phrasings now answer with the document's own numbers — R900 renewal
+      below R250 000, R1 500 initial — grounded, quoting single cells. **Left:** (3) the *context, not
+      quotation* distinction as a design pass; the dashed "Table row:" line shipped with slice 2 is
+      the minimum that stops a bare `900` reading as a non-answer. Mechanism:
+      `product/design/g11_option_e_explainer.html`; argument: `g11_row_labels_exploration.html`.
+      Unblocks the fee answer G10 opened.
 
 ## Product, deferred from the aimed spec
 

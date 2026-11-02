@@ -539,6 +539,30 @@ it does not make the fee answer reliable. Slices 2 and 3 are still what close it
 unit should be the **table**: when a chunk belongs to a reviewed table, its rows travel with it, and
 the fixed reservation is not the lever.
 
+**Slice 2 landed 2026-11-02 — the table is shown as a table, and a row keeps its identity.**
+`knowledge/table_context.py` gives a retrieved passage the reviewed table it belongs to (a row by
+its cells, the introduction by its section), and `search_terms` appends that table's rows — up to
+`TABLE_ROW_SEATS = 8`, **after** the passages, so nothing is displaced and `eval_retrieval`'s ranks
+are untouched (re-measured: identical). `build_prompt` renders each reviewed table once — `TABLE:`
+line, the printed headings, then the rows with one cell per line, which is the page's own layout.
+`Citation.row_label` carries the row's printed label and both citation templates render it as
+**context** (dashed rule, muted) above the quote. `layout: process` tables are excluded: their rows
+are already readable passages (`D77`), and including them cost 8 seats for puzzles. `PROMPT_VERSION`
+`d79-1` → `d79-2`.
+
+**Measured on the live surface, the same two phrasings slice 1 could not answer:** *"what is the
+yearly cost of membership?"* → *"a farm with an annual turnover below R250,000 would pay a renewal
+fee of R900"*; *"how much does it cost to be certified?"* → *"farms with an annual turnover below
+R250,000 pay an initial certification fee of R1,500 or a renewal fee of R900"*. Both **grounded**.
+The first run was **refused**: the model quoted `Below R 250,000 900` — label and renewal fee,
+skipping the initial fee between them — and the audit was right, for a rule the prompt had not
+stated. `d79-2` states it (cells are quotable together only when consecutive), and both phrasings
+now quote **single cells** (`900`, `Below R 250,000`), which is option E working: the quote is the
+paper's characters, and the label reaches the reader as context. **Left: slice 3** — the
+"context, not quotation" distinction as a design pass over the answer and reader surfaces, with the
+legend and the wording that make it legible. Today's dashed rule is the minimum that stops a bare
+`900` reading as a non-answer.
+
 **Also measured, and worth keeping:** D73's rendition is for rows whose cells are **numbers**.
 Applying it to Appendix 2's reviewed literals — whose cells are already prose — took the probe
 suite from 9 of 9 grounded to **6 of 9** (horse manure, cardboard and ducks all refused), so

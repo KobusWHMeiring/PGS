@@ -143,9 +143,11 @@ def test_a_new_uat_file_renders_a_usable_page(ask_artefact, page, console_errors
 
     page.goto(ask_artefact.as_uri())
 
-    assert page.locator(".card").count() == 7
-    assert page.locator(".judgement").count() == 7
-    assert page.locator("#progress").inner_text() == "0 of 7 judged"
+    # Eight scenarios since 2026-11-02 (D79 slice 2 — the fee answer and its row context);
+    # the counts are asserted so a card the page cannot render fails here rather than in UAT.
+    assert page.locator(".card").count() == 8
+    assert page.locator(".judgement").count() == 8
+    assert page.locator("#progress").inner_text() == "0 of 8 judged"
     assert [url for url in requests if not url.startswith("file://")] == []
     assert console_errors == []
 
@@ -175,7 +177,10 @@ def test_the_ask_uat_exports_a_sign_off_the_writer_accepts(ask_artefact, page, t
 
     export = json.loads(path.read_text(encoding="utf-8"))
     assert export["slug"] == "ask_surface"
-    assert len(export["results"]) == 7
+    # Eight scenarios since 2026-11-02 (D79 slice 2): a fee answer and the row context that
+    # makes its citation legible. The count is asserted so a scenario silently dropped from
+    # the file cannot pass as a smaller sign-off.
+    assert len(export["results"]) == 8
 
     from scripts.uat_parse import parse_uat
     from scripts.uat_signoff import validate

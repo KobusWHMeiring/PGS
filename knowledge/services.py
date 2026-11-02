@@ -33,7 +33,7 @@ Read-only by design: nothing here writes, so it is safe to call from a public re
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Mapping
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
@@ -43,6 +43,12 @@ from pgvector.django import CosineDistance
 from knowledge.aliases import ALIASES
 from knowledge.embedding import EmbeddingError, EmbeddingUnavailable, embed_texts
 from knowledge.models import DocumentChunk, StandardSet
+from knowledge.table_context import (
+    TABLE_ROW_SEATS,
+    TableContext,
+    reviewed_table_for_section,
+    row_chunks_for,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +165,11 @@ class RetrievedChunk:
     #: `[{"ref", "start", "end"}]` as stored. A citation's `sub_ref` must appear here;
     #: depth is never inferred (D15/D43).
     sub_refs: tuple[dict, ...] = ()
+    #: The reviewed table this passage belongs to, if any (D79/E). Set by `search_terms`
+    #: for a row and for the table's own introduction, and read by `build_prompt` so the
+    #: printed columns reach the model **once**. It is structure, never a quote target:
+    #: the audit still checks a quote against `text`.
+    table: TableContext | None = None
 
     def as_citation(self) -> dict:
         """The shape D's chat contract consumes: `{section_ref, quote, …}`.
@@ -749,6 +760,8 @@ def search_terms(
                 merged.extend(c for c in incoming if c.chunk_id not in seen)
             warnings = tuple(dict.fromkeys((*warnings, *carried.warnings)))
 
+    merged = _with_their_tables(merged, standard_set=standard_set)
+
     return RetrievalResult(
         query=question or " OR ".join(cleaned),
         standard_set_id=getattr(standard_set, "pk", None),
@@ -757,6 +770,78 @@ def search_terms(
         warnings=warnings,
         key=key,
     )
+
+
+def _with_their_tables(
+    chunks: list[RetrievedChunk], *, standard_set: StandardSet
+) -> list[RetrievedChunk]:
+    """Give each reviewed table's rows to a set that found one of its passages (D79/E).
+
+    In:  the merged passages; the corpus boundary. Out: the same passages, in the same
+         order, each carrying its `TableContext` when it belongs to a reviewed table, plus
+         that table's rows appended **after** them, up to `TABLE_ROW_SEATS` in total.
+    Fails: never. A document with no artefact, an unreadable one, or a row whose text does
+         not match the artefact adds nothing and removes nothing.
+
+    Why the rows are appended rather than given seats: the passages a question already
+    retrieved keep their positions and their ranks, so a table arrives without displacing
+    the evidence that found it — and the budget this module documents (`limit`) stays a
+    budget for *retrieval*, which is what `eval_retrieval` measures.
+
+    Why it is needed at all, measured on 2026-11-02: the OPP's six fee bands are within
+    0.023 of each other in the vector arm, so their order is noise and a question's
+    punctuation decides whether one is seated (slice 1). The table's introduction, which
+    *is* retrieved reliably, names none of the numbers — so the rows have to come with it.
+    """
+    if not chunks:
+        return chunks
+
+    contexts: dict[int, TableContext] = {}
+    additions: list[RetrievedChunk] = []
+    seen = {chunk.chunk_id for chunk in chunks}
+    seats = TABLE_ROW_SEATS
+    for chunk in chunks:
+        if seats <= 0:
+            break
+        table = reviewed_table_for_section(
+            chunk.document_source_file, chunk.section_ref, chunk.heading_path
+        )
+        if table is None:
+            continue
+        rows = row_chunks_for(
+            table, standard_set=standard_set, source_file=chunk.document_source_file
+        )
+        for row in rows:
+            context = table.context_for(row.text)
+            if row.pk in seen:
+                contexts[row.pk] = context
+                continue
+            if seats <= 0:
+                break
+            seen.add(row.pk)
+            contexts[row.pk] = context
+            additions.append(
+                replace(
+                    _retrieved_from_row(
+                        row,
+                        score=0.0,
+                        lexical_rank=None,
+                        vector_rank=None,
+                    ),
+                    table=context,
+                )
+            )
+            seats -= 1
+
+    if not contexts:
+        return chunks
+    labelled = [
+        replace(chunk, table=contexts[chunk.chunk_id])
+        if chunk.chunk_id in contexts
+        else chunk
+        for chunk in chunks
+    ]
+    return labelled + additions
 
 
 def _has_credentials(provider) -> bool:

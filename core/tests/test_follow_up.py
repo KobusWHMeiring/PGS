@@ -388,6 +388,8 @@ def test_the_prompt_version_moved():
     has to move it deliberately, in the same commit, rather than leave a cached reply
     that was produced under a contract nobody can name. It moved twice in one day: `d78-1`
     named the components and forbade every total, `d78-2` separates the group's fee from a
-    member's and allows the floor.
+    member's and allows the floor. `d79-1`/`d79-2` add rule 8b: a reviewed table is shown as
+    structure with its headings once, and a row's cells are quotable together only when they
+    are consecutive.
     """
-    assert PROMPT_VERSION == "d78-2"
+    assert PROMPT_VERSION == "d79-2"

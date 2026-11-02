@@ -432,6 +432,18 @@
   line-height: var(--leading-body);
 }
 
+/* D79 option E: the row's printed label, rendered from the reviewed table at cite time.
+   Context, not quotation — dashed rule and muted colour so it cannot be mistaken for a
+   line the paper prints beside the quoted cells. */
+.cite-context {
+  margin: 0.75rem 0 0;
+  padding-left: 0.75rem;
+  border-left: 2px dashed var(--brand-ochreLight);
+  color: rgb(var(--brand-cream-rgb) / 0.72);
+  font-size: var(--text-nano);
+  letter-spacing: 0.02em;
+}
+
 .cite-source {
   margin: 0.5rem 0 0;
   color: var(--brand-ochreLight);
@@ -760,6 +772,17 @@
   font-family: var(--font-serif);
   font-size: var(--text-base);
   line-height: 1.6;
+}
+
+/* D79 option E: the row's printed label, rendered from the reviewed table at cite time —
+   context, not quotation, so it is set in the metadata face and marked with a dashed rule. */
+.answer__context {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px dashed var(--brand-sand);
+  color: var(--brand-muted);
+  font-size: var(--text-micro);
+  letter-spacing: 0.02em;
 }
 
 .answer__source {

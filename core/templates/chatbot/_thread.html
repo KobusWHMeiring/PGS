@@ -44,6 +44,13 @@ that cannot be checked.
                 <summary class="cite cite--reference">
                   {{ citation.section_ref }}{% if citation.sub_ref %} · {{ citation.sub_ref }}{% endif %}
                 </summary>
+                {% if citation.row_label %}{% comment %} D79 option E: the printed row label is
+                   context rendered from the reviewed table, not a quotation — the page prints
+                   it in the row's first column, so the corpus never repeats it and the audit
+                   never sees it. Marked as context so a reader cannot think "900" was
+                   quoted alone when the row is what makes it a renewal fee. {% endcomment %}
+                  <p class="cite-context">Table row: {{ citation.row_label }}</p>
+                {% endif %}
                 <blockquote class="cite-quote">{{ citation.quote }}</blockquote>
                 <p class="cite-source">
                   {{ citation.document }}{% if citation.page %} · p. {{ citation.page }}{% endif %}

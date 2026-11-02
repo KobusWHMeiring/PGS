@@ -57,6 +57,7 @@ from knowledge.services import (
     chunks_by_id,
     search_terms,
 )
+from knowledge.table_context import TableContext
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,15 @@ MAX_OUTPUT_TOKENS_CEILING = 8192
 #: 394-chunk dev corpus: *"what is the yearly cost of membership"* answered with §2.1's
 #: R100 + R500 alone while §2.2, §2.3, §2.4 and §2.5 were all among the eight passages
 #: supplied — faithful to the question, and the R100 read as the price of a year.
-PROMPT_VERSION = "d78-2"
+#: `d79-1` (2026-11-02): rule 8b — a table is shown as structure (columns once, one cell per
+#: line) and the headings are context, never a quote. `D79` option E, slice 2: the audit is
+#: unchanged (still a substring of the row's own cells), and what changed is that the model
+#: can now *see* which cell is which.
+#: `d79-2` the same day: cells are quotable together only when they are consecutive. The
+#: first live run quoted `Below R 250,000 900` — the label and the renewal fee, skipping
+#: the initial fee between them — and the audit refused the whole answer, correctly, for a
+#: rule the prompt had not stated.
+PROMPT_VERSION = "d79-2"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -224,6 +233,17 @@ procedure, and name the document you are citing.
 chemical-free or spray-free. Those are not PGS certification outcomes in this \
 deployment. If a passage mentions one, say only what the passage says and do not \
 endorse it.
+8b. A passage may be printed as a TABLE: a `LOCATOR:`, the table's column headings \
+once, and then its rows with one cell per line, in the order the headings are \
+printed. The headings are **context, not evidence** — the page prints them once \
+above the table and they are not part of any row. Quote a row's cells only, \
+character-for-character as they are printed under the row, and cite the `LOCATOR:` \
+that precedes the table. Never include a column heading, a `TABLE:` line, or a \
+vertical bar in a quote, and never quote across two rows: one row is one excerpt. \
+Cells are only quotable together when they are **consecutive**: if a row prints \
+`Below R 250,000`, `1,500`, `900` then `Below R 250,000 900` is not a quote of it, \
+because `1,500` sits between them and no passage prints those two words side by \
+side. Quote the whole row, or quote one cell on its own.
 
 The application renders its own refusal wording, so do not write a refusal yourself.
 """
@@ -360,6 +380,11 @@ class Citation:
     #: reference itself; later ones are named for their own words, so the anchor is a property
     #: of the text and survives a `--force` re-ingest (`CONCORDANCE_PRD` §10.7).
     reading_anchor: str = ""
+    #: The printed label of the row this citation quotes, when the passage is a row of a
+    #: reviewed table (`D79` option E). It is **not** part of the quote: the page prints it
+    #: in the row's first column, and a citation that shows it shows context, which is how a
+    #: reader learns that `900` is a renewal fee without the corpus repeating a heading.
+    row_label: str = ""
 
     @property
     def read_url(self) -> str:
@@ -1102,6 +1127,9 @@ def audit_citations(    raw_citations: Sequence[dict],
                 or reading_anchor(
                     matched.section_ref, matched.anchor, matched.heading_path
                 ),
+                row_label=(
+                    matched.table.row_label if matched.table is not None else ""
+                ),
             )
         )
 
@@ -1401,6 +1429,35 @@ def _is_truncated(finish_reason) -> bool:
     return str(value).upper().endswith("MAX_TOKENS")
 
 
+def _render_table(
+    chunk: RetrievedChunk, table: TableContext, rows: Sequence[RetrievedChunk]
+) -> str:
+    """One reviewed table, as the paper prints it: headings once, then a cell per line.
+
+    The rows are `/`-free and labelled nowhere: each row is printed exactly as its chunk
+    text, so the quote the model copies is a substring of the chunk the audit checks. The
+    headings sit above them because that is where the page puts them, which is the whole
+    of option E.
+    """
+    document = chunk.document_title + (
+        f" v{chunk.document_version}" if chunk.document_version else ""
+    )
+    page = f", page {chunk.page}" if chunk.page is not None else ""
+    lines = [
+        f"LOCATOR: {locator_of(chunk) or '(no locator)'}",
+        f"Document: {document}{page}",
+        "Numbered sub-clauses available: none — omit `sub_ref` for these rows.",
+        f"TABLE: {table.title}",
+        "Column headings, in the order each row prints its cells (context only — never "
+        "quote a heading):",
+        " | ".join(table.columns),
+        "Rows, one cell per line, in printed order — quote the cells of one row exactly as "
+        "they are printed here:",
+    ]
+    lines.extend(row.text for row in rows)
+    return "\n".join(lines)
+
+
 def build_prompt(
     question: str, chunks: Sequence[RetrievedChunk], history: Sequence[ChatMessage]
 ) -> str:
@@ -1418,7 +1475,28 @@ def build_prompt(
     omits `sub_ref` rather than inventing one from a heading (D47).
     """
     blocks: list[str] = []
+    rendered_tables: set[tuple[str, ...]] = set()
     for index, chunk in enumerate(chunks, start=1):
+        # A reviewed table is rendered **once**, at the position of its first row, with its
+        # printed headings above the rows (D79/E, `d79-1`). The headings are context: they
+        # never appear inside a row's text, so a quote can never include them and the audit
+        # is untouched — still a substring of the row's own cells. The alternative (paste
+        # the heading into every row's chunk text) repeats a line the paper prints once and
+        # is what option A was rejected for.
+        table = chunk.table
+        if table is not None and table.row_label and table.key not in rendered_tables:
+            rendered_tables.add(table.key)
+            rows = [
+                other
+                for other in chunks
+                if other.table is not None
+                and other.table.key == table.key
+                and other.table.row_label
+            ]
+            blocks.append(_render_table(chunk, table, rows))
+            continue
+        if table is not None and table.row_label:
+            continue
         locator = locator_of(chunk) or "(no locator)"
         document = chunk.document_title + (
             f" v{chunk.document_version}" if chunk.document_version else ""

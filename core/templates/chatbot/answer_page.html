@@ -63,6 +63,10 @@
           <h2 class="answer__h">The clause it comes from</h2>
           {% for citation in answer.citations %}
             <figure class="answer__clause">
+              {% if citation.row_label %}{% comment %} D79 option E: context rendered from the
+                 reviewed table, never quoted — see `_thread.html` for the same rule. {% endcomment %}
+                <p class="answer__context">Table row: {{ citation.row_label }}</p>
+              {% endif %}
               <blockquote class="answer__quote">{{ citation.quote }}</blockquote>
               <figcaption class="answer__source">
                 {{ citation.document }}

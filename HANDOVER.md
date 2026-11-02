@@ -16,14 +16,14 @@
 >    fixed: the decision is written up and belongs to the owner.
 > 4. **G11 is answered: D79 = E** (2026-11-02). Show the table as structure, quote cells only, render
 >    the row's context from the artefact at cite time; `product/design/g11_option_e_explainer.html`
->    teaches the mechanism. **Slice 1 (the reserved seat) landed:** the seats are filled in the vector
->    arm's own order and a heading cannot take one — `curated-unannounced-visit` went from not-found to
->    rank 3, and a fee band is now *reachable at all*; R@8 unchanged at 0.812, and
->    `curated-conversion-period` lost (rank 7 → not found). **Reachable is not reliable** — the band is
->    the last of eight seats on one phrasing and out on two others, because no similarity ranking
->    chooses a band. Cuts 2 and 3 (the prompt shape, the *context, not quotation* UI) are **not
->    built**; slice 2's unit should be the table, not a bigger reservation. `g12` is decided as
->    **D80** (X2 now, X3 when demanded).
+>    teaches the mechanism. **Slices 1 and 2 landed.** Slice 1: the seats are filled in the vector
+>    arm's own order and a heading cannot take one. Slice 2: a reviewed table's rows travel with any
+>    passage of it (`knowledge/table_context.py`), the prompt shows the table once with its printed
+>    headings (`d79-2`), and `Citation.row_label` reaches the templates as context. **The G10 fees
+>    answer now works:** *"…below R250,000 would pay a renewal fee of R900"*, *"…initial certification
+>    fee of R1,500 or a renewal fee of R900"* — both grounded, quoting single cells. R@8 unchanged at
+>    0.812. **Left: slice 3**, the *context, not quotation* design pass — the dashed "Table row:" line
+>    is the minimum. `g12` is decided as **D80** (X2 now, X3 when demanded).
 > 5. **Context budget measured, the handover split, and the loop measured**
 >    (`product/docs/context/CONTEXT_BUDGET.md`): the six files this repo told every session to read
 >    totalled **509 KB ≈ 144k tokens**; `HANDOVER.md` was 2,553 lines of which 72 were state. **This
@@ -46,8 +46,8 @@
 >    `core/services/_chatbot.py` (**91 KB, 3× the §II cap**) along its own four headings, then
 >    `knowledge/corpus.py` (49 KB). 4.4: wire `scripts/context.py --check` into the gate **once the
 >    tree is inside budget** — it reports 25 breaches today (11 source files, 14 rows).
-> 2. **The table work, in this order:** **G11 slices 2 and 3** (D79 = E — the prompt shape and row
->    identity, then the *context, not quotation* UI distinction), then **G12/X2**
+> 2. **The table work, in this order:** **G11 slice 3** (D79 = E — the *context, not quotation*
+>    distinction as a design pass, and the legend that makes it legible), then **G12/X2**
 >    starting with the **eight-shape fixture set** (that is D80's first commit).
 > 3. **The landscape UAT sign-off** — still unsigned, still unblocked, still the only thing keeping
 >    `LANDSCAPE_TABLES_PRD` out of `Done/`.
@@ -68,15 +68,15 @@
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4 and context-budget sessions
-**Repo state:** `main`, **38 commits ahead of `origin/main`**. On this tree (2026-11-02, after
-D79's slice 1): `scripts/fast.sh` **1554 passed, 1 skipped in 138.78 s** and
-`scripts/fast.sh --critical` **210 passed, 4 deselected in 19.52 s**, both run as
-`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1); `scripts/verify.sh` was last green at **1566 passed / 1
-skipped in 133.93 s** cold and has **not** been re-run since the seat change, so the next deploy
-owes one. `pytest tests/e2e` **71 passed** (not in the gate: needs a browser, last measured at
-`efd1191`). The suite is fast today because the database was warm; quote the cold and warm pair,
-not one number (`testing_hazards.md` §3.17).
+**Repo state:** `main`, **40 commits ahead of `origin/main`**. On this tree (2026-11-02, after
+D79's slices 1 and 2): `scripts/fast.sh` **1565 passed, 1 skipped in 103.37 s**,
+`scripts/fast.sh --critical` **213 passed, 4 deselected in 18.44 s**, and `pytest tests/e2e`
+**71 passed in 135 s** — all three run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs`
+(the gate defaults to 5432 and this box serves 5433, `testing_hazards.md` §3.1).
+`scripts/verify.sh` was last green at **1566 passed / 1 skipped in 133.93 s** cold and has **not**
+been re-run since the seat or the table change, so the next deploy owes one. The suite is fast
+today because the database was warm; quote the cold and warm pair, not one number
+(`testing_hazards.md` §3.17).
 
 **The dev box is current.** All four documents re-ingested from their artefacts, **401 chunks, 0
 unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left

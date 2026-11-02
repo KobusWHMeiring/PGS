@@ -433,6 +433,12 @@ obvious improvement: filling the seats with vector-only chunks first ("the ones 
 could not find") scored **R@8 0.750, R@5 0.625, MRR 0.355** — clearly worse, because those chunks
 displace ones both arms had ranked.
 
+**S2 does not move these numbers, by design, and that is worth knowing before re-measuring.**
+A reviewed table's rows are appended to the passage set *after* the hits, with score 0.0, so
+every rank `eval_retrieval` reports is unchanged — re-run it after a change to `search_terms`
+and a table that stopped travelling would still show 0.812. That behaviour is pinned by
+`knowledge/tests/test_table_context.py` instead, which is the right instrument for it.
+
 **Not pinned by a test.** The seat's mechanics are (`knowledge/tests/test_retrieval.py`,
 `test_a_seat_is_filled_from_the_semantic_arms_own_ranking` and
 `test_a_heading_cannot_consume_a_semantic_seat`), but *these* numbers are not: §4 says a ranking

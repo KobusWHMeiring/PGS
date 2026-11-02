@@ -167,8 +167,9 @@ def test_the_rule_allows_a_floor_and_no_other_arithmetic():
 
 
 def test_the_prompt_version_moved_with_the_rule():
-    """`d78-2` is the version that carries this rule (pinned in `test_follow_up` too)."""
-    assert PROMPT_VERSION == "d78-2"
+    """`d79-2` is the version that carries the cost rule and the table rule (pinned in
+    `test_follow_up` too)."""
+    assert PROMPT_VERSION == "d79-2"
 
 
 # --- The advisory note ------------------------------------------------------
