@@ -230,7 +230,8 @@
     <h1>How does a printed column header reach a row’s quotable text?</h1>
     <p>The assistant can now <em>find</em> the OPP’s six turnover bands. It still cannot <em>say</em> R1,500,
        because a row’s chunk text is three bare cells and the column labels live outside it.
-       Four ways out, and one decision.</p>
+       Five ways out, and one decision — read together with
+       <code>g12_ingestion_generalisation.html</code>, where option E comes from.</p>
     <div class="meta">
       <span>PRD <code>CHAT_ANSWER_COVERAGE_PRD.md</code> G11</span>
       <span>Spec <code>§18.3</code> D73, D69, D70.1</span>
@@ -434,8 +435,11 @@ rendition  best = <span class="ok">Farmyard manure, slurry and urine</span>   <s
 
   <!-- ================= PART 3 ================= -->
   <div class="section-head"><h2>Part 3 — The options</h2><span class="rule"></span></div>
-  <p class="section-note">Four whole answers, each of which must solve both mechanisms. They are not
-     exclusive in principle — A and D could both run — but they are exclusive <em>as the answer</em>.</p>
+  <p class="section-note">Five whole answers, each of which must solve both mechanisms. They are not
+     exclusive in principle — A now and E later is a real sequence — but they are exclusive <em>as the
+     final answer</em>. <b>E is new since the first version of this page:</b> it came out of asking what a
+     general ingestion engine needs (<code>g12_ingestion_generalisation.html</code>), and it is the one the
+     evidence now points to.</p>
 
   <div class="card">
     <h3>A. The printed header line becomes part of each row’s chunk text</h3>
@@ -555,6 +559,52 @@ Below R 250,000
     </div>
   </div>
 
+  <div class="card">
+    <h3>E. The table is shown as structure; the citation renders the row’s context at cite time</h3>
+    <p>The model is shown the table as a <b>table</b> — its printed column headings once, then the rows —
+       and quotes <b>cells only</b>. The reader-facing citation is then <b>rendered</b> from the artefact’s
+       own <code>cols:</code> and the row’s label:</p>
+<pre><span class="dim">prompt (structure, not a quote target):</span>
+  TABLE  2.3 PGS assessment fee structure
+  columns: Annual farm turnover (gross sales) | Initial certification fee (R) | Renewal fee (R)
+  row    : Below R 250,000 | 1,500 | 900
+
+<span class="dim">what the model may quote:</span>  Below R 250,000 / 1,500 / 900      <span class="ok">(the cells)</span>
+<span class="dim">what the reader sees:</span>       §2.3 — Below R 250,000 · initial R1 500 · renewal R900
+<span class="dim">and what the audit checks:</span>   the quoted cells are in the row’s cells   <span class="ok">(substring, unchanged)</span></pre>
+    <p>Nothing is added to the corpus. The heading is never quoted, so it can never be refused; it is
+       <b>context rendered from structure</b>, the way a citation already renders a document title and a
+       page number. This is the mechanism NotebookLM’s UX implies (see
+       <code>g12_ingestion_generalisation.html</code>): a citation that <em>highlights a region</em> does not
+       need the passage to carry its own context.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul>
+          <li>The quote stays exactly the paper’s characters — <b>nothing repeated, nothing added</b> — so
+              D69 holds without a licence.</li>
+          <li>The label cannot be mis-quoted, because it is never a quote target.</li>
+          <li>The audit is untouched: still a substring check, just against cells.</li>
+          <li><b>It is the only option that generalises to a table we have not seen:</b> the renderer
+              reads structure, so a merged header, a two-level header or a 1,100-character cell needs no
+              new corpus rule.</li>
+          <li>The reader’s grid is untouched.</li>
+        </ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul>
+          <li>The biggest change of the five: a prompt shape, a citation identity (which row?), and the
+              answer/reader templates that render it.</li>
+          <li>A citation now displays text the passage does not contain. That is a <b>new category</b>
+              (“context, not quotation”) and the UI must say which is which, or a reader could think the
+              paper prints the label above the row.</li>
+          <li>It needs the artefact at read time — fine here, but it couples the chat citation to a
+              reviewed file rather than to the chunk.</li>
+          <li>Rows need a stable identity for the citation to reference (today a row is a chunk id).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= PART 4 ================= -->
   <div class="section-head"><h2>Part 4 — What the principles say, including where they disagree</h2><span class="rule"></span></div>
 
@@ -576,19 +626,20 @@ Below R 250,000
             <td><span class="pill no">fails</span> — D puts the schedule in code as a second copy</td></tr>
         <tr><td>Contextual retrieval (Gao et al. 2023; Anthropic 2024)</td>
             <td>prepend context to the <em>embedded</em> text, never to the quoted text</td>
-            <td>D73, against A</td>
-            <td><span class="pill no">disagrees</span> with A — and this is the strongest argument against A</td></tr>
+            <td>D73, <b>and E</b></td>
+            <td><span class="pill yes">agrees</span> with E — the label is context, never a quote</td></tr>
         <tr><td>Retrieval for tabular QA (Herzig et al. 2020; TAPAS lineage)</td>
             <td>a table is retrieved with its header or not usable</td><td>B, A</td>
             <td><span class="pill yes">yes</span> — a headerless numeric row is not a readable unit</td></tr>
       </tbody>
     </table>
     <p style="margin-top:12px"><b>The disagreement is real and it is the crux.</b> The retrieval literature
-       says: put context on the vector, keep it out of the quoted text. That is precisely D73, and it is
-       precisely what fails here — because the *quote* is what a reader checks, and a quote of three
-       numbers is a riddle. A tabular-QA reading of the same problem says a cell without its column is
-       not a value. <b>I break the tie toward the reader</b>: this product’s claim is that every
-       sentence is checkable against the paper, and “1,500” alone is not.</p>
+       says: put context on the vector, keep it out of the quoted text. That is precisely D73 — and
+       <b>E is the first option that satisfies it</b>: the label is rendered, never quoted. A repeats a
+       printed line inside quotable text, which the literature would not do. A tabular-QA reading of the
+       same problem says a cell without its column is not a value — E gives the reader the column without
+       inventing a quote. <b>The tie breaks toward E for a system that must generalise</b>, and toward A
+       only as a stopgap; see <code>g12_ingestion_generalisation.html</code>.</p>
   </div>
 
   <!-- ================= PART 5 ================= -->
@@ -597,15 +648,23 @@ Below R 250,000
 
   <div class="card">
     <table>
-      <thead><tr><th>Criterion</th><th>A — header in the row</th><th>B — one chunk per table</th><th>C — leave it to the page</th><th>D — fee panel</th></tr></thead>
+      <thead><tr><th>Option</th><th>Quote is the paper’s words</th><th>Reader grid</th><th>Can state R1,500</th><th>Effort</th><th>Generalises</th></tr></thead>
       <tbody>
-        <tr><td>Quote is the paper’s own words</td><td><span class="pill yes">yes</span>, repeated</td><td><span class="pill yes">yes</span>, once</td><td><span class="pill yes">n/a</span></td><td><span class="pill no">no</span> — code constants</td></tr>
-        <tr><td>The reader’s grid survives</td><td><span class="pill yes">unchanged</span></td><td><span class="pill no">needs a rebuild</span></td><td><span class="pill yes">unchanged</span></td><td><span class="pill yes">unchanged</span></td></tr>
-        <tr><td>The assistant can state R1,500</td><td><span class="pill yes">yes</span> (with the seat fix)</td><td><span class="pill yes">yes</span></td><td><span class="pill no">no</span></td><td><span class="pill yes">yes</span>, deterministically</td></tr>
-        <tr><td>Beside the answer, from code rather than the corpus</td><td><span class="pill yes">no</span></td><td><span class="pill yes">no</span></td><td><span class="pill yes">no</span></td><td><span class="pill no">is exactly that</span></td></tr>
-        <tr><td>Effort</td><td>small — one function, 2 tests, re-ingest 2 docs</td><td>large — reader rebuild + chunking + tests</td><td><b>none</b></td><td>medium — new panel, template, citation rule, a test holding two sources equal</td></tr>
-        <tr><td>Generalises to other numeric tables</td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td><td><span class="pill no">no</span></td><td><span class="pill no">no</span></td></tr>
-        <tr><td>Risk to existing answers</td><td>low — text-only change to 6 rows</td><td>high — retrieval and reader both move</td><td>none</td><td>medium — a new answer surface on a live page</td></tr>
+        <tr><td><b>A</b> — header in the row</td><td>yes, <b>repeated</b></td><td>unchanged</td><td>yes (+ seat fix)</td><td>small</td><td>yes</td></tr>
+        <tr><td><b>B</b> — one chunk per table</td><td>yes, once</td><td><span class="pill no">needs rebuild</span></td><td>yes</td><td>large</td><td>yes</td></tr>
+        <tr><td><b>C</b> — leave it to the page</td><td>n/a</td><td>unchanged</td><td><span class="pill no">no</span></td><td>none</td><td><span class="pill no">no</span></td></tr>
+        <tr><td><b>D</b> — reviewed fee panel</td><td><span class="pill no">no</span> — code constants</td><td>unchanged</td><td>yes, guaranteed</td><td>medium</td><td><span class="pill no">no</span></td></tr>
+        <tr class="hit"><td><b>E</b> — render context at cite time</td><td>yes, <b>cells only</b></td><td>unchanged</td><td>yes</td><td>medium</td><td><span class="pill yes">yes, and cleanly</span></td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><b>Two further criteria that decide between A and E,</b> and neither is in the
+       table because both are binary:</p>
+    <table style="margin-top:6px">
+      <thead><tr><th></th><th>A</th><th>E</th></tr></thead>
+      <tbody>
+        <tr><td>Adds text to the corpus that the paper prints once</td><td><span class="pill no">yes</span></td><td><span class="pill yes">no</span></td></tr>
+        <tr><td>Needs a citation that can display non-quoted context</td><td><span class="pill yes">no</span></td><td><span class="pill no">yes</span></td></tr>
+        <tr><td>Ships this week</td><td><span class="pill yes">yes</span></td><td><span class="pill mid">no</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -615,26 +674,31 @@ Below R 250,000
 
   <div class="card">
     <div class="rec">
-      <span class="label">Recommended</span>
-      <p><b>A — the printed header line becomes part of each row’s chunk text</b>, together with the
-         selection fix (reserve the semantic seat so the alias arm cannot throw it away).</p>
-      <p>It is the only option that makes the assistant able to quote the paper’s own words, keeps the
-         reader’s grid untouched, needs no new claim class, and generalises to the next numeric table.
-         The header is a line the OPP prints; repeating it per row is a transcription choice, not an
-         invention — and it is the smallest change that removes the failure.</p>
-      <p><b>Order of work:</b> (1) run the §1.4 experiment, because A depends on the rendition’s effect
-         being benign; (2) the header rule + 2 tests; (3) the seat reservation + a test that a
-         vector-only chunk reaches the budget; (4) re-ingest <code>opp</code>, re-probe the four cost
-         phrasings, and only then write the §18.3 row.</p>
-      <p><b>What would change my mind:</b> if the header repetition reads badly in a real citation
-         (a reader seeing a header above a row that does not print one) — then B, and accept the reader
-         rebuild. Or if the owner wants the floor guaranteed regardless of retrieval — then D <em>as
-         well</em>, accepting that a sentence of the answer is not corpus-grounded.</p>
+      <span class="label">Recommended — two tracks</span>
+      <p><b>Target: E.</b> Show the model the table as structure, quote cells only, and render the row’s
+         context from the artefact at cite time. It is the only option that keeps the quote exactly the
+         paper’s characters <em>and</em> gives the reader the column heading, and it is the only one that
+         survives a table we have not seen — which is the requirement
+         <code>g12_ingestion_generalisation.html</code> is about.</p>
+      <p><b>Stopgap: A</b>, only if the fees answer must ship before E is designed. It adds a printed line
+         to six rows’ texts, which D69 tolerates and the retrieval literature does not; it should be
+         written down as temporary, with E’s slice named as its replacement.</p>
+      <p><b>Do not build both by accident.</b> A changes the chunk text; E changes the citation. If A ships
+         and E follows, E must delete A’s repetition — otherwise the corpus carries a rule built for a
+         mechanism that no longer exists.</p>
+      <p><b>Order of work:</b> (1) the §1.4 experiment, because both A and E depend on a rendition;
+         (2) E’s design — prompt shape, row identity, and the “context, not quotation” distinction in the
+         answer and reader templates; (3) branch by <code>layout:</code>, so <code>grid</code> tables get
+         structure and a <code>process</code> table keeps cards; (4) the selection fix in either case — a
+         reserved seat, because no similarity ranking chooses a band.</p>
+      <p><b>What would change my mind:</b> if E’s “context, not quotation” distinction cannot be made legible
+         in the answer UI, then A, and accept the repetition. If the owner wants the floor guaranteed
+         regardless of retrieval, then D <em>as well</em> — accepting that one sentence of the answer is
+         grounded in a reviewed constant rather than a passage.</p>
     </div>
-    <p style="margin-top:14px"><b>Not recommended, with reasons:</b> B is the most faithful to the paper
-       and the most expensive, and it would need P4’s reader join re-opened; C is honest and fails the
-       owner’s actual question; D is the only guaranteed floor and it breaks the grounding contract
-       for one sentence — a contract change, not an implementation detail.</p>
+    <p style="margin-top:14px"><b>Not recommended:</b> B is the most faithful to the paper and the most
+       expensive, and it re-opens P4’s reader join; C is honest and fails the owner’s actual question; D is
+       a contract change rather than an implementation detail.</p>
   </div>
 
   <!-- ================= PART 7 ================= -->
@@ -647,11 +711,14 @@ Below R 250,000
       <label class="opt"><input type="radio" name="g11" value="B"> B — one chunk per table</label>
       <label class="opt"><input type="radio" name="g11" value="C"> C — leave it to the page</label>
       <label class="opt"><input type="radio" name="g11" value="D"> D — reviewed fee panel</label>
+      <label class="opt"><input type="radio" name="g11" value="E"> E — render context at cite time</label>
+      <label class="opt"><input type="radio" name="g11" value="AE"> A now, E as the target</label>
       <label class="opt neg"><input type="radio" name="g11" value="other"> Something else</label>
     </div>
-    <textarea data-notes="g11" placeholder="Anything to add — especially if you want D as well as A, or if the header repetition is the thing that bothers you."></textarea>
+    <textarea data-notes="g11" placeholder="Anything to add — especially whether “context, not quotation” is legible enough in the answer UI for E to carry it."></textarea>
     <div class="card-foot">
-      <button class="tiny primary" data-accept="g11" data-value="A">Accept A (recommended)</button>
+      <button class="tiny primary" data-accept="g11" data-value="E">Accept E (recommended)</button>
+      <button class="tiny" data-accept="g11" data-value="AE">Accept A now, E as the target</button>
       <button class="tiny" data-clear="g11">Clear this answer</button>
     </div>
   </div>
@@ -760,7 +827,7 @@ Below R 250,000
     count();
   });
 
-  var LABELS = { A: 'A — header in the row', B: 'B — one chunk per table', C: 'C — leave it to the page', D: 'D — reviewed fee panel', other: 'Something else' };
+  var LABELS = { A: 'A — header in the row', B: 'B — one chunk per table', C: 'C — leave it to the page', D: 'D — reviewed fee panel', E: 'E — render context at cite time', AE: 'A now, E as the target', other: 'Something else' };
   var PROSE = { first: 'measure first', after: 'after the work', drop: 'leave the revert as shipped' };
 
   function markdown() {

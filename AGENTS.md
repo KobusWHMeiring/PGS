@@ -8,9 +8,15 @@ the SAOSO standard.
 
 ## Read these first
 
+**Do not read the whole set.** Six files totalling ~509 KB (≈144k tokens) is more than a
+session's budget; `python scripts/context.py --task <chat|corpus|reader|public|backlog>` prints
+the read set for your task, with a READ/SEARCH mode per file. The budgets and the four proposed
+cuts are in `product/docs/context/CONTEXT_BUDGET.md`; today the tree is over budget in
+`HANDOVER.md`, 11 source files and 9 decision rows, and `--check` names them.
+
 | Purpose | File |
 |---------|------|
-| **Handover — start here** | `HANDOVER.md` |
+| **Handover — START HERE block only** | `HANDOVER.md` (state; history is below it) |
 | **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
 | **Testing hazards — read before writing a test** | `product/docs/context/testing_hazards.md` |

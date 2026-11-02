@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<!-- EXPLORATION ARTIFACT (not a production template) | Outeniqua PGS — G12: does the ingestion engine generalise?
+     Companion to CHAT_ANSWER_COVERAGE_PRD.md G11 and product/design/g11_row_labels_exploration.html.
+     Self-contained: no CDN, no build step, no external requests. Answers autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — Does the ingestion engine generalise? (G12)</title>
+<style>
+  :root {
+    --bg:#f4f6f2; --surface:#ffffff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+    --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+    --text:#1c2620; --muted:#66756b;
+    --warn:#8a5a1c; --warn-soft:#f7efe1;
+    --stop:#8c3a32; --stop-soft:#f6e7e4;
+    --radius-lg:14px; --radius-xl:20px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:0 2px 10px rgba(28,38,32,.10);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:0 20px 160px; }
+
+  header.hero { background:linear-gradient(160deg,var(--accent) 0%,#274936 100%); color:#fff; padding:44px 20px 38px; margin-bottom:28px; }
+  header.hero .inner { max-width:940px; margin:0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 10px; font-size:30px; line-height:1.2; letter-spacing:-.01em; }
+  header.hero p { margin:0; max-width:64ch; opacity:.92; font-size:15px; }
+  header.hero .meta { margin-top:18px; font-size:13px; opacity:.85; display:flex; flex-wrap:wrap; gap:8px 20px; }
+  header.hero .meta code { font-family:var(--mono); font-size:12px; background:rgba(255,255,255,.14); padding:2px 7px; border-radius:6px; }
+
+  .intro { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:30px; }
+  .intro h2 { margin:0 0 8px; font-size:17px; }
+  .intro p { margin:0 0 10px; font-size:14.5px; color:var(--muted); }
+  .intro ol { margin:10px 0 0; padding-left:20px; font-size:14.5px; color:var(--muted); }
+  .intro li { margin-bottom:5px; }
+
+  .section-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:40px 0 14px; }
+  .section-head h2 { margin:0; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+  .section-head .rule { flex:1; height:1px; background:var(--surface-high); min-width:40px; }
+  .section-note { font-size:14px; color:var(--muted); margin:-6px 0 16px; max-width:70ch; }
+
+  .card { background:var(--surface); border-radius:var(--radius-xl); padding:20px 22px 22px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .card h3 { margin:0 0 8px; font-size:16.5px; line-height:1.35; }
+  .card p { margin:0 0 10px; font-size:14.5px; }
+  .card p:last-child { margin-bottom:0; }
+  .card h4 { margin:18px 0 6px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+
+  .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px) { .split { grid-template-columns:1fr; } }
+  .for, .against { border-radius:var(--radius-lg); padding:12px 14px; font-size:14px; }
+  .for { background:var(--accent-soft); }
+  .against { background:var(--warn-soft); }
+  .for .label, .against .label { display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; margin-bottom:6px; }
+  .for .label { color:var(--accent); }
+  .against .label { color:var(--warn); }
+  .for ul, .against ul { margin:0; padding-left:18px; }
+  .for li, .against li { margin-bottom:5px; }
+
+  code, .mono { font-family:var(--mono); font-size:12.5px; }
+  .path { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  pre { margin:10px 0; padding:12px 14px; background:var(--surface-low); border-radius:var(--radius-lg); overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.5; }
+  pre .ok { color:var(--accent); font-weight:600; }
+  pre .bad { color:var(--stop); font-weight:600; }
+  pre .dim { color:var(--muted); }
+
+  table { width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13.5px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--surface-high); vertical-align:top; }
+  th { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; font-family:var(--mono); }
+  tr:last-child td { border-bottom:none; }
+  tr.hit td { background:var(--accent-soft); }
+
+  .pill { display:inline-block; font-family:var(--mono); font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--surface-high); color:var(--text); }
+  .pill.yes { background:var(--accent-soft); color:var(--accent); }
+  .pill.no { background:var(--stop-soft); color:var(--stop); }
+  .pill.mid { background:var(--warn-soft); color:var(--warn); }
+
+  .pipe { display:flex; flex-wrap:wrap; gap:10px; align-items:stretch; margin:14px 0 6px; }
+  .step { flex:1 1 150px; background:var(--surface-low); border-radius:var(--radius-lg); padding:10px 12px; font-size:13px; position:relative; }
+  .step b { display:block; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  .step.bad { background:var(--stop-soft); }
+  .step.bad b { color:var(--stop); }
+  .step .arrow { position:absolute; right:-12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; }
+  .legend { font-size:12.5px; color:var(--muted); margin-top:6px; }
+  .legend .k { display:inline-block; width:10px; height:10px; border-radius:3px; vertical-align:middle; margin-right:5px; }
+
+  .rec { margin:14px 0 0; background:var(--surface-low); border-radius:var(--radius-lg); padding:14px 16px; }
+  .rec .label { font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--accent); display:block; margin-bottom:6px; }
+  .rec p { margin:0 0 8px; font-size:14.5px; }
+  .rec p:last-child { margin-bottom:0; }
+
+  .callout { border-left:3px solid var(--accent-line); background:var(--accent-soft); border-radius:0 var(--radius-lg) var(--radius-lg) 0; padding:12px 15px; margin:14px 0; font-size:14px; }
+  .callout.warn { border-left-color:var(--warn); background:var(--warn-soft); }
+  .callout.stop { border-left-color:var(--stop); background:var(--stop-soft); }
+  .callout .k { display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:5px; color:var(--muted); }
+  .callout p { margin:0 0 8px; }
+  .callout p:last-child { margin-bottom:0; }
+
+  .opts { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .opt { cursor:pointer; font-size:13.5px; font-weight:550; padding:8px 15px; border-radius:999px; background:var(--surface-low); color:var(--muted); border:1px solid transparent; user-select:none; transition:background .12s, color .12s; }
+  .opt:hover { background:var(--surface-high); }
+  .opt input { position:absolute; opacity:0; pointer-events:none; }
+  .opt:has(input:checked) { background:var(--accent); color:#fff; }
+  .opt.neg:has(input:checked) { background:var(--warn); color:#fff; }
+
+  textarea { width:100%; margin-top:14px; min-height:88px; resize:vertical; font-family:var(--font); font-size:15px; line-height:1.5; color:var(--text); background:var(--surface-low); border:1px solid transparent; border-radius:var(--radius-lg); padding:12px 14px; }
+  textarea::placeholder { color:#9aa79f; }
+  textarea:focus { outline:none; border-color:var(--accent-line); background:var(--surface); }
+
+  button { font-family:var(--font); font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:8px 14px; border:1px solid transparent; background:var(--surface-low); color:var(--text); transition:background .12s; }
+  button:hover { background:var(--surface-high); }
+  button.primary { background:var(--accent); color:#fff; }
+  button.primary:hover { background:#2b5039; }
+  button.ghost { background:transparent; color:var(--muted); }
+  button.ghost:hover { background:var(--surface-low); }
+  button.tiny { font-size:12.5px; padding:6px 11px; }
+  .card-foot { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+
+  .bar { position:fixed; left:0; right:0; bottom:0; z-index:20; background:rgba(255,255,255,.93); backdrop-filter:blur(10px); box-shadow:var(--shadow-sticky); padding:11px 20px; }
+  .bar .inner { max-width:940px; margin:0 auto; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .progress { font-size:13.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .progress b { color:var(--text); }
+  .bar .spacer { flex:1; }
+  .bar .saved { font-size:12.5px; color:var(--accent); opacity:0; transition:opacity .3s; }
+  .bar .saved.show { opacity:1; }
+
+  dialog { border:none; border-radius:var(--radius-xl); padding:0; width:min(820px,92vw); box-shadow:0 20px 60px rgba(0,0,0,.32); }
+  dialog::backdrop { background:rgba(20,28,24,.5); }
+  dialog .dlg-head { padding:18px 22px 14px; }
+  dialog h3 { margin:0 0 4px; font-size:17px; }
+  dialog .dlg-head p { margin:0; font-size:13.5px; color:var(--muted); }
+  dialog textarea { margin:0; border-radius:0; min-height:340px; max-height:52vh; font-family:var(--mono); font-size:12.5px; background:var(--surface-low); border-top:1px solid var(--surface-high); border-bottom:1px solid var(--surface-high); }
+  dialog .dlg-foot { padding:14px 22px 18px; display:flex; gap:10px; flex-wrap:wrap; }
+
+  @media print {
+    body { background:#fff; }
+    header.hero { background:#fff; color:#000; padding:0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity:1; }
+    header.hero .meta code { background:none; padding:0; }
+    .bar, .card-foot, dialog, .intro { display:none; }
+    .card, .intro { box-shadow:none; break-inside:avoid; }
+    .wrap { padding-bottom:0; }
+  }
+  @media (max-width:560px) {
+    header.hero h1 { font-size:23px; }
+    .card { padding:17px 16px 18px; }
+    .wrap { padding:0 14px 170px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; Decision exploration</p>
+    <h1>Does this ingestion engine generalise past our four documents?</h1>
+    <p>We hand-reviewed a canonical corpus for four documents we own. The next corpus will be
+       documents we have never seen — different formatting, more tables, nastier tables. Four
+       architectures, measured against the tables that already break today.</p>
+    <div class="meta">
+      <span>PRD <code>CHAT_ANSWER_COVERAGE_PRD.md</code> G11</span>
+      <span>Plans <code>CORPUS_CANONICAL_FORMAT_PLAN.md</code> P4–P6</span>
+      <span>2026-11-02</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>How to read this</h2>
+    <p>This is a <b>decision document</b>. The question is not “which is best in the abstract” but
+       <b>what must be true of the engine so that a document we have not seen can be ingested without a
+       human writing its tables by hand</b> — and which of four architectures gets us there.</p>
+    <ol>
+      <li><b>Part 1 is the test set</b> — eight table shapes, each one already in our own corpus, with what
+          breaks. If an architecture cannot handle these, it does not generalise.</li>
+      <li>Part 2 is what our current design actually is, stated plainly, including the part that does not
+          scale.</li>
+      <li>Part 3–5 are the four options with their strongest cases, the literature, and a matrix.</li>
+      <li>Part 6 is one recommendation and what would change it. Part 7 is the control.</li>
+    </ol>
+    <p style="margin-top:10px"><b>Read with <code>g11_row_labels_exploration.html</code>:</b> G11 decides how
+       <em>one</em> table’s labels reach a quote; this page decides whether that answer survives contact
+       with the next corpus. Option <b>E</b> in G11 exists because of this page.</p>
+  </div>
+
+  <!-- ============ PART 1 ============ -->
+  <div class="section-head"><h2>Part 1 — The test set: eight shapes, all already in our corpus</h2><span class="rule"></span></div>
+  <p class="section-note">Nothing here is hypothetical. Every row is a shape the current pipeline either
+     mangles or special-cases by hand, with the artefact or chunk that shows it.</p>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>#</th><th>Shape</th><th>Where it exists today</th><th>What breaks</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">1</td>
+          <td><b>Numeric row, no labels</b> — a row that is three numbers</td>
+          <td>OPP §2.3 sliding scale, 6 rows: <code class="path">Below R 250,000 / 1,500 / 900</code></td>
+          <td>The row cannot be retrieved (no shared word) and cannot be quoted (labels outside the text). This is G11.</td>
+        </tr>
+        <tr>
+          <td class="num">2</td>
+          <td><b>Header lost entirely</b> — the chunk keeps values, not what they measure</td>
+          <td>SAOSO Appendix 6a, <b>20 chunks</b>: <code class="path">Equines over six months old | 2</code></td>
+          <td>“2” what, per what? Measured in the shipped corpus: 20 of 20 rows carry no unit and no column name.</td>
+        </tr>
+        <tr>
+          <td class="num">3</td>
+          <td><b>Column-major interleaving</b> — reading order destroyed</td>
+          <td>SAOSO Appendix 7: <code class="path">1 Aeration or oxygenation Air, / using gaseous oxygen Gaseous oxygen</code></td>
+          <td>Text survives, meaning does not. A quote of the real sentence fails the audit. Still uncurated (G4).</td>
+        </tr>
+        <tr>
+          <td class="num">4</td>
+          <td><b>Very long cell</b> — a cell is a paragraph</td>
+          <td>Landscape, longest cell <b>1,107 characters</b>; Appendix 2's trace-elements substance cell is 490</td>
+          <td>Cannot be a grid column; D76 measured the reading measure at ~85 characters. Forced D70.1’s definition-list shape.</td>
+        </tr>
+        <tr>
+          <td class="num">5</td>
+          <td><b>Deliberate empty cell</b> — silence is data</td>
+          <td>Landscape: <b>12 empty cells</b> across 4 tables</td>
+          <td>A missing cell and an empty one are different findings. A filler that “helpfully” repeats the value above destroys the distinction.</td>
+        </tr>
+        <tr>
+          <td class="num">6</td>
+          <td><b>Row spanning a page break</b></td>
+          <td>Landscape <code class="path">ESTABLISHING A PGS GROUP</code>: Steps 1–2 on p4, Step 3 on p5 (D72.5)</td>
+          <td>A row has one page; a page has two halves. Naïve extraction produces two half-rows or one row on the wrong page.</td>
+        </tr>
+        <tr>
+          <td class="num">7</td>
+          <td><b>Two-level structure</b> — a qualifier applying to some rows</td>
+          <td>Appendix 2: <code class="path">South African specific</code> printed between rows; part headings <code class="path">I. PLANT AND ANIMAL ORIGIN</code></td>
+          <td>Not a row, not a heading. Our answer is a reviewed <code>row-divider</code> annotation — hand-authored, so it does not scale.</td>
+        </tr>
+        <tr>
+          <td class="num">8</td>
+          <td><b>A picture in a cell</b> — the seal artwork</td>
+          <td>Landscape seals table (D72.1): the artwork is not stored</td>
+          <td>A picture cannot be a chunk or a quote. The decision to record it as “not stored” was a human’s.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><b>Two of these are live defects, not history:</b> Appendix 6a ships 20 chunks with
+       no column meaning, and Appendix 7 is still interleaved. Both have been true for weeks and neither is
+       caught by a test, because the tests assert what a human already fixed elsewhere. <b>That is the
+       generalisation problem in one sentence: our coverage is a review, not a mechanism.</b></p>
+  </div>
+
+  <div class="card">
+    <h3>1.1 What our pipeline is, stated plainly</h3>
+    <div class="pipe">
+      <div class="step"><b>PDF</b>governed document, 4 of them<span class="arrow">-&gt;</span></div>
+      <div class="step"><b>Generator</b><code>build_corpus.py</code> drafts the artefact<span class="arrow">-&gt;</span></div>
+      <div class="step"><b>Human review</b>tables, edits, front matter — by hand<span class="arrow">-&gt;</span></div>
+      <div class="step"><b>Corpus</b>chunks; quote = substring of text<span class="arrow">-&gt;</span></div>
+      <div class="step bad"><b>New corpus</b>nobody has reviewed it</div>
+    </div>
+    <p class="legend"><span class="k" style="background:var(--surface-low)"></span>works today
+       &nbsp; <span class="k" style="background:var(--stop-soft)"></span>the step with no answer</p>
+    <p style="margin-top:12px">The generator still <b>cannot emit a <code>&lt;!-- table --&gt;</code> block</b>
+       (D75, <code class="path">CORPUS_CANONICAL_FORMAT_PLAN.md</code> P4): every table in the corpus is a
+       human transcription. Four documents, 44 rows, all hand-reviewed. For the four governed documents that
+       is the right trade — the corpus is the thing we must be able to defend line by line (D69). For an
+       unknown corpus it is the whole problem: <b>the engine’s coverage is however many tables a person has
+       typed.</b></p>
+  </div>
+
+  <!-- ============ PART 2 ============ -->
+  <div class="section-head"><h2>Part 2 — The shape of the problem: three concerns we have welded together</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <p>Our design answers three questions with one mechanism, and that is why it does not travel:</p>
+    <table>
+      <thead><tr><th>Concern</th><th>Question it answers</th><th>Our mechanism</th><th>Scales?</th></tr></thead>
+      <tbody>
+        <tr><td><b>Extraction</b></td><td>how do we get the structure out of the page?</td>
+            <td>a hand-reviewed artefact</td><td><span class="pill no">no</span> — a human per document</td></tr>
+        <tr><td><b>Verification</b></td><td>how do we know the extraction is faithful?</td>
+            <td>the same review, plus character-multiset tests written per document</td>
+            <td><span class="pill no">no</span> — one test file per document</td></tr>
+        <tr><td><b>Citation</b></td><td>what does a reader check, and how?</td>
+            <td>a quote that must be a substring of the chunk</td>
+            <td><span class="pill mid">partly</span> — it works, but it forces context into the text</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <span class="k">The weld</span>
+      <p>Because verification is “a human read it” and citation is “the quote is in the text”, <b>anything a
+         reader needs in order to understand a quote must be in the text</b>. That is exactly what G11 is
+         fighting. A general engine separates them: <b>structure is verified against the source, and context is
+         rendered from structure</b> — not smuggled into the quote.</p>
+    </div>
+    <h4>The measured cost of the weld</h4>
+    <pre><span class="dim">documented tables in the corpus:</span>  4 artefact tables (14 rows) + 30 reviewed literals = 44 rows
+<span class="dim">reviewed by:</span>                     a person, once, per document
+<span class="dim">test files guarding them:</span>        test_corpus_landscape.py, test_corpus_opp.py, test_corpus_tables.py, test_tables.py
+<span class="dim">tables still mangled:</span>            2 (Appendix 6a’s 20 rows, Appendix 7’s 4 chunks)</pre>
+    <p>Four documents produced four bespoke test files and still left two tables broken. A fifth, unknown
+       document would produce a fifth test file and no guarantee. <b>That is the number that decides this.</b></p>
+  </div>
+
+  <!-- ============ PART 3 ============ -->
+  <div class="section-head"><h2>Part 3 — The options</h2><span class="rule"></span></div>
+  <p class="section-note">Four architectures, judged against Part 1. Names in brackets are the open-source or
+     cloud components that already do most of the work — none of them is a recommendation to adopt a vendor.</p>
+
+  <div class="card">
+    <h3>X1. Keep transcription; repair the generator so it drafts tables too</h3>
+    <p>The cheapest continuation: teach <code>build_corpus.py</code> to emit <code>&lt;!-- table --&gt;</code>
+       blocks from the layout, and keep the human diff as the verification. Add Appendix 6a and 7 to the
+       reviewed set.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul><li>No new dependency, no new claim, and it is D75’s already-agreed next step.</li>
+            <li>Keeps the strongest property we have: every line of the corpus has been read by a person.</li>
+            <li>Directly fixes the two live defects (6a, 7), which no architecture change does by itself.</li></ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul><li>The human is still in the loop per document. Coverage does not become a mechanism.</li>
+            <li>Shape 3 (interleaving) is not a table-block problem — it needs structure recognition, which a
+                line-based generator cannot do.</li>
+            <li>It is a dead end for “a corpus with more complex tables”, which is the stated requirement.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>X2. Layout-aware extractor → our artefact IR → automated verification</h3>
+    <p>Run a real document-structure model over the page — tables recovered with cells, spans, header rows and
+       bounding boxes — and emit the artefact we already parse (<code>cols:</code>, <code>row:</code>,
+       <code>cell</code>, <code>row-divider</code>). The human review stops being the <em>only</em> check:
+       cell fidelity, row count and header association are asserted against the source text automatically.
+       <span class="plan">(Docling/TableFormer, Unstructured <code>hi_res</code>, Google Document AI layout
+       parser, Azure Document Intelligence, LlamaParse — all produce exactly this.)</span></p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul><li>Our IR is already good: header, rows, cells, dividers, layout, legend. The work is in the
+                <em>producer</em>, not in a rewrite.</li>
+            <li>Shapes 1, 2, 4, 5, 7 fall out of structure recognition — the header stops being an inference.</li>
+            <li>Verification becomes a test suite that any new document runs, not a review that one document
+                needed.</li>
+            <li>Keeps the corpus quotable exactly as it is: cells stay the paper’s characters (D69).</li></ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul><li>A new dependency and a new failure mode: an extractor’s confidence is not a review.</li>
+            <li>Shape 3 (interleaving) and shape 8 (artwork) still need a rule — extraction helps, it does
+                not finish the job.</li>
+            <li>Costs an evaluation harness to know whether extractor A beats extractor B on <em>our</em>
+                shapes, or it is a guess with a licence.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>X3. Cite the region, not the string</h3>
+    <p>A citation identifies <b>(document, page, region or node, row)</b> and the reader <b>highlights it in
+       the source</b> — the NotebookLM-shaped UX. Provenance is kept per row at extraction time; the quote is
+       what the model wrote, but what a reader verifies is the highlighted region.</p>
+<pre><span class="dim">today</span>   citation = a string that must be a substring of a chunk
+<span class="dim">X3</span>     citation = §2.3 / row “Below R 250,000” / page 2   →  rendered with the table’s own headings
+                                and highlighted in the page image or the reader grid</pre>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul><li>Dissolves G11 rather than answering it: the labels are the <em>region’s</em>, so they never
+                need to be in the quoted text.</li>
+            <li>It is the only model that survives every shape in Part 1 — including artwork in a cell and a
+                row across a page break.</li>
+            <li>A reader verifying against the page is a stronger claim than a substring match.</li></ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul><li>It is the largest change here: the audit’s meaning, the citation model, both templates, and
+                the reader.</li>
+            <li>Regions need to survive re-ingest, exactly as anchors do (D68) — a new stability problem.</li>
+            <li>We would be building it for a corpus we do not yet have. D70.2’s discipline applies: do not
+                build the fallback before the plan.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>X4. Retrieve the page image and let a vision model read it</h3>
+    <p>Skip extraction for the hard cases: index page images with a late-interaction model (ColPali and
+       descendants) and let a multimodal model read the table at answer time.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul><li>Immune to every shape in Part 1 by construction: the page is the page.</li>
+            <li>No structure recognition to get wrong, and no artefact to keep in step.</li></ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul><li><b>A quote stops being checkable.</b> The whole product claim is that every sentence is
+                traceable to characters; a vision model reading a picture gives characters nobody verified.</li>
+            <li>D70.2 already decided this class: a model’s output is a fallback that a human reviews, not
+                the plan.</li>
+            <li>Another model call per page, and a new provider dependency on the answer path.</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PART 4 ============ -->
+  <div class="section-head"><h2>Part 4 — What the field does, and where it disagrees</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Practice</th><th>What it says</th><th>Which option</th><th>Does it hold here?</th></tr></thead>
+      <tbody>
+        <tr><td>Layout-aware parsing (Docling/TableFormer, Unstructured <code>hi_res</code>, Document AI, Azure DI)</td>
+            <td>never recover a table from text; ask a structure model for cells, spans, headers and boxes</td>
+            <td>X2</td><td><span class="pill yes">yes</span> — and our IR already matches its output shape</td></tr>
+        <tr><td>Table representation for retrieval (TAPAS lineage; “serialisation” work)</td>
+            <td>a cell is meaningless without its column and row context</td><td>X2, G11-E</td>
+            <td><span class="pill yes">yes</span> — measured: six bands within 0.023, headers change the order</td></tr>
+        <tr><td>Contextual retrieval (Anthropic 2024)</td>
+            <td>put context on the <em>embedded</em> text, never the quoted text</td><td>X2, G11-E</td>
+            <td><span class="pill yes">yes</span> — D73 already; it is X1/A that violate it</td></tr>
+        <tr><td>Parent-child / small-to-big retrieval (LlamaIndex, LangChain)</td>
+            <td>embed the row, return the table; the answer unit is never the indexed unit</td><td>X2</td>
+            <td><span class="pill yes">yes</span> — and it is what our reader already wants</td></tr>
+        <tr><td>Region citations (NotebookLM’s UX; PDF-highlight patterns)</td>
+            <td>citation points at a place, not a string</td><td>X3</td>
+            <td><span class="pill mid">inferred</span> — NotebookLM’s internals are not public; its behaviour implies this</td></tr>
+        <tr><td>Vision retrieval (ColPali 2024)</td>
+            <td>for pathological layouts, retrieve pixels</td><td>X4</td>
+            <td><span class="pill no">disagrees</span> with our grounding claim — a fallback, not a plan</td></tr>
+        <tr><td><code>build_principles.md</code> §I — data encodes the standard</td>
+            <td>a retarget must not require a migration</td><td>against X1’s per-document code</td>
+            <td><span class="pill yes">yes</span> — X2 keeps the IR and changes the producer</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><b>Where the field disagrees with itself:</b> retrieval research optimises the
+       <em>index</em> (context on the vector), while document-QA research optimises the <em>reading unit</em>
+       (a cell needs its header). Our audit optimises the <em>quote</em>. X2 satisfies the first two; X3 satisfies
+       the third. <b>The disagreement is only resolvable by separating the three, which is Part 2’s point.</b></p>
+  </div>
+
+  <!-- ============ PART 5 ============ -->
+  <div class="section-head"><h2>Part 5 — Comparison</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Against the Part 1 test set</th><th>X1 generator</th><th>X2 extractor</th><th>X3 region cite</th><th>X4 vision</th></tr></thead>
+      <tbody>
+        <tr><td>1 numeric row, no labels</td><td><span class="pill mid">needs A/E</span></td><td><span class="pill yes">header known</span></td><td><span class="pill yes">dissolves it</span></td><td><span class="pill yes">yes</span></td></tr>
+        <tr><td>2 header lost (Appendix 6a)</td><td><span class="pill no">not by text alone</span></td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td></tr>
+        <tr><td>3 column-major interleaving</td><td><span class="pill no">no</span></td><td><span class="pill mid">partly</span></td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td></tr>
+        <tr><td>4 very long cell</td><td><span class="pill yes">reviewed</span></td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td><td><span class="pill mid">reads it</span></td></tr>
+        <tr><td>5 deliberate empty cell</td><td><span class="pill yes">reviewed</span></td><td><span class="pill mid">must be asserted</span></td><td><span class="pill yes">visible in region</span></td><td><span class="pill no">indistinct</span></td></tr>
+        <tr><td>6 row across a page break</td><td><span class="pill yes">reviewed</span></td><td><span class="pill mid">needs a rule</span></td><td><span class="pill yes">two regions</span></td><td><span class="pill mid">two pages</span></td></tr>
+        <tr><td>7 two-level structure</td><td><span class="pill yes">reviewed</span></td><td><span class="pill yes">spans → dividers</span></td><td><span class="pill yes">yes</span></td><td><span class="pill mid">reads it</span></td></tr>
+        <tr><td>8 picture in a cell</td><td><span class="pill yes">reviewed: not stored</span></td><td><span class="pill mid">detects, cannot quote</span></td><td><span class="pill yes">region shows it</span></td><td><span class="pill yes">yes</span></td></tr>
+        <tr><td><b>A new document needs a person</b></td><td><span class="pill no">yes, per document</span></td><td><span class="pill mid">review the diff</span></td><td><span class="pill mid">review the diff</span></td><td><span class="pill yes">no</span></td></tr>
+        <tr><td><b>Quote stays checkable characters</b></td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td><td><span class="pill mid">by region, not string</span></td><td><span class="pill no">no</span></td></tr>
+        <tr><td>Effort</td><td>small</td><td>medium–large</td><td>large</td><td>medium (plus a provider)</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><b>Read the last three rows together:</b> X4 is the only option that needs no
+       person and the only one that breaks the claim. X2 is the only option that needs no <em>new claim</em> and
+       fixes shapes 1, 2, 4, 5 and 7. X3 is the only one that survives all eight — and it is the largest.</p>
+  </div>
+
+  <!-- ============ PART 6 ============ -->
+  <div class="section-head"><h2>Part 6 — Recommendation</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <div class="rec">
+      <span class="label">Recommended</span>
+      <p><b>X2 now, X3 when a document demands it, X1 in the meantime, X4 never as the plan.</b></p>
+      <p><b>X2 is the step that changes the coverage model</b> from “a person reviewed this document” to “a
+         suite checks every document”. It fits what we already have — the artefact IR is the right shape for a
+         structure model’s output — and it fixes the two live defects (Appendix 6a’s 20 headerless rows,
+         Appendix 7’s interleaved chunks) as a side effect of the harness rather than as another hand review.</p>
+      <p><b>X3 is the destination, and only one thing justifies building it:</b> a document whose tables cannot
+         be flattened into our IR without losing what a reader needs. Until one arrives, G11’s option <b>E</b> is
+         the same idea in miniature — context rendered, never quoted — and it is cheap enough to prove the UX
+         question (“can a reader tell context from quotation?”) before X3 bets the reader on it.</p>
+      <p><b>X1 is not wasted time:</b> repairing the generator (D75) is a prerequisite for X2 anyway — an
+         extractor that cannot emit our IR has nowhere to put its tables. Do it as X2’s first slice, not as the
+         plan.</p>
+      <p><b>Order of work:</b> (1) build the Part 1 test set as fixtures — eight shapes, asserted, red;
+         (2) evaluate two extractors against it (Docling and Document AI are the two with published table
+         structure; measure cells, headers, spans, and speed); (3) make the generator emit <code>table</code>
+         blocks from the winner; (4) the automated verification suite (cell fidelity, row count, header
+         association) as the gate for any new document; (5) re-review Appendix 6a and 7 through it.</p>
+      <p><b>What would change my mind:</b> if the test set shows extractors lose spans or qualifiers on more
+         than two of the eight shapes, then X3 moves first — a region citation does not need the structure to be
+         perfect, only locatable. And if a deployment must ingest a document this week, X1 plus G11-E is the
+         honest answer, with the review written down as debt.</p>
+    </div>
+    <div class="callout stop">
+      <span class="k">The cost nobody budgets for</span>
+      <p>Every option except X2 makes the <b>verification</b> problem worse, and verification is the one thing
+         this product sells. An extractor with no harness is a faster way to be wrong; a vision model is a
+         faster way to be unfalsifiable. <b>Whatever is chosen, the Part 1 fixtures are the first commit.</b></p>
+    </div>
+  </div>
+
+  <!-- ============ PART 7 ============ -->
+  <div class="section-head"><h2>Part 7 — Your decision</h2><span class="rule"></span></div>
+
+  <div class="card" data-decision="g12">
+    <h3>G12 — What architecture makes the engine survive a document we have not seen?</h3>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="g12" value="X1"> X1 — generator + review</label>
+      <label class="opt"><input type="radio" name="g12" value="X2"> X2 — extractor → IR</label>
+      <label class="opt"><input type="radio" name="g12" value="X3"> X3 — region citation</label>
+      <label class="opt"><input type="radio" name="g12" value="X4"> X4 — vision retrieval</label>
+      <label class="opt"><input type="radio" name="g12" value="X2X3"> X2 now, X3 when demanded</label>
+      <label class="opt neg"><input type="radio" name="g12" value="other"> Something else</label>
+    </div>
+    <textarea data-notes="g12" placeholder="Anything to add — especially whether the Part 1 test set is the right eight, or whether there is a ninth shape you have seen."></textarea>
+    <div class="card-foot">
+      <button class="tiny primary" data-accept="g12" data-value="X2X3">Accept X2 now, X3 when demanded</button>
+      <button class="tiny" data-clear="g12">Clear this answer</button>
+    </div>
+  </div>
+
+  <div class="card" data-decision="priority">
+    <h3>Sequencing against G11 and the fees answer</h3>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="priority" value="fees"> Fees answer first (G11 A, then this)</label>
+      <label class="opt"><input type="radio" name="priority" value="engine"> Engine first (test set, then extractor)</label>
+      <label class="opt"><input type="radio" name="priority" value="parallel"> Two tracks in parallel</label>
+    </div>
+    <textarea data-notes="priority" placeholder="Your call. The trade is a week of one engineer either way."></textarea>
+  </div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress"><b id="answered">0</b> of 2 answered</span>
+    <span class="spacer"></span>
+    <span class="saved" id="saved">Saved</span>
+    <button class="ghost tiny" id="reset">Reset</button>
+    <button class="primary" id="export">Export decision</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>Paste into <code>PGS_PLATFORM_SPEC.md §18.3</code></h3>
+    <p>The next free <code>D</code> row, filled with your answer.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copy">Copy</button>
+    <button id="download">Download .md</button>
+    <button class="ghost" id="close">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var KEY = 'pgs.g12.exploration.v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    var el = document.getElementById('saved');
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 1200);
+  }
+  function count() {
+    var done = ['g12', 'priority'].filter(function (k) { return !!(state[k] && state[k].choice); }).length;
+    document.getElementById('answered').textContent = done;
+  }
+  document.querySelectorAll('input[type=radio]').forEach(function (input) {
+    var key = input.name;
+    if (state[key] && state[key].choice === input.value) input.checked = true;
+    input.addEventListener('change', function () {
+      state[key] = state[key] || {};
+      state[key].choice = input.value;
+      save(); count();
+    });
+  });
+  document.querySelectorAll('textarea[data-notes]').forEach(function (area) {
+    var key = area.getAttribute('data-notes');
+    if (state[key] && state[key].notes) area.value = state[key].notes;
+    area.addEventListener('input', function () {
+      state[key] = state[key] || {};
+      state[key].notes = area.value;
+      save();
+    });
+  });
+  document.querySelectorAll('button[data-accept]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-accept');
+      var input = document.querySelector('input[name="' + key + '"][value="' + btn.getAttribute('data-value') + '"]');
+      if (input) { input.checked = true; input.dispatchEvent(new Event('change')); }
+    });
+  });
+  document.querySelectorAll('button[data-clear]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-clear');
+      state[key] = {};
+      document.querySelectorAll('input[name="' + key + '"]').forEach(function (i) { i.checked = false; });
+      var area = document.querySelector('textarea[data-notes="' + key + '"]');
+      if (area) area.value = '';
+      save(); count();
+    });
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!confirm('Clear every answer on this page?')) return;
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    document.querySelectorAll('input[type=radio]').forEach(function (i) { i.checked = false; });
+    document.querySelectorAll('textarea').forEach(function (t) { if (!t.readOnly) t.value = ''; });
+    count();
+  });
+
+  var LABELS = {
+    X1: 'X1 — generator + review', X2: 'X2 — extractor to the artefact IR',
+    X3: 'X3 — region citation', X4: 'X4 — vision retrieval',
+    X2X3: 'X2 now, X3 when a document demands it', other: 'Something else'
+  };
+  var PRIORITY = {
+    fees: 'the fees answer first', engine: 'the engine first', parallel: 'two tracks in parallel'
+  };
+  function markdown() {
+    var g = state.g12 || {};
+    var p = state.priority || {};
+    var answer = LABELS[g.choice] || '(not answered)';
+    var order = PRIORITY[p.choice] || '(not answered)';
+    var notes = (g.notes || '').trim().replace(/\s*\n\s*/g, ' ');
+    var pnotes = (p.notes || '').trim().replace(/\s*\n\s*/g, ' ');
+    return '| D80 | What architecture makes the ingestion engine survive a document it has never seen — ' +
+      'different formatting, more tables, nastier tables? | **' + answer + '**, decided 2026-11-02 ' +
+      '(exploration `product/design/g12_ingestion_generalisation.html`). The measured starting point: **44 ' +
+      'reviewed table rows across four documents, four bespoke test files, and two tables still mangled** ' +
+      '(SAOSO Appendix 6a ships 20 chunks with no column meaning; Appendix 7 is interleaved) — so coverage ' +
+      'today is a review, not a mechanism. Three concerns are welded together and must be separated: ' +
+      'extraction (human review), verification (the same review) and citation (a substring of the chunk); ' +
+      'the weld is why a reader’s context has to be smuggled into the quoted text (G11). The test set is ' +
+      'eight shapes already in our corpus: numeric rows without labels, headerless value rows, ' +
+      'column-major interleaving, a 1,107-character cell, deliberate empty cells, a row across a page ' +
+      'break, a two-level qualifier structure, and artwork in a cell. **X2** moves coverage to a harness: a ' +
+      'structure model emits the artefact IR we already parse, and cell fidelity, row count and header ' +
+      'association are asserted against the source. **X3** (cite a region, render its context) survives all ' +
+      'eight and is the destination; G11 option E is its miniature. **X4** (page images, vision) needs no ' +
+      'person and breaks the claim that a quote is characters we verified — D70.2’s fallback, never the ' +
+      'plan. **Sequencing:** ' + order + '. ' + (notes ? 'Owner’s note: ' + notes + ' ' : '') +
+      (pnotes ? 'Sequencing note: ' + pnotes + ' ' : '') +
+      '**The first commit in any case is the eight-shape fixture set**, because every option but X2 makes ' +
+      'verification worse and verification is what this product sells. |';
+  }
+
+  var dlg = document.getElementById('dlg');
+  document.getElementById('export').addEventListener('click', function () {
+    document.getElementById('out').value = markdown();
+    dlg.showModal();
+  });
+  document.getElementById('close').addEventListener('click', function () { dlg.close(); });
+  document.getElementById('copy').addEventListener('click', function () {
+    var out = document.getElementById('out'); out.select(); document.execCommand('copy');
+  });
+  document.getElementById('download').addEventListener('click', function () {
+    var blob = new Blob([markdown() + '\n'], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'd80-g12-ingestion-generalisation.md';
+    a.click();
+  });
+  count();
+})();
+</script>
+</body>
+</html>

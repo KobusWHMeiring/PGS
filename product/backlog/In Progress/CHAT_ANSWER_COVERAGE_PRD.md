@@ -498,6 +498,13 @@ assessment fee named as applying to every farm entering or renewing.
   correctly. A label line in the prompt is a quote trap; the same lesson as D50-1's passage
   number.
 
+**Generalisation explored 2026-11-02 — `product/design/g12_ingestion_generalisation.html`.** The
+engine's coverage today is *however many tables a person has typed*: 44 reviewed rows across four
+documents, four bespoke test files, and **two tables still mangled** (SAOSO Appendix 6a ships 20
+chunks with no column meaning; Appendix 7 is interleaved). That page's Part 1 is an eight-shape
+test set built from our own corpus, Part 6 recommends a structure extractor emitting the same
+artefact IR plus an automated verification harness, and G11's **option E** comes out of it.
+
 **Explored 2026-11-02 — `product/design/g11_row_labels_exploration.html`.** Four options with their
 evidence and costs, the recommendation (A: the printed header line becomes part of each row's chunk
 text, plus the reserved seat), and the literature that disagrees with A. **Undecided**; the page
