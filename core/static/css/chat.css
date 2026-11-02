@@ -450,6 +450,17 @@
   font-size: var(--text-nano);
 }
 
+/* D79 option E's legend, printed once per answer under the citation chips. It names both rules
+   in the reader's terms: a dashed rule is not self-evidently "context", and the solid rule is
+   only a quotation if someone says so. Muted, because it is about the citation, not of it. */
+.cite-legend {
+  margin: 0.75rem 0 0;
+  max-width: 34rem;
+  color: rgb(var(--brand-cream-rgb) / 0.62);
+  font-size: var(--text-nano);
+  line-height: 1.55;
+}
+
 /* --- The explanation beside the window ----------------------------------- */
 
 .chat-aside {
@@ -783,6 +794,15 @@
   color: var(--brand-muted);
   font-size: var(--text-micro);
   letter-spacing: 0.02em;
+}
+
+/* The legend the transcript carries, in the answer page's own ink. Same words, same once-per-
+   answer rule (`_citation_legend.html`): a reader can arrive on either surface first. */
+.answer__legend {
+  margin: 0 0 1rem;
+  color: var(--brand-muted);
+  font-size: var(--text-xs);
+  line-height: 1.55;
 }
 
 .answer__source {

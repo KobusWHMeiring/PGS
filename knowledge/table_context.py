@@ -13,10 +13,11 @@ section's introduction is enough, and it is the one that *is* reliably retrieved
 table's rows travel with it, and the prompt shows the model the printed columns once.
 
 **What this module does not do.** It does not put a heading into chunk text (`D69`: the
-corpus is the paper's characters, and option A was rejected for exactly that), and it does
-not render the row's context into a citation — that is slice 3, and `Citation.row_label`
-is the identity it will need. Here, the label is *structure*: it tells the prompt which
-cell sits under which column, and it is never a quote target.
+corpus is the paper's characters, and option A was rejected for exactly that) and it does
+not choose what a citation displays. It supplies the identity slice 3 renders: the row's
+printed label (`Citation.row_label`) and, through `column_label_for`, the column the quoted
+cell sits under (`Citation.column_label`). Here, both are *structure*: they tell the prompt
+which cell sits under which column, and they are never a quote target.
 
 **Cost.** One `stat` per candidate document, one cached artefact parse (keyed on the
 file's mtime and size, so a regenerated corpus is never read stale), and one query per
@@ -59,6 +60,10 @@ class TableContext:
     columns: tuple[str, ...]
     section_ref: str | None = None
     row_label: str = ""
+    #: This row's printed cells, in column order — the same strings the row's chunk holds,
+    #: used by `column_label_for` to name the column a quoted cell belongs to. Empty for the
+    #: section's prose (the introduction or the notes under the table).
+    cells: tuple[str, ...] = ()
 
     @property
     def key(self) -> tuple[str, ...]:
@@ -77,30 +82,71 @@ class ReviewedTable:
 
     title: str
     columns: tuple[str, ...]
-    rows: tuple[str, ...]
+    #: One entry per row; each is that row's printed cells, in column order.
+    cells: tuple[tuple[str, ...], ...]
     labels: tuple[str, ...]
     section_ref: str | None = None
 
-    def row_label(self, text: str) -> str | None:
-        """In: a passage's text. Out: the printed label of the row it is, or None.
+    @property
+    def rows(self) -> tuple[str, ...]:
+        """Each row as the chunk text the ingest stores (`ParsedTableRow.text`)."""
+        return tuple("\n".join(cells) for cells in self.cells)
+
+    def row_index(self, text: str) -> int | None:
+        """In: a passage's text. Out: the index of the row it is, or None.
 
         Whitespace-normalised equality against the row's cells joined by newlines — the
         same normal form the citation audit uses, so a row the prompt calls a row is a row
         the audit can check.
         """
         wanted = " ".join(text.split())
-        for cells, label in zip(self.rows, self.labels):
-            if " ".join(cells.split()) == wanted:
-                return label
+        for index, cells in enumerate(self.cells):
+            if " ".join("\n".join(cells).split()) == wanted:
+                return index
         return None
 
+    def row_for(self, text: str) -> tuple[str, ...] | None:
+        """In: a passage's text. Out: the row it is, as its printed cells, or None."""
+        index = self.row_index(text)
+        return self.cells[index] if index is not None else None
+
+    def row_label(self, text: str) -> str | None:
+        """In: a passage's text. Out: the printed label of the row it is, or None."""
+        index = self.row_index(text)
+        return self.labels[index] if index is not None and index < len(self.labels) else None
+
     def context_for(self, text: str) -> TableContext:
+        cells = self.row_for(text) or ()
         return TableContext(
             title=self.title,
             columns=self.columns,
             section_ref=self.section_ref,
             row_label=self.row_label(text) or "",
+            cells=cells,
         )
+
+
+def column_label_for(table: TableContext | None, quote: str) -> str:
+    """In: the table a citation's row belongs to, and the quote. Out: its column, or "".
+
+    `D79` option E separates what is quoted from what frames the quote. The quote is one
+    cell; the column heading is the printed context that makes the cell mean something, and
+    the page supplies it at cite time. A quote that spans several cells is **not** given a
+    column: naming the first would claim it belongs to that column alone, and a citation
+    that displays a heading the reader cannot reconcile with the text is the failure mode
+    the decision page calls E's one real risk.
+    """
+    if table is None or not table.cells:
+        return ""
+    wanted = " ".join((quote or "").split())
+    if not wanted:
+        return ""
+    matches = [
+        column
+        for column, cell in zip(table.columns, table.cells)
+        if wanted in " ".join(cell.split())
+    ]
+    return matches[0] if len(matches) == 1 else ""
 
 
 def reviewed_table_for(document_source_file: str | None, text: str) -> ReviewedTable | None:
@@ -217,7 +263,7 @@ def _parsed_tables(path: str, mtime_ns: int, size: int) -> tuple[ReviewedTable, 
             ReviewedTable(
                 title=" ".join((section.heading_path or "").split()),
                 columns=tuple(" ".join(column.split()) for column in grid.columns),
-                rows=tuple("\n".join(cells) for cells in grid.rows),
+                cells=grid.rows,
                 labels=tuple(grid.labels),
                 section_ref=section.section_ref,
             )

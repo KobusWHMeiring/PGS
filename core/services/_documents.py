@@ -348,6 +348,17 @@ class ReaderGridRow:
     #: reviewer's `branch:` onward. The template stacks these in the last column, dashed, with an
     #: `or` between them.
     is_path: bool = False
+    #: D79 option E: True when a citation landed on this row. The template washes the row and the
+    #: note above the table says why, so the row label and column heading the answer named are
+    #: visible around the quoted cell instead of being asserted in a sentence elsewhere.
+    is_cited: bool = False
+    #: The column index of the quoted cell, when exactly one cell contains the quote. None when
+    #: the quote spans cells (or none matched): the row is still marked, and no single cell is —
+    #: pointing at one would claim the quote is that cell alone.
+    cited_cell: int | None = None
+    #: The printed text of each cell, in column order, before it is laid out into blocks. Kept for
+    #: `_cited_row`, which has a citation's quote and needs the cell it came from.
+    cell_texts: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -579,6 +590,25 @@ def _cards_for(
 
 
 @dataclass(frozen=True)
+class ReaderCitation:
+    """`D79` option E on the reader: the row and cell an answer cited, from the printed table.
+
+    The answer's citation shows a context line (row, column) and a quote. Following it must let
+    a reader *see* that context, not take it on trust: this is what the reader marks — the row,
+    and the one cell the quote occupies, under its printed heading. Every field comes from the
+    `ArtefactGrid` the reader already draws; the `quote` is the only thing the URL carries, and
+    a quote that matches no cell produces no marks rather than a wrong one.
+    """
+
+    row_anchor: str
+    row_label: str
+    column: str
+    quote: str
+    #: Index into `ReaderGridRow.cells` for the quoted cell, or None when the quote spans cells.
+    cell_index: int | None = None
+
+
+@dataclass(frozen=True)
 class Reader:
     """Everything `/documents/<code>/read/` renders — the concordance.
 
@@ -604,6 +634,8 @@ class Reader:
     #: The printed grid for a reviewed artefact table (D72.3) — the landscape's five columns.
     #: Distinct from `table`: that is the two-column appendix shape, this is a real grid.
     grid: ReaderGrid | None = None
+    #: D79 option E: the row and cell a citation landed on, when the URL carried its quote.
+    cited: ReaderCitation | None = None
 
     @property
     def title(self) -> str:
@@ -720,6 +752,7 @@ def _artefact_grid(
                     (column, passage_blocks(cell_text))
                     for column, cell_text in zip(grid.columns, cells)
                 ),
+                cell_texts=tuple(cells),
             )
         )
         previous_page = page
@@ -739,6 +772,60 @@ def _artefact_grid(
             rows=tuple(rows),
         ),
         set(positions.positions),
+    )
+
+
+def _cited_row(
+    grid: ReaderGrid | None, section: str, quote: str
+) -> ReaderCitation | None:
+    """In: a branch's grid, the `?section=` value and the citation's quote. Out: the mark, or None.
+
+    `D79` option E's reader half. The answer's citation shows a row and a column as *context*;
+    this finds the same row in the printed table so the page can mark it and name the same
+    column. Two rules keep it honest:
+
+    * a quote that matches no cell marks **nothing** — the citation still opens the branch, and
+      an unmarked table is better than a highlighted wrong row (the fallback `_artefact_grid`
+      already follows when a corpus disagrees with the artefact);
+    * a quote that spans cells marks the row but **no cell**, because a single-cell mark would
+      say the quote is that one cell.
+
+    The row is chosen by the `?section=` anchor when it names a row, because that is the row the
+    citation's fragment will scroll to; the quote then only decides the cell. Otherwise the first
+    row whose cells contain the quote is used.
+    """
+    if grid is None or not quote.strip():
+        return None
+    wanted = " ".join(quote.split())
+    wanted_section = section.strip()
+    row = next((row for row in grid.rows if row.anchor == wanted_section), None)
+    if row is None:
+        row = next(
+            (
+                row
+                for row in grid.rows
+                if wanted in " ".join(" ".join(row.cell_texts).split())
+            ),
+            None,
+        )
+    if row is None:
+        return None
+    matches = [
+        index
+        for index, cell in enumerate(row.cell_texts)
+        if wanted and wanted in " ".join(cell.split())
+    ]
+    index = matches[0] if len(matches) == 1 else None
+    return ReaderCitation(
+        row_anchor=row.anchor,
+        row_label=row.label,
+        column=(
+            grid.columns[index]
+            if index is not None and index < len(grid.columns)
+            else ""
+        ),
+        quote=quote.strip(),
+        cell_index=index,
     )
 
 
@@ -765,11 +852,14 @@ def _select_section(
     return sections[0]
 
 
-def reader_for(document: PublicDocument, query: str = "", section: str = "") -> Reader:
-    """In: a published document, what the reader searched for, and which branch. Out: a `Reader`.
+def reader_for(
+    document: PublicDocument, query: str = "", section: str = "", quote: str = ""
+) -> Reader:
+    """In: a published document, what the reader searched for, which branch, and the quote.
 
     In:  `query` — free text from the search box; `section` — the branch to open, by branch
-         anchor or by any passage anchor (a citation names a passage, not a section).
+         anchor or by any passage anchor (a citation names a passage, not a section); `quote`
+         — the cell a citation quoted, when the visitor arrived from one (`D79` option E).
     Out: the document's section tree (including reserved rows), the selected branch, that
          branch's passages, the printed sections the corpus does not hold, and any search hits —
          searched across the **whole** document, not the open branch, because a reader who
@@ -823,6 +913,24 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
     # labelling rows it cannot vouch for (`knowledge.tables.structure_for`).
     section_ref = branch_pairs[0][0].section_ref if branch_pairs else None
     structure = structure_for(section_ref, tuple(texts))
+    # `D79` option E, reader side: a citation that carried its quote marks the row it landed on
+    # and the cell it quoted. The mark is built from the grid the page is about to draw, so the
+    # note above the table and the highlighted cells cannot disagree about which row it is.
+    cited = _cited_row(grid, section, quote)
+    if cited is not None and grid is not None:
+        grid = replace(
+            grid,
+            rows=tuple(
+                replace(
+                    row,
+                    is_cited=row.anchor == cited.row_anchor,
+                    cited_cell=(
+                        cited.cell_index if row.anchor == cited.row_anchor else None
+                    ),
+                )
+                for row in grid.rows
+            ),
+        )
     # One index per request, built from the tree the page already rendered: a reference can only
     # point at a branch that is in it.
     index = build_reference_index(document_row, sections)
@@ -889,6 +997,7 @@ def reader_for(document: PublicDocument, query: str = "", section: str = "") -> 
         section=section.strip(),
         table=structure,
         grid=grid,
+        cited=cited,
     )
 
 

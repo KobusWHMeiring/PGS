@@ -170,13 +170,17 @@ to be certified?"** as a second phrasing.
 **Expected:** each answer states a real amount from the OPP's §2.3 scale — a renewal fee of R900 for
 turnover below R250 000, or an initial fee of R1 500 — rather than "the specific scale is not
 provided". The citation that carries the number shows a muted, dashed **"Table row: Below
-R 250,000"** line above the quote, and the quote itself is the paper's own cell (`900`), not a
-sentence the assistant wrote.
+R 250,000 · Column: Renewal fee (R)"** line above the quote, the quote itself is the paper's own
+cell (`900`), not a sentence the assistant wrote, and one legend under the citations reads **"The
+dashed line is context, not a quotation … The text under the solid rule is the document's own."**
+Follow "View this line": the reader opens §2.3 with **that row washed, the quoted cell marked with
+a solid rule**, and a note above the table naming the column.
 
 **Judgement:** *Does the reader understand that the dashed line is context the page supplies, and
 that the solid quote is what the document prints?* This is `D79` option E's one real risk, and no
 test can make the call: a citation that displays text the passage does not contain must be seen to
-be context. If it reads as a quotation, the answer to `D79` is option A and the fallback is already
+be context. Check the legend on the answer page as well as in the transcript, and check the reader
+mark: if either reads as a quotation, the answer to `D79` is option A and the fallback is already
 written down.
 
 ---

@@ -98,6 +98,55 @@ def test_the_page_states_what_the_answer_does_not_cover(client, published_card):
     assert "Whether your supply is contaminated." in body
 
 
+# --- D79 option E, slice 3: context is not quotation -------------------------
+
+
+def test_a_rows_context_and_the_legend_are_rendered_on_the_answer_page(
+    client, db, administrator
+):
+    """The answer page reads the **snapshot**, so the frame has to be stored with the quote.
+
+    Before slice 3 `citation_records` dropped `row_label`, and this page silently rendered
+    no context while the transcript rendered it. The legend is what makes the dashed line
+    legible (UAT, `ask_surface_uat.md` Scenario 8): it names both rules, once per answer.
+    """
+    from django.utils import timezone
+
+    card = PublicQuestion.objects.create(
+        question="What does it cost to renew below R250,000?",
+        asked_key="k-fee-band",
+        answer="A farm with an annual turnover below R250,000 pays R900 to renew.",
+        citations=[
+            citation(
+                section_ref="§2.3",
+                document="Outeniqua PGS Principles, Policies and Procedures",
+                quote="900",
+                document_code="opp",
+                reading_anchor="below-r-250-000",
+                row_label="Below R 250,000",
+                column_label="Renewal fee (R)",
+            )
+        ],
+        last_asked_at=timezone.now(),
+    )
+    approved = approve(card.pk, user=administrator)
+    body = client.get(page_url(approved)).content.decode()
+
+    assert "Table row: Below R 250,000" in body
+    assert "Column: Renewal fee (R)" in body
+    assert body.count("The dashed line is context, not a quotation") == 1
+    assert "The text under the solid rule is the document" in body
+    assert "quote=900" in body, "the reader has to mark the cell the quote came from"
+
+
+def test_a_citation_without_a_row_renders_no_legend(client, published_card):
+    """The legend is not boilerplate. It appears only where there is context to explain."""
+    body = client.get(page_url(published_card)).content.decode()
+
+    assert "Table row:" not in body
+    assert "The dashed line is context, not a quotation" not in body
+
+
 def test_an_awaiting_card_has_no_page_even_with_a_slug(client, db):
     """`AWAITING` is not a page with a notice; it is not a page.
 

@@ -49,7 +49,7 @@ that cannot be checked.
                    it in the row's first column, so the corpus never repeats it and the audit
                    never sees it. Marked as context so a reader cannot think "900" was
                    quoted alone when the row is what makes it a renewal fee. {% endcomment %}
-                  <p class="cite-context">Table row: {{ citation.row_label }}</p>
+                  {% include "chatbot/_citation_context.html" with citation=citation context_class="cite-context" %}
                 {% endif %}
                 <blockquote class="cite-quote">{{ citation.quote }}</blockquote>
                 <p class="cite-source">
@@ -71,6 +71,11 @@ that cannot be checked.
               </details>
             {% endfor %}
           </div>
+          {% if answer.has_row_context %}
+            {% comment %} Once per answer, under the chips: the same legend both surfaces use,
+               so a reader learns the dashed rule before opening the next citation. {% endcomment %}
+            {% include "chatbot/_citation_legend.html" with legend_class="cite-legend" %}
+          {% endif %}
         {% endif %}
 
         {% if message.refusal_reason %}

@@ -3,7 +3,7 @@
 **Status:** In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
 **2026-10-22:** **G8 is closed by measurement**, and the retrieval budget it depended on was wrong in a way nobody had measured — the product was retrieving five passages, not eight (§7 G8, `testing_hazards.md` §2.7). G3, G4, G6 and G7 remain open.
 **Owner:** Build — grounded chat (sub-plan D), corpus ingestion (sub-plan B)
-**Last Updated:** 2026-11-01
+**Last Updated:** 2026-11-02
 **MVP:** MVP 0 — defect fix and a deliberate widening of D17.
 **Scope:** What the assistant may answer, and the corpus behind it. Retrieval query
 construction, the answer-mode prompt, and Appendix 2 as reviewed rows. **Not** in scope:
@@ -562,6 +562,20 @@ paper's characters, and the label reaches the reader as context. **Left: slice 3
 "context, not quotation" distinction as a design pass over the answer and reader surfaces, with the
 legend and the wording that make it legible. Today's dashed rule is the minimum that stops a bare
 `900` reading as a non-answer.
+
+**Slice 3 landed 2026-11-02 — the context is a row *and a column*, and the page says so.**
+`Citation.column_label` is resolved from the same reviewed row (`knowledge.table_context.column_label_for`):
+the printed heading is named only when exactly one cell contains the quote, so a quote spanning
+cells keeps the row and prints no column, and a heading the reader could not reconcile with the
+quote is never shown. One partial (`chatbot/_citation_context.html`) renders
+`Table row: … · Column: …` on both answer surfaces, and one legend
+(`chatbot/_citation_legend.html`) explains the dashed/solid pair **once per answer**, in the
+reader's terms. `citation_records` now stores `row_label`/`column_label`: before this the answer
+page silently rendered no context while the transcript rendered it, because the snapshot dropped
+the label. The reader got its counterpart — `&quote=` on the citation's link, `_cited_row`
+resolving it against the grid, the row washed and the quoted cell marked, and a note naming the
+column; a quote that matches no cell marks nothing. **Not yet judged:** UAT Scenario 8 is the
+legibility call, and D79's fallback to option A stays on record until a human signs it.
 
 **Also measured, and worth keeping:** D73's rendition is for rows whose cells are **numbers**.
 Applying it to Appendix 2's reviewed literals — whose cells are already prose — took the probe

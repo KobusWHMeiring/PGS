@@ -191,6 +191,16 @@
                 {% if reader.grid.legend %}
                   <p class="reader__grid-legend">{{ reader.grid.legend }}</p>
                 {% endif %}
+                {% if reader.cited %}
+                  {% comment %} D79 option E's reader counterpart. The answer's citation shows a
+                     dashed context line (row, column) and a quote; following it must let a reader
+                     *see* that context in the table rather than take the sentence on trust. The
+                     row is washed, the quoted cell carries the solid rule, and this note says
+                     which is which in the same terms as the legend on the answer surfaces. {% endcomment %}
+                  <p class="reader__grid-cited">
+                    The citation lands on this row. The quoted text is the marked cell{% if reader.cited.column %}, under &ldquo;{{ reader.cited.column }}&rdquo;{% endif %}; the row label and the column headings are the table&rsquo;s own, and none of them is part of the quotation.
+                  </p>
+                {% endif %}
                 {% if reader.grid.layout == "process" %}
                 {% comment %}
                   The reviewed block asked for a **process** (D77): a card per step, with the
@@ -235,12 +245,12 @@
                     </thead>
                     <tbody>
                       {% for row in reader.grid.rows %}
-                        <tr id="{{ row.anchor }}">
+                        <tr id="{{ row.anchor }}"{% if row.is_cited %} class="is-cited"{% endif %}>
                           {% for column, blocks in row.cells %}
                             {% if forloop.first %}
-                              <th scope="row">{% include "public/_passage_blocks.html" with blocks=blocks %}{% if row.show_page and row.page %}<span class="reader__grid-page">printed p. {{ row.page }}</span>{% endif %}</th>
+                              <th scope="row"{% if row.cited_cell == forloop.counter0 %} class="is-cited-cell"{% endif %}>{% include "public/_passage_blocks.html" with blocks=blocks %}{% if row.show_page and row.page %}<span class="reader__grid-page">printed p. {{ row.page }}</span>{% endif %}</th>
                             {% else %}
-                              <td data-label="{{ column }}"{% if not blocks %} class="is-empty"{% endif %}>{% include "public/_passage_blocks.html" with blocks=blocks %}</td>
+                              <td data-label="{{ column }}" class="{% if not blocks %}is-empty{% endif %}{% if row.cited_cell == forloop.counter0 %} is-cited-cell{% endif %}">{% include "public/_passage_blocks.html" with blocks=blocks %}</td>
                             {% endif %}
                           {% endfor %}
                         </tr>

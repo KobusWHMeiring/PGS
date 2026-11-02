@@ -1,11 +1,11 @@
-# Handover — D79 = E is answered and two slices landed; the fee answer works; slice 3 is next
+# Handover — D79's three slices are built; UAT Scenario 8 is the judgement; the context cuts are next
 
-> ## START HERE — slice 3 is the unfinished one
+> ## START HERE — slice 3 is built; the judgement is unsigned
 >
-> **Where the work stands (2026-11-02, session 10).** The owner answered G11 and two of its three
-> slices were built the same day. The session record is
-> `product/docs/handover/SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md`; this block is
-> state only.
+> **Where the work stands (2026-11-02, session 11).** The owner answered G11 and all three of its
+> slices are now built. The session record is
+> `product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`; this
+> block is state only.
 >
 > 1. **Cost-question rule — built** (`d78-2`, D78). The assistant separates the *member's* fee from
 >    the *group's*, names the assessment as unavoidable, and may state one floor (membership + one
@@ -18,13 +18,19 @@
 >    fixed: the decision is written up and belongs to the owner.
 > 4. **G11 is answered: D79 = E** (2026-11-02). Show the table as structure, quote cells only, render
 >    the row's context from the artefact at cite time; `product/design/g11_option_e_explainer.html`
->    teaches the mechanism. **Slices 1 and 2 landed** (`9608656`, `64f70ae`, `16c2b2a`). Slice 1: the
->    seats are filled in the vector arm's own order and a heading cannot take one. Slice 2: a
+>    teaches the mechanism. **All three slices are built.** Slice 1 (`9608656`): the seats are filled
+>    in the vector arm's own order and a heading cannot take one. Slice 2 (`64f70ae`, `16c2b2a`): a
 >    reviewed table's rows travel with any passage of it (`knowledge/table_context.py`), the prompt
 >    shows the table once with its printed headings (`d79-2`), and `Citation.row_label` reaches the
->    templates as context. **The G10 fees answer now works:** *"…below R250,000 would pay a renewal
->    fee of R900"*, *"…initial certification fee of R1,500 or a renewal fee of R900"* — both
->    grounded, quoting single cells. R@8 unchanged at 0.812. **Left: slice 3.**
+>    templates as context. Slice 3 (session 11): **the frame is a row *and a column*** —
+>    `Citation.column_label` from `column_label_for`, stored in the snapshot (the answer page had
+>    silently rendered no context before this), one shared context line and **one legend per answer**
+>    (`chatbot/_citation_context.html`, `_citation_legend.html`), and the reader counterpart —
+>    `&quote=` on the link, the row washed and the quoted cell marked in the printed grid. **The G10
+>    fees answer works:** *"…below R250,000 would pay a renewal fee of R900"*, *"…initial
+>    certification fee of R1,500 or a renewal fee of R900"*. **What is left is the judgement, not the
+>    code:** UAT Scenario 8 is the legibility call, and if the dashed line reads as a quotation, D79
+>    falls back to option A (written down in the spec row and the PRD). R@8 unchanged at 0.812.
 > 5. **Context budget measured, the handover split, and the loop measured**
 >    (`product/docs/context/CONTEXT_BUDGET.md`): the six files this repo told every session to read
 >    totalled **509 KB ≈ 144k tokens**; `HANDOVER.md` was 2,553 lines of which 72 were state. **This
@@ -41,25 +47,21 @@
 >
 > **What is next, in order:**
 >
-> 1. **G11 slice 3 — the *context, not quotation* distinction as a design pass** (`DESIGN.md`
->    governs; do this with the UAT open, not after it). What ships today is the minimum: a muted,
->    dashed "Table row: Below R 250,000" above the quote in `_thread.html` and `answer_page.html`,
->    with `.cite-context` / `.answer__context` in `chat.css`. What is missing is the *legend and
->    wording* that make it legible — E's one real risk is a citation that displays text the passage
->    does not contain, and **if it cannot be made legible, D79 falls back to option A** (already
->    written down in the spec row and the PRD). Judge it as UAT scenario 8 of
->    `tests/uat/ask_surface_uat.md`; the citation also needs its reader-side counterpart, where
->    `ArtefactGrid` can supply the columns at `?section=`.
-> 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: slice
->    1 and 2 grew `core/services/_chatbot.py` to **~95 KB (3× the §II cap)** and
->    `knowledge/services.py` to **~40 KB**. `knowledge/table_context.py` was deliberately created
->    instead of adding to either. 4.2: a §18.3 row becomes a sentence plus a link — `--check` names
->    the rows over 1.5 KB (**14 today**, `D68` the largest at 3.6 KB). 4.4: wire
+> 1. **UAT Scenario 8 — the legibility judgement** (`tests/uat/ask_surface_uat.md`, updated to the
+>    shipped wording). A person must look: does the dashed `Table row: … · Column: …` line read as
+>    context the page supplies, and the solid quote as the document's own? Check the answer page and
+>    the reader mark as well as the transcript. **If it cannot be made legible, D79 falls back to
+>    option A** — and that fallback is already written in the spec row and the PRD. Then the
+>    **landscape UAT sign-off**, still unsigned and still the only thing keeping
+>    `LANDSCAPE_TABLES_PRD` out of `Done/`.
+> 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
+>    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
+>    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`
+>    was deliberately created instead of adding to either. 4.2: a §18.3 row becomes a sentence plus a
+>    link — `--check` names the rows over 1.5 KB (**14 today**, `D68` the largest at 3.6 KB). 4.4: wire
 >    `scripts/context.py --check` into the gate **once the tree is inside budget** — 25 breaches
 >    today (11 source files, 14 rows).
 > 3. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
-> 4. **The landscape UAT sign-off** — still unsigned, still unblocked, still the only thing keeping
->    `LANDSCAPE_TABLES_PRD` out of `Done/`.
 >
 > **Do not run `scripts/build_corpus.py --force` on a document with a table block** — the generator
 > has no table-block rule and replaces the review with column soup while every guard stays green
@@ -69,28 +71,31 @@
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
 >
-> **Deploy note:** the live box is still `8d2839d` and misses four sessions. A deploy pulls the
+> **Deploy note:** the live box is still `8d2839d` and misses five sessions. A deploy pulls the
 > artefacts but never re-ingests; the OPP's 30 → 37 chunks is a corpus change, not a code change.
 > **The deploy also needs `d79-1`/`d79-2` to have run**: the entries are keyed on `PROMPT_VERSION`, so
 > old cached answers are not served under the new contract — but a visitor mid-conversation keeps
-> their thread.
+> their thread. Slice 3 adds no migration and no corpus change; the changed templates and CSS are
+> shipped by `collectstatic`, and old cards keep the page they had.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
-display-model, shapes-build, cost-rule-and-P4 and context-budget sessions
-**Repo state:** `main`, **41 commits ahead of `origin/main`**. On this tree (2026-11-02, after
-D79's slices 1 and 2): `scripts/verify.sh` **green at 1580 passed / 1 skipped in 73.57 s** with
-`--create-db`, and `scripts/fast.sh` **1565 passed, 1 skipped in 103.37 s**,
-`scripts/fast.sh --critical` **213 passed, 4 deselected in 18.44 s**, `pytest tests/e2e`
-**71 passed in 135 s** — all four run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/…` (the gate
-defaults to 5432 and this box serves 5433, `testing_hazards.md` §3.1; `verify.sh` wants `pgs_verify`).
-The gate ran on an idle box with a warm page cache, so quote it beside the 133.93 s run of the same
-command earlier the same day, not alone (`testing_hazards.md` §3.17).
+display-model, shapes-build, cost-rule-and-P4, context-budget and context-frame sessions
+**Repo state:** `main`, **42 commits ahead of `origin/main`**. On this tree (2026-11-02, after
+D79's three slices): `scripts/verify.sh` **green at 1593 passed / 1 skipped in 59.50 s** with
+`--create-db`, and `scripts/fast.sh` **1578 passed, 1 skipped in 42.40 s**,
+`scripts/fast.sh --critical` **217 passed, 4 deselected in 11.28 s** — run as
+`DATABASE_URL=postgres://pgs:pgs@localhost:5433/…` (the gate defaults to 5432 and this box serves
+5433, `testing_hazards.md` §3.1; `verify.sh` wants `pgs_verify`). `pytest tests/e2e` was **not**
+re-run this session (only templates, URL assembly and CSS moved; 71 passed in 135 s on the
+previous tree). The gate ran on an idle box with a warm page cache, so quote it beside the
+earlier runs of the same command (`testing_hazards.md` §3.17).
 
-The suite gained five guards this session — the two seat tests, the three table-travel tests, and the
-prompt-shape test — each proved by breaking it and watching it go red.
+The suite gained **ten** guards this session — the column-resolution pair, the snapshot/citation
+pair, the reader-link pair, the thread's context+legend pair, the answer page's context+legend
+pair and the reader's mark/no-mark pair — each proved by breaking it and watching it go red.
 
 **The dev box is current.** All four documents re-ingested from their artefacts, **401 chunks, 0
 unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left
@@ -109,6 +114,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `0y` 2026-11-02 (session 11) — slice 3: the context is a row and a column, and both surfaces say so — [`SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`](product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md)
 - `0x` 2026-11-02 (session 10) — G11 answered, and two of its three slices landed — [`SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md`](product/docs/handover/SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md)
 - `0w` 2026-11-02 (session 9) — the context balloon is the loop, not the handover — [`SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md`](product/docs/handover/SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md)
 - `0v` 2026-11-02 (session 8) — the cost rule, P4's printed scale, two decision pages, and the handover becomes state — [`SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md`](product/docs/handover/SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md)

@@ -40,7 +40,7 @@ pytestmark = pytest.mark.django_db
 URL = "/ask/"
 
 
-def _fragment_for(session_uuid, question, *, refusal=False):
+def _fragment_for(session_uuid, question, *, refusal=False, row_context=False):
     """Write the rows the real service would write, and return its answer value."""
     session = ChatSession.objects.get(public_uuid=session_uuid)
     ChatMessage.objects.create(
@@ -63,6 +63,27 @@ def _fragment_for(session_uuid, question, *, refusal=False):
             text=REFUSAL,
             insufficient_context=True,
             escalated_query_id=1,
+            message_id=assistant.pk,
+        )
+    if row_context:
+        # D79 option E slice 3: the citation quotes one cell of a reviewed row, so the
+        # template renders a row/column context line and the once-per-answer legend.
+        return GroundedAnswer(
+            text="A farm below R250,000 pays R900 to renew.",
+            citations=[
+                Citation(
+                    section_ref="§2.3",
+                    quote="900",
+                    chunk_id=1,
+                    page=4,
+                    heading_path="2.3 PGS assessment fee structure",
+                    document="Outeniqua PGS Principles, Policies and Procedures",
+                    document_code="opp",
+                    reading_anchor="below-r-250-000",
+                    row_label="Below R 250,000",
+                    column_label="Renewal fee (R)",
+                )
+            ],
             message_id=assistant.pk,
         )
     return GroundedAnswer(
@@ -102,6 +123,18 @@ def refusing(monkeypatch):
         "answer_question",
         lambda session_uuid, question, *, ip_hash="": _fragment_for(
             session_uuid, question, refusal=True
+        ),
+    )
+
+
+@pytest.fixture
+def answering_row_context(monkeypatch):
+    """The same exchange, with the citation quoting one cell of a reviewed row (D79/E)."""
+    monkeypatch.setattr(
+        chat_view,
+        "answer_question",
+        lambda session_uuid, question, *, ip_hash="": _fragment_for(
+            session_uuid, question, row_context=True
         ),
     )
 
@@ -164,6 +197,35 @@ def test_an_htmx_post_returns_only_the_thread(client, chat_standard_set, answeri
     assert "<!DOCTYPE html>" not in html, "HTMX received a whole document"
     assert "Records must let a product be traced." in html
     assert 'id="chat-thread"' not in html, "the fragment is swapped inside the container"
+
+
+def test_the_thread_renders_the_row_and_column_as_context(
+    client, chat_standard_set, answering_row_context
+):
+    """D79 option E, slice 3: the dashed line and the legend that explains it.
+
+    The transcript is where most visitors meet the dashed rule, so it carries the same
+    once-per-answer legend as the answer page (`_citation_legend.html`). The reader link has
+    to carry the quote too, or following it marks nothing.
+    """
+    html = client.post(URL, {"question": "What does it cost to renew?"}).content.decode()
+
+    assert "Table row: Below R 250,000" in html
+    assert "Column: Renewal fee (R)" in html
+    assert html.count("The dashed line is context, not a quotation") == 1
+    assert "quote=900" in html
+
+
+def test_the_thread_renders_no_legend_for_a_prose_citation(
+    client, chat_standard_set, answering
+):
+    """The legend is not boilerplate: a clause citation has no context to explain."""
+    html = client.post(
+        URL, {"question": "What does the standard require for traceability?"}
+    ).content.decode()
+
+    assert "Table row:" not in html
+    assert "The dashed line is context, not a quotation" not in html
 
 
 def test_the_same_conversation_is_reused_across_posts(client, chat_standard_set, answering):

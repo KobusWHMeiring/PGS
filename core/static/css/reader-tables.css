@@ -739,3 +739,38 @@
     display: none;
   }
 }
+
+/* -------------------------------------------------------------------------------------------------
+   D79 option E — the row a citation landed on, and the cell it quoted.
+
+   The answer's citation shows a dashed context line (row, column) above a solid-ruled quote.
+   Following it must let a reader *see* that context in the printed table, so the same two marks
+   are used here: the **row** is context (a wash and a dashed edge), and the **cell** is the
+   quotation (a solid ochre frame). A reader who has met the answer's legend can read this
+   without being told twice, and one who has not is told by `.reader__grid-cited` above the table.
+
+   Declared after the media query on purpose: on a phone the row and cell are blocks with their
+   own grounds, and the mark has to survive that restack.
+------------------------------------------------------------------------------------------------- */
+.reader__grid-cited {
+  margin: 0 0 0.9rem;
+  max-width: var(--reader-measure);
+  color: var(--brand-charcoal);
+  font-size: var(--text-micro);
+  line-height: var(--leading-body);
+}
+
+.reader__grid tr.is-cited {
+  background-color: var(--brand-ochreLight);
+  outline: 1px dashed var(--brand-sand);
+  outline-offset: -1px;
+}
+
+/* The first column is sticky and paints its own ground; the cited wash has to cover it too. */
+.reader__grid tr.is-cited > th {
+  background-color: var(--brand-ochreLight);
+}
+
+.reader__grid .is-cited-cell {
+  box-shadow: inset 0 0 0 2px var(--brand-ochre);
+}

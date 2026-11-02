@@ -39,6 +39,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Callable, Mapping, Protocol, Sequence
+from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.core.cache import cache
@@ -57,7 +58,7 @@ from knowledge.services import (
     chunks_by_id,
     search_terms,
 )
-from knowledge.table_context import TableContext
+from knowledge.table_context import TableContext, column_label_for
 
 logger = logging.getLogger(__name__)
 
@@ -385,6 +386,11 @@ class Citation:
     #: in the row's first column, and a citation that shows it shows context, which is how a
     #: reader learns that `900` is a renewal fee without the corpus repeating a heading.
     row_label: str = ""
+    #: The printed heading of the column the quoted cell sits under, resolved from the same
+    #: reviewed table (`column_label_for`). Empty when the quote spans several cells, or when
+    #: the passage is not a reviewed row: a heading the reader cannot reconcile with the
+    #: quoted text is the failure mode `D79` falls back to option A for.
+    column_label: str = ""
 
     @property
     def read_url(self) -> str:
@@ -399,10 +405,17 @@ class Citation:
         # `?section=` **and** the fragment: a browser never sends the fragment to the server, so
         # the branch has to be chosen by a query parameter, and the fragment is what scrolls the
         # reader to the passage itself.
-        return (
+        #
+        # `quote=` rides along only when the citation has a row context (`D79` option E). The
+        # reader then marks the row and the cell the quote occupies, and names the column — the
+        # counterpart of the context line beside the quote here, from the same printed table.
+        url = (
             reverse("core:document_reader", kwargs={"code": self.document_code})
-            + f"?section={self.reading_anchor}#{self.reading_anchor}"
+            + f"?section={self.reading_anchor}"
         )
+        if self.row_label and self.quote:
+            url += f"&quote={quote_plus(self.quote)}"
+        return f"{url}#{self.reading_anchor}"
 
     @property
     def locator(self) -> str:
@@ -433,6 +446,17 @@ class GroundedAnswer:
     message_id: int | None = None
     cached: bool = False
     lexical_only: bool = False
+
+    @property
+    def has_row_context(self) -> bool:
+        """True when at least one citation carries a reviewed row (`D79` option E).
+
+        The legend that separates context from quotation is printed **once per answer**, not
+        once per citation: a citation chip is already dense, and a reader who has read the
+        sentence does not need it again above the next quote. Done here rather than in the
+        template because `any()` is logic, and templates display (`build_principles.md` §II).
+        """
+        return any(citation.row_label for citation in self.citations)
 
 
 class ChatModel(Protocol):
@@ -1130,6 +1154,7 @@ def audit_citations(    raw_citations: Sequence[dict],
                 row_label=(
                     matched.table.row_label if matched.table is not None else ""
                 ),
+                column_label=column_label_for(matched.table, quote),
             )
         )
 
@@ -1356,6 +1381,12 @@ def citation_records(citations: Sequence[Citation]) -> list[dict]:
             "chunk_id": citation.chunk_id,
             "document_code": citation.document_code,
             "reading_anchor": citation.reading_anchor,
+            # `D79` option E: the row and column frame the quote, and a card outlives the corpus
+            # the same way its quote does. Without these the answer page silently renders no
+            # context while the transcript renders it — two surfaces disagreeing about one
+            # citation (found while building slice 3).
+            "row_label": citation.row_label,
+            "column_label": citation.column_label,
         }
         for citation in citations
     ]

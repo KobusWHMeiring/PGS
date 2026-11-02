@@ -1,0 +1,15 @@
+{% comment %} D79 option E: a citation is a quotation plus a frame. The quote is the paper's own
+   cell, and the row and column it sits in are context the page supplies from the reviewed
+   table — the document never prints them beside the cell, so they must never look like a
+   quotation.
+
+   One partial for both surfaces (`_thread.html` and `answer_page.html`) because two copies of
+   this sentence is two places for the distinction to drift, and the distinction is the whole
+   risk of option E. The surface passes its own class: the chat citation and the answer page
+   are set on different grounds. The legend that explains the dashed rule is printed once per
+   answer, not once per citation — see `_citation_legend.html`. {% endcomment %}
+{% if citation.row_label %}
+  <p class="{{ context_class }}">
+    Table row: {{ citation.row_label }}{% if citation.column_label %} &middot; Column: {{ citation.column_label }}{% endif %}
+  </p>
+{% endif %}

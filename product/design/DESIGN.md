@@ -313,6 +313,32 @@ visually distinct and its action reads `Request access`, never `Download` (D22).
 A refusal is a boundary being drawn confidently, not a malfunction (UAT Scenario 3). **Never style
 it as an error.** Always show both states together — the contrast is the product's argument.
 
+#### 7.9a A citation is a quotation plus a frame — **D79 option E, added 2026-11-02**
+
+When the answer quotes one cell of a reviewed table — `900` under *Renewal fee (R)* in the OPP's
+§2.3 scale — the quote is the paper's own characters and the **row and column are context the
+page supplies at cite time**. They are never in the quoted text (`D69`), and they must never look
+as if they were.
+
+**The marks.** Context is a **dashed** rule in `--brand-muted` (`.cite-context` / `.answer__context`),
+reading `Table row: Below R 250,000 · Column: Renewal fee (R)`. The quotation keeps the existing
+**solid ochre** rule. Dashed = the page is pointing; solid = the document's own. The same pair is
+used on the reader (§7.13) so a visitor who meets it in either place can read the other.
+
+**The legend is once per answer, never once per citation.** `chatbot/_citation_legend.html` names
+both rules in the reader's terms — *"The dashed line is context, not a quotation … The text under
+the solid rule is the document's own."* It appears only where a citation carries a row; a clause
+citation gets none. One partial serves the transcript and the answer page, because two copies of
+this sentence is two places for the distinction to drift — and **the distinction is the whole risk
+of option E**: if a reader takes the dashed line for a quotation, `D79` falls back to option A
+(written down in the spec row and the PRD in advance). UAT Scenario 8 of
+`tests/uat/ask_surface_uat.md` is the judgement; no test can make it.
+
+**The column is resolved, not guessed.** `column_label_for` names the printed heading only when
+exactly one cell contains the quote. A quote spanning cells keeps the row context and prints no
+column; a quote that matches no cell gets neither. A heading the reader cannot reconcile with the
+quote is the failure mode, so silence beats a plausible guess.
+
 ### 7.10 Members
 
 Page ground, `.disclaimer` card: *"Membership is not certification"* verbatim, plus the sentence
@@ -396,6 +422,14 @@ cell is `<th scope="row">` (`Step 1`) and is **sticky**; the other four are `<td
 - **The fallback is the plain page.** If the corpus disagrees with the artefact (a failed
   re-ingest), `align_artefact_grid` returns `None` and the reader renders the passages it has —
   unlabelled rows beat mislabelled ones, the same rule `structure_for` follows.
+
+**A citation marks its row and its cell — D79 option E.** A citation that quotes a reviewed row
+carries `&quote=` as well as `?section=…#…`; `_cited_row` resolves it against the printed grid.
+The row is washed `--brand-ochreLight` with a dashed outline, the quoted cell carries a **solid**
+ochre inset rule, and `.reader__grid-cited` above the table names the column — the reader half of
+§7.9a's distinction, in the same dashed/solid pair. A quote that matches no cell marks **nothing**,
+and one that spans cells marks the row but no cell: an unmarked table beats a highlighted wrong
+row, the same rule as the grid's own fallback.
 
 #### 7.13a Two shapes, and the table chooses — **D77, 2026-11-01**
 

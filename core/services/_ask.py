@@ -15,8 +15,10 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from urllib.parse import quote_plus
 
 from django.db import transaction
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 
@@ -216,6 +218,41 @@ class AnswerPage:
     cite_text: str
     gap: bool
 
+    @property
+    def has_row_context(self) -> bool:
+        """True when a stored citation carries a reviewed row (`D79` option E).
+
+        The snapshot is a tuple of dicts, so this is also the guard that says the legend is
+        rendered only where there is something to explain. Cards published before slice 2
+        stored no `row_label`; a missing key is not an error, it is a citation with no
+        context line.
+        """
+        return any(
+            isinstance(citation, dict) and citation.get("row_label")
+            for citation in self.citations
+        )
+
+
+def _stored_read_url(citation: dict) -> str:
+    """In: one stored citation. Out: the reader URL it lands on, or "".
+
+    The snapshot is a dict, so it has no `Citation.read_url` — but the card and the live
+    transcript must link to the same place, and slice 3 adds the quote so the reader can mark
+    the cell (`D79` option E). Built here, once, rather than in the template: `answer_page.html`
+    used to assemble `?section=…#…` itself, which is a second copy of a rule that already has a
+    home, and it is the copy that would have silently missed `&quote=`.
+
+    Old cards store no `row_label`; they get the same link they always had.
+    """
+    code = citation.get("document_code") or ""
+    anchor = citation.get("reading_anchor") or ""
+    if not code or not anchor:
+        return ""
+    url = reverse("core:document_reader", kwargs={"code": code}) + f"?section={anchor}"
+    if citation.get("row_label") and citation.get("quote"):
+        url += f"&quote={quote_plus(str(citation['quote']))}"
+    return f"{url}#{anchor}"
+
 
 def _cite_text(card: PublicQuestion) -> str:
     """The citation as it should read pasted into a message, a FORM, or to a neighbour.
@@ -256,7 +293,11 @@ def answer_page(slug: str) -> AnswerPage | None:
     neighbours = list((others.filter(topic=card.topic) if card.topic else others)[:NEIGHBOURS])
     return AnswerPage(
         card=card,
-        citations=tuple(card.citations or ()),
+        citations=tuple(
+            {**citation, "read_url": _stored_read_url(citation)}
+            for citation in card.citations or ()
+            if isinstance(citation, dict)
+        ),
         neighbours=tuple(neighbours),
         cite_text=_cite_text(card),
         gap=card.status == PublicQuestion.Status.WAITING,

@@ -290,6 +290,50 @@ def test_the_scale_is_a_grid_not_a_process(client, opp):
     assert "reader__card" not in body
 
 
+# --- D79 option E, slice 3: the reader shows the context it was told about -----
+
+
+def test_a_cited_quote_marks_its_row_its_cell_and_names_the_column(client, opp):
+    """Following a citation must let a reader *see* the frame, not take a sentence on trust.
+
+    The answer cites `900` with `Table row: Below R 250,000 · Column: Renewal fee (R)` above
+    it. The reader gets the same two facts from the printed table: the row is washed, the
+    quoted cell carries the solid rule, and the note above the table names the column. The
+    quote rides in the URL because a browser never sends the fragment (D68 §6.4).
+    """
+    import re
+
+    body = client.get("/documents/opp/read/?section=ii&quote=900").content.decode()
+
+    assert "The citation lands on this row" in body
+    assert "under &ldquo;Renewal fee (R)&rdquo;" in body
+    cited = re.search(r'<tr id="[^"]+" class="is-cited">(.*?)</tr>', body, re.S)
+    assert cited is not None, "no row was marked"
+    assert "Below R 250,000" in cited.group(1)
+    assert "900" in cited.group(1)
+    assert 'class=" is-cited-cell"' in cited.group(1), (
+        "the quote is the paper's own cell; the row is only the frame"
+    )
+
+
+def test_a_quote_that_matches_no_cell_marks_nothing(client, opp):
+    """A mislabelled mark is worse than none — the rule `_artefact_grid` already follows."""
+    body = client.get(
+        "/documents/opp/read/?section=ii&quote=not-in-this-table"
+    ).content.decode()
+
+    assert "is-cited" not in body
+    assert "The citation lands on this row" not in body
+
+
+def test_a_plain_reader_link_carries_no_citation_note(client, opp):
+    """A link from the tree or a search is not a citation, and gets no citation note."""
+    body = client.get("/documents/opp/read/?section=ii").content.decode()
+
+    assert "is-cited" not in body
+    assert "The citation lands on this row" not in body
+
+
 # --- Branches that are not tables -------------------------------------------
 
 

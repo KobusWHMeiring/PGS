@@ -86,6 +86,9 @@ def document_reader(request, code: str):
         document,
         request.GET.get("q", ""),
         request.GET.get("section", ""),
+        # D79 option E: the quote a citation carried, so the reader can mark the cell it came
+        # from. Absent on every link that is not a citation, and then nothing is marked.
+        request.GET.get("quote", ""),
     )
     page = Page(
         key="document-reader",

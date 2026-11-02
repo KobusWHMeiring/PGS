@@ -1195,6 +1195,128 @@ def test_a_quote_of_the_row_cells_is_still_accepted(chat_corpus, chat_standard_s
     )
 
 
+# --- D79 option E, slice 3: the quote knows its column, and the link carries it --
+
+
+def _fee_band_row(chat_corpus):
+    """A retrieved chunk whose text is the band's printed cells, with its reviewed table.
+
+    The double in `_table_row_chunk` keeps the fixture's sentence text because it tests the
+    prompt shape; a citation's column can only be resolved from the cells the paper prints.
+    """
+    from dataclasses import replace
+
+    from knowledge.services import RetrievedChunk
+    from knowledge.table_context import TableContext
+
+    chunk = chat_corpus.fee
+    table = TableContext(
+        title="2.3 PGS assessment fee structure (initial certification and renewal)",
+        columns=(
+            "Annual farm turnover (gross sales)",
+            "Initial certification fee (R)",
+            "Renewal fee (R)",
+        ),
+        section_ref="§2.3",
+        row_label="Below R 250,000",
+        cells=("Below R 250,000", "1,500", "900"),
+    )
+    return replace(
+        _retrieved_from_stored(chunk, chunk.document.standard_set),
+        text="Below R 250,000\n1,500\n900",
+        section_ref="§2.3",
+        heading_path="2.3 PGS assessment fee structure",
+        table=table,
+    )
+
+
+def test_a_quoted_cell_knows_its_printed_column(chat_corpus, chat_standard_set):
+    """Slice 3: the frame is row **and column**, both rendered from the reviewed table.
+
+    Without the column the citation shows `Table row: Below R 250,000` above `900`, and a
+    reader still cannot tell a renewal fee from an initial one — the ambiguity the whole
+    decision exists to remove.
+    """
+    row = _fee_band_row(chat_corpus)
+
+    citations, problems = audit_citations(
+        [{"section_ref": "§2.3", "quote": "900"}],
+        [row],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    assert problems == ()
+    assert citations[0].row_label == "Below R 250,000"
+    assert citations[0].column_label == "Renewal fee (R)"
+
+
+def test_a_quote_spanning_cells_gets_no_column(chat_corpus, chat_standard_set):
+    """D79-2 lets consecutive cells be quoted together; naming one column would be a lie."""
+    row = _fee_band_row(chat_corpus)
+
+    citations, problems = audit_citations(
+        [{"section_ref": "§2.3", "quote": "1,500\n900"}],
+        [row],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    assert problems == ()
+    assert citations[0].row_label == "Below R 250,000", "the row context still applies"
+    assert citations[0].column_label == "", "two cells is not one column"
+
+
+def test_the_reader_link_carries_the_quote_only_when_a_row_frames_it(chat_corpus):
+    """The reader marks the quoted cell, so the link has to name it — and only then.
+
+    A prose citation has no row and no cell; adding `quote=` to every link would make the
+    reader search every branch for a paragraph and mark nothing, for no reason.
+    """
+    from core.services._chatbot import Citation
+
+    framed = Citation(
+        section_ref="§2.3",
+        quote="900",
+        chunk_id=1,
+        document_code="opp",
+        reading_anchor="below-r-250-000",
+        row_label="Below R 250,000",
+        column_label="Renewal fee (R)",
+    )
+    assert "quote=900" in framed.read_url
+    assert framed.read_url.endswith("#below-r-250-000")
+
+    plain = Citation(
+        section_ref="S20.1.1",
+        quote="Records must be kept.",
+        chunk_id=2,
+        document_code="saoso-standard-v2.1",
+        reading_anchor="s20-1-1",
+    )
+    assert "quote=" not in plain.read_url
+
+
+def test_the_snapshot_keeps_the_row_and_column_of_a_citation(chat_corpus, chat_standard_set):
+    """A card outlives the corpus, so the frame is stored with the quote (D79/E).
+
+    The answer page reads the snapshot, not the corpus. Before slice 3 the snapshot dropped
+    `row_label`, so a card silently rendered no context while the transcript rendered it —
+    two surfaces disagreeing about the same citation.
+    """
+    from core.services._chatbot import citation_records
+
+    row = _fee_band_row(chat_corpus)
+    citations, _problems = audit_citations(
+        [{"section_ref": "§2.3", "quote": "900"}],
+        [row],
+        standard_set_id=chat_standard_set.pk,
+    )
+
+    records = citation_records(citations)
+
+    assert records[0]["row_label"] == "Below R 250,000"
+    assert records[0]["column_label"] == "Renewal fee (R)"
+
+
 def test_the_system_prompt_says_the_headings_are_not_quotable():
     """Without this rule the model quotes the heading it was shown, and the audit refuses."""
     lowered = SYSTEM_PROMPT.lower()

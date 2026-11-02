@@ -22,6 +22,7 @@ from knowledge.models import DocumentChunk
 from knowledge.services import search_terms
 from knowledge.table_context import (
     TABLE_ROW_SEATS,
+    column_label_for,
     reviewed_table_for,
     reviewed_table_for_section,
 )
@@ -131,6 +132,47 @@ def test_the_artefact_lookup_finds_a_row_and_refuses_a_paragraph(opp_ingested):
 def test_an_unknown_document_costs_nothing():
     assert reviewed_table_for("pgs_docs/does-not-exist.pdf", "Below R 250,000") is None
     assert reviewed_table_for_section("pgs_docs/does-not-exist.pdf", "§2.3", "") is None
+
+
+# --- D79 option E, slice 3: the quoted cell names its column -----------------
+
+
+def _band_context(opp_ingested):
+    row = DocumentChunk.objects.get(text="Below R 250,000\n1,500\n900")
+    table = reviewed_table_for(OPP, row.text)
+    assert table is not None
+    return table.context_for(row.text)
+
+
+def test_the_quoted_cell_names_its_printed_column(opp_ingested):
+    """Slice 3's other half: the frame is a row **and a column**, from the same reviewed row.
+
+    The answer says *"below R250,000 … a renewal fee of R900"*, and the citation shows the
+    cell (`900`). Naming the column is what lets the reader see why the cell is a renewal
+    fee; the label alone would leave `900` and `1,500` indistinguishable context.
+    """
+    context = _band_context(opp_ingested)
+
+    assert context.cells == ("Below R 250,000", "1,500", "900")
+    assert column_label_for(context, "900") == "Renewal fee (R)"
+    assert column_label_for(context, "1,500") == "Initial certification fee (R)"
+    assert column_label_for(context, "Below R 250,000") == (
+        "Annual farm turnover (gross sales)"
+    )
+
+
+def test_a_quote_across_cells_is_given_no_column(opp_ingested):
+    """E's one real risk is a heading the reader cannot reconcile with the quote.
+
+    A quote that spans cells has no single column. Naming the first would claim the whole
+    quote belongs there; `""` leaves the row context and prints no column at all.
+    """
+    context = _band_context(opp_ingested)
+
+    assert column_label_for(context, "1,500\n900") == ""
+    assert column_label_for(context, "not in this row") == ""
+    assert column_label_for(context, "") == ""
+    assert column_label_for(None, "900") == "", "a prose passage has no column"
 
 
 def test_a_process_table_is_not_shown_as_a_grid(opp_ingested):

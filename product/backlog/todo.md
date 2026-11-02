@@ -25,10 +25,11 @@ the generated index's "To Do" section.
       the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
       and Appendix 7's interleaved chunks.
 - [ ] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
-      render the row's context from the artefact at cite time. **Slice 1 landed 2026-11-02:** the
-      reserved seat is now filled in the vector arm's own order (it was filled from the fused head,
-      which was truncated to `limit`, so a vector-only chunk could never be seated) and a
-      heading-only chunk cannot consume one. Measured: a fee band is **reachable at all** for the
+      render the row's context from the artefact at cite time. **All three slices landed** (2026-11-02;
+      session record `SESSION_0y_…`). **Slice 1:** the reserved seat is now filled in the vector arm's
+      own order (it was filled from the fused head, which was truncated to `limit`, so a
+      vector-only chunk could never be seated) and a heading-only chunk cannot consume one.
+      Measured: a fee band is **reachable at all** for the
       first time (it appeared in no lexical ranking and ranked 15th fused) and
       `curated-unannounced-visit` went from not-found to rank 3; R@8 unchanged at 0.812, MRR
       0.387 → 0.385, and `curated-conversion-period` lost (rank 7 → not found) —
@@ -40,11 +41,13 @@ the generated index's "To Do" section.
       unchanged); `build_prompt` renders the table once with its printed headings above one-cell-per-
       line rows; `Citation.row_label` carries the row's printed label and both citation templates
       render it as context. Both phrasings now answer with the document's own numbers — R900 renewal
-      below R250 000, R1 500 initial — grounded, quoting single cells. **Left:** (3) the *context, not
-      quotation* distinction as a design pass; the dashed "Table row:" line shipped with slice 2 is
-      the minimum that stops a bare `900` reading as a non-answer. Mechanism:
-      `product/design/g11_option_e_explainer.html`; argument: `g11_row_labels_exploration.html`.
-      Unblocks the fee answer G10 opened.
+      below R250 000, R1 500 initial — grounded, quoting single cells. **Slice 3 (the design pass)
+      landed:** `Citation.column_label` names the printed column (only when exactly one cell holds the
+      quote), the snapshot keeps row+column so the answer page stops disagreeing with the transcript,
+      one legend per answer explains the dashed/solid pair, and the reader marks the cited row and
+      cell. **Left: the UAT Scenario 8 judgement** — if the distinction cannot be made legible, D79
+      falls back to option A. Mechanism: `product/design/g11_option_e_explainer.html`; argument:
+      `g11_row_labels_exploration.html`. The fee answer G10 opened now works.
 
 ## Product, deferred from the aimed spec
 
