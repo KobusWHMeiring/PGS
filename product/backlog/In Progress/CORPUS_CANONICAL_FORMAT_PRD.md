@@ -1,9 +1,9 @@
 # PRD: A canonical corpus — reviewed text as data, extraction as a build step
 
-**Status:** In Progress — **SAOSO and BPP** are built, reviewed and are the text of record (`knowledge/corpus/saoso.md`, `bpp.md`); the OPP and landscape are not converted (P4, P5). **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4).
+**Status:** In Progress — **all four governed documents** are built, reviewed and are the text of record (`knowledge/corpus/{saoso,bpp,landscape,opp}.md`); **P4 (the OPP) landed 2026-11-02**, so `corpus_check` reports *current* for all four and the dev corpus is 401 chunks, 0 unembedded. **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4). **Remaining:** the generator's table-block rule (D75 — every table in the corpus is still a human transcription) and pdf 11's §6.5 labelling table; both now sit inside **D80**'s engine work.
 **2026-10-22:** scope extended by §8 — the deployment gate proved the *runtime* still depends on the extractor (`testing_hazards.md` §2.9). Decisions **D55–D58** are recorded in `PGS_PLATFORM_SPEC.md` §18.3, and the work is scheduled in `CORPUS_CANONICAL_FORMAT_PLAN.md`.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
-**Last Updated:** 2026-10-28
+**Last Updated:** 2026-11-02
 **MVP:** MVP 0 — architecture change to how the corpus is produced. **No migration.**
 **Scope:** Where the text of a governed document comes from, and how it is reviewed.
 **Not** in scope: retrieval ranking (G3), the prompt contract, the escalation path.

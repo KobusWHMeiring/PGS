@@ -20,9 +20,13 @@
 >    document — **X2 now, X3 when demanded**, decided as **D80**).
 > 5. **Context budget measured and the first cut taken** (`product/docs/context/CONTEXT_BUDGET.md`):
 >    the six files this repo told every session to read total **509 KB ≈ 144k tokens**;
->    `HANDOVER.md` was 2,553 lines of which 72 were state. **This file is now 138 lines** and the
->    22 session narratives are in `product/docs/handover/`. `python scripts/context.py --task
->    <chat|corpus|reader|public|backlog>` prints what to read and what to grep.
+>    `HANDOVER.md` was 2,553 lines of which 72 were state. **This file is now 101 lines** and the
+>    23 session narratives are in `product/docs/handover/` (content verified byte-for-byte:
+>    173,325 in, 173,325 out), with `tests/tools/test_handover.py` holding the budget.
+>    `python scripts/context.py --task <chat|corpus|reader|public|backlog>` prints what to read
+>    and what to grep. **The full session record is
+>    `product/docs/handover/SESSION_0v_2026-11-02_…md`** — read that one file for the reasoning;
+>    this block is only state.
 >
 > **What is next, in the owner's order:**
 >
@@ -77,6 +81,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `0v` 2026-11-02 (session 8) — the cost rule, P4's printed scale, two decision pages, and the handover becomes state — [`SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md`](product/docs/handover/SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md)
 - `0u` 2026-11-01 (session 7) — the cost rule, the OPP's printed scale, and the refusal located — [`SESSION_0u_2026-11-01_the-cost-rule-the-opp-s-printed-scale-and-th.md`](product/docs/handover/SESSION_0u_2026-11-01_the-cost-rule-the-opp-s-printed-scale-and-th.md)
 - `0t` 2026-11-01 (session 6) — the two shapes are built, and one number the design did not decide — [`SESSION_0t_2026-11-01_the-two-shapes-are-built-and-one-number-the.md`](product/docs/handover/SESSION_0t_2026-11-01_the-two-shapes-are-built-and-one-number-the.md)
 - `0s` 2026-10-31 (session 5) — the display model settled: C3, the split, the spreadsheet — [`SESSION_0s_2026-10-31_the-display-model-settled-c3-the-split-the-s.md`](product/docs/handover/SESSION_0s_2026-10-31_the-display-model-settled-c3-the-split-the-s.md)

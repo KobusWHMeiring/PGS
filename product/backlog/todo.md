@@ -10,6 +10,22 @@ the generated index's "To Do" section.
 - [ ] Decide the production host for the platform (the group currently has no server).
 - [ ] Add a second physical backup copy — currently a single local external drive (R11, accepted gap).
 
+## Decided, not yet queued (2026-11-02)
+
+- [ ] **Context budget cuts 4.2–4.4** (`product/docs/context/CONTEXT_BUDGET.md`): a §18.3 row
+      becomes a sentence + a link (14 rows are over 1.5 KB), split `core/services/_chatbot.py`
+      (91 KB, 3× the §II cap) and `knowledge/corpus.py` (49 KB), then wire
+      `scripts/context.py --check` into the gate. 4.1 (the HANDOVER split) is done.
+- [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) — needs
+      a PRD before it can be built. First commit is the **eight-shape fixture set** in
+      `product/design/g12_ingestion_generalisation.html` Part 1; then an extractor evaluation
+      (Docling / Document AI) against it, then the generator emitting `<!-- table -->` blocks, then
+      the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
+      and Appendix 7's interleaved chunks.
+- [ ] **G11 decision (D79)** — `product/design/g11_row_labels_exploration.html`, five options,
+      **E recommended** (render the row's context at cite time; quote cells only) with **A** as a
+      stopgap. Blocks the fee answer that G10 opened.
+
 ## Product, deferred from the aimed spec
 
 - [ ] Voice notes — recorder UI and Gemini transcription (`PGS_PLATFORM_SPEC.md` §17.2).
