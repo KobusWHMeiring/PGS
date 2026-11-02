@@ -410,7 +410,14 @@ def ingest_standard(
                 "Retrieval is lexical only until the corpus is re-embedded."
             )
         else:
-            vectors = embed_texts([chunk.text for chunk in chunks], provider=provider)
+            # D73: a table row is embedded from its reviewed `column: value` rendition, not
+            # from its cells. `text` stays exactly what a citation quotes; only the vector
+            # space sees the labels. Measured 2026-11-01: without this, `Below R 250 000 /
+            # 1 500 / 900` ranked nowhere for any fee question and the assistant answered
+            # that the document "does not specify the exact assessment fee".
+            vectors = embed_texts(
+                [chunk.embedding_text or chunk.text for chunk in chunks], provider=provider
+            )
 
     source_file = _relative_source(path)
 
@@ -444,6 +451,9 @@ def ingest_standard(
                     anchor=chunk.anchor,
                     sub_refs=[ref.as_dict() for ref in chunk.sub_refs],
                     token_count=chunk.token_count,
+                    # D73: what the vector was computed from, when it is not `text`. Stored so
+                    # a column rename that changes a row's rendition is visible on the row.
+                    embedding_text=chunk.embedding_text,
                     embedding=vectors[index] if vectors else None,
                 )
                 for index, chunk in enumerate(chunks)

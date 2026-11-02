@@ -130,9 +130,45 @@ def test_the_rule_forbids_presenting_one_component_as_the_whole():
     assert "leave" in lowered or "not included" in lowered or "separate" in lowered
 
 
+def test_the_rule_separates_what_the_group_pays_from_what_a_member_pays():
+    """The owner's correction, 2026-11-01: the group's national fee is not a member's charge.
+
+    §2.1: *"PGS South Africa membership fee: the group will pay the annual membership fee to
+    SAOSO. The funds for this national membership will be secured from our membership fees."*
+    The first version of this rule left that R500 inside "the yearly cost of membership", so a
+    reader could not tell whose money it was. It is a rule about *shape*, so it names no
+    document and no amount — the passages carry those.
+    """
+    lowered = COST_QUESTION_RULE.lower()
+    assert "member pays" in lowered or "what a member pays" in lowered
+    assert "group pays" in lowered
+    assert "obligation" in lowered or "on its members' behalf" in lowered
+
+
+def test_the_rule_says_the_assessment_fee_is_the_unavoidable_part():
+    """A farm cannot be certified without a visit — so the R100 is not the cost of a year."""
+    lowered = COST_QUESTION_RULE.lower()
+    assert "must be assessed" in lowered
+    assert "entering or renewing certification" in lowered
+    assert "membership fee alone" in lowered
+
+
+def test_the_rule_allows_a_floor_and_no_other_arithmetic():
+    """D79: the only sum permitted is membership + one named band, called a floor.
+
+    The public page publishes exactly this shape (`FIRST_YEAR_FROM_CENTS`, "a floor, not a
+    total"), and the first version of the rule forbade every total, so the site and the
+    assistant disagreed in the one place the owner had asked them to agree.
+    """
+    lowered = COST_QUESTION_RULE.lower()
+    assert "one floor and no other total" in lowered
+    assert "membership fee plus one band" in lowered
+    assert "called a floor" in lowered
+
+
 def test_the_prompt_version_moved_with_the_rule():
-    """`d78-1` is the version that carries this rule (pinned in `test_follow_up` too)."""
-    assert PROMPT_VERSION == "d78-1"
+    """`d78-2` is the version that carries this rule (pinned in `test_follow_up` too)."""
+    assert PROMPT_VERSION == "d78-2"
 
 
 # --- The advisory note ------------------------------------------------------

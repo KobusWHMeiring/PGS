@@ -328,6 +328,23 @@ class DocumentChunk(models.Model):
         ),
     )
     text = models.TextField()
+    #: What the vector was computed from, when it is not `text` (D73). A table row's cells are
+    #: numbers and bands — `Below R 250 000 / 1 500 / 900` — so a vector of the row's own words
+    #: describes nothing and the row can never be retrieved. The reviewed shape supplies the
+    #: words (`Annual farm turnover (gross sales): Below R 250 000 · Initial certification fee
+    #: (R): 1 500 …`), and **that** is embedded while `text` stays what a citation quotes.
+    #:
+    #: Stored, not derived at embed time, so the vector space is auditable: a reprint that
+    #: renames a column changes this field, and a corpus whose chunks still carry the old
+    #: rendition is visibly stale. Empty for every ordinary passage, which embeds its own text.
+    embedding_text = models.TextField(
+        blank=True,
+        default="",
+        help_text=(
+            "The text the embedding was computed from when it differs from `text` — a "
+            "reviewed table row's column-labelled rendition (D73). Empty means `text`."
+        ),
+    )
     token_count = models.PositiveIntegerField(
         default=0,
         help_text="Rough token count, used to hold the ~800-token chunk target (B4).",

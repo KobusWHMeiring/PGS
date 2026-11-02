@@ -110,6 +110,13 @@ class TableRow:
         return f"{self.section_ref} — {label[:80]}"
 
     def as_chunk(self) -> Chunk:
+        # **No `embedding_text`, and that is measured, not an omission** (2026-11-02).
+        # Appendix 2's cells are prose, so its `text` already describes itself; prefixing
+        # `substance:`/`condition:` labels to it dilutes the vector and cost three suite
+        # questions their answers — the horse-manure, cardboard and ducks questions all
+        # refused after a re-embed with the labels on (`scripts/probe_chat.py`, 9 → 6
+        # grounded). D73's rendition exists for a row whose cells are **numbers**, which is
+        # the artefact case (`row_chunk`), not for one that is already a sentence.
         return Chunk(
             section_ref=self.section_ref,
             text=self.text,
@@ -141,17 +148,17 @@ def chunks_for_parsed_section(section) -> list[Chunk]:
     for table in section.tables:
         for row in table.rows:
             span = (row.cells[0].start, row.cells[-1].end) if row.cells else (0, 0)
-            rows.append((span[0], span[1], row))
+            rows.append((span[0], span[1], row, table.columns))
     if not rows:
         return [chunk_section(section)]
 
     rows.sort(key=lambda entry: entry[0])
     chunks: list[Chunk] = []
     cursor = 0
-    for start, end, row in rows:
+    for start, end, row, columns in rows:
         if start > cursor:
             chunks.extend(_prose_chunks(section, cursor, start))
-        chunks.append(row_chunk(section, row))
+        chunks.append(row_chunk(section, row, columns))
         cursor = max(cursor, end)
     if cursor < len(section.text):
         chunks.extend(_prose_chunks(section, cursor, len(section.text)))
@@ -201,7 +208,7 @@ def _prose_chunks(section, start: int, end: int) -> list[Chunk]:
     return [chunk for chunk in chunks if chunk.text.removeprefix(heading).strip()]
 
 
-def row_chunk(section, row) -> Chunk:
+def row_chunk(section, row, columns: tuple[str, ...] = ()) -> Chunk:
     """One reviewed row's chunk: its cells, the page it starts on, and a locator.
 
     `text` is the row's cells joined by a newline — the documented exception to "a chunk is
@@ -210,6 +217,15 @@ def row_chunk(section, row) -> Chunk:
     the label so a citation can say which step it came from, and the label is *not* text: on
     this document it is also printed in the first cell, and a corpus that repeated it would be
     quoting a word the paper prints once.
+
+    **`embedding_text` is the row's labels, and it is why a numeric row is retrievable at all
+    (D73).** `Below R 250,000 / 1,500 / 900` shares no word with any question, so a vector of
+    the cells describes nothing; `columns` supplies the words — `Annual farm turnover (gross
+    sales): Below R 250,000 · Initial certification fee (R): 1,500 · Renewal fee (R): 900`.
+    Measured 2026-11-01: without it the sliding scale's six bands ranked nowhere, and `/ask/`
+    answered *"the document does not specify the exact assessment fee"* for a fee the document
+    prints (`CHAT_ANSWER_COVERAGE_PRD` G10). `text` is untouched: the quote audit and the
+    reader see only what the paper prints.
     """
     label = row.label_text
     heading_path = (
@@ -223,7 +239,26 @@ def row_chunk(section, row) -> Chunk:
         heading_path=heading_path,
         page=row.page if row.page is not None else section.page,
         anchor=section_anchor(f"{section.heading_path} {label}") if label else section.anchor,
+        embedding_text=_embedding_rendition(heading_path, row, columns),
     )
+
+
+def _embedding_rendition(heading_path: str, row, columns: tuple[str, ...]) -> str:
+    """The text a row is embedded from: its heading, then `column: cell` for each printed cell.
+
+    In:  `heading_path` — the section plus the row's label; `row` — a `ParsedTableRow`;
+         `columns` — the table's printed column labels.
+    Out: one line, `·`-separated. Empty cells are skipped: an empty cell is *silence*, and a
+         label with nothing after it would embed a word the row does not say.
+    """
+    parts = [heading_path]
+    for index, cell in enumerate(row.cells):
+        value = " ".join((cell.text or "").split())
+        if not value:
+            continue
+        column = columns[index] if index < len(columns) else ""
+        parts.append(f"{column}: {value}" if column else value)
+    return " · ".join(parts)
 
 
 #: Verbatim cells from SAOSO v2.1 (2026), Appendix 2, printed pp. 76–78. Reviewed

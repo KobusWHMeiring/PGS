@@ -384,8 +384,10 @@ def test_a_first_question_prompt_gains_nothing(chat_corpus):
 def test_the_prompt_version_moved():
     """A prompt change that is not versioned is a cache entry nobody can interpret.
 
-    `d78-1` is the cost-question rule (G10, D78) — the pin exists so the next prompt edit
+    `d78-2` is the cost-question rule (G10, D78/D79) — the pin exists so the next prompt edit
     has to move it deliberately, in the same commit, rather than leave a cached reply
-    that was produced under a contract nobody can name.
+    that was produced under a contract nobody can name. It moved twice in one day: `d78-1`
+    named the components and forbade every total, `d78-2` separates the group's fee from a
+    member's and allows the floor.
     """
-    assert PROMPT_VERSION == "d78-1"
+    assert PROMPT_VERSION == "d78-2"

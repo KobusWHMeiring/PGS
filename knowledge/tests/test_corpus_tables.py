@@ -397,6 +397,57 @@ def test_the_prose_around_a_table_is_kept_and_ordered():
     assert any("R1 000" in text for text in texts), "the last row is last"
 
 
+def test_a_row_is_embedded_from_its_column_labels_not_its_cells():
+    """D73's vector half: `Below R 250 000 / 1 500 / 900` describes nothing on its own.
+
+    Measured 2026-11-01: without this, the six bands of the OPP's sliding scale ranked nowhere
+    for any fee question and `/ask/` said the document "does not specify the exact assessment
+    fee" — a grounded answer that was wrong by omission, and the reason a table row needs a
+    second rendition at all.
+    """
+    document = parse_blocks(artefact(two_row_section()))
+    chunks = chunks_for_sections(list(document.sections))
+    rows = [chunk for chunk in chunks if chunk.embedding_text]
+    assert rows, "no row carried a rendition — every row would embed its bare cells"
+    for chunk in rows:
+        assert "<table" not in chunk.embedding_text
+        for cell in chunk.text.split("\n"):
+            if cell.strip():
+                assert cell.strip() in chunk.embedding_text, (cell, chunk.embedding_text)
+    first = rows[0].embedding_text
+    assert first.startswith(rows[0].heading_path), first
+    assert "Key steps: Farmers who are already producing a surplus." in first, first
+    assert "Fee: R500" in first, first
+
+
+def test_a_row_with_an_empty_cell_does_not_label_the_silence():
+    """An empty cell is *silence* (§4 item 3): a label with nothing after it embeds a word
+    the row does not say."""
+    document = parse_blocks(
+        artefact(
+            """<!-- page: 3 printed: 3 -->
+### SEALS
+<!-- table
+cols: Seal | Use | Fee
+-->
+<!-- row: PGS Organic -->
+<!-- cell -->
+PGS Organic
+<!-- cell -->
+<!-- cell -->
+R500
+<!-- /table -->"""
+        )
+    )
+    row = next(
+        chunk
+        for chunk in chunks_for_sections(list(document.sections))
+        if chunk.embedding_text
+    )
+    assert "Use:" not in row.embedding_text, row.embedding_text
+    assert "Fee: R500" in row.embedding_text
+
+
 def test_the_prose_after_a_table_does_not_start_with_a_blank_line():
     """Measured 2026-11-01 on the OPP's §2.3: the notes under the scale began with a newline.
 

@@ -453,6 +453,66 @@ not the G9 header-decoration cause (that fix holds; every audited citation in th
 `§2.x` locator with no decoration). Reproduce with `scripts/why_refused.py "what is the yearly
 cost"` and `scripts/probe_chat.py "<the same>"`, which is how G9 was named — do not guess at it.
 
+### G11. The owner read the cost answer and two more defects fell out — **found 2026-11-01**
+
+The product owner read the *fixed* cost answer and said two things, and both were right:
+
+1. *"the R500 was what PGS Outeniqua pays to SAOSA yearly, not what the individual members
+   pay"* — §2.1 says so in its own words: *"PGS South Africa membership fee: the group will
+   pay the annual membership fee to SAOSO. The funds for this national membership will be
+   secured from our membership fees set out in 1."* The R100 is the member's; the R500 is the
+   **group's**, funded out of the members' fees. The first rule listed it inside "the yearly
+   cost of membership" anyway, so a reader could not tell whose money it was.
+2. *"a user needs to have a farm visit to be certified, so that fee should be included in the
+   yearly cost calc"* — and the public page already publishes that shape:
+   `FIRST_YEAR_FROM_CENTS` = **R1 600** (R100 membership + the R1 500 lowest assessment band),
+   *"a floor, not a total"*, with its three exclusions named. The assistant said neither that
+   the assessment fee is unavoidable nor any floor, and the first version of the rule had
+   **forbidden every total** — so the site and the assistant disagreed in the one place the
+   owner had asked them to agree.
+
+**Fixed the same day (`d78-2`).** The rule is now three parts, in order: **whose** amount it
+is (a member's vs the group's, never presented as an extra charge), the **unavoidable** part
+(the assessment fee applies to every farm entering or renewing, so the membership fee alone is
+not the cost of being certified), and the **conditional** part (travel, catering, the licence).
+It also permits **one** sum: the membership fee plus one named band, *called a floor*, with
+what it leaves out named. Measured after: *"…which is secured from the group's collected
+membership fees and **is not an additional charge to the individual member**"*, and the
+assessment fee named as applying to every farm entering or renewing.
+
+**Two blockers remain, and they are linked — both measured, neither fixed.**
+
+- **A table row can never be retrieved.** `Below R 250,000 / 1,500 / 900` shares no word with
+  any question, so the row is **vector-only by construction**. `SEMANTIC_SEATS = 3` exists for
+  exactly that, but the seats are taken from the *fused head* (chunks the lexical arm already
+  ranked) and the alias arm (`cost → fee`, G3's fix) then truncates the tail, so the
+  reservation is spent and lost. Measured: the six bands rank **4th–13th in the vector arm and
+  nowhere in the top eight**, and `/ask/` answers *"the specific scale is not provided"* for a
+  scale the document prints next to it. **Fixed in the vector, not yet in the seat** — see the
+  next bullet.
+- **A row's labels cannot be quoted.** D73's vector half was built in this session (a table
+  row is embedded from a `column: value` rendition, stored on the chunk), and with the seats
+  enforced by hand the model *did* read a band correctly (*"a farmer with an annual farm
+  turnover between R 500,001 and R 1,000,000 pays a renewal fee of R 2,500"*). But the labels
+  are metadata the paper does not print, so the model quoted **them**, and the audit refused —
+  correctly. A label line in the prompt is a quote trap; the same lesson as D50-1's passage
+  number.
+
+**What the next slice has to decide, therefore, is one thing:** how a printed header reaches a
+row's *quotable* text. The candidates are (a) the printed column-header line becomes part of
+each row's chunk text — it is the paper's own words, printed once above the table, and Appendix
+2 already restores printed part headings from reviewed data; (b) the reader/answer cites the
+whole table section instead of a row; (c) the assistant does not attempt the band and says the
+scale is in the OPP, which is what it does today and is honest but unhelpful. **With (a), the
+reserved seat and the floor both work**; without one of them, P4's table is a reader feature and
+not a chat feature, and G10's "align the two" stays half done.
+
+**Also measured, and worth keeping:** D73's rendition is for rows whose cells are **numbers**.
+Applying it to Appendix 2's reviewed literals — whose cells are already prose — took the probe
+suite from 9 of 9 grounded to **6 of 9** (horse manure, cardboard and ducks all refused), so
+`TableRow.as_chunk()` deliberately sets no rendition. One shape for both storages would have
+been tidier and worse.
+
 **The second finding is located, 2026-11-01 — and it is one space, not a paraphrase.** Reproduced
 twice on the same question (`probe_chat`, 401-chunk corpus, after both fixes): the answer was
 complete and correct, one citation failed, and the product refused it. The failing quote:

@@ -72,6 +72,9 @@ class Chunk:
     #: it is what makes overlap measurable (and therefore testable).
     source_start: int = 0
     source_end: int = 0
+    #: What to embed when it is not `text` (D73) — a reviewed table row's column-labelled
+    #: rendition. Empty for every ordinary passage, which embeds its own words.
+    embedding_text: str = ""
 
     def as_chunk_kwargs(self) -> dict:
         """The keyword arguments `DocumentChunk.objects.create(**…)` takes."""
@@ -83,6 +86,7 @@ class Chunk:
             "anchor": self.anchor,
             "sub_refs": [ref.as_dict() for ref in self.sub_refs],
             "token_count": self.token_count,
+            "embedding_text": self.embedding_text,
         }
 
 

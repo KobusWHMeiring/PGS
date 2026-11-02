@@ -309,6 +309,30 @@ def test_pages_are_the_printed_numbers(saoso_pdf, standard_set):
     assert chunk.page == 60
 
 
+def test_a_table_rows_embedding_rendition_is_stored(standard_set):
+    """D73's vector half, end to end — and the guard the first version of it lacked.
+
+    The ingest builds `DocumentChunk(...)` **field by field** rather than through
+    `Chunk.as_chunk_kwargs()`, so a new field on the chunk is silently dropped unless it is
+    added there too. Measured 2026-11-01: the rendition reached every row chunk and not one
+    row in the database, so the vectors were still the bare cells and the sliding scale
+    ranked nowhere. This test would have said so in a second.
+    """
+    report = ingest_standard(
+        pdf_path=PDFS["opp"], standard_set=standard_set, doc_key="opp", embed=False
+    )
+
+    row = DocumentChunk.objects.get(
+        document_id=report.document_id, section_ref="§2.3", text__startswith="Below R"
+    )
+    assert row.embedding_text, "the row was stored without the text its vector is built from"
+    assert "Annual farm turnover (gross sales): Below R 250,000" in row.embedding_text
+    assert "Initial certification fee (R): 1,500" in row.embedding_text
+    assert row.text == "Below R 250,000\n1,500\n900", (
+        "`text` stays exactly what a citation quotes"
+    )
+
+
 def test_opp_sub_refs_survive_into_the_database(standard_set):
     """D15 end to end: §4.5's offsets are stored and still slice their own chunk.
 

@@ -160,11 +160,13 @@ MAX_OUTPUT_TOKENS_CEILING = 8192
 #: the fruit question declines the verdict, and the seeds question opens with the rule in
 #: 3 runs of 3 (it answered "No, …" in 2 of 2 before the leading-verdict clause).
 #: `d78-1` (2026-11-01): rule 9 — a cost question is answered with the components the
-#: passages supply and what cannot be totalled (G10, D78). Measured before, on the
+#: passages supply and what cannot be totalled (G10, D78). `d78-2` the same day: whose fee is
+#: whose, the assessment fee as the unavoidable part, and the one arithmetic a cost answer may
+#: do (the floor). See `COST_QUESTION_RULE`. Measured before, on the
 #: 394-chunk dev corpus: *"what is the yearly cost of membership"* answered with §2.1's
 #: R100 + R500 alone while §2.2, §2.3, §2.4 and §2.5 were all among the eight passages
 #: supplied — faithful to the question, and the R100 read as the price of a year.
-PROMPT_VERSION = "d78-1"
+PROMPT_VERSION = "d78-2"
 
 SYSTEM_PROMPT = """You answer questions about the SAOSO Organic Standard, the \
 Outeniqua PGS Principles, Policies and Procedures, the Basic Production Principles, \
@@ -241,14 +243,20 @@ The application renders its own refusal wording, so do not write a refusal yours
 #: answered with the R100 and the R500 alone while the assessment scale, the visit catering
 #: and the seal licence were all in the eight passages supplied. The answer was faithful to
 #: the question and still told the reader the R100 was the price of a year.
-COST_QUESTION_RULE = """Cost questions. The documents set out several separate amounts, and \
-no single one of them is the price of a year. When the question names one component, or \
-names none, state every component the passages supply — membership, the assessment fee for \
-the farm's turnover band, the administrator's travel, the visit's catering, and the seal \
-licence — and say plainly what the passages leave out or leave undetermined: travel and \
-catering depend on the farm and the visit, and the licence applies only once a farm is \
-certified and labels produce. Never present one component as the price of the whole, and \
-never add the amounts into a total the passages do not state.
+#:
+#: **`d78-2`, the same day: the owner read the first fix and it was still wrong in two ways.**
+#: The OPP's R500 is what the *group* pays SAOSO annually, secured **from** the members' fees —
+#: not a second charge to a farmer — and the first rule listed it inside "the yearly cost of
+#: membership" anyway. And a farm cannot be certified without a visit, so the assessment fee is
+#: unavoidable, which the first rule never said; worse, it forbade *every* total, including the
+#: membership-plus-lowest-band floor the public page already publishes (`FIRST_YEAR_FROM_CENTS`,
+#: "a floor, not a total"). The three parts are those two corrections plus the floor, and the
+#: floor is the **only** arithmetic a cost answer may do (D79).
+COST_QUESTION_RULE = """Cost questions. These documents set out several separate amounts, and no single one of them is the price of a year — so every cost answer has all three of these, in this order, **even when the question names only one component**:
+a. **Whose amount it is.** Some amounts are what a member pays; some are what the group pays on its members' behalf out of the fees it collects. Say which is which, and never present the group's obligation as an extra charge to the member.
+b. **The unavoidable part.** A farm must be assessed to be certified, so the assessment fee applies to every farm entering or renewing certification. The membership fee alone is not the cost of being certified: name the assessment fee and the turnover band that sets it.
+c. **The conditional part.** The administrator's travel and the visit's catering depend on the farm and the visit, and the seal licence applies only once a farm is certified and labels produce.
+If the passages give the bands, you may state one floor and no other total: the membership fee plus one band you name, called a floor, with what it leaves out named. Never present one component as the price of the whole.
 """
 
 #: Gemini's structured-output schema (SPEC Â§13). `sub_ref` is optional because most
