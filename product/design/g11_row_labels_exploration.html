@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<!-- EXPLORATION ARTIFACT (not a production template) | Outeniqua PGS — G11: a table row's labels
+     Companion to product/backlog/In Progress/CHAT_ANSWER_COVERAGE_PRD.md G11.
+     Self-contained: no CDN, no build step, no external requests. Answers autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — How a printed column header reaches a row's quotable text (G11)</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --stop:            #8c3a32;
+    --stop-soft:       #f6e7e4;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 160px; }
+
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff; padding: 44px 20px 38px; margin-bottom: 28px;
+  }
+  header.hero .inner { max-width: 940px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 10px; font-size: 30px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero p { margin: 0; max-width: 64ch; opacity: .92; font-size: 15px; }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .85;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px;
+  }
+
+  .intro {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 22px 24px; box-shadow: var(--shadow); margin-bottom: 32px;
+  }
+  .intro h2 { margin: 0 0 8px; font-size: 17px; }
+  .intro p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); }
+  .intro ol { margin: 10px 0 0; padding-left: 20px; font-size: 14.5px; color: var(--muted); }
+  .intro li { margin-bottom: 5px; }
+
+  .section-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 40px 0 14px; }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14px; color: var(--muted); margin: -6px 0 16px; max-width: 70ch; }
+
+  .card {
+    background: var(--surface); border-radius: var(--radius-xl);
+    padding: 20px 22px 22px; box-shadow: var(--shadow); margin-bottom: 14px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 16.5px; line-height: 1.35; }
+  .card p { margin: 0 0 10px; font-size: 14.5px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card h4 { margin: 16px 0 6px; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .split { grid-template-columns: 1fr; } }
+
+  .for, .against {
+    border-radius: var(--radius-lg); padding: 12px 14px; font-size: 14px;
+  }
+  .for { background: var(--accent-soft); }
+  .against { background: var(--warn-soft); }
+  .for .label, .against .label {
+    display: block; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 6px;
+  }
+  .for .label { color: var(--accent); }
+  .against .label { color: var(--warn); }
+  .for ul, .against ul { margin: 0; padding-left: 18px; }
+  .for li, .against li { margin-bottom: 5px; }
+
+  code, .mono { font-family: var(--mono); font-size: 12.5px; }
+  .path { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  pre {
+    margin: 10px 0; padding: 12px 14px; background: var(--surface-low);
+    border-radius: var(--radius-lg); overflow-x: auto;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
+  }
+  pre .ok { color: var(--accent); font-weight: 600; }
+  pre .bad { color: var(--stop); font-weight: 600; }
+  pre .dim { color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 4px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px; background: var(--surface-high); color: var(--text);
+  }
+  .pill.yes { background: var(--accent-soft); color: var(--accent); }
+  .pill.no { background: var(--stop-soft); color: var(--stop); }
+  .pill.mid { background: var(--warn-soft); color: var(--warn); }
+
+  /* pipeline */
+  .pipe { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; margin: 14px 0 6px; }
+  .step {
+    flex: 1 1 150px; background: var(--surface-low); border-radius: var(--radius-lg);
+    padding: 10px 12px; font-size: 13px; position: relative;
+  }
+  .step b { display: block; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .step.bad { background: var(--stop-soft); }
+  .step.bad b { color: var(--stop); }
+  .step .arrow { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+  .legend { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .legend .k { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: middle; margin-right: 5px; }
+
+  .rec {
+    margin: 14px 0 0; background: var(--surface-low);
+    border-radius: var(--radius-lg); padding: 14px 16px;
+  }
+  .rec .label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--accent); display: block; margin-bottom: 6px;
+  }
+  .rec p { margin: 0 0 8px; font-size: 14.5px; }
+  .rec p:last-child { margin-bottom: 0; }
+
+  .opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .opt {
+    cursor: pointer; font-size: 13.5px; font-weight: 550; padding: 8px 15px;
+    border-radius: 999px; background: var(--surface-low); color: var(--muted);
+    border: 1px solid transparent; user-select: none; transition: background .12s, color .12s;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt:has(input:checked) { background: var(--accent); color: #fff; }
+  .opt.neg:has(input:checked) { background: var(--warn); color: #fff; }
+
+  textarea {
+    width: 100%; margin-top: 14px; min-height: 88px; resize: vertical;
+    font-family: var(--font); font-size: 15px; line-height: 1.5; color: var(--text);
+    background: var(--surface-low); border: 1px solid transparent;
+    border-radius: var(--radius-lg); padding: 12px 14px;
+  }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  button {
+    font-family: var(--font); font-size: 13.5px; font-weight: 600; cursor: pointer;
+    border-radius: 10px; padding: 8px 14px; border: 1px solid transparent;
+    background: var(--surface-low); color: var(--text); transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+  button.tiny { font-size: 12.5px; padding: 6px 11px; }
+  .card-foot { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.93); backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky); padding: 11px 20px;
+  }
+  .bar .inner { max-width: 940px; margin: 0 auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .progress { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .bar .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .bar .saved.show { opacity: 1; }
+
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0;
+    width: min(820px, 92vw); box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 340px; max-height: 52vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high);
+  }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, .card-foot, dialog, .intro { display: none; }
+    .card, .intro { box-shadow: none; break-inside: avoid; }
+    .wrap { padding-bottom: 0; }
+  }
+  @media (max-width: 560px) {
+    header.hero h1 { font-size: 23px; }
+    .card { padding: 17px 16px 18px; }
+    .wrap { padding: 0 14px 170px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS Digital Platform &middot; Decision exploration</p>
+    <h1>How does a printed column header reach a row’s quotable text?</h1>
+    <p>The assistant can now <em>find</em> the OPP’s six turnover bands. It still cannot <em>say</em> R1,500,
+       because a row’s chunk text is three bare cells and the column labels live outside it.
+       Four ways out, and one decision.</p>
+    <div class="meta">
+      <span>PRD <code>CHAT_ANSWER_COVERAGE_PRD.md</code> G11</span>
+      <span>Spec <code>§18.3</code> D73, D69, D70.1</span>
+      <span>2026-11-02</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>How to read this</h2>
+    <p>This is a <b>decision document</b>, not a proposal and not a design. It exists to get one answer
+       out of you: <b>which mechanism puts a printed column header where a quote can reach it?</b>
+       Everything that could be checked was run; anything inferred says so.</p>
+    <ol>
+      <li>Part 1 is the inventory — what the three table storages actually produce today, measured.</li>
+      <li>Part 2 is the asymmetry that makes this hard: <b>finding a row and quoting a row are two
+          different mechanisms</b>, and today both fail, for unrelated reasons.</li>
+      <li>Part 3 gives four options, each with its strongest case.</li>
+      <li>Part 5 records where the principles disagree, including the one that says my preferred
+          option is wrong.</li>
+      <li>Part 7 is one recommendation and what would change it. Part 8 is the control.</li>
+    </ol>
+    <p style="margin-top:10px"><b>Beneath the decision there is an open measurement</b> you flagged:
+       applying D73’s rendition to the <em>prose</em> rows (Appendix 2) appeared to cost three suite
+       questions their answers, and the revert is not yet justified by a clean experiment. It is
+       written up in <a href="#prose">Part 1.4</a> with the numbers, and it is <em>not</em> part of
+       the four options — it is a separate thing to settle.</p>
+  </div>
+
+  <!-- ================= PART 1 ================= -->
+  <div class="section-head"><h2>Part 1 — What is actually true</h2><span class="rule"></span></div>
+  <p class="section-note">Measured on the dev corpus, 401 chunks, 2026-11-01/02. Commands and file
+     references are given so a reader can re-run them.</p>
+
+  <div class="card">
+    <h3>1.1 Three storages, three shapes of “row”</h3>
+    <p>Every reviewed table in the corpus ends up as ordinary <code>DocumentChunk</code>s, one per row.
+       What a row’s <code>text</code> contains differs by storage, and that is the whole problem:</p>
+    <table>
+      <thead><tr><th>Storage</th><th>Rows</th><th>What <code>text</code> holds</th><th>Self-describing?</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Appendix 2 &amp; 6a — <code>TABLE_ROWS</code> literals<br><span class="path">knowledge/tables.py:87</span></td>
+          <td class="num">30</td>
+          <td>substance + condition, both prose</td>
+          <td><span class="pill yes">yes</span> — a cell is a sentence</td>
+        </tr>
+        <tr>
+          <td>Certification landscape — artefact rows<br><span class="path">knowledge/corpus/landscape.md</span></td>
+          <td class="num">8</td>
+          <td>cells, each carrying its own printed label inside the cell</td>
+          <td><span class="pill yes">yes</span> — the paper labels every cell</td>
+        </tr>
+        <tr>
+          <td>OPP §2.3 — artefact rows<br><span class="path">knowledge/corpus/opp.md:55</span></td>
+          <td class="num">6</td>
+          <td><code>Below R 250,000\n1,500\n900</code></td>
+          <td><span class="pill no">no</span> — three numbers, no labels</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><b>Only 6 of 44 rows are affected.</b> That is why this is a small decision, and why it is worth
+       making properly rather than papering over.</p>
+  </div>
+
+  <div class="card">
+    <h3>1.2 What each surface sees today</h3>
+    <table>
+      <thead><tr><th>Surface</th><th>Sees</th><th>Can a reader get R1,500?</th></tr></thead>
+      <tbody>
+        <tr><td>Reader grid, <code>/documents/opp/read/?section=ii</code></td><td>the artefact’s
+            <code>cols:</code> as &lt;th&gt;, then each row’s cells</td><td><span class="pill yes">yes</span> — verified from the HTML</td></tr>
+        <tr><td>Public page, <code>/costs/</code></td><td><code>FEE_BANDS</code> constants + the
+            <b>R1&nbsp;600</b> floor sentence</td><td><span class="pill yes">yes</span></td></tr>
+        <tr><td>Assistant, <code>/ask/</code></td><td>chunk <code>text</code> only — <code>Below R 250,000 / 1,500 / 900</code></td><td><span class="pill no">no</span> — “the specific scale is not provided”</td></tr>
+      </tbody>
+    </table>
+    <p>So the site and the reader already answer the owner’s question. <b>The assistant is the only
+       surface that cannot</b> — and it is the surface that was asked.</p>
+  </div>
+
+  <div class="card">
+    <h3>1.3 The two mechanisms that both fail</h3>
+    <p>Measured separately, because they have different fixes:</p>
+    <div class="pipe">
+      <div class="step"><b>Selection</b>retrieval must put the row in the top 8
+        <span class="arrow">-&gt;</span></div>
+      <div class="step bad"><b>Today</b>the row is <i>vector-only</i> and ranks below the fused head;
+        <code>SEMANTIC_SEATS</code> is spent on chunks the lexical arm already ranked
+        <span class="arrow">-&gt;</span></div>
+      <div class="step"><b>Quotability</b>the quote must be a substring of <code>text</code>
+        <span class="arrow">-&gt;</span></div>
+      <div class="step bad"><b>Today</b>the labels are not in <code>text</code>; a prompt label line
+        is unquotable, and the audit refuses the quote</div>
+    </div>
+    <p class="legend"><span class="k" style="background:var(--surface-low)"></span>working mechanism
+       &nbsp; <span class="k" style="background:var(--stop-soft)"></span>measured failure</p>
+    <p style="margin-top:12px"><b>Fixing one is not enough, and that is the asymmetry this decision
+       turns on.</b> A seat that finds the row still hands the model three unlabelled numbers; a
+       header in the text that the model cannot retrieve changes nothing. Each option below is
+       therefore judged on <b>both</b>.</p>
+    <h4>Evidence — selection</h4>
+<pre><span class="dim">$ python - &gt; default_retrieval("what is the yearly cost of membership", limit=40)</span>
+ 1. §2.3  <span class="dim">notes chunk</span>        lex=1            <span class="dim">0.0164</span>
+ …
+ 7. §2.3  <span class="dim">lead-in</span>             lex=8  vec=3     <span class="dim">0.0149</span>
+ 8. §2.1  <span class="dim">membership</span>            lex=11 vec=2     <span class="dim">0.0147</span>
+<span class="bad">15. §2.3  R 500,001 – R 1,000,000 / 3,000 / 2,500   vec=4   &lt;-- the bands live here</span>
+<span class="dim">FUSED_CANDIDATES = 20   SEMANTIC_SEATS = 3   (knowledge/services.py:66,76)</span></pre>
+    <p>The bands rank <b>4th–13th in the vector arm</b> and never reach the top eight. The alias arm
+       (<code>cost -&gt; fee</code>, G3’s fix) then truncates the tail at
+       <span class="path">knowledge/services.py:660</span>, so a resumed seat is thrown away.</p>
+    <h4>Evidence — quotability</h4>
+<pre><span class="dim">chunk text:</span>   Below R 250,000
+               1,500
+               900
+<span class="dim">what the model is told (D73 rendition, stored):</span>
+Annual farm turnover (gross sales): Below R 250,000 · Initial certification fee (R): 1,500 · …
+<span class="dim">what the model did when that line was put in the prompt:</span>
+  ANSWER: … a farmer with turnover between R 500,001 and R 1,000,000 pays a renewal fee of R 2,500
+  <span class="bad">AUDIT: REFUSED   ! §2.3: the quote is not in the cited chunk</span>
+<span class="dim">— it read the labels correctly and then quoted them, which the audit must refuse.</span></pre>
+  </div>
+
+  <div class="card" id="prose">
+    <h3>1.4 The open measurement you flagged: the prose rows</h3>
+    <p>D73’s rendition was first applied to <b>all</b> rows. After re-ingesting everything, the probe
+       suite went <b>9 of 9 grounded → 6 of 9</b>: horse manure, cardboard and ducks all refused. I
+       reverted the rendition for the prose literals on that basis. <b>That revert is not yet
+       justified</b>, and here is why, measured:</p>
+    <table>
+      <thead><tr><th>Question</th><th>Best row, <code>text</code></th><th>Best row, rendition</th></tr></thead>
+      <tbody>
+        <tr><td>horse manure</td><td class="num">0.665</td><td class="num">0.617</td></tr>
+        <tr><td>cardboard</td><td class="num">0.619</td><td class="num">0.574</td></tr>
+        <tr><td>straw mulch</td><td class="num">0.690</td><td class="num">0.621</td></tr>
+        <tr><td>borax</td><td class="num">0.617</td><td class="num">0.616</td></tr>
+      </tbody>
+    </table>
+    <p>Absolute similarity drops slightly every time — <em>but absolute similarity is not what
+       retrieval ranks on.</em> For the manure question the <b>top row changes</b>:</p>
+<pre>text       best = <span class="bad">Source separated human excrement</span>   <span class="dim">(0.665) — wrong row</span>
+rendition  best = <span class="ok">Farmyard manure, slurry and urine</span>   <span class="dim">(0.617) — right row</span></pre>
+    <p>And the suite result that caused the revert was <b>one run per question</b>, on a generator that
+       is measurably stochastic: with the revert in place, <b>ducks refuses about one run in two</b>
+       (<code>sub_ref 'a' does not exist in the chunk</code> — the pre-existing G1 class), and manure
+       and cardboard are grounded 2 of 2. So at least one of the three failures was noise, and the
+       other two are unexplained rather than disproved.</p>
+    <div class="rec">
+      <span class="label">What would settle it</span>
+      <p>Apply the rendition to the prose rows again, re-ingest SAOSO once, and run each of the four
+         affected questions <b>five times in each configuration</b>, recording the failure class
+         (<code>NO_RETRIEVAL</code> / <code>CITATION_AUDIT</code> / grounded) — not just the verdict.
+         About 40 model calls. <b>This is not one of the four options below</b>; it is a measurement to
+         run before the next corpus slice, whichever option you pick.</p>
+      <p><b>Interim position:</b> leave the revert in place (it is what shipped), and treat
+         “the rendition helps numeric rows, unknown for prose rows” as the true statement. It matters
+         for option A, whose whole mechanism is a rendition — so <b>if A wins, run this experiment
+         first.</b></p>
+    </div>
+  </div>
+
+  <!-- ================= PART 2 ================= -->
+  <div class="section-head"><h2>Part 2 — The shape of the problem</h2><span class="rule"></span></div>
+  <p class="section-note">Two constraints pull in opposite directions, and both are already decisions
+     in this repo.</p>
+
+  <div class="card">
+    <h3>2.1 The quote must be the paper’s characters (D69), and the vector must not be (D73)</h3>
+    <p>Two decisions already made, and they are the walls of this room:</p>
+    <table>
+      <thead><tr><th>Decision</th><th>Says</th><th>Consequence here</th></tr></thead>
+      <tbody>
+        <tr><td><b>D69</b></td><td>the corpus is the document’s characters; nothing is substituted or added</td>
+            <td>a column label the paper prints once cannot simply be pasted into every row’s text… unless it is the paper’s own words</td></tr>
+        <tr><td><b>D73</b></td><td>quote from <code>text</code>, embed a <code>column: value</code> rendition</td>
+            <td>this separates “findable” from “quotable” on purpose — and only the quotable half reaches a citation</td></tr>
+      </tbody>
+    </table>
+    <p>D73 solved <em>finding</em> and left <em>quoting</em> alone, which was right when rows were prose
+       (Appendix 2) and became a gap the day a row was three numbers.</p>
+  </div>
+
+  <div class="card">
+    <h3>2.2 Precedent already in the corpus: Appendix 2 restores printed headers from reviewed data</h3>
+    <p>D70.1 and <code>knowledge/tables.py</code> already carry the printed part headings
+       (<code>I. PLANT AND ANIMAL ORIGIN</code>) and the column headers for the <b>reader’s</b> shape,
+       restored from reviewed data rather than recovered from text. Nothing there is a quote.</p>
+    <p><b>The distinction that matters:</b> Appendix 2’s restoration is <b>display-only</b> (D70.1 says
+       so explicitly). Option A below is the first time the idea is proposed for <b>chunk text</b>, which
+       is citable. That is a real step, not an obvious extension.</p>
+  </div>
+
+  <!-- ================= PART 3 ================= -->
+  <div class="section-head"><h2>Part 3 — The options</h2><span class="rule"></span></div>
+  <p class="section-note">Four whole answers, each of which must solve both mechanisms. They are not
+     exclusive in principle — A and D could both run — but they are exclusive <em>as the answer</em>.</p>
+
+  <div class="card">
+    <h3>A. The printed header line becomes part of each row’s chunk text</h3>
+<pre>Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)
+Below R 250,000
+1,500
+900</pre>
+    <p>Plus the selection fix: reserve the semantic seat properly (or the rows, now having
+       <code>fee</code> and <code>certification</code> in their <code>search_vector</code>, may rank
+       lexically where they did not).</p>
+    <p class="legend">Diagram: <b>artefact</b> — <code>cols:</code> + cells → <b>chunk text</b> =
+       header line + cells → <b>embedding</b> = text (or the rendition, unchanged) → <b>quote</b> =
+       a substring of the paper’s own words, repeated per row.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul>
+          <li>Every word in the quote is a word the paper prints. Nothing is invented.</li>
+          <li>The model reads it correctly without help — the failure in §1.3 disappears.</li>
+          <li>The reader is untouched: the grid renders cells, not chunk text.</li>
+          <li>No new surface, no new claim class, no migration.</li>
+          <li>Measured upside: with the header, the <b>lowest band ranks 2nd</b> in the vector arm for
+              “what is the yearly cost of membership” (was 6th).</li>
+        </ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul>
+          <li>The paper prints the header <b>once</b>; the corpus then prints it six times. A reader
+              viewing a single row’s passage sees a header above it that is not on that line of the page.</li>
+          <li>A quote may now span header + cells, so a citation can quote a line that is not
+              contiguous <em>on the page</em> — the audit compares against the chunk, so it passes, but
+              D69’s “the corpus is the characters” loosens.</li>
+          <li>Only 6 rows need it, so it is a rule built for the smallest case in the corpus.</li>
+          <li>Chunk text changes ⇒ re-ingest two documents; two tests pin the current text.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>B. One chunk per table section for chat; the grid stays a reader shape</h3>
+    <p>§2.3 becomes one chunk — the whole printed table, header and six bands in printed order — the
+       way it was before P4. The reader keeps the grid, built from the artefact alone rather than by
+       aligning row chunks to passages.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul>
+          <li>The passage <em>is</em> a contiguous slice of the page, header included — the strictest
+              reading of D69.</li>
+          <li>The model gets the whole scale at once, so the floor is one addition away.</li>
+          <li>One chunk instead of seven: fewer seats spent, better retrieval odds for a generic question.</li>
+        </ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul>
+          <li><b>Prerequisite:</b> the reader’s grid currently needs one passage per row
+              (<code>align_artefact_grid</code>, <span class="path">core/services/_documents.py:640</span>)
+              and falls back to prose when it cannot align. B means rebuilding that to trust the
+              artefact alone — a P4-sized change, not a row-sized one.</li>
+          <li>Citations lose row granularity: “which band?” becomes “the table”.</li>
+          <li>A 7-row chunk is 200+ tokens of numbers — a weak retrieval target for a question that
+              names one band.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>C. Leave the bands to the pages that already publish them</h3>
+    <p>The assistant keeps saying what it says now — the assessment fee applies to every farm entering
+       or renewing, set by turnover, “the specific scale is not provided” — and the answer points at
+       <code>/costs/</code> and the reader, which both give R1,500 and the R1&nbsp;600 floor.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul>
+          <li>Zero risk, zero change, and honest: the model really does not have the numbers.</li>
+          <li>The pages that do publish the numbers are reviewed data with citations (§2.1/§2.3).</li>
+          <li>No claim-adjacent code in the answer path.</li>
+        </ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul>
+          <li>The owner asked the assistant and got “not provided”. A pointer is not an answer.</li>
+          <li>It is the third surface disagreeing with the other two, which is exactly what G10 was
+              opened to stop.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>D. A reviewed fee panel beside the answer, from the data the page already uses</h3>
+    <p>The assistant stops trying to read the table for amounts. When the question is a cost question,
+       the answer carries a small panel built in code from <code>FEE_BANDS</code> and
+       <code>MEMBERSHIP_FARMER_CENTS</code> — the same reviewed constants as <code>/costs/</code> — with
+       the floor sentence and its exclusions, each citing §2.1/§2.3 as text.</p>
+    <div class="split">
+      <div class="for"><span class="label">Strongest case</span>
+        <ul>
+          <li>The floor is <b>guaranteed</b>, exactly, with no model arithmetic and no retrieval luck.</li>
+          <li>The site and the assistant cannot disagree, because they read one constant.</li>
+          <li>It reuses a reviewed data set that already exists and is already cited.</li>
+        </ul>
+      </div>
+      <div class="against"><span class="label">Strongest case against</span>
+        <ul>
+          <li><b>It is a new claim class:</b> a sentence in the answer that is not grounded in a
+              retrieved passage but in a Python constant. The whole feature is built on “every
+              sentence is traceable to the corpus”.</li>
+          <li>Two sources of truth for the fees (constants and corpus) that must be kept equal by a
+              test — and the corpus already holds the same numbers.</li>
+          <li>It answers cost questions and leaves every other numeric table unreadable; the
+              mechanism does not generalise.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PART 4 ================= -->
+  <div class="section-head"><h2>Part 4 — What the principles say, including where they disagree</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Principle</th><th>What it says</th><th>Which option</th><th>Does it hold here?</th></tr></thead>
+      <tbody>
+        <tr><td>D69 — the corpus is the document’s characters</td>
+            <td>never add text the paper does not print</td><td>A (and B)</td>
+            <td><span class="pill mid">partly</span> A repeats a line the paper prints once; B keeps it once</td></tr>
+        <tr><td>D73 — quote from <code>text</code>, embed a rendition</td>
+            <td>separate what is found from what is quoted</td><td>A, C</td>
+            <td><span class="pill yes">yes</span> — and A does not disturb it</td></tr>
+        <tr><td>D70.1 — printed headings are restored from reviewed data</td>
+            <td>restoration is legitimate, and display-only</td><td>A</td>
+            <td><span class="pill mid">precedent</span> A extends it from display to citation, which is new</td></tr>
+        <tr><td><code>build_principles.md</code> §I — data encodes the standard</td>
+            <td>the fee schedule is data, not code</td><td>against D</td>
+            <td><span class="pill no">fails</span> — D puts the schedule in code as a second copy</td></tr>
+        <tr><td>Contextual retrieval (Gao et al. 2023; Anthropic 2024)</td>
+            <td>prepend context to the <em>embedded</em> text, never to the quoted text</td>
+            <td>D73, against A</td>
+            <td><span class="pill no">disagrees</span> with A — and this is the strongest argument against A</td></tr>
+        <tr><td>Retrieval for tabular QA (Herzig et al. 2020; TAPAS lineage)</td>
+            <td>a table is retrieved with its header or not usable</td><td>B, A</td>
+            <td><span class="pill yes">yes</span> — a headerless numeric row is not a readable unit</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><b>The disagreement is real and it is the crux.</b> The retrieval literature
+       says: put context on the vector, keep it out of the quoted text. That is precisely D73, and it is
+       precisely what fails here — because the *quote* is what a reader checks, and a quote of three
+       numbers is a riddle. A tabular-QA reading of the same problem says a cell without its column is
+       not a value. <b>I break the tie toward the reader</b>: this product’s claim is that every
+       sentence is checkable against the paper, and “1,500” alone is not.</p>
+  </div>
+
+  <!-- ================= PART 5 ================= -->
+  <div class="section-head"><h2>Part 5 — Comparison</h2><span class="rule"></span></div>
+  <p class="section-note">Unweighted, with reasons. Read it as a map, not a score.</p>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Criterion</th><th>A — header in the row</th><th>B — one chunk per table</th><th>C — leave it to the page</th><th>D — fee panel</th></tr></thead>
+      <tbody>
+        <tr><td>Quote is the paper’s own words</td><td><span class="pill yes">yes</span>, repeated</td><td><span class="pill yes">yes</span>, once</td><td><span class="pill yes">n/a</span></td><td><span class="pill no">no</span> — code constants</td></tr>
+        <tr><td>The reader’s grid survives</td><td><span class="pill yes">unchanged</span></td><td><span class="pill no">needs a rebuild</span></td><td><span class="pill yes">unchanged</span></td><td><span class="pill yes">unchanged</span></td></tr>
+        <tr><td>The assistant can state R1,500</td><td><span class="pill yes">yes</span> (with the seat fix)</td><td><span class="pill yes">yes</span></td><td><span class="pill no">no</span></td><td><span class="pill yes">yes</span>, deterministically</td></tr>
+        <tr><td>Beside the answer, from code rather than the corpus</td><td><span class="pill yes">no</span></td><td><span class="pill yes">no</span></td><td><span class="pill yes">no</span></td><td><span class="pill no">is exactly that</span></td></tr>
+        <tr><td>Effort</td><td>small — one function, 2 tests, re-ingest 2 docs</td><td>large — reader rebuild + chunking + tests</td><td><b>none</b></td><td>medium — new panel, template, citation rule, a test holding two sources equal</td></tr>
+        <tr><td>Generalises to other numeric tables</td><td><span class="pill yes">yes</span></td><td><span class="pill yes">yes</span></td><td><span class="pill no">no</span></td><td><span class="pill no">no</span></td></tr>
+        <tr><td>Risk to existing answers</td><td>low — text-only change to 6 rows</td><td>high — retrieval and reader both move</td><td>none</td><td>medium — a new answer surface on a live page</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================= PART 6 ================= -->
+  <div class="section-head"><h2>Part 6 — Recommendation</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <div class="rec">
+      <span class="label">Recommended</span>
+      <p><b>A — the printed header line becomes part of each row’s chunk text</b>, together with the
+         selection fix (reserve the semantic seat so the alias arm cannot throw it away).</p>
+      <p>It is the only option that makes the assistant able to quote the paper’s own words, keeps the
+         reader’s grid untouched, needs no new claim class, and generalises to the next numeric table.
+         The header is a line the OPP prints; repeating it per row is a transcription choice, not an
+         invention — and it is the smallest change that removes the failure.</p>
+      <p><b>Order of work:</b> (1) run the §1.4 experiment, because A depends on the rendition’s effect
+         being benign; (2) the header rule + 2 tests; (3) the seat reservation + a test that a
+         vector-only chunk reaches the budget; (4) re-ingest <code>opp</code>, re-probe the four cost
+         phrasings, and only then write the §18.3 row.</p>
+      <p><b>What would change my mind:</b> if the header repetition reads badly in a real citation
+         (a reader seeing a header above a row that does not print one) — then B, and accept the reader
+         rebuild. Or if the owner wants the floor guaranteed regardless of retrieval — then D <em>as
+         well</em>, accepting that a sentence of the answer is not corpus-grounded.</p>
+    </div>
+    <p style="margin-top:14px"><b>Not recommended, with reasons:</b> B is the most faithful to the paper
+       and the most expensive, and it would need P4’s reader join re-opened; C is honest and fails the
+       owner’s actual question; D is the only guaranteed floor and it breaks the grounding contract
+       for one sentence — a contract change, not an implementation detail.</p>
+  </div>
+
+  <!-- ================= PART 7 ================= -->
+  <div class="section-head"><h2>Part 7 — Your decision</h2><span class="rule"></span></div>
+
+  <div class="card" data-decision="g11">
+    <h3>G11 — How does the printed column header reach a row’s quotable text?</h3>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="g11" value="A"> A — header in the row</label>
+      <label class="opt"><input type="radio" name="g11" value="B"> B — one chunk per table</label>
+      <label class="opt"><input type="radio" name="g11" value="C"> C — leave it to the page</label>
+      <label class="opt"><input type="radio" name="g11" value="D"> D — reviewed fee panel</label>
+      <label class="opt neg"><input type="radio" name="g11" value="other"> Something else</label>
+    </div>
+    <textarea data-notes="g11" placeholder="Anything to add — especially if you want D as well as A, or if the header repetition is the thing that bothers you."></textarea>
+    <div class="card-foot">
+      <button class="tiny primary" data-accept="g11" data-value="A">Accept A (recommended)</button>
+      <button class="tiny" data-clear="g11">Clear this answer</button>
+    </div>
+  </div>
+
+  <div class="card" data-decision="prose">
+    <h3>The prose-row experiment (separate, but it gates A)</h3>
+    <p style="font-size:14px;color:var(--muted)">Should the five-run experiment in §1.4 be run before
+       the header work starts?</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="prose" value="first"> Yes — measure first</label>
+      <label class="opt"><input type="radio" name="prose" value="after"> No — run it after</label>
+      <label class="opt"><input type="radio" name="prose" value="drop"> Leave the revert as shipped</label>
+    </div>
+    <textarea data-notes="prose" placeholder="Your call, and why."></textarea>
+  </div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress"><b id="answered">0</b> of 2 answered</span>
+    <span class="spacer"></span>
+    <span class="saved" id="saved">Saved</span>
+    <button class="ghost tiny" id="reset">Reset</button>
+    <button class="primary" id="export">Export decision</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>Paste into <code>PGS_PLATFORM_SPEC.md §18.3</code></h3>
+    <p>This is the next free <code>D</code> row, filled with your answer. Copy it, or download it.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copy">Copy</button>
+    <button id="download">Download .md</button>
+    <button class="ghost" id="close">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var KEY = 'pgs.g11.exploration.v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    var el = document.getElementById('saved');
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 1200);
+  }
+
+  function count() {
+    var done = ['g11', 'prose'].filter(function (k) { return !!(state[k] && state[k].choice); }).length;
+    document.getElementById('answered').textContent = done;
+  }
+
+  document.querySelectorAll('input[type=radio]').forEach(function (input) {
+    var key = input.name;
+    if (state[key] && state[key].choice === input.value) input.checked = true;
+    input.addEventListener('change', function () {
+      state[key] = state[key] || {};
+      state[key].choice = input.value;
+      save(); count();
+    });
+  });
+
+  document.querySelectorAll('textarea[data-notes]').forEach(function (area) {
+    var key = area.getAttribute('data-notes');
+    if (state[key] && state[key].notes) area.value = state[key].notes;
+    area.addEventListener('input', function () {
+      state[key] = state[key] || {};
+      state[key].notes = area.value;
+      save();
+    });
+  });
+
+  document.querySelectorAll('button[data-accept]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-accept');
+      var value = btn.getAttribute('data-value');
+      var input = document.querySelector('input[name="' + key + '"][value="' + value + '"]');
+      if (input) { input.checked = true; input.dispatchEvent(new Event('change')); }
+    });
+  });
+
+  document.querySelectorAll('button[data-clear]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-clear');
+      state[key] = {};
+      document.querySelectorAll('input[name="' + key + '"]').forEach(function (i) { i.checked = false; });
+      var area = document.querySelector('textarea[data-notes="' + key + '"]');
+      if (area) area.value = '';
+      save(); count();
+    });
+  });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!confirm('Clear every answer on this page?')) return;
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    document.querySelectorAll('input[type=radio]').forEach(function (i) { i.checked = false; });
+    document.querySelectorAll('textarea').forEach(function (t) { if (!t.readOnly) t.value = ''; });
+    count();
+  });
+
+  var LABELS = { A: 'A — header in the row', B: 'B — one chunk per table', C: 'C — leave it to the page', D: 'D — reviewed fee panel', other: 'Something else' };
+  var PROSE = { first: 'measure first', after: 'after the work', drop: 'leave the revert as shipped' };
+
+  function markdown() {
+    var g = state.g11 || {};
+    var p = state.prose || {};
+    var answer = LABELS[g.choice] || '(not answered)';
+    var prose = PROSE[p.choice] || '(not answered)';
+    var notes = (g.notes || '').trim().replace(/\s*\n\s*/g, ' ');
+    var proseNotes = (p.notes || '').trim().replace(/\s*\n\s*/g, ' ');
+    return '| D79 | How does a printed column header reach a row’s quotable text, so the assistant can ' +
+      'answer with a figure the paper prints? | **' + answer + '**, decided 2026-11-02 (exploration ' +
+      '`product/design/g11_row_labels_exploration.html`; evidence `CHAT_ANSWER_COVERAGE_PRD.md` G11). ' +
+      'The measured asymmetry: a table row that is three bare cells is **vector-only** (it shares no ' +
+      'word with any question, so `SEMANTIC_SEATS` must place it) *and* **unquotable** (its labels ' +
+      'are not in `text`, and a label line in the prompt is a quote trap — measured: the model quoted ' +
+      'it and the audit refused, correctly). ' + (notes ? 'Owner’s note: ' + notes + ' ' : '') +
+      '**Prose-row experiment:** ' + prose + (proseNotes ? ' — ' + proseNotes : '') + '. |';
+  }
+
+  var dlg = document.getElementById('dlg');
+  document.getElementById('export').addEventListener('click', function () {
+    document.getElementById('out').value = markdown();
+    dlg.showModal();
+  });
+  document.getElementById('close').addEventListener('click', function () { dlg.close(); });
+  document.getElementById('copy').addEventListener('click', function () {
+    var out = document.getElementById('out');
+    out.select();
+    document.execCommand('copy');
+  });
+  document.getElementById('download').addEventListener('click', function () {
+    var blob = new Blob([markdown() + '\n'], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'd79-g11-row-labels.md';
+    a.click();
+  });
+
+  count();
+})();
+</script>
+</body>
+</html>

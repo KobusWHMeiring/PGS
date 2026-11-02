@@ -498,6 +498,11 @@ assessment fee named as applying to every farm entering or renewing.
   correctly. A label line in the prompt is a quote trap; the same lesson as D50-1's passage
   number.
 
+**Explored 2026-11-02 — `product/design/g11_row_labels_exploration.html`.** Four options with their
+evidence and costs, the recommendation (A: the printed header line becomes part of each row's chunk
+text, plus the reserved seat), and the literature that disagrees with A. **Undecided**; the page
+exports the §18.3 row when it is answered.
+
 **What the next slice has to decide, therefore, is one thing:** how a printed header reaches a
 row's *quotable* text. The candidates are (a) the printed column-header line becomes part of
 each row's chunk text — it is the paper's own words, printed once above the table, and Appendix
