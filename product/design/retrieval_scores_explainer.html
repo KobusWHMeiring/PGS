@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<!-- EXPLAINER (not a decision artifact, not a production template) | Outeniqua PGS
+     How to read the retrieval numbers this repo prints: cosine, rank, RRF score.
+     Measurements: 2026-11-02, dev corpus, 401 chunks, gemini-embedding-001.
+     Self-contained: no CDN, no build step, no external requests. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading the retrieval numbers — cosine, rank, RRF</title>
+<style>
+  :root {
+    --bg:#f4f6f2; --surface:#ffffff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+    --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+    --text:#1c2620; --muted:#66756b;
+    --warn:#8a5a1c; --warn-soft:#f7efe1;
+    --stop:#8c3a32; --stop-soft:#f6e7e4;
+    --radius-lg:14px; --radius-xl:20px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:900px; margin:0 auto; padding:0 20px 90px; }
+
+  header.hero { background:linear-gradient(160deg,var(--accent) 0%,#274936 100%); color:#fff; padding:44px 20px 38px; margin-bottom:28px; }
+  header.hero .inner { max-width:900px; margin:0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 10px; font-size:30px; line-height:1.2; letter-spacing:-.01em; }
+  header.hero p { margin:0; max-width:64ch; opacity:.92; font-size:15px; }
+  header.hero .meta { margin-top:18px; font-size:13px; opacity:.85; display:flex; flex-wrap:wrap; gap:8px 20px; }
+  header.hero .meta code { font-family:var(--mono); font-size:12px; background:rgba(255,255,255,.14); padding:2px 7px; border-radius:6px; }
+
+  .intro { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:30px; }
+  .intro h2 { margin:0 0 8px; font-size:17px; }
+  .intro p { margin:0 0 10px; font-size:14.5px; color:var(--muted); }
+  .intro p:last-child { margin-bottom:0; }
+
+  .section-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:40px 0 14px; }
+  .section-head h2 { margin:0; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+  .section-head .rule { flex:1; height:1px; background:var(--surface-high); min-width:40px; }
+  .section-note { font-size:14px; color:var(--muted); margin:-6px 0 16px; max-width:70ch; }
+
+  .card { background:var(--surface); border-radius:var(--radius-xl); padding:20px 22px 22px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .card h3 { margin:0 0 8px; font-size:16.5px; line-height:1.35; }
+  .card p { margin:0 0 10px; font-size:14.5px; }
+  .card p:last-child { margin-bottom:0; }
+  .card h4 { margin:18px 0 6px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+
+  code, .mono { font-family:var(--mono); font-size:12.5px; }
+  pre { margin:10px 0; padding:12px 14px; background:var(--surface-low); border-radius:var(--radius-lg); overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.55; }
+  pre .ok { color:var(--accent); font-weight:600; }
+  pre .bad { color:var(--stop); font-weight:600; }
+  pre .dim { color:var(--muted); }
+  pre .tag { color:var(--warn); font-weight:600; }
+
+  table { width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13.5px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--surface-high); vertical-align:top; }
+  th { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; font-family:var(--mono); }
+  tr:last-child td { border-bottom:none; }
+  tr.hit td { background:var(--accent-soft); }
+  tr.miss td { background:var(--stop-soft); }
+
+  .pill { display:inline-block; font-family:var(--mono); font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--surface-high); color:var(--text); }
+  .pill.yes { background:var(--accent-soft); color:var(--accent); }
+  .pill.no { background:var(--stop-soft); color:var(--stop); }
+  .pill.mid { background:var(--warn-soft); color:var(--warn); }
+
+  /* bar chart */
+  .chart { margin:14px 0 4px; }
+  .bar-row { display:grid; grid-template-columns:190px 1fr 56px; gap:10px; align-items:center; margin-bottom:6px; font-size:13px; }
+  .bar-row .label { color:var(--text); }
+  .bar-row .track { background:var(--surface-low); border-radius:6px; height:18px; position:relative; }
+  .bar-row .fill { position:absolute; left:0; top:0; bottom:0; background:var(--accent-line); border-radius:6px; }
+  .bar-row.zero .fill { background:transparent; border-left:2px solid var(--surface-high); width:0 !important; }
+  .bar-row .val { font-family:var(--mono); font-size:12px; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
+  .axis { font-size:11.5px; color:var(--muted); margin:2px 0 0 200px; }
+
+  .callout { border-left:3px solid var(--accent-line); background:var(--accent-soft); border-radius:0 var(--radius-lg) var(--radius-lg) 0; padding:12px 15px; margin:14px 0; font-size:14px; }
+  .callout.warn { border-left-color:var(--warn); background:var(--warn-soft); }
+  .callout.stop { border-left-color:var(--stop); background:var(--stop-soft); }
+  .callout b.k { display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:5px; }
+  .callout .k { color:var(--muted); }
+  .callout p { margin:0 0 8px; }
+  .callout p:last-child { margin-bottom:0; }
+
+  ol.rules { margin:10px 0 0; padding-left:22px; font-size:14.5px; }
+  ol.rules li { margin-bottom:8px; }
+
+  @media print {
+    body { background:#fff; }
+    header.hero { background:#fff; color:#000; padding:0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity:1; }
+    header.hero .meta code { background:none; padding:0; }
+    .card, .intro { box-shadow:none; break-inside:avoid; }
+    .wrap { padding-bottom:0; }
+  }
+  @media (max-width:560px) {
+    header.hero h1 { font-size:23px; }
+    .bar-row { grid-template-columns:120px 1fr 52px; }
+    .axis { margin-left:130px; }
+    .wrap { padding:0 14px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; Explainer</p>
+    <h1>Reading the retrieval numbers</h1>
+    <p>What <code>0.665</code>, <code>0.617</code>, <code>vec=4</code> and <code>0.0164</code> actually mean —
+       and the three ways these numbers are usually over-read.</p>
+    <div class="meta">
+      <span>Measured 2026-11-02</span>
+      <span>401-chunk dev corpus</span>
+      <span><code>gemini-embedding-001</code></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>The one-sentence version</h2>
+    <p><b>Cosine similarity tells you how close two meanings are, not how good an answer is</b> — and in
+       a real corpus the interesting rows sit within two or three hundredths of each other, so the
+       <em>order</em> is what retrieval uses and the <em>size of the gap</em> is what tells you whether
+       the order means anything at all.</p>
+    <p>Everything below is measured on our own corpus, so you can re-run it (commands in §7).</p>
+  </div>
+
+  <!-- 1 -->
+  <div class="section-head"><h2>1 — Three different numbers appear in one probe run</h2><span class="rule"></span></div>
+  <p class="section-note">They look alike and mean entirely different things. Most confusion about
+     retrieval comes from reading one as if it were another.</p>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Number</th><th>What it is</th><th>Range you will see</th><th>Comparable to…</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="mono">0.665</td>
+          <td><b>Cosine similarity</b> — the angle between two vectors. Measures meaning, not words.</td>
+          <td>0.3 – 0.9 for text; unrelated ≈ 0.4–0.5, related ≈ 0.6–0.8</td>
+          <td>Only other cosines <em>for the same question</em>. Never across questions, never across models.</td>
+        </tr>
+        <tr>
+          <td class="mono">vec=4 / lex=1</td>
+          <td><b>Rank</b> — this chunk was the 4th best in the vector arm, the 1st in the lexical arm.</td>
+          <td>1, 2, 3 … up to the candidate depth (20)</td>
+          <td>Other chunks in the same arm. Rank is what gets fused; the score is thrown away.</td>
+        </tr>
+        <tr>
+          <td class="mono">0.0164</td>
+          <td><b>RRF score</b> — <code>1/(60 + rank)</code>, summed over the arms that found it.</td>
+          <td>0.014 – 0.033 (two arms, k=60)</td>
+          <td>Other RRF scores in the same list. It is a rank aggregate, not a similarity.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px">A fourth number, <code>df</code> (document frequency), appears in the probe too:
+       how many chunks contain a word. <code>df: cost 9</code> means nine chunks mention “cost” — a word
+       that rare is nearly a proper noun, and the rare-term arm will search it alone.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="section-head"><h2>2 — What cosine actually measures</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <p>An embedding turns a piece of text into a list of ~3,000 numbers — a direction in a very
+       high-dimensional space. Texts that mean similar things point in similar directions. Cosine
+       similarity is the cosine of the angle between two of those arrows: <b>1.0 is the same
+       direction, 0 is perpendicular, −1 is opposite</b>. The length of the arrow is ignored, which is
+       the point — it makes the measure insensitive to how long the text is.</p>
+
+    <pre><span class="dim">"horse manure"        ●</span>
+                              <span class="dim">╲  angle small  →  cos ≈ 0.8  (related)</span>
+<span class="dim">"farmyard manure"     ●────────●  "borax for boron supplements"</span>
+                              <span class="dim">╱  angle large  →  cos ≈ 0.5  (unrelated)</span></pre>
+
+    <div class="callout warn">
+      <b class="k">The first over-reading</b>
+      <p><b>0.665 is not “66.5% relevant”.</b> There is no percentage hiding in it. A cosine of 0.66 is
+         unremarkable — most of a corpus sits between 0.4 and 0.7 for a typical question. The number only
+         becomes meaningful next to its competitors, which is the next section.</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="section-head"><h2>3 — Why 0.617 can beat 0.665</h2><span class="rule"></span></div>
+  <p class="section-note">This is the single most useful thing to understand, and it comes from our own
+     data. The question is <i>“Do i need to know where my horse manure comes from?”</i> and the corpus is
+     SAOSO Appendix 2, 30 rows.</p>
+
+  <div class="card">
+    <h4>The right answer is <span class="mono">Farmyard manure, slurry and urine</span></h4>
+    <p>Embed the 30 rows <b>as their own text</b> and rank by cosine:</p>
+    <table>
+      <thead><tr><th class="num">Rank</th><th class="num">cosine</th><th>Row</th><th></th></tr></thead>
+      <tbody>
+        <tr class="miss"><td class="num">1</td><td class="num">0.665</td><td>Source separated human excrement</td><td><span class="pill no">wrong</span></td></tr>
+        <tr class="hit"><td class="num">2</td><td class="num">0.643</td><td>Farmyard manure, slurry and urine</td><td><span class="pill yes">wanted</span></td></tr>
+        <tr><td class="num">3</td><td class="num">0.632</td><td>Guano</td><td></td></tr>
+        <tr><td class="num">4</td><td class="num">0.625</td><td>Compost made from ingredients listed in this table</td><td></td></tr>
+        <tr><td class="num">5</td><td class="num">0.622</td><td>Blood meal, meat meal, bone, bone meal</td><td></td></tr>
+      </tbody>
+    </table>
+    <p>Now embed the <b>same rows with their labels and heading prepended</b> (the D73 rendition —
+       <code>Appendix 2 — Farmyard manure… · substance: … · condition: …</code>):</p>
+    <table>
+      <thead><tr><th class="num">Rank</th><th class="num">cosine</th><th>Row</th><th></th></tr></thead>
+      <tbody>
+        <tr class="hit"><td class="num">1</td><td class="num">0.617</td><td>Farmyard manure, slurry and urine</td><td><span class="pill yes">wanted</span></td></tr>
+        <tr class="miss"><td class="num">2</td><td class="num">0.617</td><td>Source separated human excrement</td><td><span class="pill no">wrong</span></td></tr>
+        <tr><td class="num">3</td><td class="num">0.604</td><td>Compost made from ingredients listed in this table</td><td></td></tr>
+        <tr><td class="num">4</td><td class="num">0.590</td><td>Blood meal, meat meal, bone, bone meal</td><td></td></tr>
+        <tr><td class="num">5</td><td class="num">0.589</td><td>Biodegradable processing by-products, plant origin</td><td></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <b class="k">Read it twice</b>
+      <p>The top score <b>went down</b> (0.665 → 0.617) and the right row went <b>up</b> to first place.
+         So “higher cosine = better retrieval” is false. The rendition did not make the corpus more
+         similar to the question; it changed the <em>shape of the field</em>.</p>
+      <p><b>But look at the margin: 0.617 vs 0.617.</b> That is a tie. The “fix” is decided by the tie-break,
+         not by a real difference — which is exactly why a single run is not evidence. <b>I told you earlier
+         that the rendition moved the right row to the top; the numbers make that claim much weaker than I
+         made it sound, and this page is the correction.</b></p>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section-head"><h2>4 — The case that matters more: six bands within two hundredths</h2><span class="rule"></span></div>
+  <p class="section-note">The OPP’s turnover scale, question <i>“what is the yearly cost of membership”</i>.
+     Six rows, six cosines.</p>
+
+  <div class="card">
+    <h4>Embedded as bare cells — the current corpus</h4>
+    <div class="chart">
+      <div class="bar-row"><span class="label">R 500,001 – 1,000,000</span><span class="track"><span class="fill" style="width:100%"></span></span><span class="val">0.584</span></div>
+      <div class="bar-row"><span class="label">R 2,500,001 – 5,000,000</span><span class="track"><span class="fill" style="width:85%"></span></span><span class="val">0.581</span></div>
+      <div class="bar-row"><span class="label">R 250,001 – 500,000</span><span class="track"><span class="fill" style="width:85%"></span></span><span class="val">0.581</span></div>
+      <div class="bar-row"><span class="label">R 1,000,001 – 2,500,000</span><span class="track"><span class="fill" style="width:33%"></span></span><span class="val">0.572</span></div>
+      <div class="bar-row"><span class="label">Above R 5,000,000</span><span class="track"><span class="fill" style="width:9%"></span></span><span class="val">0.563</span></div>
+      <div class="bar-row"><span class="label">Below R 250,000</span><span class="track"><span class="fill" style="width:0%"></span></span><span class="val">0.561</span></div>
+    </div>
+    <p class="axis">bars scaled from 0.561 (shortest) to 0.584 (longest) — a total spread of <b>0.023</b></p>
+
+    <p style="margin-top:16px">Three things this picture tells you, and they are not the things it looks
+       like it tells you:</p>
+    <ol class="rules">
+      <li><b>The bands are interchangeable to the embedding.</b> A spread of 0.023 across six options is
+          noise. Ask a slightly different question and the order rearranges completely.</li>
+      <li><b>For this question the <em>lowest</em> band is last.</b> Nothing in the question says how big
+          the farm is, so similarity has no basis to prefer any band — it picks by accident.</li>
+      <li><b>With the header prepended</b> (ranked: Above R5m 0.596, Below R250k 0.586) the order flips.
+          Same corpus, same question, different labels. <b>A similarity ranking of a scale is not a
+          decision — it is a coin toss with a decimal point.</b></li>
+    </ol>
+
+    <div class="callout stop">
+      <b class="k">The consequence for the product</b>
+      <p>Which band applies is the <b>farmer’s declared turnover</b> (OPP §2.3 — “Annual turnover is
+          self-declared … subject to peer review”), not a retrieval decision. So the assistant must never
+          let a cosine choose a band. It can present the scale, and it can state the <em>lowest</em> band
+          as a floor because “lowest” is a fact about the table, not a similarity score.</p>
+      <p>That is why the G11 options are judged on <b>quoting</b> more than on ranking: ranking cannot be
+          trusted here, and no tuning will make it trustworthy.</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="section-head"><h2>5 — Why the fused score is <span class="mono">0.0164</span></h2><span class="rule"></span></div>
+
+  <div class="card">
+    <p>Retrieval here runs two arms — full-text search (lexical) and vector search (semantic) — and fuses
+       them by <b>rank</b>, not by score, using Reciprocal Rank Fusion:</p>
+    <pre>score(chunk) = Σ over arms that found it  1 / (k + rank)      k = 60
+             = 1 / (60 + 1) = <span class="ok">0.0164</span>   for a chunk ranked 1st in one arm
+             = 1/61 + 1/63  = <span class="ok">0.0323</span>   for a chunk ranked 1st and 3rd in both arms</pre>
+    <p>So the numbers are small because they are reciprocals, and the <b>k=60</b> is there to flatten the
+       difference between rank 1 and rank 2 (1/61 vs 1/62 — a 1.6% difference, i.e. almost none).</p>
+    <p><b>What that means in practice:</b> a chunk found by <em>both</em> arms scores about twice a chunk
+       found by one. That is the whole mechanism, and it has a side effect we measured: a chunk that
+       shares no word with the question (a table row of bare numbers) can only ever be found by the vector
+       arm, so it scores at most ~0.016 — while every chunk that matches lexically scores ~0.016 <em>and</em>
+       whatever the vector arm gives it. <b>It cannot win.</b> That is the “vector-only by construction”
+       problem in G11, expressed in arithmetic.</p>
+    <div class="callout">
+      <b class="k">Why we do not just use the cosine instead</b>
+      <p>Because lexical and vector scores are on different scales and are not comparable — that is the
+         reason RRF exists. But it means the fused list is dominated by <em>agreement between arms</em>,
+         which is a good prior for prose and a bad one for tables. Worth knowing before tuning anything.</p>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="section-head"><h2>6 — What these numbers cannot tell you</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Question</th><th>Can the numbers answer it?</th><th>What does</th></tr></thead>
+      <tbody>
+        <tr><td>Is the answer correct?</td><td><span class="pill no">no</span></td><td>the citation audit (quotes are substrings) and a human</td></tr>
+        <tr><td>Is the right passage in the top 8?</td><td><span class="pill yes">yes</span> — rank is exactly this</td><td><code>probe_chat.py</code>, <code>eval_retrieval</code></td></tr>
+        <tr><td>Is the right <em>unit</em> there — a row, not a section?</td><td><span class="pill mid">partly</span></td><td>you, reading the passage list</td></tr>
+        <tr><td>Would a different question give the same order?</td><td><span class="pill no">no</span></td><td>ask it. Several times.</td></tr>
+        <tr><td>Is a 0.02 difference meaningful?</td><td><span class="pill no">no</span></td><td>the spread across the whole corpus for that question</td></tr>
+        <tr><td>Can I set a threshold — “drop below 0.6”?</td><td><span class="pill no">no</span></td><td>nothing. Thresholds do not survive a new question, a new corpus or a new model.</td></tr>
+      </tbody>
+    </table>
+    <h4>And one run is not a measurement</h4>
+    <p>Our own probe suite is stochastic. The ducks question — <i>“if my ducks aren't fed organic food and I
+       make compost from their bedding, will I still pass?”</i> — was run twice today in the <b>same</b>
+       configuration: <span class="pill yes">grounded</span> then
+       <span class="pill no">refused</span>, the second refusing because the model cited
+       <code>sub_ref 'a'</code> from a chunk that does not store it. Any claim of the form “X made the
+       suite go from 9 to 6” needs five runs per question before it is a finding. (That is the open
+       experiment in G11 Part 1.4.)</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="section-head"><h2>7 — How to read a probe line, and how to re-run this</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <h4>One annotated line of real output</h4>
+    <pre>  7. §2.3   [lex8,vec3] 2.3 PGS assessment fee structure (initial certification and renewal) …
+  │   │        │  │       └─ the passage's first 90 characters
+  │   │        │  └─ 3rd best in the *vector* arm  → semantic match
+  │   │        └─ 8th best in the *lexical* arm  → shares a word with the question
+  │   └─ the citation locator (§2.3), not the document title
+  └─ position in the final budget (the top 8 the model is given)</pre>
+    <p><b>Read it as:</b> “the eighth-best lexical match and the third-best semantic match, landing seventh
+       overall.” A line with only <code>vec=</code> and no <code>lex=</code> is a chunk that shares no word
+       with the question — important, because those are the ones the fusion starves (§5).</p>
+
+    <h4>Re-run it</h4>
+    <pre><span class="dim"># what the product actually retrieves and answers</span>
+PYTHONIOENCODING=utf-8 python scripts/probe_chat.py "what is the yearly cost of membership"
+
+<span class="dim"># retrieval only, more budget, to see what is being cut off</span>
+PYTHONIOENCODING=utf-8 python scripts/probe_chat.py --chunks-only --limit 40 "…"
+
+<span class="dim"># the instrument that grades locators (does the set contain the right clause?)</span>
+python scripts/eval_retrieval.py
+
+<span class="dim"># a cosine table for any set of texts — ~15 lines, and it is what produced §3 and §4</span>
+python -m pytest knowledge/tests/test_retrieval.py -q</pre>
+    <p class="section-note" style="margin-top:8px">The Windows console needs
+       <code>PYTHONIOENCODING=utf-8</code> or the probe dies on a <code>●</code>
+       (<code>testing_hazards.md</code> §3.21).</p>
+  </div>
+
+  <!-- 8 -->
+  <div class="section-head"><h2>8 — The three questions to ask of any retrieval number</h2><span class="rule"></span></div>
+
+  <div class="card">
+    <ol class="rules">
+      <li><b>Selection:</b> did the passage that answers it land inside the budget (top 8)? That is a
+          <em>rank</em> question, and rank is the one number you can trust.</li>
+      <li><b>Granularity:</b> is the unit right — a row, a paragraph, a clause — or did retrieval hand the
+          model a whole table and hope? A large spread of cosines inside an undifferentiated block is the
+          signature of a granularity problem, not a scoring problem.</li>
+      <li><b>Grounding:</b> did the answer survive the audit, and if not, <em>which</em> failure class —
+          <code>NO_RETRIEVAL</code>, <code>CITATION_AUDIT</code>, <code>INSUFFICIENT_CONTEXT</code>? A
+          refusal tells you nothing until you know which one, and one run tells you nothing at all.</li>
+    </ol>
+    <div class="callout">
+      <b class="k">Rule of thumb</b>
+      <p>If two cosines differ by less than about <b>0.03</b>, treat them as tied and go and look at the
+         passages yourself. In a corpus this size that gap is the width of a rewording, not the width of a
+         distinction.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
