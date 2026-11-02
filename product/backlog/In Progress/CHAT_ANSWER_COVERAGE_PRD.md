@@ -517,6 +517,23 @@ plus a row identity on `Citation`, then the UI distinction that says *context, n
 that distinction cannot be made legible, E falls back to A, and the fallback is written down here
 in advance. P4's table becomes a chat feature when the first two slices land.
 
+**Slice 1 landed 2026-11-02 — the reserved seat.** It had two defects, both measured before being
+touched: the seats were filled from the **fused head**, and `search_terms` asked the fused arm for
+`limit` chunks, so a chunk only the vector arm found scored `1/(60+rank)` and could not reach a
+seat however well it ranked — the OPP's fee band (vector rank 4, in no lexical ranking) was
+unreachable; and a **heading** could take a seat, because the OPP's part heading *II. Membership
+fees, farm assessment fees, licensing fees* takes vector rank 1 for any fee question by naming
+every fee the document charges. The seats are now filled in the vector arm's own order, from a
+candidate-depth fetch, and a heading-only chunk cannot consume one. **Measured:** all six fee bands
+are retrievable and one is now in the eight passages the model receives — the first time any band
+has ever reached it, which is G10's remaining half; `curated-unannounced-visit` went from not-found
+to rank 3 (the seat's own case: a clause no lexical arm can reach). **Cost, recorded: R@8 unchanged
+at 0.812, MRR 0.387 → 0.385, and `curated-conversion-period` lost (rank 7 → not found)** — its
+answer arrived through the old fused-order seats. The full before/after pair, on one corpus, is
+`spike/RETRIEVAL_EVAL_SPIKE.md` §8b. **What slice 1 does not do:** it makes a row *retrievable*, not
+*quotable* — the model still receives `Below R 250,000 / 1,500 / 900` with no column meaning, so
+slices 2 and 3 are still what close the reader's answer.
+
 **Also measured, and worth keeping:** D73's rendition is for rows whose cells are **numbers**.
 Applying it to Appendix 2's reviewed literals — whose cells are already prose — took the probe
 suite from 9 of 9 grounded to **6 of 9** (horse manure, cardboard and ducks all refused), so

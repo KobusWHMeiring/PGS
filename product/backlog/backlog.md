@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-02 13:19
+> Generated: 2026-11-02 13:55
 
 ## Ready (up next)
 
@@ -92,13 +92,17 @@ the generated index's "To Do" section.
       the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
       and Appendix 7's interleaved chunks.
 - [ ] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
-      render the row's context from the artefact at cite time. Three slices, in order: (1) the
-      reserved semantic seat — the bands rank 4th–13th in the vector arm and never reach the top 8; (2)
-      the prompt shape plus a row identity on `Citation` (`artefact_grid_for` and
-      `align_artefact_grid` already resolve this path for the reader); (3) the *context, not
-      quotation* UI distinction — if it cannot be made legible, fall back to A. Mechanism:
-      `product/design/g11_option_e_explainer.html`; argument: `g11_row_labels_exploration.html`.
-      Unblocks the fee answer G10 opened.
+      render the row's context from the artefact at cite time. **Slice 1 landed 2026-11-02:** the
+      reserved seat is now filled in the vector arm's own order (it was filled from the fused head,
+      which was truncated to `limit`, so a vector-only chunk could never be seated) and a
+      heading-only chunk cannot consume one. Measured: the OPP's fee band is in the eight passages
+      for the first time, and `curated-unannounced-visit` went from not-found to rank 3; R@8
+      unchanged at 0.812, MRR 0.387 → 0.385, and `curated-conversion-period` lost (rank 7 → not
+      found) — `RETRIEVAL_EVAL_SPIKE.md` §8b. **Left:** (2) the prompt shape plus a row identity on
+      `Citation` (`artefact_grid_for` and `align_artefact_grid` already resolve this path for the
+      reader); (3) the *context, not quotation* UI distinction — if it cannot be made legible, fall
+      back to A. Mechanism: `product/design/g11_option_e_explainer.html`; argument:
+      `g11_row_labels_exploration.html`. Unblocks the fee answer G10 opened.
 
 ## Product, deferred from the aimed spec
 

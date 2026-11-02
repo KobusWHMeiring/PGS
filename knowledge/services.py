@@ -73,6 +73,9 @@ DEFAULT_LIMIT = 5
 #: vector arm contributed *nothing* whenever the lexical arm reached the limit — the
 #: hybrid retrieval the chatbot advertises was lexical in practice. Three seats is
 #: enough for the semantic arm's best clauses and leaves the rare-term arm five.
+#: The seats are filled in the *vector arm's own order* (`search_terms`), because a
+#: reservation filled in fused order is still the lexical arm choosing; and a heading
+#: cannot consume one (`is_heading_only`).
 SEMANTIC_SEATS = 3
 
 #: Words that name the *asking* rather than the subject: the verbs and furniture of an
@@ -430,6 +433,32 @@ def document_frequency(term: str, *, standard_set: StandardSet) -> int:
     )
 
 
+def is_heading_only(chunk: RetrievedChunk) -> bool:
+    """True when a chunk prints a heading and nothing under it.
+
+    In:  a retrieved chunk. Out: whether its text **is** its own heading and reads as a
+         heading rather than as a rule.
+
+    Measured 2026-11-02: the OPP's part heading *II. Membership fees, farm assessment
+    fees, licensing fees* is 57 characters with no body beneath it, and it takes the
+    semantic arm's **rank 1** for any fee question because its text names every fee the
+    document charges. A standard's section headings behave the same way. They are real
+    corpus text and stay retrievable; this predicate only keeps them out of the semantic
+    **seat**, which exists to bring a clause (`search_terms`).
+
+    A rule is a sentence and ends with terminal punctuation; a heading is a phrase and
+    does not. Text equality alone will not do: SAOSO stores many one-sentence clauses
+    whose `heading_path` leaf *is* the clause (`20.2.2. Using organic … is prohibited.`),
+    and 56 real rules would be disqualified without it. A heading that happens to end in
+    a full stop would consume one seat — the failure is a wasted seat, not a wrong answer.
+    """
+    body = " ".join(chunk.text.split())
+    leaf = " ".join(chunk.heading_path.split(">")[-1].split())
+    if not body or body.casefold() != leaf.casefold():
+        return False
+    return not body.endswith((".", "?", "!", ":"))
+
+
 def search_terms(
     terms: list[str],
     *,
@@ -481,7 +510,10 @@ def search_terms(
     out of the one clause that governs it. When every term is known, the rare-term arm
     still leads (that decision is separately measured and pinned), but only for
     `limit - SEMANTIC_SEATS` chunks: the semantic arm gets the rest, because otherwise a
-    full lexical result set leaves the vector arm contributing nothing at all.
+    full lexical result set leaves the vector arm contributing nothing at all. Those
+    seats are filled in the **semantic arm's own order** and never by a heading — see
+    `is_heading_only` and the note in the body, where the fee band that the old fused
+    order could not seat is the measurement.
 
     The hedge is also the offline path: with no embedding key the semantic arm returns
     nothing, and the two lexical chunks are still better than an empty result set.
@@ -593,10 +625,14 @@ def search_terms(
         # The rare word is a lexical key. The semantic query is the fallback below.
         use_vector=False,
     )
+    # Asked at **candidate depth**, not at `limit`: the seats below are filled from the
+    # semantic arm's own ranking, and `fused[:limit]` does not contain that ranking — a
+    # chunk only the vector arm found scores `1/(60+rank)` and sits below every chunk the
+    # lexical arm matched too (measured 2026-11-02, D79's slice 1).
     fallback = search(
         " OR ".join(cleaned),
         standard_set=standard_set,
-        limit=limit,
+        limit=candidates,
         candidates=candidates,
         provider=provider,
         vector_query=question or None,
@@ -611,12 +647,22 @@ def search_terms(
         if chunk.chunk_id not in seen:
             seen.add(chunk.chunk_id)
             merged.append(chunk)
+    # The seats belong to the semantic arm, so its **own** order fills them. Filling them
+    # in fused order let the lexical arm choose which semantic chunks got in, which is the
+    # thing the reservation exists to prevent: on "what is the yearly cost of membership"
+    # the OPP's fee band is the vector arm's 4th chunk and appears in no lexical ranking,
+    # so it could not take a seat however well it ranked. A heading is not what a seat is
+    # for (`is_heading_only`), so it does not consume one — the OPP's part heading takes
+    # vector rank 1 for any fee question by naming every fee the document charges.
     semantic_added = 0
-    for chunk in fallback.chunks:
-        if chunk.chunk_id in seen:
+    for candidate in sorted(
+        (chunk for chunk in fallback.chunks if chunk.vector_rank is not None),
+        key=lambda chunk: chunk.vector_rank,
+    ):
+        if candidate.chunk_id in seen or is_heading_only(candidate):
             continue
-        seen.add(chunk.chunk_id)
-        merged.append(chunk)
+        seen.add(candidate.chunk_id)
+        merged.append(candidate)
         semantic_added += 1
         if semantic_added >= SEMANTIC_SEATS:
             break

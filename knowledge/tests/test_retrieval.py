@@ -125,12 +125,12 @@ def vec(*head: float) -> list[float]:
     return list(head) + [0.0] * (768 - len(head))
 
 
-def make_chunk(document, *, ref, text, embedding=None, page=1):
+def make_chunk(document, *, ref, text, embedding=None, page=1, heading_path=None):
     return DocumentChunk.objects.create(
         document=document,
         section_ref=ref,
         text=text,
-        heading_path=ref,
+        heading_path=ref if heading_path is None else heading_path,
         page=page,
         embedding=embedding,
     )
@@ -476,6 +476,109 @@ def test_the_semantic_arm_is_not_crowded_out_by_a_full_lexical_limit(two_sets):
     ids = [chunk.chunk_id for chunk in result.chunks]
     assert len(ids) == 4
     assert semantic.pk in ids, "the lexical arm filled every seat and the vector arm was ignored"
+
+
+def test_a_seat_is_filled_from_the_semantic_arms_own_ranking(two_sets):
+    """The reservation exists for the vector arm, so the vector arm's order must fill it.
+
+    Measured 2026-11-02 on the dev corpus (*"what is the yearly cost of membership"*):
+    the OPP's fee-band row is the semantic arm's 4th chunk and appears in **no** lexical
+    ranking, so its fused score is a single `1/(60+4)` and every chunk the lexical arm
+    also matched outranks it. `search_terms` asked the fused arm for `limit` chunks, so
+    the band sat outside `fused[:limit]` — which was all the seat could see — and a
+    chunk the reservation was created for could not take a seat however well the vector
+    arm ranked it. Filling the seats in fused order is the same defect one step later:
+    the lexical arm, which the seat exists to bypass, still chooses which semantic
+    chunks get in.
+
+    This chunk is the semantic arm's best and is in no lexical ranking. It must be
+    seated; today it is unreachable.
+    """
+    first, _second, in_set, _out = two_sets
+    document = in_set.document
+    for index in range(4):
+        make_chunk(
+            document,
+            ref=f"S9.{index}",
+            text=f"alpha requirement number {index}",
+            embedding=vec(0.0, 1.0),
+        )
+    seat_worthy = make_chunk(
+        document,
+        ref="§2.3",
+        text="R 250,001 – R 500,000 / 2,500 / 2,000",
+        embedding=vec(0.0, 0.0, 1.0),
+    )
+
+    result = search_terms(
+        ["alpha"],
+        question="what does gamma require?",
+        standard_set=first,
+        provider=FakeProvider(),
+        limit=4,
+    )
+
+    ids = [chunk.chunk_id for chunk in result.chunks]
+    assert result.lexical_only is False, "this test would pass vacuously without the vector arm"
+    assert len(ids) == 4
+    assert seat_worthy.pk in ids, (
+        "the semantic arm's best chunk never reached a seat: "
+        f"{[chunk.section_ref for chunk in result.chunks]}"
+    )
+
+
+def test_a_heading_cannot_consume_a_semantic_seat(two_sets):
+    """A heading is not the clause a seat is reserved for.
+
+    Measured 2026-11-02: the OPP's part heading *II. Membership fees, farm assessment
+    fees, licensing fees* is 57 characters with no body under it, and it takes the
+    semantic arm's **rank 1** for any fee question because its text names every fee the
+    document charges. Section headings of a standard behave the same way. They are real
+    corpus text and stay retrievable — but a reserved seat exists to bring a clause, and
+    spending it on a phrase that states no rule is how the fourth-best clause misses.
+
+    Three passages and one heading, three seats: all three passages must be seated.
+    """
+    first, _second, in_set, _out = two_sets
+    document = in_set.document
+    for index in range(2):
+        make_chunk(
+            document,
+            ref=f"S9.{index}",
+            text=f"alpha requirement number {index}",
+            embedding=vec(0.0, 1.0),
+        )
+    heading = make_chunk(
+        document,
+        ref="§II",
+        text="II. Membership fees, farm assessment fees, licensing fees",
+        heading_path="II. Membership fees, farm assessment fees, licensing fees",
+        embedding=vec(0.0, 0.0, 1.0),
+    )
+    passages = [
+        make_chunk(
+            document,
+            ref=f"§2.{index}",
+            text=f"The fee for band {index} is payable on assessment.",
+            embedding=vec(0.0, 0.02 * index, 1.0),
+        )
+        for index in range(1, 4)
+    ]
+
+    result = search_terms(
+        ["alpha"],
+        question="what does gamma require?",
+        standard_set=first,
+        provider=FakeProvider(),
+        limit=4,
+    )
+
+    ids = [chunk.chunk_id for chunk in result.chunks]
+    assert len(ids) == 4
+    assert all(p.pk in ids for p in passages), (
+        "a heading consumed the seat the third clause needed: "
+        f"{[chunk.section_ref for chunk in result.chunks]}"
+    )
 
 
 def test_without_a_question_the_or_query_is_still_the_semantic_query(two_sets):

@@ -366,6 +366,62 @@ one. Quote the product's own depth (`k=8` here), and never compare a `--k 5` row
 | Adding the instrument changes user-facing behaviour | Not fired: no production module was touched. `knowledge/` gained a data file, `scripts/` two read-only modules, `tests/tools/` one test file |
 | The runner and the view disagree | Not fired: `bare` **is** `default_retrieval` (asserted by `test_the_bare_variant_is_the_product_call`), and a source test forbids the runner from calling `search_terms` directly |
 
+## 8b. S2 measured — the reserved seat, fixed 2026-11-02
+
+The seat had two defects, both measured before being touched:
+
+1. **It was filled from the fused head.** `search_terms` asked the fused arm for `limit`
+   chunks, so the reservation could only see `fused[:8]`. A chunk only the vector arm found scores
+   `1/(60+rank)`, which loses to every chunk the lexical arm matched too — the OPP's fee-band row
+   (vector rank 4, in no lexical ranking) ranked 15th fused and was **unreachable**. Filling the
+   seats in fused order is the same defect one step later: the lexical arm, which the seat exists
+   to bypass, still chose which semantic chunks got in.
+2. **A heading could take one.** The OPP's part heading *II. Membership fees, farm assessment fees,
+   licensing fees* is 57 characters with no body and takes vector rank 1 for any fee question,
+   because its text names every fee the document charges. 60 of 401 chunks are of this shape.
+
+Fix: the seats are filled in the **vector arm's own order**, from a candidate-depth fetch, and a
+heading-only chunk cannot consume one (`is_heading_only`).
+
+Provenance for the pair below — **one corpus, one run each way**, so the comparison is honest
+(the 8a table was measured on 385 chunks before P4; this one is 401):
+
+| | |
+|---|---|
+| Date | 2026-11-02 |
+| Corpus | **401 chunks** · `sha256:98ecc0133691` · saoso 338, opp 37, landscape 17, bpp 9 |
+| Similarity | `gemini-embedding-001`, 768 d, 0 unembedded |
+| Product budget | `CHAT_RETRIEVAL_LIMIT=8` |
+
+| `bare` | R@1 | R@3 | R@5 | R@8 | MRR | g0 anywhere | found by |
+|---|---|---|---|---|---|---|---|
+| before | 0.188 | **0.594** | 0.688 | **0.812** | 0.3873 | 1 | lexical 11, vector 7, both 8, none 6 |
+| after | 0.188 | 0.562 | **0.719** | **0.812** | 0.3849 | 2 | lexical 11, vector 8, both 7, none 6 |
+
+**What it bought, and what it cost.** Seven of thirty-five questions moved:
+
+- `curated-unannounced-visit` — **not found → rank 3**, by the vector arm's rank 1. A question the
+  product could not answer at all now has its clause; that is the seat doing its job.
+- `how much does membership cost` — the OPP's fee band is now **in the eight passages**. It is the
+  last passage, and it is the first time any band has ever reached the model (G10's remaining half).
+- `curated-conversion-period` — **rank 7 → not found.** The answer sat at fused rank 2 (`S4.2.3`)
+  and 4 (`S4.2.2`) and arrived through the old fused-order seats; the vector arm's own top three
+  are different chunks. This is the cost, and it is the shape S2 has to solve: a table's rows need
+  the *table*, and one row's similarity is not a ranking.
+- `escalated-horse-manure-short` 2 → 5, `design-cattle-per-hectare` 3 → 5,
+  `design-laying-hens-per-hectare` 3 → 2.
+
+**A variant was tried and rejected**, and its number is recorded so it is not re-proposed as an
+obvious improvement: filling the seats with vector-only chunks first ("the ones the lexical arms
+could not find") scored **R@8 0.750, R@5 0.625, MRR 0.355** — clearly worse, because those chunks
+displace ones both arms had ranked.
+
+**Not pinned by a test.** The seat's mechanics are (`knowledge/tests/test_retrieval.py`,
+`test_a_seat_is_filled_from_the_semantic_arms_own_ranking` and
+`test_a_heading_cannot_consume_a_semantic_seat`), but *these* numbers are not: §4 says a ranking
+metric must not gate the build. Re-measure with `python scripts/eval_retrieval.py` after any
+change to `search_terms`.
+
 ## 9. Definition of done
 
 **S1 — baseline (done 2026-10-30):**
