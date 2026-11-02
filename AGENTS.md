@@ -16,7 +16,7 @@ cuts are in `product/docs/context/CONTEXT_BUDGET.md`; today the tree is over bud
 
 | Purpose | File |
 |---------|------|
-| **Handover — START HERE block only** | `HANDOVER.md` (state; history is below it) |
+| **Handover — START HERE block only** | `HANDOVER.md` (138 lines of state; session history is `product/docs/handover/`) |
 | **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
 | Build rules — non-negotiable | `product/docs/context/build_principles.md` |
 | **Testing hazards — read before writing a test** | `product/docs/context/testing_hazards.md` |

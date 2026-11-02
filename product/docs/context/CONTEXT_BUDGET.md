@@ -9,7 +9,8 @@ wondering why a "quick" task needed half a day.
 
 ## 1. The measurement
 
-`AGENTS.md` says *read these first* and names six files. Their cost, today:
+`AGENTS.md` said *read these first* and named six files. Their cost **before the 2026-11-02 split**
+(the first row is fixed; the rest is the work still to do):
 
 | lines | KB | ≈ tokens | file |
 |---:|---:|---:|---|
@@ -19,7 +20,12 @@ wondering why a "quick" task needed half a day.
 | 1,067 | 172 | 49,000 | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
 | 424 | 25 | 7,000 | `product/backlog/In Progress/MVP0_PRD.md` |
 | 391 | 26 | 7,000 | `product/backlog/ready/MVP1A_PRD.md` |
-| | **509** | **≈ 144,000** | total |
+| | **509** | **≈ 144,000** | total before the split |
+
+After §4.1 the `HANDOVER.md` row is **101 lines / 13 KB / ≈4,000 tokens**, and the read-set total
+is **342 KB ≈ 95,000 tokens** — still too much, because the spec's decision table (172 KB) and
+`testing_hazards.md` (93 KB) are the next two items, and both are read by *searching* rather than
+linearly.
 
 A session that follows that instruction has spent its budget before running a test. This is not
 a style complaint: it is the reason sessions start by reading history instead of by reading
@@ -32,8 +38,8 @@ regenerate the context buffet". The instruction has been dead for as long as any
 
 Three different causes, and they need three different answers:
 
-1. **`HANDOVER.md` is a log, not a state.** 22 session sections; the *current state* is 72
-   lines. Every session appends; nothing is ever retired. It has grown monotonically and will
+1. **`HANDOVER.md` was a log, not a state** (fixed 2026-11-02, §4.1). 22 session sections; the
+   *current state* was 72 lines. Every session appends; nothing is ever retired. It has grown monotonically and will
    keep growing — the one file every session reads is the one file that never shrinks.
 2. **The spec's decision table is a research record.** §18.3 is 72 KB of the file's 172 KB:
    78 rows, the largest 3.7 KB (`D71`), and the pattern is that each new decision is argued in
@@ -70,7 +76,7 @@ Three different causes, and they need three different answers:
 
 ## 4. The four cuts
 
-### 4.1 `HANDOVER.md` becomes state; history moves to `product/docs/handover/`
+### 4.1 `HANDOVER.md` becomes state; history moves to `product/docs/handover/` — **DONE 2026-11-02**
 
 The top block (`START HERE` → repo state) is already the right shape — 72 lines: what landed,
 what is next, what not to do. Everything below it is a session narrative.
@@ -85,6 +91,19 @@ what is next, what not to do. Everything below it is a session narrative.
 
 Cost: one mechanical commit (22 moves + an index). Nothing is lost; `git log` still has it, and
 the archive is one hop away.
+
+**Done, and measured.** `HANDOVER.md` went **2,553 → 139 lines**; 22 sessions moved verbatim to
+`product/docs/handover/SESSION_<tag>_<date>_<slug>.md`. The move asserted that every moved section's
+bytes appear exactly once in the archive: **173,325 bytes in, 173,325 bytes out**. The file now
+holds the START HERE block, the repo state, and a one-line-per-session index; the rule from here is
+*state in `HANDOVER.md`, narrative in its own file*. `tests/tools/test_handover.py` holds the
+budget at 250 lines and checks every index link resolves.
+
+**Found while doing it:** several modules cite `HANDOVER.md §17`, `§1.7`, `§6.5` and `§6` —
+sections that have not existed for weeks, because the file was reorganised under them. They are
+harmless but wrong, and they are the clearest evidence that a growing log is not just expensive but
+unreliable. Fix them to name the archive file when you next touch those modules; do not do a
+sweep for their own sake.
 
 ### 4.2 A §18.3 row is a sentence and a link
 

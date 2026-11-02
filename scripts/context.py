@@ -62,25 +62,25 @@ READ, SEARCH = "read", "search"
 
 TASKS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "chat": (
-        ("HANDOVER.md", "the START HERE block only — 72 lines of state", SEARCH),
+        ("HANDOVER.md", "read it whole now — 101 lines of state; history is in product/docs/handover/", READ),
         ("product/backlog/In Progress/CHAT_ANSWER_COVERAGE_PRD.md", "the gap you are closing", READ),
         ("product/docs/context/testing_hazards.md", "the refusal/retry headings only", SEARCH),
         ("core/services/_chatbot.py", "`COST_QUESTION_RULE`, `audit_citations`, `answer_question`", SEARCH),
     ),
     "corpus": (
-        ("HANDOVER.md", "the START HERE block only", SEARCH),
+        ("HANDOVER.md", "read it whole now — 101 lines of state", READ),
         ("knowledge/corpus.py", "the format docstring: rules 1-6", SEARCH),
         ("knowledge/tables.py", "`row_chunk`, `_embedding_rendition`, `chunks_for_parsed_section`", SEARCH),
         ("product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md", "the plan and its gates", READ),
     ),
     "reader": (
-        ("HANDOVER.md", "the START HERE block only", SEARCH),
+        ("HANDOVER.md", "read it whole now — 101 lines of state", READ),
         ("product/design/DESIGN.md", "§7.13 for tables, §1 for the claim rules", SEARCH),
         ("core/services/_documents.py", "the three joins: branch, grid, structure", SEARCH),
         ("core/templates/public/document_reader.html", "the shapes", SEARCH),
     ),
     "public": (
-        ("HANDOVER.md", "the START HERE block only", SEARCH),
+        ("HANDOVER.md", "read it whole now — 101 lines of state", READ),
         ("product/design/content_inventory.md", "the live site is the content baseline", READ),
         ("core/services/_public.py", "the reviewed constants", SEARCH),
         ("product/backlog/In Progress/PUBLIC_BOARD_PRD.md", "only if the board is the change", SEARCH),
