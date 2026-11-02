@@ -1,6 +1,7 @@
 # Context budget — what a session reads, and why it is getting too big
 
-**Status:** measured 2026-11-02; four cuts proposed, none taken yet.
+**Status:** measured 2026-11-02; 4.1 taken, 4.2-4.4 open. The read-set is no longer the
+largest multiplier - see §7 for the agent loop that is.
 **Instrument:** `python scripts/context.py` (sizes and recipes), `--check` (every breach).
 **Read this when** you are starting a session, adding to `HANDOVER.md`, writing a §18.3 row, or
 wondering why a "quick" task needed half a day.
@@ -22,10 +23,11 @@ wondering why a "quick" task needed half a day.
 | 391 | 26 | 7,000 | `product/backlog/ready/MVP1A_PRD.md` |
 | | **509** | **≈ 144,000** | total before the split |
 
-After §4.1 the `HANDOVER.md` row is **101 lines / 13 KB / ≈4,000 tokens**, and the read-set total
-is **342 KB ≈ 95,000 tokens** — still too much, because the spec's decision table (172 KB) and
-`testing_hazards.md` (93 KB) are the next two items, and both are read by *searching* rather than
-linearly.
+After §4.1 the `HANDOVER.md` row is **116 lines / 13 KB / ≈4,000 tokens**, and the read-set total
+is **344 KB ≈ 98,000 tokens** - still too much, because the spec's decision table (174 KB) and
+`testing_hazards.md` (94 KB) are the next two items, and both are read by *searching* rather than
+linearly. `scripts/context.py` prints these numbers live; quote that output, not this table, when
+the tree has moved.
 
 A session that follows that instruction has spent its budget before running a test. This is not
 a style complaint: it is the reason sessions start by reading history instead of by reading
@@ -92,7 +94,8 @@ what is next, what not to do. Everything below it is a session narrative.
 Cost: one mechanical commit (22 moves + an index). Nothing is lost; `git log` still has it, and
 the archive is one hop away.
 
-**Done, and measured.** `HANDOVER.md` went **2,553 → 139 lines**; 22 sessions moved verbatim to
+**Done, and measured.** `HANDOVER.md` went **2,553 → ~100 lines** (115 today, after the `0w`
+index line); the session narratives moved verbatim to
 `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`. The move asserted that every moved section's
 bytes appear exactly once in the archive: **173,325 bytes in, 173,325 bytes out**. The file now
 holds the START HERE block, the repo state, and a one-line-per-session index; the rule from here is
@@ -114,10 +117,10 @@ link to the artifact that argues it. Everything else already lives somewhere bet
 - implementation record → the PRD's "landed" section;
 - the measurement → the PRD's evidence table.
 
-Cost: rewriting nine long rows (`D46`, `D47`, `D52`, `D53`, `D68`, `D69`, `D70`, `D71`, `D72`,
-`D73`, `D74`, plus today's `D78`). Do it one row per commit, when you next touch that decision —
-a big-bang rewrite of the spec is exactly the kind of work that costs a session and returns
-nothing a reader can see.
+Cost: rewriting the rows `--check` names today (14: `D46`, `D47`, `D52`, `D53`, `D68`, `D69`,
+`D70`, `D71`, `D72`, `D73`, `D74`, `D75`, `D78`, `D80`; `D68` is the largest at 3.6 KB). Do it one
+row per commit, when you next touch that decision — a big-bang rewrite of the spec is exactly the
+kind of work that costs a session and returns nothing a reader can see.
 
 ### 4.3 Split `_chatbot.py` (and the rest) by responsibility
 
@@ -147,6 +150,8 @@ suite green before and after.
   the gate like every other rule.
 - Update `AGENTS.md`'s read table to name **recipes**, not files: "read these first" becomes
   "`python scripts/context.py --task <task>`", and the table loses its six-file list.
+  **DONE 2026-11-02:** the table is now a shelf of what exists, and `AGENTS.md` carries the
+  discipline block described in §7.
 
 ## 5. The recipes (the part that helps today)
 
@@ -154,10 +159,11 @@ Until the cuts land, `python scripts/context.py --task <task>` prints a per-task
 `READ`/`SEARCH` mode per file. `SEARCH` means: find the section, stop, and name it in your
 handover note. Current recipes: `chat`, `corpus`, `reader`, `public`, `backlog`.
 
-The read budget for the `chat` recipe is **63 KB ≈ 18k tokens** — but only because three of its
-six entries are `SEARCH`. Read whole, the same recipe is 427 KB. **That gap is the entire
-argument for this document**: the files are not too big to exist, they are too big to be read
-linearly, and the instructions currently say to do exactly that.
+The read budget for the `chat` recipe is **78 KB ≈ 22k tokens** (measured 2026-11-02; the script
+prints it live) - but only because three of its six entries are `SEARCH`. Read whole, the same
+recipe is over 400 KB. **That gap is the entire argument for this document**: the files are not
+too big to exist, they are too big to be read linearly, and the instructions used to say to do
+exactly that.
 
 ## 6. What this session cost, as evidence
 
@@ -169,3 +175,43 @@ expensive; it is unreliable, because its numbers rot at different rates from its
 
 That is the argument for 4.1 in one line: **state is short and checked; history is long and
 archived.**
+
+## 7. The larger multiplier: the loop, not the read-set
+
+The read-set explains why a session starts expensive. It does not explain 1.8 M-token figures
+over a handful of prompts. The 47 PGS session logs under `~/.pi/agent/sessions/`
+(2026-10-18 → 2026-11-02) do:
+
+| Measurement | Value |
+|---|---:|
+| Cumulative tokens processed | **1.70 billion** |
+| Median per session | **26.4 M** |
+| Worst session | **121.9 M** (457 requests) |
+| Median user messages per session | **7** |
+| Median API requests per session | **181** |
+| Requests per user message (median) | **26.5** |
+| Context growth per request (median) | **+1,009 tokens** |
+| Largest single live context | **562,454** |
+| Automatic compactions in those 47 sessions | **0** |
+
+**What this means.** A tool call is not a free action: it is a new request that re-sends the whole
+conversation. `cumulative tokens ≈ requests × average context`, so the cost is quadratic in the
+number of tool calls. The `1.8 M` figure is the sum over requests, not one context - the largest
+single request observed is 562k. A six-prompt session ran 368 requests and 86.7 M tokens.
+
+**Where the retained bytes are** (text, chars/4 ≈ tokens): tool results 37% (16.1 MB), thinking
+30% (13.3 MB), tool-call arguments 30% (13.2 MB), assistant prose 3%. Two-thirds of the
+transcript is the agent's own output, re-sent on every later request. The concrete habits:
+
+- `cat`/`sed`/`head`/`tail`: **3,769 calls / 8.5 MB**. Grep first, then read a range.
+- `python - <<'PY'` heredocs: **1,492**. Write the probe to `_scratch/` and re-run it.
+- `write`: 372 calls / 4.46 MB (avg 12 KB); `edit`: 1,103 calls / 2.69 MB. Both keep the
+  full body in the transcript. That is the right tool, but it is not free.
+- Images: **189 reads / 51.6 MB base64**; `home-desktop.png` was read 10 times.
+- Thinking is permanently at `high` in these sessions. It is ~30% of retained context, and it is
+  re-sent like everything else.
+
+None of this is fixed by the four cuts above. §4.1-4.3 make each request cheaper; the discipline
+in `AGENTS.md` reduces the number of requests. The harness setting that would cap a session
+(`compaction.reserveTokens`) is deliberately **not** changed here: the owner asked to leave the
+Pi setting alone for now.

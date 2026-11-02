@@ -4,15 +4,17 @@
     python scripts/context.py --task chat     # what to read for one kind of task
     python scripts/context.py --check         # report every budget breach (report-only today)
 
-**Why this exists.** `AGENTS.md` says "read these first" and lists seven files totalling
-**521 KB** — about 145k tokens, which is more than the context window of a mid-size model and
-about half a day of a session's budget before any work starts. `build_principles.md` §V calls
-`python summarise.py` the context buffet; that file has never existed in this repo.
+**Why this exists.** `AGENTS.md` used to say "read these first" and list every document a
+session might need. Read whole, that set is ~340 KB, or roughly 100k tokens, before any work
+starts. The numbers here are measured on every run; the budgets and the proposed cuts are in
+`product/docs/context/CONTEXT_BUDGET.md`.
 
-So the numbers live here, measured, and the doc that explains them is
-`product/docs/context/CONTEXT_BUDGET.md`. This script is the measuring instrument for both: it
-counts, it names the offenders, and `--check` is the shape a gate would take once the tree is
-inside the budgets.
+**Why the output is ASCII-only.** This tool is run from a Windows `cp1252` console as often as
+from a POSIX shell. A `~` or a section sign in a printed string is a `UnicodeEncodeError` there,
+which is how this script once failed at the exact moment it was meant to save context. Prose in
+docstrings and comments may use the repo's typography; anything `print()`ed may not - and
+`--help` is a print path, because argparse prints this docstring as its description. Every
+printed string therefore goes through `ascii_fold()`, this page included.
 
 **Not wired into `verify.sh` on purpose** (2026-11-02): the tree is over budget in 11 Python
 files, in `HANDOVER.md` and in nine decision rows, so a hard check would be red for as long as
@@ -45,8 +47,8 @@ SOURCE_GLOBS = (
 )
 
 #: The current-state file a new session must read. Its budget is the hard one: every session
-#: loads it and every session appends to it. 2,553 lines on 2026-11-02, of which ~72 are the
-#: state and the rest is 22 sessions of history.
+#: loads it and every session appends to it. 2,553 lines on 2026-11-02, of which ~72 were the
+#: state and the rest was session history.
 HANDOVER = REPO_ROOT / "HANDOVER.md"
 HANDOVER_BUDGET_LINES = 250
 
@@ -62,31 +64,31 @@ READ, SEARCH = "read", "search"
 
 TASKS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "chat": (
-        ("HANDOVER.md", "read it whole now — 101 lines of state; history is in product/docs/handover/", READ),
+        ("HANDOVER.md", "read it whole now - state only; history is in product/docs/handover/", READ),
         ("product/backlog/In Progress/CHAT_ANSWER_COVERAGE_PRD.md", "the gap you are closing", READ),
         ("product/docs/context/testing_hazards.md", "the refusal/retry headings only", SEARCH),
         ("core/services/_chatbot.py", "`COST_QUESTION_RULE`, `audit_citations`, `answer_question`", SEARCH),
     ),
     "corpus": (
-        ("HANDOVER.md", "read it whole now — 101 lines of state", READ),
+        ("HANDOVER.md", "read it whole now - state only", READ),
         ("knowledge/corpus.py", "the format docstring: rules 1-6", SEARCH),
         ("knowledge/tables.py", "`row_chunk`, `_embedding_rendition`, `chunks_for_parsed_section`", SEARCH),
         ("product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md", "the plan and its gates", READ),
     ),
     "reader": (
-        ("HANDOVER.md", "read it whole now — 101 lines of state", READ),
-        ("product/design/DESIGN.md", "§7.13 for tables, §1 for the claim rules", SEARCH),
+        ("HANDOVER.md", "read it whole now - state only", READ),
+        ("product/design/DESIGN.md", "section 7.13 for tables, section 1 for the claim rules", SEARCH),
         ("core/services/_documents.py", "the three joins: branch, grid, structure", SEARCH),
         ("core/templates/public/document_reader.html", "the shapes", SEARCH),
     ),
     "public": (
-        ("HANDOVER.md", "read it whole now — 101 lines of state", READ),
+        ("HANDOVER.md", "read it whole now - state only", READ),
         ("product/design/content_inventory.md", "the live site is the content baseline", READ),
         ("core/services/_public.py", "the reviewed constants", SEARCH),
         ("product/backlog/In Progress/PUBLIC_BOARD_PRD.md", "only if the board is the change", SEARCH),
     ),
     "backlog": (
-        ("product/backlog/backlog.md", "the generated index — not the PRDs", READ),
+        ("product/backlog/backlog.md", "the generated index - not the PRDs", READ),
         ("product/backlog/CONVENTION.md", "the convention, once", READ),
     ),
 }
@@ -94,7 +96,7 @@ TASKS: dict[str, tuple[tuple[str, str, str], ...]] = {
 #: The two files every session reads, and both are cheap on purpose.
 ALWAYS: tuple[tuple[str, str, str], ...] = (
     ("AGENTS.md", "the rules that bite: claims, budgets, hazards", READ),
-    ("product/docs/context/build_principles.md", "the non-negotiables — 13 KB, read whole", READ),
+    ("product/docs/context/build_principles.md", "the non-negotiables - 13 KB, read whole", READ),
 )
 
 READ_SET = (
@@ -105,6 +107,35 @@ READ_SET = (
     "product/backlog/In Progress/MVP0_PRD.md",
     "product/backlog/ready/MVP1A_PRD.md",
 )
+
+
+def ascii_fold(text: str) -> str:
+    """Fold the repo's typography to ASCII for printing.
+
+    The docstring says prose may keep `§`, an em dash and `≈` while printed output may not;
+    `--help` sits on both sides of that line, so the fold happens at the boundary. Anything not
+    in the table becomes `?` instead of a `UnicodeEncodeError` on a cp1252 console.
+    """
+    for char, replacement in _FOLD.items():
+        text = text.replace(char, replacement)
+    return text.encode("ascii", "replace").decode("ascii")
+
+
+#: The characters this repo actually uses in prose. Order is irrelevant: none is a prefix of
+#: another, so no replacement can be folded twice.
+_FOLD = {
+    "\u2014": "-",  # em dash
+    "\u2013": "-",  # en dash
+    "\u2248": "~",  # almost-equal, the read-budget marker
+    "\u00a7": "section ",  # section sign: `§II` reads as `section II`
+    "\u2018": "'",
+    "\u2019": "'",
+    "\u201c": '"',
+    "\u201d": '"',
+    "\u2026": "...",
+    "\u00d7": "x",
+    "\u2192": "->",
+}
 
 
 def size_of(path: Path) -> tuple[int, int]:
@@ -121,7 +152,7 @@ def tokens(byte_count: int) -> int:
 
 
 def show_sizes() -> None:
-    print("The read-set AGENTS.md currently names\n")
+    print("The historical read-set (the old 'read these first' table, before the recipe)\n")
     print(f"{'lines':>7} {'KB':>6} {'~tokens':>9}  file")
     total = 0
     for name in READ_SET:
@@ -140,14 +171,14 @@ def show_task(task: str) -> None:
     if entries is None:
         print(f"no recipe for {task!r}; known: {', '.join(sorted(TASKS))}", file=sys.stderr)
         raise SystemExit(2)
-    print(f"Read for a {task!r} task — in this order, and stop when the question is answered\n")
+    print(f"Read for a {task!r} task - in this order, and stop when the question is answered\n")
     run = 0
     for name, why, mode in (*ALWAYS, *entries):
         lines, size = size_of(REPO_ROOT / name)
         if mode == READ:
             run += size
         print(f"  {mode.upper():>6}  {size / 1024:>5.0f} KB  {lines:>5} lines  {name}\n              {why}")
-    print(f"\n  read budget: {run / 1024:>5.0f} KB  ≈ {tokens(run):,} tokens")
+    print(f"\n  read budget: {run / 1024:>5.0f} KB  ~ {tokens(run):,} tokens")
     print("  A SEARCH entry is not read: find the section, stop, and name it in the handover.")
 
 
@@ -171,7 +202,7 @@ def check() -> int:
             if size > SOURCE_CAP_BYTES:
                 over.append((size, path.relative_to(REPO_ROOT).as_posix()))
     for size, name in sorted(over, reverse=True):
-        broken.append(f"{name} is {size / 1024:.0f} KB (cap {SOURCE_CAP_BYTES // 1024} KB, §II)")
+        broken.append(f"{name} is {size / 1024:.0f} KB (cap {SOURCE_CAP_BYTES // 1024} KB, section II)")
 
     if SPEC.is_file():
         rows = [
@@ -187,7 +218,7 @@ def check() -> int:
                     "its evidence belongs in the linked exploration or PRD"
                 )
 
-    print(f"context budgets — {len(broken)} breach(es)\n")
+    print(f"context budgets - {len(broken)} breach(es)\n")
     for entry in broken:
         print(f"  - {entry}")
     if not broken:
@@ -201,7 +232,8 @@ def check() -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=ascii_fold(__doc__ or ""),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--task", help=f"what to read for one task: {', '.join(sorted(TASKS))}")
     parser.add_argument("--check", action="store_true", help="report every budget breach")

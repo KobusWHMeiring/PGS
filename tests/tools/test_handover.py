@@ -19,7 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 HANDOVER = REPO_ROOT / "HANDOVER.md"
 ARCHIVE = REPO_ROOT / "product" / "docs" / "handover"
 
-#: Measured 2,553 lines before the split. 250 is the budget, not the current size (139) — the room
+#: Measured 2,553 lines before the split. 250 is the budget, not the current size (115) — the room
 #: is for a session or two of state growth before the next split is due.
 BUDGET_LINES = 250
 

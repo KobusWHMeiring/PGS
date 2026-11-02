@@ -1666,6 +1666,14 @@ against a committed artefact must be taken with `--strip-trailing-cr` or it is 5
 and the real 57 are invisible. A PUA codepoint is not quotable text at all; the generator now
 strips the range.
 
+**A third instance, 2026-11-02, in the tool written to prevent context waste:**
+`python scripts/context.py --task chat` printed `≈` in its final `read budget` line. Every recipe
+did its work and then died on the summary line, so the one command `AGENTS.md` now sends every
+session to was broken on the box it was written on. The rule is the same, applied to the *printed*
+strings only: docstrings and comments may keep the repo's typography, output may not.
+`tests/tools/test_context.py` asserts `out.isascii()` for every recipe, so the next glyph is
+caught before a human runs it.
+
 ### 3.22 An inverted predicate empties the output, and every guard stays green
 
 `scripts/build_corpus.py` chose its line filter per branch. The generic branch — every document

@@ -6,33 +6,52 @@ A greenfield Django 5.2 monolith digitising the Outeniqua PGS organic certificat
 process, plus the public PGS Outeniqua website and a strictly grounded chatbot over
 the SAOSO standard.
 
-## Read these first
+## Start here - the recipe, not the shelf
 
-**Do not read the whole set.** Six files totalling ~509 KB (≈144k tokens) is more than a
-session's budget; `python scripts/context.py --task <chat|corpus|reader|public|backlog>` prints
-the read set for your task, with a READ/SEARCH mode per file. The budgets and the four proposed
-cuts are in `product/docs/context/CONTEXT_BUDGET.md`; today the tree is over budget in
-`HANDOVER.md`, 11 source files and 9 decision rows, and `--check` names them.
+`python scripts/context.py --task <chat|corpus|reader|public|backlog>` prints what to read for
+the task, in order, with a **READ** or **SEARCH** mode per file and a read budget. Follow it, and
+stop when the question is answered. `--check` names every breach; the measurements and the four
+proposed cuts are in `product/docs/context/CONTEXT_BUDGET.md`.
 
-| Purpose | File |
-|---------|------|
-| **Handover — START HERE block only** | `HANDOVER.md` (138 lines of state; session history is `product/docs/handover/`) |
-| **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` |
-| Build rules — non-negotiable | `product/docs/context/build_principles.md` |
-| **Testing hazards — read before writing a test** | `product/docs/context/testing_hazards.md` |
-| **Front-end design — only when designing or changing a view** | `product/design/DESIGN.md` |
-| MVP 0 PRD | `product/backlog/In Progress/MVP0_PRD.md` |
-| MVP 0 implementation plan | `product/backlog/In Progress/MVP0_PLAN_V2.md` |
-| **MVP 1a PRD — up next** | `product/backlog/ready/MVP1A_PRD.md` |
-| **MVP 1a implementation plan** | `product/backlog/ready/MVP1A_PLAN.md` |
-| MVP 1a UAT | `tests/uat/mvp1a_in_office_visit_uat.md` |
-| MVP 0 UAT checklist | `tests/uat/mvp0_standards_and_public_site_uat.md` |
+The shelf below is what exists, not a reading list. Nothing is read whole unless the recipe says
+READ.
+
+| Purpose | Where |
+|---------|-------|
+| **Current state - START HERE block only** | `HANDOVER.md`; history is one file per session in `product/docs/handover/` |
+| **The product spec (target state)** | `product/backlog/Refinement/PGS_PLATFORM_SPEC.md` - SEARCH section 18.3 for a decision |
+| Build rules - non-negotiable | `product/docs/context/build_principles.md` |
+| **Testing hazards - search before writing a test** | `product/docs/context/testing_hazards.md` |
+| **Front-end design - only when designing or changing a view** | `product/design/DESIGN.md` |
+| PRDs, plans and UAT | `product/backlog/<bucket>/` (the directory is the status), `tests/uat/` |
 | Source documents (authoritative) | `pgs_docs/*.pdf`, `pgs_docs/*.xlsx` |
 
 `pgs_docs/` holds the governing documents: the Outeniqua PGS Principles, Policies and
 Procedures (the OPP — cited throughout the spec), SAOSO Standard v2.1 2026, the
 assessment workbook, the checklists, and the certification landscape. **These are the
 source of truth for domain language.** Cite them rather than inventing terminology.
+
+## Context discipline
+
+Measured 2026-11-02 over the 47 PGS session logs: **1.70 billion tokens processed cumulatively**,
+a median of **26 M cumulative per session**, and **26 API requests per user message**. Each tool
+call re-sends the whole conversation, so cost grows with the number of tool calls, not with the
+number of prompts. The habits that cost the most, and the rule for each:
+
+- **Grep first, then read a range.** `cat`/`sed`/`head`/`tail` was 3,769 calls returning 8.5 MB.
+  Use `rg -n`, then `read` with `offset`/`limit`; never dump a whole file to answer a question.
+- **Write a probe once.** 1,492 `python - <<'PY'` heredocs put the whole script in the transcript
+  and re-send it on every later request. Put it in `_scratch/` and re-run it.
+- **Bound every output.** `pytest -q --tb=line -x 2>&1 | tail -40`, `git diff --stat`, `rg -m`.
+  A full log is read once by you and hundreds of times by the context.
+- **One screenshot, one read.** 189 image reads / 51.6 MB; `home-desktop.png` was read 10 times.
+  Read a shot once, and start a new session for a new design pass.
+- **End at a task boundary.** The 100 M-token sessions are the 300-450-request ones. When the
+  task's gate is green, write the session record and start a new session; don't keep the context
+  alive for the next question.
+- **State is short; narrative is archived.** `HANDOVER.md` stays within 250 lines
+  (`tests/tools/test_handover.py`), and a session's story goes to
+  `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`.
 
 ## Architecture at a glance
 
