@@ -14,29 +14,34 @@
 >    **rule 6** (`<!-- sub: … -->`) or 24 sub-clause addresses would have vanished.
 > 3. **G10's refusal is located and is one space** — a quote across a line break (`1.` / `o`). Not
 >    fixed: the decision is written up and belongs to the owner.
-> 4. **Two decision pages, neither answered:** `product/design/g11_row_labels_exploration.html`
->    (how a printed column header reaches a row's quotable text — five options, **E recommended**)
->    and `product/design/g12_ingestion_generalisation.html` (does the engine survive an unseen
->    document — **X2 now, X3 when demanded**, decided as **D80**).
-> 5. **Context budget measured and the first cut taken** (`product/docs/context/CONTEXT_BUDGET.md`):
->    the six files this repo told every session to read total **509 KB ≈ 144k tokens**;
->    `HANDOVER.md` was 2,553 lines of which 72 were state. **This file is now 101 lines** and the
->    23 session narratives are in `product/docs/handover/` (content verified byte-for-byte:
->    173,325 in, 173,325 out), with `tests/tools/test_handover.py` holding the budget.
->    `python scripts/context.py --task <chat|corpus|reader|public|backlog>` prints what to read
->    and what to grep. **The full session record is
->    `product/docs/handover/SESSION_0v_2026-11-02_…md`** — read that one file for the reasoning;
->    this block is only state.
+> 4. **G11 is answered: D79 = E** (2026-11-02). Show the table as structure, quote cells only, render
+>    the row's context from the artefact at cite time; `product/design/g11_option_e_explainer.html`
+>    teaches the mechanism. **Not built** — three slices, the reserved seat first. `g12` is decided as
+>    **D80** (X2 now, X3 when demanded).
+> 5. **Context budget measured, the handover split, and the loop measured**
+>    (`product/docs/context/CONTEXT_BUDGET.md`): the six files this repo told every session to read
+>    totalled **509 KB ≈ 144k tokens**; `HANDOVER.md` was 2,553 lines of which 72 were state. **This
+>    file is now state (~100 lines)** and the **24** session narratives are in
+>    `product/docs/handover/` (content verified byte-for-byte: 173,325 in, 173,325 out), with
+>    `tests/tools/test_handover.py` holding the budget. `python scripts/context.py --task
+>    <chat|corpus|reader|public|backlog>` prints what to read and what to grep. **The read-set was
+>    not the whole bill:** 47 session logs measured **1.70 B tokens processed**, median **26 M per
+>    session**, **26 API requests per user message** — thinking and tool-call arguments are 60% of
+>    retained context, and no PGS session ever compacted. `AGENTS.md` now carries the **Context
+>    discipline** block; §7 of `CONTEXT_BUDGET.md` has the numbers. The reasoning is in
+>    `SESSION_0w_2026-11-02_…md`; the split itself is `SESSION_0v_2026-11-02_…md`. This block is
+>    only state.
 >
 > **What is next, in the owner's order:**
 >
 > 1. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`). 4.2: a §18.3 row becomes a sentence plus a
->    link — **nine rows are over 1.5 KB** (`D71` is 3.7 KB) and the evidence already exists in
->    `product/design/` and the PRDs. 4.3: split `core/services/_chatbot.py` (**91 KB, 3× the §II
->    cap**) along its own four headings, then `knowledge/corpus.py` (49 KB). 4.4: wire
->    `scripts/context.py --check` into the gate **once the tree is inside budget** — it reports 12
->    breaches today.
-> 2. **The table work, in this order:** answer **G11** (D79 — A as a stopgap or E as the target),
+>    link — `--check` names the rows over 1.5 KB (**14 today**, `D68` the largest at 3.6 KB) and the
+>    evidence already exists in `product/design/` and the PRDs. 4.3: split
+>    `core/services/_chatbot.py` (**91 KB, 3× the §II cap**) along its own four headings, then
+>    `knowledge/corpus.py` (49 KB). 4.4: wire `scripts/context.py --check` into the gate **once the
+>    tree is inside budget** — it reports 25 breaches today (11 source files, 14 rows).
+> 2. **The table work, in this order:** **G11's three slices** (D79 = E — reserved seat, then the
+>    prompt shape and row identity, then the *context, not quotation* UI distinction),
 >    then **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
 > 3. **The landscape UAT sign-off** — still unsigned, still unblocked, still the only thing keeping
 >    `LANDSCAPE_TABLES_PRD` out of `Done/`.
@@ -57,19 +62,22 @@
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4 and context-budget sessions
-**Repo state:** `main`, **33 commits ahead of `origin/main`** (`35051e1`); the last code commit is
-`18a8523` and this documentation commit follows it. On that tree: `scripts/fast.sh` green (whole
-suite minus `slow`) and `verify.sh` green at **1558 passed / 1 skipped in 67.2 s** cold, run as
-`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). `pytest tests/e2e` **71 passed** (not in the gate: needs a
-browser). The suite is fast today because the database was warm; quote the cold and warm pair, not
-one number (`testing_hazards.md` §3.17).
+**Repo state:** `main`, **35 commits ahead of `origin/main`** (`efd1191`); this change adds one
+when committed: the discipline block plus the `context.py` ASCII fix. On this tree
+(2026-11-02): `scripts/verify.sh` green at **1566 passed / 1 skipped in 133.93 s** cold, run as
+`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this
+box serves 5433, `testing_hazards.md` §3.1). `scripts/fast.sh --critical` **208 passed, 4
+deselected, 11-18 s across three runs**; `pytest tests/e2e` **71 passed** (not in the gate: needs a
+browser, last measured at `efd1191`). The new `tests/tools/test_context.py` is in the gate, so the
+context tooling is now guarded. The suite is fast today because the database was warm; quote the
+cold and warm pair, not one number (`testing_hazards.md` §3.17).
 
 **The dev box is current.** All four documents re-ingested from their artefacts, **401 chunks, 0
 unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left
 unlinked on purpose (same locator, different text: the transition off the PDF parses).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **33 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **35 commits unpushed**
+(36 when this change is committed).
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
 2026-10-30 — three sessions behind, with the old PDF-built corpus. A deploy pulls the artefacts but
 never runs `ingest_standard`, so the box will show drift on all four until someone runs
@@ -81,6 +89,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `0w` 2026-11-02 (session 9) — the context balloon is the loop, not the handover — [`SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md`](product/docs/handover/SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md)
 - `0v` 2026-11-02 (session 8) — the cost rule, P4's printed scale, two decision pages, and the handover becomes state — [`SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md`](product/docs/handover/SESSION_0v_2026-11-02_the-cost-rule-p4-two-decisions-and-the-handover-b.md)
 - `0u` 2026-11-01 (session 7) — the cost rule, the OPP's printed scale, and the refusal located — [`SESSION_0u_2026-11-01_the-cost-rule-the-opp-s-printed-scale-and-th.md`](product/docs/handover/SESSION_0u_2026-11-01_the-cost-rule-the-opp-s-printed-scale-and-th.md)
 - `0t` 2026-11-01 (session 6) — the two shapes are built, and one number the design did not decide — [`SESSION_0t_2026-11-01_the-two-shapes-are-built-and-one-number-the.md`](product/docs/handover/SESSION_0t_2026-11-01_the-two-shapes-are-built-and-one-number-the.md)

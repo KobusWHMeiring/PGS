@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<!-- EXPLAINER (not a production template) | Outeniqua PGS — G11: what option E actually does,
+     step by step, with the real files and the real measurements.
+     Companion to g11_row_labels_exploration.html (the decision) and g12_ingestion_generalisation.html.
+     Self-contained: no CDN, no build step, no external requests. Notes autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — G11 option E, explained</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --stop:            #8c3a32;
+    --stop-soft:       #f6e7e4;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 170px; }
+
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #f2f6f0; padding: 46px 20px 52px;
+  }
+  header.hero .inner { max-width: 940px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 12px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 14px; font-size: 31px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero .lede { margin: 0; font-size: 17.5px; line-height: 1.5; max-width: 720px; opacity: .95; }
+  header.hero .lede b { color: #fff; }
+  header.hero .meta {
+    margin: 22px 0 0; font-size: 12.5px; opacity: .8;
+    display: flex; gap: 18px; flex-wrap: wrap;
+  }
+
+  h2 { font-size: 21px; margin: 0 0 4px; letter-spacing: -.005em; }
+  .section-head {
+    display: flex; align-items: center; gap: 14px; margin: 46px 0 16px;
+  }
+  .section-head .n {
+    flex: 0 0 auto; font-family: var(--mono); font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; color: var(--accent); background: var(--accent-soft);
+    border: 1px solid var(--accent-line); border-radius: 999px; padding: 3px 9px;
+  }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+
+  p { margin: 0 0 13px; }
+  .prose { font-size: 15.5px; }
+  .lead { font-size: 16.5px; color: var(--text); }
+  .muted { color: var(--muted); }
+  small { font-size: 12.5px; color: var(--muted); }
+
+  .card {
+    background: var(--surface); border-radius: var(--radius-lg); padding: 18px 20px;
+    box-shadow: var(--shadow); margin: 0 0 16px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 16.5px; line-height: 1.35; }
+  .card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+  .key {
+    background: var(--accent-soft); border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0; padding: 16px 20px; margin: 0 0 18px;
+    font-size: 16px; line-height: 1.5;
+  }
+  .key b { color: var(--accent); }
+  .warnbox {
+    background: var(--warn-soft); border-left: 3px solid var(--warn);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0; padding: 14px 18px; margin: 0 0 16px;
+    font-size: 14.5px;
+  }
+  .stopbox {
+    background: var(--stop-soft); border-left: 3px solid var(--stop);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0; padding: 14px 18px; margin: 0 0 16px;
+    font-size: 14.5px;
+  }
+
+  code, pre { font-family: var(--mono); }
+  pre {
+    margin: 10px 0; padding: 13px 15px; background: var(--surface-low);
+    border-radius: var(--radius-lg); overflow-x: auto;
+    font-size: 12.5px; line-height: 1.55; white-space: pre;
+  }
+  pre .ok  { color: var(--accent); font-weight: 600; }
+  pre .bad { color: var(--stop); font-weight: 600; }
+  pre .dim { color: var(--muted); }
+  p code, li code, td code {
+    background: var(--surface-low); padding: 1px 5px; border-radius: 5px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- the printed table vs the stored chunk ---------- */
+  .two-up { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 16px; }
+  .two-up > .col { flex: 1 1 300px; min-width: 0; }
+  .col-label {
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted); margin: 0 0 7px;
+  }
+  table.printed {
+    width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface);
+    box-shadow: var(--shadow); border-radius: 8px; overflow: hidden;
+  }
+  table.printed th {
+    text-align: left; background: var(--accent-soft); color: var(--accent);
+    font-size: 11.5px; font-weight: 700; padding: 9px 10px; border-bottom: 1px solid var(--accent-line);
+  }
+  table.printed td { padding: 8px 10px; border-bottom: 1px solid var(--surface-high); }
+  table.printed tr:last-child td { border-bottom: 0; }
+  table.printed tr.hi td { background: var(--warn-soft); font-weight: 600; }
+  table.printed td.num { font-family: var(--mono); }
+
+  .chunkbox {
+    background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding: 14px 16px; font-family: var(--mono); font-size: 13px; line-height: 1.7;
+  }
+  .chunkbox .lbl {
+    display: block; font-family: var(--font); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 8px;
+  }
+  .chunkbox .n { color: var(--muted); font-size: 11.5px; }
+
+  /* ---------- pipelines ---------- */
+  .pipe { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin: 14px 0 8px; }
+  .step {
+    flex: 1 1 132px; min-width: 0; background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: var(--radius-lg); padding: 11px 12px; box-shadow: var(--shadow);
+  }
+  .step .tag {
+    display: block; font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+    font-weight: 700; color: var(--muted); margin-bottom: 5px;
+  }
+  .step .t { display: block; font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .step .d { display: block; font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+  .step.bad  { border-color: #e2b6ae; background: var(--stop-soft); }
+  .step.bad .tag { color: var(--stop); }
+  .step.good { border-color: var(--accent-line); background: var(--accent-soft); }
+  .step.good .tag { color: var(--accent); }
+  .step.null { background: transparent; border-style: dashed; box-shadow: none; }
+  .arrow {
+    flex: 0 0 auto; align-self: center; font-family: var(--mono); font-size: 12px;
+    color: var(--muted); text-align: center; padding: 0 2px; white-space: nowrap;
+  }
+  .arrow span { display: block; font-family: var(--font); font-size: 9.5px; letter-spacing: .06em;
+    text-transform: uppercase; margin-top: 2px; }
+
+  /* ---------- three lanes ---------- */
+  .lanes { margin: 16px 0 10px; }
+  .lane {
+    display: grid; grid-template-columns: 116px 1fr; gap: 14px; align-items: start;
+    padding: 14px 16px; border-radius: var(--radius-lg); margin-bottom: 8px;
+    background: var(--surface); box-shadow: var(--shadow);
+  }
+  .lane .name { font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+  .lane .name small { display: block; font-weight: 500; font-size: 11px; margin-top: 3px; }
+  .lane .body { font-size: 14px; min-width: 0; }
+  .lane .body pre { margin: 8px 0 0; }
+  .lane.find { border-left: 3px solid var(--muted); }
+  .lane.quote { border-left: 3px solid var(--accent); }
+  .lane.show { border-left: 3px solid var(--warn); }
+
+  /* ---------- frames ---------- */
+  .frames { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 14px; margin: 16px 0; }
+  .frame {
+    background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding: 15px 16px; min-width: 0;
+  }
+  .frame .who {
+    display: flex; align-items: center; gap: 8px; margin: 0 0 9px;
+    font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--accent);
+  }
+  .frame .who .dot {
+    width: 20px; height: 20px; border-radius: 999px; background: var(--accent); color: #fff;
+    display: grid; place-items: center; font-size: 10.5px; letter-spacing: 0;
+  }
+  .frame pre { margin: 0 0 9px; font-size: 11.5px; white-space: pre-wrap; word-break: break-word; }
+  .frame .why { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.45; }
+  .frame .why b { color: var(--text); }
+
+  /* ---------- what the reader sees ---------- */
+  .citerender {
+    background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    padding: 4px 18px 16px; margin: 14px 0 8px;
+  }
+  .citerender .hdr {
+    font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent);
+    padding: 12px 0 10px; border-bottom: 1px solid var(--surface-high);
+  }
+  .citerender .row { padding: 12px 0 0; }
+  .ctx {
+    font-size: 12px; color: var(--muted); font-family: var(--mono);
+    border-left: 2px dashed var(--surface-high); padding-left: 10px; margin: 0 0 8px;
+  }
+  .ctx b { color: var(--text); font-family: var(--font); }
+  blockquote.quoted {
+    margin: 0 0 8px; padding: 9px 14px; background: var(--surface-low);
+    border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 14px;
+  }
+  .citerender .src { font-size: 12.5px; color: var(--muted); margin: 0; }
+
+  /* ---------- comparison of what each lane may contain ---------- */
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  .legend .k { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+
+  ul, ol { margin: 0 0 13px; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+
+  /* ---------- decision ---------- */
+  .decision { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow); padding: 22px 22px 20px; margin: 18px 0; }
+  .opts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+  .opt {
+    cursor: pointer; font-family: var(--font); font-size: 13px; font-weight: 550;
+    padding: 8px 14px; border-radius: 999px; background: var(--surface-low); color: var(--muted);
+    border: 1px solid transparent; user-select: none; transition: background .12s, color .12s;
+  }
+  .opt:hover { background: var(--surface-high); }
+  .opt[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .opt small { font-size: 10.5px; opacity: .8; display: block; }
+  textarea {
+    width: 100%; margin-top: 14px; min-height: 84px; resize: vertical;
+    font-family: var(--font); font-size: 14.5px; line-height: 1.5; color: var(--text);
+    background: var(--surface-low); border: 1px solid transparent;
+    border-radius: var(--radius-lg); padding: 12px 14px;
+  }
+  button {
+    font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer;
+    border-radius: 10px; padding: 8px 14px; border: 1px solid transparent;
+    background: var(--surface-low); color: var(--text); transition: background .12s;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b513e; }
+
+  /* ---------- sticky bar ---------- */
+  .sticky {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: rgba(255,255,255,.96); backdrop-filter: blur(6px);
+    border-top: 1px solid var(--surface-high); box-shadow: var(--shadow-sticky);
+    padding: 10px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .sticky .state { flex: 1; min-width: 160px; color: var(--muted); }
+  .sticky .state b { color: var(--text); }
+
+  footer { margin-top: 40px; font-size: 12.5px; color: var(--muted); }
+
+  @media print {
+    body { background: #fff; }
+    .sticky { display: none; }
+    header.hero { background: #274936 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .card, .step, .lane, .frame, .decision, table.printed, .chunkbox, .citerender {
+      box-shadow: none !important; border: 1px solid #ccc; break-inside: avoid;
+    }
+    .frames { grid-template-columns: 1fr 1fr; }
+    a { color: inherit; text-decoration: none; }
+  }
+  @media (max-width: 560px) {
+    header.hero h1 { font-size: 25px; }
+    .lane { grid-template-columns: 1fr; gap: 8px; }
+    .arrow span { display: none; }
+    .frames { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">G11 &middot; Option E, explained &middot; an explainer, not a proposal</p>
+    <h1>E keeps the words where the paper put them, and moves the meaning to where the reader needs it.</h1>
+    <p class="lede">
+      Today the assistant cannot say <b>&ldquo;R1 500&rdquo;</b> for the lowest turnover band, because the row it
+      retrieves is three numbers with no labels, and the audit refuses a quote the row does not contain.
+      Option E fixes that <b>without adding a single character to the corpus</b>: the model is shown the
+      table as a table, quotes cells only, and the column heading is attached when the citation is
+      <em>drawn</em>.
+    </p>
+    <p class="meta">
+      <span>Companion to <code>g11_row_labels_exploration.html</code> (the decision) and <code>g12_ingestion_generalisation.html</code></span>
+      <span>Measured on the dev corpus, 401 chunks, 2026-11-01/02</span>
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="section-head">
+    <span class="n">0</span>
+    <h2>How to read this</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    This page teaches one mechanism. It does not re-argue the five options &mdash; that is the decision
+    page, and its recommendation stands. It exists because E is the only option whose idea is
+    structural (&ldquo;a citation can display context it does not quote&rdquo;), and structural ideas are hard
+    to picture from a one-line description.
+  </p>
+  <p class="prose">
+    Nine short steps, each one answering the question the previous step raises. Every claim that could
+    be checked against the repo was, and is quoted with a <code>file:line</code>. Where something is a
+    judgement rather than a measurement, it says so.
+  </p>
+
+  <div class="key">
+    <b>The one-sentence version.</b> A printed table has three layers &mdash; <em>what the text says</em>,
+    <em>what it means</em>, and <em>what the reader is shown</em> &mdash; and today the assistant forces all
+    three through one channel (the chunk text). E gives each layer its own channel: the corpus keeps the
+    characters, the prompt carries the structure, the citation carries the context.
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">1</span>
+    <h2>The paper prints a grid. The corpus stores a row.</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    OPP §2.3 is the assessment fee structure: three columns, six bands. Here is what the paper prints,
+    from the reviewed artefact <code>knowledge/corpus/opp.md</code>:
+  </p>
+
+  <div class="two-up">
+    <div class="col">
+      <p class="col-label">What the paper prints (and the reader draws)</p>
+      <table class="printed">
+        <tr>
+          <th>Annual farm turnover (gross sales)</th>
+          <th>Initial certification fee (R)</th>
+          <th>Renewal fee (R)</th>
+        </tr>
+        <tr class="hi"><td>Below R 250,000</td><td class="num">1,500</td><td class="num">900</td></tr>
+        <tr><td>R 250,001 &ndash; R 500,000</td><td class="num">2,500</td><td class="num">2,000</td></tr>
+        <tr><td>R 500,001 &ndash; R 1,000,000</td><td class="num">3,000</td><td class="num">2,500</td></tr>
+        <tr><td>&hellip; three more bands</td><td class="num">&hellip;</td><td class="num">&hellip;</td></tr>
+      </table>
+      <p class="muted" style="margin-top:8px;font-size:12.5px">
+        Legend, in the artefact: <em>&ldquo;Amounts are in rand, printed without a thousands separator.&rdquo;</em>
+        That legend exists because <code>1,500</code> is ambiguous &mdash; and it is the same problem the
+        assistant has, in a different place.
+      </p>
+    </div>
+    <div class="col">
+      <p class="col-label">What the corpus stores as one chunk</p>
+      <div class="chunkbox">
+        <span class="lbl">DocumentChunk.text</span>
+        Below R 250,000<br>
+        1,500<br>
+        900
+      </div>
+      <p class="muted" style="margin-top:8px;font-size:12.5px">
+        One chunk per reviewed row, cells joined by a newline
+        (<code>knowledge/sections/__init__.py</code>, <code>ParsedTableRow.text</code>).
+        <b>The heading is not in it.</b> The paper prints the heading once, above the grid; the corpus
+        prints it zero times.
+      </p>
+    </div>
+  </div>
+
+  <p class="prose">
+    That is the whole defect, and it is smaller than it sounds: <b>6 of 44 rows</b> are affected.
+    Appendix 2 and Appendix 6a's 30 rows are prose (&ldquo;a cell is a sentence&rdquo;), and the landscape's 8 rows
+    carry their own printed label inside each cell. Only the OPP's six fee bands are bare numbers.
+  </p>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">2</span>
+    <h2>So the model receives three numbers and has to guess</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    The prompt renders each retrieved chunk as a block. From <code>core/services/_chatbot.py:1433</code>:
+  </p>
+
+  <pre>LOCATOR: §2.3
+Document: Outeniqua PGS Principles, Policies and Procedures, page 12
+Numbered sub-clauses available: none - omit `sub_ref` for this passage.
+Below R 250,000
+1,500
+900</pre>
+
+  <p class="prose">
+    Nothing here says which number is the initial fee and which is the renewal. The model is then asked
+    for an answer <em>plus citations</em>, and every citation carries two things the model supplies:
+  </p>
+
+  <pre><span class="dim">// from the schema in the prompt, and `audit_citations`' input</span>
+{
+  "answer": "...",
+  "citations": [ { "section_ref": "§2.3", "sub_ref": null, "quote": "..." } ]
+}</pre>
+
+  <p class="prose">
+    The <code>quote</code> is the load-bearing field. Everything the reader sees as evidence comes from it,
+    and it is checked by a substring test.
+  </p>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">3</span>
+    <h2>Why the obvious sentence is refused: the audit is not being pedantic</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    Suppose the model works out that <code>900</code> is the renewal fee and writes the sentence the reader
+    wants. Here is the check that decides its fate
+    (<code>core/services/_chatbot.py:1055-1061</code>):
+  </p>
+
+  <pre>quote_key = _normalise_text(quote)
+<span class="dim"># a quote is accepted only if it is a substring of the cited chunk's own text</span>
+candidates = [chunk for chunk in candidates if quote_key in _normalise_text(chunk.text)]
+<span class="bad">problems.append(f"{ref}: the quote is not in the cited chunk")</span></pre>
+
+  <p class="prose">
+    <code>_normalise_text</code> normalises whitespace only &mdash; <em>&ldquo;punctuation and case stay exact&rdquo;</em>
+    (<code>:816</code>). So the failure is not fuzzy matching; the sentence is simply absent from the chunk.
+  </p>
+
+  <div class="pipe">
+    <div class="step">
+      <span class="tag">model writes</span>
+      <span class="t">&ldquo;Renewal fee R900&rdquo;</span>
+      <span class="d">the sentence the reader needs</span>
+    </div>
+    <div class="arrow">&rarr;<span>check</span></div>
+    <div class="step bad">
+      <span class="tag">audit</span>
+      <span class="t">not in chunk text</span>
+      <span class="d">the chunk says <code>1,500</code> and <code>900</code>, never &ldquo;renewal&rdquo;</span>
+    </div>
+    <div class="arrow">&rarr;<span>consequence</span></div>
+    <div class="step bad">
+      <span class="tag">whole answer</span>
+      <span class="t">refused</span>
+      <span class="d">&ldquo;one invented citation makes the rest untrustworthy&rdquo; &mdash; it is not trimmed</span>
+    </div>
+  </div>
+
+  <p class="prose">
+    And this is not hypothetical. It was measured with the <em>best</em> possible input. The team added
+    D73's rendition &mdash; a labelled line stored alongside the chunk &mdash; and put it in the prompt. The model
+    read the labels perfectly and quoted them:
+  </p>
+
+  <pre><span class="dim">what the model was told:</span>
+Annual farm turnover (gross sales): Below R 250,000 · Initial certification fee (R): 1,500 · ...
+
+<span class="dim">what the model did:</span>
+ANSWER: ... a farmer with turnover between R 500,001 and R 1,000,000 pays a renewal fee of R 2,500
+<span class="bad">AUDIT:  REFUSED   ! §2.3: the quote is not in the cited chunk</span></pre>
+
+  <div class="key">
+    <b>This is the crux of E.</b> The model was not wrong about the world &mdash; it was right, and the contract
+    refused it. So the fix cannot be &ldquo;help the model understand&rdquo;. The fix has to be
+    <b>where the label lives</b>: out of the quote, in the citation.
+  </div>
+
+  <p class="prose">
+    One more wall, from the same room. <code>D69</code> says the corpus is the document's characters &mdash;
+    nothing substituted or added. That is why the team could not simply have the ingest write
+    &ldquo;Renewal fee:&rdquo; in front of <code>900</code>. Any option that puts meaning into the chunk text is
+    spending something.
+  </p>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">4</span>
+    <h2>Option A &mdash; the obvious fix, and what it costs</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    A says: paste the printed heading line into every row's chunk text. It works &mdash; the sentence becomes
+    quotable and the row becomes findable &mdash; and it is small.
+  </p>
+
+  <div class="two-up">
+    <div class="col">
+      <p class="col-label">What the paper prints</p>
+      <div class="chunkbox">
+        <span class="n">one heading, once</span><br>
+        <b>Annual farm turnover &hellip; | Initial &hellip; | Renewal &hellip;</b><br>
+        R 250,001 &ndash; R 500,000 &nbsp;|&nbsp; 2,500 &nbsp;|&nbsp; 2,000
+      </div>
+    </div>
+    <div class="col">
+      <p class="col-label">What A's corpus prints</p>
+      <div class="chunkbox">
+        <span class="n">six chunks, each carrying it</span><br>
+        <b>Annual &hellip; | Initial &hellip; | Renewal &hellip;</b><br>
+        R 250,001 &ndash; R 500,000 / 2,500 / 2,000<br><br>
+        <span class="n">and again, above the next band,</span><br>
+        <span class="n">and again, above the next band &hellip;</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="prose">Three things follow, and all three are real:</p>
+  <ul>
+    <li>A citation may now quote a line <b>that is not contiguous on the page</b> &mdash; the audit passes it
+      because it compares against the chunk, but D69's &ldquo;the corpus is the characters&rdquo; has loosened.</li>
+    <li>A reader viewing one row's passage sees a heading above it that <b>the paper does not print there</b>.</li>
+    <li>Chunk text changes, so <b>two documents must be re-ingested</b> and two tests that pin the current
+      text must change.</li>
+  </ul>
+  <p class="prose">
+    That is acceptable as a <em>stopgap</em>. It is a bad <em>target</em>, because the corpus now carries a
+    rule built for the smallest case in it.
+  </p>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">5</span>
+    <h2>E's idea: three layers, three channels</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    Here is the part that is hard to see from a one-line description. A table row, in this system, is
+    <b>three different things at once</b> &mdash; and every previous option tried to satisfy all three with the
+    same bytes.
+  </p>
+
+  <div class="lanes">
+    <div class="lane find">
+      <div class="name">Finding
+        <small>what retrieval ranks</small>
+      </div>
+      <div class="body">
+        The embedding never has to be the paper's characters &mdash; <code>D73</code> settled that: <em>quote
+        from text, embed a rendition</em>. Structure can help here without any risk, because nothing here is
+        ever shown as evidence.
+        <pre><span class="dim"># free to be anything:</span>
+table 2.3 PGS assessment fee structure
+columns: turnover | initial fee | renewal fee</pre>
+      </div>
+    </div>
+    <div class="lane quote">
+      <div class="name">Quoting
+        <small>what the audit checks</small>
+      </div>
+      <div class="body">
+        The quote must be the paper's own characters, contiguous, inside the cited chunk. This is the only
+        layer <code>D69</code> actually governs.
+        <pre>Below R 250,000
+1,500
+900  <span class="ok">&lt;- this is what may be quoted</span></pre>
+      </div>
+    </div>
+    <div class="lane show">
+      <div class="name">Showing
+        <small>what the reader sees</small>
+      </div>
+      <div class="body">
+        Context is attached when the citation is <em>drawn</em>, from the artefact &mdash; exactly the way a
+        citation already renders a document title and a page number, neither of which the model supplied
+        either.
+        <pre>§2.3 &mdash; Below R 250,000 · initial R1 500 · renewal R900</pre>
+      </div>
+    </div>
+  </div>
+
+  <p class="prose">
+    <b>E is the only option that gives each layer its own channel.</b> A moves the heading into the quoting
+    layer (it becomes quotable, and then must be repeated). B collapses quoting and showing into one
+    passage (losing row granularity). D leaves the corpus entirely and grounds the answer in code.
+    E is the one that mirrors the artefact the paper already is: <em>the heading is context, the cell is
+    the quotation.</em>
+  </p>
+
+  <div class="warnbox">
+    <b>The conceptual unlock, stated once.</b> A citation today is a <em>quotation</em>. E makes a citation a
+    <em>quotation plus a frame</em> &mdash; and the two must look different on screen, or a reader could believe
+    the paper prints the label beside the row. That UI distinction is the work, not an afterthought.
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">6</span>
+    <h2>E end to end, in six frames</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="frames">
+    <div class="frame">
+      <p class="who"><span class="dot">1</span> The prompt</p>
+      <pre>TABLE 2.3 PGS assessment fee structure
+columns: Annual farm turnover
+         (gross sales)
+       | Initial certification fee (R)
+       | Renewal fee (R)
+row:    Below R 250,000 | 1,500 | 900</pre>
+      <p class="why">The model sees the <b>shape</b>: the headings once, the row beneath them. It still
+        cannot quote the headings &mdash; the prompt says so.</p>
+    </div>
+
+    <div class="frame">
+      <p class="who"><span class="dot">2</span> The model answers</p>
+      <pre>ANSWER: The initial certification fee for
+a farm with turnover below R 250,000
+is R1 500, and renewal is R900.
+
+QUOTE:  Below R 250,000 / 1,500 / 900</pre>
+      <p class="why">Cells only. The model is free to <b>explain</b> in the answer; only the quote is checked.</p>
+    </div>
+
+    <div class="frame">
+      <p class="who"><span class="dot">3</span> The audit &mdash; unchanged</p>
+      <pre><span class="ok">PASS</span>  "Below R 250,000\n1,500\n900"
+       is a substring of the row chunk</pre>
+      <p class="why">No new rule. Still <code>quote in chunk.text</code>. E does not weaken the audit;
+        it stops asking the model to quote something the paper never printed on that line.</p>
+    </div>
+
+    <div class="frame">
+      <p class="who"><span class="dot">4</span> The citation carries a row identity</p>
+      <pre>Citation(
+  section_ref="§2.3",
+  quote="Below R 250,000 / 1,500 / 900",
+  chunk_id=4821,
+  row_label="Below R 250,000",   <span class="dim"># new</span>
+)</pre>
+      <p class="why">Today a row <b>is</b> a chunk id. E adds the reviewed row label so the renderer knows
+        which row of the grid this was.</p>
+    </div>
+
+    <div class="frame">
+      <p class="who"><span class="dot">5</span> The renderer fetches the columns</p>
+      <pre>grid = artefact_grid_for(section)
+<span class="dim"># grid.columns = ("Annual farm turnover
+#   (gross sales)", "Initial ...", "Renewal ...")
+# grid.rows[i]  = ("Below R 250,000","1,500","900")</span></pre>
+      <p class="why">From the <b>reviewed artefact</b> at read time &mdash; the same file the reader grid
+        is drawn from.</p>
+    </div>
+
+    <div class="frame">
+      <p class="who"><span class="dot">6</span> The reader sees both</p>
+      <pre>§2.3
+<span class="ctx">Annual farm turnover (gross sales):
+  Below R 250,000</span>
+> Below R 250,000 / 1,500 / 900
+Outeniqua PGS OPP · p. 12</pre>
+      <p class="why">Context above, quotation below, visually distinct. The quote is still <b>exactly</b>
+        the paper's characters.</p>
+    </div>
+  </div>
+
+  <p class="prose">What that looks like as a real citation panel &mdash; the dashed rule and the small
+    label mark the rendered context; the solid bar marks the quotation:</p>
+
+  <div class="citerender">
+    <div class="hdr">§2.3</div>
+    <div class="row">
+      <p class="ctx">Table: 2.3 PGS assessment fee structure<br>
+        Annual farm turnover (gross sales): <b>Below R 250,000</b></p>
+      <blockquote class="quoted">Below R 250,000<br>1,500<br>900</blockquote>
+      <p class="src">Outeniqua PGS Principles, Policies and Procedures &middot; p. 12 &nbsp;
+        <span style="color:var(--accent)">View this line &rarr;</span></p>
+    </div>
+  </div>
+  <div class="legend">
+    <span><span class="k" style="background:transparent;border:1px dashed var(--muted)"></span>rendered context (not a quotation)</span>
+    <span><span class="k" style="background:var(--accent)"></span>the quotation the audit verified</span>
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">7</span>
+    <h2>Why E is cheaper than &ldquo;a new citation category&rdquo; sounds</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    The decision page calls E the biggest change of the five, and that is true of the <em>prompt contract</em>.
+    It is not true of the <em>infrastructure</em>, and this is the finding that changes the estimate: the
+    reader already does exactly this lookup, in production, today.
+  </p>
+
+  <div class="card">
+    <h3>The three pieces already exist</h3>
+    <ul>
+      <li><code>knowledge/tables.py:716</code> &mdash; <code>ArtefactGrid</code> already holds
+        <code>columns</code>, <code>labels</code> (the printed label of each row) and
+        <code>rows</code> (cells in printed column order). That is precisely frame 5's data.</li>
+      <li><code>knowledge/tables.py:790</code> &mdash; <code>align_artefact_grid(grid, texts)</code> maps each
+        artefact row to the passage that holds it, whitespace-normalised, and returns <code>None</code> rather
+        than a mislabelled grid when they disagree.</li>
+      <li><code>core/services/_documents.py:640</code> &mdash; <code>_artefact_grid()</code> resolves an open
+        branch to its reviewed section and draws the grid. Its comment records that <b>§2.3 already works
+        through this path</b>: <em>&ldquo;The OPP's §2.3 is the first table in a numbered document&rdquo;</em>, matched by
+        <code>section_ref</code>.</li>
+    </ul>
+    <p><code>Citation</code> already carries <code>section_ref</code>, <code>sub_ref</code>,
+      <code>document</code>, <code>document_code</code>, <code>page</code> and <code>reading_anchor</code> &mdash; every
+      field the renderer needs to find the grid. The artefact's review metadata already names the row
+      (<code>&lt;!-- row: Below R 250,000 --&gt;</code>), which <code>ParsedTableRow.label_text</code> exposes.</p>
+  </div>
+
+  <p class="prose">So E's genuinely new work is three things, and only one of them is hard:</p>
+  <ol>
+    <li><b>The prompt shape</b> &mdash; the model must be shown a table it may not quote from. Medium: it is a
+      contract change with its own prompt version, and the &ldquo;cells only&rdquo; rule needs a test that a model
+      which ignores it is caught.</li>
+    <li><b>Row identity on the citation</b> &mdash; small: one field, resolved through
+      <code>align_artefact_grid</code>, which already fails closed.</li>
+    <li><b>&ldquo;Context, not quotation&rdquo; in the UI</b> &mdash; the hard one, and it is a design question, not a
+      plumbing one. If it cannot be made legible, E's case collapses (see step 9).</li>
+  </ol>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">8</span>
+    <h2>What E does <em>not</em> fix: the row has to be retrieved first</h2>
+    <span class="rule"></span>
+  </div>
+
+  <p class="prose">
+    Quotability is one of two failures. The other is that the band row never reaches the top eight
+    passages. Measured, from the decision page:
+  </p>
+
+  <pre>$ default_retrieval("what is the yearly cost of membership", limit=40)
+ 1. §2.3  notes chunk        lex=1          0.0164
+ 7. §2.3  lead-in            lex=8  vec=3   0.0149
+ 8. §2.1  membership         lex=11 vec=2   0.0147
+<span class="bad">15. §2.3  R 500,001 - R 1,000,000 / 3,000 / 2,500   vec=4</span>
+<span class="dim">FUSED_CANDIDATES = 20   SEMANTIC_SEATS = 3   (knowledge/services.py:66,76)</span></pre>
+
+  <div class="pipe">
+    <div class="step">
+      <span class="tag">lexical arm</span>
+      <span class="t">ranks other §2.3 chunks</span>
+      <span class="d">the band rows carry no words a cost question uses</span>
+    </div>
+    <div class="arrow">+<span>fuse</span></div>
+    <div class="step">
+      <span class="tag">vector arm</span>
+      <span class="t">bands sit 4th&ndash;13th</span>
+      <span class="d">real signal, but below the head</span>
+    </div>
+    <div class="arrow">&rarr;<span>truncate</span></div>
+    <div class="step bad">
+      <span class="tag">top 8</span>
+      <span class="t">the band is gone</span>
+      <span class="d"><code>SEMANTIC_SEATS = 3</code> is spent on chunks the lexical arm already ranked</span>
+    </div>
+  </div>
+
+  <div class="warnbox">
+    <b>So E is half the answer, and the other half is the same under every option.</b> The selection fix
+    &mdash; reserving the semantic seat properly, and not letting the alias arm truncate the tail
+    (<code>knowledge/services.py:660</code>) &mdash; has to land whichever option you pick. <em>&ldquo;No similarity
+    ranking chooses a band.&rdquo;</em> Plan E as <b>selection fix &rarr; E's prompt and row identity &rarr; the UI
+    distinction</b>, in that order.
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">9</span>
+    <h2>The honest risks, and what would make me withdraw E</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="card">
+    <h3>Three costs, none of them hidden</h3>
+    <ul>
+      <li><b>A citation now displays text the passage does not contain.</b> That is a new category, and it is
+        a real risk to the product's central promise (&ldquo;every sentence traceable to the corpus&rdquo;). The
+        mitigation is the UI distinction &mdash; and if reviewers find it confusing, the mitigation has failed.</li>
+      <li><b>The citation is coupled to a reviewed file at read time.</b> Fine here (the reader already does
+        it), but a citation can no longer be rendered from the chunk alone, so a missing artefact degrades
+        the citation to a plain quote &mdash; which is exactly today's behaviour, so the failure is safe.</li>
+      <li><b>Rows need a stable identity.</b> A chunk id will not survive a re-ingest. The reviewed row label
+        will, if <code>align_artefact_grid</code>'s whitespace-normalised join holds &mdash; and where it does not,
+        it already falls back rather than mislabelling.</li>
+    </ul>
+  </div>
+
+  <div class="stopbox">
+    <b>What would change my mind.</b> If E's &ldquo;context, not quotation&rdquo; distinction cannot be made
+    <em>legible</em> in the answer UI &mdash; if a reader cannot tell which words the paper printed and which
+    were drawn from structure &mdash; then E trades one dishonesty for another, and A is the right answer,
+    accepting the repetition and the loosened D69. <br><br>
+    <b>What would add to it.</b> If you want the R1 500 floor guaranteed regardless of retrieval, add
+    <b>D</b> as well &mdash; accepting that one sentence of the answer is grounded in a reviewed constant rather
+    than a passage. That is a contract change, and it should be a decision of its own, not a side effect.
+  </div>
+
+  <div class="card">
+    <h3>The separate measurement neither option escapes</h3>
+    <p>
+      The <em>prose</em> rendition (Appendix 2's rows) was reverted after three suite questions refused,
+      and the revert is not yet justified. Re-read carefully, the evidence says: absolute similarity drops
+      slightly every time, but the order changes &mdash; and for the manure question the top row moves from the
+      wrong row (0.665) to the right one (0.617), with second place <em>also</em> 0.617. A tie decides it.
+      And one of the three failures was noise (ducks refuses about one run in two with the revert in place,
+      the pre-existing G1 class).
+    </p>
+    <p class="muted" style="margin-bottom:0">
+      &ldquo;The rendition changes the order; whether it helps is not established.&rdquo; Settling it costs about
+      <b>40 model calls</b> (4 questions &times; 5 runs &times; 2 configurations, recording failure class rather than
+      verdict). Run it before the next corpus slice. It gates <b>A</b> directly; it informs E through the
+      finding layer only, which is why E is the safer bet while it is open.
+    </p>
+  </div>
+
+  <!-- ============================================================ -->
+  <div class="section-head">
+    <span class="n">10</span>
+    <h2>Your decision</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="key">
+    <b>Answered 2026-11-02: E</b> (spec §18.3 D79). The product owner chose the target alone &mdash;
+    A is not to be built. The three build slices are the reserved semantic seat, then the prompt shape
+    and row identity, then the &ldquo;context, not quotation&rdquo; UI distinction.
+  </div>
+
+  <div class="decision" id="decision">
+    <h3 style="margin:0 0 6px;font-size:17px">G11 &mdash; How does the printed column header reach a row's quotable text?</h3>
+    <p class="muted" style="margin:0;font-size:13.5px">
+      The full argument for each is in <code>g11_row_labels_exploration.html</code> Part 3. This page only
+      taught you E.
+    </p>
+    <div class="opts" role="group" aria-label="G11 options">
+      <button class="opt" aria-pressed="false" data-value="A">A <small>header in the row</small></button>
+      <button class="opt" aria-pressed="false" data-value="B">B <small>one chunk per table</small></button>
+      <button class="opt" aria-pressed="false" data-value="C">C <small>leave it to the page</small></button>
+      <button class="opt" aria-pressed="false" data-value="D">D <small>reviewed fee panel</small></button>
+      <button class="opt" aria-pressed="false" data-value="E">E <small>render context at cite time</small></button>
+      <button class="opt" aria-pressed="false" data-value="A now, E as the target">A now, E as the target <small>two tracks</small></button>
+    </div>
+    <textarea id="notes" placeholder="Why — in one or two sentences. This becomes the rationale line of the D79 row."></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="primary" id="export">Copy the §18.3 row</button>
+      <button id="reset">Clear</button>
+      <span id="status" class="muted" style="font-size:12.5px;align-self:center"></span>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      Sources quoted here: <code>knowledge/corpus/opp.md</code> (§2.3 table block),
+      <code>knowledge/sections/__init__.py</code> (<code>ParsedTableRow.text</code>, <code>label_text</code>),
+      <code>core/services/_chatbot.py</code> (<code>Citation</code> :339, <code>build_prompt</code> :1404,
+      <code>_normalise_text</code> :816, <code>audit_citations</code> :984, substring check :1055-1061),
+      <code>knowledge/tables.py</code> (<code>ArtefactGrid</code> :716, <code>artefact_grid_for</code> :769,
+      <code>align_artefact_grid</code> :790),
+      <code>core/services/_documents.py:640</code> (<code>_artefact_grid</code>),
+      <code>core/templates/chatbot/_thread.html:41-60</code> (the citation panel as it renders today),
+      <code>knowledge/services.py:66,76,660</code> (retrieval arms and seats).
+    </p>
+    <p>
+      Measurements are from the decision page (dev corpus, 401 chunks, 2026-11-01/02) and were not re-run
+      for this page. Nothing here is a proposal; the recommendation belongs to
+      <code>g11_row_labels_exploration.html</code> Part 6.
+    </p>
+  </footer>
+
+</div>
+
+<div class="sticky">
+  <span class="state" id="bar">No option chosen</span>
+  <button id="top">Back to top</button>
+</div>
+
+<script>
+(function () {
+  var KEY = "pgs.g11.explainer";
+  var state = { choice: "", notes: "" };
+  try {
+    var saved = localStorage.getItem(KEY);
+    if (saved) { state = Object.assign(state, JSON.parse(saved)); }
+  } catch (e) { /* private mode: the page still works, it just will not remember */ }
+
+  var opts = Array.prototype.slice.call(document.querySelectorAll(".opt"));
+  var notes = document.getElementById("notes");
+  var bar = document.getElementById("bar");
+  var status = document.getElementById("status");
+
+  function paint() {
+    opts.forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.value === state.choice ? "true" : "false");
+    });
+    bar.innerHTML = state.choice
+      ? "Chosen: <b>" + state.choice + "</b>"
+      : "No option chosen";
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+  }
+
+  opts.forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.choice = b.dataset.value;
+      paint(); save(); status.textContent = "";
+    });
+  });
+
+  notes.addEventListener("input", function () {
+    state.notes = notes.value;
+    save(); status.textContent = "";
+  });
+
+  document.getElementById("export").addEventListener("click", function () {
+    if (!state.choice) {
+      status.textContent = "Choose an option first.";
+      return;
+    }
+    var why = (state.notes || "").replace(/\s+/g, " ").trim() || "(rationale to add)";
+    var row = "| **D79** | " + state.choice + " \u2014 " + why +
+      " | 2026-11-02 | owner | " +
+      "[G11 exploration](product/design/g11_row_labels_exploration.html); " +
+      "[option E explained](product/design/g11_option_e_explainer.html) |";
+    var text = "| Decision | Answer | Date | Owner | Evidence |\n" +
+      "|---|---|---|---|---|\n" + row + "\n";
+    var done = function () { status.textContent = "Copied \u2014 paste into PGS_PLATFORM_SPEC.md \u00a718.3"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { window.prompt("Copy this row:", text); });
+    } else {
+      window.prompt("Copy this row:", text);
+    }
+  });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    state = { choice: "", notes: "" };
+    notes.value = "";
+    paint(); save(); status.textContent = "Cleared.";
+  });
+
+  document.getElementById("top").addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  notes.value = state.notes || "";
+  paint();
+})();
+</script>
+</body>
+</html>

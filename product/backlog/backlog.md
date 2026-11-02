@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-01 17:53
+> Generated: 2026-11-02 13:19
 
 ## Ready (up next)
 
@@ -14,7 +14,7 @@
 - **PRD — The ask surface, second shape (board + answer pages)** - `In Progress\ASK_SURFACE_PRD.md` - Status: In Progress — shape decided (**D62**); follow-up stage 1 landed (**D63**);
 - **PRD: Chat answer coverage — governing rules, table rows, and the gaps left** - `In Progress\CHAT_ANSWER_COVERAGE_PRD.md` - Status: In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
 - **Corpus Canonical Format — Implementation Plan** - `In Progress\CORPUS_CANONICAL_FORMAT_PLAN.md` - Status: In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.1–P2.4 landed
-- **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — **SAOSO and BPP** are built, reviewed and are the text of record (`knowledge/corpus/saoso.md`, `bpp.md`); the OPP and landscape are not converted (P4, P5). **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4).
+- **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — **all four governed documents** are built, reviewed and are the text of record (`knowledge/corpus/{saoso,bpp,landscape,opp}.md`); **P4 (the OPP) landed 2026-11-02**, so `corpus_check` reports *current* for all four and the dev corpus is 401 chunks, 0 unembedded. **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4). **Remaining:** the generator's table-block rule (D75 — every table in the corpus is still a human transcription) and pdf 11's §6.5 labelling table; both now sit inside **D80**'s engine work.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
 - **PRD: The certification landscape's tables — reviewed rows, and the rule for every other table** - `In Progress\LANDSCAPE_TABLES_PRD.md` - Status: In Progress — **all seven decisions taken 2026-10-29** (D72.1–D72.7, §6); **step 0 and step 1 built 2026-10-30** (§12a): the format, the guard and one-chunk-per-row land, and the measurements in §1 were reproduced exactly. Not built: the landscape artefact (step 2), curation with `TABLE_BANDS` (steps 3–4), front matter (step 5), the reader's grid (step 6).
@@ -76,6 +76,29 @@ the generated index's "To Do" section.
 - [ ] `docker-compose.yml` + `Dockerfile` (MVP 0, sub-plan A).
 - [ ] Decide the production host for the platform (the group currently has no server).
 - [ ] Add a second physical backup copy — currently a single local external drive (R11, accepted gap).
+
+## Decided, not yet queued (2026-11-02)
+
+- [ ] **Context budget cuts 4.2–4.4** (`product/docs/context/CONTEXT_BUDGET.md`): a §18.3 row
+      becomes a sentence + a link (14 rows are over 1.5 KB), split `core/services/_chatbot.py`
+      (91 KB, 3× the §II cap) and `knowledge/corpus.py` (49 KB), then wire
+      `scripts/context.py --check` into the gate. 4.1 (the HANDOVER split) and the
+      `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
+      source files, 14 decision rows).
+- [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) — needs
+      a PRD before it can be built. First commit is the **eight-shape fixture set** in
+      `product/design/g12_ingestion_generalisation.html` Part 1; then an extractor evaluation
+      (Docling / Document AI) against it, then the generator emitting `<!-- table -->` blocks, then
+      the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
+      and Appendix 7's interleaved chunks.
+- [ ] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
+      render the row's context from the artefact at cite time. Three slices, in order: (1) the
+      reserved semantic seat — the bands rank 4th–13th in the vector arm and never reach the top 8; (2)
+      the prompt shape plus a row identity on `Citation` (`artefact_grid_for` and
+      `align_artefact_grid` already resolve this path for the reader); (3) the *context, not
+      quotation* UI distinction — if it cannot be made legible, fall back to A. Mechanism:
+      `product/design/g11_option_e_explainer.html`; argument: `g11_row_labels_exploration.html`.
+      Unblocks the fee answer G10 opened.
 
 ## Product, deferred from the aimed spec
 

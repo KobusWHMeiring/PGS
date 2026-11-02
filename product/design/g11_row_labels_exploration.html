@@ -35,6 +35,19 @@
     margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
     line-height: 1.55; -webkit-font-smoothing: antialiased;
   }
+  header.hero .decided {
+    margin: 0 0 12px; padding: 10px 14px; border-radius: var(--radius-lg);
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3);
+    font-size: 13.5px; line-height: 1.5; max-width: none; opacity: 1;
+  }
+  header.hero .decided a { color: #fff; text-decoration: underline; }
+  @media print {
+    header.hero .decided {
+      background: #f0f4ef !important; border: 1px solid #999 !important; color: #000 !important;
+    }
+    header.hero .decided a { color: #000 !important; }
+  }
+
   .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 160px; }
 
   header.hero {
@@ -228,6 +241,10 @@
   <div class="inner">
     <p class="eyebrow">Outeniqua PGS Digital Platform &middot; Decision exploration</p>
     <h1>How does a printed column header reach a row’s quotable text?</h1>
+    <p class="decided"><b>Decided 2026-11-02 — option E</b> (spec §18.3 D79). Part 6 argued two
+       tracks; the owner chose the target alone, so <b>A is not to be built</b>. Parts 1–6 are
+       unchanged — this banner records the answer, and
+       <a href="g11_option_e_explainer.html">option E is explained step by step here</a>.</p>
     <p>The assistant can now <em>find</em> the OPP’s six turnover bands. It still cannot <em>say</em> R1,500,
        because a row’s chunk text is three bare cells and the column labels live outside it.
        Five ways out, and one decision — read together with

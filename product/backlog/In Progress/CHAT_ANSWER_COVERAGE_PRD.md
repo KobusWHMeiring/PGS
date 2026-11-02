@@ -505,19 +505,17 @@ chunks with no column meaning; Appendix 7 is interleaved). That page's Part 1 is
 test set built from our own corpus, Part 6 recommends a structure extractor emitting the same
 artefact IR plus an automated verification harness, and G11's **option E** comes out of it.
 
-**Explored 2026-11-02 — `product/design/g11_row_labels_exploration.html`.** Four options with their
-evidence and costs, the recommendation (A: the printed header line becomes part of each row's chunk
-text, plus the reserved seat), and the literature that disagrees with A. **Undecided**; the page
-exports the §18.3 row when it is answered.
-
-**What the next slice has to decide, therefore, is one thing:** how a printed header reaches a
-row's *quotable* text. The candidates are (a) the printed column-header line becomes part of
-each row's chunk text — it is the paper's own words, printed once above the table, and Appendix
-2 already restores printed part headings from reviewed data; (b) the reader/answer cites the
-whole table section instead of a row; (c) the assistant does not attempt the band and says the
-scale is in the OPP, which is what it does today and is honest but unhelpful. **With (a), the
-reserved seat and the floor both work**; without one of them, P4's table is a reader feature and
-not a chat feature, and G10's "align the two" stays half done.
+**Decided 2026-11-02 — `E` (spec §18.3 D79).** Five options were laid out with their evidence and
+costs in `product/design/g11_row_labels_exploration.html`, and the mechanism chosen is walked
+through in `product/design/g11_option_e_explainer.html`: show the model the table as **structure**,
+let it quote **cells only**, and render the row's context from the artefact **at cite time**. A
+citation becomes a quotation plus a frame — the printed heading is never a quote target, so it can
+never be refused, and D69 needs no licence. **A was not built**, so its repetition never has to be
+deleted later. **Three slices, in this order:** the reserved semantic seat (which no option escapes
+— the bands rank 4th–13th in the vector arm and never reach the top eight), then the prompt shape
+plus a row identity on `Citation`, then the UI distinction that says *context, not quotation* — if
+that distinction cannot be made legible, E falls back to A, and the fallback is written down here
+in advance. P4's table becomes a chat feature when the first two slices land.
 
 **Also measured, and worth keeping:** D73's rendition is for rows whose cells are **numbers**.
 Applying it to Appendix 2's reviewed literals — whose cells are already prose — took the probe

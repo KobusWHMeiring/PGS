@@ -15,16 +15,23 @@ the generated index's "To Do" section.
 - [ ] **Context budget cuts 4.2–4.4** (`product/docs/context/CONTEXT_BUDGET.md`): a §18.3 row
       becomes a sentence + a link (14 rows are over 1.5 KB), split `core/services/_chatbot.py`
       (91 KB, 3× the §II cap) and `knowledge/corpus.py` (49 KB), then wire
-      `scripts/context.py --check` into the gate. 4.1 (the HANDOVER split) is done.
+      `scripts/context.py --check` into the gate. 4.1 (the HANDOVER split) and the
+      `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
+      source files, 14 decision rows).
 - [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) — needs
       a PRD before it can be built. First commit is the **eight-shape fixture set** in
       `product/design/g12_ingestion_generalisation.html` Part 1; then an extractor evaluation
       (Docling / Document AI) against it, then the generator emitting `<!-- table -->` blocks, then
       the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
       and Appendix 7's interleaved chunks.
-- [ ] **G11 decision (D79)** — `product/design/g11_row_labels_exploration.html`, five options,
-      **E recommended** (render the row's context at cite time; quote cells only) with **A** as a
-      stopgap. Blocks the fee answer that G10 opened.
+- [ ] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
+      render the row's context from the artefact at cite time. Three slices, in order: (1) the
+      reserved semantic seat — the bands rank 4th–13th in the vector arm and never reach the top 8; (2)
+      the prompt shape plus a row identity on `Citation` (`artefact_grid_for` and
+      `align_artefact_grid` already resolve this path for the reader); (3) the *context, not
+      quotation* UI distinction — if it cannot be made legible, fall back to A. Mechanism:
+      `product/design/g11_option_e_explainer.html`; argument: `g11_row_labels_exploration.html`.
+      Unblocks the fee answer G10 opened.
 
 ## Product, deferred from the aimed spec
 
