@@ -22,6 +22,20 @@
 >    joins it had never needed — a numbered clause's reading anchor is its *reference*, not the
 >    artefact's heading slug, and a branch may hold several sections of which one has a table.
 >
+> **The owner then read the cost answer and was right twice (G11, `d78-2`).** The OPP's R500
+> is the **group's** annual fee to SAOSO, secured *from* the members' fees — not a second charge
+> to a farmer — and the first rule listed it inside "the yearly cost of membership". And a farm
+> cannot be certified without a visit, so the assessment fee is unavoidable; the first rule
+> forbade *every* total, including the **R1 600** floor the public page already publishes. The
+> rule is now three parts (whose amount, the unavoidable part, the conditional part) and permits
+> exactly one sum — membership plus one named band, called a floor. Measured after: *"…secured
+> from the group's collected membership fees and **is not an additional charge to the individual
+> member**"*. **The amounts are still unreachable**, for two linked reasons, both measured and
+> both written up in G11: a table row is vector-only (so the seat must be reserved, and today the
+> alias arm throws it away), and a row's labels are not in its quotable text (so a prompt label
+> line is a quote trap — the model quoted it and the audit refused, correctly). **One decision
+> closes both:** how a printed column header reaches a row's quotable text.
+>
 > **G10's second finding is now LOCATED, and it is one space.** The refusal that hid for a session:
 > the model quoted `…set out in 1.o Currently R500`; the passage prints `1.` and `o Currently R500`
 > on two lines, and `flat()`-normalisation keeps a space where the model dropped one.
