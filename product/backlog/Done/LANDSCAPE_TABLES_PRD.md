@@ -1,6 +1,6 @@
 # PRD: The certification landscape's tables — reviewed rows, and the rule for every other table
 
-**Status:** In Progress — **all seven decisions taken 2026-10-29** (D72.1–D72.7, §6); **step 0 and step 1 built 2026-10-30** (§12a): the format, the guard and one-chunk-per-row land, and the measurements in §1 were reproduced exactly. Not built: the landscape artefact (step 2), curation with `TABLE_BANDS` (steps 3–4), front matter (step 5), the reader's grid (step 6).
+**Status:** **Done 2026-11-01** — built in §12a–§12g (steps 0–6 and the §12f design's steps 1–8) and **UAT SIGNED 2026-11-01** — `tests/uat/landscape_tables_uat.md` carries six **PASS** results, signed by Kobus (Product) against commit `ecd3c8d`; applied by `scripts/uat_signoff.py`. The PGS administrator and committee reviewer seats are still empty (D4). Carried forward and named rather than hidden: **`TABLE_BANDS`** (a transposition inside one printed row-line) and **the corpus-level table-page guard**, both inside D80's engine work; the generator's table-block rule (`scripts/build_corpus.py --force --doc landscape` still destroys the review). See §12h.
 **Resolved 2026-10-29:** the rows live in the **corpus artefact**, not in `tables.py` (§5.2a), so step 2
 is dropped and the landscape's conversion moves ahead of its PRD's own place in the rollout.
 Decision artifact: `product/design/d72_landscape_tables_questions.html`.
@@ -1104,6 +1104,36 @@ The last one exists because **a missing title and a forgotten one look identical
 - **The corpus-level table-page guard** — still needs a cross-document definition of "table-shaped".
 - **`scripts/build_corpus.py --force --doc landscape` still destroys the review.** The generator has
   no table-block (or card) rule, and nothing this session changed that.
+
+## 12h. Signed 2026-11-01 — six PASS, and the paper's own "As above"
+
+**UAT SIGNED.** `scripts/uat_signoff.py` applied Kobus (Product)'s export to
+`tests/uat/landscape_tables_uat.md`: **6 PASS · 0 FAIL · 0 N/A**, judged on
+`product/design/uat/landscape_tables.html` rebuilt against `ecd3c8d` (clean), database `pgs`.
+Preflight: `ready — no blocking failure` (corpus 401 chunks, 0 unembedded, 8 documents published,
+Xpdf 4.00); one warning, `celery_worker=error`, which the reader slice does not touch. The run was
+idempotent — a second apply changed nothing.
+
+**The one finding, recorded rather than fixed.** The reviewer reported that the *PGS seals and
+their use* grid shows a Fee cell reading **"As above"** with nothing above it. Checked against the
+paper first: printed p. 6 prints exactly that, for both rows, and the referent is the p. 5 table's
+*"Recommended annual fee for the use of stickers (paid by individual farmers): R350 [to be divided
+between PGS SA (30%) and PGS groups (70%)…]"*. The artefact is therefore faithful, and its own
+legend already says so (`legend: … Both rows' Fee cell reads "As above", which is the fee stated on
+the previous table.`), rendered as `p.reader__grid-legend` directly above the grid.
+
+What is *ours* is smaller and real: on the deep link
+`?section=pgs-seals-and-their-use` there is no previous table in view and "the previous table" is
+not reachable. The fix must be a **legend** change, never a cell change — writing `R350` into the
+cell would publish an amount outside the paper's sentence (the D72.2 failure) and add a word the
+paper does not print (Scenario 6). Filed as
+`product/backlog/BugFixes/landscape_fee_as_above_referent.md`. The reviewer accepted the page as
+is; the defect is in the source document and is now carried by name.
+
+**Also noted for the next session:** no scenario asked this question. Scenario 1 is the fee
+question but is scoped to the *establishing a PGS group* branch; Scenario 4 is legibility and
+resizing. The seals table's Fee column fell between the two — a gap in the UAT, recorded in the bug
+file, not repaired in a signed file.
 
 ## Pre-Flight Checklist
 

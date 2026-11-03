@@ -1,13 +1,16 @@
-# Handover — D79's three slices are built and signed; the landscape sign-off and the context cuts are next
+# Handover — D79's three slices and the landscape UAT are signed; the context cuts are next
 
-> ## START HERE — slice 3 is closed; the context cuts are next
+> ## START HERE — the landscape is signed and in `Done/`; the context cuts are next
 >
-> **Where the work stands (2026-11-02, session 11).** The owner answered G11, all three of its
-> slices are built, and **UAT Scenario 8 is signed — PASS**: the context line reads as context, not
-> a quotation, on the transcript, the answer page and the reader. `D79` option E stands; the
-> option A fallback is not taken. The session record is
-> `product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`; this
-> block is state only.
+> **Where the work stands (2026-11-03, session 12).** Two sign-offs are in: G11's **Scenario 8**
+> (2026-11-02) and the **landscape tables, 6 PASS · 0 FAIL · 0 N/A** (2026-11-01, applied
+> 2026-11-03 against `ecd3c8d`), so `LANDSCAPE_TABLES_PRD` has moved to `Done/` with `TABLE_BANDS`
+> and the corpus-level table-page guard **named and carried forward** into D80. The sign-off's one
+> finding — a Fee cell reading "As above" with nothing above it on a deep link — is the **paper's**
+> wording, faithfully reproduced, and the legend already explains it; what is ours is that the
+> referent is unreachable, filed as `BugFixes/landscape_fee_as_above_referent.md`. The session
+> record is `product/docs/handover/SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md`;
+> this block is state only.
 >
 > 1. **Cost-question rule — built** (`d78-2`, D78). The assistant separates the *member's* fee from
 >    the *group's*, names the assessment as unavoidable, and may state one floor (membership + one
@@ -49,10 +52,11 @@
 >
 > **What is next, in order:**
 >
-> 1. **The landscape UAT sign-off** (`tests/uat/landscape_tables_uat.md`) — still unsigned, still
->    unblocked, and still the only thing keeping `LANDSCAPE_TABLES_PRD` out of `Done/`. The ask
->    surface's own Scenario 8 is signed; the other seats on that file (PGS administrator, committee
->    reviewer, second reader) remain open and are not blocking.
+> 1. **The fee legend's unreachable referent** (`BugFixes/landscape_fee_as_above_referent.md`) —
+>    the seals table's `As above` is the paper's own wording; the artefact's legend says what it
+>    means, but on `?section=pgs-seals-and-their-use` "the previous table" is not in view and is not
+>    reachable. Fix is a **legend** edit (never a cell: D72.2 and Scenario 6 forbid it), then
+>    re-present and re-judge **only** Scenario 4. Small, unblocked, no re-ingest.
 > 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
 >    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
 >    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`
@@ -70,8 +74,9 @@
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
 >
-> **Deploy note:** the live box is still `8d2839d` and misses five sessions. A deploy pulls the
-> artefacts but never re-ingests; the OPP's 30 → 37 chunks is a corpus change, not a code change.
+> **Deploy note:** the live box is still `8d2839d` and misses **14 sessions (`0m`–`0z`), 57 commits**.
+> A deploy pulls the artefacts but never re-ingests; the OPP's 30 → 37 chunks is a corpus change,
+> not a code change.
 > **The deploy also needs `d79-1`/`d79-2` to have run**: the entries are keyed on `PROMPT_VERSION`, so
 > old cached answers are not served under the new contract — but a visitor mid-conversation keeps
 > their thread. Slice 3 adds no migration and no corpus change; the changed templates and CSS are
@@ -81,19 +86,20 @@
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
-display-model, shapes-build, cost-rule-and-P4, context-budget and context-frame sessions
-**Repo state:** `main`, **45 commits ahead of `origin/main`**. On this tree (2026-11-02, after
-D79's three slices — the sign-off added docs only, so the code gate below still stands):
-`scripts/verify.sh` **green at 1593 passed / 1 skipped in 59.50 s** with
-`--create-db`, and `scripts/fast.sh` **1578 passed, 1 skipped in 42.40 s**,
-`scripts/fast.sh --critical` **217 passed, 4 deselected in 11.28 s** — run as
-`DATABASE_URL=postgres://pgs:pgs@localhost:5433/…` (the gate defaults to 5432 and this box serves
-5433, `testing_hazards.md` §3.1; `verify.sh` wants `pgs_verify`). `pytest tests/e2e` was **not**
-re-run this session (only templates, URL assembly and CSS moved; 71 passed in 135 s on the
-previous tree). The gate ran on an idle box with a warm page cache, so quote it beside the
-earlier runs of the same command (`testing_hazards.md` §3.17).
+display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame and
+landscape-sign-off sessions
+**Repo state:** `main`, **46 commits ahead of `origin/main`**. On this tree (2026-11-03, after the
+landscape sign-off — docs and the regenerated board only, so no code moved):
+`scripts/verify.sh` **green at 1593 passed / 1 skipped in 72.76 s** with `--create-db`, run as
+`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
+serves 5433, `testing_hazards.md` §3.1). `scripts/fast.sh` and `--critical` were **not** re-run
+this session; the previous tree measured 1578 passed / 1 skipped in 42.40 s and 217 passed /
+4 deselected in 11.28 s. `pytest tests/e2e` was **not** re-run this session — nothing in
+`core/templates`, the URL assembly or the CSS moved; 71 passed in 135 s on the previous tree. The
+gate ran on an idle box with a warm page cache, so quote it beside the earlier runs of the same
+command (`testing_hazards.md` §3.17).
 
-The suite gained **ten** guards this session — the column-resolution pair, the snapshot/citation
+The suite gained **ten** guards in session 11 — the column-resolution pair, the snapshot/citation
 pair, the reader-link pair, the thread's context+legend pair, the answer page's context+legend
 pair and the reader's mark/no-mark pair — each proved by breaking it and watching it go red.
 
@@ -101,10 +107,10 @@ pair and the reader's mark/no-mark pair — each proved by breaking it and watch
 unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left
 unlinked on purpose (same locator, different text: the transition off the PDF parses).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **35 commits unpushed**
-(36 when this change is committed).
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **46 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — three sessions behind, with the old PDF-built corpus. A deploy pulls the artefacts but
+2026-10-30 — **14 sessions and 57 commits behind**, with the old PDF-built corpus. A deploy pulls
+the artefacts but
 never runs `ingest_standard`, so the box will show drift on all four until someone runs
 `corpus_refresh --apply` there deliberately.
 
@@ -114,6 +120,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `0z` 2026-11-03 (session 12) — the landscape is signed, and "As above" is the paper's word — [`SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md`](product/docs/handover/SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md)
 - `0y` 2026-11-02 (session 11) — slice 3: the context is a row and a column, both surfaces say so, and Scenario 8 is signed — [`SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`](product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md)
 - `0x` 2026-11-02 (session 10) — G11 answered, and two of its three slices landed — [`SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md`](product/docs/handover/SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md)
 - `0w` 2026-11-02 (session 9) — the context balloon is the loop, not the handover — [`SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md`](product/docs/handover/SESSION_0w_2026-11-02_the-context-balloon-is-the-loop-not-the-handover.md)

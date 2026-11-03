@@ -15,7 +15,7 @@ The shape and the column titles are `core/services/_board.py`'s; this module is 
 
 from __future__ import annotations
 
-SOURCE_DIGEST = 'sha256:7a2764bf483c4006ac722f429fcf29a2bb410a7945d237417e158bbc4ce56e8f'
+SOURCE_DIGEST = 'sha256:f192aa22784595f55adf48492e3d8462979c5f05c6d43b19c6e85cf59bf4b63d'
 
 COLUMN_ORDER: tuple[str, ...] = ('refinement', 'ready', 'in_progress', 'done')
 
@@ -37,7 +37,7 @@ CURATED: tuple[dict[str, str], ...] = (
     {
         'title': 'Readable tables in the certification landscape',
         'summary': 'Five table pages in the certification landscape document become readable rows, instead of text flattened into a paragraph.',
-        'column': 'in_progress',
+        'column': 'done',
         'updated': '2026-10-30',
     },
     {

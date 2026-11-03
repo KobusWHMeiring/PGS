@@ -150,7 +150,7 @@
     <p class="eyebrow">Outeniqua PGS - user acceptance testing</p>
     <h1>UAT — The certification landscape's tables: cards, a fork, and a spreadsheet</h1>
     <p>6 scenarios to judge. Read the judgement question, run the scenario in the app, then record what you saw.</p>
-    <div class="meta"><span>Slug <code>landscape_tables</code></span><span>Commit <code>a1358c7 (clean)</code></span><span>Database <code>pgs</code></span><span>Generated <code>2026-11-01</code></span><span>Source <code>landscape_tables_uat.md</code></span></div>
+    <div class="meta"><span>Slug <code>landscape_tables</code></span><span>Commit <code>ecd3c8d (clean)</code></span><span>Database <code>pgs</code></span><span>Generated <code>2026-11-03</code></span><span>Source <code>landscape_tables_uat.md</code></span></div>
   </div>
 </header>
 
@@ -176,13 +176,15 @@
     <p>Observed against expected. To run a setup command or re-check, use the staff console at
        <code>/uat/</code> on this instance - it has them as buttons, so nothing here has to be
        copied. This panel is the snapshot taken when the page was built.</p>
-    <pre class="preflight">[ok  ] settings and app     no issues
+    <pre class="preflight">2026-11-03T08:54:11.965425Z [warning  ] health.celery_worker.no_workers_responded
+2026-11-03T08:54:11.968013Z [error    ] health.degraded                failed=['celery_worker']
+[ok  ] settings and app     no issues
        expected: no issues
 [warn] dependencies         db=ok redis=ok celery_broker=ok celery_worker=error
        expected: db, redis, celery_broker, celery_worker all ok
        note: a dev box often has no Celery worker; it must be ok on the instance being signed
-[ok  ] corpus present       394 chunks
-       expected: 394 chunks
+[ok  ] corpus present       401 chunks
+       expected: 401 chunks
 [ok  ] corpus embedded      0 chunk(s) without a vector
        expected: 0 chunks without a vector
        note: a corpus ingested with --no-embed answers from the lexical arm only (D48)
@@ -241,10 +243,10 @@ preflight: ready - no blocking failure</pre>
  "slug": "landscape_tables",
  "title": "UAT — The certification landscape's tables: cards, a fork, and a spreadsheet",
  "environment": {
-  "commit": "a1358c7",
+  "commit": "ecd3c8d",
   "working_tree": "clean",
   "database": "pgs",
-  "generated_on": "2026-11-01"
+  "generated_on": "2026-11-03"
  },
  "scenarios": [
   {

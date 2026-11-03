@@ -1,10 +1,10 @@
 # UAT — The certification landscape's tables: cards, a fork, and a spreadsheet
 
 **Feature slug:** `landscape_tables`
-**PRD:** `product/backlog/In Progress/LANDSCAPE_TABLES_PRD.md` (§12f, built in §12g)
+**PRD:** `product/backlog/Done/LANDSCAPE_TABLES_PRD.md` (§12f, built in §12g, signed in §12h)
 **Decision:** `PGS_PLATFORM_SPEC.md` §18.3 D72 (the rows are reviewed data), D76 (the printed grid), **D77 (a layout per table)**
 **Design:** `product/design/d76d_c3_and_the_split.html` · `product/design/DESIGN.md` §7.13
-**Status:** Drafted after implementation — **unsigned**
+**Status:** **SIGNED 2026-11-01** — 6 PASS, 0 FAIL, 0 N/A, signed by Kobus (Product) against commit `ecd3c8d`; applied by `scripts/uat_signoff.py`. The PGS administrator and committee reviewer seats are still empty (D4) and are not blocking.
 **Date:** 2026-11-01
 
 ---
@@ -89,6 +89,7 @@ Steps 1–2; the certification fee sits under Step 3.
 **Judgement:** *Did you find the answer without hunting, and does each box say what the money buys
 and who it is paid to?* A box holding a bare "R500" is the failure D72.2 forbids — the amount is
 never published on its own. Say plainly whether you would quote this page to a farmer who asked.
+**Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`
 
@@ -109,6 +110,7 @@ closed fold away; *Use of seals* is visible without opening anything.
 fold?* This is also the decision the design deferred (§12f item 3): **if the cards are still too
 tall, *Use of seals* folds with the same element.** Say whether it should — folding it is one
 attribute, not a redesign, and this is the only place that call can be made.
+**Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`
 
@@ -129,6 +131,7 @@ pointer to Step 2, the second is the paper's direct route with its own fee; the 
 pointer is a signpost, not a second summary of Step 2?* The risk the design named: Path A
 drifting into a duplicate of Step 2, and repeating its fees (which D72.2 would then break in a
 new place). Judge whether it reads as a signpost at this size.
+**Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`
 
@@ -149,6 +152,7 @@ columns rather than rearranging them.
 **Judgement:** *Is the comparison legible without touching a control — and if you did resize, did
 the table end up more useful rather than merely different?* A reader who never drags must still be
 able to compare the two seals. Say whether Compact is worth having at all.
+**Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`
 
@@ -169,6 +173,7 @@ spreadsheet restacks into labelled blocks, and nothing needs a sideways swipe.
 **Judgement:** *On a phone in daylight, can a farmer read the fee answer without pinching or
 swiping?* This is the one judgement a browser at 1280 px cannot make, and it is the reason the
 design refused an `overflow-x` rail.
+**Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`
 
@@ -190,6 +195,7 @@ that are not stored. No page says a farm, a person or a product is certified.
 statement of what the landscape says?* `test_claim_discipline.py` catches the forbidden terms and
 nothing about framing; the residue — a fee that reads as a quote, a route that reads as an
 endorsement — is this scenario.
+**Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`
 
@@ -202,3 +208,18 @@ endorsement — is this scenario.
 | Product owner | | | | |
 | PGS administrator | | | | |
 | Committee reviewer | | | | |
+
+### Per-scenario results
+
+| Scenario | Category | Result | Reviewer | Role | Date |
+|---|---|---|---|---|---|
+| 1. The fee question, which is why any of this exists |  | PASS | Kobus | Product | 2026-11-01 |
+| 2. A card you can scan, and the one fold the design left to UAT |  | PASS | Kobus | Product | 2026-11-01 |
+| 3. The fork reads as a fork, not as a fourth step |  | PASS | Kobus | Product | 2026-11-01 |
+| 4. The comparison is a spreadsheet, and it reads without being dragged |  | PASS | Kobus | Product | 2026-11-01 |
+| 5. A real phone, 390 px, in daylight |  | PASS | Kobus | Product | 2026-11-01 |
+| 6. What the pages refuse to claim |  | PASS | Kobus | Product | 2026-11-01 |
+
+**Results:** 6 PASS · 0 FAIL · 0 N/A — signed by Kobus (Product).
+
+**Signed against:** commit `ecd3c8d` (clean), database `pgs`, generated 2026-11-03.
