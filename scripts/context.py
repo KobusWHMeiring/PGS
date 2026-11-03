@@ -82,7 +82,8 @@ TASKS: dict[str, tuple[tuple[str, str, str], ...]] = {
     "reader": (
         ("HANDOVER.md", "read it whole now - state only", READ),
         ("product/design/DESIGN.md", "section 7.13 for tables, section 1 for the claim rules", SEARCH),
-        ("core/services/_documents.py", "the three joins: branch, grid, structure", SEARCH),
+        ("core/services/_document_reader.py", "the three joins: branch, search, citation", SEARCH),
+        ("core/services/_document_shapes.py", "cards, the printed grid, the fee box", SEARCH),
         ("core/templates/public/document_reader.html", "the shapes", SEARCH),
     ),
     "public": (

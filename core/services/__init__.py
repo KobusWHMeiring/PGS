@@ -16,4 +16,7 @@ Slices:
     _chat_cache.py   the answer cache: its key and the snapshot it proves
     _chat_text.py    tokens, locators and digests shared by all of the above
     _chat_values.py  what the chatbot returns, raises, and needs from a provider
+    _documents.py    the public document library: what is published, and how it gets there
+    _document_reader.py  the reader page: section, branch, passages, search, citation
+    _document_shapes.py  what that page is made of: cards, the printed grid, the fee box
 """

@@ -131,9 +131,13 @@ Ordered so each step is independently committable and the biggest session cost f
    reviewed-edit ledger move out; the header and format rules stay. Measured: the table block is
    15.7 KB and the ledger 10.4 KB — the table split **alone** leaves `corpus.py` at 38 KB, over
    cap, so the ledger has to go too. After both it is 28.5 KB.
-7. **`core/services/_documents.py` (48 KB).** No section headings, so name the seam first: the
-   reader-shape builders (`_cards_for`, `_artefact_grid`, the fee-box derivation) are one
-   responsibility, the passage/document assembly around them the other.
+7. **`core/services/_documents.py` (48 KB).** Measured before cutting: 8 KB of registry and
+   publishing, 33 KB of reader (its dataclasses and builders interleaved), 6 KB of publishing.
+   So the seam is **reader vs publishing**, and the reader needs **two** modules:
+   `_document_reader.py` (which document, which branch, the passages, the citation — 12 KB)
+   and `_document_shapes.py` (the dataclasses and the builders: cards, the printed grid, the
+   fee box — 24 KB). `_documents.py` is 15 KB. The PRD's original "shape builders against the
+   passage assembly" cut is not buildable: the classes and their builders are interleaved.
 8. **`knowledge/services.py` (39 KB) and `knowledge/tables.py` (35 KB).** Neither has section
    headings either. The seams their own top-level names give: in `services.py`, retrieval proper
    (`lexical_search`, `vector_search`, `fuse`, `search`) against term analysis (`search_terms`,

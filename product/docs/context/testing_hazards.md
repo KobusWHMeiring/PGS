@@ -1782,6 +1782,30 @@ Rule: after `--force` on any document with a table block, re-apply the block (it
 HEAD~1, or in the review commit) **before** ingesting. The guard that catches the *shape* is
 `test_corpus_landscape.py`/`test_corpus_opp.py`'s table assertions.
 
+### 3.26 `subprocess(text=True)` decodes stdout with the locale codec, not UTF-8
+
+`subprocess.run([...], capture_output=True, text=True)` decodes the child's output using the
+*locale* encoding. On this Windows box that is cp1252, so `git show HEAD:file.py` comes back
+with every em dash, `§`, `²` and curly quote replaced by mojibake — and Python does not raise,
+because the bytes are all valid cp1252.
+
+Evidence (2026-11-03, the reader split): the move read the source with
+`subprocess.run(["git","show","HEAD:"+p], capture_output=True, text=True).stdout` and wrote it
+back. `_scratch/probe_reader.py` then produced a different digest for every branch of every
+document, while the extracted code parsed, imported and passed 79 tests. The first differing
+value was `Reader.title`:
+
+    Certification Landscape — PGS SEALS AND THEIR USE     (HEAD)
+    Certification Landscape â€” PGS SEALS AND THEIR USE    (after the move)
+
+Consequence: a refactor that is supposed to change nothing changes user-visible text, and no
+test catches it because every test asserts a substring that happens to be ASCII.
+
+Rule: `capture_output=True` and `.stdout.decode("utf-8")` — never `text=True` for file content
+on this box. The general form: **fingerprint the output of the thing you are moving** (here,
+every branch's rendered `Reader`), not just its test result; a test asserts what someone
+thought to assert, a fingerprint asserts everything that is there.
+
 ## 5. Template for a new entry
 
 ```markdown
