@@ -52,7 +52,7 @@ Recorded here so the manual list is not padded with machine-provable work.
 | The column-laid-out pages are re-emitted in reading order, 107 single-column pages stay byte-identical, and no non-space character is lost on any of the 139 pages | `knowledge/tests/test_columns.py` |
 | The BPP manure sentence and the SAOSO Appendix 2 condition are contiguous in **one stored chunk** after a real ingest | `knowledge/tests/test_ingest_transforms.py`, `core/tests/test_chatbot_grounding.py` |
 | The verbatim corpus sentence is accepted by `audit_citations`; the model's recorded 2026-10-19 paraphrase is still refused | `core/tests/test_chatbot_grounding.py` |
-| The landscape keeps its printed page numbers after de-columning; SAOSO/OPP/BPP `(section_ref, anchor, page)` sets are unchanged | `knowledge/tests/test_section_parsers.py` |
+| The landscape keeps its printed page numbers after de-columning; SAOSO/OPP/BPP `(section_ref, anchor, page)` sets are unchanged | `knowledge/tests/test_section_parsers_pages.py` |
 | A fixture is only evidence if the manifest records its pipeline and pre-transform page hashes | `knowledge/tests/test_section_parsers.py` |
 | `knowledge` never imports `core` | `import-linter` contract, run in CI |
 | Every seeded `Seal` other than the two active ones is `is_active=False` | `core/tests/test_seed_deployment.py` |
