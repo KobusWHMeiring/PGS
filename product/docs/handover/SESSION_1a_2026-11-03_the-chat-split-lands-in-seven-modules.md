@@ -118,3 +118,24 @@ thing you move, not just its test result.**
 
 Reader digests: ALL `84d307aa5dafa82e`, identical before and after. Gate 1598 passed /
 1 skipped in 90.92 s; critical lane 217 passed in 40.85 s; `--check` 23 → 22 breaches.
+
+## 8. Step 8: retrieval and table chunks, and a PRD seam that was backwards
+
+`knowledge/services.py` (39 KB) split by *what the module decides*: `search_terms` (14.6 KB) plus
+`_with_their_tables` moved to `knowledge/retrieval.py` — it is the retrieval **strategy**, not
+term analysis as the PRD said; it reads rarity, aliases and seats off the corpus and returns a
+`RetrievalResult`. The scoring layer (`lexical_search`, `vector_search`, `fuse`, `search`,
+`document_frequency`, `lexical_key`) stays, 21 KB. `search` stays with the scoring because
+`search_terms` calls it — moving both would have made the two modules import each other.
+
+`knowledge/tables.py` (35 KB) lost its chunk-building to `knowledge/table_chunks.py` (8 KB):
+`chunks_for_parsed_section`, `row_chunk`, `_embedding_rendition`, `chunks_for_rows`. The curated
+rows, dividers, `TableStructure`, `ArtefactGrid` stay (28 KB). No re-exports: `_chat_guard`,
+`ingest.py` and four test modules now import from the new modules, because a re-export would
+close the cycle.
+
+Proof, both ways this time: every moved block is **character-for-character** equal to
+`git show HEAD:` (decoded UTF-8, §3.26), every block left behind is too, and the behaviour is
+identical — twelve questions through `search_terms` (ids, ranks, scores, warnings, cache key)
+hash the same (`5f9cbd97ed93d459`), as does every artefact's chunk output and both curated
+appendices (`edc150922f968798`). Gate 1598 passed / 1 skipped in 149.66 s; `--check` 22 → 20.
