@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F2 — Where is the money for an open-source PGS platform?</title>
+<!--
+  Decision artifact F2 (2026-11-03). Self-contained: no CDN, no external
+  requests, no build step. Answers autosave to localStorage.
+  Every claim is tagged: CHECKED (ran it / fetched it, quote reproduced),
+  JUDGEMENT (my reading, arguable), UNVERIFIED (not tested this session).
+-->
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --stop:            #8f2f2f;
+    --stop-soft:       #f8e8e8;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px 150px; }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    background: var(--accent); color: #fff; padding: 34px 0 30px; margin-bottom: 26px;
+  }
+  header.hero .wrap { padding-bottom: 0; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .10em; text-transform: uppercase;
+    opacity: .82; margin: 0 0 10px;
+  }
+  header.hero h1 {
+    font-size: clamp(24px, 4vw, 36px); line-height: 1.16; margin: 0 0 12px;
+    font-weight: 650; letter-spacing: -.015em; max-width: 22em;
+  }
+  header.hero .lede { font-size: 16.5px; margin: 0 0 16px; max-width: 44em; opacity: .95; }
+  header.hero .meta { font-size: 12.5px; opacity: .8; display: flex; gap: 16px; flex-wrap: wrap; }
+  header.hero .meta code { background: rgba(255,255,255,.15); padding: 1px 6px; border-radius: 5px; }
+
+  /* ---------- sections ---------- */
+  section { margin: 0 0 40px; }
+  h2 {
+    font-size: 12.5px; letter-spacing: .10em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 6px; font-weight: 650;
+  }
+  h3 { font-size: 20px; margin: 0 0 10px; letter-spacing: -.01em; }
+  h4 { font-size: 15.5px; margin: 22px 0 8px; }
+  p { margin: 0 0 12px; }
+  .lede { font-size: 16px; color: var(--muted); max-width: 46em; }
+  .card {
+    background: var(--surface); border-radius: var(--radius-lg); padding: 22px 24px;
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin: 5px 0; }
+  code { font-family: var(--mono); font-size: .88em; background: var(--surface-low);
+         padding: 1px 5px; border-radius: 5px; }
+
+  /* ---------- tags ---------- */
+  .tag {
+    display: inline-block; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px; font-weight: 650; vertical-align: middle;
+    border: 1px solid transparent; white-space: nowrap;
+  }
+  .t-checked    { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
+  .t-judgement { background: var(--warn-soft);   color: var(--warn);   border-color: #e6d3b6; }
+  .t-unverified { background: var(--surface-high); color: var(--muted); border-color: #cfd8c9; }
+  .t-closed     { background: var(--stop-soft);  color: var(--stop);   border-color: #e3c5c5; }
+
+  /* ---------- tables ---------- */
+  .tblwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 0 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; background: var(--surface); }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  thead th {
+    background: var(--surface-low); font-size: 11px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted); font-weight: 650; white-space: nowrap;
+    position: sticky; top: 0;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.strata td { background: var(--accent-soft); font-weight: 650; color: var(--accent); }
+
+  /* ---------- callouts ---------- */
+  .note {
+    border-left: 3px solid var(--accent-line); background: var(--accent-soft);
+    padding: 12px 16px; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; margin: 14px 0;
+    font-size: 14px;
+  }
+  .note.warn { border-left-color: #dcc39a; background: var(--warn-soft); }
+  .note.stop { border-left-color: #d8b4b4; background: var(--stop-soft); }
+  .note p:last-child { margin-bottom: 0; }
+  .note b { font-weight: 650; }
+
+  /* ---------- fit scale ---------- */
+  .fit { font-family: var(--mono); letter-spacing: 1px; white-space: nowrap; }
+  .fit-3 { color: var(--accent); font-weight: 700; }
+  .fit-2 { color: #4d7a5e; }
+  .fit-1 { color: var(--muted); }
+  .fit-0 { color: var(--stop); }
+
+  /* ---------- routes ---------- */
+  .routes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .routes { grid-template-columns: 1fr; } }
+  .route { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 18px 20px; }
+  .route h4 { margin-top: 0; display: flex; align-items: center; gap: 8px; }
+  .route .why { font-size: 13.5px; }
+  .route .why p { margin: 0 0 8px; }
+  .route .lbl { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 650; display: block; margin: 10px 0 3px; }
+  .route .pros li, .route .cons li { font-size: 13.5px; }
+
+  /* ---------- decision ---------- */
+  .decide { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow); padding: 22px 24px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 11px; padding: 11px 13px;
+    border: 1px solid var(--surface-high); border-radius: var(--radius-lg);
+    margin: 0 0 8px; cursor: pointer; font-size: 14px; background: var(--surface);
+  }
+  .opt:hover { background: var(--surface-low); }
+  .opt input { margin-top: 3px; accent-color: var(--accent); }
+  .opt.sel { border-color: var(--accent); background: var(--accent-soft); }
+  .opt small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  textarea {
+    width: 100%; border: 1px solid var(--surface-high); border-radius: var(--radius-lg);
+    padding: 11px 13px; font: inherit; font-size: 14px; background: var(--surface);
+    resize: vertical; min-height: 74px; color: var(--text);
+  }
+  textarea:focus, .opt input:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 1px; }
+
+  button {
+    font: inherit; font-size: 14px; padding: 9px 15px; border-radius: 999px;
+    border: 1px solid var(--surface-high); background: var(--surface); color: var(--text);
+    cursor: pointer; min-height: 40px;
+  }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+
+  /* ---------- sticky bar ---------- */
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: rgba(255,255,255,.94); backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sticky); padding: 11px 20px;
+  }
+  .bar .inner { max-width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .bar .status { font-size: 13px; color: var(--muted); }
+  .bar .status b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .bar .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .bar .saved.show { opacity: 1; }
+
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0; width: min(820px, 92vw);
+    box-shadow: 0 20px 60px rgba(0,0,0,.32);
+  }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 12px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13px; color: var(--muted); }
+  dialog textarea {
+    margin: 0; border-radius: 0; min-height: 320px; max-height: 50vh;
+    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+    border-left: none; border-right: none;
+  }
+  dialog .dlg-foot { padding: 12px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- print ---------- */
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 14px; border-bottom: 2px solid #000; }
+    header.hero .meta { opacity: 1; }
+    .bar, dialog, .decide button, .no-print { display: none !important; }
+    .card, .route, .note, table { box-shadow: none; break-inside: avoid; }
+    .wrap { padding-bottom: 0; max-width: none; }
+    a { color: inherit; text-decoration: none; }
+    h2 { color: #000; }
+  }
+
+  /* ---------- mobile tables ---------- */
+  @media (max-width: 720px) {
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+    tbody tr {
+      border: 1px solid var(--surface-high); border-radius: var(--radius-lg);
+      margin-bottom: 10px; padding: 6px 10px; background: var(--surface);
+    }
+    tr.strata { border: none; padding: 0; margin: 16px 0 6px; }
+    tr.strata td { background: none; padding: 6px 0; font-size: 13px; }
+    td { border: none; border-bottom: 1px dotted var(--surface-high); padding: 7px 0; }
+    td:last-child { border-bottom: none; }
+    td::before {
+      content: attr(data-label); display: block; font-size: 10.5px; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--muted); font-weight: 650; margin-bottom: 2px;
+    }
+    td:not([data-label])::before { content: none; }
+    .fit { display: inline-block; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Outeniqua PGS Digital Platform &nbsp;·&nbsp; Funding decision F2 &nbsp;·&nbsp; Exploration</p>
+    <h1>Where is the money for an open-source PGS platform — and who signs?</h1>
+    <p class="lede">A sweep of the funder landscape against two applicant shapes: you as an individual, and
+      <code>NU HORUS NPO</code> as the group. The question this page exists to answer is which
+      <em>two</em> routes deserve the next 90 days.</p>
+    <div class="meta">
+      <span>Written 2026-11-03</span>
+      <span>Supersedes F1's funder assumptions</span>
+      <span>38 funder pages fetched</span>
+      <span>Not a proposal — a decision about several</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ============================================================ HOW TO READ -->
+<section>
+  <div class="card">
+    <h2>How to read this</h2>
+    <p>Every claim carries one of three tags.</p>
+    <ul>
+      <li><span class="tag t-checked">checked</span> — I ran the command or fetched the page, and the quote is
+        reproduced here. You can re-run it.</li>
+      <li><span class="tag t-judgement">judgement</span> — my reading of a call's text, or of how an assessor will
+        see us. Arguable, and said so where it matters.</li>
+      <li><span class="tag t-unverified">unverified</span> — plausible, widely repeated, but <b>not tested this
+        session</b>. Do not budget against it.</li>
+    </ul>
+    <p class="lede" style="margin-bottom:0">F1 asked whether one fund was worth a fortnight. This page asks a
+      different question: across the whole landscape, where does this project's shape actually clear the gates,
+      and what is the cheapest sequence that gets money moving?</p>
+  </div>
+</section>
+
+<!-- ============================================================ PART 1 -->
+<section>
+  <h2>Part 1</h2>
+  <h3>What is actually true</h3>
+
+  <h4>1.1 The applicant, in two shapes</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Shape</th><th>What it is</th><th>Evidence</th><th>What it unlocks / blocks</th></tr></thead>
+      <tbody>
+        <tr>
+          <td data-label="Shape"><b>You, individually</b></td>
+          <td data-label="What it is">A named person with a working codebase and a standards corpus.</td>
+          <td data-label="Evidence"><span class="tag t-checked">checked</span> 260 commits; the suite is the
+            largest artefact in the repo.</td>
+          <td data-label="Unlocks / blocks">Unlocks NLnet (“in principle anyone can apply: individuals…”),
+            fellowships, fiscal-host arrangements. Blocks anything needing audited accounts or an entity.</td>
+        </tr>
+        <tr>
+          <td data-label="Shape"><b>The group, via <code>NU HORUS NPO</code></b></td>
+          <td data-label="What it is">A registered non-profit that receives the membership and assessment fees.</td>
+          <td data-label="Evidence"><span class="tag t-checked">checked</span> <code>product/design/content_inventory.md</code>
+            line 48: bank details published today are “<code>NU HORUS NPO</code>, ABSA savings, <code>9288670349</code>”.</td>
+          <td data-label="Unlocks / blocks">Unlocks foundations and most agroecology money. Blocks nothing by itself —
+            but <b>PBO / s18A tax status is unknown</b> <span class="tag t-unverified">unverified</span> and several
+            funders require it.</td>
+        </tr>
+        <tr>
+          <td data-label="Shape"><b>The project, via a fiscal host</b></td>
+          <td data-label="What it is">A third-party non-profit holds the money and contracts on the code's behalf.</td>
+          <td data-label="Evidence"><span class="tag t-checked">checked</span> Open Source Collective: “a 501(c)(6)
+            nonprofit fiscal host… providing financial and legal infrastructure to open source projects since 2017”.</td>
+          <td data-label="Unlocks / blocks">Unlocks grant intake without forming an entity. Blocks nothing, but
+            US 501(c)(6) means donations are <b>not tax-deductible</b>, and it is not a South African legal person.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>1.2 The artefact — and the gate that is still shut</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Claim</th><th>Basis</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Claim">The code is public</td><td data-label="Basis"><span class="tag t-checked">checked</span></td>
+          <td data-label="Evidence"><code>curl -o /dev/null -w '%{http_code}' github.com/KobusWHMeiring/PGS</code> → <code>200</code>;
+            <code>git branch -r</code> → <code>origin/main</code>; 260 commits.</td></tr>
+        <tr><td data-label="Claim"><b>There is no licence</b></td><td data-label="Basis"><span class="tag t-checked">checked</span></td>
+          <td data-label="Evidence"><code>ls LICENSE* COPYING*</code> → <i>No such file or directory</i>. Public but
+            <b>all rights reserved</b>: it is source-available, not open source.</td></tr>
+        <tr><td data-label="Claim">There is no CI</td><td data-label="Basis"><span class="tag t-checked">checked</span></td>
+          <td data-label="Evidence"><code>ls -d .github</code> → <i>No such file or directory</i>.</td></tr>
+        <tr><td data-label="Claim">The group is small and long-lived</td><td data-label="Basis"><span class="tag t-checked">checked</span></td>
+          <td data-label="Evidence"><code>content_inventory.md</code>: 13 farmer members, 33 consumer entries, active
+            since 21 Oct 2018, committee of ≥2 farmers + 1 adviser + 1 consumer.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note stop">
+    <p><b>The licence is the single cheapest gate in this entire document.</b> Every open-source fund, the
+      Digital Public Goods Alliance, and most tech-for-good foundations screen on it. It currently costs one
+      hour and blocks four routes at once.</p>
+  </div>
+
+  <h4>1.3 The corpus cannot be open-sourced the way the code can</h4>
+  <p>F1 left this as an open question (“whether the SAOSO v2.1 text and the OPP may be redistributed”). It is now
+    answered by reading the documents.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Document</th><th>Rights notice</th><th>Consequence</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Document"><code>saoso-version-2.1-2026.pdf</code></td>
+          <td data-label="Rights notice"><span class="tag t-checked">checked</span> No copyright or reproduction notice.
+            The 9 hits for “reproduc” are all about plants and animals.</td>
+          <td data-label="Consequence">No permission granted. Default copyright: <b>do not publish it in the repo.</b></td></tr>
+        <tr><td data-label="Document"><code>Outeniqua pgs principles… 2026.pdf</code></td>
+          <td data-label="Rights notice"><span class="tag t-checked">checked</span> No rights notice found.</td>
+          <td data-label="Consequence">Same.</td></tr>
+        <tr><td data-label="Document"><code>PGS Certification landscape_Final.pdf</code>, p9</td>
+          <td data-label="Rights notice"><span class="tag t-checked">checked</span> “can be copied… for
+            <b>not-for-profit</b> and/or educational purposes only. It <b>cannot be used for commercial purposes</b>…
+            the logos of these organisations <b>must not appear</b> on any adaptation.”</td>
+          <td data-label="Consequence">Derivatives allowed, commercial use not, attribution mandatory.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><b>So “FOSS in its entirety” can only ever mean the engine.</b> The corpus ships as <em>your own documents,
+    loaded by the operator</em> — which is also better design, because it is what makes the engine retargetable.
+    Say this in any application before a reviewer finds it.</p>
+
+  <h4>1.4 Two facts that reshape the whole search</h4>
+  <div class="note">
+    <p><b>GIZ already pays for PGS knowledge products in Southern Africa.</b> Page 9 of the certification-landscape
+      PDF: the document “was funded by the South African Organic Sector Organisation (SAOSO), PGS South Africa
+      (PGS SA) and the Knowledge Hub for Organic Agriculture in Southern Africa (KHSA) as part of the global project
+      Knowledge Centre for Organic Agriculture in Africa (KCOA), implemented by the Deutsche Gesellschaft für
+      Internationale Zusammenarbeit (GIZ) GmbH… on behalf of the German Federal Ministry for Economic Cooperation
+      and Development (BMZ).”</p>
+    <p>That is not a call you can enter. It is a <em>programme that has already bought the groundwork</em>, with a
+      South African partner chain — and it is the highest-probability money on this page.</p>
+  </div>
+  <div class="note warn">
+    <p><b>The money that matters does not publish calls.</b> I fetched 38 non-empty pages across roughly 32
+      organisations. <b>Two</b> publish a live dated deadline (NLnet, 3 Jan 2027; IDRC, 30 Nov 2026). One more
+      publishes only a closed one. Foundation sites describe mission, not application routes.</p>
+    <p>A call-poller — including Tenderly — can only ever see that minority. The rest is a map and a conversation.</p>
+  </div>
+</section>
+
+<!-- ============================================================ PART 2 -->
+<section>
+  <h2>Part 2</h2>
+  <h3>The shape of the problem</h3>
+
+  <p>F1's central insight still holds and it governs everything below: <b>eligibility precedes merit.</b> A
+    proposal is screened on who is asking and what is being funded before anyone reads the idea. Three gates, in
+    order, and the first one to fail ends the process:</p>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Gate</th><th>The question</th><th>Where this project stands</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Gate"><b>1. Who signs</b></td>
+          <td data-label="Question">Are you a person, an NPO, an EU consortium, a company?</td>
+          <td data-label="Standing">Two shapes available. The NPO is the broader key; the person is the narrower,
+            faster key.</td></tr>
+        <tr><td data-label="Gate"><b>2. What is funded</b></td>
+          <td data-label="Question">Code? Field operations? A person's time? A programme delivered with partners?</td>
+          <td data-label="Standing"><b>This is the mismatch.</b> The code is fundable as a commons; the group's real
+            need is operations and rollout. They are different pots.</td></tr>
+        <tr><td data-label="Gate"><b>3. Relevance</b></td>
+          <td data-label="Question">Does it sit on their axis — internet infrastructure, agroecology, AI for good,
+            African agriculture?</td>
+          <td data-label="Standing">Genuinely split: the engine is infrastructure-shaped; the assistant is AI-for-good;
+            the group is agroecology. No single funder likes all three.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>That mismatch is the whole difficulty. Plot the landscape on two axes and the funders scatter:</p>
+
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th></th><th>Funds the <b>code / commons</b></th><th>Funds <b>operations / field</b></th><th>Funds <b>the person</b></th></tr></thead>
+      <tbody>
+        <tr><td data-label=""><b>You sign</b></td>
+          <td data-label="Code">NLnet open call; Sovereign Tech Fellowship</td>
+          <td data-label="Operations">— (nothing pays a solo operator to run a farmer group's system)</td>
+          <td data-label="Person">Ashoka, Echoing Green, MIT Solve</td></tr>
+        <tr><td data-label=""><b>NPO signs</b></td>
+          <td data-label="Code">NLnet (NPO eligible); tech-for-good foundations; DPGA as a credential</td>
+          <td data-label="Operations">GIZ/BMZ via KCOA·KHSA·SAOSO·PGS SA; WC Dept of Agriculture; agroecology funds</td>
+          <td data-label="Person">— (the NPO cannot take a personal fellowship)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="lede">Read the bottom-left cell carefully: it is the only cell where the group's actual need — money to
+    run and roll out a system — has a plausible payer. Everything else buys a <em>different</em> project.</p>
+
+  <h4>Ticket sizes, as far as they are verifiable</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Band</th><th>Typical ask</th><th>Basis</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Band">Micro (grassroots funds)</td><td data-label="Ask" class="num">$5k–10k</td>
+          <td data-label="Basis"><span class="tag t-unverified">unverified</span> recollected, not checked this session</td></tr>
+        <tr><td data-label="Band">Small FOSS / agroecology grants</td><td data-label="Ask" class="num">€5k–50k</td>
+          <td data-label="Basis"><span class="tag t-checked">checked</span> NLnet: “between € 5 000 and € 50 000 for a first grant”</td></tr>
+        <tr><td data-label="Band">Fellowship stipends</td><td data-label="Ask" class="num">person-sized, 1–3 yrs</td>
+          <td data-label="Basis"><span class="tag t-unverified">unverified</span> amounts vary by cohort; not published on the pages fetched</td></tr>
+        <tr><td data-label="Band">Programme / consultancy</td><td data-label="Ask" class="num">largest, but procured</td>
+          <td data-label="Basis"><span class="tag t-judgement">judgement</span> GIZ/KCOA-type work is budgeted per
+            project and awarded through partners</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ PART 3 -->
+<section>
+  <h2>Part 3</h2>
+  <h3>The map</h3>
+  <p class="lede">Six strata, ordered by how directly they match this project rather than by size. The fit column is
+    my judgement; the “verified” column is not.</p>
+
+  <h4>Stratum 1 — Open-source infrastructure funds</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Funder</th><th>What it funds</th><th>Verified today</th><th>Signs as</th><th>Fit</th><th>Gate / next action</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Funder"><b>NLnet — “Other / open call”</b></td>
+          <td data-label="Funds">Technical development of free/open software, hardware, standards.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “Next deadline: January 3rd 2027 12:00 CET”.
+            “Between € 5 000 and € 50 000 for a first grant.” “In principle anyone can apply: individuals, research
+            organisations, non-profits, public institutions, companies”. “any software… must be published under a
+            recognised free and open source license in its entirety”. Deadlines “on the 3rd of every odd month”.</td>
+          <td data-label="Signs as">you <i>or</i> NPO</td>
+          <td data-label="Fit"><span class="fit fit-3">●●●</span></td>
+          <td data-label="Action">Needs a LICENSE and a “building block” framing. <b>The only FOSS fund whose gates
+            you can clear this month.</b></td></tr>
+        <tr><td data-label="Funder">NLnet — NGI Zero Core / Commons</td>
+          <td data-label="Funds">Same money, EU-funded: “the next generation internet”.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Same deadline and amounts.
+            “Our EU-supported funds require a strong European dimension; usually this means applicants should (mostly)
+            be from Horizon Europe-eligible countries.”</td>
+          <td data-label="Signs as">EU consortium</td>
+          <td data-label="Fit"><span class="fit fit-0">○○○</span></td>
+          <td data-label="Action">Skip unless an EU co-applicant appears. This is the gate F1 correctly identified.</td></tr>
+        <tr><td data-label="Funder">NLnet — CodeSupply / GeoCommons / Open Social / R&amp;HE</td>
+          <td data-label="Funds">Narrow themes: supply-chain metadata, geospatial commons, the social web, research networks.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> All listed as active funds with the same
+            form and deadline.</td>
+          <td data-label="Signs as">any</td>
+          <td data-label="Fit"><span class="fit fit-0">○○○</span></td>
+          <td data-label="Action">None of them matches certification. Do not contort the project to fit.</td></tr>
+        <tr><td data-label="Funder">NLnet — NGI Assure</td>
+          <td data-label="Funds">Cryptography, PKI, consensus, formal proofs.</td>
+          <td data-label="Verified"><span class="tag t-closed">closed</span> “between now and 2023 we will award 5.6
+            million euro”; Horizon 2020 agreement No 957073.</td>
+          <td data-label="Signs as">—</td>
+          <td data-label="Fit"><span class="fit fit-0">✗</span></td>
+          <td data-label="Action">Dead fund still appearing in search results. Ignore.</td></tr>
+        <tr><td data-label="Funder"><b>Sovereign Tech Agency</b></td>
+          <td data-label="Funds">“Strategic investments in the digital infrastructure of our economy and society”;
+            programmes: Sovereign Tech Fund, Resilience, <b>Fellowship</b>, Standards, Challenge.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “we invest globally in the open software
+            components that underpin Germany's and Europe's competitiveness”. No open call on the pages fetched.</td>
+          <td data-label="Signs as">you (Fellowship) / entity (Fund)</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">The <b>Fellowship</b> is the plausible door for a person. The Fund is for core
+            infrastructure — a certification engine is an application, not infrastructure.</td></tr>
+        <tr><td data-label="Funder"><b>Open Source Collective</b></td>
+          <td data-label="Funds">Not a funder: a fiscal host that can hold money, sign contracts and invoice.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “a 501(c)(6) nonprofit fiscal host…
+            issuing invoices, managing a bank account, contract review and signature”; “Contributions… are not
+            deductible as charitable contributions”.</td>
+          <td data-label="Signs as">the project</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">Insurance for the “you sign” path. Not money; a way to receive it.</td></tr>
+        <tr><td data-label="Funder">BlueHats prizes (French DINUM)</td>
+          <td data-label="Funds">Four €10 000 prizes for free software used by public administrations.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “Nominate Free Software Projects for the
+            four €10.000 BlueHats Prizes.”</td>
+          <td data-label="Signs as">project</td>
+          <td data-label="Fit"><span class="fit fit-1">●○○</span></td>
+          <td data-label="Action">Free to nominate once licensed. Cheap lottery ticket, not a plan.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Stratum 2 — Programmes and bilaterals: where the groundwork is already funded</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Funder</th><th>What it funds</th><th>Verified today</th><th>Signs as</th><th>Fit</th><th>Gate / next action</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Funder"><b>GIZ / BMZ via KCOA + KHSA</b></td>
+          <td data-label="Funds">Organic-agriculture knowledge products and capacity building in Africa; digital tools
+            sit squarely inside the KCOA brief.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> The certification-landscape PDF p9 names
+            SAOSO, PGS SA and KHSA as funders “as part of the global project Knowledge Centre for Organic Agriculture
+            in Africa (KCOA), implemented by… GIZ… on behalf of… BMZ”.</td>
+          <td data-label="Signs as">NPO, via SAOSO / PGS SA</td>
+          <td data-label="Fit"><span class="fit fit-3">●●●</span></td>
+          <td data-label="Action">No call exists to enter. The action is a conversation with SAOSO/PGS SA about what
+            KCOA funds next, and who writes it.</td></tr>
+        <tr><td data-label="Funder"><b>SAOSO &amp; PGS SA</b></td>
+          <td data-label="Funds">National sector bodies. SAOSO co-funded the certification-landscape document
+            “as part of the global project KCOA”; PGS SA does “organisational mapping and support”.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Both sites live; SAOSO currently
+            advertises a part-time admin &amp; logistics post — i.e. it runs funded programmes.</td>
+          <td data-label="Signs as">NPO</td>
+          <td data-label="Fit"><span class="fit fit-3">●●●</span></td>
+          <td data-label="Action">This is the door to stratum 2 and the standing reference for PGS credibility.</td></tr>
+        <tr><td data-label="Funder">EU / IKI / Horizon</td>
+          <td data-label="Funds">Climate and food-systems programmes.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> IKI medium and large grant feeds are
+            already polled by Tenderly.</td>
+          <td data-label="Signs as">EU consortium</td>
+          <td data-label="Fit"><span class="fit fit-0">○○○</span></td>
+          <td data-label="Action">Only with a European lead. Not a 90-day option.</td></tr>
+        <tr><td data-label="Funder">IDRC / FCDO·UKPACT / AfDB / SADC</td>
+          <td data-label="Funds">Research, climate, infrastructure procurement.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> IDRC's only open call is the John G. Bene
+            Fellowship, deadline 30 Nov 2026 — forestry and agroforestry research.</td>
+          <td data-label="Signs as">institution</td>
+          <td data-label="Fit"><span class="fit fit-0">○○○</span></td>
+          <td data-label="Action">Use Tenderly to watch these; do not plan around them.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Stratum 3 — Agroecology and organic philanthropy</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Funder</th><th>What it funds</th><th>Verified today</th><th>Signs as</th><th>Fit</th><th>Gate / next action</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Funder"><b>Agroecology Fund</b></td>
+          <td data-label="Funds">Pooled grantmaking and regional funds for agroecological solutions.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “$52 million to collaborating
+            organizations in 107 countries” since 2012. Main grants are <b>US$50 000</b> (12–18 months) to
+            <b>US$150 000</b> (18–24 months); small grants US$10–20k only via special calls.
+            <b>“No open calls”</b> — “Advisors, Funders and Long-term Partners <b>nominate</b> potential grantees”.
+            Regional funds cover Eastern and West Africa; <b>no Southern Africa fund</b> is listed.</td>
+          <td data-label="Signs as">NPO, by nomination</td>
+          <td data-label="Fit"><span class="fit fit-1">●○○</span></td>
+          <td data-label="Action">There is no application to make. The only entry is a <b>nominator</b> — which is
+            another reason the SAOSO / Biovision conversation matters. Grants centre “collaboratives rather than
+            individual organizations”, and US$50k+ is larger than this project's realistic first ask.</td></tr>
+        <tr><td data-label="Funder">Global Greengrants Fund</td>
+          <td data-label="Funds">Small grants to grassroots groups, usually via advisors.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> The site returned no content to the
+            fetch — it blocks automated requests.</td>
+          <td data-label="Signs as">NPO</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">No published route. Find a Southern African advisor; the amount is likely small.</td></tr>
+        <tr><td data-label="Funder"><b>Biovision Foundation</b></td>
+          <td data-label="Funds">Agroecology advocacy and PGS promotion (Swiss).</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Site live; no figures on the page fetched.</td>
+          <td data-label="Signs as">NPO</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">PGS is their own vocabulary. Ally first, applicant second.</td></tr>
+        <tr><td data-label="Funder">11th Hour, Patagonia, Swift</td>
+          <td data-label="Funds">Food and agriculture, grassroots organising.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> 11th Hour: DNS failure. Patagonia:
+            JavaScript-only page. Swift: live, no figures.</td>
+          <td data-label="Signs as">NPO</td>
+          <td data-label="Fit"><span class="fit fit-1">●○○</span></td>
+          <td data-label="Action">Relationship-only and mostly US-facing. Low probability without an introduction.</td></tr>
+        <tr><td data-label="Funder">Rockefeller / African Climate Foundation</td>
+          <td data-label="Funds">Climate and food-systems RFPs.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Both publish RFPs; both already in
+            Tenderly's source list.</td>
+          <td data-label="Signs as">institution</td>
+          <td data-label="Fit"><span class="fit fit-0">○○○</span></td>
+          <td data-label="Action">Wrong scale and theme for a certification tool. Watch, don't chase.</td></tr>
+        <tr><td data-label="Funder"><b>IFOAM Organics International</b></td>
+          <td data-label="Funds">Not a grantmaker. Owns PGS recognition and the Family of Standards.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> The PGS programme page is live.</td>
+          <td data-label="Signs as">—</td>
+          <td data-label="Fit"><span class="fit fit-3">●●●</span></td>
+          <td data-label="Action">Credibility, not cash. A PGS/IFOAM recognition makes every other application
+            stronger — and it is the natural home for a commons.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Stratum 4 — South African instruments</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Funder</th><th>What it funds</th><th>Verified today</th><th>Signs as</th><th>Fit</th><th>Gate / next action</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Funder">National Research Foundation</td>
+          <td data-label="Funds">Research grants, normally through a university host.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Site and grants register live; no
+            instrument matched to this project on the pages fetched.</td>
+          <td data-label="Signs as">you + a university</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">Needs an academic partner. Raymond Auerbach (soil science, SAOSO) is the obvious
+            conversation — a research angle on participatory certification.</td></tr>
+        <tr><td data-label="Funder">Technology Innovation Agency</td>
+          <td data-label="Funds">SA technology innovation and commercialisation.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “How to apply for funding” page live.</td>
+          <td data-label="Signs as">company / NPO</td>
+          <td data-label="Fit"><span class="fit fit-1">●○○</span></td>
+          <td data-label="Action">Commercialisation-shaped; may want IP. Conflicts with a commons.</td></tr>
+        <tr><td data-label="Funder"><b>Western Cape Dept of Agriculture (Elsenburg)</b></td>
+          <td data-label="Funds">Provincial agricultural programmes and farmer support.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Site live.</td>
+          <td data-label="Signs as">NPO / farmer group</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">Local, small, relationship-driven. The realistic payer for <em>field rollout</em> —
+            devices, assessor time, connectivity.</td></tr>
+        <tr><td data-label="Funder">Jobs Fund / SEFA / Garden Route municipality</td>
+          <td data-label="Funds">Employment, small enterprise, local economic development.</td>
+          <td data-label="Verified"><span class="tag t-unverified">unverified</span> Not tested this session.</td>
+          <td data-label="Signs as">NPO</td>
+          <td data-label="Fit"><span class="fit fit-1">●○○</span></td>
+          <td data-label="Action">Only if framed as jobs and enterprise. Would reshape the project to fit.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Stratum 5 — Tech-for-good and AI-for-social-good</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Funder</th><th>What it funds</th><th>Verified today</th><th>Signs as</th><th>Fit</th><th>Gate / next action</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Funder"><b>Patrick J. McGovern Foundation</b></td>
+          <td data-label="Funds">“Strengthen non-profit impact with technology, AI, and data.”</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Page live; no amounts or open call published.</td>
+          <td data-label="Signs as">NPO</td>
+          <td data-label="Fit"><span class="fit fit-3">●●●</span></td>
+          <td data-label="Action">The best thematic match for the grounded-assistant work — and the reason not to
+            delete the chatbot from the story, only from the infrastructure pitch.</td></tr>
+        <tr><td data-label="Funder">Mozilla Foundation</td>
+          <td data-label="Funds">Grants and fellowships for a healthier internet.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> “more than $35 million in people and
+            projects”; grantmaking and fellowship pages live.</td>
+          <td data-label="Signs as">you / NPO</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">Internet-health framing, not agriculture. A long shot that costs little.</td></tr>
+        <tr><td data-label="Funder">Google.org, Gates, Mastercard Foundation, Omidyar, Ford, Open Society</td>
+          <td data-label="Funds">Large, strategy-driven programmes.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> All live; none published an open call
+            matching this project. Omidyar and Sloan blocked automated access.</td>
+          <td data-label="Signs as">institution</td>
+          <td data-label="Fit"><span class="fit fit-1">●○○</span></td>
+          <td data-label="Action">Relationship route with the wrong ticket size to start. Revisit after a first grant
+            creates a track record.</td></tr>
+        <tr><td data-label="Funder">DG Murray Trust</td>
+          <td data-label="Funds">—</td>
+          <td data-label="Verified"><span class="tag t-closed">excluded</span> “DGMT sees itself as a strategic
+            investor and public innovator, <b>not a grant-maker</b>.”</td>
+          <td data-label="Signs as">—</td>
+          <td data-label="Fit"><span class="fit fit-0">✗</span></td>
+          <td data-label="Action">Remove from any list you have been keeping.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Stratum 6 — Person-shaped money, and things that are not money</h4>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Funder</th><th>What it funds</th><th>Verified today</th><th>Signs as</th><th>Fit</th><th>Gate / next action</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Funder">Shuttleworth Foundation Fellowship</td>
+          <td data-label="Funds">Historically: individual fellowships, openness required.</td>
+          <td data-label="Verified"><span class="tag t-closed">dormant</span> The fellowships URL now serves an
+            unrelated Mauritius entity — “Digiclub… Foundation Number 842… Date of Registration 01/08/2024”.
+            The applications page still says “Applications for the March 2022 fellowship intake are closed.”</td>
+          <td data-label="Signs as">you</td>
+          <td data-label="Fit"><span class="fit fit-0">✗</span></td>
+          <td data-label="Action">Do not plan around it. Verify again in 2027 — the domain may be recovered.</td></tr>
+        <tr><td data-label="Funder">Ashoka / Echoing Green / MIT Solve</td>
+          <td data-label="Funds">Fellowships and challenges for social entrepreneurs.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Sites live; Ashoka lists current
+            Southern Africa fellows. Amounts <span class="tag t-unverified">unverified</span>.</td>
+          <td data-label="Signs as">you</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">Person-shaped: they buy a founder's trajectory, not a repo. Needs the story of
+            46 members and 8 years, told by the people it changed.</td></tr>
+        <tr><td data-label="Funder">Sovereign Tech Fellowship</td>
+          <td data-label="Funds">An individual working on open digital infrastructure.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Listed as a programme on sovereign.tech.</td>
+          <td data-label="Signs as">you</td>
+          <td data-label="Fit"><span class="fit fit-2">●●○</span></td>
+          <td data-label="Action">The closest fit in this stratum to what you actually do. Watch for a cohort.</td></tr>
+        <tr><td data-label="Funder"><b>Digital Public Goods Alliance</b></td>
+          <td data-label="Funds">Nothing. Recognition against a nine-indicator standard.</td>
+          <td data-label="Verified"><span class="tag t-checked">checked</span> Indicators include “SDG Relevance”,
+            “Open Licencing”, “Platform Independence”, “Documentation”.</td>
+          <td data-label="Signs as">project</td>
+          <td data-label="Fit"><span class="fit fit-3">●●●</span></td>
+          <td data-label="Action">A week of work, after the licence. It converts “we built a thing” into a
+            verifiable public-good status that funders screen for.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ PART 4 -->
+<section>
+  <h2>Part 4</h2>
+  <h3>The three routes worth arguing about</h3>
+  <p class="lede">Each gets its strongest case first, then its weaknesses. A route with no weaknesses below is one I
+    have not understood.</p>
+
+  <div class="routes">
+    <div class="route">
+      <h4>A &nbsp;The programme route</h4>
+      <p class="why" style="color:var(--muted);font-size:13px;margin-bottom:6px">GIZ/BMZ → KCOA → KHSA → SAOSO → PGS SA → the NPO</p>
+      <span class="lbl">Strongest case</span>
+      <p class="why">They have already paid for the intellectual groundwork and the relationship chain is South
+        African. A digital PGS tool is exactly what a knowledge programme funds next, and the NPO is the right shape
+        to receive it. No European partner, no licence gate, no AI clause.</p>
+      <span class="lbl">Against</span>
+      <ul class="cons">
+        <li>There is no call to enter. It is a conversation, and conversations have no deadline to force a decision.</li>
+        <li>It is procurement-shaped: you may become a sub-contractor delivering someone else's workplan.</li>
+        <li>A programme usually wants the deliverable to serve <em>its</em> countries, not one Garden Route group.</li>
+        <li>It may expect the code to be handed over, or to stay closed — directly against the commons idea.</li>
+      </ul>
+    </div>
+
+    <div class="route">
+      <h4>B &nbsp;The FOSS route</h4>
+      <p class="why" style="color:var(--muted);font-size:13px;margin-bottom:6px">NLnet open call · 3 Jan 2027 · €5–50k</p>
+      <span class="lbl">Strongest case</span>
+      <p class="why">Individuals and NPOs are both explicitly eligible. The deadline is fixed and knowable. The
+        money buys technical work, which is the part already proven here. F1's O2 milestones were written for exactly
+        this shape and remain reusable.</p>
+      <span class="lbl">Against</span>
+      <ul class="cons">
+        <li>“Our grants are primarily for technical development” — a field-rollout budget will be cut.</li>
+        <li>Their generative-AI policy means the chatbot cannot be the headline, and must be disclosed.</li>
+        <li>The engine must read as a building block. “A certification app for one farmer group” is not one.</li>
+        <li>It funds work that gets published — not the group's operations, now or later.</li>
+      </ul>
+    </div>
+
+    <div class="route">
+      <h4>C &nbsp;The credibility route</h4>
+      <p class="why" style="color:var(--muted);font-size:13px;margin-bottom:6px">LICENSE → CI → DPGA → IFOAM/PGS → foundations</p>
+      <span class="lbl">Strongest case</span>
+      <p class="why">Costs about a week and changes the question every later funder asks. A licensed, CI-verified,
+        DPG-recognised PGS engine is a different object from an unlicensed private repo — and the agroecology and
+        tech-for-good foundations in stratum 3 and 5 have no call you can enter, so a credential is the only door.</p>
+      <span class="lbl">Against</span>
+      <ul class="cons">
+        <li>It produces no cash by itself. It is a precondition wearing the costume of a plan.</li>
+        <li>DPG status requires open licencing of the software; the corpus still cannot be published, so the
+          “entirety” question returns in every form.</li>
+        <li>It delays the only application with a real deadline (B) if done first and badly.</li>
+      </ul>
+    </div>
+
+    <div class="route">
+      <h4>D &nbsp;The person route</h4>
+      <p class="why" style="color:var(--muted);font-size:13px;margin-bottom:6px">Sovereign Tech Fellowship · Ashoka · Echoing Green</p>
+      <span class="lbl">Strongest case</span>
+      <p class="why">Fellowships fund a person to keep doing what they are already doing, which is the truest
+        description of this project. No entity, no licence, no consortium. It buys the maintainer's time — the thing
+        no grant in stratum 1 will pay for.</p>
+      <span class="lbl">Against</span>
+      <ul class="cons">
+        <li>They buy a trajectory and a personal story, not a repository. This repo's story is told in commits.</li>
+        <li>Cohorts and cycles are unpredictable; nothing here has a date you can plan to.</li>
+        <li>It does not fund the group, and the group is the thing with members and a bank account.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><b>Where these four disagree is the real finding.</b> B pays for the engine; A pays for the group's ability to
+      use it; D pays for the person who maintains it; C is the only one that makes the other three credible. None of
+      them funds “the platform” as a whole — which is the thing F1 established is unfundable as a single ask.</p>
+  </div>
+</section>
+
+<!-- ============================================================ PART 5 -->
+<section>
+  <h2>Part 5</h2>
+  <h3>What the pattern says</h3>
+  <p class="lede">Four principles, drawn from the pages actually read, including the ones that cut against the
+    recommendation.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Principle</th><th>What it says</th><th>Does it hold here?</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Principle"><b>Fund maintenance, not features</b></td>
+          <td data-label="Says">Infrastructure funders pay for the unglamorous: packaging, docs, audits, CI.</td>
+          <td data-label="Holds">Yes — and it is exactly the work this repo has skipped (no CI, no licence, no
+            install path).</td></tr>
+        <tr><td data-label="Principle"><b>Fund a named person</b></td>
+          <td data-label="Says">Fellowships and many small grants evaluate a human, not a plan.</td>
+          <td data-label="Holds">Partly — the strongest asset here is a working system built by one person, which is
+            the fellowship story.</td></tr>
+        <tr><td data-label="Principle"><b>Fund adoption, not code</b></td>
+          <td data-label="Says">The question every second-round reviewer asks is “who else uses it?”</td>
+          <td data-label="Holds">This is the weakest point in every route. There is one adopter, and it is the group
+            the code was built for. A second PGS group's one-line expression of interest is worth more than any
+            paragraph of architecture.</td></tr>
+        <tr><td data-label="Principle"><b>Openness is a gate, not a virtue</b></td>
+          <td data-label="Says">“Must be published under a recognised open source license in its entirety.”</td>
+          <td data-label="Holds">Currently fails. One hour fixes it for the code; the corpus needs a different answer
+            (Part 1.3).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note warn">
+    <p><b>Where the sources disagree.</b> NLnet says the best route for an unsure applicant is the open call, while
+      its own EU funds would reject this applicant outright on geography. Sovereign Tech says it invests “globally”
+      while framing every benefit in terms of German and European competitiveness. Both are true; the difference is
+      who is reading. That is why the licence plus a second adopter outrank any single application.</p>
+  </div>
+</section>
+
+<!-- ============================================================ PART 6 -->
+<section>
+  <h2>Part 6</h2>
+  <h3>Comparison</h3>
+  <p class="lede">Unweighted, with reasons. Deliberately no scores: invented numbers would manufacture precision.
+    <span class="tag t-checked">ok</span> survives, <span class="tag t-judgement">arguable</span> needs work,
+    <span class="tag t-closed">blocker</span> fails as things stand.</p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Criterion</th><th>A · GIZ/KCOA</th><th>B · NLnet</th><th>C · Credibility</th><th>D · Person</th></tr></thead>
+      <tbody>
+        <tr><td data-label="Criterion">Eligible with who you are today</td>
+          <td data-label="A"><span class="tag t-checked">ok</span> NPO</td>
+          <td data-label="B"><span class="tag t-checked">ok</span> individual or NPO</td>
+          <td data-label="C"><span class="tag t-checked">ok</span> n/a</td>
+          <td data-label="D"><span class="tag t-checked">ok</span> individual</td></tr>
+        <tr><td data-label="Criterion">Cash inside 90 days</td>
+          <td data-label="A"><span class="tag t-judgement">arguable</span> if a fund cycle is open</td>
+          <td data-label="B"><span class="tag t-judgement">arguable</span> submit 3 Jan, assess 3–5 months</td>
+          <td data-label="C"><span class="tag t-closed">no</span> none by design</td>
+          <td data-label="D"><span class="tag t-judgement">arguable</span> cohort-dependent</td></tr>
+        <tr><td data-label="Criterion">Effort to reach a submission</td>
+          <td data-label="A">low — one conversation</td>
+          <td data-label="B">medium — F1's milestones are reusable</td>
+          <td data-label="C">low — about a week</td>
+          <td data-label="D">medium — a narrative, not a spec</td></tr>
+        <tr><td data-label="Criterion">Fits what the code actually is</td>
+          <td data-label="A"><span class="tag t-checked">ok</span> a PGS digital tool is on-brief</td>
+          <td data-label="B"><span class="tag t-judgement">arguable</span> must read as a building block</td>
+          <td data-label="C"><span class="tag t-checked">ok</span> neutral</td>
+          <td data-label="D"><span class="tag t-checked">ok</span> a maintainer is a maintainer</td></tr>
+        <tr><td data-label="Criterion">Buys the group's operations</td>
+          <td data-label="A"><span class="tag t-checked">ok</span> this is the only one that might</td>
+          <td data-label="B"><span class="tag t-closed">no</span> technical work only</td>
+          <td data-label="C"><span class="tag t-closed">no</span></td>
+          <td data-label="D"><span class="tag t-closed">no</span></td></tr>
+        <tr><td data-label="Criterion">Value beyond the money</td>
+          <td data-label="A">high — a national and continental network</td>
+          <td data-label="B">high — a licence and a public track record</td>
+          <td data-label="C">highest — unlocks strata 3 and 5</td>
+          <td data-label="D">high — standing for future asks</td></tr>
+        <tr><td data-label="Criterion">What it costs you</td>
+          <td data-label="A">control: someone else's workplan and delivery dates</td>
+          <td data-label="B">the AI story, and a published milestone schedule</td>
+          <td data-label="C">a week, and the corpus question becomes explicit</td>
+          <td data-label="D">time on a personal narrative that does not ship code</td></tr>
+        <tr><td data-label="Criterion">Dependent on something that does not exist</td>
+          <td data-label="A">a live KCOA follow-on</td>
+          <td data-label="B">a second adopter</td>
+          <td data-label="C">nothing</td>
+          <td data-label="D">an open cohort</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><b>What the matrix says.</b> C is the only row with no blocker and no dependency, and it is the cheapest.
+    A is the only route that could fund the group's actual operations, and the only one with no deadline to force it.
+    B has the nearest hard date. D is the true description of the work and the least fundable as a project.</p>
+</section>
+
+<!-- ============================================================ PART 7 -->
+<section>
+  <h2>Part 7</h2>
+  <h3>Recommendation</h3>
+  <div class="card">
+    <p style="font-size:17px;margin-bottom:14px"><b>Do C this week, open A in parallel, and submit B by 3 January.
+      Treat D as a watch item and ignore the rest of the map until one of these three produces something.</b></p>
+
+    <h4>The sequence, with what each step costs</h4>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>When</th><th>Action</th><th>Cost</th><th>What it unlocks</th></tr></thead>
+        <tbody>
+          <tr><td data-label="When">This week</td>
+            <td data-label="Action">Add <code>LICENSE</code> (<b>AGPL-3.0</b> if you want hosted-service reciprocity,
+              <b>Apache-2.0</b> if you want the widest reuse), plus a <code>NOTICE</code> that says the corpus is not
+              covered and is loaded by the operator.</td>
+            <td data-label="Cost">1 hour</td>
+            <td data-label="Unlocks">B, C, DPGA, and the FOSS credibility of every later claim.</td></tr>
+          <tr><td data-label="When">This week</td>
+            <td data-label="Action">Add a CI workflow that runs the suite. It is the cheapest possible proof of the
+              “tests are real” sentence.</td>
+            <td data-label="Cost">2 hours</td>
+            <td data-label="Unlocks">A verifiable claim in every application.</td></tr>
+          <tr><td data-label="When">This week</td>
+            <td data-label="Action"><b>One email each to SAOSO and PGS SA.</b> Ask: what does KCOA fund next, who
+              writes it, and would a shared PGS engine be useful to other groups? Attach nothing but the URL.</td>
+            <td data-label="Cost">1 hour</td>
+            <td data-label="Unlocks">Route A, and possibly the second adopter that B needs.</td></tr>
+          <tr><td data-label="When">Nov–Dec</td>
+            <td data-label="Action">Write the NLnet open-call proposal for the conformity engine as a commons —
+              F1's O2 milestones, minus the AI headline, plus an explicit AI disclosure.</td>
+            <td data-label="Cost">2–3 days</td>
+            <td data-label="Unlocks">Submission on 3 Jan 2027.</td></tr>
+          <tr><td data-label="When">After the licence</td>
+            <td data-label="Action">Start the DPGA self-assessment against the nine indicators; do not nominate until
+              the docs and install path pass.</td>
+            <td data-label="Cost">1 week, part-time</td>
+            <td data-label="Unlocks">Stratum 3 and 5 conversations with something to point at.</td></tr>
+          <tr><td data-label="When">Jan–Mar</td>
+            <td data-label="Action">Find a <b>nominator</b> for the Agroecology Fund — it has no open call — then
+              approach Biovision and McGovern with the licence and the DPG story, and with the members as the lead,
+              not the code.</td>
+            <td data-label="Cost">1 week of writing</td>
+            <td data-label="Unlocks">Relationship money that has no call.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>Do not pursue</h4>
+    <ul>
+      <li><b>Shuttleworth</b> — dormant since 2022, and the domain now belongs to something else.</li>
+      <li><b>DGMT</b> — states it is not a grant-maker.</li>
+      <li><b>NGI Assure</b> — closed in 2023.</li>
+      <li><b>EU consortium funds (Horizon, IKI) and the EU-backed NGI Zero funds</b> — they need a European partner
+        taking the majority of the money.</li>
+      <li><b>Sovereign Tech Fund</b> for the engine — a certification system is an application, not infrastructure.
+        Its <i>Fellowship</i> is a different question.</li>
+      <li><b>Any large US foundation</b> until a first grant exists. Wrong ticket size, wrong stage.</li>
+    </ul>
+
+    <h4>What would change my mind</h4>
+    <ul>
+      <li><b>SAOSO says a KCOA follow-on is already scoped, with a budget and a delivery date</b> — then A becomes
+        the whole plan, and B is abandoned for this cycle.</li>
+      <li><b>A second PGS group says yes in writing</b> — then B's weakest row strengthens enough to raise the ask
+        toward €50k and pull attestations forward.</li>
+      <li><b>NLnet says AI-adjacent work is out of scope for the open call</b> — then submit the engine with the
+        retrieval layer described purely as infrastructure, or wait for the March deadline and de-risk first.</li>
+      <li><b>A university partner appears</b> — NRF opens, and a research framing of participatory certification
+        becomes available.</li>
+      <li><b><code>NU HORUS NPO</code> turns out to lack PBO / s18A status</b> — several foundations drop out, and
+        the fiscal-host route becomes the practical answer.</li>
+    </ul>
+
+    <h4>What F1 got wrong, or could not know</h4>
+    <ul>
+      <li><b>The European dimension is not an NLnet property.</b> It attaches to the EU-funded NGI Zero funds. The
+        open call says “In principle anyone can apply: individuals…”. A South African applicant has a route F1
+        concluded did not exist.</li>
+      <li><b>Shuttleworth is not a live option</b> — F1 did not consider it, and it would have been the obvious
+        first suggestion.</li>
+      <li><b>The corpus-rights question is answered</b> (Part 1.3): no rights are granted in the SAOSO standard or
+        the OPP, and the landscape document is explicitly non-commercial. “FOSS in its entirety” means the engine,
+        with the corpus loaded by the operator.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ PART 8 -->
+<section>
+  <h2>Part 8</h2>
+  <h3>Your decision</h3>
+  <div class="decide">
+    <p>Pick the route that gets the next 90 days. It autosaves. Nothing here is committed until you export it.</p>
+    <div id="opts"></div>
+    <p style="margin-top:16px"><label for="who" style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:650">Who signs</label></p>
+    <div id="whoopts"></div>
+    <p style="margin-top:16px"><label for="note" style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:650">Note</label></p>
+    <textarea id="note" placeholder="What you decided, and anything the next session must not re-litigate."></textarea>
+  </div>
+</section>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="status" id="status">No decision recorded</span>
+    <span class="spacer"></span>
+    <span class="saved" id="saved">Saved</span>
+    <button class="ghost" id="resetBtn" type="button">Reset</button>
+    <button class="primary" id="exportBtn" type="button">Export decision</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>Decision F2 — exported</h3>
+    <p>Paste this into <code>PGS_PLATFORM_SPEC.md</code> §18.3 as the next <code>D&lt;n&gt;</code>, or into the session record.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copyBtn" type="button">Copy</button>
+    <button class="ghost" id="closeBtn" type="button">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "pgs-f2-funding-v1";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+
+  var ROUTES = [
+    ["A", "Route A first — the programme", "Email SAOSO and PGS SA this week; hold the licence and NLnet until the answer comes back."],
+    ["B", "Route B first — NLnet, 3 Jan 2027", "Licence, CI, then write the open-call proposal for the engine."],
+    ["C", "Route C first — licence, CI, DPGA", "Build the credibility base; apply to nothing until it exists."],
+    ["ABC", "All three, in the recommended sequence", "C this week, A in parallel, B by 3 January."],
+    ["NONE", "None yet — licence and CI only", "Stop at the preconditions; decide again in January."]
+  ];
+  var WHO = [
+    ["ME", "Me, individually"],
+    ["NPO", "NU HORUS NPO"],
+    ["HOST", "A fiscal host (Open Source Collective)"],
+    ["TBD", "Undecided — that is itself a finding"]
+  ];
+
+  var els = {
+    opts: document.getElementById("opts"),
+    who: document.getElementById("whoopts"),
+    note: document.getElementById("note"),
+    status: document.getElementById("status"),
+    saved: document.getElementById("saved"),
+    dlg: document.getElementById("dlg"),
+    out: document.getElementById("out")
+  };
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function build() {
+    els.opts.innerHTML = ROUTES.map(function (r) {
+      var sel = state.route === r[0] ? " sel" : "";
+      return '<label class="opt' + sel + '"><input type="radio" name="route" value="' + r[0] + '"' +
+        (state.route === r[0] ? " checked" : "") + '><span><b>' + esc(r[1]) + "</b><small>" +
+        esc(r[2]) + "</small></span></label>";
+    }).join("");
+    els.who.innerHTML = WHO.map(function (w) {
+      var sel = state.who === w[0] ? " sel" : "";
+      return '<label class="opt' + sel + '"><input type="radio" name="who" value="' + w[0] + '"' +
+        (state.who === w[0] ? " checked" : "") + '><span>' + esc(w[1]) + "</span></label>";
+    }).join("");
+    els.note.value = state.note || "";
+    paint();
+  }
+
+  function paint() {
+    var route = ROUTES.filter(function (r) { return r[0] === state.route; })[0];
+    var who = WHO.filter(function (w) { return w[0] === state.who; })[0];
+    els.status.innerHTML = route
+      ? "<b>" + esc(route[1]) + "</b>" + (who ? " &nbsp;·&nbsp; " + esc(who[1]) : "")
+      : "No decision recorded";
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      els.saved.classList.add("show");
+      clearTimeout(save._t);
+      save._t = setTimeout(function () { els.saved.classList.remove("show"); }, 1200);
+    } catch (e) { /* storage blocked: typing still works */ }
+  }
+
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.name === "route") { state.route = t.value; }
+    if (t.name === "who") { state.who = t.value; }
+    if (t.name === "route" || t.name === "who") {
+      Array.prototype.forEach.call(document.querySelectorAll(".opt"), function (o) {
+        var input = o.querySelector("input");
+        o.classList.toggle("sel", input && input.checked);
+      });
+      paint(); save();
+    }
+  });
+
+  els.note.addEventListener("input", function () {
+    state.note = els.note.value; save();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function () {
+    var route = ROUTES.filter(function (r) { return r[0] === state.route; })[0];
+    var who = WHO.filter(function (w) { return w[0] === state.who; })[0];
+    var when = new Date().toISOString().slice(0, 10);
+    var lines = [
+      "| D<n> | " + when + " | F2 funding landscape | " +
+        (route ? route[1] : "NO DECISION RECORDED") +
+        " · signs as: " + (who ? who[1] : "unrecorded") +
+        (state.note ? " · " + state.note.replace(/\s+/g, " ").trim() : "") +
+        " | `product/design/f2_funding_landscape.html` |"
+    ];
+    els.out.value = lines.join("\n");
+    if (typeof els.dlg.showModal === "function") { els.dlg.showModal(); }
+    else { els.out.select(); }
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    els.out.select();
+    try { document.execCommand("copy"); } catch (e) { /* manual copy */ }
+  });
+
+  document.getElementById("closeBtn").addEventListener("click", function () { els.dlg.close(); });
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Clear the recorded decision on this device?")) { return; }
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    build();
+  });
+
+  build();
+})();
+</script>
+</body>
+</html>
