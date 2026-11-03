@@ -331,10 +331,15 @@ def test_recording_is_idempotent_at_the_service_boundary(chat_session):
     answer = GroundedAnswer(
         text=GROUNDED, citations=[_citation()], message_id=message.pk
     )
+    before = timezone.now()
     first = record_public_question(question="Can I use cardboard?", answer=answer)
     second = record_public_question(question="Can I use cardboard?", answer=answer)
 
     assert first.pk == second.pk
     assert second.ask_count == 2
     assert PublicQuestion.objects.count() == 1
-    assert second.last_asked_at >= timezone.now().replace(microsecond=0)
+    # `before`, not `timezone.now()` afterwards: the second call is what moves
+    # `last_asked_at`, so a clock that crosses a second boundary between it and this line
+    # made the old assertion fail once in a measured 24-run session with nothing wrong
+    # (testing_hazards.md §3.28).
+    assert second.last_asked_at >= before.replace(microsecond=0)

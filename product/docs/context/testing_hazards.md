@@ -1837,6 +1837,31 @@ moved on, the **next** deploy verifies and installs it, which is the safe direct
 `tests/tools/test_deploy_verified_commit.py` guards it, and it was watched go red with the
 old `pull` line restored (3 failures) and with the HEAD assertion removed (1 failure).
 
+### 3.28 `timezone.now()` read *after* the call it is compared with is a flake
+
+`test_recording_is_idempotent_at_the_service_boundary` asserted
+
+    second = record_public_question(...)      # sets last_asked_at = timezone.now()
+    assert second.last_asked_at >= timezone.now().replace(microsecond=0)
+
+Which is true only while the two statements are in the same wall-clock second. When the
+`record_public_question` call runs at `15:46:53.999` and the assertion at
+`15:46:54.001`, `now.replace(microsecond=0)` is `15:46:54.000` and the stored value is
+`15:46:53.999` — a red test with nothing wrong with the code.
+
+Evidence: `scripts/fast.sh` failed on this test once during the context-cut session,
+passed alone, then passed in the lane twice. The window is the duration of the call
+(~1–5 ms), so it is a ~0.1–0.5% flake — rare enough that the first instinct is "the
+branch is broken", expensive enough to cost a 2.5-minute lane run to disbelieve.
+
+Consequence: a flaky guard teaches people to re-run instead of read, and a re-run
+eventually hides a real failure in the same test.
+
+Rule: capture the bound **before** the call (`before = timezone.now()`), then compare
+the stored value with `before.replace(microsecond=0)` — truncation only lowers the
+bound, so it can never be later than the timestamp the call wrote. Watched red by
+adding `timedelta(seconds=5)` to the bound.
+
 ## 5. Template for a new entry
 
 ```markdown
