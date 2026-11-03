@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>F3 — SAOSO outreach and the digital systems role</title>
+<!--
+  Review surface F3 (2026-11-03). Self-contained: no CDN, no external requests.
+  Two documents to approve — an email and a role description — plus the three
+  decisions they force. Notes autosave to localStorage.
+-->
+<style>
+  :root {
+    --bg:#f4f6f2; --surface:#fff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+    --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+    --text:#1c2620; --muted:#66756b; --warn:#8a5a1c; --warn-soft:#f7efe1;
+    --stop:#8f2f2f; --stop-soft:#f8e8e8;
+    --radius-lg:14px; --radius-xl:20px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:0 2px 10px rgba(28,38,32,.10);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--text);
+       line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 20px 150px}
+
+  header.hero{background:var(--accent);color:#fff;padding:32px 0 28px;margin-bottom:24px}
+  header.hero .wrap{padding-bottom:0}
+  .eyebrow{font-size:12px;letter-spacing:.10em;text-transform:uppercase;opacity:.82;margin:0 0 10px}
+  header.hero h1{font-size:clamp(23px,3.6vw,33px);line-height:1.18;margin:0 0 12px;font-weight:650;
+                 letter-spacing:-.015em;max-width:24em}
+  header.hero .lede{font-size:16px;margin:0;max-width:46em;opacity:.95}
+
+  section{margin:0 0 34px}
+  h2{font-size:12.5px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);
+     margin:0 0 6px;font-weight:650}
+  h3{font-size:20px;margin:0 0 10px;letter-spacing:-.01em}
+  h4{font-size:15.5px;margin:20px 0 8px}
+  p{margin:0 0 12px}
+  .lede{font-size:15.5px;color:var(--muted);max-width:46em}
+  ul,ol{margin:0 0 12px;padding-left:22px} li{margin:5px 0}
+  code{font-family:var(--mono);font-size:.88em;background:var(--surface-low);padding:1px 5px;border-radius:5px}
+  .card{background:var(--surface);border-radius:var(--radius-lg);padding:20px 22px;
+        box-shadow:var(--shadow);margin-bottom:16px}
+
+  .tag{display:inline-block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+       padding:2px 7px;border-radius:999px;font-weight:650;border:1px solid transparent;white-space:nowrap}
+  .t-checked{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+  .t-judgement{background:var(--warn-soft);color:var(--warn);border-color:#e6d3b6}
+  .t-unverified{background:var(--surface-high);color:var(--muted);border-color:#cfd8c9}
+
+  .note{border-left:3px solid var(--accent-line);background:var(--accent-soft);padding:12px 16px;
+        border-radius:0 var(--radius-lg) var(--radius-lg) 0;margin:14px 0;font-size:14px}
+  .note.warn{border-left-color:#dcc39a;background:var(--warn-soft)}
+  .note.stop{border-left-color:#d8b4b4;background:var(--stop-soft)}
+  .note p:last-child{margin-bottom:0}
+
+  /* the draft documents */
+  .doc{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+       overflow:hidden;margin-bottom:16px}
+  .doc-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+            padding:13px 20px;background:var(--surface-low);border-bottom:1px solid var(--surface-high)}
+  .doc-head h4{margin:0;font-size:14px;letter-spacing:.02em}
+  .doc-head .spacer{flex:1}
+  .doc-body{padding:20px 22px;font-size:14.5px;white-space:pre-wrap;overflow-wrap:break-word}
+  .doc-body p{white-space:normal}
+  .subject{font-size:14px;padding:0 22px 14px;color:var(--muted)}
+  .subject b{color:var(--text)}
+  .sig{color:var(--muted)}
+
+  button{font:inherit;font-size:13.5px;padding:7px 14px;border-radius:999px;min-height:36px;
+         border:1px solid var(--surface-high);background:var(--surface);color:var(--text);cursor:pointer}
+  button:hover{background:var(--surface-high)}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button.primary:hover{background:#2b5039}
+  button.ghost{background:transparent;color:var(--muted)}
+  button.copied{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+  .decide{background:var(--surface);border-radius:var(--radius-xl);box-shadow:var(--shadow);padding:22px 24px}
+  .q{margin:0 0 20px}
+  .q .lbl{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+          font-weight:650;display:block;margin-bottom:8px}
+  .opt{display:flex;align-items:flex-start;gap:11px;padding:10px 13px;border:1px solid var(--surface-high);
+       border-radius:var(--radius-lg);margin:0 0 8px;cursor:pointer;font-size:14px;background:var(--surface)}
+  .opt:hover{background:var(--surface-low)}
+  .opt input{margin-top:3px;accent-color:var(--accent)}
+  .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .opt small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  textarea{width:100%;border:1px solid var(--surface-high);border-radius:var(--radius-lg);
+           padding:11px 13px;font:inherit;font-size:14px;background:var(--surface);resize:vertical;
+           min-height:80px;color:var(--text)}
+  textarea:focus,.opt input:focus-visible{outline:2px solid var(--accent-line);outline-offset:1px}
+
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(255,255,255,.94);
+       backdrop-filter:blur(10px);box-shadow:var(--shadow-sticky);padding:11px 20px}
+  .bar .inner{max-width:940px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .bar .status{font-size:13px;color:var(--muted)} .bar .status b{color:var(--text)}
+  .bar .spacer{flex:1}
+  .bar .saved{font-size:12.5px;color:var(--accent);opacity:0;transition:opacity .3s}
+  .bar .saved.show{opacity:1}
+
+  dialog{border:none;border-radius:var(--radius-xl);padding:0;width:min(820px,92vw);
+         box-shadow:0 20px 60px rgba(0,0,0,.32)}
+  dialog::backdrop{background:rgba(20,28,24,.5)}
+  dialog .dlg-head{padding:18px 22px 12px}
+  dialog h3{margin:0 0 4px;font-size:17px}
+  dialog .dlg-head p{margin:0;font-size:13px;color:var(--muted)}
+  dialog textarea{margin:0;border-radius:0;min-height:300px;max-height:50vh;font-family:var(--mono);
+                  font-size:12.5px;background:var(--surface-low);border-left:none;border-right:none}
+  dialog .dlg-foot{padding:12px 22px 18px;display:flex;gap:10px;flex-wrap:wrap}
+
+  @media print{
+    body{background:#fff}
+    header.hero{background:#fff;color:#000;padding:0 0 14px;border-bottom:2px solid #000}
+    .bar,dialog,.no-print{display:none!important}
+    .card,.doc,.note{box-shadow:none;break-inside:avoid}
+    .wrap{padding-bottom:0;max-width:none}
+    .doc-head{background:#eee}
+  }
+  @media (max-width:720px){ .doc-body{font-size:14px} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Outeniqua PGS &nbsp;·&nbsp; Funding follow-through F3 &nbsp;·&nbsp; Draft for review</p>
+    <h1>Two documents to approve: the SAOSO email, and the role that it leads to</h1>
+    <p class="lede">The email is 250 words and asks for nothing but twenty minutes. The role
+      description is what a programme would actually fund — because "build me a platform" is not
+      a thing donors buy, and "pay one person to run it" is.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <div class="card">
+    <h2>Why these two, in this order</h2>
+    <p>SAOSO is a <b>current grantee</b> of the Agroecology Fund, with a live project that names PGS
+      in its title and runs to <b>30 June 2027</b>. The fund has no open call — nominators are
+      Advisors, Funders and Long-term Partners — so the only way in is through an existing
+      relationship. That is what the email opens.</p>
+    <p style="margin-bottom:0">The role description exists because of what you told me: you want
+      build time and a salary, and with those you would run the group's operations yourself. No
+      funder pays an open-ended salary. Programmes do fund <em>posts</em>. So the second document
+      reframes the ask into the only shape that money recognises.</p>
+  </div>
+</section>
+
+<!-- ============================================================ EMAIL -->
+<section>
+  <h2>Document 1</h2>
+  <h3>The email</h3>
+  <p class="lede">Deliberately short, specific, and it invites a no. Two things it does not do:
+    it does not describe the code, and it does not ask for money.</p>
+
+  <div class="doc">
+    <div class="doc-head">
+      <h4>Email — first contact</h4>
+      <span class="spacer"></span>
+      <button class="ghost no-print" data-copy="email">Copy</button>
+    </div>
+    <div class="subject"><b>Subject:</b> Digital PGS — something you may already be funding</div>
+    <div class="doc-body" id="email">Dear [name],
+
+We spoke some time ago about the Outeniqua group's move off paper. That system is now live at organicguarantee.africa: member records, the governing documents served directly instead of through shared folders, and a way to ask the SAOSO standard a question and get the passage it came from.
+
+I am writing because of your Agroecology Fund project — "Scaling Agroecology for Justice: Strengthening Community-led Food Systems and Biodiversity through Participatory Guarantee System (PGS), Advocacy and Regional Collaboration", which I see runs to June 2027.
+
+Three questions:
+
+1. Is there a digital workstream inside that project, or room for one in a renewal?
+2. Would a shared engine be useful to other PGS groups — that is, is this Outeniqua's problem or the network's?
+3. If it is the network's, who would host the person who builds and runs it?
+
+I am not asking for a proposal, and I would rather be told plainly if this is not useful to you than take up your time. Twenty minutes, in person or on a call, is all I am after — I would show you what exists and then listen.
+
+Kind regards,
+Kobus Meiring
+Outeniqua PGS
+[phone] · organicguarantee.africa</div>
+  </div>
+
+  <div class="note">
+    <p><b>Why this works.</b> It leads with what exists rather than what is planned, quotes their
+      own project title verbatim (which proves you read it), names the network question instead of
+      asking for money, and explicitly offers them an easy refusal. A programme officer can reply
+      to this in one line, which is the whole point.</p>
+  </div>
+  <div class="note warn">
+    <p><b>Two things to fill in before sending.</b> <code>[name]</code> — your existing contact, not
+      the general address. And check whether the project has already ended for your counterpart
+      before you cite it: the page lists <b>Ongoing · 01/07/25 – 30/06/27</b>
+      <span class="tag t-checked">checked 2026-11-03</span>, but a project being "ongoing" on a
+      website and being staffed are not the same fact.</p>
+  </div>
+</section>
+
+<!-- ============================================================ ROLE -->
+<section>
+  <h2>Document 2</h2>
+  <h3>The role description</h3>
+  <p class="lede">One page. Written to be lifted into a programme document or a job advert
+    without editing, which is why it names deliverables instead of features.</p>
+
+  <div class="doc">
+    <div class="doc-head">
+      <h4>PGS Digital Systems Coordinator</h4>
+      <span class="spacer"></span>
+      <button class="ghost no-print" data-copy="role">Copy</button>
+    </div>
+    <div class="doc-body" id="role">PGS DIGITAL SYSTEMS COORDINATOR
+
+1. Purpose
+
+One person responsible for the digital system that carries a participatory guarantee system's
+assessment record and public guarantee — for the network, not for a single farm.
+
+2. Why the role exists
+
+A PGS group's integrity rests on its records: who was visited, by whom, against what standard,
+with what evidence, and what the committee decided. Today those records are paper. Paper does
+not lose data, but it cannot answer a consumer, cannot be searched, and cannot be audited
+without a filing cabinet.
+
+Software that nobody maintains reverts to paper within a season. The common failure of a
+donor-funded tool is that it is handed over without a person, and then abandoned. This role
+exists to be that person.
+
+3. Responsibilities
+
+- Maintain and extend the platform: the assessment lifecycle from application to certificate,
+  and the public surface that shows what is currently true.
+- Take the farm visit into the field: a two-hour walkabout completed on a phone with no signal,
+  reconciled on return, with no retyping by the administrator.
+- Keep the standard current: ingest each revision, re-link the citations, and prove the reader
+  still matches the printed page.
+- Train the assessors, the committee and the administrator; write the operator documentation.
+- Support a second group adopting the same engine with a different standard — the step that
+  turns one group's tool into shared public infrastructure.
+
+4. Year-one deliverables
+
+1. A complete farm visit, end to end, offline on a phone, on the server before the assessor is
+   back in reception.
+2. A public verification surface: any current certification outcome resolvable by a code, and
+   nothing published that is not currently true.
+3. A second PGS group running its own standard on the same engine with no code changes.
+4. An open licence, an install path and operator docs — so the system survives the person.
+
+5. Requirements
+
+- Python and Django, with enough database confidence to own a data model.
+- Able to work with farmers and a committee, not only with developers.
+- Patience for a standard that arrives as a PDF, and rigour about quoting it exactly.
+- Written English clear enough to be the group's public voice.
+
+6. Cost
+
+The cost of one mid-level technologist employed in South Africa for a year, budgeted as a salary
+line rather than a consultancy fee. Indicative range, to be confirmed against the host
+organisation's own scales: R480 000 - R720 000 total cost of employment per annum, including
+equipment and data. This is a planning figure, not a quote.
+
+7. Hosting
+
+For a programme funder this matters more than the amount: the post should sit where the
+mandate is national. Options, in order of durability:
+- SAOSO, as the standards owner, with the post serving all member groups.
+- PGS South Africa, as the PGS body.
+- Outeniqua's own NPO, seconded to the national body, as an interim arrangement.
+
+8. What this role is not
+
+Not a consultancy deliverable, not a fixed-term build, and not a volunteer. The failure mode
+this role is designed to prevent is a system that is delivered and then unowned.</div>
+  </div>
+
+  <div class="note">
+    <p><b>The load-bearing sentence is §7.</b> A funder will not pay for one group's tool. The same
+      role described as a national capability — serving every PGS group that adopts the standard —
+      is a different and much better-shaped proposition. That is also why deliverable 3 exists:
+      it is the proof that the post is national, not local.</p>
+  </div>
+</section>
+
+<!-- ============================================================ DECISIONS -->
+<section>
+  <h2>Document 3</h2>
+  <h3>What you have to decide before sending</h3>
+
+  <div class="decide">
+    <div class="q">
+      <span class="lbl">1 · Which host organisation does the role sit in?</span>
+      <div id="q-host"></div>
+    </div>
+    <div class="q">
+      <span class="lbl">2 · Is the role national or Outeniqua-only?</span>
+      <div id="q-scope"></div>
+    </div>
+    <div class="q">
+      <span class="lbl">3 · Do you send the role description now, or only if they ask?</span>
+      <div id="q-attach"></div>
+    </div>
+    <div class="q" style="margin-bottom:0">
+      <span class="lbl">Notes for the next session</span>
+      <textarea id="note" placeholder="What you changed, who you're writing to, and what must not be re-argued."></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CLAIMS -->
+<section>
+  <h2>Before you send</h2>
+  <h3>The five things not to say</h3>
+  <div class="card">
+    <p class="lede" style="margin-bottom:14px">The same discipline the public site is held to
+      applies to a fundraising email — a claim that cannot be backed is the fastest way to lose a
+      programme officer's trust.</p>
+    <ul>
+      <li><b>Do not lead with "AI chatbot."</b> Lead with the standard being answerable and
+        citations being checkable. The mechanism is unremarkable; the guarantee is not. Several
+        FOSS funds also refuse AI-led projects outright.</li>
+      <li><b>Do not say the members are certified.</b> Membership is not certification, and the
+        distinction is the whole integrity of a PGS.</li>
+      <li><b>Do not claim adoption you do not have.</b> One group uses this. That is the honest
+        sentence, and "one group, and here is what it would take to serve ten" is a better pitch
+        than an inflated number.</li>
+      <li><b>Do not say "sustainable" without naming the revenue.</b> If the answer is "grant,
+        then another grant", say that instead — programmes respect a plan more than an adjective.</li>
+      <li><b>Do not confuse free with free.</b> The licence costs nothing; running the system
+        costs a person. Asking for the person is the credible ask.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="status" id="status">No decision recorded</span>
+    <span class="spacer"></span>
+    <span class="saved" id="saved">Saved</span>
+    <button class="ghost" id="reset" type="button">Reset</button>
+    <button class="primary" id="export" type="button">Export decisions</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>F3 — exported</h3>
+    <p>Paste into the session record, or keep with the email as the reasoning behind it.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copyOut" type="button">Copy</button>
+    <button class="ghost" id="closeDlg" type="button">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "pgs-f3-outreach-v1";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+
+  var QUESTIONS = {
+    host: [
+      ["SAOSO", "SAOSO", "The standards owner; the post can serve every member group."],
+      ["PGSSA", "PGS South Africa", "The PGS body; narrower mandate, closer to the work."],
+      ["NPO", "NU HORUS NPO, seconded", "Fastest to start; weakest claim to being national."],
+      ["ASK", "Let them propose", "Ask who they would host it in, and say why it matters."]
+    ],
+    scope: [
+      ["NATIONAL", "National — serve every PGS group", "Required for programme money."],
+      ["BOTH", "Outeniqua now, national next", "Honest, and matches deliverable 3."],
+      ["LOCAL", "Outeniqua only", "Fundable by the group or the province, not a donor."]
+    ],
+    attach: [
+      ["NO", "Send the email alone", "Ask first. The role is the answer to their question, not ours."],
+      ["YES", "Attach the role description", "Faster, but it presumes they are interested."],
+      ["ONASK", "Offer it — send on request", "Recommended: names it without spending their attention."]
+    ]
+  };
+
+  var LABEL = { host: "Host", scope: "Scope", attach: "Role description" };
+  var els = {
+    host: document.getElementById("q-host"),
+    scope: document.getElementById("q-scope"),
+    attach: document.getElementById("q-attach"),
+    note: document.getElementById("note"),
+    status: document.getElementById("status"),
+    saved: document.getElementById("saved"),
+    dlg: document.getElementById("dlg"),
+    out: document.getElementById("out")
+  };
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function renderQ(key, el) {
+    el.innerHTML = QUESTIONS[key].map(function (o) {
+      var sel = state[key] === o[0] ? " sel" : "";
+      return '<label class="opt' + sel + '"><input type="radio" name="' + key + '" value="' +
+        o[0] + '"' + (state[key] === o[0] ? " checked" : "") + '><span><b>' + esc(o[1]) +
+        "</b><small>" + esc(o[2]) + "</small></span></label>";
+    }).join("");
+  }
+
+  function build() {
+    renderQ("host", els.host);
+    renderQ("scope", els.scope);
+    renderQ("attach", els.attach);
+    els.note.value = state.note || "";
+    paint();
+  }
+
+  function chosen(key) {
+    var list = QUESTIONS[key] || [];
+    for (var i = 0; i < list.length; i++) { if (list[i][0] === state[key]) { return list[i][1]; } }
+    return null;
+  }
+
+  function paint() {
+    var parts = ["host", "scope"].map(chosen).filter(Boolean);
+    els.status.innerHTML = parts.length
+      ? "<b>" + esc(parts.join(" · ")) + "</b>"
+      : "No decision recorded";
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+      els.saved.classList.add("show");
+      clearTimeout(save._t);
+      save._t = setTimeout(function () { els.saved.classList.remove("show"); }, 1200);
+    } catch (e) { /* storage blocked */ }
+  }
+
+  document.addEventListener("change", function (e) {
+    var t = e.target;
+    if (!t.name || !QUESTIONS[t.name]) { return; }
+    state[t.name] = t.value;
+    Array.prototype.forEach.call(document.querySelectorAll(".opt"), function (o) {
+      var input = o.querySelector("input");
+      o.classList.toggle("sel", !!(input && input.checked));
+    });
+    paint(); save();
+  });
+
+  els.note.addEventListener("input", function () { state.note = els.note.value; save(); });
+
+  /* copy the draft documents */
+  Array.prototype.forEach.call(document.querySelectorAll("[data-copy]"), function (btn) {
+    btn.addEventListener("click", function () {
+      var el = document.getElementById(btn.getAttribute("data-copy"));
+      var text = el ? el.innerText : "";
+      var done = function () {
+        var was = btn.textContent;
+        btn.textContent = "Copied"; btn.classList.add("copied");
+        setTimeout(function () { btn.textContent = was; btn.classList.remove("copied"); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {});
+      } else {
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        try { document.execCommand("copy"); done(); } catch (e) {}
+      }
+    });
+  });
+
+  document.getElementById("export").addEventListener("click", function () {
+    var when = new Date().toISOString().slice(0, 10);
+    var lines = ["## F3 — SAOSO outreach, " + when, ""];
+    ["host", "scope", "attach"].forEach(function (k) {
+      lines.push("- **" + LABEL[k] + ":** " + (chosen(k) || "undecided"));
+    });
+    if (state.note) { lines.push("- **Note:** " + state.note.replace(/\s+/g, " ").trim()); }
+    lines.push("", "Documents: `product/design/f3_saoso_outreach_and_role.html`");
+    els.out.value = lines.join("\n");
+    if (typeof els.dlg.showModal === "function") { els.dlg.showModal(); } else { els.out.select(); }
+  });
+
+  document.getElementById("copyOut").addEventListener("click", function () {
+    els.out.select();
+    try { document.execCommand("copy"); } catch (e) {}
+  });
+
+  document.getElementById("closeDlg").addEventListener("click", function () { els.dlg.close(); });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Clear the decisions recorded on this device?")) { return; }
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    build();
+  });
+
+  build();
+})();
+</script>
+</body>
+</html>

@@ -25,6 +25,10 @@ the generated index's "To Do" section.
       extractor evaluation (Docling / Document AI) against the eight, S3 the generator emitting
       table blocks, S4 the verification harness, S5 re-reviewing Appendix 6a and Appendix 7 through
       it — the two live defects the PRD measures.
+- [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
+      (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
+      email, the role description) and three decisions they force. No PRD references it and no
+      decision row exists yet; it is parked here deliberately rather than absorbed into D80.
 - [x] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
       render the row's context from the artefact at cite time. **All three slices landed** (2026-11-02;
       session record `SESSION_0y_…`). **Slice 1:** the reserved seat is now filled in the vector arm's
