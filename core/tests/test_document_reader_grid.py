@@ -168,6 +168,25 @@ def test_the_seals_branch_renders_the_spreadsheet_and_the_prose_after_it(client,
     assert "reader__process" not in page, "a comparison is not a process"
 
 
+def test_the_seals_legend_names_where_as_above_points(client, landscape):
+    """The product owner's finding (`landscape_fee_as_above_referent.md`, `LANDSCAPE_TABLES_PRD`
+    §12h): both Fee cells read "As above" and the fee is not on this page.
+
+    The cell stays literal — the paper prints it that way, and D72.2 forbids putting an amount
+    there on its own. So the legend above the grid has to name the branch the fee is printed in,
+    and name it in the words the contents tree uses, or the pointer is still a dead end for a
+    reader who arrived on the deep link.
+    """
+    page = html(client, "pgs-seals-and-their-use")
+    legend = page[page.index('class="reader__grid-legend"') :]
+    legend = legend[: legend.index("</p>")]
+
+    assert "As above" in legend, "the legend quotes the cell it explains"
+    assert "ESTABLISHING A PGS GROUP" in legend, "the referent is named, not pointed at"
+    assert "Step 3" in legend, "the branch alone does not say which cell to read"
+    assert "?section=establishing-a-pgs-group" in page, "and the tree can take you there"
+
+
 def test_the_grid_carries_what_the_resizer_needs_and_nothing_it_requires(client, landscape):
     """D77: sizing is an enhancement — the separator and the colgroup are inert without the script."""
     page = html(client, "pgs-seals-and-their-use")

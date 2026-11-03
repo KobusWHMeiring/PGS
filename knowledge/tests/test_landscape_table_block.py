@@ -20,6 +20,7 @@ inside one row-line keeps its index, so it passes here.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -173,6 +174,25 @@ def test_a_seal_is_a_row_and_its_name_heads_the_use_of_seals_column(document):
     ]
     assert all(row.cells[3].text == "" for row in rows), "the picture is not stored"
     assert all(row.cells[4].text == "As above" for row in rows)
+
+
+def test_the_seals_fee_legend_says_where_as_above_points(document):
+    """The product owner's finding, 2026-11-01 (UAT Scenario 4, `LANDSCAPE_TABLES_PRD` §12h).
+
+    Both Fee cells read "As above" and the referent is not on this page. The paper prints it
+    that way, so the cell stays literal — the legend is where the pointer is made followable,
+    and it must name the branch rather than say "the previous table", because on the deep link
+    `?section=pgs-seals-and-their-use` there is no previous table in view. Naming it is what the
+    reader's contents tree can act on.
+
+    The legend may not restate the amount: D72.2 forbids an amount published on its own, and one
+    here would arrive detached from the paper's sentence about stickers and the 30/70 split.
+    """
+    legend = table(document, "pgs-seals-and-their-use").legend
+    assert "As above" in legend, "the legend has to quote the cell, or it explains nothing"
+    assert "ESTABLISHING A PGS GROUP" in legend, "the referent is named, not pointed at"
+    assert "Step 3" in legend, "the branch alone does not say which cell to read"
+    assert not re.search(r"R\s?\d", legend), "no amount on its own (D72.2)"
 
 
 def test_the_third_saoso_row_is_the_direct_route_with_no_printed_step_number(document):

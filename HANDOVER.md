@@ -52,11 +52,15 @@
 >
 > **What is next, in order:**
 >
-> 1. **The fee legend's unreachable referent** (`BugFixes/landscape_fee_as_above_referent.md`) —
->    the seals table's `As above` is the paper's own wording; the artefact's legend says what it
->    means, but on `?section=pgs-seals-and-their-use` "the previous table" is not in view and is not
->    reachable. Fix is a **legend** edit (never a cell: D72.2 and Scenario 6 forbid it), then
->    re-present and re-judge **only** Scenario 4. Small, unblocked, no re-ingest.
+> 1. **The fee legend's unreachable referent** — **fixed 2026-11-03**, awaiting the re-judge
+>    (`BugFixes/landscape_fee_as_above_referent.md`). The seals table's `As above` is the paper's
+>    own wording, so the cell stayed literal; the legend now names the branch and the step
+>    (`ESTABLISHING A PGS GROUP — Step 3's fee cell`) in the words the contents tree prints, and
+>    says the fee is not on this page. Two guards hold it, each watched failing against the old
+>    wording first; all **17 of 17** landscape chunk texts are byte-identical, so there is **no
+>    re-ingest** — `corpus_check` reports landscape drift on the file hash alone. **Scenario 4 must
+>    be judged again on the rebuilt artefact; the other five cards are unchanged and the tool
+>    refuses a partial export, so a re-sign covers all six.**
 > 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
 >    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
 >    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`

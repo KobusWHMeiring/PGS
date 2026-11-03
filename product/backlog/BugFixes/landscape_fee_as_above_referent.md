@@ -1,9 +1,14 @@
 # Bug: a Fee cell reads "As above", and on a deep link there is nothing above
 
-**Status:** **Open** — found by the product owner while signing the landscape UAT, 2026-11-01
-(`tests/uat/landscape_tables_uat.md` Scenario 4). The page was **accepted as is**; this records the
-defect so it is carried by name rather than in chat. Fix is a **legend** edit in the artefact
-header, not a cell edit, and needs **no re-ingest**.
+**Status:** **Fixed 2026-11-03** — the legend now names the branch and the step instead of saying
+"the previous table", so the pointer is followable from the contents tree. Two guards hold it
+(`knowledge/tests/test_landscape_table_block.py::test_the_seals_fee_legend_says_where_as_above_points`,
+`core/tests/test_document_reader_grid.py::test_the_seals_legend_names_where_as_above_points`), each
+watched failing against the old wording first. **No re-ingest:** all **17 of 17** landscape chunk
+texts are byte-identical before and after (measured, `_scratch` probe), because the legend is a table
+*header* field and never enters a chunk — `corpus_check` reports landscape drift on the file hash
+alone, which is the same state `LANDSCAPE_TABLES_PRD` §12f left it in and is cleared by a deliberate
+`corpus_refresh --apply`, not by this fix.
 **Severity:** **misleading, not wrong.** The transcription is faithful to the paper and the legend
 already explains the cell; the failure is that on `?section=pgs-seals-and-their-use` the referent
 is off-page and unreachable, so a reader arriving by deep link is told to look at something they
@@ -77,22 +82,36 @@ The legend is also the cheap surface: it lives in the artefact header, so changi
 alter the chunk text and needs **no re-ingest** — though it does move the artefact hash, which
 `corpus_check` will report as landscape drift until the next `corpus_refresh --apply`.
 
-## 4. The repair to make, when it is scheduled
+## 4. The repair that was made
 
-- Name the referent in the legend: the branch (`ESTABLISHING A PGS GROUP`) and what the fee buys
-  (the recommended annual sticker fee, paid per farmer, split 30% PGS SA / 70% group) — still
-  inside the paper's own sentence, so D72.2 holds.
-- Make it reachable: a link to `?section=establishing-a-pgs-group` if the legend renderer allows
-  markup, or an anchor name the reader can search. If neither is possible without new rendering,
-  say so and stop — a legend that names the branch is still a large improvement on "the previous
-  table".
-- Re-present Scenario 4 and re-judge only that card; do not re-sign the other five.
+The legend now reads:
+
+> … Both rows' Fee cell reads "As above", **and the fee it points at is not on this page**: it is
+the one printed in **ESTABLISHING A PGS GROUP — Step 3's fee cell** — the recommended annual fee
+for the use of stickers, paid by individual farmers and divided between PGS SA and the group.
+**That branch is in the contents.**
+
+What that does and does not do:
+
+- **Names the branch and the step**, in the same words the contents tree prints, so a reader on the
+deep link can find it. Verified on the running instance: `ESTABLISHING A PGS GROUP` appears twice
+on the seals page — once in the tree, once in the legend.
+- **Does not restate the amount.** `R350` would be an amount published on its own (D72.2) and a
+number detached from the paper's sentence about stickers and the 30/70 split. The legend says what
+the fee *buys* and who pays instead, which is what makes it findable rather than quotable.
+- **Does not link.** The legend renders as `{{ reader.grid.legend }}` — autoescaped plain text, no
+markup — so a link would need a renderer change. Naming the branch is enough: the tree is one
+`<details>` away on the same page, and the name matches.
+
+**What is left: the re-judge.** Scenario 4 must be judged again against this page — the card's
+`Judgement:` clause is legibility and resizing, and the legend changed under it. Only that card;
+the other five were signed on a page whose legend is unchanged elsewhere.
 
 ## 5. The UAT gap this exposed
 
 No scenario asked this question. Scenario 1 is the fee question, scoped to the *establishing a PGS
 group* branch; Scenario 4 is legibility and resizing; Scenario 6 is claims. The seals table's Fee
-column sat between all three. When this is fixed, the re-judged card should ask it directly: *does
-every fee cell on every branch either state what the money buys, or point somewhere you can get
-to?* — and `writing-uat-tests` should decide whether that belongs to Scenario 1 or 4 rather than
-adding a seventh.
+column sat between all three. The re-judged card should ask it directly: *does every fee cell on
+every branch either state what the money buys, or point somewhere you can get to?* — and
+`writing-uat-tests` should decide whether that belongs to Scenario 1 or 4 rather than adding a
+seventh.

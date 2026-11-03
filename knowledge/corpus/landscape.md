@@ -298,7 +298,7 @@ renews its membership]
 <!-- table
 cols: Key steps | Resource documents, guidelines and requirements | Use of seals and logos | Seals and logos | Fee
 layout: grid
-legend: Each row is one seal. This table's “Seals and logos” column holds the seal's picture and no text: the seal's printed name heads the “Use of seals and logos” column beside it, and the artwork itself is not stored. Both rows' Fee cell reads “As above”, which is the fee stated on the previous table.
+legend: Each row is one seal. This table's “Seals and logos” column holds the seal's picture and no text: the seal's printed name heads the “Use of seals and logos” column beside it, and the artwork itself is not stored. Both rows' Fee cell reads “As above”, and the fee it points at is not on this page: it is the one printed in ESTABLISHING A PGS GROUP — Step 3's fee cell — the recommended annual fee for the use of stickers, paid by individual farmers and divided between PGS SA and the group. That branch is in the contents.
 -->
 <!-- row: PGS Organic In-Conversion -->
 <!-- cell -->
