@@ -1862,6 +1862,32 @@ the stored value with `before.replace(microsecond=0)` — truncation only lowers
 bound, so it can never be later than the timestamp the call wrote. Watched red by
 adding `timedelta(seconds=5)` to the bound.
 
+### 3.29 A decision row's "link" was a bare basename, and no test ever read one
+
+`CONTEXT_BUDGET.md` §4.2 cuts a decision row to "a sentence and a link", and `--check`
+measures the row's **bytes**. Nothing measured the link. When the 14 over-budget rows were
+cut, **12 of the 14** pointed at paths that do not exist from the spec's own directory:
+
+    `CHAT_ANSWER_COVERAGE_PRD.md`          # resolves to Refinement/, the PRD is in In Progress/
+    `Refinement/LANDSCAPE_TABLES_PRD.md`   # resolves to Refinement/Refinement/ — and it is in Done/
+    (D47)                                  # no link at all
+
+Evidence: `_scratch/rows/probe.py` resolved each backticked token against the repo root —
+`12 of 14 dead, 11 further rows with the same defect, 1 row with none`. The row budget was
+green the whole time, so the check reported "every budget holds" over a table whose
+evidence was unreachable.
+
+Consequence: the cut makes the file smaller and the spec *less* useful — the reader follows
+a link that 404s, or reads a row that cites nothing, and there is no signal that anything
+is wrong. It is the same shape as §2's `lint-imports` exiting 0 while enforcing nothing:
+the instrument measures one property and is trusted for another.
+
+Rule: a budget check must also check that what the budget is *for* still works. Every
+§18.3 row's backticked `.md`/`.html` path must resolve from the repo root, and
+`tests/tools/test_context.py::test_every_decision_row_link_resolves` now says so
+(watched red: one row reverted to a bare basename → 1 failed, naming D78).
+Rows are repo-root-relative, never relative to the spec's own directory.
+
 ## 5. Template for a new entry
 
 ```markdown

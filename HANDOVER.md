@@ -1,62 +1,43 @@
-# Handover — deployed and current on the live box; the corpus cuts are next
+# Handover — the context budgets are closed and enforced; D80's PRD is next
 
-> ## START HERE — the live site is deployed with a current corpus; the corpus cuts are next
+> ## START HERE — `--check` is green and is now the gate's first step; D80 is next
 >
-> **Deployed 2026-11-03 (session `1b`).** Live is `06bb11a`: **401 chunks** (saoso 338, opp 37,
-> landscape 17, bpp 9), `corpus_check` exit 0, `/health/` `ok` through the socket, home and the
-> OPP reader both 200, 8 of landscape's 17 and 6 of opp's 37 chunks carrying a column-labelled
-> rendition. The refresh cost **16 citation links** and `relink_evidence` recovered **0**: 7
-> assistant turns examined, all 7 predating the grounding snapshot, so this box has recorded **no
-> chat turn since 2026-10-28**. Cumulative over both refreshes: **56 links gone**, all on the same
-> 7 historical answers. The next turn recorded carries a snapshot.
+> **`CONTEXT_CUTS_PRD` is `Done` (2026-11-03, session `1d`).** All 12 steps: the chat split, the
+> six file cuts, the **14 §18.3 rows** (14 breaches → **0**, largest row 3689 → 1499 bytes) and
+> **the budget check as `scripts/verify.sh` step 1/4**. `scripts/verify.sh` **green: 1610 passed /
+> 1 skipped**, **183.57 s cold / 59.97 s warm** on this box; step 1/4 printed `every budget holds`,
+> so the check proves itself on every run. `scripts/fast.sh --critical` **172 passed / 4 deselected
+> in 46.53 s** and still names the same eight files.
 >
-> **The dev box is NOT current, and says so.** `corpus_check` here reports `landscape` **drift**
-> ("the reviewed artefact has changed since this corpus was built") and its 17 chunks carry **0**
-> labelled renditions against live's 8 — so **live is ahead of the reference DB**. Do not refresh it
-> until `GEMINI_API_KEY` is in the dev `.env`: it holds only `DJANGO_SECRET_KEY`, and a refresh
-> without the key writes 17 NULL vectors that then report "already ingested" forever
-> (`deploy/README.md` §4). This corrects session `1a`'s claim that the dev box was current.
+> **The rows' links were not links** (`testing_hazards.md` §3.29). Cutting 14 rows to "a sentence
+> and a link" found that **12 of the 14** pointed at paths that do not exist from the spec's own
+> directory — bare basenames for PRDs in `In Progress/`, `Refinement/` for one that had moved to
+> `Done/` — and **D47 had none at all**. 11 further rows had the same defect; all 81 are
+> repo-root-relative now, and `tests/tools/test_context.py` fails on any unresolvable row token
+> (watched red). **A missing artefact is now a breach too:** `size_of()` returns `(0, 0)` for an
+> absent path, so a deleted `HANDOVER.md` would have read as "inside its budget".
 >
-> **A deploy verified one commit and installed another, then logged the verified one**
-> (`testing_hazards.md` §3.27): step 1/8 verified `7b22423`, step 2/8's `pull --ff-only` re-fetched
-> and landed `06bb11a`, step 8/8 printed "7b22423 is live". Fixed by fast-forwarding to
-> `$VERIFY_COMMIT` — which step 1/8 already fetched — and asserting `HEAD` matches it before the
-> first irreversible step. `tests/tools/test_deploy_verified_commit.py` guards it, watched red two
-> ways: 3 failures with the old `pull` restored, 1 with the HEAD assertion removed. **The fix takes
-> effect on the next deploy** — the live box is still running the old script.
->
-> **Where the work stands (2026-11-03, session 14 `1c`).** `CONTEXT_CUTS_PRD` steps 1–10 are
-> **landed**: the chat split (`_chatbot.py` 97 → 23 KB, seven modules, prompt byte-identical,
-> `PROMPT_VERSION` still `d79-2`) and then, this session, the six remaining file cuts —
-> `test_chatbot_grounding.py` 51 → 21+14+15+4, `test_ingest.py` 40 → 18+10+11,
-> `test_retrieval.py` 38 → 17+19, `test_document_reader.py` 36 → 21+15,
-> `test_section_parsers.py` 32 → 22+10, `build_corpus.py` 31 → 25+7. **Every file is now inside
-> its 30 KB cap**; `--check` went 20 → 14 breaches and the 14 left are §18.3 rows.
-> **No behaviour changed:** every moved body is byte-identical to its original (asserted by
-> `_scratch/split_*.py`), every test count is unchanged, and the generator's `--stdout` output
-> hashes identically (`965cede4…` landscape, `2fab852f…` bpp).
->
-> **The critical lane did not shrink by accident.** `scripts/fast.sh --critical` still names the
-> same eight files, and the guards each entry is named for stayed in the file it names — the
-> refusal/grounding guards plus D46/D52 in `test_chatbot_grounding.py`, the recall floors in
-> `test_retrieval.py`. What left those files is display, storage and strategy.
+> **The state block below had drifted three sessions** — it still said live was `8d2839d`, 70
+> commits behind, with the old PDF corpus, and that the dev box was current. Corrected in
+> `1793a1e` **against git and `corpus_check`**, not against the previous prose. **The §3.27 deploy
+> window is not debt:** `06bb11a`'s `deploy.sh` still pulls origin's tip, but it carries the
+> re-exec, so the next deploy verifies afresh before the backup and the first migration.
 >
 > **What is next, in order:**
 >
-> 0. **Nothing is deployed-pending: live is at `06bb11a` and its corpus is current.** The box's
->    `deploy.sh` is still the pre-`3c2c39d` one, but it carries the re-exec, so the next deploy
->    closes the §3.27 window by itself — **nothing is owed** (see the state block below).
-> 1. **`product/backlog/In Progress/CONTEXT_CUTS_PRD.md` step 11 — the 14 §18.3 rows**
->    (`D46 D47 D52 D53 D68 D69 D70 D71 D72 D73 D74 D75 D78 D80`, 1.7–3.7 KB against a 1.5 KB
->    budget). Each row must keep decision + date + owner + **the one measurement** + a link, and
->    its argument must be **confirmed present** at that link first — three already have an
->    exploration page (`product/design/d46_…`, `d71_…`, `d68_…`); the rest need the owning PRD's
->    "landed" section or evidence table. `D44` is **not** among them and must keep its deferral
->    marker (`scripts/uat_parse.py` refuses the UAT otherwise).
-> 2. **Step 12 — wire `scripts/context.py --check` into `verify.sh`, at zero breaches only**
->    (`testing_hazards.md` §3.11), with `tests/tools/test_verify_gate.py` proving a breach fails
->    the gate.
-> 3. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
+> 1. **D80 / G12/X2 — but a PRD first.** `todo.md` says the ingestion engine "needs a PRD before
+>    it can be built", and **the first commit in any case is the eight-shape fixture set**: numeric
+>    rows without labels, headerless value rows, column-major interleaving, a 1,107-character cell,
+>    deliberate empty cells, a row across a page break, a two-level qualifier structure, artwork in
+>    a cell. Four of the eight have no test today. Start a **fresh session** for it: this is a
+>    different kind of work from what `1d` was doing.
+> 2. **`product/design/f3_saoso_outreach_and_role.html` is untracked** — 24 KB, "F3 — SAOSO
+>    outreach and the digital systems role", dated 2026-11-03, referenced by no PRD. Commit it with
+>    a backlog line or delete it.
+> 3. **Do not refresh the dev corpus.** `corpus_check` here reports `landscape` **drift** and its
+>    17 chunks carry **0** labelled renditions against live's 8; a refresh without
+>    `GEMINI_API_KEY` in the dev `.env` writes 17 NULL vectors that then read "already ingested"
+>    forever (`deploy/README.md` §4). **Live is the reference DB.**
 >
 > **The landscape is closed** (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
 > `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried
@@ -64,7 +45,7 @@
 >
 > **Do not run `scripts/build_corpus.py --force` on a document with a table block** — the generator
 > has no table-block rule and replaces the review with column soup while every guard stays green
-> (`testing_hazards.md` §3.25).
+> (`testing_hazards.md` §3.25). That rule is D80's first real commit.
 >
 > **"corpus is current" does not mean "rebuilt"** — drift compares the artefact's hash and the
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
@@ -76,31 +57,28 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split and handover-truth-up sessions
-**Repo state:** `main`, **9 commits ahead of `origin/main`** — `06bb11a` is pushed and live; the
-licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix and `1c`'s
-close are the rest. On this tree (2026-11-03, session `1c`): `scripts/verify.sh` **green at 1604
-passed / 1 skipped in 56.97 s**, run as
-`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this
-box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this tree — every
-commit since it is docs. Cold runs on near-identical trees have measured **126–223 s** in one
-session — quote the range, never the best run (§3.17). `scripts/fast.sh` (the lane) measured
-**1589 passed / 1 skipped / 15 deselected in 41.45 s warm**.
+**Repo state:** `main`, **19 commits ahead of `origin/main`** — `06bb11a` is pushed and live;
+the licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s
+close, and session `1d`'s ten (the truth-up, five row batches, the link guard, the gate wiring, the
+PRD close). On this tree (2026-11-03, session `1d`): `scripts/verify.sh` **green at 1610 passed /
+1 skipped**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults
+to 5432 and this box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this
+tree: **183.57 s cold, 59.97 s warm** — quote the range, never the best run (§3.17).
+`scripts/fast.sh` (the lane) measured **172 passed / 4 deselected in 46.53 s warm** with
+`--critical`.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **9 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **19 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`06bb11a`**, deployed
-2026-11-03 with a **current** corpus (401 chunks) — START HERE has the detail. Its `deploy.sh` on
-disk is the pre-`3c2c39d` one, and **the §3.27 window is self-closing, not debt**: that script
-still `pull`s origin's tip, but it already carries the re-exec, so the next deploy re-runs the
-fixed script, which verifies origin's tip afresh and fast-forwards to *that* — before the backup
-and the first migration (`deploy/README.md`: "re-executes itself if the pull changed it"). No
-manual fix is owed.
+2026-11-03 with a **current** corpus (401 chunks). Its `deploy.sh` on disk is the pre-`3c2c39d`
+one, and **the §3.27 window is self-closing, not debt**: that script still `pull`s origin's tip,
+but it already carries the re-exec, so the next deploy re-runs the fixed script, which verifies
+origin's tip afresh and fast-forwards to *that* — before the backup and the first migration
+(`deploy/README.md`: "re-executes itself if the pull changed it"). No manual fix is owed.
 **The dev box is NOT current — it is behind live**, and says so: `corpus_check` reports
 `landscape` **drift**, and its 17 landscape chunks carry **0** labelled renditions against live's
 8. Do not refresh it until `GEMINI_API_KEY` is in the dev `.env` (it holds only
 `DJANGO_SECRET_KEY`), or the refresh writes 17 NULL vectors that then report "already ingested"
-forever (`deploy/README.md` §4). Live is the reference DB. Three lines here said otherwise
-(`8d2839d`, "70 commits behind", "59 commits unpushed", "the dev box is current") — corrected
-this session against git and `corpus_check`.
+forever (`deploy/README.md` §4). Live is the reference DB.
 
 ## Session archive
 
@@ -108,6 +86,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1d` 2026-11-03 (session 16) — the state said what was not true, and the rows were cut — [`SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md`](product/docs/handover/SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md)
 - `1c` 2026-11-03 (session 15) — the six remaining cuts, and every file is inside its cap — [`SESSION_1c_2026-11-03_the-six-remaining-cuts.md`](product/docs/handover/SESSION_1c_2026-11-03_the-six-remaining-cuts.md)
 - `1b` 2026-11-03 (session 14) — deployed, and the deploy verified one commit and installed another — [`SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md`](product/docs/handover/SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md)
 - `1a` 2026-11-03 (session 13) — five splits: the chat split lands, and `_chatbot.py` is 23 KB — [`SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md`](product/docs/handover/SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md)
