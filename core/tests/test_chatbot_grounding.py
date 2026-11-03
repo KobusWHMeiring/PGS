@@ -103,7 +103,7 @@ def test_the_shipped_retrieval_budget_and_the_fallback_agree(settings):
 
 def test_default_retrieval_passes_the_shipped_budget(chat_standard_set, monkeypatch, settings):
     """`default_retrieval` is the view's path; it must use the setting, not a literal."""
-    from core.services import _chatbot
+    from core.services import _chat_guard, _chatbot
 
     seen: dict[str, object] = {}
 
@@ -117,7 +117,10 @@ def test_default_retrieval_passes_the_shipped_budget(chat_standard_set, monkeypa
             lexical_only=True,
         )
 
-    monkeypatch.setattr(_chatbot, "search_terms", spy)
+    # Patched on the module `default_retrieval` actually reads it from: since the
+    # context-cut split it lives in `_chat_guard`, and patching `_chatbot` would install
+    # the spy where nothing looks -- a test that passes for the wrong reason.
+    monkeypatch.setattr(_chat_guard, "search_terms", spy)
     settings.CHAT_RETRIEVAL_LIMIT = 3
 
     default_retrieval("how do I sign up?", chat_standard_set)

@@ -32,7 +32,6 @@ whole feature exists to prevent.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import re
 import time
@@ -41,9 +40,7 @@ from typing import Callable, Sequence
 
 from django.conf import settings
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Count, Max
 
 from core.models import ChatMessage, ChatSession, EscalatedQuery, User
 from core.services._chat_audit import (
@@ -60,19 +57,36 @@ from core.services._chat_prompt import (
     looks_like_cost_question,
     significant_terms,
 )
+from core.services._chat_guard import (
+    MAX_QUESTION_CHARS,
+    RETRIEVAL_LIMIT,
+    attach_user,
+    build_retrieval_query,
+    chat_retrieval_limit,
+    check_rate_limit,
+    default_retrieval,
+    default_standard_set,
+    get_session,
+    looks_like_follow_up,
+    start_session,
+    validate_question,
+)
 from core.services._chat_provider import (
     ANSWER_SCHEMA,
     MAX_OUTPUT_TOKENS,
     GeminiChatModel,
 )
-from core.services._chat_text import (
-    _STOPWORDS,
-    _content_words,
-    _words,
-    locator_of,
-    normalise_question,
-    text_sha,
+from core.services._chat_cache import (
+    ANSWER_CACHE_TTL,
+    _cache_key,
+    _citation_record,
+    _corpus_fingerprint,
+    _grounding_snapshot,
+    _reply_from_json,
+    _reply_to_json,
+    citation_records,
 )
+from core.services._chat_text import locator_of, normalise_question, text_sha
 from core.services._chat_values import (
     AnswerTruncatedError,
     ChatConfigurationError,
@@ -87,14 +101,9 @@ from core.services._chat_values import (
     UpstreamModelError,
 )
 from core.services._documents import public_codes_by_source
-from knowledge.models import DocumentChunk, StandardSet
+from knowledge.models import StandardSet
 from knowledge.reading import reading_anchor
-from knowledge.services import (
-    RetrievedChunk,
-    RetrievalResult,
-    chunks_by_id,
-    search_terms,
-)
+from knowledge.services import RetrievedChunk, RetrievalResult, chunks_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -130,480 +139,11 @@ TRUNCATED_MESSAGE = (
 
 #: Defaults. Every one is read through `getattr(settings, â€¦)` at call time, so a test
 #: or a deployment can override it with `override_settings`/an environment variable.
-MAX_QUESTION_CHARS = 500
 HISTORY_MESSAGES = 8
-#: How many passages the model is given, when the setting is absent. **`settings`
-#: always defines `CHAT_RETRIEVAL_LIMIT`**, so this value is a fallback and not the live
-#: budget — see `chat_retrieval_limit()`. The 2026-10-21 answer-coverage work raised this
-#: constant from 5 to 8 believing it was the budget; the product kept running at 5
-#: (`testing_hazards.md` §2.7). Read the limit through the function, never from here.
-RETRIEVAL_LIMIT = 8
-RATE_LIMIT = 20
-RATE_LIMIT_WINDOW_SECONDS = 3600
-ANSWER_CACHE_TTL = 3600
 MAX_ANSWER_CHARS = 6000
 #: How many of the previous answer's clauses a follow-up may carry back into
 #: retrieval. The audited citations, not the eight supplied passages.
 CARRIED_CITATIONS = 2
-
-
-# --- Session lifecycle ------------------------------------------------------
-
-
-def chat_retrieval_limit() -> int:
-    """The one retrieval budget: the setting, falling back to `RETRIEVAL_LIMIT`.
-
-    In:  nothing.
-    Out: how many passages the model is given.
-
-    A function rather than a constant so that the view path and every measuring
-    instrument read the *same* number. `scripts/probe_chat.py` used to hardcode 8 while
-    the product used 5, and printed a grounded answer for a question `/ask/` refuses —
-    the instrument measured a path the product does not have (`testing_hazards.md` §2.7).
-    """
-    return int(getattr(settings, "CHAT_RETRIEVAL_LIMIT", RETRIEVAL_LIMIT))
-
-
-def default_retrieval(
-    question: str,
-    standard_set: StandardSet,
-    *,
-    limit: int | None = None,
-    context_query: str = "",
-) -> RetrievalResult:
-    """Retrieve the passages a question is answered from.
-
-    In:  the visitor's question; the corpus to search; optionally an explicit `limit`
-         (used by the probe's `--limit` when comparing budgets); `context_query` — the
-         previous question, when this turn continues it. The caller decides that
-         (`answer_question` uses `looks_like_follow_up`); retrieval does not guess.
-    Out: a `RetrievalResult`; `limit` defaults to `chat_retrieval_limit()`.
-
-    This is the single retrieval path: `answer_question()` calls it, and
-    `scripts/probe_chat.py` calls it too, so a measurement cannot drift from the product.
-    """
-    return search_terms(
-        significant_terms(question),
-        standard_set=standard_set,
-        question=question,
-        limit=chat_retrieval_limit() if limit is None else limit,
-        context_query=context_query,
-    )
-
-
-def default_standard_set() -> StandardSet:
-    """The corpus a new conversation starts against.
-
-    In:  nothing.
-    Out: the single `is_default=True` set.
-    Fails: `ChatConfigurationError` when it is missing or ambiguous. Guessing would
-        put another standard's text behind the assistant's answers (SPEC Â§4.5).
-    """
-    defaults = StandardSet.objects.filter(is_default=True)
-    count = defaults.count()
-    if count != 1:
-        raise ChatConfigurationError(
-            f"Expected exactly one default StandardSet, found {count}. "
-            "Run `python manage.py seed_deployment` before serving the chat."
-        )
-    return defaults.get()
-
-
-def start_session(
-    *,
-    user: User | None = None,
-    standard_set: StandardSet | None = None,
-    ip_hash: str = "",
-    user_agent: str = "",
-) -> ChatSession:
-    """Create a conversation pinned to a corpus.
-
-    In:  `user` (or None), `standard_set` (defaults to the deployed corpus),
-         `ip_hash` (sha256 of the client IP, never the address), `user_agent`.
-    Out: a persisted `ChatSession`.
-    Fails: `ChatConfigurationError` when no default set is seeded.
-    """
-    return ChatSession.objects.create(
-        user=user,
-        standard_set=standard_set or default_standard_set(),
-        ip_hash=ip_hash[:64],
-        user_agent=user_agent[:255],
-    )
-
-
-def get_session(session_uuid: uuid.UUID | str) -> ChatSession:
-    """Resolve a public UUID or raise the service's own error.
-
-    A malformed UUID is a missing session, not a 500: the value comes from a cookie
-    and a stale or edited one must fall back to "no conversation".
-    """
-    try:
-        return ChatSession.objects.select_related("standard_set").get(
-            public_uuid=session_uuid
-        )
-    except (ChatSession.DoesNotExist, ValueError, TypeError, ValidationError) as error:
-        raise SessionNotFoundError(f"No chat session {session_uuid!r}.") from error
-
-
-def attach_user(session_uuid: uuid.UUID | str, user: User) -> ChatSession:
-    """Attach a signed-in user to an existing (usually anonymous) conversation.
-
-    In:  `session_uuid`; `user`.
-    Out: the same `ChatSession`, with `user` set.
-    Side Effects: one `UPDATE` when the session had no user.
-    Fails: `SessionNotFoundError`.
-    Idempotency: yes â€” attaching the same user twice changes nothing, and a session
-        that already has a different user is left alone rather than reassigned.
-    """
-    session = get_session(session_uuid)
-    if session.user_id is None:
-        session.user = user
-        session.save(update_fields=["user"])
-    return session
-
-
-# --- Guardrails -------------------------------------------------------------
-
-
-def _now() -> float:
-    """The clock, isolated so a rate-limit test can hand it a fixed time."""
-    return time.time()
-
-
-def _rate_limit() -> int:
-    return int(getattr(settings, "CHAT_RATE_LIMIT", RATE_LIMIT))
-
-
-def _rate_window() -> int:
-    return int(getattr(settings, "CHAT_RATE_LIMIT_WINDOW_SECONDS", RATE_LIMIT_WINDOW_SECONDS))
-
-
-def check_rate_limit(ip_hash: str, *, now: float | None = None) -> None:
-    """Count one question against the client's fixed window.
-
-    In:  `ip_hash` â€” sha256 of the IP; `now` â€” injectable clock.
-    Out: None.
-    Side Effects: one cache increment.
-    Fails: `RateLimitedError` when the count exceeds `CHAT_RATE_LIMIT`.
-
-    A blank `ip_hash` is not rate-limited: it means the caller is not a public
-    request (a test, a management command). The public view always supplies one.
-    """
-    if not ip_hash:
-        return
-
-    limit = _rate_limit()
-    window = _rate_window()
-    timestamp = _now() if now is None else now
-    bucket = int(timestamp // window)
-    key = f"chat:rate:{ip_hash}:{bucket}"
-
-    # `add` is atomic and gives us the first count; `incr` is atomic thereafter. A
-    # key that expires between the two raises ValueError, which is a new window, not
-    # an error.
-    if cache.add(key, 1, timeout=window):
-        count = 1
-    else:
-        try:
-            count = cache.incr(key)
-        except ValueError:
-            cache.set(key, 1, timeout=window)
-            count = 1
-
-    if count > limit:
-        retry_after = int(window - (timestamp % window)) or window
-        raise RateLimitedError(retry_after)
-
-
-def validate_question(question: str) -> str:
-    """In: raw question text. Out: the stripped question.
-    Fails: `InvalidQuestionError` when blank or over `CHAT_MAX_QUESTION_CHARS`."""
-    text = (question or "").strip()
-    cap = int(getattr(settings, "CHAT_MAX_QUESTION_CHARS", MAX_QUESTION_CHARS))
-    if not text:
-        raise InvalidQuestionError("Please ask a question.")
-    if len(text) > cap:
-        raise InvalidQuestionError(
-            f"Please keep the question to {cap} characters or fewer."
-        )
-    return text
-
-
-#: Openers that only make sense as a continuation. Matched against the question's
-#: leading words with punctuation removed, so `why?` and `and for goats?` both land.
-FOLLOW_UP_OPENERS = (
-    "and ",
-    "also ",
-    "but ",
-    "then ",
-    "so ",
-    "why ",
-    "what about",
-    "what if",
-    "how about",
-    "does that",
-    "does it",
-    "do that",
-    "is that",
-    "is it",
-    "can that",
-    "can it",
-    "would that",
-    "will that",
-    "should that",
-)
-
-#: Pronouns and demonstratives. A short question containing one of these is pointing at
-#: the previous answer; a long one has its own subject and merely uses the word.
-FOLLOW_UP_ANAPHORS = frozenset(
-    {"it", "its", "that", "this", "they", "them", "those", "these", "same"}
-)
-
-#: An anaphor is only evidence while the question is short. Twelve words is a sentence.
-FOLLOW_UP_MAX_WORDS = 12
-
-#: "Short" for the shared-term rule. Six content words is a noun phrase with a verb.
-FOLLOW_UP_MAX_TERMS = 6
-
-#: A shared word shorter than this is a verb or a preposition-like filler ("use", "get"),
-#: not the subject of the question. Without it "Can I use KNF preparations?" reads as a
-#: follow-up of "Can I use cardboard?" purely on the word "use".
-FOLLOW_UP_MIN_SHARED = 4
-
-
-def looks_like_follow_up(question: str, parent_question: str) -> bool:
-    """Does `question` continue `parent_question`, or is it a new question?
-
-    In:  the question just typed; the previous *user* question in the conversation
-         (empty when there is none).
-    Out: True when the question cannot stand on its own.
-    Fails: never. **It fails closed** — anything it cannot recognise is a new question,
-         which is exactly the behaviour before stage 1, so a wrong answer costs nothing
-         and a right one is the only way to gain.
-
-    Why a heuristic instead of the visitor's choice: they know least about what they are
-    asking at the moment they would have to choose. Two mistakes are possible here and
-    they are not equal. A missed follow-up falls back to today's behaviour. A false
-    positive carries one stale subject into retrieval, which is why the context arm
-    `search_terms` adds is capped at two passages and displaces the weakest match
-    rather than splitting the budget.
-
-    The three signals, in order, and the reasons for each:
-
-    1. **An opener** — `what if`, `and`, `why`. The strongest single signal, because the
-       phrase is incomplete by construction.
-    2. **An anaphor in a short question** — `it`, `that`, `those`. Something outside the
-       sentence is the subject.
-    3. **Short and sharing a distinctive word** — "does manure apply to goats too?".
-       Length is part of the test: a long question has enough of its own subject that
-       overlap is topical, not referential.
-    """
-    normalised = normalise_question(question)
-    if not parent_question or not normalised:
-        return False
-
-    # Asking the same question twice is not a follow-up: it is the same question, and
-    # treating it as a follow-up would key it to its own history and miss the cache the
-    # repeat exists to hit. A follow-up has to add something.
-    if normalised == normalise_question(parent_question):
-        return False
-
-    words = _words(normalised)
-    if not words:
-        return False
-
-    if (" ".join(words) + " ").startswith(FOLLOW_UP_OPENERS):
-        return True
-
-    if len(words) <= FOLLOW_UP_MAX_WORDS and any(word in FOLLOW_UP_ANAPHORS for word in words):
-        return True
-
-    content = _content_words(normalised)
-    if len(content) > FOLLOW_UP_MAX_TERMS:
-        return False
-
-    parent_words = set(_content_words(parent_question))
-    return any(
-        word in parent_words and len(word) >= FOLLOW_UP_MIN_SHARED for word in content
-    )
-
-
-def build_retrieval_query(question: str) -> str:
-    """Turn a natural-language question into a lexical OR query.
-
-    In:  the user's question.
-    Out: `"term OR term OR …"`. Falls back to the raw question when every token is a
-         stopword, so a query like "the why" still does something rather than
-         silently retrieving nothing.
-    Fails: never.
-
-    The default retrieval path uses `significant_terms` directly (see
-    `search_terms`); this string is kept for diagnostics and for the narrow case where
-    a single OR query is the right tool.
-    """
-    tokens = significant_terms(question)
-    if not tokens:
-        return question
-    return " OR ".join(tokens)
-
-
-# --- The answer cache -------------------------------------------------------
-
-
-def _corpus_fingerprint(standard_set: StandardSet) -> str:
-    """A cheap description of the corpus a cached reply was produced from.
-
-    Count + max id catches an ingest or a re-chunk; the document sha list catches the
-    same bytes being re-ingested under a new version. It is not a content hash of
-    every chunk â€” that would cost more than the Gemini call it saves â€” but it is
-    enough that a corpus change cannot silently reuse yesterday's citations.
-    """
-    aggregate = (
-        DocumentChunk.objects.filter(document__standard_set=standard_set).aggregate(
-            count=Count("id"), max_id=Max("id")
-        )
-    )
-    shas = "|".join(
-        standard_set.documents.order_by("id").values_list("sha256", flat=True)
-    )
-    return hashlib.sha256(
-        f"{aggregate['count']}:{aggregate['max_id']}:{shas}".encode()
-    ).hexdigest()[:32]
-
-
-def _cache_key(
-    question: str,
-    standard_set: StandardSet,
-    fingerprint: str | None = None,
-    history_digest: str = "",
-) -> str:
-    """The cache key: contract, corpus, question, and the conversation that shaped it.
-
-    `history_digest` is set for a **follow-up** — a turn whose retrieval and prompt both
-    depend on the previous exchange — and empty otherwise. That is deliberately narrower
-    than "history exists":
-
-    * A first question has no history at all, which is the case the cache exists for:
-      many visitors, one question.
-    * A standalone question in an existing conversation still receives the bounded
-      history in its prompt (D2, `CHAT_HISTORY_MESSAGES`), so its reply *may* differ from
-      another visitor's. That residual predates stage 1 and is not made worse by it: the
-      prompt now says the earlier turns resolve references and may not be cited, and a
-      standalone turn inherits no passages. Keying it on the history would remove the
-      cache hit for the common "ask it again to re-read it" case and break three tests
-      that pin the property deliberately.
-    * A follow-up's answer genuinely *is* derived from its parent, so it cannot be shared
-      with a different conversation. That is the leak this closes.
-    """
-    material = normalise_question(question)
-    if history_digest:
-        material = f"{history_digest}\x00{material}"
-    digest = hashlib.sha256(material.encode()).hexdigest()[:32]
-    return (
-        f"chat:answer:{PROMPT_VERSION}:{standard_set.pk}:"
-        f"{fingerprint or _corpus_fingerprint(standard_set)}:{digest}"
-    )
-
-
-def _grounding_snapshot(chunks: Sequence[RetrievedChunk]) -> list[dict]:
-    """What an answer stood on, in a form that outlives the chunks themselves.
-
-    `retrieved_chunks` is the joinable record while the corpus exists; `--force`
-    re-ingest deletes the chunks and takes the M2M rows with them, so a corpus rebuild
-    erases the evidence for every answer already given. The transcript is kept
-    indefinitely (D59), so the grounds for it must be too.
-
-    The text sha is what makes this a record rather than a label: it lets a reviewer
-    tell "the same locator, text changed" from "the same passage" without storing the
-    passage a second time (the corpus owns the text).
-    """
-    return [
-        {
-            "locator": locator_of(chunk),
-            "page": chunk.page,
-            "heading_path": chunk.heading_path,
-            "document": chunk.document_title,
-            "text_sha": text_sha(chunk.text),
-        }
-        for chunk in chunks
-    ]
-
-
-def citation_records(citations: Sequence[Citation]) -> list[dict]:
-    """The accepted citations in the shape `_citation_record` stores them.
-
-    One shape, two callers: the transcript's evidence trail and the board's card. A card and a
-    turn must not disagree about what was cited, and two list comprehensions that drift apart
-    would disagree silently.
-
-    `document_code` and `reading_anchor` are stored **in** the snapshot rather than resolved at
-    render time: a card outlives a `--force` re-ingest, and a page that silently re-resolved a
-    citation after the corpus changed would be a claim nobody could audit.
-    """
-    return [
-        {
-            "section_ref": citation.section_ref,
-            "sub_ref": citation.sub_ref,
-            "page": citation.page,
-            "document": citation.document,
-            "quote": citation.quote,
-            # Recorded so a follow-up can carry the previous answer's clauses back into
-            # retrieval, and so the trace console can show which passage an accepted
-            # citation actually named. Rows written before this carry no `chunk_id`, and a
-            # follow-up simply inherits nothing from them.
-            "chunk_id": citation.chunk_id,
-            "document_code": citation.document_code,
-            "reading_anchor": citation.reading_anchor,
-            # `D79` option E: the row and column frame the quote, and a card outlives the corpus
-            # the same way its quote does. Without these the answer page silently renders no
-            # context while the transcript renders it — two surfaces disagreeing about one
-            # citation (found while building slice 3).
-            "row_label": citation.row_label,
-            "column_label": citation.column_label,
-        }
-        for citation in citations
-    ]
-
-
-def _citation_record(
-    raw_citations: Sequence[object], accepted: Sequence[Citation]
-) -> dict:
-    """The citations as returned, and as shown — in one field, with no guesswork.
-
-    `raw` is kept verbatim, unsanitised: it is the model's output and the evidence of
-    what it did. `accepted` is the audited subset, carrying the document and page that
-    the audit attached from the chunk rather than from the model.
-
-    Deliberately *not* matched pairwise. The audit normalises a locator before lookup
-    (`§4.2` vs `4.2`), so deciding which raw citation corresponds to which accepted one
-    would be a heuristic — and a heuristic in the evidence trail is worse than two lists.
-    """
-    return {
-        "raw": [item for item in raw_citations if isinstance(item, dict)][:20],
-        "accepted": citation_records(accepted),
-    }
-
-
-def _reply_to_json(reply: ModelReply) -> dict:
-    return {
-        "answer": reply.answer,
-        "citations": list(reply.citations),
-        "insufficient_context": reply.insufficient_context,
-        "model": reply.model,
-        "prompt_tokens": reply.prompt_tokens,
-        "completion_tokens": reply.completion_tokens,
-    }
-
-
-def _reply_from_json(payload: dict) -> ModelReply:
-    return ModelReply(
-        answer=str(payload.get("answer", "")),
-        citations=tuple(payload.get("citations") or ()),
-        insufficient_context=bool(payload.get("insufficient_context")),
-        model=str(payload.get("model", "")),
-        prompt_tokens=payload.get("prompt_tokens"),
-        completion_tokens=payload.get("completion_tokens"),
-    )
 
 
 # --- The contract -----------------------------------------------------------

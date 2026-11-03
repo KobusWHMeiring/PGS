@@ -238,7 +238,7 @@ CHAT_HISTORY_MESSAGES = int(env("CHAT_HISTORY_MESSAGES", "8"))
 # How many passages the model is given. Eight, not five: at five the cardboard question
 # retrieves no inputs clause and refuses, at eight it answers from Appendix 2 (measured
 # 2026-10-22, `testing_hazards.md` §2.7). The 2026-10-21 change raised
-# `_chatbot.RETRIEVAL_LIMIT` instead of this setting, and that constant is only a
+# `_chat_guard.RETRIEVAL_LIMIT` instead of this setting, and that constant is only a
 # fallback — so the product ran at five for a day while the plan believed eight.
 CHAT_RETRIEVAL_LIMIT = int(env("CHAT_RETRIEVAL_LIMIT", "8"))
 CHAT_ANSWER_CACHE_TTL = int(env("CHAT_ANSWER_CACHE_TTL", "3600"))

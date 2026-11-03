@@ -57,8 +57,9 @@ headings:
 | `_chat_values.py` | errors, `Citation`, `ModelReply`, `GroundedAnswer`, `ChatModel` | 6 KB |
 | `_chat_audit.py` | `audit_citations`, `outcome_claim_warnings`, `cost_question_warnings`, `_address_book`, `_reader_anchors` | 12 KB |
 | `_chat_provider.py` | `ANSWER_SCHEMA`, `GeminiChatModel`, truncation handling, the model constants | 8 KB |
-| `_chat_guard.py` | rate limit, `validate_question`, follow-up detection, retrieval defaults, session lifecycle | 11 KB |
-| `core/services/_chatbot.py` | `answer_question`, the cache, refusals — **the contract** | ~27 KB |
+| `_chat_guard.py` | rate limit, `validate_question`, follow-up detection, retrieval defaults, session lifecycle | 13 KB |
+| `_chat_cache.py` | the answer cache: `_cache_key`, the grounding snapshot, the JSON round-trip | 8 KB |
+| `core/services/_chatbot.py` | `answer_question` and the refusals — **the contract** | 23 KB |
 
 **Amended 2026-11-03, after step 1.** The first table had four modules and left `_chatbot.py` at
 35 KB — over the 30 KB cap the split exists to satisfy — and step 2 could not be built at all:
@@ -119,9 +120,12 @@ Ordered so each step is independently committable and the biggest session cost f
 4. **`_chat_provider.py`.** The model client, `ANSWER_SCHEMA`, truncation and the `MODEL_*`
    constants. This is the only slice that touches an external surface — keep the truncation
    tests as the proof.
-5. **`_chat_guard.py`.** Rate limiting, `validate_question`, follow-up detection, retrieval
-   defaults and session lifecycle. **`--check` must show `_chatbot.py` under 30 KB after this
-   one**, with margin — 27 KB measured, not 29.5 and hoping.
+5. **`_chat_guard.py`**, then **`_chat_cache.py`.** The guardrails, validation, follow-up
+   detection, retrieval defaults and session lifecycle; then the answer cache and its
+   snapshot. `--check` must show `_chatbot.py` under 30 KB with **margin**, not on the line:
+   the guard slice alone measured 30,616 bytes against a 30,720 cap -- 104 bytes of
+   headroom -- so the cache left too and the file is 23 KB. A cap met by 0.3% is a cap that
+   the next comment breaks.
 6. **`knowledge/corpus.py` → `knowledge/corpus_tables.py`.** The table block moves; the header and
    format rules stay. `--check` must show both files under cap.
 7. **`core/services/_documents.py` (48 KB).** No section headings, so name the seam first: the
