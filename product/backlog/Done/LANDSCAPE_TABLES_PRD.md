@@ -1185,9 +1185,10 @@ by putting a sentence into the picture column and restoring it.
 
 **The UAT consequence.** Scenario 2's steps said *"Leave **Use of seals** alone, and notice whether
 you had to open it to answer a question"* — that premise is now the opposite, and its `Judgement:`
-clause ("is anything you needed behind a fold?") is exactly the question this change answers. So
-Scenario 2 is **re-judged with Scenario 4** against the rebuilt artefact; the other four cards are
-untouched.
+clause ("is anything you needed behind a fold?") is exactly the question this change answers. Its
+Setup/Steps/Expected were rewritten against the page as built and the clause kept, then **Scenario
+2 was re-judged with Scenario 4** on the artefact rebuilt against `c4c362e` — six PASS, signed by
+Kobus (Product) 2026-11-03.
 
 ## Pre-Flight Checklist
 

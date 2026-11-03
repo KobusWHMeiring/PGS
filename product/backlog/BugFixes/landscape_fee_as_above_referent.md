@@ -103,9 +103,8 @@ the fee *buys* and who pays instead, which is what makes it findable rather than
 markup — so a link would need a renderer change. Naming the branch is enough: the tree is one
 `<details>` away on the same page, and the name matches.
 
-**What is left: the re-judge.** Scenario 4 must be judged again against this page — the card's
-`Judgement:` clause is legibility and resizing, and the legend changed under it. Only that card;
-the other five were signed on a page whose legend is unchanged elsewhere.
+**What is left: nothing — re-judged and signed.** Scenarios 2 and 4 were judged again on the
+artefact rebuilt against `c4c362e`, and all six are **PASS** (2026-11-03).
 
 ## 5. The UAT gap this exposed
 

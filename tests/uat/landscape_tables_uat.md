@@ -4,7 +4,7 @@
 **PRD:** `product/backlog/Done/LANDSCAPE_TABLES_PRD.md` (§12f, built in §12g, signed in §12h)
 **Decision:** `PGS_PLATFORM_SPEC.md` §18.3 D72 (the rows are reviewed data), D76 (the printed grid), **D77 (a layout per table)**
 **Design:** `product/design/d76d_c3_and_the_split.html` · `product/design/DESIGN.md` §7.13
-**Status:** **SIGNED 2026-11-01** — 6 PASS, 0 FAIL, 0 N/A, signed by Kobus (Product) against commit `ecd3c8d`; applied by `scripts/uat_signoff.py`. The PGS administrator and committee reviewer seats are still empty (D4) and are not blocking.
+**Status:** **SIGNED** — 6 PASS, 0 FAIL, 0 N/A, signed by Kobus (Product): **first pass 2026-11-01 against `ecd3c8d`**, **re-signed 2026-11-03 against `c4c362e`** after §12h (the seals legend) and §12i (the folds moved to the prose), which changed Scenarios 2 and 4. Applied by `scripts/uat_signoff.py` both times; the second export carried the first pass's card dates, so the `**Signed against:**` line is what dates the re-judge. The PGS administrator and committee reviewer seats are still empty (D4) and are not blocking.
 **Date:** 2026-11-01
 
 ---
@@ -226,4 +226,4 @@ endorsement — is this scenario.
 
 **Results:** 6 PASS · 0 FAIL · 0 N/A — signed by Kobus (Product).
 
-**Signed against:** commit `ecd3c8d` (clean), database `pgs`, generated 2026-11-03.
+**Signed against:** commit `c4c362e` (clean), database `pgs`, generated 2026-11-03.

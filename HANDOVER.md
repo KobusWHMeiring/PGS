@@ -52,26 +52,20 @@
 >
 > **What is next, in order:**
 >
-> 1. **The reader's folds moved to the prose** — **built 2026-11-03**, awaiting the re-judge
->    (`LANDSCAPE_TABLES_PRD` §12i, amending D77; `BugFixes/landscape_fee_as_above_referent.md`).
->    Two changes on the landscape reader, both decided by the owner while signing:
->    **(a)** the seals grid's legend names the branch and the step instead of saying "the previous
->    table", so `As above` is followable from a deep link; **(b)** the folds swap — Resources and
->    *Use of seals* both fold closed, and the `Seals and logos` picture column is **not drawn**
->    (its Step 2 cell was the caption "Proud member of", a control opening onto a fragment of an
->    absent picture). An empty facet is never folded, so Step 1 keeps *"The paper is silent on this
->    step."* Five guards, each written first and watched red. **No re-ingest** — all 17 of 17
->    landscape chunk texts are byte-identical; `corpus_check` reports landscape drift on the file
->    hash alone. **Scenarios 2 and 4 must be judged again on the rebuilt artefact; the tool refuses
->    a partial export, so the re-sign covers all six.**
-> 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
+> 1. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
 >    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
 >    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`
 >    was deliberately created instead of adding to either. 4.2: a §18.3 row becomes a sentence plus a
 >    link — `--check` names the rows over 1.5 KB (**14 today**, `D68` the largest at 3.6 KB). 4.4: wire
 >    `scripts/context.py --check` into the gate **once the tree is inside budget** — 25 breaches
 >    today (11 source files, 14 rows).
-> 3. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
+> 2. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
+>
+> **The landscape is closed.** The reader's two follow-ups landed 2026-11-03 — the seals legend
+> names its referent (§12h) and the folds moved to the prose (§12i, amending D77) — and the UAT was
+> **re-signed against `c4c362e`: 6 PASS**, Scenarios 2 and 4 re-judged on the rebuilt artefact.
+> `LANDSCAPE_TABLES_PRD` is in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard are
+> carried into D80 by name.
 >
 > **Do not run `scripts/build_corpus.py --force` on a document with a table block** — the generator
 > has no table-block rule and replaces the review with column soup while every guard stays green
