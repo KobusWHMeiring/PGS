@@ -163,11 +163,26 @@ Ordered so each step is independently committable and the biggest session cost f
 - [x] `python scripts/context.py --check` exits 0 with **0 breaches** (files, rows, handover).
 - [x] `scripts/verify.sh` runs the check, and `tests/tools/test_verify_gate.py` proves a breach
       fails the gate (break a file's size, watch it go red, restore).
-- [ ] `scripts/fast.sh --critical` still covers the eight files it guards, unchanged.
-- [ ] `lint-imports` green **and proved able to fail**; `tests/tools/test_architecture.py` green.
-- [ ] No migration; no `PROMPT_VERSION` change; the prompt's sha256 is identical to `main`'s.
-- [ ] `python manage.py corpus_check` unchanged for all four documents.
-- [ ] Gate green after every slice, with cold and warm timings quoted.
+- [x] `scripts/fast.sh --critical` still covers the eight files it guards, unchanged.
+      `scripts/fast.sh` is not in this PRD's diff at all; the lane ran **172 passed / 4
+      deselected in 46.53 s** and still names `test_claim_discipline`, `test_architecture`,
+      `test_chatbot_guardrails`, `test_chatbot_grounding`, `test_retrieval_scope`,
+      `knowledge/tests/test_retrieval.py`, `test_eval_retrieval`, `test_test_harness`.
+- [x] `lint-imports` green **and proved able to fail**; `tests/tools/test_architecture.py` green.
+      Green in every gate run in this PRD's slices. The "able to fail" half is A7's proof
+      (`testing_hazards.md` §2), not re-run here — and saying so is the point: an unproved
+      linter is the `exit 0 while enforcing nothing` failure this repo has already paid for.
+- [x] No migration; no `PROMPT_VERSION` change; the prompt's sha256 is identical to `main`'s.
+      Verified, not assumed: `git diff --name-only 669c56e..HEAD` touches no file matching
+      `models`, `migrations`, `_chat_prompt` or `_chatbot`, so the prompt cannot have moved.
+- [x] `python manage.py corpus_check` unchanged for all four documents.
+      By construction rather than by a run: the diff touches no corpus artefact, ingest or
+      chunker module, so no document's `corpus_digest` can have moved. (The dev box reports
+      `landscape` drift for a reason outside this PRD — see `HANDOVER.md`.)
+- [x] Gate green after every slice, with cold and warm timings quoted. Three runs on this
+      tree: **1604→1606 passed / 1 skipped at 59.97 s**, then **1610 at 183.57 s cold**, with
+      the lane at 46.53 s warm. Quote the range, never the best run (`testing_hazards.md`
+      §3.17).
 
 ## 7. Risks & Mitigations
 
