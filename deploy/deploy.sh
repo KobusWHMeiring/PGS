@@ -179,13 +179,42 @@ trap - EXIT INT TERM
 echo ""
 echo "==> 2/8  Pulling origin/$GIT_BRANCH"
 sudo -u "$APP_USER" git -C "$APP_DIR" checkout "$GIT_BRANCH"
-sudo -u "$APP_USER" git -C "$APP_DIR" pull --ff-only origin "$GIT_BRANCH"
+
+# Install $VERIFY_COMMIT — NOT origin/$GIT_BRANCH. `pull origin main` fetches again, so
+# the thing installed is origin's tip *now*, while the thing verified is origin's tip
+# when step 1/8 fetched it. A push landing inside that window is deployed untested.
+# Measured on the VPS 2026-11-03: 7b22423 was verified over 82 s, 06bb11a was installed,
+# and step 8/8 nonetheless printed "7b22423 is live" — so the log was wrong in the same
+# breath as the gate was bypassed. Most pushes in that window are docs; a migration
+# would have been equally welcome.
+#
+# Fast-forwarding to the verified sha closes the window by construction rather than
+# detecting it after the fact: step 1/8 already fetched this object, so it is in the
+# database, and if origin has moved on the next deploy verifies and installs that.
+if ! sudo -u "$APP_USER" git -C "$APP_DIR" merge --ff-only --quiet "$VERIFY_COMMIT"; then
+    echo "!! $APP_DIR cannot fast-forward to the verified commit" >&2
+    echo "   verified: $VERIFY_COMMIT" >&2
+    echo "   HEAD:     $(sudo -u "$APP_USER" git -C "$APP_DIR" rev-parse HEAD)" >&2
+    echo "   The checkout has local commits or changes. Nothing was deployed." >&2
+    exit 1
+fi
 
 if [[ -z "${DEPLOY_REEXEC:-}" && \
       "$SELF_BEFORE" != "$(sha256sum "$SELF_PATH" | cut -d' ' -f1)" ]]; then
     echo "==> deploy.sh changed in this pull — re-executing the new version"
     export DEPLOY_REEXEC=1
     exec bash "$SELF_PATH" "$@"
+fi
+
+# The claim in step 8/8 ("$VERIFY_COMMIT is live") is only allowed to be true if the tree
+# still *is* that commit. One cheap assertion, so that any later edit which moves HEAD
+# between here and the health check fails loudly instead of shipping untested code and
+# reporting a sha that was never installed.
+HEAD_NOW="$(sudo -u "$APP_USER" git -C "$APP_DIR" rev-parse HEAD)"
+if [[ "$HEAD_NOW" != "$VERIFY_COMMIT" ]]; then
+    echo "!! HEAD is $HEAD_NOW but $VERIFY_COMMIT was the verified commit" >&2
+    echo "   Refusing to deploy code the gate never saw. Nothing was migrated." >&2
+    exit 1
 fi
 
 # 4. Backup BEFORE migrating --------------------------------------------------
