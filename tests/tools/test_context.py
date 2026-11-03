@@ -18,9 +18,14 @@ is over budget. The test asserts it reports, not that it is green.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from scripts import context
+
+SPEC = context.REPO_ROOT / "product/backlog/Refinement/PGS_PLATFORM_SPEC.md"
+DECISION_TOKEN = re.compile(r"`([^`\n]+\.(?:md|html))`")
 
 
 def test_every_recipe_entry_exists():
@@ -71,6 +76,43 @@ def test_check_reports_without_crashing(capsys):
     assert "context budgets" in out
     assert "breach" in out
     assert out.isascii(), "printed output must be ASCII (Windows cp1252 console)"
+
+
+def unresolvable_links(spec_text):
+    """Every backticked `.md`/`.html` path in a decision row, minus the ones that resolve.
+
+    A `<doc>` token is prose rather than a path — `knowledge/corpus/<doc>.md` names four
+    files — so it is skipped, and everything else must be a repo-root-relative path.
+    """
+    bad = []
+    for line in spec_text.splitlines():
+        if not line.startswith("| D"):
+            continue
+        row = line.split("|")[1].strip()
+        for token in DECISION_TOKEN.findall(line):
+            if "<" not in token and not (context.REPO_ROOT / token).is_file():
+                bad.append(f"{row}: {token}")
+    return bad
+
+
+def test_every_decision_row_link_resolves():
+    """A row's evidence is its link (`CONTEXT_BUDGET.md` §4.2); a basename is not a link.
+
+    When the 14 over-budget rows were cut to a sentence and a link, 12 of them pointed at
+    paths that do not exist from the spec's own directory — bare filenames for PRDs in
+    `In Progress/`, and `Refinement/` for one that had moved to `Done/` — and nothing
+    failed, because no test ever read a row's link.
+    """
+    assert not unresolvable_links(SPEC.read_text(encoding="utf-8"))
+
+
+def test_the_link_check_can_fail():
+    """Prove the guard before trusting it green: a bare basename must be named."""
+    assert unresolvable_links("| D999 | q | **Yes** (`CHAT_ANSWER_COVERAGE_PRD.md`). |") == [
+        "D999: CHAT_ANSWER_COVERAGE_PRD.md"
+    ]
+    resolved = "| D999 | q | **Yes** (`product/backlog/In Progress/CHAT_ANSWER_COVERAGE_PRD.md`). |"
+    assert unresolvable_links(resolved) == []
 
 
 def test_an_unknown_task_names_the_known_ones():
