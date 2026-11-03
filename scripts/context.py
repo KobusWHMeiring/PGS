@@ -68,6 +68,7 @@ TASKS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("product/backlog/In Progress/CHAT_ANSWER_COVERAGE_PRD.md", "the gap you are closing", READ),
         ("product/docs/context/testing_hazards.md", "the refusal/retry headings only", SEARCH),
         ("core/services/_chat_prompt.py", "`SYSTEM_PROMPT`, `COST_QUESTION_RULE`, `build_prompt`", SEARCH),
+        ("core/services/_chat_audit.py", "`audit_citations` and the two warning lists", SEARCH),
         ("core/services/_chatbot.py", "`answer_question`, the cache, the refusal", SEARCH),
     ),
     "corpus": (
