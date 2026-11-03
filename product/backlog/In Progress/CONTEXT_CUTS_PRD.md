@@ -1,7 +1,7 @@
 # PRD: The context cuts — a sentence and a link, and a file that fits its cap
-**Status:** Ready
+**Status:** In Progress — steps 1-10 landed 2026-11-03; step 11 (the 14 rows) and step 12 (wire the gate) open
 **Owner:** Build (no product decision is open; the rules are already decided in `CONTEXT_BUDGET.md`)
-**Last Updated:** 2026-11-03
+**Last Updated:** 2026-11-03 (session `1c`)
 **Scope:** Cuts **4.2** and **4.3** of `product/docs/context/CONTEXT_BUDGET.md`, then **4.4** (wire the
 check into the gate). Not in scope: §4.1 (done 2026-11-02), and any change to what the code *does*.
 **Reference:** `product/docs/context/CONTEXT_BUDGET.md` §3–§4 · `build_principles.md` §II (the 30 KB
@@ -182,6 +182,38 @@ Ordered so each step is independently committable and the biggest session cost f
 | Sizes drift back after the wiring | The check is in the gate — that is the whole point of 4.4 |
 
 ---
+
+## Landed (session `1c`, 2026-11-03)
+
+Steps 1–8 were already in when this session started. Steps 9–10 are the six commits below;
+`--check` went **20 → 14 breaches**, and **every file is now inside its cap**.
+
+| slice | commit | before → after |
+|---|---|---|
+| chat grounding tests | `f188eac` | `test_chatbot_grounding.py` 51 KB → 21 + 14 + 15 + 4 |
+| ingest tests | `6eb7c3e` | `test_ingest.py` 40 KB → 18 + 10 + 11 |
+| retrieval tests | `0442c75` | `test_retrieval.py` 38 KB → 17 + 19 |
+| document reader tests | `73718ce` | `test_document_reader.py` 36 KB → 21 + 15 |
+| section parser tests | `de3fe54` | `test_section_parsers.py` 32 KB → 22 + 10 |
+| the generator | `5ab6eac` | `build_corpus.py` 31 KB → 25 + 7 |
+
+Every body is byte-identical to the original (`_scratch/split_*.py` asserts in/out byte counts),
+every test count is unchanged, and each shared fixture block moved to one imported module rather
+than being copied: `chat_helpers`, `ingest_fixtures`, `retrieval_fixtures`, `reader_fixtures`,
+`section_fixtures`. `scripts/fast.sh --critical` keeps naming the same eight files, and the
+grounding, floors and refusal guards it names stayed in those files.
+
+**Two defects found by doing it, both fixed in the same session:** a flaky wall-clock
+assertion in `test_ask_board.py` (`e4ee9f5`, `testing_hazards.md` §3.28), and
+`test_table_context.py` importing fixtures from another test module — invisible to a grep for
+the file's path, caught by the lane (`0442c75`).
+
+**Gate:** `scripts/verify.sh` **green, 1604 passed / 1 skipped in 56.97 s** on this tree.
+
+**Still open:** step 11 (the 14 §18.3 rows: `D46 D47 D52 D53 D68 D69 D70 D71 D72 D73 D74 D75
+D78 D80`) and step 12 (`--check` into `verify.sh`, only at zero). Each row needs its argument
+confirmed at the artifact the row links to before the row is cut — that is a reading task over
+`product/design/` and the owning PRDs, not a mechanical edit, which is why it is handed on.
 
 ## Pre-Flight Checklist
 - [ ] No `core/models.py` change and no new app — this is a move, so **no migration**

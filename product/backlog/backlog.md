@@ -1,11 +1,10 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-03 16:38
+> Generated: 2026-11-03 17:51
 
 ## Ready (up next)
 
-- **PRD: The context cuts — a sentence and a link, and a file that fits its cap** - `ready\CONTEXT_CUTS_PRD.md` - Status: Ready
 - **MVP 1a Implementation Plan — In-Office Visit Flow** - `ready\MVP1A_PLAN.md` - Status: Ready
 - **PRD: MVP 1a — In-Office Visit Flow** - `ready\MVP1A_PRD.md` - Status: Ready — all blocking decisions closed (spec §18.3 D27–D39, D45). **Prerequisite satisfied:** MVP 0 sub-plan A (A1–A10) landed 2026-10-19; the custom `User` is migrated and first. See `MVP1A_PLAN.md` §0.2.
 
@@ -14,6 +13,7 @@
 - **The ask board, the answer page and the document reader — Implementation Plan** - `In Progress\ASK_SURFACE_PLAN.md` - Status: no status
 - **PRD — The ask surface, second shape (board + answer pages)** - `In Progress\ASK_SURFACE_PRD.md` - Status: In Progress — shape decided (**D62**); follow-up stage 1 landed (**D63**);
 - **PRD: Chat answer coverage — governing rules, table rows, and the gaps left** - `In Progress\CHAT_ANSWER_COVERAGE_PRD.md` - Status: In Progress — built 2026-10-21. **UAT signed 2026-10-21 (product owner):** Scenarios 1, 2, 3, 9 and 10 carry a result, with **G8** recorded as an open defect rather than absorbed (see §7). The remaining seats (PGS administrator, committee reviewer, consumer member) are unsigned.
+- **PRD: The context cuts — a sentence and a link, and a file that fits its cap** - `In Progress\CONTEXT_CUTS_PRD.md` - Status: In Progress — steps 1-10 landed 2026-11-03; step 11 (the 14 rows) and step 12 (wire the gate) open
 - **Corpus Canonical Format — Implementation Plan** - `In Progress\CORPUS_CANONICAL_FORMAT_PLAN.md` - Status: In Progress — P0 settled (D55–D59); **P1 landed 2026-10-22**; **P2.1–P2.4 landed
 - **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — **all four governed documents** are built, reviewed and are the text of record (`knowledge/corpus/{saoso,bpp,landscape,opp}.md`); **P4 (the OPP) landed 2026-11-02**, so `corpus_check` reports *current* for all four and the dev corpus is 401 chunks, 0 unembedded. **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4). **Remaining:** the generator's table-block rule (D75 — every table in the corpus is still a human transcription) and pdf 11's §6.5 labelling table; both now sit inside **D80**'s engine work.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.

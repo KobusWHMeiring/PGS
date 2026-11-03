@@ -25,44 +25,38 @@
 > ways: 3 failures with the old `pull` restored, 1 with the HEAD assertion removed. **The fix takes
 > effect on the next deploy** — the live box is still running the old script.
 >
-> **Where the work stands (2026-11-03, session 13).** `CONTEXT_CUTS_PRD` slice 1 is closed in
-> eight commits: `_chatbot.py` went **97 KB → 23 KB** against a 30 KB cap, into seven modules —
-> `_chat_text` (tokens, locators, digests), `_chat_prompt`, `_chat_values`, `_chat_audit`,
-> `_chat_provider`, `_chat_guard` (rate limit, validation, follow-up, retrieval, sessions) and
-> `_chat_cache`. **No behaviour changed:** the prompt's sha256 and five rendered prompts are
-> byte-identical, `PROMPT_VERSION` is still `d79-2`, no migration, no corpus change, and every
-> module is re-imported through `_chatbot` so no import site outside the package changed. The
-> session record is `product/docs/handover/SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md`;
-> this block is state only.
+> **Where the work stands (2026-11-03, session 14 `1c`).** `CONTEXT_CUTS_PRD` steps 1–10 are
+> **landed**: the chat split (`_chatbot.py` 97 → 23 KB, seven modules, prompt byte-identical,
+> `PROMPT_VERSION` still `d79-2`) and then, this session, the six remaining file cuts —
+> `test_chatbot_grounding.py` 51 → 21+14+15+4, `test_ingest.py` 40 → 18+10+11,
+> `test_retrieval.py` 38 → 17+19, `test_document_reader.py` 36 → 21+15,
+> `test_section_parsers.py` 32 → 22+10, `build_corpus.py` 31 → 25+7. **Every file is now inside
+> its 30 KB cap**; `--check` went 20 → 14 breaches and the 14 left are §18.3 rows.
+> **No behaviour changed:** every moved body is byte-identical to its original (asserted by
+> `_scratch/split_*.py`), every test count is unchanged, and the generator's `--stdout` output
+> hashes identically (`965cede4…` landscape, `2fab852f…` bpp).
 >
-> **What the plan got wrong, now amended in the PRD and not remembered in chat:** the four-module
-> table left `_chatbot.py` at 36 KB — over the cap the split exists to satisfy — and step 2 could
-> not be built at all, because `audit_citations` constructs a `Citation`, so the audit and the
-> contract would have imported each other. The values therefore move before the audit. And the
-> guard slice alone measured **30,616 bytes against a 30,720 cap — 104 bytes** — so the answer
-> cache left in the same commit; `_chatbot.py` now has **~7 KB of headroom**, not 0.3%.
+> **The critical lane did not shrink by accident.** `scripts/fast.sh --critical` still names the
+> same eight files, and the guards each entry is named for stayed in the file it names — the
+> refusal/grounding guards plus D46/D52 in `test_chatbot_grounding.py`, the recall floors in
+> `test_retrieval.py`. What left those files is display, storage and strategy.
 >
 > **What is next, in order:**
 >
 > 0. **Nothing is deployed-pending: live is at `06bb11a` and its corpus is current.** The only
 >    deploy-shaped debt is that the box still runs the old `deploy.sh`, so the §3.27 window is
 >    open until the next deploy.
->
-> 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 9–11** — the five over-cap test files
->    (`test_chatbot_grounding.py` 51 KB, `test_ingest.py` 40, `test_retrieval.py` 38,
->    `test_document_reader.py` 36, `test_section_parsers.py` 32), **split by scenario and never by
->    line count** — a guard that has to exist twice was never needed; then the 14 §18.3 rows; then
->    wire `scripts/context.py --check` into `verify.sh` **only at zero breaches**
->    (`testing_hazards.md` §3.11). `--check` says **20 breaches** now.
->    **Every code move is done** (steps 6–8): `corpus.py` 50 → 28 KB, `_documents.py` 48 → 15 KB,
->    `services.py` 39 → 21 KB, `tables.py` 35 → 28 KB. Each is byte-identical by fingerprint, not
->    by test: `_scratch/probe_corpus_parse.py`, `probe_reader.py`, `probe_terms.py`,
->    `probe_table_chunks.py`. Step 8 also corrected the PRD: `search_terms` is the retrieval
->    *strategy*, not term analysis.
->    **The method that keeps paying:** fingerprint what the moved code *produces*, then diff the
->    digests — and prove the move byte-identical against `git show HEAD:`, decoded as UTF-8
->    (§3.26; `text=True` is cp1252 here and mojibaked a page title).
-> 2. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
+> 1. **`product/backlog/In Progress/CONTEXT_CUTS_PRD.md` step 11 — the 14 §18.3 rows**
+>    (`D46 D47 D52 D53 D68 D69 D70 D71 D72 D73 D74 D75 D78 D80`, 1.7–3.7 KB against a 1.5 KB
+>    budget). Each row must keep decision + date + owner + **the one measurement** + a link, and
+>    its argument must be **confirmed present** at that link first — three already have an
+>    exploration page (`product/design/d46_…`, `d71_…`, `d68_…`); the rest need the owning PRD's
+>    "landed" section or evidence table. `D44` is **not** among them and must keep its deferral
+>    marker (`scripts/uat_parse.py` refuses the UAT otherwise).
+> 2. **Step 12 — wire `scripts/context.py --check` into `verify.sh`, at zero breaches only**
+>    (`testing_hazards.md` §3.11), with `tests/tools/test_verify_gate.py` proving a breach fails
+>    the gate.
+> 3. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
 >
 > **The landscape is closed** (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
 > `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried
@@ -82,17 +76,16 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off and chat-split sessions
-**Repo state:** `main`, **2 commits ahead of `origin/main`** (`7b22423` is pushed and live; this
-session's fix and its record are the two). On this tree (2026-11-03, after the deploy fix — one
-`deploy.sh`, one new test, docs): `scripts/verify.sh` **green at 1598 passed / 1 skipped** was the
-last full gate, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate
-defaults to 5432 and this box serves 5433, `testing_hazards.md` §3.1) **on the box during the
-deploy, in 82.03 s** — that is the number to quote for this tree, because it is the tree the box
-installed. Five cold dev runs the session before measured **126.50 s, 141.25 s, 154.87 s,
-187.26 s and 223.41 s** on near-identical trees — quote the range, not the best run
-(`testing_hazards.md` §3.17). `scripts/fast.sh --critical` measured **217 passed / 4 deselected in
-12.20 s** warm. This session added **one guard** — `tests/tools/test_deploy_verified_commit.py`,
-6 tests, proved able to fail two ways — and one hazard entry, §3.27.
+**Repo state:** `main`, **8 commits ahead of `origin/main`** (`06bb11a` is pushed and
+live; the chat-split follow-ups, the six test/generator cuts, the flake fix and the records are
+the rest). On this tree (2026-11-03, session `1c`): `scripts/verify.sh` **green at 1604 passed /
+1 skipped in 56.97 s**, run as
+`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this
+box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this tree. Cold
+runs on near-identical trees have measured **126–223 s** in one session — quote the range, never
+the best run (§3.17). `scripts/fast.sh` (the lane) measured **1589 passed / 1 skipped / 15
+deselected in 41.45 s warm**. This session added **one guard** (nothing new) and **one hazard
+entry**, §3.28 — a wall-clock flake in `test_ask_board.py`, fixed and watched red.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **59 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
@@ -107,6 +100,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1c` 2026-11-03 (session 15) — the six remaining cuts, and every file is inside its cap — [`SESSION_1c_2026-11-03_the-six-remaining-cuts.md`](product/docs/handover/SESSION_1c_2026-11-03_the-six-remaining-cuts.md)
 - `1b` 2026-11-03 (session 14) — deployed, and the deploy verified one commit and installed another — [`SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md`](product/docs/handover/SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md)
 - `1a` 2026-11-03 (session 13) — five splits: the chat split lands, and `_chatbot.py` is 23 KB — [`SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md`](product/docs/handover/SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md)
 - `0z` 2026-11-03 (session 12) — the landscape is signed, and "As above" is the paper's word — [`SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md`](product/docs/handover/SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md)
