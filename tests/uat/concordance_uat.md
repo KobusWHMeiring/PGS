@@ -56,12 +56,12 @@ corpus does not hold?**
 | `?section=` accepts a branch anchor, a passage anchor, and an unknown value | `core/tests/test_document_reader.py` |
 | Only the selected branch is rendered; a closed branch is not in the page | `core/tests/test_document_reader.py` |
 | The citation says "View this line", opens a new tab, and announces it | `core/tests/test_document_reader.py` |
-| Appendix 2's 19 empty conditions print the muted label, and the legend is one sentence | `knowledge/tests/test_table_sections.py`, `core/tests/test_document_reader.py` |
-| Every row reads as an entry: a substance heading, then its condition paragraphs | `knowledge/tests/test_row_blocks.py`, `core/tests/test_document_reader.py` |
+| Appendix 2's 19 empty conditions print the muted label, and the legend is one sentence | `knowledge/tests/test_table_sections.py`, `core/tests/test_document_reader.py`, `core/tests/test_document_reader_curated.py` |
+| Every row reads as an entry: a substance heading, then its condition paragraphs | `knowledge/tests/test_row_blocks.py`, `core/tests/test_document_reader_curated.py` |
 | The seven dividers sit above the rows the paper prints them above | `knowledge/tests/test_table_sections.py` |
-| `Section A – 2.3` resolves to the missing-sections note and never to `S2`; bare `Appendix 4` and bare `Appendix 6` stay text | `knowledge/tests/test_references.py`, `core/tests/test_document_reader.py` |
-| A reference is an `<a target="_blank" rel="noopener">` whose `href` is a branch in the tree, and the BPP and landscape render none | `core/tests/test_document_reader.py` |
-| One locator per run (366 → 311), and every passage keeps its `id` | `knowledge/tests/test_reading.py`, `core/tests/test_document_reader.py` |
+| `Section A – 2.3` resolves to the missing-sections note and never to `S2`; bare `Appendix 4` and bare `Appendix 6` stay text | `knowledge/tests/test_references.py`, `core/tests/test_document_reader_curated.py` |
+| A reference is an `<a target="_blank" rel="noopener">` whose `href` is a branch in the tree, and the BPP and landscape render none | `core/tests/test_document_reader_curated.py` |
+| One locator per run (366 → 311), and every passage keeps its `id` | `knowledge/tests/test_reading.py`, `core/tests/test_document_reader_curated.py` |
 | A definition link lands on the definition's own `id`, once per term per passage | `knowledge/tests/test_glossary.py` |
 | Per-branch `<title>` and `rel=canonical` | `core/tests/test_document_reader.py` |
 | `<title>`/copy carries no forbidden claim term; the reader stays exempt for its recorded reason | `core/tests/test_claim_discipline.py` |
