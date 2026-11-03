@@ -67,7 +67,7 @@ Recorded so the manual list is not padded with machine-provable work.
 | `PGS SEALS AND THEIR USE` is a real `<table>` with `<colgroup>`, a separator per boundary, and a `data-grid-key`; the columns resize by keyboard and the width survives a reload; Compact changes the type size | `…::test_the_grid_carries_what_the_resizer_needs_and_nothing_it_requires`, `tests/e2e/test_reader_layout.py` (keyboard resize, Compact) |
 | At 1280 px the cards are one row and the fee boxes sit under them; at 390 px they stack; the two paths are one column; neither page scrolls sideways | `tests/e2e/test_reader_layout.py` |
 | The four header fields are refused when malformed (unknown `layout:`, a `branch:` naming no row, a `title:` list of the wrong length), and the artefact's own declarations are pinned | `knowledge/tests/test_corpus_tables.py`, `knowledge/tests/test_corpus_landscape.py` |
-| The page-crop exclusion does nothing to the shipped corpus: the ingest never transforms a page, and a reviewed cell is still not quotable off the excluded page | `knowledge/tests/test_ingest.py::test_the_landscape_page_exclusion_has_no_reach_into_the_ingest`, `knowledge/tests/test_columns.py` (§5.7) |
+| The page-crop exclusion does nothing to the shipped corpus: the ingest never transforms a page, and a reviewed cell is still not quotable off the excluded page | `knowledge/tests/test_ingest_artefact.py::test_the_landscape_page_exclusion_has_no_reach_into_the_ingest`, `knowledge/tests/test_columns.py` (§5.7) |
 | No forbidden certification claim on the reader, and no unrendered template syntax | `core/tests/test_claim_discipline.py`, `core/tests/test_public.py` |
 
 ---
