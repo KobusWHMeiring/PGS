@@ -1,4 +1,4 @@
-# Session 1a — 2026-11-03 — the chat split lands, and `_chatbot.py` is 23 KB
+# Session 1a — 2026-11-03 — the chat split lands, and four more with it
 
 **Task:** slice 1 of `CONTEXT_CUTS_PRD` — split `core/services/_chatbot.py` (97 KB against a
 30 KB cap), the file a chat task opens on every session.
