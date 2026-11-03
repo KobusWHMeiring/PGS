@@ -52,13 +52,13 @@
 >
 > **What is next, in order:**
 >
-> 1. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
->    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
->    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`
->    was deliberately created instead of adding to either. 4.2: a §18.3 row becomes a sentence plus a
->    link — `--check` names the rows over 1.5 KB (**14 today**, `D68` the largest at 3.6 KB). 4.4: wire
->    `scripts/context.py --check` into the gate **once the tree is inside budget** — 25 breaches
->    today (11 source files, 14 rows).
+> 1. **Context cuts 4.2 and 4.3** — **`product/backlog/ready/CONTEXT_CUTS_PRD.md`** is the handover:
+>    the 25 measured breaches, the split table, ten ordered slices, the success criteria and the
+>    traps (`PROMPT_VERSION` must not move, `D44` must keep its deferral marker, prove the lint can
+>    fail). Short version: `_chatbot.py` is **97 KB** against a 30 KB cap and is the file a chat task
+>    always opens; split it into `_chat_prompt` / `_chat_audit` / `_chat_provider`, one file per
+>    commit. Then 14 §18.3 rows (1.7–3.7 KB against 1.5 KB), then wire `scripts/context.py --check`
+>    into `verify.sh` **only at zero breaches** (`testing_hazards.md` §3.11).
 > 2. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
 >
 > **The landscape is closed.** The reader's two follow-ups landed 2026-11-03 — the seals legend
