@@ -256,3 +256,93 @@ def test_a_correction_that_matches_twice_fails_loudly():
     edit = CorpusEdit(page=4, original="twice here", replacement="x", reason="x")
     with pytest.raises(SystemExit, match="matched 2 times"):
         corpusgen.apply_review("twice here and twice here", (edit,))
+
+
+# --- `--force` may not delete a table block (D80's S1) ------------------------
+#
+# Measured 2026-11-01: `build_corpus.py --doc opp --force` was run to pick up a parser fix, and
+# `opp.md`'s §2.3 table block was gone (`grep -c '<!-- table' → 0`) while the file stayed valid,
+# the section kept its text, and every guard that compares characters still passed
+# (`testing_hazards.md` §3.25). The generator has **no rule that emits a table block**, so the
+# only safe thing it can do is refuse and name the loss. `--discard-tables` is the override, and
+# it is deliberately not `--force`: a flag that means "overwrite" must not also mean "delete the
+# review".
+
+ARTEFACT_WITH_TABLE = """<!-- corpus
+doc_key: opp
+-->
+<!-- page: 2 printed: 2 -->
+## 2.3 PGS assessment fee structure
+<!-- table
+cols: Annual farm turnover (gross sales) | Initial certification fee (R) | Renewal fee (R)
+legend: Reviewed by hand.
+-->
+<!-- row: Below R 250,000 -->
+<!-- cell -->Below R 250,000
+<!-- cell -->1,500
+<!-- cell -->900
+<!-- row: R 250,001 – R 500,000 -->
+<!-- cell -->R 250,001 – R 500,000
+<!-- cell -->2,500
+<!-- cell -->2,000
+<!-- /table -->
+"""
+
+
+def test_a_draft_that_drops_the_reviewed_table_is_refused():
+    refusal = corpusgen.table_loss_refusal(
+        ARTEFACT_WITH_TABLE, "## 2.3 PGS assessment fee structure\nBelow R 250,000 1,500 900\n"
+    )
+    assert refusal, "a draft with no table block must not be allowed to replace two rows"
+    assert "1 table block(s) and the draft carries 0" in refusal
+    assert "--discard-tables" in refusal
+    assert "§3.25" in refusal, "the refusal has to name the hazard it prevents"
+
+
+def test_an_artefact_with_no_table_block_is_never_blocked():
+    """BPP and SAOSO carry none: the guard must not make the generator refuse everywhere."""
+    assert corpusgen.table_loss_refusal("## Intro\nText.\n", "## Intro\nText.\n") is None
+
+
+def test_a_draft_that_keeps_every_marker_is_allowed():
+    """The day S3 teaches the generator to emit blocks, the guard must step out of the way."""
+    assert corpusgen.table_loss_refusal(ARTEFACT_WITH_TABLE, ARTEFACT_WITH_TABLE) is None
+
+
+def test_a_draft_that_keeps_the_block_but_loses_a_row_is_refused():
+    """A block that survives with fewer rows is still a lost review, not a smaller table."""
+    half = ARTEFACT_WITH_TABLE.split("<!-- row: R 250,001")[0] + "<!-- /table -->\n"
+    refusal = corpusgen.table_loss_refusal(ARTEFACT_WITH_TABLE, half)
+    assert refusal and "1 row marker(s) → 0" not in refusal  # the first row survived
+    assert "2 row marker(s) → 1" in refusal
+
+
+def test_main_refuses_before_it_writes(tmp_path, monkeypatch):
+    """The pure rule is the seam; this is the operator's actual command, refusing."""
+    target = tmp_path / "opp.md"
+    target.write_text(ARTEFACT_WITH_TABLE, encoding="utf-8")
+    pdf = tmp_path / "opp.pdf"
+    pdf.write_bytes(b"%PDF-1.4 not read: build() is stubbed")
+    monkeypatch.setattr(corpusgen, "CORPUS_DIR", tmp_path)
+    monkeypatch.setattr(corpusgen, "build", lambda *a, **k: "## 2.3\nBelow R 250,000 1,500 900\n")
+
+    with pytest.raises(SystemExit, match="column soup"):
+        corpusgen.main(["--doc", "opp", "--file", str(pdf), "--force"])
+
+    assert target.read_text(encoding="utf-8") == ARTEFACT_WITH_TABLE, "the review was written over"
+
+
+def test_discard_tables_is_the_named_override(tmp_path, monkeypatch):
+    target = tmp_path / "opp.md"
+    target.write_text(ARTEFACT_WITH_TABLE, encoding="utf-8")
+    pdf = tmp_path / "opp.pdf"
+    pdf.write_bytes(b"%PDF-1.4 not read: build() is stubbed")
+    monkeypatch.setattr(corpusgen, "CORPUS_DIR", tmp_path)
+    monkeypatch.setattr(corpusgen, "build", lambda *a, **k: "## 2.3\nBelow R 250,000 1,500 900\n")
+    monkeypatch.setattr(corpusgen, "pages_of", lambda *a, **k: (["page one"], ["page one"], None))
+
+    corpusgen.main(["--doc", "opp", "--file", str(pdf), "--force", "--discard-tables"])
+
+    assert "<!-- table" not in target.read_text(encoding="utf-8"), (
+        "the override has to actually discard, or it is a second refusal with a longer name"
+    )

@@ -35,6 +35,11 @@ Five rules that matter:
    `4.5`, with its offsets; hand-typing the markers would be a transcription of a
    transcription. The artefact is still reviewed in the diff, and the round-trip is proved by
    `test_corpus_opp.py`: each marker's span must quote the words the PDF path quoted.
+6. **`--force` may not delete a table block.** The generator has no rule that emits one, so
+   overwriting a document whose artefact carries `<!-- table … -->` would replace the review with
+   the PDF's column soup while every character-level guard stayed green
+   (`testing_hazards.md` §3.25, measured on `opp.md` 2026-11-01). It refuses and names the loss;
+   `--discard-tables` is the deliberate override, and it is not spelled `--force`.
 """
 
 from __future__ import annotations
@@ -436,6 +441,57 @@ def apply_review(text: str, edits) -> str:
     return text
 
 
+def shown(path: Path) -> Path:
+    """The path as the operator sees it: repo-relative when it is inside the repo.
+
+    A guard is exercised from a temporary corpus directory in its own test, and `relative_to()`
+    raises there — a guard that crashes instead of refusing is not a guard.
+    """
+    return path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
+
+
+def table_block_counts(text: str) -> dict[str, int]:
+    """How many of each table-format marker a text carries.
+
+    The five are the whole vocabulary of corpus format rule 5, so a block that is lost loses a
+    count here as well as every boundary it held. `-- /table` is deliberately not counted: it
+    pairs with `<!-- table`, and a doubled count would hide a lost block behind a gained closer.
+    """
+    return {
+        "table": text.count("<!-- table"),
+        "row": text.count("<!-- row:"),
+        "cell": text.count("<!-- cell"),
+        "divider": text.count("<!-- row-divider:"),
+    }
+
+
+def table_loss_refusal(existing: str, generated: str) -> str | None:
+    """In: the artefact on disk and the draft about to replace it. Out: a refusal, or None.
+
+    Returns a message when the draft would leave fewer table markers of any kind than the artefact
+    already carries. The draft having *more* is not a loss: that is the day the generator learns to
+    emit the block (D80's S3), and it must not be blocked by the guard that protects today's
+    reviews.
+
+    Out is a string rather than an exception so the decision is testable without a PDF or an
+    extractor — the same seam `body_filter()` exists for (`testing_hazards.md` §2.9).
+    """
+    before = table_block_counts(existing)
+    after = table_block_counts(generated)
+    lost = {name: (before[name], after[name]) for name in before if after[name] < before[name]}
+    if not lost:
+        return None
+    loss = ", ".join(f"{count} {name} marker(s) → {kept}" for name, (count, kept) in lost.items())
+    return (
+        f"the artefact on disk carries {before['table']} table block(s) and the draft carries "
+        f"{after['table']} ({loss}). build_corpus.py has no rule that emits a `<!-- table -->` "
+        "block, so writing this draft would replace a human's transcription with the PDF's "
+        "column soup — and every guard that compares characters would still pass "
+        "(testing_hazards.md §3.25). Nothing was written. Draft elsewhere with `--stdout`, or "
+        "pass `--discard-tables` to accept the loss and expect to retype the review."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--doc", required=True, choices=sorted(CORPUS_DOCUMENTS))
@@ -446,6 +502,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Overwrite an existing artefact. Required, because a human reviews these.",
     )
     parser.add_argument("--stdout", action="store_true", help="Print instead of writing.")
+    parser.add_argument(
+        "--discard-tables",
+        action="store_true",
+        help=(
+            "Write the draft even though it drops the reviewed table blocks it cannot emit "
+            "(D75/D80). Deliberate: the review will have to be retyped by hand."
+        ),
+    )
     parser.add_argument(
         "--no-raw-fallback",
         action="store_true",
@@ -477,6 +541,10 @@ def main(argv: list[str] | None = None) -> int:
             f"{target.relative_to(REPO_ROOT)} already exists and may have been reviewed. "
             "Pass --force to regenerate it — and expect the diff to be the review."
         )
+    if target.exists() and not args.discard_tables:
+        refusal = table_loss_refusal(target.read_text(encoding="utf-8"), text)
+        if refusal:
+            raise SystemExit(f"{shown(target)}: {refusal}")
     CORPUS_DIR.mkdir(parents=True, exist_ok=True)
     # `newline=""` is load-bearing: on Windows `write_text` translates a line feed to
     # carriage-return + line feed, so the same PDF and generator would produce a different
@@ -489,7 +557,7 @@ def main(argv: list[str] | None = None) -> int:
         "\f".join(pages)
     )
     print(
-        f"{target.relative_to(REPO_ROOT)}: {text.count('<!-- page:')} page markers, "
+        f"{shown(target)}: {text.count('<!-- page:')} page markers, "
         f"{len(sections)} sections, {len(chunk_sections(sections))} chunks, "
         f"{len(raw_pages)} raw pages, {len(text)} chars"
     )
