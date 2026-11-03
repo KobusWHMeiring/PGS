@@ -1,6 +1,29 @@
-# Handover — the chat split is done, `_chatbot.py` is 23 KB; the corpus cuts are next
+# Handover — deployed and current on the live box; the corpus cuts are next
 
-> ## START HERE — the chat split is done and `_chatbot.py` is 23 KB; the corpus cuts are next
+> ## START HERE — the live site is deployed with a current corpus; the corpus cuts are next
+>
+> **Deployed 2026-11-03 (session `1b`).** Live is `06bb11a`: **401 chunks** (saoso 338, opp 37,
+> landscape 17, bpp 9), `corpus_check` exit 0, `/health/` `ok` through the socket, home and the
+> OPP reader both 200, 8 of landscape's 17 and 6 of opp's 37 chunks carrying a column-labelled
+> rendition. The refresh cost **16 citation links** and `relink_evidence` recovered **0**: 7
+> assistant turns examined, all 7 predating the grounding snapshot, so this box has recorded **no
+> chat turn since 2026-10-28**. Cumulative over both refreshes: **56 links gone**, all on the same
+> 7 historical answers. The next turn recorded carries a snapshot.
+>
+> **The dev box is NOT current, and says so.** `corpus_check` here reports `landscape` **drift**
+> ("the reviewed artefact has changed since this corpus was built") and its 17 chunks carry **0**
+> labelled renditions against live's 8 — so **live is ahead of the reference DB**. Do not refresh it
+> until `GEMINI_API_KEY` is in the dev `.env`: it holds only `DJANGO_SECRET_KEY`, and a refresh
+> without the key writes 17 NULL vectors that then report "already ingested" forever
+> (`deploy/README.md` §4). This corrects session `1a`'s claim that the dev box was current.
+>
+> **A deploy verified one commit and installed another, then logged the verified one**
+> (`testing_hazards.md` §3.27): step 1/8 verified `7b22423`, step 2/8's `pull --ff-only` re-fetched
+> and landed `06bb11a`, step 8/8 printed "7b22423 is live". Fixed by fast-forwarding to
+> `$VERIFY_COMMIT` — which step 1/8 already fetched — and asserting `HEAD` matches it before the
+> first irreversible step. `tests/tools/test_deploy_verified_commit.py` guards it, watched red two
+> ways: 3 failures with the old `pull` restored, 1 with the HEAD assertion removed. **The fix takes
+> effect on the next deploy** — the live box is still running the old script.
 >
 > **Where the work stands (2026-11-03, session 13).** `CONTEXT_CUTS_PRD` slice 1 is closed in
 > eight commits: `_chatbot.py` went **97 KB → 23 KB** against a 30 KB cap, into seven modules —
@@ -20,6 +43,10 @@
 > cache left in the same commit; `_chatbot.py` now has **~7 KB of headroom**, not 0.3%.
 >
 > **What is next, in order:**
+>
+> 0. **Nothing is deployed-pending: live is at `06bb11a` and its corpus is current.** The only
+>    deploy-shaped debt is that the box still runs the old `deploy.sh`, so the §3.27 window is
+>    open until the next deploy.
 >
 > 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 9–11** — the five over-cap test files
 >    (`test_chatbot_grounding.py` 51 KB, `test_ingest.py` 40, `test_retrieval.py` 38,
@@ -48,13 +75,6 @@
 > **"corpus is current" does not mean "rebuilt"** — drift compares the artefact's hash and the
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
->
-> **Deploy note:** the live box is still `8d2839d` and misses **15 sessions (`0m`–`0z`, `1a`),
-> 70 commits**. A deploy pulls the artefacts but never re-ingests; the OPP's 30 → 37 chunks is a
-> corpus change, not a code change. **The deploy also needs `d79-1`/`d79-2` to have run**: the
-> cache entries are keyed on `PROMPT_VERSION`, so old cached answers are not served under the new
-> contract — but a visitor mid-conversation keeps their thread. This session adds no template and
-> no corpus change, so it needs nothing beyond the deploy.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
@@ -62,14 +82,17 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off and chat-split sessions
-**Repo state:** `main`, **59 commits ahead of `origin/main`**. On this tree (2026-11-03, after the
-chat split — services only, no template, no migration): `scripts/verify.sh` **green at 1598 passed /
-1 skipped**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to
-5432 and this box serves 5433, `testing_hazards.md` §3.1). Five cold runs this session measured
-**126.50 s, 141.25 s, 154.87 s, 187.26 s and 223.41 s** on near-identical trees — quote the range,
-not the best run (`testing_hazards.md` §3.17). `scripts/fast.sh --critical` measured **217 passed /
-4 deselected** in 36–57 s. The suite gained **no new guard** this session: it is a move, and the
-proof is byte-identity, not a test.
+**Repo state:** `main`, **2 commits ahead of `origin/main`** (`7b22423` is pushed and live; this
+session's fix and its record are the two). On this tree (2026-11-03, after the deploy fix — one
+`deploy.sh`, one new test, docs): `scripts/verify.sh` **green at 1598 passed / 1 skipped** was the
+last full gate, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate
+defaults to 5432 and this box serves 5433, `testing_hazards.md` §3.1) **on the box during the
+deploy, in 82.03 s** — that is the number to quote for this tree, because it is the tree the box
+installed. Five cold dev runs the session before measured **126.50 s, 141.25 s, 154.87 s,
+187.26 s and 223.41 s** on near-identical trees — quote the range, not the best run
+(`testing_hazards.md` §3.17). `scripts/fast.sh --critical` measured **217 passed / 4 deselected in
+12.20 s** warm. This session added **one guard** — `tests/tools/test_deploy_verified_commit.py`,
+6 tests, proved able to fail two ways — and one hazard entry, §3.27.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **59 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
@@ -84,6 +107,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1b` 2026-11-03 (session 14) — deployed, and the deploy verified one commit and installed another — [`SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md`](product/docs/handover/SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md)
 - `1a` 2026-11-03 (session 13) — five splits: the chat split lands, and `_chatbot.py` is 23 KB — [`SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md`](product/docs/handover/SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md)
 - `0z` 2026-11-03 (session 12) — the landscape is signed, and "As above" is the paper's word — [`SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md`](product/docs/handover/SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md)
 - `0y` 2026-11-02 (session 11) — slice 3: the context is a row and a column, both surfaces say so, and Scenario 8 is signed — [`SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`](product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md)
