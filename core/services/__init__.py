@@ -11,9 +11,10 @@ Slices:
     _chatbot.py  grounded answering + refusal (D) -- the contract: answer, cache, refusals
     _chat_prompt.py  the prompt text, PROMPT_VERSION and `build_prompt`
     _chat_audit.py   the citation audit and its advisory warnings
+    _chat_provider.py  the live model: Gemini, its schema, the truncation rule
     _chat_text.py    tokens, locators and digests shared by all of the above
     _chat_values.py  what the chatbot returns, raises, and needs from a provider
 
-The model provider still lives in `_chatbot.py`; it leaves next
-(`product/backlog/ready/CONTEXT_CUTS_PRD.md`).
+The guardrails (rate limit, validation, follow-up detection) still live in `_chatbot.py`;
+they leave last (`product/backlog/ready/CONTEXT_CUTS_PRD.md`).
 """
