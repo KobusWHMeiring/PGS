@@ -52,15 +52,18 @@
 >
 > **What is next, in order:**
 >
-> 1. **The fee legend's unreachable referent** — **fixed 2026-11-03**, awaiting the re-judge
->    (`BugFixes/landscape_fee_as_above_referent.md`). The seals table's `As above` is the paper's
->    own wording, so the cell stayed literal; the legend now names the branch and the step
->    (`ESTABLISHING A PGS GROUP — Step 3's fee cell`) in the words the contents tree prints, and
->    says the fee is not on this page. Two guards hold it, each watched failing against the old
->    wording first; all **17 of 17** landscape chunk texts are byte-identical, so there is **no
->    re-ingest** — `corpus_check` reports landscape drift on the file hash alone. **Scenario 4 must
->    be judged again on the rebuilt artefact; the other five cards are unchanged and the tool
->    refuses a partial export, so a re-sign covers all six.**
+> 1. **The reader's folds moved to the prose** — **built 2026-11-03**, awaiting the re-judge
+>    (`LANDSCAPE_TABLES_PRD` §12i, amending D77; `BugFixes/landscape_fee_as_above_referent.md`).
+>    Two changes on the landscape reader, both decided by the owner while signing:
+>    **(a)** the seals grid's legend names the branch and the step instead of saying "the previous
+>    table", so `As above` is followable from a deep link; **(b)** the folds swap — Resources and
+>    *Use of seals* both fold closed, and the `Seals and logos` picture column is **not drawn**
+>    (its Step 2 cell was the caption "Proud member of", a control opening onto a fragment of an
+>    absent picture). An empty facet is never folded, so Step 1 keeps *"The paper is silent on this
+>    step."* Five guards, each written first and watched red. **No re-ingest** — all 17 of 17
+>    landscape chunk texts are byte-identical; `corpus_check` reports landscape drift on the file
+>    hash alone. **Scenarios 2 and 4 must be judged again on the rebuilt artefact; the tool refuses
+>    a partial export, so the re-sign covers all six.**
 > 2. **Context cuts 4.2 and 4.3** (`CONTEXT_BUDGET.md`) — and they are bigger than they were: all
 >    three slices grew `core/services/_chatbot.py` to **~99 KB (3× the §II cap)** and
 >    `knowledge/services.py` to **~40 KB**, with `_documents.py` at 48 KB. `knowledge/table_context.py`

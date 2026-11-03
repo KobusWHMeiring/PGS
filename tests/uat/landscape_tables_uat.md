@@ -97,19 +97,23 @@ never published on its own. Say plainly whether you would quote this page to a f
 
 ## Scenario 2 — A card you can scan, and the one fold the design left to UAT
 
-**Setup:** the same branch. Resources and Seals are closed by default; *Use of seals* is visible.
+**Setup:** the same branch. All three cards now fold their two **text** facets — Resources and
+*Use of seals* — closed by default. The `Seals and logos` column is not drawn: its cell is the
+printed caption of a picture the corpus does not store.
 
 1. Read the three cards as they arrive, judging the step body on its own.
-2. Open Resources, then Seals, on each step that has them. Read them.
-3. Leave *Use of seals* alone, and notice whether you had to open it to answer a question.
+2. Open Resources, then *Use of seals*, on each step that has one. Read them.
+3. Notice what you had to open to answer a question, and what you never needed.
 
-**Expected:** each card leads with the step and what happens in it; the reference material is one
-closed fold away; *Use of seals* is visible without opening anything.
+**Expected:** each card leads with the step and what happens in it; the reference material and the
+long rule are each one closed fold away, signed by the paper's own column heading; nothing is
+behind a fold that you did not want to open.
 
 **Judgement:** *Is the step body now the thing that leads, and is anything you needed behind a
-fold?* This is also the decision the design deferred (§12f item 3): **if the cards are still too
-tall, *Use of seals* folds with the same element.** Say whether it should — folding it is one
-attribute, not a redesign, and this is the only place that call can be made.
+fold?* This is the decision the design deferred (§12f item 3) and **the owner took it on
+2026-11-03** (`LANDSCAPE_TABLES_PRD` §12i): *Use of seals* folds with the same element as
+Resources, because on Step 3 it is ten paragraphs and the facet that used to fold opened onto one
+caption, "Proud member of". Say whether that reads better than the open rule did.
 **Result:** PASS · Kobus (Product) · 2026-11-01
 
 **Status:** `Ready`

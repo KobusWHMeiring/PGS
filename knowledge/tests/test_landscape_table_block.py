@@ -93,6 +93,19 @@ def test_every_table_has_the_papers_five_columns_and_five_cells_a_row(document, 
     assert [len(row.cells) for row in parsed.rows] == [5] * len(parsed.rows)
 
 
+def test_the_picture_column_holds_a_label_and_never_prose(document):
+    """The reader does not draw the `Seals and logos` column (`LANDSCAPE_TABLES_PRD` §12i): the
+    artwork is not stored, so the cell is at most the printed caption. That rule is only safe
+    while it holds on the shipped corpus — if a review ever puts a sentence in that column, this
+    fails and the column has to come back, rather than a paragraph disappearing silently.
+    """
+    for anchor in ("establishing-a-pgs-group", "saoso-organic-certification"):
+        for row in table(document, anchor).rows:
+            label = row.cells[3].text
+            assert "\n" not in label, f"{anchor} {row.label}: the picture column holds prose"
+            assert len(label) <= 40, f"{anchor} {row.label}: {label!r} is longer than a caption"
+
+
 def test_a_row_belongs_to_the_page_it_starts_on(document):
     """D72.5: PDF 5 restarts the table, and Step 3 is still a row of the same table."""
     rows = table(document, "establishing-a-pgs-group").rows

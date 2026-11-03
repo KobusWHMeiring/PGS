@@ -8,9 +8,11 @@
 
   Three rules the markup carries, and why:
 
-  - **The step body leads.** Resources and Seals fold (`<details>`, closed); *Use of seals* stays
-    visible, because it is the rule a reader checks. A folded facet with no text is not drawn at
-    all — a closed control with nothing inside is a dead control.
+  - **The step body leads.** The two text facets — Resources and *Use of seals* — fold
+    (`<details>`, closed); a facet with no text is never folded, because a closed control with
+    nothing inside is a dead control, so it keeps the sentence that the paper is silent. The
+    picture column (`Seals and logos`) is not drawn at all: its cell is a caption for artwork the
+    corpus does not store, so a control opening onto it would be a dead end (`§12i`).
   - **The fork is two cards in the last column.** Path A is a *pointer* to the step the paper's
     direct route branches from (§12f.5): it repeats no fee and states no outcome, because the
     only words it may add are UI ones ("Path A", "See …"). Path B, C … are the paper's own rows.
@@ -48,7 +50,7 @@
                 {% include "public/_passage_blocks.html" with blocks=facet.blocks %}
               </div>
             {% endif %}
-          {% elif not facet.folded %}
+          {% else %}
             <div class="reader__facet">
               <h4 class="reader__facet-label">{{ facet.label }}</h4>
               <p class="reader__facet-silent">The paper is silent on this step.</p>

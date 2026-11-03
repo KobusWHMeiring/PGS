@@ -426,11 +426,21 @@ class ReaderGrid:
         return steps[-1].label if steps else ""
 
 
-#: A `process` card's facets are named by the paper's own column heading (D77 §12f.2):
-#: `Resource documents, guidelines and requirements` and `Seals and logos` fold away so the step
-#: body leads. Every other heading renders visible — an unrecognised one is a **taller card, never
-#: a lost cell**, which is why this is a prefix list and not a rule about what a column "is".
-FOLDED_FACETS = ("resource", "seals and logos")
+#: A `process` card's facets are named by the paper's own column heading (D77 §12f.2, amended
+#: 2026-11-03 in `LANDSCAPE_TABLES_PRD` §12i): the two **text** columns fold away so the step body
+#: leads. Every other heading renders visible — an unrecognised one is a **taller card, never a
+#: lost cell**, which is why this is a prefix list and not a rule about what a column "is".
+#: *Use of seals* used to stay visible "because it is the rule a reader checks"; on Step 3 that
+#: rule is ten paragraphs, and the facet that did fold opened onto a picture caption, so the folds
+#: moved to the prose.
+FOLDED_FACETS = ("resource", "use of seals")
+
+#: The heading of a column whose cell is a **picture's printed label**, not prose: the artwork is
+#: not stored (D72.1), so at most a caption survives, and a control that opens onto a fragment of
+#: an absent picture is worse than no control. Such a column is not drawn as a facet at all.
+#: Safe only while the cell really is a label — `test_the_picture_column_holds_a_label_and_never_prose`
+#: fails if a review ever puts a sentence here, so nothing disappears silently.
+PICTURE_FACETS = ("seals and logos",)
 
 #: The printed heading of the column whose cell becomes a fee box. The paper prints `Fee`; a
 #: `process` table with no such column renders every cell as a facet and loses nothing.
@@ -527,6 +537,11 @@ def _folds(label: str) -> bool:
     return any(lowered.startswith(prefix) for prefix in FOLDED_FACETS)
 
 
+def _is_picture(label: str) -> bool:
+    lowered = label.strip().lower()
+    return any(lowered.startswith(prefix) for prefix in PICTURE_FACETS)
+
+
 def _cards_for(
     rows: tuple[ReaderGridRow, ...], fee_labels: tuple[str, ...] = ()
 ) -> tuple[tuple[ReaderCard, ...], tuple[ReaderFeeBox, ...]]:
@@ -555,6 +570,8 @@ def _cards_for(
             elif index == fee_index:
                 fee = blocks
             else:
+                if _is_picture(column):
+                    continue
                 facets.append(ReaderFacet(label=column, blocks=blocks, folded=_folds(column)))
         cards.append(
             ReaderCard(

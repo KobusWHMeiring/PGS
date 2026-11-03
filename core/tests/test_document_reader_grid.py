@@ -99,18 +99,38 @@ def test_the_establishing_branch_renders_three_step_cards(client, landscape):
     ), "printed order"
 
 
-def test_the_two_folded_facets_are_closed_and_the_seal_rule_is_not(client, landscape):
-    """§12f item 3: Resources and Seals fold so the step body leads; Use of seals stays visible."""
+def test_use_of_seals_folds_with_resources_so_the_step_body_leads(client, landscape):
+    """D77 amended 2026-11-03 (`LANDSCAPE_TABLES_PRD` §12i): the fold moves to the long prose.
+
+    §12f.2 kept *Use of seals* visible "because it is the rule a reader checks". On Step 3 that
+    rule is ten paragraphs, and the facet that did fold opened onto a picture caption — so the
+    folds were on the wrong things. Both text columns fold now, closed, and the step body leads.
+    """
     page = html(client, "establishing-a-pgs-group")
 
     assert "<details" in page
     assert "<details open" not in page, "closed by default"
-    assert "Use of seals and logos" in page
-    # The Step 2 rule a reader checks is not inside a folded facet.
+    # The Step 2 rule now sits behind its own summary rather than leading the card.
     rule = "entitled to make use of the"
-    assert rule in page
-    before, after = page.split("<details", 1)
-    assert rule not in after.split("</details>", 1)[0]
+    marker = 'reader__facet-summary">Use of seals and logos'
+    assert marker in page, "the column still signs itself"
+    assert rule not in page.split(marker, 1)[0].rsplit("reader__card", 1)[-1]
+    assert rule in page.split(marker, 1)[1].split("</details>", 1)[0], "inside its own fold"
+
+
+def test_the_picture_column_is_not_a_facet(client, landscape):
+    """§12i: the `Seals and logos` column holds a picture, not prose.
+
+    The artwork is not stored (D72.1), so the cell's whole content on Step 2 is the printed
+    caption `Proud member of` — a control that opens onto one fragment belonging to an absent
+    picture. The column is not drawn. Nothing is lost: the visible-then-folded *Use of seals*
+    prose on that same card already says groups may use the "member of PGS SA" logo.
+    """
+    page = html(client, "establishing-a-pgs-group")
+
+    assert "Proud member of" not in page
+    assert 'reader__facet-summary">Seals and logos' not in page
+    assert "member of PGS SA" in page, "the prose that carries the fact is still there"
 
 
 def test_the_merged_fee_is_one_box_with_the_whole_cell_under_steps_1_and_2(
@@ -463,16 +483,27 @@ def test_the_establishing_cards_take_the_first_column_as_the_step_body(landscape
     )
 
 
-def test_the_facets_keep_the_printed_column_order_and_fold_only_two_of_them(landscape):
-    """§12f item 3: Resources and Seals fold; Use of seals is the rule a reader checks."""
+def test_the_facets_keep_the_printed_column_order_and_fold_the_text_columns(landscape):
+    """§12i: the printed order survives; the picture column is dropped, the two text columns fold."""
     card = grid_for(landscape, "establishing-a-pgs-group").cards[1]
 
     assert [facet.label for facet in card.facets] == [
         "Resource documents, guidelines and requirements",
         "Use of seals and logos",
-        "Seals and logos",
     ]
-    assert [facet.folded for facet in card.facets] == [True, False, True]
+    assert [facet.folded for facet in card.facets] == [True, True]
+
+
+def test_an_empty_facet_still_says_the_paper_is_silent(client, landscape):
+    """Step 1's Use of seals cell is printed empty; folding a column must not swallow that.
+
+    The table's legend says "silence is not permission", and the card said so per facet before
+    this change. A folded control with nothing inside would be a dead control, so an empty
+    facet is never folded — it keeps the sentence.
+    """
+    page = html(client, "establishing-a-pgs-group")
+
+    assert "The paper is silent on this step." in page
 
 
 def test_the_merged_fee_cell_is_one_box_under_steps_1_and_2(landscape):

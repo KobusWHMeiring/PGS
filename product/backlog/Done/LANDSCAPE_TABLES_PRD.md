@@ -943,11 +943,14 @@ sequence, a comparison, or a branch without a parser change.
 
 - One card per step, in printed order, up to the `branch:` row. A card is:
   `Step N · <title>` + the printed page, the step body, then the facets.
-- Facets in printed column order, with the two that fold closed by default:
+- Facets in printed column order, with the two text columns folding closed by default
+  (**amended 2026-11-03, §12i**):
   - **Resources** — `<details>` (closed).
-  - **Use of seals** — visible prose.
-  - **Seals** — `<details>` (closed); the seal is a picture, so the cell is its printed label and
-    the legend says the picture is not stored.
+  - **Use of seals** — `<details>` (closed). It was visible prose until §12i; on Step 3 it is ten
+    paragraphs, so the fold moved to it.
+  - **Seals** — **not drawn.** The seal is a picture, so the cell is at most its printed label and
+    the legend says the picture is not stored; a control opening onto "Proud member of" was a dead
+    end. A guard fails if the column ever holds prose.
   - **Fee** — a box **under the card(s)** it belongs to. The merged Fee cell belongs to Step 1 and
     covers Steps 1–2 (the legend says so); Step 3's Fee is its own box. The box shows the **full
     cell**, never an amount on its own (D72.2).
@@ -1134,6 +1137,57 @@ is; the defect is in the source document and is now carried by name.
 question but is scoped to the *establishing a PGS group* branch; Scenario 4 is legibility and
 resizing. The seals table's Fee column fell between the two — a gap in the UAT, recorded in the bug
 file, not repaired in a signed file.
+
+## 12i. Amended 2026-11-03 — the folds were on the wrong things
+
+**Decided by the product owner** while re-judging the reader after §12h's legend fix. It **amends
+D77 / §12f.2** (the spec row and `DESIGN.md` §7.13a carry the amendment too) — and it is not the
+build going its own way: §12f.2 set a **default**, and UAT Scenario 2 named this exact call in
+advance — *"if the cards are still too tall, **Use of seals** folds with the same element. Say
+whether it should … this is the only place that call can be made."* The owner has now made it.
+
+**The observation.** §12f.2 put the folds on Resources and **Seals**, and kept *Use of seals* as
+visible prose "because it is the rule a reader checks". Reading the shipped page, the owner found
+the reverse of what that sentence intends:
+
+| card | Resources | Use of seals and logos | Seals and logos |
+|---|---|---|---|
+| Step 1 | folded | *"The paper is silent on this step."* | not drawn (empty cell) |
+| Step 2 | folded | **visible** — three short paragraphs | **folded → `Proud member of`** |
+| Step 3 | folded | **visible** — ten paragraphs (DALRRD, GMO, exceptions) | not drawn (empty cell) |
+
+The facet that folded on Step 2 opened onto **one line**: `Proud member of`. That line is the
+printed caption of the "member of PGS SA" logo, and the artwork is not stored (D72.1) — so the
+control opened onto a fragment of a picture the corpus deliberately does not hold. Meanwhile the
+rule the fold was supposed to protect stayed open on Step 3, where it is longest.
+
+**The change.**
+
+- **`FOLDED_FACETS = ("resource", "use of seals")`** — the two text columns fold. Still a prefix
+  list, still "an unrecognised heading is a taller card, never a lost cell".
+- **`PICTURE_FACETS = ("seals and logos",)`** — a picture column is **not drawn as a facet at
+  all**. Safe only while the cell really is a label: `test_the_picture_column_holds_a_label_and_never_prose`
+  fails if a review ever puts a sentence there, so nothing can disappear silently. On the shipped
+  corpus the column is empty everywhere except Step 2's 15-character caption.
+- **An empty facet is never folded** — it keeps *"The paper is silent on this step."* Folding the
+  column would otherwise have swallowed Step 1's statement of the paper's silence, which the table
+  legend calls out ("silence is not permission").
+
+**Nothing is lost by not drawing the picture column.** Step 2's prose — now inside the *Use of
+seals* fold — already says groups *"will be entitled to make use of the 'member of PGS SA' logo"*.
+
+**Guards, each written first and watched red:** `test_use_of_seals_folds_with_resources_so_the_step_body_leads`,
+`test_the_picture_column_is_not_a_facet` and
+`test_the_facets_keep_the_printed_column_order_and_fold_the_text_columns`
+(`core/tests/test_document_reader_grid.py`), plus the label guard and
+`test_the_seal_cell_carries_the_printed_label_not_the_picture` (`knowledge/tests/`), both proved red
+by putting a sentence into the picture column and restoring it.
+
+**The UAT consequence.** Scenario 2's steps said *"Leave **Use of seals** alone, and notice whether
+you had to open it to answer a question"* — that premise is now the opposite, and its `Judgement:`
+clause ("is anything you needed behind a fold?") is exactly the question this change answers. So
+Scenario 2 is **re-judged with Scenario 4** against the rebuilt artefact; the other four cards are
+untouched.
 
 ## Pre-Flight Checklist
 

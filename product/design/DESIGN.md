@@ -444,9 +444,16 @@ column order, and the **fee is a box under the card(s) it belongs to**.
 - The card head is `Step N · <reviewer title>` plus the printed page. The titles (`Get together`,
   `Agree and establish`, `Visit and certify`) are **reviewed data**, not inference; without them the
   head is the printed label alone.
-- **Resources and Seals fold** (`<details>`, closed), because the step body leads. *Use of seals*
-  stays visible: it is the rule a reader checks. A folded facet with no text is not drawn — a closed
-  control with nothing inside is a dead control. `<summary>` is a **44 px** target.
+- **The two text columns fold** (`<details>`, closed), because the step body leads: Resources and
+  *Use of seals*. A facet with no text is **never** folded — it keeps the sentence that the paper is
+  silent, because a closed control with nothing inside is a dead control. The **picture column**
+  (`Seals and logos`) is **not drawn at all**: the artwork is not stored, so its cell is at most a
+  printed caption, and a control opening onto a caption for an absent picture is a dead end. A
+  guard fails if that column ever holds prose, so nothing disappears silently. `<summary>` is a
+  **44 px** target. *(Amended 2026-11-03 — `LANDSCAPE_TABLES_PRD` §12i. Until then Resources and
+  Seals folded and *Use of seals* stayed visible, "because it is the rule a reader checks"; on
+  Step 3 that rule is ten paragraphs, and the facet that did fold opened onto the one line
+  "Proud member of", so the folds were on the wrong things.)*
 - **The step body does not repeat its own label.** The paper prints `Step 1` as the cell's first
   line and the reviewer copies it into the row label, so the heading prints it and the body drops
   it. A path card's heading is `Path B`, and its label is the opening of its own sentence, so it
