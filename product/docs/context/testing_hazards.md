@@ -1806,6 +1806,37 @@ on this box. The general form: **fingerprint the output of the thing you are mov
 every branch's rendered `Reader`), not just its test result; a test asserts what someone
 thought to assert, a fingerprint asserts everything that is there.
 
+### 3.27 A deploy verifies one commit and installs another, and the log names the wrong one
+
+`deploy/deploy.sh` step 1/8 fetches `origin/main` and archives **that object** into a scratch
+tree, so the gate tests what will be installed. Step 2/8 then ran
+`git pull --ff-only origin main`, which **fetches again**. Between the two there is the whole
+gate — measured at 82 s on the VPS and 126–223 s cold on the dev box — so any push landing
+inside that window is installed having never been tested.
+
+Evidence (2026-11-03, the first deploy of the chat split):
+
+    ==> 1/8  Verifying origin/main     ->  7b2242343192b6fcbebfe48cd9a6a82d91b64492
+    ==> 2/8  Pulling origin/main       ->  7b22423..06bb11a  main -> origin/main
+    ✅ Deploy complete — 7b2242343192b6... is live
+
+`VERIFY_COMMIT` is captured at L118 from `rev-parse FETCH_HEAD`; the pull is a separate
+network call; and the closing line prints the captured variable. So the tree was `06bb11a`
+while the log said `7b22423` — the log was wrong in the same breath as the gate was bypassed.
+The delta that time was one HTML file in `product/design/`, which is exactly why it would have
+gone unnoticed when the delta is a migration. Nobody notices a green deploy.
+
+Consequence: a deploy can ship untested code and report a sha it never installed. Both halves
+are silent: the gate was green (for a different tree) and the summary line reads like
+evidence.
+
+Rule: install the object you verified — `git merge --ff-only "$VERIFY_COMMIT"`, which step 1/8
+already fetched — and assert `rev-parse HEAD` still equals it before the first irreversible
+step. Do not "detect and warn": a warning here is a deploy that ships anyway. If origin has
+moved on, the **next** deploy verifies and installs it, which is the safe direction.
+`tests/tools/test_deploy_verified_commit.py` guards it, and it was watched go red with the
+old `pull` line restored (3 failures) and with the HEAD assertion removed (1 failure).
+
 ## 5. Template for a new entry
 
 ```markdown
