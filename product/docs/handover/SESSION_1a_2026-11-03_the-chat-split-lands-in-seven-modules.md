@@ -97,3 +97,24 @@ page blocks. **ALL `170b581afdbec6f4`** before and after; 814 knowledge tests, 1
 For step 7 the seam is already measured: `_documents.py` is ~8 KB of registry/publishing,
 ~28 KB of reader shapes (`ReaderPassage` … `reader_for`, `_artefact_grid`, `_cards_for`) and
 ~6 KB of publishing. The reader is the module to extract.
+
+## 7. Step 7, same session: the reader split, and the bug the fingerprint caught
+
+`_documents.py` (48 KB) became three files: `_document_reader.py` (12 KB — which document,
+which branch, the passages, the hits, the citation, `Reader`), `_document_shapes.py` (24 KB —
+the dataclasses and the builders: cards, the printed grid, the fee box) and `_documents.py`
+itself (15 KB — what is published and how the served copy gets there). The PRD's proposed
+cut ("shape builders against the passage assembly") is **not buildable**: the classes and
+their builders are interleaved in the file, so the honest seam is reader vs publishing.
+
+**The first cut silently mojibaked the source.** `subprocess.run(..., text=True)` decodes
+stdout with the locale codec — cp1252 here — so every em dash and `§` in the moved code came
+back as `â€”`. The code parsed, imported, and passed 79 tests. `_scratch/probe_reader.py`
+(which walks every branch of all eight documents plus a search and the cited-row case) showed
+it immediately: `Reader.title` changed from `Certification Landscape — …` to
+`Certification Landscape â€” …`. Fixed by decoding `stdout` as UTF-8; recorded as
+`testing_hazards.md` §3.26 with the rule that generalises — **fingerprint the output of the
+thing you move, not just its test result.**
+
+Reader digests: ALL `84d307aa5dafa82e`, identical before and after. Gate 1598 passed /
+1 skipped in 90.92 s; critical lane 217 passed in 40.85 s; `--check` 23 → 22 breaches.

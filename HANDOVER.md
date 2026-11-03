@@ -21,17 +21,19 @@
 >
 > **What is next, in order:**
 >
-> 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 7–11** — `_documents.py`, the
->    `services.py`/`tables.py` pair, the five test files split by scenario, the 14 §18.3 rows,
->    then wire `scripts/context.py --check` into `verify.sh` **only at zero breaches**
->    (`testing_hazards.md` §3.11). `--check` says **23 breaches**; `_chatbot.py` and
->    `knowledge/corpus.py` are no longer among them.
->    **Step 6 landed too** (`883e66a`): `corpus.py` 50 → 28 KB into `corpus_tables.py` (16) and
->    `corpus_edits.py` (10) — the table move alone left 38 KB, so the ledger had to go as well.
->    The parse is byte-identical (all four artefacts, `_scratch/probe_corpus_parse.py`).
->    **Next seam, measured:** `_documents.py` is 8 KB of registry/publishing, 28 KB of reader
->    shapes (`ReaderPassage`…`reader_for`, `_artefact_grid`, `_cards_for`) and 6 KB of
->    publishing — so the reader is the module to extract, not the PRD's "shape builders". The proven habits for each slice are the session record's: prove the lint
+> 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 8–11** — the `services.py`/`tables.py`
+>    pair, the five test files split by scenario, `build_corpus.py`, the 14 §18.3 rows, then wire
+>    `scripts/context.py --check` into `verify.sh` **only at zero breaches**
+>    (`testing_hazards.md` §3.11). `--check` says **22 breaches**; `_chatbot.py`,
+>    `knowledge/corpus.py` and `_documents.py` are no longer among them.
+>    **Steps 6 and 7 landed**: `corpus.py` 50 → 28 KB (`corpus_tables.py` 16, `corpus_edits.py`
+>    10 — the table move alone left 38, so the ledger went too), and `_documents.py` 48 → 15 KB
+>    (`_document_reader.py` 12, `_document_shapes.py` 24 — the classes and their builders are
+>    interleaved, so the reader needed two modules). Both are byte-identical by fingerprint,
+>    not by test: `_scratch/probe_corpus_parse.py` and `_scratch/probe_reader.py`.
+>    **The method that keeps paying:** fingerprint what the moved code *produces*, then diff
+>    the digests. Step 7's fingerprint caught cp1252 mojibake (`testing_hazards.md` §3.26) that
+>    79 passing tests and a clean import did not. The proven habits for each slice are the session record's: prove the lint
 >    can fail, and check every monkeypatch still patches the module the code actually reads.
 > 2. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
 >
