@@ -75,7 +75,7 @@
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
 >
-> **Deploy note:** the live box is still `8d2839d` and misses **14 sessions (`0m`–`0z`), 57 commits**.
+> **Deploy note:** the live box is still `8d2839d` and misses **14 sessions (`0m`–`0z`), 60 commits**.
 > A deploy pulls the artefacts but never re-ingests; the OPP's 30 → 37 chunks is a corpus change,
 > not a code change.
 > **The deploy also needs `d79-1`/`d79-2` to have run**: the entries are keyed on `PROMPT_VERSION`, so
@@ -89,16 +89,15 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame and
 landscape-sign-off sessions
-**Repo state:** `main`, **46 commits ahead of `origin/main`**. On this tree (2026-11-03, after the
-landscape sign-off — docs and the regenerated board only, so no code moved):
-`scripts/verify.sh` **green at 1593 passed / 1 skipped in 72.76 s** with `--create-db`, run as
+**Repo state:** `main`, **49 commits ahead of `origin/main`**. On this tree (2026-11-03, after the
+landscape re-sign — docs, one service constant and one template only):
+`scripts/verify.sh` **green at 1598 passed / 1 skipped in 165.69 s** with `--create-db`, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). `scripts/fast.sh` and `--critical` were **not** re-run
-this session; the previous tree measured 1578 passed / 1 skipped in 42.40 s and 217 passed /
-4 deselected in 11.28 s. `pytest tests/e2e` was **not** re-run this session — nothing in
-`core/templates`, the URL assembly or the CSS moved; 71 passed in 135 s on the previous tree. The
-gate ran on an idle box with a warm page cache, so quote it beside the earlier runs of the same
-command (`testing_hazards.md` §3.17).
+serves 5433, `testing_hazards.md` §3.1). The same command measured **72.76 s** on this tree an hour
+earlier — quote the range, not the best run (`testing_hazards.md` §3.17). `pytest tests/e2e` **71
+passed in 179.13 s** (run because a template moved). `scripts/fast.sh` and `--critical` were **not**
+re-run this session; the previous tree measured 1578 passed / 1 skipped in 42.40 s and 217 passed /
+4 deselected in 11.28 s.
 
 The suite gained **ten** guards in session 11 — the column-resolution pair, the snapshot/citation
 pair, the reader-link pair, the thread's context+legend pair, the answer page's context+legend
@@ -108,9 +107,9 @@ pair and the reader's mark/no-mark pair — each proved by breaking it and watch
 unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left
 unlinked on purpose (same locator, different text: the transition off the PDF parses).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **46 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **49 commits unpushed**.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — **14 sessions and 57 commits behind**, with the old PDF-built corpus. A deploy pulls
+2026-10-30 — **14 sessions and 60 commits behind**, with the old PDF-built corpus. A deploy pulls
 the artefacts but
 never runs `ingest_standard`, so the box will show drift on all four until someone runs
 `corpus_refresh --apply` there deliberately.
