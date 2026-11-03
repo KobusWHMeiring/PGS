@@ -47,15 +47,28 @@ behaviour changes anywhere: same answers, same pages, same corpus.
 The rules are already written and are not up for re-decision. Restated here so this file is the one
 thing to read.
 
-**4.3 — split by responsibility.** `_chatbot.py` already has four responsibilities, named in its own
+**4.3 — split by responsibility.** `_chatbot.py` already has responsibilities named in its own
 headings:
 
-| new module | takes | ≈ size |
+| new module | takes | size |
 |---|---|---|
-| `core/services/_chat_prompt.py` | `SYSTEM_PROMPT`, `COST_QUESTION_RULE`, `build_prompt`, `significant_terms` | 15 KB |
-| `core/services/_chat_audit.py` | `audit_citations`, `outcome_claim_warnings`, `cost_question_warnings`, locators | 20 KB |
-| `core/services/_chat_provider.py` | `GeminiChatModel`, schemas, truncation handling | 15 KB |
-| `core/services/_chatbot.py` | `answer_question`, the cache, refusals — **the contract** | 35 KB |
+| `_chat_text.py` **landed** | tokens, locators, digests: `normalise_question`, `_STOPWORDS`, `locator_of`, `text_sha`, `_normalise_ref`, `_sub_ref_names` | 8 KB |
+| `_chat_prompt.py` **landed** | `PROMPT_VERSION`, `SYSTEM_PROMPT`, `COST_QUESTION_RULE`, `looks_like_cost_question`, `significant_terms`, `_render_table`, `build_prompt` | 21 KB |
+| `_chat_values.py` | errors, `Citation`, `ModelReply`, `GroundedAnswer`, `ChatModel` | 6 KB |
+| `_chat_audit.py` | `audit_citations`, `outcome_claim_warnings`, `cost_question_warnings`, `_address_book`, `_reader_anchors` | 12 KB |
+| `_chat_provider.py` | `ANSWER_SCHEMA`, `GeminiChatModel`, truncation handling, the model constants | 8 KB |
+| `_chat_guard.py` | rate limit, `validate_question`, follow-up detection, retrieval defaults, session lifecycle | 11 KB |
+| `core/services/_chatbot.py` | `answer_question`, the cache, refusals — **the contract** | ~27 KB |
+
+**Amended 2026-11-03, after step 1.** The first table had four modules and left `_chatbot.py` at
+35 KB — over the 30 KB cap the split exists to satisfy — and step 2 could not be built at all:
+`audit_citations` constructs `Citation`, which lived in `_chatbot`, so the audit and the contract
+would have imported each other. The two moves that landed were a pair (the prompt cannot be
+built without the locators) and measured 8 + 21 KB. The remaining sections measured 6.3
+(errors + values), 12.4 (audit), 7.6 (generation), 10.7 (lifecycle + guardrails), 18.1
+(contract), 6.8 (cache). So the values move **before** the audit, and the guardrails leave too
+or `_chatbot` lands at ~33 KB. No behaviour change anywhere; the prompt's bytes are proved
+identical by `_scratch/probe_prompt_hash.py`.
 
 `knowledge/corpus.py` splits the same way: the header/format rules stay, the table block moves to
 `knowledge/corpus_tables.py`. The five over-cap **test** files split **by scenario, not by line
@@ -94,32 +107,42 @@ the same move for the other two.
 
 Ordered so each step is independently committable and the biggest session cost falls first.
 
-1. **`_chatbot.py` → `_chat_prompt.py`.** Pure move; the prompt text and `PROMPT_VERSION` unchanged.
-   Prove the prompt's sha256 is identical before and after (a one-line probe in `_scratch/`).
-2. **`_chatbot.py` → `_chat_audit.py`.** Pure move of the audit functions and their locators.
-3. **`_chatbot.py` → `_chat_provider.py`.** The model client, schemas, truncation. This is the only
-   slice that touches an external surface — keep the truncation tests as the proof.
-4. **`knowledge/corpus.py` → `knowledge/corpus_tables.py`.** The table block moves; the header and
+1. **`_chat_text.py` and `_chat_prompt.py` — done** (`8fff5bf`, `5344d83`). Two commits because
+   the prompt renders locators and so cannot be moved before them: the leaf is a pure move
+   first, then the prompt. The prompt's sha256 and five rendered prompts are identical;
+   `_chatbot.py` 97 → 69 KB.
+2. **`_chat_values.py`.** Errors and the value dataclasses. Pure move; `_chatbot` re-exports, so
+   every `from core.services._chatbot import Citation` keeps working. This must come **before**
+   the audit, or the audit and the contract import each other.
+3. **`_chat_audit.py`.** Pure move of the audit functions, the two warning lists and
+   `_address_book`/`_reader_anchors` (the locator primitives already left in step 1).
+4. **`_chat_provider.py`.** The model client, `ANSWER_SCHEMA`, truncation and the `MODEL_*`
+   constants. This is the only slice that touches an external surface — keep the truncation
+   tests as the proof.
+5. **`_chat_guard.py`.** Rate limiting, `validate_question`, follow-up detection, retrieval
+   defaults and session lifecycle. **`--check` must show `_chatbot.py` under 30 KB after this
+   one**, with margin — 27 KB measured, not 29.5 and hoping.
+6. **`knowledge/corpus.py` → `knowledge/corpus_tables.py`.** The table block moves; the header and
    format rules stay. `--check` must show both files under cap.
-5. **`core/services/_documents.py` (48 KB).** No section headings, so name the seam first: the
+7. **`core/services/_documents.py` (48 KB).** No section headings, so name the seam first: the
    reader-shape builders (`_cards_for`, `_artefact_grid`, the fee-box derivation) are one
    responsibility, the passage/document assembly around them the other.
-6. **`knowledge/services.py` (39 KB) and `knowledge/tables.py` (35 KB).** Neither has section
+8. **`knowledge/services.py` (39 KB) and `knowledge/tables.py` (35 KB).** Neither has section
    headings either. The seams their own top-level names give: in `services.py`, retrieval proper
    (`lexical_search`, `vector_search`, `fuse`, `search`) against term analysis (`search_terms`,
    `document_frequency`, `lexical_key`); in `tables.py`, chunk-building from rows
    (`chunks_for_parsed_section`, `row_chunk`, `_embedding_rendition`) against the curated structure
    (`TableSection`, `ArtefactGrid`, `align_artefact_grid`). Both are only just over the line —
    prefer the smallest honest seam to a perfect taxonomy.
-7. **The five test files**, split by scenario. Do **not** duplicate a guard to make the numbers
+9. **The five test files**, split by scenario. Do **not** duplicate a guard to make the numbers
    work — see `cutting-test-suite-cost`: if a split forces a test to exist twice, the second copy
    was never needed.
-8. **`scripts/build_corpus.py`** — it is a few hundred bytes over; find the seam or move one rule.
-9. **The 14 §18.3 rows**, in small batches (2–3 per commit), each row reduced to decision + date +
-   owner + the one measurement + link. `D44` is **not** among the 14, and that is the point of the
-   rule in §4: it is the only decision an N/A scenario cites, so any row you trim has to keep its
-   id and any deferral marker it carries.
-10. **Wire `--check` into `scripts/verify.sh`**, with `tests/tools/test_verify_gate.py` asserting it
+10. **`scripts/build_corpus.py`** — it is a few hundred bytes over; find the seam or move one rule.
+11. **The 14 §18.3 rows**, in small batches (2–3 per commit), each row reduced to decision + date +
+    owner + the one measurement + link. `D44` is **not** among the 14, and that is the point of the
+    rule in §4: it is the only decision an N/A scenario cites, so any row you trim has to keep its
+    id and any deferral marker it carries.
+12. **Wire `--check` into `scripts/verify.sh`**, with `tests/tools/test_verify_gate.py` asserting it
     is wired *and* that it can fail.
 
 ## 6. Success Criteria
