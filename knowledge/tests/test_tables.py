@@ -20,11 +20,11 @@ from knowledge.tests.page_fixtures import pages
 
 from knowledge.extraction import extract_pages
 from knowledge.corpus import CORPUS_EDITS
+from knowledge.table_chunks import chunks_for_rows
 from knowledge.tables import (
     APPENDIX_2_ROWS,
     APPENDIX_6A_ROWS,
     TABLE_BANDS,
-    chunks_for_rows,
     rows_for,
 )
 

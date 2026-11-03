@@ -579,7 +579,7 @@ def curated_rows(db):
     test is the reviewed text — not a hand-written row that would let the renderer pass while the
     corpus is different (`testing_hazards.md` §1.32).
     """
-    from knowledge.tables import chunks_for_rows
+    from knowledge.table_chunks import chunks_for_rows
 
     corpus = StandardSet.objects.create(code="outeniqua", label="Outeniqua", is_default=True)
     document = StandardDocument.objects.create(

@@ -76,7 +76,7 @@ TASKS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("HANDOVER.md", "read it whole now - state only", READ),
         ("knowledge/corpus.py", "the format docstring: rules 1-6", SEARCH),
         ("knowledge/corpus_tables.py", "`TableBlock`: rules 5 and the table state machine", SEARCH),
-        ("knowledge/tables.py", "`row_chunk`, `_embedding_rendition`, `chunks_for_parsed_section`", SEARCH),
+        ("knowledge/table_chunks.py", "`row_chunk`, `_embedding_rendition`, `chunks_for_parsed_section`", SEARCH),
         ("product/backlog/In Progress/CORPUS_CANONICAL_FORMAT_PLAN.md", "the plan and its gates", READ),
     ),
     "reader": (

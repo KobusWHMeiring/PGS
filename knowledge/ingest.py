@@ -51,7 +51,8 @@ from knowledge.extraction import extract_pages, sha256_of
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.sections import registry
 from knowledge.sections.toc import toc_from_pages
-from knowledge.tables import chunks_for_parsed_section, chunks_for_rows, rows_for
+from knowledge.table_chunks import chunks_for_parsed_section, chunks_for_rows
+from knowledge.tables import rows_for
 
 logger = logging.getLogger(__name__)
 

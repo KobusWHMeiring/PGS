@@ -19,7 +19,7 @@ from __future__ import annotations
 import pytest
 
 from knowledge.models import DocumentChunk
-from knowledge.services import search_terms
+from knowledge.retrieval import search_terms
 from knowledge.table_context import (
     TABLE_ROW_SEATS,
     column_label_for,

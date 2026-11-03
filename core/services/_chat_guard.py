@@ -30,7 +30,8 @@ from core.services._chat_values import (
     SessionNotFoundError,
 )
 from knowledge.models import StandardSet
-from knowledge.services import RetrievalResult, chunks_by_id, search_terms
+from knowledge.retrieval import search_terms
+from knowledge.services import RetrievalResult, chunks_by_id
 
 #: Defaults. Every one is read through `getattr(settings, ...)` at call time, so a test or
 #: a deployment can override it with `override_settings`/an environment variable.

@@ -138,13 +138,15 @@ Ordered so each step is independently committable and the biggest session cost f
    and `_document_shapes.py` (the dataclasses and the builders: cards, the printed grid, the
    fee box — 24 KB). `_documents.py` is 15 KB. The PRD's original "shape builders against the
    passage assembly" cut is not buildable: the classes and their builders are interleaved.
-8. **`knowledge/services.py` (39 KB) and `knowledge/tables.py` (35 KB).** Neither has section
-   headings either. The seams their own top-level names give: in `services.py`, retrieval proper
-   (`lexical_search`, `vector_search`, `fuse`, `search`) against term analysis (`search_terms`,
-   `document_frequency`, `lexical_key`); in `tables.py`, chunk-building from rows
-   (`chunks_for_parsed_section`, `row_chunk`, `_embedding_rendition`) against the curated structure
-   (`TableSection`, `ArtefactGrid`, `align_artefact_grid`). Both are only just over the line —
-   prefer the smallest honest seam to a perfect taxonomy.
+8. **`knowledge/services.py` (39 KB) and `knowledge/tables.py` (35 KB).** Measured: `search_terms`
+   is **14.6 KB and is the retrieval strategy**, not term analysis — it reads rarity, aliases and
+   seats off the corpus and returns a `RetrievalResult`. So the seam is *scoring* (`services.py`:
+   `lexical_search`, `vector_search`, `fuse`, `search`, `document_frequency`, `lexical_key`)
+   against *strategy* (`knowledge/retrieval.py`: `search_terms`, `_with_their_tables`). `search`
+   stays behind because `search_terms` calls it. In `tables.py` the seam the PRD named is the
+   right one: chunk-building (`chunks_for_parsed_section`, `row_chunk`, `_embedding_rendition`,
+   `chunks_for_rows`) out to `knowledge/table_chunks.py` (8 KB), the curated data and structure
+   stay. Both files land at 21 and 27 KB.
 9. **The five test files**, split by scenario. Do **not** duplicate a guard to make the numbers
    work — see `cutting-test-suite-cost`: if a split forces a test to exist twice, the second copy
    was never needed.

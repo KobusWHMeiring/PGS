@@ -29,7 +29,8 @@ from core.services._chatbot import (
     significant_terms,
 )
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
-from knowledge.services import RetrievedChunk, search, search_terms
+from knowledge.retrieval import search_terms
+from knowledge.services import RetrievedChunk, search
 
 pytestmark = pytest.mark.django_db
 

@@ -32,6 +32,7 @@ import pytest
 from knowledge.ingest import ingest_standard
 from knowledge.tests.page_fixtures import stub_ingest_extraction
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
+from knowledge.retrieval import search_terms
 from knowledge.services import (
     DEFAULT_LIMIT,
     chunks_by_id,
@@ -43,7 +44,6 @@ from knowledge.services import (
     fuse,
     lexical_key,
     search,
-    search_terms,
     vector_search,
 )
 
