@@ -1,0 +1,67 @@
+# NOTICE
+
+Outeniqua PGS Digital Platform
+Copyright (C) 2026 Kobus Meiring
+Licensed under the GNU Affero General Public License v3.0 or later — see `LICENSE`.
+
+This file records what in this repository is **not** covered by that licence.
+
+---
+
+## 1. Standards documents and corpus — NOT covered, and not redistributable by us
+
+The governing documents live in `pgs_docs/` and are ingested into `knowledge/corpus/`.
+They are third-party works. None of them is licensed to us for redistribution.
+
+| Work | Rights position (checked 2026-11-03) |
+|---|---|
+| `saoso-version-2.1-2026.pdf` | No copyright, reproduction or licence notice anywhere in the text. Absence of a notice grants no permission: default copyright applies. |
+| `Outeniqua pgs principles, policies and procedures 2026.pdf` | Same — no rights notice found. |
+| `PGS Certification landscape_Final.pdf` | Explicitly: may be copied and adapted for "not-for-profit and/or educational purposes only… cannot be used for commercial purposes"; the logos of SAOSO, KCOA, BMZ and GIZ "must not appear on any adaptation". Copyright PGS South Africa / SAOSO, 2021. |
+| `Basic Production Principles_ENG_PRINT.pdf`, `6. … assessment form … .xlsx`, `5. … preparation list.pdf`, `7.a–7.c` | No notice checked. Treat as unknown and therefore not redistributable. |
+
+**Consequence, and why it is deliberate:** the engine ships; the corpus does not. An
+operator ingests their own copy of the standard they are certified against. That is also
+what makes the engine retargetable to a second standard or a second producer group without
+a migration — the architectural rule in `AGENTS.md`.
+
+If you are redistributing this software, do not add those documents to your copy.
+
+## 2. Vendored third-party code
+
+| File | Version | Licence | Notes |
+|---|---|---|---|
+| `core/static/js/vendor/htmx.min.js` | 2.0.4 | BSD 2-Clause | Vendored deliberately — zero build pipeline, no CDN (`build_principles.md` §IV). Loaded on `/ask/` only. Upstream source is recorded in `core/static/js/vendor/README.md`. |
+
+The BSD 2-Clause licence requires that its copyright notice and disclaimer be retained.
+They are not present in the minified file as vendored; the authoritative record is
+`core/static/js/vendor/README.md` and the upstream distribution.
+
+## 3. Fonts
+
+| File | Family | Licence |
+|---|---|---|
+| `core/static/fonts/lora-normal.woff2`, `lora-italic.woff2` | Lora | SIL Open Font License 1.1 |
+| `core/static/fonts/mulish-normal.woff2`, `mulish-italic.woff2` | Mulish | SIL Open Font License 1.1 |
+
+Both are distributed under the SIL OFL 1.1. **Before relying on this, obtain the OFL text
+from the upstream releases and add it here** — the `.woff2` files as committed carry no
+licence metadata, so this table is an identification of the family, not a copy of the grant.
+
+## 4. Images
+
+`core/static/img/*.jpg` and `logo_mark.png` are the producer group's own photographs and
+marks. They are not covered by the AGPL and are not licensed for reuse. If you fork this
+project, replace them.
+
+---
+
+## What this means for a funder or an adopter
+
+- **The code** is free and open source, in its entirety, under AGPL-3.0-or-later.
+- **The standard's text** is not ours to license, and is not included.
+- **The group's identity** — photographs, marks, member data — is not included either.
+
+If you are assessing this project against a "must be open source in its entirety"
+requirement, the answer is that the software is, and the data is deliberately not part of
+the deliverable.
