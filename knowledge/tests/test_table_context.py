@@ -26,7 +26,7 @@ from knowledge.table_context import (
     reviewed_table_for,
     reviewed_table_for_section,
 )
-from knowledge.tests.test_retrieval import opp_ingested, saoso_set  # noqa: F401
+from knowledge.tests.retrieval_fixtures import opp_ingested, saoso_set  # noqa: F401
 
 pytestmark = pytest.mark.django_db
 
