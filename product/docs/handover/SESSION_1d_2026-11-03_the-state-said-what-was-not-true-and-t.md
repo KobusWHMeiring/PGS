@@ -97,9 +97,12 @@ emptied (1 failed), and one row's link reverted (1 failed, naming D78). Restored
 ## 4. What is next
 
 1. **G12/X2 — starting with the eight-shape fixture set.** D80's row now says so in one sentence,
-   and `todo.md` says the PRD comes before the build. Four of the eight shapes have no test today
-   (Section A's `22 of 28`, the `1,107`-character cell, the 1,107-cell transposition, artwork in a
-   cell). This is a fresh-session task: a PRD, then the fixtures.
+   and `todo.md` says the PRD comes before the build. The eight are named in Part 1 of the
+   exploration; the spec's measured starting point is 44 reviewed rows, four bespoke test files and
+   two tables still mangled — **shape-by-shape test coverage is the first thing the fixture set
+   establishes, and this session did not measure it.** (An earlier draft of this record and of
+   `HANDOVER.md` claimed "four of the eight have no test today"; that was an inference from the four
+   bespoke files, not a reading, and it was corrected in `c1f…` before either was acted on.)
 2. **`product/design/f3_saoso_outreach_and_role.html` is untracked** (24 KB, "F3 — SAOSO outreach
    and the digital systems role", dated today, referenced by no PRD). Commit it with a backlog line
    or delete it; it should not sit unversioned.

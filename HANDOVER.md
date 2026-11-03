@@ -29,8 +29,11 @@
 >    it can be built", and **the first commit in any case is the eight-shape fixture set**: numeric
 >    rows without labels, headerless value rows, column-major interleaving, a 1,107-character cell,
 >    deliberate empty cells, a row across a page break, a two-level qualifier structure, artwork in
->    a cell. Four of the eight have no test today. Start a **fresh session** for it: this is a
->    different kind of work from what `1d` was doing.
+>    a cell. The spec's measured starting point is 44 reviewed rows across four documents, four
+>    bespoke test files and **two tables still mangled** (SAOSO Appendix 6a ships 20 chunks with no
+>    column meaning; Appendix 7 is interleaved) — so **which of the eight already have a test is the
+>    first thing to establish, not a fact to inherit.** Start a **fresh session**: this is different
+>    work from what `1d` was doing.
 > 2. **`product/design/f3_saoso_outreach_and_role.html` is untracked** — 24 KB, "F3 — SAOSO
 >    outreach and the digital systems role", dated 2026-11-03, referenced by no PRD. Commit it with
 >    a backlog line or delete it.
