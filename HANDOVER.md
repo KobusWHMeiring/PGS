@@ -43,9 +43,9 @@
 >
 > **What is next, in order:**
 >
-> 0. **Nothing is deployed-pending: live is at `06bb11a` and its corpus is current.** The only
->    deploy-shaped debt is that the box still runs the old `deploy.sh`, so the §3.27 window is
->    open until the next deploy.
+> 0. **Nothing is deployed-pending: live is at `06bb11a` and its corpus is current.** The box's
+>    `deploy.sh` is still the pre-`3c2c39d` one, but it carries the re-exec, so the next deploy
+>    closes the §3.27 window by itself — **nothing is owed** (see the state block below).
 > 1. **`product/backlog/In Progress/CONTEXT_CUTS_PRD.md` step 11 — the 14 §18.3 rows**
 >    (`D46 D47 D52 D53 D68 D69 D70 D71 D72 D73 D74 D75 D78 D80`, 1.7–3.7 KB against a 1.5 KB
 >    budget). Each row must keep decision + date + owner + **the one measurement** + a link, and
@@ -75,24 +75,32 @@
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off and chat-split sessions
-**Repo state:** `main`, **8 commits ahead of `origin/main`** (`06bb11a` is pushed and
-live; the chat-split follow-ups, the six test/generator cuts, the flake fix and the records are
-the rest). On this tree (2026-11-03, session `1c`): `scripts/verify.sh` **green at 1604 passed /
-1 skipped in 56.97 s**, run as
+landscape-sign-off, chat-split and handover-truth-up sessions
+**Repo state:** `main`, **9 commits ahead of `origin/main`** — `06bb11a` is pushed and live; the
+licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix and `1c`'s
+close are the rest. On this tree (2026-11-03, session `1c`): `scripts/verify.sh` **green at 1604
+passed / 1 skipped in 56.97 s**, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this
-box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this tree. Cold
-runs on near-identical trees have measured **126–223 s** in one session — quote the range, never
-the best run (§3.17). `scripts/fast.sh` (the lane) measured **1589 passed / 1 skipped / 15
-deselected in 41.45 s warm**. This session added **one guard** (nothing new) and **one hazard
-entry**, §3.28 — a wall-clock flake in `test_ask_board.py`, fixed and watched red.
+box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this tree — every
+commit since it is docs. Cold runs on near-identical trees have measured **126–223 s** in one
+session — quote the range, never the best run (§3.17). `scripts/fast.sh` (the lane) measured
+**1589 passed / 1 skipped / 15 deselected in 41.45 s warm**.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **59 commits unpushed**.
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — **15 sessions and 70 commits behind**, with the old PDF-built corpus.
-**The dev box is current:** all four documents re-ingested from their artefacts, **401 chunks, 0
-unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left
-unlinked on purpose (same locator, different text: the transition off the PDF parses).
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **9 commits unpushed**.
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`06bb11a`**, deployed
+2026-11-03 with a **current** corpus (401 chunks) — START HERE has the detail. Its `deploy.sh` on
+disk is the pre-`3c2c39d` one, and **the §3.27 window is self-closing, not debt**: that script
+still `pull`s origin's tip, but it already carries the re-exec, so the next deploy re-runs the
+fixed script, which verifies origin's tip afresh and fast-forwards to *that* — before the backup
+and the first migration (`deploy/README.md`: "re-executes itself if the pull changed it"). No
+manual fix is owed.
+**The dev box is NOT current — it is behind live**, and says so: `corpus_check` reports
+`landscape` **drift**, and its 17 landscape chunks carry **0** labelled renditions against live's
+8. Do not refresh it until `GEMINI_API_KEY` is in the dev `.env` (it holds only
+`DJANGO_SECRET_KEY`), or the refresh writes 17 NULL vectors that then report "already ingested"
+forever (`deploy/README.md` §4). Live is the reference DB. Three lines here said otherwise
+(`8d2839d`, "70 commits behind", "59 commits unpushed", "the dev box is current") — corrected
+this session against git and `corpus_check`.
 
 ## Session archive
 
