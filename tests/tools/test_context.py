@@ -12,8 +12,9 @@
    was therefore broken on the machine it was written on, and nothing failed until a human ran
    it. Printed output must stay ASCII.
 
-`--check` is report-only by design (`CONTEXT_BUDGET.md` §4.4), so it may exit 1 while the tree
-is over budget. The test asserts it reports, not that it is green.
+`--check` is enforced by the gate (`scripts/verify.sh` step 1/4), so a breach anywhere makes
+this suite's own gate run red. These tests assert that it *reports* correctly — the breach
+that proves the gate can fail lives in `tests/tools/test_verify_gate.py`.
 """
 
 from __future__ import annotations
@@ -69,12 +70,13 @@ def test_help_is_ascii(capsys):
 
 
 def test_check_reports_without_crashing(capsys):
-    """Report-only: a breach is exit 1, but the report itself must always be produced."""
+    """A breach is exit 1 and the report must still be produced: `verify.sh` prints it."""
     status = context.check()
     out = capsys.readouterr().out
     assert status in (0, 1)
     assert "context budgets" in out
     assert "breach" in out
+    assert "verify.sh" in out, "the report must say what runs it"
     assert out.isascii(), "printed output must be ASCII (Windows cp1252 console)"
 
 

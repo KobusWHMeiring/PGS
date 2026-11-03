@@ -151,6 +151,14 @@ def size_of(path: Path) -> tuple[int, int]:
     return data.count(b"\n") + 1, len(data)
 
 
+def _where(path: Path) -> str:
+    """A path as a reader sees it: relative to the repo when it is inside it."""
+    try:
+        return path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def tokens(byte_count: int) -> int:
     """A legible estimate, not a measurement. Quoted to one significant figure."""
     return round(byte_count / BYTES_PER_TOKEN / 1000) * 1000
@@ -188,8 +196,21 @@ def show_task(task: str) -> None:
 
 
 def check() -> int:
-    """Report every budget breach. Exit 1 when any is broken (report-only today)."""
+    """Report every budget breach. Exit 1 when any is broken.
+
+    `scripts/verify.sh` runs this as its first step, so a breach is not a report any more:
+    it fails the gate. That is why an **absent** file is a breach too — `size_of` returns
+    `(0, 0)` for a path that is not there, so without this a deleted `HANDOVER.md` or spec
+    would read as a file comfortably inside its budget, and the gate would pass on the
+    artefact's absence.
+    """
     broken: list[str] = []
+
+    for path in (HANDOVER, SPEC):
+        if not path.is_file():
+            broken.append(
+                f"{_where(path)} is missing: an absent file is not a file inside its budget"
+            )
 
     lines, _ = size_of(HANDOVER)
     if lines > HANDOVER_BUDGET_LINES:
@@ -229,8 +250,8 @@ def check() -> int:
     if not broken:
         print("  every budget holds")
     print(
-        "\nReport-only: these are the four cuts in CONTEXT_BUDGET.md, not a gate yet. "
-        "Wire --check into verify.sh once the tree is inside the budgets."
+        "\nThese are the four cuts in CONTEXT_BUDGET.md, and scripts/verify.sh runs this "
+        "check as its first step: a breach fails the gate."
     )
     return 1 if broken else 0
 

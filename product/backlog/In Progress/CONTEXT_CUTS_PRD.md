@@ -1,5 +1,5 @@
 # PRD: The context cuts — a sentence and a link, and a file that fits its cap
-**Status:** In Progress — steps 1-11 landed 2026-11-03; step 12 (wire the gate) open
+**Status:** **Done 2026-11-03** — steps 1-12 landed; `--check` is step 1/4 of the gate
 **Owner:** Build (no product decision is open; the rules are already decided in `CONTEXT_BUDGET.md`)
 **Last Updated:** 2026-11-03 (session `1c`)
 **Scope:** Cuts **4.2** and **4.3** of `product/docs/context/CONTEXT_BUDGET.md`, then **4.4** (wire the
@@ -161,7 +161,7 @@ Ordered so each step is independently committable and the biggest session cost f
 ## 6. Success Criteria
 
 - [x] `python scripts/context.py --check` exits 0 with **0 breaches** (files, rows, handover).
-- [ ] `scripts/verify.sh` runs the check, and `tests/tools/test_verify_gate.py` proves a breach
+- [x] `scripts/verify.sh` runs the check, and `tests/tools/test_verify_gate.py` proves a breach
       fails the gate (break a file's size, watch it go red, restore).
 - [ ] `scripts/fast.sh --critical` still covers the eight files it guards, unchanged.
 - [ ] `lint-imports` green **and proved able to fail**; `tests/tools/test_architecture.py` green.
@@ -243,7 +243,32 @@ reverted to a bare basename, 1 failed naming D78; restored, 11 passed). (2) `D53
 SAOSO and landscape were "not yet converted" — true on 2026-10-22, false since 2026-11-02, when
 all four became the text of record. Corrected in the row.
 
-**Still open:** step 12 (`--check` into `verify.sh`, only at zero — the zero is now reached).
+### Step 12 — the check is in the gate, landed 2026-11-03 (session `1d`)
+
+`scripts/verify.sh` now runs `scripts/context.py --check` as **step 1/4**, before the Django
+checks, guarded with `if !` rather than leaning on `set -e` — the failure has to say which budget
+broke and where the argument belongs, or the next person deletes the step.
+
+Two things had to be true before that was worth doing, and both were:
+
+- **Zero breaches.** Reached by step 11. §4.4's condition was "wire it once the tree is inside the
+  budgets" (`testing_hazards.md` §3.11), not "wire it and let people live with red".
+- **A missing file must not read as a small one.** `size_of` returns `(0, 0)` for an absent path,
+  so a deleted `HANDOVER.md` or spec would have been "comfortably inside its budget" and the gate
+  would have passed on the artefact's absence. `check()` now reports absence as a breach, which
+  also covers the `git archive` tree `deploy.sh` gates if `product/` were ever excluded.
+
+`tests/tools/test_verify_gate.py` holds both halves: the wiring is asserted as text (and that it
+is guarded), and `check()` is run against a scratch tree that is **deliberately over budget**,
+which must exit 1 and name the file. A clean scratch tree must exit 0, so a check that always
+fails cannot pass for the right reason. **Watched red three ways** before trusted: the guard
+replaced with `if false` (1 failed), the missing-file loop emptied (1 failed), and one row's link
+reverted to a bare basename in step 11 (1 failed, naming D78). Restored, all green.
+
+**Gate on this tree:** `scripts/verify.sh` green, **1610 passed / 1 skipped**, with step 1/4
+printing `every budget holds` — so the check now proves itself on every run. Timing on this box
+during this session: **183.57 s cold, 59.97 s warm** — quote the range, never the best run
+(`testing_hazards.md` §3.17).
 
 ## Pre-Flight Checklist
 - [ ] No `core/models.py` change and no new app — this is a move, so **no migration**

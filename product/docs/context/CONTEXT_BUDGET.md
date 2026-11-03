@@ -141,11 +141,19 @@ Cost: mechanical, but it touches imports across the tree, and every split must k
 `tests/tools/test_architecture.py` and `lint-imports` green. Do one file per slice, with the
 suite green before and after.
 
-### 4.4 Enforce it, or it grows back
+### 4.4 Enforce it, or it grows back — **DONE 2026-11-03**
 
-- Wire `scripts/context.py --check` into `scripts/verify.sh` **once the tree is inside the
-  budgets** — a gate that is red on day one trains people to skip it (`testing_hazards.md`
-  §3.11). Until then it reports.
+- **`scripts/context.py --check` is step 1/4 of `scripts/verify.sh`.** Wired only once the
+  tree was inside the budgets — a gate that is red on day one trains people to skip it
+  (`testing_hazards.md` §3.11) — and the tree reached **0 breaches** on 2026-11-03, when the
+  last 14 decision rows were cut to a sentence and a link. A breach now fails the gate and
+  says which budget broke and where the argument belongs; a missing `HANDOVER.md` or spec is
+  itself a breach, because `size_of` returns `(0, 0)` for an absent file and absence must not
+  read as "inside the budget". `tests/tools/test_verify_gate.py` holds both halves: the
+  wiring, and a tree over budget failing `check()` (watched red by removing the guard).
+- **The rows' links are a link.** `tests/tools/test_context.py` fails on any §18.3 row whose
+  backticked path does not resolve from the repo root — the defect that made the first 12
+  trimmed rows point at nothing.
 - Keep the `HANDOVER.md` check in `tests/tools/` rather than only in the script, so it runs in
   the gate like every other rule.
 - Update `AGENTS.md`'s read table to name **recipes**, not files: "read these first" becomes

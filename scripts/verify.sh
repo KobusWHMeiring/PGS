@@ -2,12 +2,13 @@
 #
 # verify.sh — the gate. "Is this tree shippable?"
 #
-# Runs the three checks from MVP0_PLAN_V2.md Task A8, in order, and stops at the
-# first failure:
+# Runs the checks from MVP0_PLAN_V2.md Task A8, in order — cheapest first, and the
+# first failure stops the run:
 #
-#   1. manage.py check        — Django's system checks (config, models, admin)
-#   2. lint-imports           — knowledge must never import core (A7)
-#   3. pytest                 — the suite, against a real Postgres and Redis
+#   1. context.py --check     — the four context budgets (CONTEXT_BUDGET.md §4)
+#   2. manage.py check        — Django's system checks (config, models, admin)
+#   3. lint-imports           — knowledge must never import core (A7)
+#   4. pytest                 — the suite, against a real Postgres and Redis
 #
 # This script is the SINGLE source of truth for "is this good". `deploy.sh` calls
 # it on the server before touching the live tree, and a `.github/workflows/ci.yml`
@@ -140,9 +141,34 @@ if [ -f .env ]; then
     echo "          fresh clone with no .env (which is what deploy.sh does)."
 fi
 
-# --- 1. Django system checks -------------------------------------------------
+# --- 1. Context budgets ------------------------------------------------------
+#
+# `HANDOVER.md`, the spec's 81 decision rows, and seven source files. This is in the
+# gate rather than in a reviewer's memory because every one of those budgets grew
+# back before: a state file that keeps its history, rows that keep their arguments,
+# files that keep their second responsibility. `CONTEXT_BUDGET.md` §4.4 named the
+# condition for wiring it — "once the tree is inside the budgets" — and that was met
+# on 2026-11-03 with 0 breaches (`testing_hazards.md` §3.11: a gate wired red trains
+# people to skip it).
+#
+# Guarded with `if !` rather than leaning on `set -e`: the failure has to *say* which
+# budget broke and where the argument belongs, or the next person deletes the step.
 echo ""
-echo "==> 1/3  manage.py check"
+echo "==> 1/4  context budgets (scripts/context.py --check)"
+if ! "$PYTHON" scripts/context.py --check; then
+    echo "" >&2
+    echo "ERROR: a context budget is broken. Move the content; do not raise the budget:" >&2
+    echo "  - a decision row keeps the decision, the date, the owner, the one" >&2
+    echo "    measurement and a link; its argument belongs in the linked PRD or" >&2
+    echo "    exploration page (CONTEXT_BUDGET.md §4.2)" >&2
+    echo "  - a file over 30 KB is two files (build_principles.md §II)" >&2
+    echo "  - HANDOVER.md keeps state; a session's story goes to product/docs/handover/" >&2
+    exit 1
+fi
+
+# --- 2. Django system checks -------------------------------------------------
+echo ""
+echo "==> 2/4  manage.py check"
 "$PYTHON" manage.py check
 
 # A model change with no migration is invisible on the dev box and prints a warning on
@@ -150,7 +176,7 @@ echo "==> 1/3  manage.py check"
 # migration"). Found on the VPS 2026-10-22: `EscalatedQuery.reason` gained D54's
 # `CITATION_AUDIT` choice and no migration followed. `--check` exits non-zero, and needs
 # no database, so it belongs beside `check`.
-echo "==> 1/3  makemigrations --check (no model change without a migration)"
+echo "==> 2/4  makemigrations --check (no model change without a migration)"
 if ! "$PYTHON" manage.py makemigrations --check --dry-run; then
     echo "" >&2
     echo "ERROR: a model changed without a migration. Run:" >&2
@@ -160,16 +186,16 @@ if ! "$PYTHON" manage.py makemigrations --check --dry-run; then
     exit 1
 fi
 
-# --- 2. Architecture contract ------------------------------------------------
+# --- 3. Architecture contract ------------------------------------------------
 # `--no-cache`: Grimp's cached module graph can outlive a deleted file and report a
 # stale result (testing_hazards.md §2.2).
 echo ""
-echo "==> 2/3  lint-imports (knowledge must never import core)"
+echo "==> 3/4  lint-imports (knowledge must never import core)"
 "$LINT_IMPORTS" --no-cache --no-logo
 
-# --- 3. The suite ------------------------------------------------------------
+# --- 4. The suite ------------------------------------------------------------
 echo ""
-echo "==> 3/3  pytest"
+echo "==> 4/4  pytest"
 # `--create-db` forces the test database to be dropped and rebuilt, so migrations
 # are proven to apply to an empty schema on every run rather than reusing yesterday's.
 #
