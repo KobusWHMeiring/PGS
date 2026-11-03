@@ -1,5 +1,5 @@
 # PRD: The context cuts — a sentence and a link, and a file that fits its cap
-**Status:** In Progress — steps 1-10 landed 2026-11-03; step 11 (the 14 rows) and step 12 (wire the gate) open
+**Status:** In Progress — steps 1-11 landed 2026-11-03; step 12 (wire the gate) open
 **Owner:** Build (no product decision is open; the rules are already decided in `CONTEXT_BUDGET.md`)
 **Last Updated:** 2026-11-03 (session `1c`)
 **Scope:** Cuts **4.2** and **4.3** of `product/docs/context/CONTEXT_BUDGET.md`, then **4.4** (wire the
@@ -160,7 +160,7 @@ Ordered so each step is independently committable and the biggest session cost f
 
 ## 6. Success Criteria
 
-- [ ] `python scripts/context.py --check` exits 0 with **0 breaches** (files, rows, handover).
+- [x] `python scripts/context.py --check` exits 0 with **0 breaches** (files, rows, handover).
 - [ ] `scripts/verify.sh` runs the check, and `tests/tools/test_verify_gate.py` proves a breach
       fails the gate (break a file's size, watch it go red, restore).
 - [ ] `scripts/fast.sh --critical` still covers the eight files it guards, unchanged.
@@ -210,10 +210,40 @@ the file's path, caught by the lane (`0442c75`).
 
 **Gate:** `scripts/verify.sh` **green, 1604 passed / 1 skipped in 56.97 s** on this tree.
 
-**Still open:** step 11 (the 14 §18.3 rows: `D46 D47 D52 D53 D68 D69 D70 D71 D72 D73 D74 D75
-D78 D80`) and step 12 (`--check` into `verify.sh`, only at zero). Each row needs its argument
-confirmed at the artifact the row links to before the row is cut — that is a reading task over
-`product/design/` and the owning PRDs, not a mechanical edit, which is why it is handed on.
+### Step 11 — the 14 §18.3 rows, landed 2026-11-03 (session `1d`)
+
+`--check` went **14 → 0 breaches**; every one of the spec's 81 decision rows is now inside the
+1500-byte budget. Five commits, 3/3/3/3/2: `85d0f0b`, `b11ac90`, `50d9b92`, `43792d4`, `f7daa60`.
+Each row keeps the decision, the owner and date, the one measurement that settles it, and a link;
+the argument it was carrying was confirmed present at that link **before** the cut.
+
+| row | before → after | what stayed, and why it had to |
+|---|---|---|
+| D46 | 1703 → 1320 | 33 detected / 29 pinned / the `(40, 42)` override |
+| D47 | 1732 → 1134 | "no stitching" — its only other home is the prompt text itself |
+| D52 | 2165 → 1356 | 20 joins, 65 of 368 chunks |
+| D53 | 2470 → 1425 | the BPP spike: 13 pages, 5 corrections, 66 → 13 lines |
+| D68 | 3578 → 1492 | 57 of 366 (15.6%), 22 of 28 branches |
+| D69 | 2259 → 1420 | 275 of 433,154 bytes; 83 characters; 66 bullets |
+| D70 | 3122 → 1466 | all seven sub-ids (code and tests cite D70.1–D70.7) |
+| D71 | 3689 → 1490 | the fifteen-of-twenty reword count, which exists only here |
+| D72 | 3193 → 1492 | the 0-chunk probe; 8 → 11 → 17 chunks |
+| D73 | 2808 → 1484 | the negative measure: 9 of 9 → 6 of 9 |
+| D74 | 2117 → 1487 | 10 of 36 PRDs carry a claim-discipline term |
+| D75 | 1932 → 1453 | the inverted predicate; 316 lines of body text |
+| D78 | 2376 → 1499 | four phrasings, 9 of 9 back |
+| D80 | 1678 → 1492 | the eight shapes, 1,107-character cell |
+
+**Two defects found by doing it.** (1) The rows did not carry links: **12 of the 14** pointed at
+paths that do not exist from the spec's own directory — bare basenames for PRDs in `In Progress/`,
+and `Refinement/LANDSCAPE_TABLES_PRD.md` for one that had moved to `Done/`. `D47` had no link at
+all. **11 further rows** had the same defect, so all were made repo-root-relative and
+`tests/tools/test_context.py` now fails on any unresolvable row token (watched red: one row
+reverted to a bare basename, 1 failed naming D78; restored, 11 passed). (2) `D53` claimed the OPP,
+SAOSO and landscape were "not yet converted" — true on 2026-10-22, false since 2026-11-02, when
+all four became the text of record. Corrected in the row.
+
+**Still open:** step 12 (`--check` into `verify.sh`, only at zero — the zero is now reached).
 
 ## Pre-Flight Checklist
 - [ ] No `core/models.py` change and no new app — this is a move, so **no migration**
