@@ -5,7 +5,7 @@
 > **`CONTEXT_CUTS_PRD` is `Done` (2026-11-03, session `1d`).** All 12 steps: the chat split, the
 > six file cuts, the **14 §18.3 rows** (14 breaches → **0**, largest row 3689 → 1499 bytes) and
 > **the budget check as `scripts/verify.sh` step 1/4**. `scripts/verify.sh` **green: 1610 passed /
-> 1 skipped**, **183.57 s cold / 59.97 s warm** on this box; step 1/4 printed `every budget holds`,
+> 1 skipped**, **183.57 / 132.78 / 59.97 s** across three runs on this box; step 1/4 printed `every budget holds`,
 > so the check proves itself on every run. `scripts/fast.sh --critical` **172 passed / 4 deselected
 > in 46.53 s** and still names the same eight files.
 >

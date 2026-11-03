@@ -180,8 +180,8 @@ Ordered so each step is independently committable and the biggest session cost f
       chunker module, so no document's `corpus_digest` can have moved. (The dev box reports
       `landscape` drift for a reason outside this PRD — see `HANDOVER.md`.)
 - [x] Gate green after every slice, with cold and warm timings quoted. Three runs on this
-      tree: **1604→1606 passed / 1 skipped at 59.97 s**, then **1610 at 183.57 s cold**, with
-      the lane at 46.53 s warm. Quote the range, never the best run (`testing_hazards.md`
+      tree: **1604→1606 passed / 1 skipped at 59.97 s**, then **1610 at 183.57 s cold and 132.78 s on a repeat**, with the
+      lane at 46.53 s warm. Quote the range, never the best run (`testing_hazards.md`
       §3.17).
 
 ## 7. Risks & Mitigations
