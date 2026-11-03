@@ -80,3 +80,20 @@ rows, then wiring `--check` into the gate **only at zero breaches**.
 The chat split is the largest single read-set win: `_chatbot.py` was the file a chat task
 always opened, and the recipe now opens a 23 KB contract, a 21 KB prompt, a 14 KB audit or a
 10 KB provider depending on the question.
+
+## 6. Step 6, same session: the corpus split
+
+Same method, same finding one level down. `knowledge/corpus.py` (50,402 bytes) moved its
+table block into `knowledge/corpus_tables.py` as a `TableBlock` state machine — 15,745
+bytes — and `CorpusFormatError` with it, because leaving the error in `corpus.py` would have
+made the table module import the parser that imports it. That left `corpus.py` at **38,094**,
+still over cap, so the reviewed-edit ledger (`CorpusEdit`, `CORPUS_EDITS`) moved to
+`knowledge/corpus_edits.py` (10,382). `corpus.py` is **28,538**.
+
+The proof is a parse fingerprint, not a test: `_scratch/probe_corpus_parse.py` hashes every
+artefact's sections, text digests, anchors, sub-ref slices, table columns/rows/cell slices and
+page blocks. **ALL `170b581afdbec6f4`** before and after; 814 knowledge tests, 1 skipped.
+
+For step 7 the seam is already measured: `_documents.py` is ~8 KB of registry/publishing,
+~28 KB of reader shapes (`ReaderPassage` … `reader_for`, `_artefact_grid`, `_cards_for`) and
+~6 KB of publishing. The reader is the module to extract.

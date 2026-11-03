@@ -21,11 +21,17 @@
 >
 > **What is next, in order:**
 >
-> 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 6–11** — `knowledge/corpus_tables.py`,
->    `_documents.py`, the `services.py`/`tables.py` pair, the five test files split by scenario,
->    the 14 §18.3 rows, then wire `scripts/context.py --check` into `verify.sh` **only at zero
->    breaches** (`testing_hazards.md` §3.11). `--check` says **24 breaches**; `_chatbot.py` is no
->    longer one of them. The proven habits for each slice are the session record's: prove the lint
+> 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 7–11** — `_documents.py`, the
+>    `services.py`/`tables.py` pair, the five test files split by scenario, the 14 §18.3 rows,
+>    then wire `scripts/context.py --check` into `verify.sh` **only at zero breaches**
+>    (`testing_hazards.md` §3.11). `--check` says **23 breaches**; `_chatbot.py` and
+>    `knowledge/corpus.py` are no longer among them.
+>    **Step 6 landed too** (`883e66a`): `corpus.py` 50 → 28 KB into `corpus_tables.py` (16) and
+>    `corpus_edits.py` (10) — the table move alone left 38 KB, so the ledger had to go as well.
+>    The parse is byte-identical (all four artefacts, `_scratch/probe_corpus_parse.py`).
+>    **Next seam, measured:** `_documents.py` is 8 KB of registry/publishing, 28 KB of reader
+>    shapes (`ReaderPassage`…`reader_for`, `_artefact_grid`, `_cards_for`) and 6 KB of
+>    publishing — so the reader is the module to extract, not the PRD's "shape builders". The proven habits for each slice are the session record's: prove the lint
 >    can fail, and check every monkeypatch still patches the module the code actually reads.
 > 2. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
 >
