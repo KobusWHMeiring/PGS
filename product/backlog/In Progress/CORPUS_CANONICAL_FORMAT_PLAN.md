@@ -10,7 +10,9 @@ amendment — §P7.1).
 rule 6 for sub-clauses) — the "blocked as written" note below is provenance, not status.
 **Remaining:** P2.6–P2.8 (`chat_review`, the staff flag, retention), pdf 11's §6.5 labelling table
 (the one table P4 did not take), and the generator's table-block rule (D75), which is now **D80**'s
-first slice rather than a corpus-format task. P5
+work rather than a corpus-format task — **since 2026-11-03 `--force` refuses to drop a reviewed
+block** instead of replacing it with column soup (`INGESTION_ENGINE_PRD.md` S1); emitting the block
+is S3. P5
 (landscape), P6's step 4 for Appendices 3, 4 Table 1, 6b and 7, P7.3 (docs) and P7.4 (the box,
 from artefacts).
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D), deployment

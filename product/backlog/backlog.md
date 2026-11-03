@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-03 19:28
+> Generated: 2026-11-03 20:38
 
 ## Ready (up next)
 
@@ -17,6 +17,7 @@
 - **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — **all four governed documents** are built, reviewed and are the text of record (`knowledge/corpus/{saoso,bpp,landscape,opp}.md`); **P4 (the OPP) landed 2026-11-02**, so `corpus_check` reports *current* for all four and the dev corpus is 401 chunks, 0 unembedded. **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4). **Remaining:** the generator's table-block rule (D75 — every table in the corpus is still a human transcription) and pdf 11's §6.5 labelling table; both now sit inside **D80**'s engine work.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
+- **PRD: The ingestion engine — from "a person reviewed this document" to "a suite checks every document"** - `In Progress\INGESTION_ENGINE_PRD.md` - Status: In Progress — **S0 (the eight-shape fixture set) and S1 (the generator's table-block
 - **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: two items left, both human gates** — the VPS restore rehearsal and the missing UAT seats. `f4e8907` deployed and the corpus was rebuilt with `--force` on 2026-10-22 (364 chunks, all embedded, `lexical_only=False`); committee confirmation of no-claims left for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 - **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plans A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19, and **D (D1–D5, chatbot)** landed with it, so every sub-plan except the deferred C3 is built. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. **Closing MVP 0 is now an enumerated list, not a judgement call** — `MVP0_PLAN_V2.md` §4.1 (audited 2026-10-22): two engineering items, three human gates, one fix in flight. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
 - **Implementation Plan — Building in the open (public board)** - `In Progress\PUBLIC_BOARD_PLAN.md` - Status: In Progress — B0–B6 landed 2026-10-29; **B7 (UAT) outstanding**, so the item stays
@@ -87,12 +88,17 @@ the generated index's "To Do" section.
       `scripts/context.py --check` into the gate. 4.1 (the HANDOVER split) and the
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
-- [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) — needs
-      a PRD before it can be built. First commit is the **eight-shape fixture set** in
-      `product/design/g12_ingestion_generalisation.html` Part 1; then an extractor evaluation
-      (Docling / Document AI) against it, then the generator emitting `<!-- table -->` blocks, then
-      the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
-      and Appendix 7's interleaved chunks.
+- [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
+      **has a PRD and its first two slices** (2026-11-03): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      S0 is the **eight-shape fixture set** (`knowledge/tests/shape_fixtures.py`, 8 xfailed targets);
+      S1 is `build_corpus.py` refusing to overwrite a reviewed `<!-- table -->` block. Open: S2 the
+      extractor evaluation (Docling / Document AI) against the eight, S3 the generator emitting
+      table blocks, S4 the verification harness, S5 re-reviewing Appendix 6a and Appendix 7 through
+      it — the two live defects the PRD measures.
+- [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
+      (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
+      email, the role description) and three decisions they force. No PRD references it and no
+      decision row exists yet; it is parked here deliberately rather than absorbed into D80.
 - [x] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
       render the row's context from the artefact at cite time. **All three slices landed** (2026-11-02;
       session record `SESSION_0y_…`). **Slice 1:** the reserved seat is now filled in the vector arm's

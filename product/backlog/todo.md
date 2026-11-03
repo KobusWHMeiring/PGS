@@ -18,12 +18,13 @@ the generated index's "To Do" section.
       `scripts/context.py --check` into the gate. 4.1 (the HANDOVER split) and the
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
-- [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) — needs
-      a PRD before it can be built. First commit is the **eight-shape fixture set** in
-      `product/design/g12_ingestion_generalisation.html` Part 1; then an extractor evaluation
-      (Docling / Document AI) against it, then the generator emitting `<!-- table -->` blocks, then
-      the verification harness. Exercises two live defects: SAOSO Appendix 6a's 20 headerless rows
-      and Appendix 7's interleaved chunks.
+- [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
+      **has a PRD and its first two slices** (2026-11-03): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      S0 is the **eight-shape fixture set** (`knowledge/tests/shape_fixtures.py`, 8 xfailed targets);
+      S1 is `build_corpus.py` refusing to overwrite a reviewed `<!-- table -->` block. Open: S2 the
+      extractor evaluation (Docling / Document AI) against the eight, S3 the generator emitting
+      table blocks, S4 the verification harness, S5 re-reviewing Appendix 6a and Appendix 7 through
+      it — the two live defects the PRD measures.
 - [x] **G11 build (D79 = E, decided 2026-11-02)** — show the table as structure, quote cells only,
       render the row's context from the artefact at cite time. **All three slices landed** (2026-11-02;
       session record `SESSION_0y_…`). **Slice 1:** the reserved seat is now filled in the vector arm's
