@@ -57,10 +57,13 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split and handover-truth-up sessions
-**Repo state:** `main`, **19 commits ahead of `origin/main`** — `06bb11a` is pushed and live;
-the licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s
-close, and session `1d`'s ten (the truth-up, five row batches, the link guard, the gate wiring, the
-PRD close). On this tree (2026-11-03, session `1d`): `scripts/verify.sh` **green at 1610 passed /
+**Repo state:** `main` — **`origin/main` is at `06bb11a` (pushed and live) and everything since is
+unpushed**: the licence commit, the chat-split follow-ups, the six test/generator cuts, the flake
+fix, `1c`'s close, and session `1d`'s (the truth-up, five row batches, the link guard, the gate
+wiring, the PRD close). **Count it, do not quote it:** `git rev-list --count origin/main..HEAD`
+(21 at the close of `1d`) — this line said "8" and "59" in the same file and both were wrong.
+
+**On this tree** (2026-11-03, session `1d`): `scripts/verify.sh` **green at 1610 passed /
 1 skipped**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults
 to 5432 and this box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this
 tree: **183.57 s cold, 59.97 s warm** — quote the range, never the best run (§3.17).
