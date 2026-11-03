@@ -1,58 +1,52 @@
-# Handover — the context budgets are closed and enforced; D80's PRD is next
+# Handover — D80 has a PRD, the eight shapes are fixtures, and two of them have no test
 
-> ## START HERE — `--check` is green and is now the gate's first step; D80 is next
+> ## START HERE — D80's PRD and its first two slices are in; S2 (an extractor) is next
 >
-> **`CONTEXT_CUTS_PRD` is `Done` (2026-11-03, session `1d`).** All 12 steps: the chat split, the
-> six file cuts, the **14 §18.3 rows** (14 breaches → **0**, largest row 3689 → 1499 bytes) and
-> **the budget check as `scripts/verify.sh` step 1/4**. `scripts/verify.sh` **green: 1610 passed /
-> 1 skipped**, **183.57 / 132.78 / 59.97 s** across three runs on this box; step 1/4 printed `every budget holds`,
-> so the check proves itself on every run. `scripts/fast.sh --critical` **172 passed / 4 deselected
-> in 46.53 s** and still names the same eight files.
+> **`INGESTION_ENGINE_PRD.md` is `In Progress` (session `1e`, 2026-11-03)** and carries D80's
+> decision as prose (X2 now, X3 when a document demands it) plus six slices. **S0 and S1 landed.**
+> `scripts/verify.sh` **green: 1644 passed / 1 skipped / 8 xfailed in 219.16 s** (35 s of the rise is
+> the fixture reads hashing four PDFs; quote cold *and* warm, §3.17); step 1/4 printed
+> `every budget holds`. `scripts/fast.sh --critical` **172 passed / 4 deselected in 52.15 s**.
 >
-> **The rows' links were not links** (`testing_hazards.md` §3.29). Cutting 14 rows to "a sentence
-> and a link" found that **12 of the 14** pointed at paths that do not exist from the spec's own
-> directory — bare basenames for PRDs in `In Progress/`, `Refinement/` for one that had moved to
-> `Done/` — and **D47 had none at all**. 11 further rows had the same defect; all 81 are
-> repo-root-relative now, and `tests/tools/test_context.py` fails on any unresolvable row token
-> (watched red). **A missing artefact is now a breach too:** `size_of()` returns `(0, 0)` for an
-> absent path, so a deleted `HANDOVER.md` would have read as "inside its budget".
+> **The audit was established, not inherited** (`SESSION_1e…` §1). Measured: **44** reviewed rows
+> carrying column meaning across **three** documents (OPP §2.3 6, landscape 8, Appendix 2 30), plus
+> **20** Appendix 6a rows that carry none, **ten** table-shape test modules (not four), Appendix 7's
+> **4** interleaved chunks, and the landscape's longest cell at **1,112** characters. And the answer
+> that matters: **six of the eight shapes have a test, and none of the eight has a test whose input
+> is the shape** — every existing assertion reads a human's fix. The two with no test are exactly the
+> two live defects, and that is now `test_the_two_live_defects_are_the_two_shapes_with_no_test`.
 >
-> **The state block below had drifted three sessions** — it still said live was `8d2839d`, 70
-> commits behind, with the old PDF corpus, and that the dev box was current. Corrected in
-> `1793a1e` **against git and `corpus_check`**, not against the previous prose. **The §3.27 deploy
-> window is not debt:** `06bb11a`'s `deploy.sh` still pulls origin's tip, but it carries the
-> re-exec, so the next deploy verifies afresh before the backup and the first migration.
+> **S0** = `knowledge/tests/shape_fixtures.py` (eight `ShapeCase`s: page provenance, expectation,
+> IR verdict, gap, `covered_by`; the page is **read** from the committed fixtures, never copied) and
+> `test_ingestion_shapes.py` (28 green, **8 strict-xfail targets** calling a `read_table()` that does
+> not exist yet, so the gap is counted every run and an `XPASS` fails the suite). **S1** =
+> `build_corpus.py --force` **refuses** to drop a reviewed `<!-- table -->` block and names
+> `--discard-tables` as the override (hazard §3.25; two proofs watched red).
 >
-> **What is next, in order:**
+> **What is next:** **S2** — evaluate Docling and Document AI against the eight pages and put the
+> result in the PRD as a table. Then S3 (generator emits blocks), S4 (the harness), S5 (re-review
+> Appendices 6a and 7 *through* it). **`read_table()` is the seam.**
 >
-> 1. **D80 / G12/X2 — but a PRD first.** `todo.md` says the ingestion engine "needs a PRD before
->    it can be built", and **the first commit in any case is the eight-shape fixture set**: numeric
->    rows without labels, headerless value rows, column-major interleaving, a 1,107-character cell,
->    deliberate empty cells, a row across a page break, a two-level qualifier structure, artwork in
->    a cell. The spec's measured starting point is 44 reviewed rows across four documents, four
->    bespoke test files and **two tables still mangled** (SAOSO Appendix 6a ships 20 chunks with no
->    column meaning; Appendix 7 is interleaved) — so **which of the eight already have a test is the
->    first thing to establish, not a fact to inherit.** Start a **fresh session**: this is different
->    work from what `1d` was doing.
-> 2. **`product/design/f3_saoso_outreach_and_role.html` is untracked** — 24 KB, "F3 — SAOSO
->    outreach and the digital systems role", dated 2026-11-03, referenced by no PRD. Commit it with
->    a backlog line or delete it.
-> 3. **Do not refresh the dev corpus.** `corpus_check` here reports `landscape` **drift** and its
->    17 chunks carry **0** labelled renditions against live's 8; a refresh without
->    `GEMINI_API_KEY` in the dev `.env` writes 17 NULL vectors that then read "already ingested"
->    forever (`deploy/README.md` §4). **Live is the reference DB.**
+> **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
+> a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
+> work and not a PRD.
 >
-> **The landscape is closed** (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
-> `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried
-> into D80 by name.
+> **Do not refresh the dev corpus.** `corpus_check` here reports `landscape` **drift** and its
+> 17 chunks carry **0** labelled renditions against live's 8; a refresh without
+> `GEMINI_API_KEY` in the dev `.env` writes 17 NULL vectors that then read "already ingested"
+> forever (`deploy/README.md` §4). **Live is the reference DB.**
 >
-> **Do not run `scripts/build_corpus.py --force` on a document with a table block** — the generator
-> has no table-block rule and replaces the review with column soup while every guard stays green
-> (`testing_hazards.md` §3.25). That rule is D80's first real commit.
+> **Do not run `scripts/build_corpus.py --force` on a document with a table block** — it now refuses
+> before writing, so the accident that lost `opp.md`'s §2.3 review on 2026-11-01 cannot recur. Read
+> the refusal: the only way past it is `--discard-tables`, and then the review is yours to retype.
 >
 > **"corpus is current" does not mean "rebuilt"** — drift compares the artefact's hash and the
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
+
+The landscape is closed (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
+`LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried into
+D80 by name.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
@@ -62,15 +56,15 @@ display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split and handover-truth-up sessions
 **Repo state:** `main` — **`origin/main` is at `06bb11a` (pushed and live) and everything since is
 unpushed**: the licence commit, the chat-split follow-ups, the six test/generator cuts, the flake
-fix, `1c`'s close, and session `1d`'s (the truth-up, five row batches, the link guard, the gate
-wiring, the PRD close). **Count it, do not quote it:** `git rev-list --count origin/main..HEAD`
-(21 at the close of `1d`) — this line said "8" and "59" in the same file and both were wrong.
+fix, `1c`'s close, session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring,
+the PRD close) and session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3). **Count it,
+do not quote it:** `git rev-list --count origin/main..HEAD`.
 
-**On this tree** (2026-11-03, session `1d`): `scripts/verify.sh` **green at 1610 passed /
-1 skipped**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults
-to 5432 and this box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number for this
-tree: **183.57 s cold, 59.97 s warm** — quote the range, never the best run (§3.17).
-`scripts/fast.sh` (the lane) measured **172 passed / 4 deselected in 46.53 s warm** with
+**On this tree** (2026-11-03, session `1e`): `scripts/verify.sh` **green at 1644 passed /
+1 skipped / 8 xfailed**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate
+defaults to 5432 and this box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number
+for this tree: **219.16 s** — the first cold run on this tree; the 8 xfailed are D80's shape targets,
+not failures. `scripts/fast.sh` (the lane) measured **172 passed / 4 deselected in 52.15 s** with
 `--critical`.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **19 commits unpushed**.
@@ -92,6 +86,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1e` 2026-11-03 (session 17) — the eight shapes, and the two that have no test — [`SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md`](product/docs/handover/SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md)
 - `1d` 2026-11-03 (session 16) — the state said what was not true, and the rows were cut — [`SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md`](product/docs/handover/SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md)
 - `1c` 2026-11-03 (session 15) — the six remaining cuts, and every file is inside its cap — [`SESSION_1c_2026-11-03_the-six-remaining-cuts.md`](product/docs/handover/SESSION_1c_2026-11-03_the-six-remaining-cuts.md)
 - `1b` 2026-11-03 (session 14) — deployed, and the deploy verified one commit and installed another — [`SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md`](product/docs/handover/SESSION_1b_2026-11-03_deployed-and-the-deploy-verified-one-commit.md)
