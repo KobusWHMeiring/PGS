@@ -126,8 +126,11 @@ Ordered so each step is independently committable and the biggest session cost f
    the guard slice alone measured 30,616 bytes against a 30,720 cap -- 104 bytes of
    headroom -- so the cache left too and the file is 23 KB. A cap met by 0.3% is a cap that
    the next comment breaks.
-6. **`knowledge/corpus.py` → `knowledge/corpus_tables.py`.** The table block moves; the header and
-   format rules stay. `--check` must show both files under cap.
+6. **`knowledge/corpus.py` → `knowledge/corpus_tables.py`, then `knowledge/corpus_edits.py`.**
+   The table block (rule 5, the `<!-- table` state machine, `branch_row`) and then the
+   reviewed-edit ledger move out; the header and format rules stay. Measured: the table block is
+   15.7 KB and the ledger 10.4 KB — the table split **alone** leaves `corpus.py` at 38 KB, over
+   cap, so the ledger has to go too. After both it is 28.5 KB.
 7. **`core/services/_documents.py` (48 KB).** No section headings, so name the seam first: the
    reader-shape builders (`_cards_for`, `_artefact_grid`, the fee-box derivation) are one
    responsibility, the passage/document assembly around them the other.

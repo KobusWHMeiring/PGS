@@ -80,19 +80,18 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from knowledge.sections import (
-    ParsedSection,
-    ParsedTable,
-    ParsedTableRow,
-    TableCell,
-    TableRowDivider,
-    any_level_end,
-    slug,
+from knowledge.corpus_edits import CORPUS_EDITS, CorpusEdit
+from knowledge.corpus_tables import (
+    CELL,
+    DIVIDER,
+    ROW,
+    TABLE_CLOSE,
+    TABLE_OPEN,
+    CorpusFormatError,
+    TableBlock,
+    parsed_tables,
 )
-
-
-class CorpusFormatError(ValueError):
-    """The artefact is malformed. Never swallowed: a silent default loses provenance."""
+from knowledge.sections import ParsedSection, any_level_end, slug
 
 
 #: `<!-- page: 12 printed: 11 -->` — PDF page and the number the document prints.
@@ -104,36 +103,6 @@ REF = re.compile(r"^<!--\s*ref:\s*(\S.*?)\s*-->\s*$")
 #: `<!-- sub: 4.5(2)(c) -->` — a sub-clause printed *inside* a section, opening at the next text
 #: line. See rule 6: the OPP's items are the case, and dropping them costs 24 citable addresses.
 SUB = re.compile(r"^<!--\s*sub:\s*(\S.*?)\s*-->\s*$")
-
-#: `<!-- cell -->` — a cell boundary inside a table row. Structural, not a paragraph break, so a
-#: cell may hold blank lines and lists: Appendix 2's conditions are five paragraphs each.
-CELL = re.compile(r"^<!--\s*cell\s*-->\s*$")
-
-#: `<!-- row: Step 1 -->`, or `<!-- row -->` when the paper prints no label column.
-ROW = re.compile(r"^<!--\s*row(?::\s*(.*?))?\s*-->\s*$")
-
-#: `<!-- row-divider: South African specific qualifier -->` — a label printed *between* rows,
-#: applying to the row beneath it. A trailing `part` or `qualifier` sets the kind; the rest is
-#: the printed text.
-DIVIDER = re.compile(r"^<!--\s*row-divider:\s*(.+?)\s*-->\s*$")
-
-#: `<!-- table` opens a block whose fields follow, `<!-- /table -->` closes it. The close is
-#: explicit because a table that ends by inference is a table whose last row can swallow the
-#: prose after it.
-TABLE_OPEN = re.compile(r"^<!--\s*table\s*$")
-TABLE_CLOSE = re.compile(r"^<!--\s*/table\s*-->\s*$")
-
-#: A field inside a `<!-- table` header. `cols` is required (`|`-separated); `legend` is the
-#: reviewed note the reader prints above the grid; the other four are D77's shape fields —
-#: `layout` (which shape), `branch` (where the rows fork), `title` (one per row) and `fee_label`
-#: (one per fee box). Every one is reviewed data: the renderer infers none of them.
-TABLE_FIELD = re.compile(
-    r"^\s*(cols|legend|layout|branch|title|fee_label):\s*(.*?)\s*$"
-)
-
-#: The shapes the reader can draw (D77). `grid` is the default so every table written before D77
-#: keeps the shape it had; `process` is the cards.
-TABLE_LAYOUTS = ("grid", "process")
 
 #: `<!-- corpus` … `-->` at the top of the file.
 HEADER_OPEN = re.compile(r"^<!--\s*corpus\s*$")
@@ -197,53 +166,6 @@ def annotation_attempt(line: str) -> str | None:
             return name
     return None
 
-
-def row_divider(value: str):
-    """A `row-divider`'s text and kind. The kind trails, as the format says it does."""
-    words = value.split()
-    if words and words[-1].lower() in ("part", "qualifier"):
-        return TableRowDivider(" ".join(words[:-1]), words[-1].lower())
-    return TableRowDivider(value.strip(), "qualifier")
-
-
-def branch_row(value: str, rows: list[dict], where: int) -> int:
-    """In: a `branch:` field, the table's raw rows, and the line. Out: a 0-based row index.
-
-    Why two spellings: the reviewer reading the paper writes the row's **label** (`branch: Step
-    3`), and the artefact format's own vocabulary is the **index** (`branch: 2`). Both resolve to
-    the same thing here, so nothing downstream has to know which was typed.
-
-    Refuses an index past the last row and a label that names no row. Silence is the failure this
-    guards against: a fork pointing at nothing renders a linear table that looks like it has an
-    alternative path, and the two paths would be the same path.
-    """
-    count = len(rows)
-    wanted = value.strip()
-    if wanted.isdigit():
-        index = int(wanted)
-        if index >= count:
-            raise CorpusFormatError(
-                f"line {where}: `branch: {wanted}` names row {index} of a {count}-row table "
-                "(the index is 0-based). The alternative path would start past the last row, "
-                "so no row would be one."
-            )
-        return index
-    index = next(
-        (
-            position
-            for position, row in enumerate(rows)
-            if row["label"].strip().casefold() == wanted.casefold()
-        ),
-        -1,
-    )
-    if index < 0:
-        labels = ", ".join(repr(row["label"]) for row in rows)
-        raise CorpusFormatError(
-            f"line {where}: `branch: {wanted}` names no row of this table. Its rows are "
-            f"{labels}, and a fork that points at none of them would render as two paths that "
-            "are the same path."
-        )
-    return index
 
 #: `DocumentChunk.anchor` is a `CharField(max_length=128)`. A clause heading can be a whole
 #: sentence, so its slug overruns the column (the SAOSO artefact's first ingest failed with
@@ -398,7 +320,7 @@ def parse_blocks(text: str) -> CorpusDocument:
     new_block = True
     #: The open `<!-- table … -->` block, if any. One at a time: a nested table is a typo, and a
     #: table that never closes is an error rather than a section that quietly owns the rest.
-    table: dict | None = None
+    table: TableBlock | None = None
 
     def add_text(line: str, where: int) -> int:
         """Append one body line. Returns its index in `current["body"]`.
@@ -438,107 +360,6 @@ def parse_blocks(text: str) -> CorpusDocument:
             )
         new_block = False
         return len(current["body"]) - 1
-
-    # -- the table block ------------------------------------------------------------------
-
-    def close_cell(where: int) -> None:
-        """Finish the open cell, trimming the blank lines that only space it out."""
-        nonlocal table
-        cell = table["cell"]
-        if cell is None:
-            return
-        body = current["body"]
-        while cell["lines"] and not body[cell["lines"][0]].strip():
-            cell["lines"].pop(0)
-        while cell["lines"] and not body[cell["lines"][-1]].strip():
-            cell["lines"].pop()
-        cell["first"] = cell["lines"][0] if cell["lines"] else None
-        cell["last"] = cell["lines"][-1] if cell["lines"] else None
-        table["row"]["cells"].append(cell)
-        table["cell"] = None
-
-    def close_row(where: int) -> None:
-        nonlocal table
-        if table["row"] is None:
-            return
-        close_cell(where)
-        row = table["row"]
-        columns = len(table["columns"])
-        if not row["cells"]:
-            raise CorpusFormatError(
-                f"line {where}: a `row` with no cells. A row that cites nothing is a row the "
-                "reviewer did not finish — two `<!-- row: … -->` annotations in a row lose the "
-                "one between them."
-            )
-        if len(row["cells"]) > columns:
-            raise CorpusFormatError(
-                f"line {where}: a `row` with more cells ({len(row['cells'])}) than the "
-                f"table's `cols` ({columns}). The extra cell would never be rendered or "
-                "quoted, because nothing knows which column it belongs to."
-            )
-        if all(not cell["lines"] for cell in row["cells"]):
-            raise CorpusFormatError(
-                f"line {where}: a `row` with no text in any cell. It would become a "
-                "zero-length chunk — a citation with nothing in it, and a row the reviewer "
-                "left unfinished."
-            )
-        table["rows"].append(row)
-        table["row"] = None
-
-    def close_table(where: int) -> None:
-        nonlocal table
-        close_row(where)
-        if not table["rows"]:
-            raise CorpusFormatError(
-                f"line {where}: a `table` block with no rows. Its column labels would render "
-                "as a table with nothing in it, and the page's text would be missing from the "
-                "corpus entirely — which is the defect this block exists to prevent."
-            )
-        if table["pending_dividers"]:
-            raise CorpusFormatError(
-                f"line {where}: a `row-divider` after the table's last row. A divider "
-                "qualifies the row beneath it, and there is none — the label would silently "
-                "vanish."
-            )
-        fields = table["fields"]
-        rows = table["rows"]
-        if "branch" in fields:
-            table["branch"] = branch_row(fields["branch"], rows, where)
-        titles = fields.get("title", ())
-        if titles and len(titles) != len(rows):
-            raise CorpusFormatError(
-                f"line {where}: `title:` names {len(titles)} titles for {len(rows)} rows. "
-                "Titles are `|`-separated, one per row in printed order, or omitted entirely — "
-                "a short list would silently shift every title onto the row above."
-            )
-        current["tables"].append(dict(table))
-        table = None
-
-    def open_row(where: int, label: str | None) -> None:
-        nonlocal table
-        close_row(where)
-        table["row"] = {
-            "label": (label or "").strip(),
-            "page": printed,
-            "cells": [],
-            # A divider is printed *between* rows and qualifies the one beneath it, so it is
-            # collected while no row is open and claimed by the next `<!-- row: … -->`.
-            "dividers": tuple(table["pending_dividers"]),
-            "cursor": len(current["body"]),
-        }
-        table["pending_dividers"] = []
-
-    def open_cell(where: int) -> None:
-        nonlocal table
-        if table["row"] is None:
-            raise CorpusFormatError(
-                f"line {where}: a `cell` annotation before any row. A cell belongs to a "
-                "row; outside one "
-                "its text would become a chunk no column label points at."
-            )
-        close_cell(where)
-        table["cell"] = {"lines": [], "first": None, "last": None,
-                         "cursor": len(current["body"])}
 
     # -- flush ----------------------------------------------------------------------------
 
@@ -583,18 +404,6 @@ def parse_blocks(text: str) -> CorpusDocument:
                 return len(text)
             return min(offsets[position], len(text))
 
-        def cell_of(raw: dict) -> TableCell:
-            if raw["first"] is None:
-                # An empty cell means *silence*, which §4 item 3 requires to be distinguishable
-                # from a cell nobody filled in — so it is recorded, with a zero-width slice.
-                at = char_offset(raw["cursor"])
-                return TableCell("", at, at)
-            start = char_offset(raw["first"])
-            end = min(
-                char_offset(raw["last"]) + len(lines_in_text[raw["last"] + 1]), len(text)
-            )
-            return TableCell(text[start:end], start, end)
-
         # Rule 6: markers become offsets through the same helper the PDF parsers use, so an
         # artefact reproduces the parser's *slices* and not just its words. `lines_in_text`
         # puts the heading at 0 and the first body line at 1, which is what `char_offset`
@@ -607,26 +416,7 @@ def parse_blocks(text: str) -> CorpusDocument:
             )
         )
 
-        tables = tuple(
-            ParsedTable(
-                columns=raw["columns"],
-                legend=raw["fields"].get("legend", ""),
-                layout=raw["fields"].get("layout", "grid"),
-                branch=raw.get("branch"),
-                titles=raw["fields"].get("title", ()),
-                fee_labels=raw["fields"].get("fee_label", ()),
-                rows=tuple(
-                    ParsedTableRow(
-                        cells=tuple(cell_of(cell) for cell in row["cells"]),
-                        label=row["label"],
-                        page=row["page"],
-                        dividers=row["dividers"],
-                    )
-                    for row in raw["rows"]
-                ),
-            )
-            for raw in current["tables"]
-        )
+        tables = parsed_tables(current["tables"], char_offset, lines_in_text, text)
 
         sections.append(
             ParsedSection(
@@ -648,7 +438,7 @@ def parse_blocks(text: str) -> CorpusDocument:
 
         marker = PAGE.match(line)
         if marker:
-            if table is not None and table["header"]:
+            if table is not None and table.header:
                 raise CorpusFormatError(
                     f"line {index}: a page marker inside a table's header. The header is a list "
                     "of `key: value` fields; a page marker there was meant for a row."
@@ -657,60 +447,11 @@ def parse_blocks(text: str) -> CorpusDocument:
             printed = None if marker.group(2) == "none" else int(marker.group(2))
             continue
 
-        if table is not None and table["header"]:
+        if table is not None and table.header:
             if HEADER_CLOSE.match(line):
-                columns = table["fields"].get("cols", ())
-                if not columns:
-                    raise CorpusFormatError(
-                        f"line {index}: a `table` block with no `cols:` field. The column "
-                        "labels are what the reader prints above the grid and what tells a "
-                        "cell which column it belongs to."
-                    )
-                table["columns"] = columns
-                table["header"] = False
+                table.close_header(index)
                 continue
-            field = TABLE_FIELD.match(line)
-            if not field:
-                raise CorpusFormatError(
-                    f"line {index}: a table header line that is not one of `cols:`, `legend:`, "
-                    f"`layout:`, `branch:`, `title:`, `fee_label:` or `-->`: {line!r}"
-                )
-            key = field.group(1)
-            if key in table["fields"]:
-                raise CorpusFormatError(
-                    f"line {index}: `{key}:` appears twice in one table header. The second "
-                    "would silently replace the first."
-                )
-            if key == "cols":
-                value = tuple(part.strip() for part in field.group(2).split("|"))
-                if not value or not all(value):
-                    raise CorpusFormatError(
-                        f"line {index}: `cols:` names an empty column: {field.group(2)!r}. "
-                        "Columns are `|`-separated, and a blank one would make every cell "
-                        "beneath it unlabelled."
-                    )
-            elif key == "layout":
-                value = field.group(2)
-                if value not in TABLE_LAYOUTS:
-                    raise CorpusFormatError(
-                        f"line {index}: `layout: {value}` is not a shape the reader draws. "
-                        f"Use one of: {', '.join(TABLE_LAYOUTS)}. An unknown shape would "
-                        "render as whatever the template's fallback branch guessed."
-                    )
-            elif key in ("title", "fee_label"):
-                value = tuple(part.strip() for part in field.group(2).split("|"))
-                if not all(value):
-                    raise CorpusFormatError(
-                        f"line {index}: `{key}:` has an empty entry: {field.group(2)!r}. "
-                        f"The entries are `|`-separated, one per "
-                        f"{'row' if key == 'title' else 'fee box'}, and a blank one would "
-                        "render a heading with no words in it."
-                    )
-            else:
-                # `legend` and `branch`. `branch` is resolved when the table closes, because
-                # until then there are no rows for it to point at.
-                value = field.group(2)
-            table["fields"][key] = value
+            table.read_header_line(line, index)
             continue
 
         if TABLE_OPEN.match(line):
@@ -724,15 +465,7 @@ def parse_blocks(text: str) -> CorpusDocument:
                     f"line {index}: a second `<!-- table` while one is already open. Close the "
                     "first with `<!-- /table -->`, or the rows run into each other."
                 )
-            table = {
-                "header": True,
-                "fields": {},
-                "columns": (),
-                "rows": [],
-                "row": None,
-                "cell": None,
-                "pending_dividers": [],
-            }
+            table = TableBlock.open()
             continue
 
         if TABLE_CLOSE.match(line):
@@ -742,21 +475,21 @@ def parse_blocks(text: str) -> CorpusDocument:
                     "open is a table whose rows the reviewer wrote but whose header is "
                     "missing — the rows would be silently read as prose."
                 )
-            close_table(index)
+            current["tables"].append(table.close(index, current["body"]))
+            table = None
             continue
 
         if table is not None:
             divider = DIVIDER.match(line)
             if divider:
-                close_cell(index)
-                table["pending_dividers"].append(row_divider(divider.group(1)))
+                table.add_divider(divider.group(1), index, current["body"])
                 continue
             row = ROW.match(line)
             if row:
-                open_row(index, row.group(1))
+                table.open_row(index, row.group(1), printed, current["body"])
                 continue
             if CELL.match(line):
-                open_cell(index)
+                table.open_cell(index, current["body"])
                 continue
             if HEADING.match(line):
                 raise CorpusFormatError(
@@ -784,7 +517,7 @@ def parse_blocks(text: str) -> CorpusDocument:
                 raise CorpusFormatError(
                     f"line {index}: malformed comment inside a table block: {line!r}"
                 )
-            if table["cell"] is None:
+            if table.cell is None:
                 if line.strip():
                     raise CorpusFormatError(
                         f"line {index}: text inside a table block but outside any `cell`: "
@@ -793,7 +526,7 @@ def parse_blocks(text: str) -> CorpusDocument:
                     )
                 continue  # a blank line between rows, for the reviewer's eye only
             add_text(line, index)
-            table["cell"]["lines"].append(len(current["body"]) - 1)
+            table.add_cell_line(len(current["body"]) - 1)
             continue
 
         ref = REF.match(line)
@@ -927,195 +660,3 @@ __all__ = [
     "load_document",
     "parse_blocks",
 ]
-
-
-@dataclass(frozen=True)
-class CorpusEdit:
-    """One reviewed correction, and the evidence that it was necessary.
-
-    In:  `page` — the PDF page; `original` — the text the *PDF* produces there (the
-         defact being repaired); `replacement` — what the artefact now says;
-         `reason` — how the defect arose, in one sentence, so the generator can be
-         improved rather than the symptom patched forever.
-    Out: data consumed by the traceability test. `original` must be found on `page`, and
-         `replacement` must be found in the artefact, which is what stops this table
-         becoming a place to hide text nobody checked.
-    """
-
-    page: int
-    original: str
-    replacement: str
-    reason: str
-    #: `replace` (a correction), `drop` (furniture removed) or `move` (the same text at a
-    #: new position). The distinction matters to the coverage test: a move changes no
-    #: character, so counting it as a substitution would invent text.
-    #:
-    #: **`move` cannot be regenerated, and must not be used for one (2026-10-30).**
-    #: `scripts/build_corpus.apply_review` is a text *substitution*: it has an `original` and a
-    #: `replacement` and no notion of a source and a destination. The BPP's footnote-2 entry was
-    #: a `move` for a day and applying it deleted `must be preferably composted` and reprinted
-    #: `land available will not be allowed.` at the foot of page 4 — and no test failed, because
-    #: the traceability test compares `flat()` strings and `flat` joins lines, so a corruption
-    #: that reintroduces the line above reads as a faithful move. Express a move as **a lift and
-    #: a place**: a `replace` that removes the text from where the extraction glued it, and a
-    #: `replace` anchored on the text it belongs beside (`LANDSCAPE_TABLES_PRD` §12b.2).
-    kind: str = "replace"
-
-
-#: Reviewed corrections, per corpus document. **Every entry is a generator defect that
-#: was found by reading the artefact.** Keeping them here rather than as comments in the
-#: Markdown is deliberate: a comment cannot fail a test, and this table can.
-CORPUS_EDITS: dict[str, tuple[CorpusEdit, ...]] = {
-    "saoso": (
-        CorpusEdit(
-            page=25,
-            original="fattening of chickens with more 2 than 25kg weight/m .",
-            replacement="fattening of chickens with more than 25kg weight/m².",
-            reason=(
-                "The `²` of `m²` is drawn as a superscript, so `pdftotext` puts the digit "
-                "on its own line *between* `more` and `than` and leaves the base line as "
-                "`m .` — the sentence read `…with more / 2 / than 25kg weight/m .` and could "
-                "not be quoted. Read from the page image: one sentence, `weight/m²`. The "
-                "lone digit is the superscript, not a page stamp, so it is merged rather "
-                "than dropped (`BugFixes/saoso_text_glyphs_and_boundaries.md` §2)."
-            ),
-        ),
-        CorpusEdit(
-            page=50,
-            original="p u r c h a s e d",
-            replacement="purchased",
-            reason=(
-                "A tracked (letterspaced) word in a heading run: the text layer emits one "
-                "token per letter, so `purchased` matched nothing in search or retrieval. "
-                "Read from the page image, the word is set in tracking, not spelled out "
-                "(ibid. §4)."
-            ),
-        ),
-        CorpusEdit(
-            page=86,
-            original="Other b o v i n e a n i m a l s less t h a n o n e year old",
-            replacement="Other bovine animals less than one year old",
-            reason=(
-                "Two letterspaced runs inside one Appendix 6a row (`bovine animals`, "
-                "`than one`). Recorded as one edit because both are on the same printed "
-                "line and the same cell; `bovine` has to be findable, since the appendix "
-                "is where a farmer looks up a stocking rate (ibid. §4–§5)."
-            ),
-        ),
-    ),
-    "bpp": (
-        CorpusEdit(
-            kind="drop",
-            page=3,
-            original="02",
-            replacement="",
-            reason=(
-                "The printed page number is furniture. `-raw` puts it on its own line "
-                "before the body and `-layout` glues it to the footnote's last line; "
-                "either way it is not text."
-            ),
-        ),
-        # Two edits, not one `move` (2026-10-30). A `move` says "the same characters at a new
-        # position", and `apply_review` is a single text **substitution** — so the one `move`
-        # entry this replaced silently deleted `must be preferably composted` and printed
-        # `land available will not be allowed.` a second time, at the foot of page 4. Nothing
-        # caught it: the traceability test asserts `flat(original)` on the page and
-        # `flat(replacement)` in the artefact, and `flat` joins lines, so a corruption that
-        # reintroduces a line from two lines above reads as a faithful move. The review's
-        # decision is unchanged — the footnote belongs with the bullet that carries its
-        # marker — but it now takes a lift and a place, so regeneration reproduces the
-        # reviewed artefact instead of mangling it.
-        CorpusEdit(
-            page=4,
-            original=(
-                "must be preferably composted 2 Sustainable means: meeting the needs of "
-                "the present without compromising the ability of future generations to "
-                "meet their own needs; conserving an ecological balance by avoiding "
-                "depletion or destruction of natural resources.(IFOAM: Organics "
-                "International 3.0)"
-            ),
-            replacement="must be preferably composted",
-            reason=(
-                "`-raw` emits footnote 2 at the end of page 4, which is inside the "
-                "manure sentence (`must be preferably composted` / footnote / `prior to "
-                "application`), so the BPP's most-quoted sentence was unquotable. This "
-                "lifts the footnote out; the next edit puts it back on its bullet."
-            ),
-        ),
-        CorpusEdit(
-            page=4,
-            original="land available will not be allowed.",
-            replacement=(
-                "land available will not be allowed.\n"
-                "2 Sustainable means: meeting the needs of the present without compromising "
-                "the ability of future\n"
-                "generations to meet their own needs; conserving an ecological balance by "
-                "avoiding depletion or\n"
-                "destruction of natural resources.(IFOAM: Organics International 3.0)"
-            ),
-            reason=(
-                "The other half of the pair above: footnote 2 is printed at the foot of "
-                "page 4 but belongs to the marker it follows on `a. Sustainable land "
-                "management2`. Anchored on the bullet's own sentence, which occurs once "
-                "on the page, so the insert cannot land in the manure rule instead."
-            ),
-        ),
-        CorpusEdit(
-            kind="drop",
-            page=8,
-            original="ii. Preventativemethods(disruption,",
-            replacement="ii. Preventative methods (disruption,",
-            reason=(
-                "The PDF's text layer has no spaces in this line, so no extractor can "
-                "recover them; read from the page, it is two words and a parenthesis."
-            ),
-        ),
-        CorpusEdit(
-            kind="drop",
-            page=8,
-            original=(
-                "The Principle Of Health. The Principle Of Ecology. The Principle Of "
-                "Fairness. The Principle Of Care."
-            ),
-            replacement="",
-            reason=(
-                "The brochure prints the four-principle strip on pages 1, 6, 8 and 10. "
-                "The first occurrence (page 6) carries the content and sits at a "
-                "paragraph boundary; the repeats interrupt numbered lists, so they are "
-                "dropped rather than moved."
-            ),
-        ),
-        CorpusEdit(
-            kind="drop",
-            page=10,
-            original=(
-                "The Principle Of Health. The Principle Of Ecology. The Principle Of "
-                "Fairness. The Principle Of Care."
-            ),
-            replacement="",
-            reason="The same repeated strip; see the page-8 entry.",
-        ),
-        CorpusEdit(
-            kind="drop",
-            page=5,
-            original="\uf06e",
-            replacement="",
-            reason=(
-                "A private-use glyph (U+F06E): the producer's Dingbats bullet before "
-                "`Planting:`. Nothing in Unicode names it — pdftotext can emit only the "
-                "code the embedded font assigns — so keeping it would put a character in "
-                "the corpus that no reader can see, no search can match and no audit can "
-                "quote. Only the glyph is dropped: `Planting:` is the list item it marks. "
-                "It reached the artefact on 2026-10-27, because before `-enc UTF-8` the "
-                "extraction dropped such glyphs silently and the artefact never held one."
-            ),
-        ),
-        CorpusEdit(
-            kind="drop",
-            page=6,
-            original="\uf06e",
-            replacement="",
-            reason="The second private-use bullet, the same shape; see the page-5 entry.",
-        ),
-    ),
-}
