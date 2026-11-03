@@ -1,71 +1,37 @@
-# Handover — D79's three slices and the landscape UAT are signed; the context cuts are next
+# Handover — the chat split is done, `_chatbot.py` is 23 KB; the corpus cuts are next
 
-> ## START HERE — the landscape is signed and in `Done/`; the context cuts are next
+> ## START HERE — the chat split is done and `_chatbot.py` is 23 KB; the corpus cuts are next
 >
-> **Where the work stands (2026-11-03, session 12).** Two sign-offs are in: G11's **Scenario 8**
-> (2026-11-02) and the **landscape tables, 6 PASS · 0 FAIL · 0 N/A** (2026-11-01, applied
-> 2026-11-03 against `ecd3c8d`), so `LANDSCAPE_TABLES_PRD` has moved to `Done/` with `TABLE_BANDS`
-> and the corpus-level table-page guard **named and carried forward** into D80. The sign-off's one
-> finding — a Fee cell reading "As above" with nothing above it on a deep link — is the **paper's**
-> wording, faithfully reproduced, and the legend already explains it; what is ours is that the
-> referent is unreachable, filed as `BugFixes/landscape_fee_as_above_referent.md`. The session
-> record is `product/docs/handover/SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md`;
+> **Where the work stands (2026-11-03, session 13).** `CONTEXT_CUTS_PRD` slice 1 is closed in
+> eight commits: `_chatbot.py` went **97 KB → 23 KB** against a 30 KB cap, into seven modules —
+> `_chat_text` (tokens, locators, digests), `_chat_prompt`, `_chat_values`, `_chat_audit`,
+> `_chat_provider`, `_chat_guard` (rate limit, validation, follow-up, retrieval, sessions) and
+> `_chat_cache`. **No behaviour changed:** the prompt's sha256 and five rendered prompts are
+> byte-identical, `PROMPT_VERSION` is still `d79-2`, no migration, no corpus change, and every
+> module is re-imported through `_chatbot` so no import site outside the package changed. The
+> session record is `product/docs/handover/SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md`;
 > this block is state only.
 >
-> 1. **Cost-question rule — built** (`d78-2`, D78). The assistant separates the *member's* fee from
->    the *group's*, names the assessment as unavoidable, and may state one floor (membership + one
->    named band), which is the shape `/costs/` publishes. Measured after: all four phrasings
->    complete and grounded, suite 9 of 9.
-> 2. **P4 — the OPP artefact, §2.3 as a grid** (`37b682a`…`61b640c`). All four governed documents
->    are artefact-backed; corpus **401 chunks, all current**. The conversion needed corpus-format
->    **rule 6** (`<!-- sub: … -->`) or 24 sub-clause addresses would have vanished.
-> 3. **G10's refusal is located and is one space** — a quote across a line break (`1.` / `o`). Not
->    fixed: the decision is written up and belongs to the owner.
-> 4. **G11 is answered: D79 = E** (2026-11-02). Show the table as structure, quote cells only, render
->    the row's context from the artefact at cite time; `product/design/g11_option_e_explainer.html`
->    teaches the mechanism. **All three slices are built.** Slice 1 (`9608656`): the seats are filled
->    in the vector arm's own order and a heading cannot take one. Slice 2 (`64f70ae`, `16c2b2a`): a
->    reviewed table's rows travel with any passage of it (`knowledge/table_context.py`), the prompt
->    shows the table once with its printed headings (`d79-2`), and `Citation.row_label` reaches the
->    templates as context. Slice 3 (session 11): **the frame is a row *and a column*** —
->    `Citation.column_label` from `column_label_for`, stored in the snapshot (the answer page had
->    silently rendered no context before this), one shared context line and **one legend per answer**
->    (`chatbot/_citation_context.html`, `_citation_legend.html`), and the reader counterpart —
->    `&quote=` on the link, the row washed and the quoted cell marked in the printed grid. **The G10
->    fees answer works:** *"…below R250,000 would pay a renewal fee of R900"*, *"…initial
->    certification fee of R1,500 or a renewal fee of R900"*. **Scenario 8 signed 2026-11-02:** the
->    dashed row/column line reads as context around the paper's own cell, so slice 3 is closed and
->    the fallback to option A is **not** taken. R@8 unchanged at 0.812.
-> 5. **Context budget measured, the handover split, and the loop measured**
->    (`product/docs/context/CONTEXT_BUDGET.md`): the six files this repo told every session to read
->    totalled **509 KB ≈ 144k tokens**; `HANDOVER.md` was 2,553 lines of which 72 were state. **This
->    file is now state (~100 lines)** and the **24** session narratives are in
->    `product/docs/handover/` (content verified byte-for-byte: 173,325 in, 173,325 out), with
->    `tests/tools/test_handover.py` holding the budget. `python scripts/context.py --task
->    <chat|corpus|reader|public|backlog>` prints what to read and what to grep. **The read-set was
->    not the whole bill:** 47 session logs measured **1.70 B tokens processed**, median **26 M per
->    session**, **26 API requests per user message** — thinking and tool-call arguments are 60% of
->    retained context, and no PGS session ever compacted. `AGENTS.md` now carries the **Context
->    discipline** block; §7 of `CONTEXT_BUDGET.md` has the numbers. The reasoning is in
->    `SESSION_0w_2026-11-02_…md`; the split itself is `SESSION_0v_2026-11-02_…md`. This block is
->    only state.
+> **What the plan got wrong, now amended in the PRD and not remembered in chat:** the four-module
+> table left `_chatbot.py` at 36 KB — over the cap the split exists to satisfy — and step 2 could
+> not be built at all, because `audit_citations` constructs a `Citation`, so the audit and the
+> contract would have imported each other. The values therefore move before the audit. And the
+> guard slice alone measured **30,616 bytes against a 30,720 cap — 104 bytes** — so the answer
+> cache left in the same commit; `_chatbot.py` now has **~7 KB of headroom**, not 0.3%.
 >
 > **What is next, in order:**
 >
-> 1. **Context cuts 4.2 and 4.3** — **`product/backlog/ready/CONTEXT_CUTS_PRD.md`** is the handover:
->    the 25 measured breaches, the split table, ten ordered slices, the success criteria and the
->    traps (`PROMPT_VERSION` must not move, `D44` must keep its deferral marker, prove the lint can
->    fail). Short version: `_chatbot.py` is **97 KB** against a 30 KB cap and is the file a chat task
->    always opens; split it into `_chat_prompt` / `_chat_audit` / `_chat_provider`, one file per
->    commit. Then 14 §18.3 rows (1.7–3.7 KB against 1.5 KB), then wire `scripts/context.py --check`
->    into `verify.sh` **only at zero breaches** (`testing_hazards.md` §3.11).
+> 1. **`product/backlog/ready/CONTEXT_CUTS_PRD.md` steps 6–11** — `knowledge/corpus_tables.py`,
+>    `_documents.py`, the `services.py`/`tables.py` pair, the five test files split by scenario,
+>    the 14 §18.3 rows, then wire `scripts/context.py --check` into `verify.sh` **only at zero
+>    breaches** (`testing_hazards.md` §3.11). `--check` says **24 breaches**; `_chatbot.py` is no
+>    longer one of them. The proven habits for each slice are the session record's: prove the lint
+>    can fail, and check every monkeypatch still patches the module the code actually reads.
 > 2. **G12/X2** starting with the **eight-shape fixture set** (that is D80's first commit).
 >
-> **The landscape is closed.** The reader's two follow-ups landed 2026-11-03 — the seals legend
-> names its referent (§12h) and the folds moved to the prose (§12i, amending D77) — and the UAT was
-> **re-signed against `c4c362e`: 6 PASS**, Scenarios 2 and 4 re-judged on the rebuilt artefact.
-> `LANDSCAPE_TABLES_PRD` is in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard are
-> carried into D80 by name.
+> **The landscape is closed** (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
+> `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried
+> into D80 by name.
 >
 > **Do not run `scripts/build_corpus.py --force` on a document with a table block** — the generator
 > has no table-block rule and replaces the review with column soup while every guard stays green
@@ -75,44 +41,34 @@
 > chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
 >
-> **Deploy note:** the live box is still `8d2839d` and misses **14 sessions (`0m`–`0z`), 60 commits**.
-> A deploy pulls the artefacts but never re-ingests; the OPP's 30 → 37 chunks is a corpus change,
-> not a code change.
-> **The deploy also needs `d79-1`/`d79-2` to have run**: the entries are keyed on `PROMPT_VERSION`, so
-> old cached answers are not served under the new contract — but a visitor mid-conversation keeps
-> their thread. Slice 3 adds no migration and no corpus change; the changed templates and CSS are
-> shipped by `collectstatic`, and old cards keep the page they had.
+> **Deploy note:** the live box is still `8d2839d` and misses **15 sessions (`0m`–`0z`, `1a`),
+> 70 commits**. A deploy pulls the artefacts but never re-ingests; the OPP's 30 → 37 chunks is a
+> corpus change, not a code change. **The deploy also needs `d79-1`/`d79-2` to have run**: the
+> cache entries are keyed on `PROMPT_VERSION`, so old cached answers are not served under the new
+> contract — but a visitor mid-conversation keeps their thread. This session adds no template and
+> no corpus change, so it needs nothing beyond the deploy.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
-display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame and
-landscape-sign-off sessions
-**Repo state:** `main`, **49 commits ahead of `origin/main`**. On this tree (2026-11-03, after the
-landscape re-sign — docs, one service constant and one template only):
-`scripts/verify.sh` **green at 1598 passed / 1 skipped in 165.69 s** with `--create-db`, run as
-`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same command measured **72.76 s** on this tree an hour
-earlier — quote the range, not the best run (`testing_hazards.md` §3.17). `pytest tests/e2e` **71
-passed in 179.13 s** (run because a template moved). `scripts/fast.sh` and `--critical` were **not**
-re-run this session; the previous tree measured 1578 passed / 1 skipped in 42.40 s and 217 passed /
-4 deselected in 11.28 s.
+display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
+landscape-sign-off and chat-split sessions
+**Repo state:** `main`, **59 commits ahead of `origin/main`**. On this tree (2026-11-03, after the
+chat split — services only, no template, no migration): `scripts/verify.sh` **green at 1598 passed /
+1 skipped**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to
+5432 and this box serves 5433, `testing_hazards.md` §3.1). Five cold runs this session measured
+**126.50 s, 141.25 s, 154.87 s, 187.26 s and 223.41 s** on near-identical trees — quote the range,
+not the best run (`testing_hazards.md` §3.17). `scripts/fast.sh --critical` measured **217 passed /
+4 deselected** in 36–57 s. The suite gained **no new guard** this session: it is a move, and the
+proof is byte-identity, not a test.
 
-The suite gained **ten** guards in session 11 — the column-resolution pair, the snapshot/citation
-pair, the reader-link pair, the thread's context+legend pair, the answer page's context+legend
-pair and the reader's mark/no-mark pair — each proved by breaking it and watching it go red.
-
-**The dev box is current.** All four documents re-ingested from their artefacts, **401 chunks, 0
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **59 commits unpushed**.
+**Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
+2026-10-30 — **15 sessions and 70 commits behind**, with the old PDF-built corpus.
+**The dev box is current:** all four documents re-ingested from their artefacts, **401 chunks, 0
 unembedded**, `corpus_check` says *current* — and `relink_evidence` reports 73 linked with 31 left
 unlinked on purpose (same locator, different text: the transition off the PDF parses).
-
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **49 commits unpushed**.
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`8d2839d`**, deployed
-2026-10-30 — **14 sessions and 60 commits behind**, with the old PDF-built corpus. A deploy pulls
-the artefacts but
-never runs `ingest_standard`, so the box will show drift on all four until someone runs
-`corpus_refresh --apply` there deliberately.
 
 ## Session archive
 
@@ -120,6 +76,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1a` 2026-11-03 (session 13) — the chat split lands, and `_chatbot.py` is 23 KB — [`SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md`](product/docs/handover/SESSION_1a_2026-11-03_the-chat-split-lands-in-seven-modules.md)
 - `0z` 2026-11-03 (session 12) — the landscape is signed, and "As above" is the paper's word — [`SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md`](product/docs/handover/SESSION_0z_2026-11-03_the-landscape-is-signed-and-the-as-above.md)
 - `0y` 2026-11-02 (session 11) — slice 3: the context is a row and a column, both surfaces say so, and Scenario 8 is signed — [`SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md`](product/docs/handover/SESSION_0y_2026-11-02_slice-3-the-context-is-a-row-and-a-column.md)
 - `0x` 2026-11-02 (session 10) — G11 answered, and two of its three slices landed — [`SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md`](product/docs/handover/SESSION_0x_2026-11-02_g11-answered-and-two-slices-landed.md)
