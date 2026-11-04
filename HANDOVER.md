@@ -54,11 +54,11 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split and handover-truth-up sessions
-**Repo state:** `main` — **`origin/main` is at `06bb11a` (pushed and live) and everything since is
-unpushed**: the licence commit, the chat-split follow-ups, the six test/generator cuts, the flake
-fix, `1c`'s close, session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring,
-the PRD close) and session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3). **Count it,
-do not quote it:** `git rev-list --count origin/main..HEAD`.
+**Repo state:** `main` — **`origin/main` == `HEAD`** (pushed 2026-11-03, session `1f`): the licence
+commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close, session
+`1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close) and session
+`1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3). **Check it, do not quote it:**
+`git rev-list --count origin/main..HEAD` must print `0`.
 
 **On this tree** (2026-11-03, session `1e`): `scripts/verify.sh` **green at 1644 passed /
 1 skipped / 8 xfailed**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate
@@ -67,7 +67,9 @@ for this tree: **219.16 s** — the first cold run on this tree; the 8 xfailed a
 not failures. `scripts/fast.sh` (the lane) measured **172 passed / 4 deselected in 52.15 s** with
 `--critical`.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **19 commits unpushed**.
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **nothing outstanding**:
+`git rev-list --count origin/main..HEAD` prints `0` (the number was wrong twice by being quoted;
+let the command answer).
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`06bb11a`**, deployed
 2026-11-03 with a **current** corpus (401 chunks). Its `deploy.sh` on disk is the pre-`3c2c39d`
 one, and **the §3.27 window is self-closing, not debt**: that script still `pull`s origin's tip,
