@@ -1933,6 +1933,28 @@ the input under test, and then it must also pin the clock (`freezegun`) so the t
 it means. Same trap applies to `joined_on`, `first_certified_on`, probation end dates and the
 three notice windows (5/3/5 days) in D3.
 
+### 1.36 `git checkout <file>` restores HEAD, not the state before your mutation
+
+Mutation testing needs a restore step, and `git checkout core/models/_core.py` reads like
+one. It is not: it discards **every** uncommitted change in that file, including the feature
+whose guard you are in the middle of proving. A2's `CommitteePosition` and `CommitteeTerm`
+were uncommitted when a mutation pass reverted the model file, and the next test run failed on
+an import that looked like a typo.
+
+Evidence:
+    $ git checkout core/models/_core.py          # "restoring" the mutation
+    $ python -m pytest core/tests/test_seed_committee.py
+    ImportError: cannot import name 'CommitteePosition' from 'core.models._core'
+
+Consequence: a mutation pass silently deletes the work under test. The failure that follows
+points at the import, not at the mistake, so the first hypothesis is "did I mistype the class
+name" — and the actual loss is an hour of writing.
+
+Rule: restore from a copy taken **outside the tree** (`cp core/models/_core.py /tmp/x.bak`
+before the mutation, `cp` it back after), which is also what makes N mutations repeatable in
+one shell script. If a file is already committed, `git checkout -- <file>` is fine; if it is
+not, it is a delete. Either commit first, or use `cp`.
+
 ## 5. Template for a new entry
 
 ```markdown
