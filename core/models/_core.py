@@ -9,15 +9,27 @@ they *hold* the Farmer role, and one person is routinely several at once — the
 spec's own example is a farmer who is also a peer assessor and a consumer. So
 roles are rows in `UserRole`, never boolean fields on `User`.
 
-`Member` — the membership record that governs *eligibility*, independent of login
-— is a different concept and arrives with sub-plan B/§4.1, not here. A `User` can
-exist with no membership at all: that is a plain public visitor.
+`Member` — the membership record that governs *eligibility*, independent of login —
+is the second half of this module (spec §4.1 "Core & Membership"). A `User` can
+exist with no membership at all: that is a plain public visitor, and the spec's
+`User.graduated_from_public_at` records the moment they engage further.
+
+`Farm`, `FarmAlias`, `FarmCategory` and `FarmContact` are the farm's identity. Two
+rules keep them honest: **`FarmCategory.status` has no pre-application value**
+(D36 — a tick in the public self-check must not become an application), and
+**census fields live on `Member`, never on `Farm`** (they describe a person, so a
+public farm page has no route to them by construction).
 """
 
 from __future__ import annotations
 
+import re
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from django.utils.text import slugify
 
 # --- Roles ------------------------------------------------------------------
 
@@ -157,3 +169,251 @@ class UserRole(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - admin convenience
         return f"{self.user_id}:{self.role}"
+
+
+# --- Membership (spec §4.1) -------------------------------------------------
+
+
+class Member(models.Model):
+    """The membership record — it governs *eligibility*, independent of login.
+
+    `membership_no` is printed on certificates, so it is **public** and shaped
+    `OUT-<year>-<seq:04d>`, never a bare autoincrement (D39).
+    """
+
+    class Status(models.TextChoices):
+        APPLICANT = "APPLICANT", "Applicant"
+        ACTIVE = "ACTIVE", "Active"
+        PROBATION = "PROBATION", "Probation"
+        LAPSED = "LAPSED", "Lapsed"
+        TERMINATED = "TERMINATED", "Terminated"
+
+    user = models.OneToOneField(User, on_delete=models.PROTECT, related_name="member")
+    membership_no = models.CharField(max_length=32, unique=True, blank=True)
+    joined_on = models.DateField(default=timezone.localdate)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.APPLICANT)
+    probation_until = models.DateField(null=True, blank=True)  # D38: the way out
+    expertise = models.ManyToManyField(
+        "core.Category", blank=True, related_name="experts"
+    )  # drives peer-assessor assignment (§3.1)
+
+    # FORM Sheet A census fields. ``sensitive`` in the spec's sense: they are
+    # excluded from every public surface, and they are here rather than on `Farm`
+    # so that exclusion is structural instead of remembered.
+    census_gender = models.CharField(max_length=32, blank=True)
+    census_age_band = models.CharField(max_length=32, blank=True)
+    census_demographic_group = models.CharField(max_length=64, blank=True)
+
+    class Meta:
+        ordering = ["membership_no"]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return self.membership_no or f"member:{self.pk}"
+
+    @property
+    def is_paid_up(self) -> bool:
+        """Derived, never stored (D39) — and read from the row's own period.
+
+        "Payable by the end of February" is group policy, so it is data on the
+        fee row, not a calendar year in this method. A stored boolean would be a
+        second source of truth that goes stale the day a period rolls over.
+        """
+        today = timezone.localdate()
+        return self.fees.filter(
+            paid_on__isnull=False, period_start__lte=today, period_end__gte=today
+        ).exists()
+
+    def save(self, *args, **kwargs):
+        if not self.membership_no:
+            self.membership_no = self._next_membership_no()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def _next_membership_no(cls) -> str:
+        """`OUT-<year>-<seq:04d>` (D39).
+
+        Two concurrent first-of-year applications can read the same maximum; the
+        unique index on the column is what makes that safe (one wins, the other
+        fails its insert) rather than silently issuing a duplicate number. A
+        retry belongs with the service that creates members, not here.
+        """
+        prefix = f"OUT-{timezone.localdate().year}-"
+        last = (
+            cls.objects.filter(membership_no__startswith=prefix)
+            .order_by("-membership_no")
+            .values_list("membership_no", flat=True)
+            .first()
+        )
+        seq = int(last.rsplit("-", 1)[1]) + 1 if last else 1
+        return f"{prefix}{seq:04d}"
+
+
+class Farm(models.Model):
+    """A farm, its canonical name, and the spellings that must resolve to it.
+
+    No `catchment` (D37 — a deployment setting), no `current_status` (D35 — it
+    derives from a Certificate that does not exist in 1a), and no PostGIS: GPS is
+    optional, never published and never spatially queried (D34).
+    """
+
+    member = models.ForeignKey(Member, on_delete=models.PROTECT, related_name="farms")
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    physical_address = models.TextField(blank=True)
+    nearest_town = models.CharField(max_length=120, blank=True)  # D39: plain text
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    total_hectares = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    public_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    publish_consent = models.BooleanField(default=False)
+    publish_consent_at = models.DateTimeField(null=True, blank=True)
+    first_certified_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)[:120]
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def resolve(cls, name: str) -> "Farm | None":
+        """One canonical farm from any spelling the group has used (§4.1).
+
+        The live records carry "Chillin Out Farm" / "CHILLOUT FARM" and worse, so
+        a lookup that only matches `name` silently forks a farm. Case, surrounding
+        whitespace and runs of internal whitespace are all noise.
+
+        The common case is an exact (case-insensitive) hit and stays in SQL. The
+        normalised scan is the honest fallback for the rest; a group has tens of
+        farms, not millions, and a key column the spec does not have would be a
+        schema invention to serve a micro-optimisation.
+        """
+        stripped = (name or "").strip()
+        if not stripped:
+            return None
+
+        exact = cls.objects.filter(name__iexact=stripped).first()
+        if exact is not None:
+            return exact
+        alias = FarmAlias.objects.filter(name__iexact=stripped).select_related("farm").first()
+        if alias is not None:
+            return alias.farm
+
+        key = _name_key(stripped)
+        for candidate_name, pk in cls.objects.values_list("name", "pk").iterator():
+            if _name_key(candidate_name) == key:
+                return cls.objects.get(pk=pk)
+        for alias_name, farm_id in FarmAlias.objects.values_list("name", "farm_id").iterator():
+            if _name_key(alias_name) == key:
+                return cls.objects.get(pk=farm_id)
+        return None
+
+
+class FarmAlias(models.Model):
+    """A historical or external spelling of a farm's name.
+
+    Exists so the migration and every later spelling resolve to one farm, and so a
+    verification lookup by an old name still lands.
+    """
+
+    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name="aliases")
+    name = models.CharField(max_length=200)
+    source = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        ordering = ["farm_id", "name"]
+        constraints = [
+            models.UniqueConstraint(fields=["farm", "name"], name="uniq_farm_alias"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return self.name
+
+
+class FarmCategory(models.Model):
+    """What a farm applies to be assessed for, and where that application got to.
+
+    The four values are an **application lifecycle**. There is deliberately no
+    pre-application value: a category ticked in the public self-check is a label in
+    `SelfCheckReport.other_categories`, never a row here (SELF_CHECK_PRD §4.1,
+    "a tick is not an application").
+    """
+
+    class Status(models.TextChoices):
+        APPLIED = "APPLIED", "Applied"
+        FOR_ASSESSMENT = "FOR_ASSESSMENT", "For assessment"
+        ASSESSED = "ASSESSED", "Assessed"
+        INACTIVE = "INACTIVE", "Inactive"
+
+    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name="categories")
+    category = models.ForeignKey(
+        "core.Category", on_delete=models.PROTECT, related_name="farm_categories"
+    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.APPLIED)
+    first_assessed_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["farm_id", "category_id"]
+        constraints = [
+            models.UniqueConstraint(fields=["farm", "category"], name="uniq_farm_category"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.farm_id}:{self.category_id}"
+
+
+class FarmContact(models.Model):
+    """A person the group deals with about this farm, including the hosting contact."""
+
+    farm = models.ForeignKey(Farm, on_delete=models.CASCADE, related_name="contacts")
+    name = models.CharField(max_length=200)
+    role = models.CharField(max_length=64, blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    email = models.EmailField(blank=True)
+
+    class Meta:
+        ordering = ["farm_id", "name"]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.name} ({self.role})" if self.role else self.name
+
+
+class MembershipFee(models.Model):
+    """A membership subscription payment for one explicit period.
+
+    The period lives on the **row**, never in the calendar (D39): "payable by the
+    end of February" is group policy, so a February deadline is data. `paid_on` is
+    nullable because a fee can be recorded before it is settled — `Member.is_paid_up`
+    requires a date.
+
+    `kind` is a plain `CharField` with no `choices=`: fee kinds are group data, and
+    sub-plan A5 decides the vocabulary. Inventing an enum here would put a
+    deployment's fee names into code.
+    """
+
+    member = models.ForeignKey(Member, on_delete=models.PROTECT, related_name="fees")
+    kind = models.CharField(max_length=32, blank=True)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    amount_cents = models.IntegerField()  # §III: integer cents, never a float
+    paid_on = models.DateField(null=True, blank=True)
+    receipt_no = models.CharField(max_length=64, blank=True)
+
+    class Meta:
+        ordering = ["member_id", "period_start"]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.period_start}..{self.period_end}"
+
+
+_SPACE_RUN = re.compile(r"\s+")
+
+
+def _name_key(value: str) -> str:
+    """Case, outer whitespace and runs of internal whitespace removed."""
+    return _SPACE_RUN.sub(" ", value or "").strip().casefold()

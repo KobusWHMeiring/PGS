@@ -12,10 +12,19 @@ from `conftest.py`, so the split is what lets the plan's tests call
 
 from __future__ import annotations
 
-from factory import Faker, LazyAttribute, Sequence
+from factory import Faker, LazyAttribute, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 
-from core.models import Language, User
+from core.models import (
+    Category,
+    Farm,
+    FarmAlias,
+    FarmCategory,
+    FarmContact,
+    Language,
+    Member,
+    User,
+)
 
 
 class UserFactory(DjangoModelFactory):
@@ -37,3 +46,67 @@ class UserFactory(DjangoModelFactory):
     # Blank rather than null: an absent phone number is "" (no null on strings).
     phone = ""
     preferred_language = Language.EN
+
+
+class CategoryFactory(DjangoModelFactory):
+    """A seeded category. Codes/titles are group data, so the factory makes its own
+    unique code rather than borrowing a deployed one."""
+
+    class Meta:
+        model = Category
+
+    code = Sequence(lambda n: f"CAT{n}")
+    label = LazyAttribute(lambda o: f"Category {o.code}")
+    standard_ref = ""
+
+
+class MemberFactory(DjangoModelFactory):
+    """An account that holds a membership record.
+
+    `membership_no` is left blank on purpose: it is generated in `Member.save()`
+    (D39), so the factory must not pre-empt the rule it is meant to exercise.
+    """
+
+    class Meta:
+        model = Member
+
+    user = SubFactory(UserFactory)
+    status = Member.Status.APPLICANT
+
+
+class FarmFactory(DjangoModelFactory):
+    """A farm with no catchment, no PostGIS field and a generated public uuid."""
+
+    class Meta:
+        model = Farm
+
+    member = SubFactory(MemberFactory)
+    name = Sequence(lambda n: f"Farm {n}")
+    nearest_town = "Rheenendal"
+
+
+class FarmAliasFactory(DjangoModelFactory):
+    class Meta:
+        model = FarmAlias
+
+    farm = SubFactory(FarmFactory)
+    name = Sequence(lambda n: f"Old Name {n}")
+    source = "live site"
+
+
+class FarmCategoryFactory(DjangoModelFactory):
+    class Meta:
+        model = FarmCategory
+
+    farm = SubFactory(FarmFactory)
+    category = SubFactory(CategoryFactory)
+    status = FarmCategory.Status.APPLIED
+
+
+class FarmContactFactory(DjangoModelFactory):
+    class Meta:
+        model = FarmContact
+
+    farm = SubFactory(FarmFactory)
+    name = Faker("name")
+    role = "HOSTING"
