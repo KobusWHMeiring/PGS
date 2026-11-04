@@ -13,6 +13,8 @@ the gate must never need an extractor — a pure function over committed page te
 
 from __future__ import annotations
 
+import re
+
 from knowledge.tests.shape_fixtures import (
     TableRead,
     flat,
@@ -37,16 +39,84 @@ def despace(text: str) -> str:
     return text.replace(" ", "")
 
 
-def page_runs(case) -> dict[int, str]:
-    """Each of the shape's printed pages as one flat line: the resolver's only source of text."""
+def page_runs(case, text_mode: str | None = None) -> dict[int, str]:
+    """Each of the shape's printed pages as one flat line: the resolver's only source of text.
+
+    `text_mode` overrides the pass the shape declares (`-layout`, `-table`, `raw`). It exists because
+    the arm's score depends on **which pass supplies the characters**, and that has to be measurable
+    rather than argued: the same cached model answer, re-scored against a different pass, isolates the
+    pass as the only variable.
+    """
     printed = dict(zip(case.pdf_pages, case.printed_pages))
-    return {printed_page: flat(case_text(case, pdf_page)) for pdf_page, printed_page in printed.items()}
+    return {
+        printed_page: flat(case_text(case, pdf_page, text_mode))
+        for pdf_page, printed_page in printed.items()
+    }
 
 
-def case_text(case, pdf_page: int) -> str:
+#: The paper's row-number gutter: '1', '6b', '12'. Printed beside a table as furniture, not as a
+#: column — but a reader that sees five printed cells will report five.
+_ROW_NUMBER = re.compile(r"^\d{1,3}[a-z]?$")
+
+
+def drop_row_number_gutter(read: TableRead) -> tuple[TableRead, int]:
+    """Drop a leading bare row number from every row that carries one.
+
+    This is a **declared normalisation**, in the same class as the letter-spacing one and reported for
+    the same reason: the paper prints a number beside each row and a reader may count it as a column.
+    The rule is narrow on purpose — it fires only when the row has exactly one cell more than the
+    header and that extra cell is nothing but a row number — so a real first column ('1 Aeration or
+    oxygenation…') is never touched.
+    """
+    if not read.columns:
+        return read, 0
+    rows, dropped = [], 0
+    for row in read.rows:
+        if len(row) == len(read.columns) + 1 and _ROW_NUMBER.match(flat(row[0])):
+            rows.append(row[1:])
+            dropped += 1
+        else:
+            rows.append(row)
+    return (
+        TableRead(
+            columns=read.columns, rows=tuple(rows), pages=read.pages, dividers=read.dividers
+        ),
+        dropped,
+    )
+
+
+def available_modes(doc_key: str) -> tuple[str, ...]:
+    """The passes committed for a document, in the order a reader would prefer them."""
+    from knowledge.tests import page_fixtures
+
+    found = {
+        key.split(".", 1)[1]
+        for key in page_fixtures.MANIFEST["pages"]
+        if key.startswith(doc_key + ".")
+    }
+    return tuple(mode for mode in ("table", "layout", "raw") if mode in found)
+
+
+def other_mode(case) -> str | None:
+    """The pass the shape does *not* declare, or None when the document has only one.
+
+    Preference is `table` then `layout` then `raw`: the experiment is "would a different pass change
+    the verdict", and a pass with no column geometry at all answers a different question.
+    """
+    for mode in available_modes(case.doc_key):
+        if mode != case.mode:
+            return mode
+    return None
+
+
+def case_text(case, pdf_page: int, text_mode: str | None = None) -> str:
     from knowledge.tests.shape_fixtures import page_text
 
-    return page_text(case, pdf_page)
+    if not text_mode or text_mode == case.mode:
+        return page_text(case, pdf_page)
+    from knowledge.tests import page_fixtures
+
+    return page_fixtures.pages(case.doc_key, text_mode)[pdf_page - 1]
 
 
 def resolve(text: str, runs: dict[int, str], cursor: dict[int, int]) -> dict:
@@ -233,7 +303,7 @@ def slice_span(first: str, last: str, run: str, mapped, start: int = 0) -> dict:
     }
 
 
-def numbered_pages(case) -> tuple[str, dict[int, list[str]]]:
+def numbered_pages(case, text_mode: str | None = None) -> tuple[str, dict[int, list[str]]]:
     """The shape's pages as numbered lines — what the `indices` mode is asked to point at.
 
     The text is the same extraction pass the other two modes are verified against, so a cell built
@@ -244,7 +314,7 @@ def numbered_pages(case) -> tuple[str, dict[int, list[str]]]:
     numbered: dict[int, list[str]] = {}
     blocks: list[str] = []
     for image, (pdf_page, printed_page) in enumerate(printed.items(), start=1):
-        lines = normalised_lines(case_text(case, pdf_page))
+        lines = normalised_lines(case_text(case, pdf_page, text_mode))
         numbered[printed_page] = lines
         blocks.append(f"PAGE {image} (printed page {printed_page})")
         blocks.extend(f"{index}: {line}" for index, line in enumerate(lines, start=1))

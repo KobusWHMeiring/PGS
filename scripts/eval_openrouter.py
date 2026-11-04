@@ -59,7 +59,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 from knowledge.tests import page_fixtures  # noqa: E402
 from knowledge.tests.shape_fixtures import BY_KEY, SHAPES, TableRead, mismatches  # noqa: E402
 from scripts.vlm_grid import (  # noqa: E402
+    drop_row_number_gutter,
     has_letter_spacing,
+    other_mode,
     numbered_pages,
     page_runs,
     read_from,
@@ -325,22 +327,29 @@ def evaluate(
     verbose: bool = False,
     cache: Path | None = None,
     mode: str = "lines",
+    text_mode: str | None = None,
+    row_number_gutter: bool = False,
 ) -> dict:
     """One shape, one model: render, ask, resolve, score. The score is `mismatches()`, S0's own."""
     pdf, doc_key = documents_for(case)
     images = render(pdf, case.pdf_pages, dpi)
+    # The model call is keyed without the text mode: the pass only affects how the answer is
+    # *verified*, so a different pass must re-score the same answer rather than buy a new one.
     key = f"{re.sub(r'[^a-z0-9]+', '-', model.lower())}__{case.key}__dpi{dpi}__{mode}"
     numbered = ""
     numbered_lines: dict[int, list[str]] = {}
     if mode == "indices":
-        numbered, numbered_lines = numbered_pages(case)
+        numbered, numbered_lines = numbered_pages(case, text_mode)
     call = ask(model, images, cache=cache, key=key, prompt=PROMPTS[mode], numbered=numbered)
+    gutter = 0
     result = {
         "shape": case.key,
         "label": case.shape,
         "doc": doc_key,
         "model": call["model"],
         "mode": mode,
+        "text_mode": text_mode or case.mode,
+        "row_number_gutter": gutter,
         "pdf_pages": list(case.pdf_pages),
         "printed_pages": list(case.printed_pages),
         "dpi": dpi,
@@ -375,13 +384,15 @@ def evaluate(
         return result
 
     proposal = call["parsed"]
-    runs = page_runs(case)
+    runs = page_runs(case, text_mode)
     if mode == "anchors":
         read, violations = read_from_anchors(proposal, case, runs)
     elif mode == "indices":
         read, violations = read_from_indices(proposal, case, runs, numbered_lines)
     else:
         read, violations = read_from(proposal, case, runs)
+    if row_number_gutter:
+        read, gutter = drop_row_number_gutter(read)
     strict = mismatches(case, read)
     conventional = strict
     if not read.columns and len(read.rows) > 1:
@@ -498,6 +509,18 @@ def main(argv: list[str] | None = None) -> int:
         default=str(REPO_ROOT / "_scratch" / "or" / "responses"),
         help="Directory of raw provider responses; a cached (model, shape, dpi) is never re-asked.",
     )
+    parser.add_argument(
+        "--text-mode",
+        choices=("layout", "table", "raw", "other"),
+        help="The pass the characters are verified against. 'other' means the pass the shape does "
+        "not declare — the same cached model answer, re-scored against a different page text.",
+    )
+    parser.add_argument(
+        "--row-number-gutter",
+        action="store_true",
+        help="Apply the declared normalisation that drops a bare leading row number ('6b') from a "
+        "row that carries one. Reported per shape as `row_number_gutter`.",
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
     cache = Path(args.cache) if args.cache else None
@@ -518,8 +541,25 @@ def main(argv: list[str] | None = None) -> int:
     for model in models:
         for mode in modes:
             for case in cases:
+                pass_mode = args.text_mode
+                if pass_mode == "other":
+                    pass_mode = other_mode(case)
+                    if pass_mode is None:
+                        print(
+                            f"skip  {case.key}: {case.doc_key} has one committed pass "
+                            f"({case.mode}); there is no second pass to score against",
+                            file=sys.stderr,
+                        )
+                        continue
                 result = evaluate(
-                    case, model, dpi=args.dpi, verbose=args.verbose, cache=cache, mode=mode
+                    case,
+                    model,
+                    dpi=args.dpi,
+                    verbose=args.verbose,
+                    cache=cache,
+                    mode=mode,
+                    text_mode=pass_mode,
+                    row_number_gutter=args.row_number_gutter,
                 )
                 results.append(result)
                 mark = {

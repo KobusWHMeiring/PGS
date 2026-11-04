@@ -2,8 +2,9 @@
 
 **Status:** In Progress — **S0 (the eight-shape fixture set) and S1 (the generator's table-block
 guard) landed 2026-11-03, session `1e`; S2 is measured for two arms (Docling §3.5, the OpenRouter VLM
-§3.7).** S3–S5 (generator emits table blocks, re-review of Appendices 6a and 7) are open, and
-Document AI needs the owner's GCP credential.
+§3.7) and both are corrected in §3.8: a mapping normalisation, not a tool, was the largest defect.**
+S3–S5 (generator emits table blocks, re-review of Appendices 6a and 7) are open, and Document AI needs
+the owner's GCP credential.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
 **Last Updated:** 2026-11-04
 **Scope:** How a table becomes reviewed data when no human has reviewed it. In: extraction, its
@@ -289,7 +290,9 @@ admissible only once the engine has a pass with **cell granularity** — which i
 is being built to produce. In `anchors` mode the same defect appears from the other side: on Appendix
 7, where the pass interleaves four columns, **no cell has a contiguous run on the page**, so every
 cell is a violation whatever the model does. A VLM cannot repair an interleaved pass; it needs a
-row-structured one.
+row-structured one. **(Corrected 2026-11-04, §3.8: that last sentence is too strong — the `lines`
+form resolves per printed line, which *is* contiguous on an interleaved page, and its Appendix 7 grid
+is right once the row-number gutter is declared.)**
 
 **Speed and cost, quoted as measured.** 5 s and $0.0015 per shape for the cheap model, 7–10 s and
 $0.019 for the expensive one, against Docling's 20–40 s per shape. Cheap enough that cost is not the
@@ -304,6 +307,50 @@ in two. The cache is 332 KB and is not committed (it lives in `_scratch/`); a fr
 that no VLM can pass it: three prompt forms is a small space, and the two failures that look most like
 model judgement (`Proud member of`, `Step 3`) are boundary calls a human reviewer made in the fixtures
 and could reasonably make differently.
+
+### 3.8 What §3.7 got wrong (2026-11-04, same session): the pass was the smaller half, and one mapping convention was the bigger one
+
+Three follow-up measurements, all from the **cached** model answers — no new call, so nothing here was
+bought:
+
+**1. A different pass does not rescue anything.** `scripts/eval_openrouter.py --text-mode other`
+re-scores the same answer against the pass the shape does *not* declare. It never improves a verdict,
+and it makes three shapes worse: `empty_cells` 0 → 11 quote violations (sonnet, `lines`),
+`page_break_row` 6 → 17, and flash-lite's `qualifier` `anchors` pass demotes to grid-only. **The
+declared pass is already the better of the two available passes for every shape**, which is the same
+thing S4 found from the other direction (the landscape passes against `-table` and fails 10 ways
+against `-layout`).
+
+**2. A row-structured pass cannot be built from the committed text at all.** Looking at Appendix 7's
+`-layout` page is decisive: the gap between two columns **collapses to a single space when a cell
+overflows**, so line 9 prints `1 Aeration or oxygenation Air,` — there is no gutter to split on, and
+no character-offset de-interleaver can recover the cells. De-interleaving needs **per-word geometry**,
+which neither committed pass carries. So "re-score `anchors` against a row-structured pass" is **not a
+performable experiment with what is committed**; it needs a pass with word boxes (Document AI supplies
+them; Docling supplies them and our mapping discarded them).
+
+**3. One declared normalisation flips Appendix 7 — and it was our defect, not the tools'.** The paper
+prints a bare row number (`1`, `6b`) beside each row. Both arms read it as a fifth, leading column,
+which shifted every cell. `--row-number-gutter` drops a bare leading row number from a row that
+carries exactly one cell more than the header (a real first column, `1 Aeration or oxygenation…`, is
+never touched — the rule is narrow and tested). With it declared:
+
+| Arm | Before | After | What is left |
+|---|---|---|---|
+| VLM, flash-lite, `lines` | fail, 5 mismatches | **grid correct** (7×4, cells exact) | **one** quote violation: the model wrote `70°C` where the page prints `70oC` — R3 doing exactly its job |
+| Docling (committed sample, 4 of 7 rows) | "extra leading column, a condition cell lost" | columns and cells align | rows 4–6 are not in the committed sample, so this is *shown*, not scored |
+
+**The arm's honest score with the normalisation declared is 1 pass + 3 grid-only — four of eight
+grids right** (numeric_row pass; column_major, page_break_row, artwork_cell right grids with characters
+the model normalised or re-wrapped). Docling's header association was 0/8; the arm's is 7–8/8.
+
+**What this changes.** The largest single defect found across both arms was a **mapping convention**,
+not a tool: our reading of the paper's row-number furniture. That does not make the arm adoptable (its
+characters still need checking, and three shapes still fail on content), but it changes the order of
+work: **re-run both arms with the declared normalisations before buying any credential**, Docling
+included — which needs its throwaway venv back, not a GCP project. If Docling + gutter + a
+row-structured pass scores in the same band, the credential buys little; if it does not, the geometry
+argument for Document AI stands on its own.
 
 **D81's consequence, unchanged in direction.** Document AI remains the ceiling candidate and still
 needs the owner's four things; this result adds one more reason to spend that money rather than less,
@@ -343,7 +390,7 @@ extraction pass before it can be scored fairly.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate extractors (Docling, the OpenRouter VLM arm, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Docling measured 2026-11-03 (§3.5): 0/8 as extracted, 1/8 with a header convention, 2/8 tables not detected. The OpenRouter VLM arm measured 2026-11-04 (§3.7): 2/8 at best, 8/8 tables found, header association 7–8/8, and `indices` form blocked by our pass having no cell granularity.** Document AI is next and **needs the owner's GCP project, billing, processor and key**. Why, and what that costs: `product/design/d80_s2_extractor_evaluation.html` |
+| **S2** | Evaluate extractors (Docling, the OpenRouter VLM arm, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Docling measured 2026-11-03 (§3.5): 0/8 as extracted, 1/8 with a header convention, 2/8 tables not detected. The OpenRouter VLM arm measured 2026-11-04 (§3.7): 2/8 at best, 8/8 tables found, header association 7–8/8. §3.8 corrects both: one declared mapping normalisation (the paper's row-number gutter) makes the arm's Appendix 7 grid correct and Docling's too, so the arm is 1 pass + 3 grid-only (4/8 grids right) and *both* arms need re-running before a credential is bought.** Document AI needs the owner's GCP project, billing, processor and key. Why, and what that costs: `product/design/d80_s2_extractor_evaluation.html` |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |

@@ -133,6 +133,45 @@ def test_a_letter_spaced_cell_is_reported_beside_the_score():
     assert not grid.has_letter_spacing("Above R 5,000,000")
 
 
+# --- the row-number gutter ----------------------------------------------------------------------
+
+HEADER = ("Oenological practice", "Authorised products", "Conditions", "Limits")
+
+
+def _read(*rows):
+    return grid.TableRead(columns=HEADER, rows=rows, pages=(88,) * len(rows))
+
+
+def test_a_bare_row_number_beside_the_table_is_dropped():
+    read, dropped = grid.drop_row_number_gutter(
+        _read(("1", "Aeration or oxygenation", "Air,", "", ""), ("6b", "Thiamine", "x", "y", "z"))
+    )
+    assert dropped == 2
+    assert read.rows[0] == ("Aeration or oxygenation", "Air,", "", "")
+    assert read.columns == HEADER
+
+
+def test_a_real_first_column_is_never_dropped():
+    """The rule fires on a *bare* row number only: '1 Aeration or oxygenation' is the cell itself."""
+    read, dropped = grid.drop_row_number_gutter(
+        _read(("1 Aeration or oxygenation", "Air,", "", ""),)
+    )
+    assert dropped == 0
+    assert read.rows[0][0] == "1 Aeration or oxygenation"
+
+
+def test_a_row_with_the_right_number_of_cells_is_left_alone():
+    read, dropped = grid.drop_row_number_gutter(_read(("1", "Air,", "", ""),))
+    assert dropped == 0, "five cells is the shape; four is not a row number plus the table"
+    assert len(read.rows[0]) == 4
+
+
+def test_a_read_with_no_columns_is_not_guessed_at():
+    read = grid.TableRead(columns=(), rows=(("1", "Aeration", "Air,"),), pages=(88,))
+    after, dropped = grid.drop_row_number_gutter(read)
+    assert dropped == 0 and after.rows == read.rows
+
+
 # --- the anchor slice ---------------------------------------------------------------------------
 
 MAPPED = grid.index_map(RUNS[85])

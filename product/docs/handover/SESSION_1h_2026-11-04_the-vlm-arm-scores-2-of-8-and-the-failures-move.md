@@ -118,10 +118,37 @@ Three prompt forms is a small space, and two of the failures that look most like
 (`Proud member of`, `Step 3`) are boundary calls a human made in the fixtures and could reasonably make
 differently.
 
-## 7. Next
+## 7. The correction (§3.8): the pass was the smaller half
 
-**Document AI** remains the ceiling candidate and still needs the owner's four things (GCP project,
-billing, a processor, a service-account key) — a Gemini API key is not one of them. The cheap options
+Three follow-ups, all re-scored from the **cached** answers — no new call, nothing bought:
+
+1. **A different pass never helps.** `--text-mode other` re-scores the same answer against the pass the
+   shape does not declare. No verdict improves; three get worse (`empty_cells` 0 → 11 quote
+   violations, `page_break_row` 6 → 17, and flash-lite's `qualifier` pass demotes to grid-only). The
+   declared pass is already the best available one.
+2. **A row-structured pass cannot be built from the committed text.** On Appendix 7 the gap between two
+   columns collapses to a single space when a cell overflows — line 9 prints
+   `1 Aeration or oxygenation Air,`. There is no gutter, so no character-offset de-interleaver can
+   recover the cells; de-interleaving needs per-word geometry, which neither pass carries.
+3. **The biggest defect was ours.** The paper prints a bare row number (`1`, `6b`) beside each row and
+   **both arms read it as a fifth leading column**, shifting every cell. `--row-number-gutter` drops a
+   bare leading row number from a row carrying exactly one cell more than the header (a real first
+   column is never touched). With it declared, flash-lite's `lines` answer for Appendix 7 is **exact**
+   — 7×4, every cell right, one quote violation left (`70°C` where the page prints `70oC`) — and
+   **Docling's committed grid turns out to have been right too**, plus the same furniture column.
+
+So the honest score with the normalisation declared is **1 pass + 3 grid-only: four of eight grids
+right**, against Docling's 0/8 header association. The order of work changes: **re-run both arms with
+the declared normalisations before buying a credential** — Docling needs its throwaway venv back, not a
+GCP project.
+
+## 8. Next
+
+**Re-score both arms with the declared normalisations first** (free for the VLM; Docling needs its
+venv), because that is the test that decides whether a credential buys anything. **Document AI**
+remains the ceiling candidate and is the only candidate that supplies per-word geometry, which is what
+de-interleaving needs; it still needs the owner's four things (GCP project, billing, a processor, a
+service-account key) — a Gemini API key is not one of them. The cheap options
 that need no account are a second local parser, and **`anchors` re-scored against a row-structured
 pass**. Then S3, then S5. If no arm is wanted, D — hand-review the 24 chunks and write the debt down —
 is the honest fallback.
