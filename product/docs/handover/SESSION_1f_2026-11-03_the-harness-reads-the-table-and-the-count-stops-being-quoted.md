@@ -81,3 +81,28 @@ PRD's own falsifier applies — S5's rows stay unasserted and that is written do
 **S4's own remaining debt, named here so it is not forgotten:** the **extraction mode per document**
 is the last bespoke datum in the path (a flag today). S3 must record it on the artefact, or the gate
 for a *new* document is a flag somebody has to remember.
+
+## 6. Later in the same session: the owner asked what S2 even is, and decided it
+
+The question was two questions: *what is Document AI, what are GCP credentials* — and then, when the
+page was written, *why Document AI instead of a vision model, and what does the industry do now?*
+
+- **The explainer** is `product/design/d80_s2_extractor_evaluation.html` (self-contained, no external
+  request, exports a §18.3 row; mobile and desktop both checked for horizontal scroll in a real
+  browser, and the JS parse-checked). Its verified facts come from this machine, not from a blog:
+  `python 3.13.3`, `docling` and `torch` absent, `.env` holding only `DJANGO_SECRET_KEY`.
+- **The decision is D81 (owner, 2026-11-03): A — Docling first**, graded by S0's expectations and S4's
+  checker, with Document AI gated on a threshold (three or more of the eight shapes losing spans,
+  qualifiers or header association) rather than on mood.
+- **The answer to "why not a vision model", recorded as Addendum A**, is a distinction worth keeping:
+  Document AI is **extractive** vision — text with geometry — while a vision *language* model
+  **writes** the text it believes it read, so a wrong digit is indistinguishable from a right one.
+  What D80 rejected was **X4, answering from page images**, which breaks R9/D70.2's claim that a quote
+  is characters we verified. A generative VLM used as a *drafting* extractor is not rejected by
+  principle — it is admitted by the harness, because R3 refuses any cell that is not a contiguous run
+  of the page, and the cell text must come from an extraction pass, not from the model's prose.
+- **The field, marked as inferred rather than verified:** extractive parser plus a human diff review
+  (ours), VLM-for-structure with OCR-for-text (the hybrid that our R3 string-match already implements),
+  end-to-end VLM for scans and handwriting (solving a problem our PDFs do not have — they carry text),
+  and region citation as the industry's own output shape (which is our X3, so adopting an extractor
+  later is cheaper than it looks).

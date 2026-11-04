@@ -180,6 +180,16 @@
 
 <div class="wrap">
 
+  <div class="callout" style="border-left-width:5px;margin-top:0">
+    <span class="k">Decided 2026-11-03 &mdash; D81</span>
+    <p><strong>A: Docling first.</strong> Evaluate it on the eight pages, graded by S0's expectations and S4's
+       checker. Document AI waits for a threshold rather than a mood: <strong>three or more of the eight</strong>
+       losing spans, qualifiers or header association. The two live defects (6a's 20 rows, Appendix 7's 4 chunks)
+       close by hand either way, because no extractor can see a table that is not a table block.</p>
+    <p class="legend">Why Document AI is on the list at all &mdash; and what it is <em>not</em> &mdash; is
+       Addendum A at the end of Part 5.</p>
+  </div>
+
   <div class="intro">
     <h2>How to read this</h2>
     <p>It is an <strong>explanation and one decision</strong>, not a proposal to buy anything. Everything
@@ -484,6 +494,52 @@ DJANGO_SECRET_KEY=   <span class="dim"># exactly one key, no API keys of any kin
          the paid one. If it is not, the paid one is waiting and we will know exactly which shapes to test
          it on.</p>
     </div>
+  </div>
+
+  <div class="card">
+    <h3>Addendum A &middot; Why Document AI and not a vision model &mdash; and where the field is</h3>
+    <p class="legend">Asked by the owner, 2026-11-03. Everything in this card that is not marked
+       <span class="pill yes">verified</span> is <span class="pill mid">inferred</span>: it is the state of the
+       field as I last read it, not a benchmark run on this box. Re-check before adopting anything from it.</p>
+
+    <h4>Three different things people mean by "AI reading a PDF"</h4>
+    <table>
+      <tr><th>Kind</th><th>What it is</th><th>What it gives you</th><th>Can a quote be verified?</th></tr>
+      <tr><td><strong>Text-layer tools</strong><br><code>pdftotext</code>, pdfplumber</td><td>read the characters the PDF already carries</td><td>exact text, plus rough geometry; no table structure</td><td><span class="pill yes">yes</span> -- it is the page's own characters. This is what we use now.</td></tr>
+      <tr><td><strong>Extractive layout + table models</strong><br>Docling, Document AI, and the equivalents from other clouds</td><td>a layout model finds the blocks; a table-structure model predicts the cell grid; OCR or the text layer fills the cells</td><td>structure <em>and</em> characters, each with a box on the page</td><td><span class="pill yes">yes</span> -- a wrong cell is a wrong string at a known place, which is exactly what S4's R3 catches</td></tr>
+      <tr><td><strong>Generative vision models (VLMs)</strong><br>a multimodal model asked for the page as markdown/JSON</td><td>the page image goes to a model, the model <em>writes</em> the text it believes it read</td><td>often excellent reading order and messy layouts</td><td><span class="pill mid">only by checking it</span> -- a wrong digit and a right one look identical in the output</td></tr>
+    </table>
+
+    <p><strong>Document AI is the middle kind.</strong> It is hosted, and it is vision-based -- its models look at
+       the rendered page -- but what it returns is <em>extracted</em> text with geometry, not prose a model
+       composed. That distinction is the whole reason it is on our list and a vision LLM is not.</p>
+
+    <div class="callout">
+      <span class="k">What D80 actually rejected</span>
+      <p><strong>X4 -- answer from page images</strong>: let a vision model read the pages and answer from what it
+         sees. That breaks R9/D70.2's claim that a quote is <em>characters we verified</em>, because the characters
+         would be the model's reading rather than the document's text. A generative vision model used as an
+         <em>extractor</em> is a different proposal: it drafts structure, and the harness holds it to the page. It
+         is viable -- but only because R3 exists, and only if the cell text comes from an extraction pass rather
+         than from the model's prose.</p>
+    </div>
+
+    <h4>What the field does at the moment</h4>
+    <table>
+      <tr><th>Pattern</th><th>Where it is used</th><th>Our verdict</th></tr>
+      <tr><td><strong>Extractive parser, then a human diff review</strong></td><td>regulated and high-assurance corpora -- filings, clinical, legal: places where a wrong cell is a liability</td><td><strong>Ours.</strong> This is X2 plus S5, and the review is a diff rather than a transcription.</td></tr>
+      <tr><td><strong>VLM for structure, OCR for text</strong> ("hybrid")</td><td>increasingly the default in document-AI vendors: the model proposes the grid, OCR supplies the characters, a string match decides</td><td>Compatible with D80 <em>behind the harness</em> -- and note that our R3 is the string match that makes it safe.</td></tr>
+      <tr><td><strong>End-to-end VLM, no OCR</strong></td><td>scans, handwriting, forms -- where there is no text layer to lose</td><td>Not for a certification corpus whose claim is a verified quote. It is also solving a problem we do not have: our PDFs carry their own text.</td></tr>
+      <tr><td><strong>Human transcription only</strong> (X1)</td><td>small, stable, high-value document sets</td><td>Still honest for a handful of documents a year -- which is why D is a real option, not a straw man.</td></tr>
+      <tr><td><strong>Region citation</strong> (boxes, not just text)</td><td>where document-AI output has been heading for years: every serious parser returns geometry, not only strings</td><td>Our X3 destination is aligned with the field's own output format, which is why adopting an extractor later is cheaper than it looks.</td></tr>
+    </table>
+
+    <h4>What would move us to a generative vision model</h4>
+    <ul>
+      <li><strong>A scanned document arrives with no text layer.</strong> Then OCR is unavoidable anyway, and a VLM is a reasonable second reader -- graded by the same harness.</li>
+      <li><strong>A hybrid beats both extractive options on fidelity</strong> through R3, on pages that matter. The harness grades a <code>TableRead</code>, not a vendor, so a VLM can be entered in S2's table at any time.</li>
+      <li><strong>Someone shows our own eight pages failing</strong> where a VLM succeeds. That is the only evidence that would beat a working extractive path.</li>
+    </ul>
   </div>
 
   <!-- ============================================================ PART 6 -->

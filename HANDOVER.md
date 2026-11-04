@@ -37,12 +37,17 @@
 > order (the strict rule reported 3 cells, all wraps). A shared cursor across a row's cells was
 > measured and dropped (171 false violations: the fee box is filed under the row it starts beside).
 >
-> **What is next:** **S2** — evaluate Docling and Document AI against the eight pages and put the
-> result in the PRD as a table. **Two frictions found 2026-11-03:** `docling` is not installed here
-> (it pulls torch and layout models) and Document AI needs GCP credentials the dev `.env` does not
-> hold. Then S3 (generator emits blocks, and records the extraction mode), S5 (re-review Appendices
-> 6a and 7 *through* the harness — the harness cannot see a table that is not a block, which is why
-> `expected_tables` exists). **`read_table()` is the seam.**
+> **What is next:** **S2 — Docling first (D81, decided 2026-11-03)**, on the eight pages, graded by S0's
+> expectations and S4's checker; **Document AI only if Docling loses spans, qualifiers or header
+> association on three or more of the eight.** Why, and what a GCP key would cost: the explainer
+> `product/design/d80_s2_extractor_evaluation.html` (Addendum A answers "why not a vision model" —
+> Document AI is *extractive* vision; what D80 rejected was X4, answering from page images, because a
+> quote must stay characters we verified). **Two frictions, measured:** `docling` and `torch` are not
+> installed here, and Document AI needs a project, billing, a processor and a service-account key the
+> dev `.env` does not hold (it has `DJANGO_SECRET_KEY` only). Then S3 (generator emits blocks, and
+> records the extraction mode), S5 (re-review Appendices 6a and 7 *through* the harness — no extractor
+> can see a table that is not a block, which is why `expected_tables` exists). **`read_table()` is the
+> seam.**
 >
 > **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
 > a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
