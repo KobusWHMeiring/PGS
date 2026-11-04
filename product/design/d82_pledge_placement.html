@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D82 — Where the farmer pledge sits, and what an account may carry</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --stop:            #7a2e2e;
+    --stop-soft:       #f6e5e5;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 200px; }
+
+  header.hero { background: linear-gradient(160deg, var(--accent) 0%, #274936 100%); color: #fff; padding: 44px 20px 38px; }
+  header.hero .inner { max-width: 1000px; margin: 0 auto; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; opacity: .72; margin: 0 0 10px; }
+  header.hero h1 { margin: 0 0 14px; font-size: 30px; line-height: 1.25; font-weight: 650; }
+  header.hero .question { font-size: 19px; line-height: 1.5; background: rgba(255,255,255,.12);
+    border-left: 3px solid rgba(255,255,255,.6); padding: 14px 18px; border-radius: 0 10px 10px 0; margin: 0; }
+  header.hero .meta { margin-top: 16px; font-size: 13px; opacity: .8; }
+
+  h2 { font-size: 22px; margin: 44px 0 6px; font-weight: 650; letter-spacing: -.01em; }
+  h2 .num { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 8px; }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p, li { font-size: 15.5px; }
+  .lede { color: var(--muted); margin: 0 0 18px; max-width: 76ch; }
+
+  .card { background: var(--surface); border: 1px solid var(--surface-high); border-radius: var(--radius-xl);
+    padding: 20px 22px; box-shadow: var(--shadow); margin: 18px 0; }
+  .card.tight { padding: 16px 18px; }
+  .card > h3:first-child { margin-top: 0; }
+
+  .quoted { background: var(--surface-low); border-left: 3px solid var(--accent-line);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14.5px; margin: 12px 0; }
+  .quoted cite { display: block; margin-top: 8px; font-style: normal; font-size: 12.5px; color: var(--muted); font-family: var(--mono); }
+
+  code, .mono { font-family: var(--mono); font-size: 13px; background: var(--surface-low);
+    padding: 1px 5px; border-radius: 4px; }
+  .mono { background: none; padding: 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { background: var(--surface-low); font-weight: 620; font-size: 13px; letter-spacing: .02em; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mix { border-collapse: separate; border-spacing: 0; }
+
+  .badge { display: inline-block; font-size: 11.5px; font-weight: 650; padding: 2px 8px;
+    border-radius: 999px; letter-spacing: .03em; white-space: nowrap; }
+  .b-built   { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-line); }
+  .b-spec    { background: var(--warn-soft); color: var(--warn); border: 1px solid #e6d3b3; }
+  .b-none    { background: var(--surface-high); color: var(--muted); border: 1px solid #cbd3c6; }
+  .b-decided { background: #e6ecf5; color: #2f4a70; border: 1px solid #c2d0e4; }
+
+  /* ---------- service blueprint ---------- */
+  .bp { overflow-x: auto; border: 1px solid var(--surface-high); border-radius: var(--radius-lg);
+    background: var(--surface); margin: 18px 0; }
+  .bp table { margin: 0; min-width: 940px; border-collapse: separate; border-spacing: 0; }
+  .bp th, .bp td { border-bottom: 1px solid var(--surface-high); border-right: 1px solid var(--surface-high);
+    padding: 9px 10px; font-size: 12.5px; line-height: 1.4; }
+  .bp th:last-child, .bp td:last-child { border-right: 0; }
+  .bp thead th { position: sticky; top: 0; background: var(--surface-low); z-index: 2; vertical-align: bottom; }
+  .bp thead th .stage { display: block; font-size: 12.5px; font-weight: 650; }
+  .bp thead th .sn { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .bp th.lane, .bp td.lane { background: var(--surface-low); font-weight: 620; font-size: 12px;
+    width: 132px; min-width: 132px; position: sticky; left: 0; z-index: 1; }
+  .bp thead th.lane { z-index: 3; }
+  .bp td { vertical-align: top; }
+  .bp tr.line td { background: var(--accent-soft); color: var(--accent); font-size: 11px;
+    letter-spacing: .1em; text-transform: uppercase; font-weight: 700; padding: 5px 10px; }
+  .bp td .pledge { display: block; margin-top: 6px; padding: 5px 7px; border-radius: 6px;
+    background: #e6ecf5; border: 1px solid #c2d0e4; font-size: 11.5px; color: #2f4a70; font-weight: 600; }
+  .bp td .pledge.alt { background: var(--warn-soft); border-color: #e6d3b3; color: var(--warn); }
+  .bp td .pledge.off { display: none; }
+  .bp td.dim { color: var(--muted); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.12); }
+
+  /* ---------- options ---------- */
+  .opts { display: grid; gap: 16px; margin: 18px 0; }
+  @media (min-width: 880px) { .opts { grid-template-columns: 1fr 1fr; } }
+  .opt { background: var(--surface); border: 1px solid var(--surface-high); border-radius: var(--radius-xl);
+    padding: 18px 20px; box-shadow: var(--shadow); }
+  .opt.recommended { border: 2px solid var(--accent); }
+  .opt h3 { margin: 0 0 4px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .opt .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 999px; }
+  .opt .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 12px; }
+
+  .strip { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; margin: 14px 0 4px;
+    font-size: 11.5px; border-radius: 8px; overflow: hidden; border: 1px solid var(--surface-high); }
+  .strip .st { flex: 1 1 0; min-width: 62px; padding: 7px 4px; text-align: center; background: var(--surface-low);
+    color: var(--muted); line-height: 1.25; border-right: 1px solid var(--surface-high); }
+  .strip .st:last-child { border-right: 0; }
+  .strip .st.on { background: var(--accent); color: #fff; font-weight: 650; }
+  .strip .st.on-soft { background: var(--accent-soft); color: var(--accent); font-weight: 650; }
+  .strip .st.warn { background: var(--warn-soft); color: var(--warn); font-weight: 650; }
+  .caption { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+  .fa { display: grid; gap: 14px; margin: 10px 0 0; }
+  @media (min-width: 760px) { .fa { grid-template-columns: 1fr 1fr; } }
+  .fa h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+  .fa .for h4 { color: var(--accent); }
+  .fa .against h4 { color: var(--stop); }
+  .fa ul { margin: 0; padding-left: 18px; }
+  .fa li { font-size: 14px; margin-bottom: 6px; }
+
+  ul.tight li { margin-bottom: 5px; }
+
+  .rec { border: 2px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius-xl);
+    padding: 22px 24px; margin: 18px 0; }
+  .rec h3 { margin-top: 0; color: var(--accent); }
+  .rec p:last-child { margin-bottom: 0; }
+
+  .warnbox { background: var(--warn-soft); border: 1px solid #e6d3b3; border-left: 4px solid var(--warn);
+    border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0; }
+  .warnbox strong { color: var(--warn); }
+
+  .choice { background: var(--surface); border: 1px solid var(--surface-high); border-radius: var(--radius-lg);
+    padding: 14px 16px; margin: 10px 0; cursor: pointer; display: block; }
+  .choice:hover { border-color: var(--accent-line); }
+  .choice input { margin-right: 10px; accent-color: var(--accent); }
+  .choice .lbl { font-weight: 620; }
+  .choice .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0 26px; }
+  textarea { width: 100%; min-height: 88px; font-family: var(--font); font-size: 14px;
+    border: 1px solid var(--surface-high); border-radius: 8px; padding: 10px 12px; resize: vertical;
+    background: var(--surface); color: var(--text); }
+  .export { margin-top: 14px; }
+  .export pre { background: var(--surface-low); border: 1px solid var(--surface-high); border-radius: 8px;
+    padding: 12px 14px; overflow-x: auto; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+
+  button { font-family: var(--font); font-size: 14px; font-weight: 620; padding: 9px 16px;
+    border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); }
+
+  .sticky { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface);
+    border-top: 1px solid var(--surface-high); box-shadow: var(--shadow-sticky); z-index: 20; }
+  .sticky .inner { max-width: 1000px; margin: 0 auto; padding: 10px 20px; display: flex;
+    align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13.5px; }
+  .sticky .state { color: var(--muted); }
+  .sticky .state b { color: var(--text); }
+
+  @media print {
+    .sticky, button { display: none !important; }
+    body { background: #fff; }
+    .card, .opt, .rec, .bp { box-shadow: none; break-inside: avoid; }
+    header.hero { background: #fff; color: var(--text); border-bottom: 2px solid var(--accent); }
+    header.hero .question { background: var(--surface-low); border-left-color: var(--accent); }
+    .bp { overflow: visible; }
+    .bp table { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Decision D82 · Outeniqua PGS · 2026-11-04</p>
+    <h1>Where does the farmer pledge sit — and may an account carry any declaration?</h1>
+    <p class="question">Now that the self-check ends with an opt-in account, is the pledge signed at
+      account creation, at the application, or on the pre-visit checklist?</p>
+    <p class="meta">A decision document for the product owner. Everything in Part 1 was read out of the
+      sources named in the margin. No production code is proposed here.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<h2><span class="num">0</span>How to read this</h2>
+<p class="lede">This is not a proposal and not a mockup. It exists to get <strong>one</strong> decision made,
+and its job is to be wrong in public if it is wrong. Part 1 is an inventory of what the governing documents
+actually say, including one document that contradicts itself. Part 3 gives three options; each gets its
+strongest case before its weakness. Part 7 makes one recommendation and says what would change it.</p>
+<p class="lede">The claim you asked about — <em>"the can-I-apply process doesn't need to pledge"</em> — is
+correct, and Part 1 shows the pledge's own words are what settle it.</p>
+
+<h2><span class="num">1</span>What is actually true</h2>
+
+<h3>1.1 The answer to "when?", in the OPP's own words</h3>
+<div class="quoted">
+  On application every prospective farmer/producer member of the Outeniqua PGS will do the following:
+  <strong>1. Sign the farmer member pledge.</strong>
+  <cite>OPP §I "Membership procedure", knowledge/corpus/opp.md:12–13 — read, not recalled</cite>
+</div>
+<p>The OPP places the pledge <strong>first in the application</strong>, ahead of supplying information
+(3), familiarising with the Basic Production Principles and SAOSO (4), and familiarising with the group's
+own procedures (5). It is an application step, not a registration step and not a visit step.</p>
+
+<h3>1.2 The pledge text itself rules out signing it before applying</h3>
+<div class="quoted">
+  All the land <strong>for which I/we are applying</strong> for PGS endorsement has been free of prohibited
+  pesticides, herbicides and fertilisers for at least 12 months before sowing or planting in the case of
+  annual production; 12 months before grazing or harvest for pastures and meadows and/or 18 months before
+  harvest for other perennials…
+  <cite>OPP, Farmer Pledge, knowledge/corpus/opp.md:611–614</cite>
+</div>
+<p>The declaration is <em>about an application</em>. A person who has not yet said what land, which
+categories and what turnover cannot truthfully sign a sentence that begins "all the land for which I am
+applying". This is a textual argument, not a design preference: <strong>the pledge presupposes the
+application step it would be moved ahead of.</strong></p>
+
+<h3>1.3 Your three candidates, checked</h3>
+<table class="mix">
+  <thead><tr><th>Candidate</th><th>Verdict</th><th>Evidence</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>The "am I ready" check</strong><br><span class="mono">/before-you-apply/</span></td>
+      <td><span class="badge b-none">No</span></td>
+      <td>The check writes <em>nothing</em> unless a research box is ticked, and its report has no FK to
+        <code>Member</code> or <code>Farm</code> — "a tick is not an application"
+        (<code>SELF_CHECK_PRD</code> §4.1, §8). A pledge there would be a declaration stored against a
+        row that is forbidden from becoming an application record.</td>
+    </tr>
+    <tr>
+      <td><strong>Creating a profile</strong><br><span class="mono">account at end of the check</span></td>
+      <td><span class="badge b-decided">Decided today, no pledge</span></td>
+      <td>Your decision 2026-11-04 (<code>SELF_CHECK_PRD</code> §11) is identity + three fields
+        (farm name, nearest town, contact). §3.1 of the spec already had the seam:
+        "an account is created when they engage further". Not an application.</td>
+    </tr>
+    <tr>
+      <td><strong>The pre-visit checklist</strong><br><span class="mono">Sheet B.1/B.2, 7.a–7.c</span></td>
+      <td><span class="badge b-none">No</span></td>
+      <td>The visits asks 77 sub-questions and checks seven records (FORM Sheet I §2). It contains an
+        <em>attestation</em> — <em>"I am aware of / have read the Basic Production Principles YES/NO"</em>
+        (FORM 7.a header, Flow A step 6) — which is a familiarity statement, not the pledge. It arrives
+        <strong>after</strong> the pledge, at application.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="warnbox">
+  <strong>The near-miss to keep separate.</strong> The Basic Production Principles / SAOSO familiarity
+  attestation (FORM 7.a header, plan Task A6 step 6) reads like a pledge and is not one. It states what the
+  applicant has <em>read</em>; the pledge states what the applicant <em>does and has done on the land</em>.
+  If these two are ever merged into one screen, the evidentiary difference disappears — and the pledge is
+  the one that carries the land-history declaration.
+</div>
+
+<h3>1.4 The service blueprint</h3>
+<p class="lede">Twelve stages of onboarding, five lanes. The lanes are the standard blueprint rows, plus a
+sixth — <strong>record written</strong> — because in this system the record is the deliverable, not a
+by-product. Status badges are verified against <code>core/urls.py</code>, <code>core/templates/public/</code>
+and the plan's task list; "not specced" means no plan task produces it.</p>
+
+<div class="bp">
+<table>
+  <thead>
+    <tr>
+      <th class="lane">Lane</th>
+      <th><span class="sn">1</span><span class="stage">Read site</span></th>
+      <th><span class="sn">2</span><span class="stage">Read docs</span></th>
+      <th><span class="sn">3</span><span class="stage">Ask</span></th>
+      <th><span class="sn">4</span><span class="stage">Am I ready?</span></th>
+      <th><span class="sn">5</span><span class="stage">Account</span></th>
+      <th><span class="sn">6</span><span class="stage">Apply</span></th>
+      <th><span class="sn">7</span><span class="stage">Pledge</span></th>
+      <th><span class="sn">8</span><span class="stage">Cat / fee</span></th>
+      <th><span class="sn">9</span><span class="stage">Questionnaire</span></th>
+      <th><span class="sn">10</span><span class="stage">Schedule</span></th>
+      <th><span class="sn">11</span><span class="stage">Visit</span></th>
+      <th><span class="sn">12</span><span class="stage">Report</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="lane">Status</td>
+      <td><span class="badge b-built">built</span></td>
+      <td><span class="badge b-built">built</span></td>
+      <td><span class="badge b-built">built</span></td>
+      <td><span class="badge b-spec">D71 · task A8</span></td>
+      <td><span class="badge b-decided">decided · §11</span></td>
+      <td><span class="badge b-spec">task A6</span></td>
+      <td><span class="badge b-spec">task A3</span></td>
+      <td><span class="badge b-spec">A4 · A5</span></td>
+      <td><span class="badge b-spec">task C2</span></td>
+      <td><span class="badge b-spec">task D</span></td>
+      <td><span class="badge b-spec">task E</span></td>
+      <td><span class="badge b-spec">task F</span></td>
+    </tr>
+
+    <tr class="line"><td class="lane">Line of interaction</td><td colspan="12"></td></tr>
+
+    <tr>
+      <td class="lane">Evidence<br><span style="font-weight:400;color:var(--muted)">what the farmer sees</span></td>
+      <td>Home, organics, how-it-works</td>
+      <td>Documents list + reader</td>
+      <td>Ask panel, answer page</td>
+      <td>20 controls, to-do list, mirror, two fixed lines</td>
+      <td>Result page + "create an account"</td>
+      <td>Application form</td>
+      <td>Pledge on screen or on paper</td>
+      <td>Category ticks, turnover band, fee band</td>
+      <td>Farmer's half of the questionnaire</td>
+      <td>Visit date, participants, notice rule</td>
+      <td>Capture form on a connected device</td>
+      <td>Sheet I report PDF</td>
+    </tr>
+
+    <tr>
+      <td class="lane">Farmer actions</td>
+      <td class="dim">reads</td>
+      <td class="dim">reads, scrolls</td>
+      <td class="dim">asks</td>
+      <td>answers 20 · ticks consent (opt-in, default off)</td>
+      <td>email · farm name · town · contact</td>
+      <td>POPIA purposes (three) · categories · turnover</td>
+      <td><strong>signs or makes a verbal pledge</strong></td>
+      <td>declares, pays</td>
+      <td>answers, uploads records</td>
+      <td class="dim">attends</td>
+      <td class="dim">walks the farm</td>
+      <td class="dim">receives</td>
+    </tr>
+
+    <tr class="line"><td class="lane">Line of visibility</td><td colspan="12"></td></tr>
+
+    <tr>
+      <td class="lane">Frontstage<br><span style="font-weight:400;color:var(--muted)">system on the group's behalf</span></td>
+      <td class="dim">—</td>
+      <td class="dim">—</td>
+      <td>grounded answers, refusals that name a cause</td>
+      <td>counts vs denominators; no verdict, no score</td>
+      <td>creates identity only</td>
+      <td>eligibility gates, fee band from declared turnover</td>
+      <td><strong>records method, witness, land history</strong></td>
+      <td>fee gate before scheduling</td>
+      <td>autosave, attachment readiness</td>
+      <td><span class="mono">validate_assessment_team()</span>, 5-day notice</td>
+      <td>verdicts, findings, corrective actions</td>
+      <td>completeness + signature gates</td>
+    </tr>
+
+    <tr>
+      <td class="lane">Backstage<br><span style="font-weight:400;color:var(--muted)">the group</span></td>
+      <td class="dim">—</td>
+      <td class="dim">—</td>
+      <td class="dim">—</td>
+      <td class="dim">—</td>
+      <td class="dim">—</td>
+      <td>confirms membership fee</td>
+      <td><strong>administrator completes the pledge <em>on the member's behalf</em> where they cannot sign</strong>, with a recorded consent</td>
+      <td>peer review of declared turnover</td>
+      <td>reviews 3 days out, asks clarifications</td>
+      <td>assembles the team, confirms the roster</td>
+      <td>runs the visit</td>
+      <td>finalises, writes Sheet I conclusion</td>
+    </tr>
+
+    <tr>
+      <td class="lane">Support<br><span style="font-weight:400;color:var(--muted)">data and documents</span></td>
+      <td>4 governed documents</td>
+      <td>corpus + reviewed tables</td>
+      <td>retrieval, citations</td>
+      <td>frozen Crops template's <span class="mono">self_check</span> markers</td>
+      <td class="dim">—</td>
+      <td>Category, Seal, fee bands (seeded)</td>
+      <td><strong>OPP §I text · witness block · evidence photo</strong></td>
+      <td>OPP §2.3 sliding scale</td>
+      <td>AssessmentTemplate schema</td>
+      <td>CommitteeTerm roster (A2, built)</td>
+      <td>frozen template snapshot</td>
+      <td>WeasyPrint, frozen schema</td>
+    </tr>
+
+    <tr>
+      <td class="lane">Record written<br><span style="font-weight:400;color:var(--muted)">the evidentiary row</span></td>
+      <td class="dim">none</td>
+      <td class="dim">none</td>
+      <td class="dim">none</td>
+      <td>optional <span class="mono">SelfCheckReport</span> (consented; no member FK)</td>
+      <td><span class="mono">User</span> + <span class="mono">Member(APPLICANT)</span> + <span class="mono">Farm</span></td>
+      <td><span class="mono">FarmCategory</span>, <span class="mono">AssessmentFee</span>, <span class="mono">PriorCertification</span></td>
+      <td><strong><span class="mono">Pledge</span> + land-history declaration</strong></td>
+      <td><span class="mono">MembershipFee</span> → <span class="mono">is_paid_up</span></td>
+      <td><span class="mono">Assessment</span>, <span class="mono">AssessmentAnswer</span>, <span class="mono">EvidenceDocument</span></td>
+      <td><span class="mono">FarmVisit</span>, <span class="mono">VisitParticipant</span></td>
+      <td><span class="mono">AssessmentVerdict</span>, <span class="mono">Finding</span>, <span class="mono">RecordCheck</span></td>
+      <td><span class="mono">Signature</span> ×3, report artefact</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div class="legend">
+  <span><span class="swatch" style="background:var(--accent-soft);border-color:var(--accent-line)"></span>built</span>
+  <span><span class="swatch" style="background:var(--warn-soft);border-color:#e6d3b3"></span>specced, no code</span>
+  <span><span class="swatch" style="background:#e6ecf5;border-color:#c2d0e4"></span>decided this session, not specced</span>
+  <span><span class="swatch" style="background:var(--surface-high)"></span>not specced</span>
+</div>
+<p class="caption">Read left to right: nothing is written before stage 4, and stage 5 writes identity only.
+The first declaration the platform ever asks a farmer to make is the pledge at stage 7.</p>
+
+<h3>1.5 One document that contradicts itself</h3>
+<p class="lede">The land-history periods appear in three places. D31 records the conflict; here is the
+full three-way picture, which is sharper than the decision row says.</p>
+<table>
+  <thead><tr><th>Source</th><th>Annuals</th><th>Pasture &amp; meadows</th><th>Other perennials</th></tr></thead>
+  <tbody>
+    <tr><td><strong>SAOSO 4.2.3 a/b/c</strong><br><span class="mono">knowledge/corpus/saoso.md:775–782</span></td>
+      <td class="num">12</td><td class="num">12</td><td class="num">18</td></tr>
+    <tr><td><strong>OPP Farmer Pledge</strong><br><span class="mono">knowledge/corpus/opp.md:611–614</span></td>
+      <td class="num">12</td><td class="num">12</td><td class="num">18</td></tr>
+    <tr><td><strong>OPP §V In-Conversion seal</strong><br><span class="mono">knowledge/corpus/opp.md:440–447</span></td>
+      <td class="num">18</td><td class="num">12</td><td class="num">12</td></tr>
+  </tbody>
+</table>
+<p><strong>Two sources agree and one disagrees — and the outlier is the group's own OPP.</strong> The pledge
+and SAOSO agree exactly. OPP §V swaps the annual and perennial figures. This matters for Task A3's design,
+because the plan's `land_history_conflict` rule is written as <em>"set when a declared period disagrees with
+OPP §V (annuals 18, pasture 12, other perennials 12)"</em> — which would flag a farmer who signed the pledge
+<em>as printed</em>. See Part 6.</p>
+
+<h2><span class="num">2</span>The shape of the problem</h2>
+<p class="lede">The difficulty is not "where does one signature go". It is that four consecutive stages each
+hold a <strong>different kind of obligation</strong>, and a blueprint that blurs them produces a system that
+asks for a declaration at the moment of least commitment.</p>
+<table>
+  <thead><tr><th>Stage</th><th>What the farmer gives</th><th>What the group may do with it</th><th>Reversible?</th></tr></thead>
+  <tbody>
+    <tr><td>4 · am I ready</td><td>answers, optionally</td><td>aggregate totals, below a threshold never published</td><td>yes — withdraw deletes both rows</td></tr>
+    <tr><td>5 · account</td><td>identity + three farm fields</td><td>hold it and use it again</td><td>yes — it is not an application</td></tr>
+    <tr><td>6–7 · apply + pledge</td><td>declarations, including what is on the land</td><td><strong>assess, and hold the member to it</strong></td><td>no — it is evidence</td></tr>
+    <tr><td>9–12 · visit → report</td><td>answers and evidence</td><td>decide</td><td>no — frozen at first visit</td></tr>
+  </tbody>
+</table>
+<p><strong>The asymmetry that drives the decision:</strong> stages 4 and 5 are cheap to undo by design. Stage 7
+is not — a pledge is the moment the group gains the right to remove a member and deny the use of the logo
+(the pledge says so, opp.md:604–605). Attaching that right to an action a farmer can abandon without
+consequence (creating an account) is the failure mode to avoid. The converse failure — a farmer who has done
+real work at stage 4 and 5 and must retype it — was the problem your account decision already solved.</p>
+
+<h2><span class="num">3</span>The options</h2>
+<div class="opts">
+
+  <div class="opt recommended">
+    <h3>A — Pledge stays in the application <span class="tag">recommended</span></h3>
+    <p class="sub">OPP §I applied literally. Account = identity. Application = declarations.</p>
+    <div class="strip">
+      <div class="st">4 ready</div><div class="st on-soft">5 account</div>
+      <div class="st on">6 apply</div><div class="st on">7 pledge</div>
+      <div class="st">8 fee</div><div class="st">9 quest.</div>
+    </div>
+    <p class="caption">The pledge sits with the application, after identity exists. Two screens, one after the other.</p>
+  </div>
+
+  <div class="opt">
+    <h3>B — Pledge at account creation</h3>
+    <p class="sub">One act: "create my account and sign the pledge." Fewer screens.</p>
+    <div class="strip">
+      <div class="st">4 ready</div><div class="st warn">5 account + pledge</div>
+      <div class="st on-soft">6 apply</div><div class="st">7 —</div>
+      <div class="st">8 fee</div><div class="st">9 quest.</div>
+    </div>
+    <p class="caption">The declaration moves ahead of the information it is about.</p>
+  </div>
+
+  <div class="opt">
+    <h3>C — Two-tier: light confirmation now, pledge later</h3>
+    <p class="sub">A "I confirm these details" at the account, the OPP pledge unchanged at the application.</p>
+    <div class="strip">
+      <div class="st">4 ready</div><div class="st on-soft">5 account + confirm</div>
+      <div class="st on">6 apply</div><div class="st on">7 pledge</div>
+      <div class="st">8 fee</div><div class="st">9 quest.</div>
+    </div>
+    <p class="caption">Two declaration-shaped texts, one of which is not a declaration.</p>
+  </div>
+
+</div>
+
+<h3>3.1 Evidence for and against</h3>
+
+<div class="card tight">
+  <h3 style="display:flex;gap:8px;align-items:center">A — Pledge stays in the application
+    <span class="badge b-built">recommended</span></h3>
+  <div class="fa">
+    <div class="for">
+      <h4>Strongest case for</h4>
+      <ul>
+        <li>It is what OPP §I says, in one sentence, with no interpretation required.</li>
+        <li>The pledge text cannot be signed truthfully before the application: it says "all the land
+          <em>for which I/we are applying</em>".</li>
+        <li>It keeps the reversible/irreversible boundary where the system already draws it (§2 above):
+          stages 4–5 undo cleanly, 7 does not.</li>
+        <li>It needs <strong>no new schema</strong>. <code>Pledge</code> hangs off <code>Member</code>,
+          which the account already creates (<code>_core.py</code>, commit <code>243cedd</code>).</li>
+        <li>Task A3 as planned already produces exactly this; nothing in the plan moves.</li>
+      </ul>
+    </div>
+    <div class="against">
+      <h4>Weakest points</h4>
+      <ul>
+        <li>Two more screens between "I'm interested" and "I'm in" — the funnel is longer than it needs to be
+          for a farmer who is already convinced.</li>
+        <li>An account that never applies is a person the group knows nothing about — no declaration, no
+          categories. It is a lead, not a member, and the platform must say so.</li>
+        <li>It relies on the farmer reaching stage 6 at all; the account step does not bind them.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card tight">
+  <h3 style="display:flex;gap:8px;align-items:center">B — Pledge at account creation</h3>
+  <div class="fa">
+    <div class="for">
+      <h4>Strongest case for</h4>
+      <ul>
+        <li>Shortest funnel: the moment of highest motivation is right after the result page says "these
+          records are in place".</li>
+        <li>One declaration screen instead of two, so there is no drift between a light confirmation and
+          the real pledge.</li>
+        <li>An abandoned account would still carry a signed pledge, which some groups would treat as a
+          stronger statement of intent than an application alone.</li>
+      </ul>
+    </div>
+    <div class="against">
+      <h4>Why it loses</h4>
+      <ul>
+        <li><strong>The text does not permit it.</strong> "All the land for which I/we are applying" — at
+          account creation nobody has said what they are applying for.</li>
+        <li>It makes the group the holder of signed pledges from people who never applied. The pledge's own
+          clause about removal and loss of the logo (opp.md:604–605) would attach to a non-applicant.</li>
+        <li>It puts the land-history attestation before the categories, so the "annuals / pasture / other
+          perennials" boxes are being ticked by someone who has not yet said which they produce.</li>
+        <li>A pledge is evidence. Evidence attached to a reversible action needs a withdrawal story the
+          account step does not have, and §11 has just made a point of not linking
+          <code>SelfCheckReport</code> to <code>Member</code>.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card tight">
+  <h3 style="display:flex;gap:8px;align-items:center">C — Two-tier (light confirmation, then the pledge)</h3>
+  <div class="fa">
+    <div class="for">
+      <h4>Strongest case for</h4>
+      <ul>
+        <li>Keeps the pledge where it belongs while still giving the account step something to confirm, so
+          the farmer feels the details are "theirs".</li>
+        <li>Matches how most services behave: a light terms acknowledgement, then the substantive
+          declaration at the transaction.</li>
+      </ul>
+    </div>
+    <div class="against">
+      <h4>Why it loses</h4>
+      <ul>
+        <li>It is the exact risk <code>SELF_CHECK_PRD</code> §7 already names: "two questionnaires that
+          disagree". Two declaration-shaped screens are one edit away from contradicting each other, and
+          there is no test that can tell you whether a "confirmation" is a declaration.</li>
+        <li>The light text has to be written, reviewed and consented — real cost for a screen whose only
+          job is reassurance.</li>
+        <li>The account step already <em>is</em> a confirmation: typing your farm name and pressing
+          save is the confirmation.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h2><span class="num">4</span>What the sources say — including where they disagree</h2>
+<table>
+  <thead><tr><th>Source</th><th>What it says</th><th>Which option it favours</th><th>Does it hold here?</th></tr></thead>
+  <tbody>
+    <tr><td>OPP §I</td><td>"On application … 1. Sign the farmer member pledge."</td><td>A</td>
+      <td>Yes — and it is the operative document for the group's own procedure.</td></tr>
+    <tr><td>OPP pledge text</td><td>The attestation is about "all the land for which I/we are applying".</td>
+      <td>A</td><td>Yes, textually. This is the decisive argument.</td></tr>
+    <tr><td>OPP §I.2</td><td>Where a member cannot sign: verbal pledge, recorded by the group, documentation
+      completed by the administrator "with his/their consent as recorded".</td><td>A</td>
+      <td>Yes — and it argues <em>against</em> B: this path needs an administrator present, which an
+      unauthenticated account-creation screen cannot offer.</td></tr>
+    <tr><td>SPEC §7 Flow A</td><td>Pledge is step 3, after registration (1) and POPIA consent (2).</td>
+      <td>A</td><td>Yes — and it is already the plan Task A6 implements.</td></tr>
+    <tr><td>D31</td><td>Record the land history as written, flag the conflict, infer nothing. "Awaiting a
+      group decision."</td><td>A (indifferent to placement)</td>
+      <td>Yes — but it constrains A3's <em>rule</em>. See 4.1.</td></tr>
+    <tr><td>POPIA purpose limitation</td><td>Data collected for one purpose is not repurposed without a
+      basis.</td><td>C, weakly</td>
+      <td>No — it favours <em>fewer</em> declarations, and C adds one.</td></tr>
+    <tr><td>Build principle "immutable history"</td><td>Assessment records are evidentiary; no destructive
+      deletes.</td><td>A</td>
+      <td>Yes — it is the same argument as §2: evidence attaches to irreversible acts.</td></tr>
+    <tr><td>Build principle "human-in-the-loop"</td><td>A recording or a declaration is reviewed by a
+      person.</td><td>A</td>
+      <td>Yes — the verbal path is explicitly a human process.</td></tr>
+  </tbody>
+</table>
+<p class="caption">One row points the other way (POPIA, weakly toward C) and one is indifferent (D31). The
+tie is broken by the pledge's own text, which is not a principle but a quoted sentence.</p>
+
+<h3>4.1 The constraint this page found in Task A3</h3>
+<div class="warnbox">
+  <p><strong>A3's conflict rule is written against the wrong reference.</strong> The plan says
+  <code>land_history_conflict</code> is set "when a declared period disagrees with OPP §V (annuals 18,
+  pasture 12, other perennials 12)". But the pledge a farmer signs, and SAOSO 4.2.3, both say
+  <strong>12 / 12 / 18</strong>. So a farmer who declares exactly what the pledge prints would be flagged
+  as conflicted, every time.</p>
+  <p>Two ways to fix it, and this page recommends the second:</p>
+  <ul class="tight">
+    <li><strong>Compare against both and flag a three-way disagreement</strong> — more code, and it still
+      treats a document-level contradiction as a per-farmer fault.</li>
+    <li><strong>Make the conflict a constant, not a computation.</strong> The contradiction is between two
+      paragraphs of the OPP; no farmer's answer creates it. <code>D31</code> is recorded as a module-level
+      fact naming both readings, and the pledge row stores only what was declared. A per-row boolean that
+      is <em>always</em> true or <em>always</em> false is not information (the same reasoning S4 applied to
+      the extraction mode in D80).</li>
+  </ul>
+</div>
+
+<h2><span class="num">5</span>Comparison</h2>
+<p class="lede">Unweighted on purpose. Weigh these yourself; the reasons are above, not in the numbers.</p>
+<table>
+  <thead><tr><th>Criterion</th><th>A — application</th><th>B — account</th><th>C — two-tier</th></tr></thead>
+  <tbody>
+    <tr><td>Honours OPP §I as written</td><td><strong>Yes</strong></td><td>No</td><td>Yes</td></tr>
+    <tr><td>Pledge can be signed truthfully</td><td><strong>Yes</strong></td><td>No — the text references the application</td><td>Yes</td></tr>
+    <tr><td>New schema or migration needed</td><td><strong>None</strong></td><td>None</td><td>New text + consent</td></tr>
+    <tr><td>Serves the verbal / distinctive-mark path (OPP §I.2)</td><td><strong>Yes</strong></td><td>Poorly — no administrator present</td><td>Yes</td></tr>
+    <tr><td>Number of declaration screens</td><td><strong>One</strong></td><td>One</td><td>Two</td></tr>
+    <tr><td>Funnel length after the result page</td><td>Two screens</td><td><strong>One</strong></td><td>Two</td></tr>
+    <tr><td>Evidence attaches only to an irreversible act</td><td><strong>Yes</strong></td><td>No</td><td>Yes</td></tr>
+    <tr><td>Risk of two texts drifting apart</td><td><strong>None</strong></td><td>None</td><td>High</td></tr>
+    <tr><td>Changes already-landed work</td><td><strong>None</strong></td><td>Reopens §11</td><td>Reopens §11</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="num">6</span>Recommendation</h2>
+<div class="rec">
+  <h3>A — the pledge stays in the application, and the account carries no declaration</h3>
+  <p>Sign it at <strong>stage 7</strong>, after the account, as OPP §I says and as the plan already has it.
+  The account step collects the three fields you decided on today and nothing else. The result page's call
+  to action stays "Create an account", never "Join".</p>
+  <p><strong>What it changes:</strong> three things to write down, no code beyond what A3 already plans —
+  (1) the account CTA wording, so a farmer does not read account creation as joining; (2) the plan's
+  <code>land_history_conflict</code> rule, per §4.1; (3) one line in the blueprint above as the reference for
+  every later "where does X happen" question.</p>
+  <p><strong>What would change my mind:</strong> if the group decides the pledge is an <em>entry</em>
+  declaration rather than an <em>application</em> declaration — but then OPP §I and the pledge's own wording
+  have to be amended first, because the platform should not be the place that resolves it. Or: if data later
+  shows a large cohort of accounts that never apply, and the group wants those people bound by something —
+  that would reopen the question with evidence rather than argument.</p>
+</div>
+
+<h2><span class="num">7</span>Your decision</h2>
+<div class="card">
+  <label class="choice"><input type="radio" name="d82" value="A">
+    <span class="lbl">A — Pledge in the application, after the account.</span>
+    <p class="hint">As OPP §I says. Account step carries no declaration. Recommended.</p>
+  </label>
+  <label class="choice"><input type="radio" name="d82" value="B">
+    <span class="lbl">B — Pledge at account creation.</span>
+    <p class="hint">Shortest funnel; requires amending OPP §I and the pledge text first.</p>
+  </label>
+  <label class="choice"><input type="radio" name="d82" value="C">
+    <span class="lbl">C — Two-tier: light confirmation at the account, the pledge at the application.</span>
+    <p class="hint">Costs a second declaration text and its own consent.</p>
+  </label>
+
+  <h3 style="margin-top:20px">Notes for the record</h3>
+  <textarea id="notes" placeholder="Anything the §18.3 row should carry: a condition, a date, a person to ask."></textarea>
+
+  <div class="export">
+    <button id="copy">Copy the §18.3 row</button>
+    <button class="ghost" id="clear">Clear</button>
+    <pre id="out">Choose an option to generate the row.</pre>
+  </div>
+</div>
+
+<p class="caption" style="margin-top:24px">
+  Sources read for this page: <span class="mono">knowledge/corpus/opp.md</span> (§I, §V, the farmer pledge,
+  p.12–14), <span class="mono">knowledge/corpus/saoso.md</span> (4.2.3),
+  <span class="mono">PGS_PLATFORM_SPEC.md</span> §3.1–3.2, §4.1, §7, D31,
+  <span class="mono">MVP1A_PLAN.md</span> Tasks A3, A6, A8,
+  <span class="mono">SELF_CHECK_PRD.md</span> §3.6, §4.1, §7, §11,
+  <span class="mono">core/urls.py</span> and <span class="mono">core/templates/public/</span> for the
+  built/not-built badges, <span class="mono">core/models/_core.py</span> at commit <code>243cedd</code> for the
+  schema claims. Quotes were copied from the corpus files, not retyped from memory.
+</p>
+
+</div>
+
+<div class="sticky">
+  <div class="inner">
+    <span class="state">D82 · <b id="state">no decision yet</b></span>
+    <button id="jump">Go to the decision</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = "pgs.d82.pledge";
+  var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="d82"]'));
+  var notes = document.getElementById("notes");
+  var out = document.getElementById("out");
+  var state = document.getElementById("state");
+
+  var LABELS = {
+    A: "Pledge in the application, after the account. Account carries no declaration.",
+    B: "Pledge at account creation. Requires amending OPP §I and the pledge text.",
+    C: "Two-tier: light confirmation at the account, the pledge at the application."
+  };
+
+  function read() {
+    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { return {}; }
+  }
+
+  function save() {
+    var chosen = radios.filter(function (r) { return r.checked; })[0];
+    var data = { choice: chosen ? chosen.value : "", notes: notes.value };
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+    render(data);
+  }
+
+  function render(data) {
+    var c = data.choice || "";
+    state.textContent = c ? "option " + c : "no decision yet";
+    if (!c) {
+      out.textContent = "Choose an option to generate the row.";
+      return;
+    }
+    var note = (data.notes || "").replace(/\s+/g, " ").trim();
+    var row = "| D82 | Where does the farmer pledge sit, and may an account carry a declaration? | " +
+      "**" + c + "** — " + LABELS[c] +
+      " Rationale: the pledge's own text is about \"all the land for which I/we are applying\", so it " +
+      "cannot precede the application; OPP §I puts it first in the application. The account step collects " +
+      "identity and three farm fields only. Consequence: OPP §I.2's verbal/distinctive-mark path stays " +
+      "with the administrator. Also recorded here: task A3's land_history_conflict rule must compare to " +
+      "the pledge and SAOSO (12/12/18), not to OPP §V (18/12/12) — see D82 artifact §4.1. " +
+      (note ? "Notes: " + note + " " : "") +
+      "Artifact: product/design/d82_pledge_placement.html |";
+    out.textContent = row;
+  }
+
+  radios.forEach(function (r) { r.addEventListener("change", save); });
+  notes.addEventListener("input", save);
+
+  document.getElementById("copy").addEventListener("click", function () {
+    var text = out.textContent;
+    if (!text || text.indexOf("Choose") === 0) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text);
+    } else {
+      var t = document.createElement("textarea");
+      t.value = text; document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(t);
+    }
+    var b = this; var was = b.textContent;
+    b.textContent = "Copied"; setTimeout(function () { b.textContent = was; }, 1200);
+  });
+
+  document.getElementById("clear").addEventListener("click", function () {
+    radios.forEach(function (r) { r.checked = false; });
+    notes.value = "";
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    render({});
+  });
+
+  document.getElementById("jump").addEventListener("click", function () {
+    var h = document.querySelectorAll("h2");
+    h[h.length - 1].scrollIntoView({ behavior: "smooth" });
+  });
+
+  var restored = read();
+  if (restored.choice) {
+    radios.forEach(function (r) { r.checked = r.value === restored.choice; });
+  }
+  notes.value = restored.notes || "";
+  render(restored);
+})();
+</script>
+</body>
+</html>
