@@ -147,7 +147,8 @@ is why `expected_tables` exists and why S5 is still the work that closes them. T
 requirements, not shapes: the eight `read_table()` targets in `test_ingestion_shapes.py` still
 wait for S2's reader.
 
-### 3.5 What S2 measured (2026-11-03): Docling scores 1 of 8, and the gaps are the ones the requirements predicted
+### 3.5 What S2 measured (2026-11-03): Docling scores 0 of 8 as extracted (1 of 8 with a header
+convention), and the gaps are the ones the requirements predicted
 
 Run: `scripts/eval_extractors.py` against the eight shapes, **docling 2.146.0** on Python 3.13.3, on a
 laptop CPU, at Docling's own defaults — measured, not assumed: `TableFormerMode.ACCURATE` with

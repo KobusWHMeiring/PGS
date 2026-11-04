@@ -1,6 +1,6 @@
-# Handover — Docling measured 1 of 8, and the next step needs a Google Cloud account
+# Handover — Docling scored 0 of 8 as extracted, and the next arm needs no new account
 
-> ## START HERE — S2 is half done: **Docling failed the bar, and Document AI is now the next step**
+> ## START HERE — S2's first arm is measured and failed; **the next arm is a choice from PRD §3.6**
 >
 > **`INGESTION_ENGINE_PRD.md` is `In Progress`** and carries D80's decision as prose (X2 now, X3 when a
 > document demands it) plus six slices. **S0, S1 and S4 landed. S2 is measured for Docling** (§3.5):
@@ -11,21 +11,25 @@
 > **dividers** (App 2's two divider labels became rows), **page-break rows** (p5's continuation is a
 > second table and was not returned) and **non-text**.
 > `scripts/verify.sh` **green: 1674 passed / 1 skipped / 8 xfailed in 141.85 s** (a busy box; the same
-> gate measured 68.61 s earlier — quote cold *and* warm, §3.17). `scripts/fast.sh --critical` 172 in 10.6 s.
+> gate measured 68.61 s earlier that day — quote cold *and* warm, §3.17). `scripts/fast.sh` **1659 passed
+> / 1 skipped / 15 deselected / 8 xfailed in 42.06 s**; `--critical` **172 passed / 4 deselected in
+> 10.09 s** (both measured 2026-11-04 on this tree).
 >
-> **D81's threshold fired**, so the next act is another extractor arm — see **§3.6 of the PRD** for the six
-> candidates and what each needs. **A Gemini API key is NOT a GCP credential** (verified 2026-11-04: 200 on
-> `generativelanguage`, 401 on `documentai` — *"API keys are not supported by this API"*), and the session
-> shell holds `GEMINI_API_KEY` and `OPENROUTER_API_KEY` even though the repo `.env` holds neither. That
-> makes a **VLM arm (Gemini or OpenRouter: 310 image-capable models listed today) runnable with no new
-> account** — with R3 as the gate, cell text taken from an extraction pass, never from the model's prose.
-> **Document AI** remains the ceiling candidate and needs the owner, not an agent: a
-> Google Cloud project with billing, the API enabled, a processor, and a service-account key. The
-> explainer (`product/design/d80_s2_extractor_evaluation.html`) says what each is and why the key is a
-> spending credential; **Addendum A** there answers "why not a vision model" (Document AI is *extractive*
-> vision; D80 rejected X4, answering from page images). Until those exist, **S2 stops here** — see §3.5 of
-> the PRD for what a second run must beat, and `product/docs/evidence/2026-11-03_s2_docling_scores.json`
-> for the numbers, regenerable by one command.
+> **D81's threshold fired**, so the next act is **one more extractor arm**. Six are listed in **§3.6** with
+> what each needs; the cheapest two need **no new account**: a **VLM arm** (the session shell holds
+> `GEMINI_API_KEY` and `OPENROUTER_API_KEY`; OpenRouter's catalogue listed **455 models today, 310
+> accepting image input, 188 a PDF**) or a second **local** parser (Unstructured `hi_res`, Marker,
+> MinerU, PaddleOCR). **Document AI is the ceiling candidate and needs the owner**: a Google Cloud project
+> with billing, the API enabled, a processor, and a service-account key. **A Gemini API key is NOT a GCP
+> credential** — verified 2026-11-04: 200 on `generativelanguage`, 401 on `documentai` — so that route
+> cannot be walked by accident.
+>
+> **The rule that admits a generative arm** (and the reason this repo can consider one at all): a VLM
+> *writes* the text it believes it read, so **R3 is the gate** — a cell that is not a contiguous run of
+> the page is a violation. Model proposes the grid; characters come from an extraction pass. The explainer
+> `product/design/d80_s2_extractor_evaluation.html` covers the tools and the credential question, and its
+> **Addendum A** answers "why not a vision model" (Document AI is *extractive* vision; D80 rejected X4,
+> answering from page images).
 >
 > **The instrument is committed and is not a dependency:** `scripts/eval_extractors.py` converts only a
 > shape's pages, maps the extractor's table onto `TableRead`, scores it with S0's own `mismatches()`, and
@@ -53,21 +57,28 @@
 > mode the cells came from** (the landscape passes against `-table` and fails 10 ways against `-layout`),
 > which S3 must record on the artefact.
 >
-> **What is next, in order:** **B — Document AI**, once the owner has created the four things (it is the
-> strongest table parser available and D81 gates it on exactly this result); then **S3** (the generator
-> emits blocks, and records the extraction mode); then **S5** (re-review Appendices 6a and 7 *through*
-> the harness — no extractor can see a table that is not a block, which is why `expected_tables` exists).
-> **If Document AI is not wanted**, D is the honest fallback: hand-review those 24 chunks and write the
-> generalisation debt down. **`read_table()` is still the seam.**
+> **What is next, in order:** **one arm from §3.6, and its scorecard is §3.5** — cheapest first (a VLM via
+> OpenRouter/Gemini, or a second local parser), because both need no new account and the instrument already
+> exists. **Document AI** stays the ceiling candidate: D81 gates it on exactly this result and it needs the
+> owner's four things. Then **S3** (the generator emits blocks, and records the extraction mode), then
+> **S5** (re-review Appendices 6a and 7 *through* the harness — no extractor can see a table that is not a
+> block, which is why `expected_tables` exists). **If no arm is wanted**, D is the honest fallback:
+> hand-review those 24 chunks and write the generalisation debt down. **`read_table()` is still the seam.**
+> The numbers a second run must beat are in `product/docs/evidence/2026-11-03_s2_docling_scores.json`,
+> regenerable by `scripts/eval_extractors.py` in one command.
 >
 > **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
 > a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
 > work and not a PRD.
 >
-> **Do not refresh the dev corpus.** `corpus_check` here reports `landscape` **drift** and its
-> 17 chunks carry **0** labelled renditions against live's 8; a refresh without
-> `GEMINI_API_KEY` in the dev `.env` writes 17 NULL vectors that then read "already ingested"
-> forever (`deploy/README.md` §4). **Live is the reference DB.**
+> **Do not refresh the dev corpus casually.** `corpus_check` here reports `landscape` **drift** and its
+> 17 chunks carry **0** labelled renditions against live's 8, so dev is behind live. The old blocker was
+> the key, and it has half lifted: the repo `.env` holds only `DJANGO_SECRET_KEY`, but **this shell holds
+> `GEMINI_API_KEY`** and `pgs/settings.py` reads it with `env("GEMINI_API_KEY")`, so a refresh *from an
+> agent shell* would embed for real. The trap is unchanged and is the reason not to do it by accident: a
+> refresh without a working key writes **17 NULL vectors that then report "already ingested" forever**
+> (`deploy/README.md` §4). So: confirm the key is present, refresh deliberately, then run `corpus_check`
+> — and know that **live is the reference DB**, not this box.
 >
 > **Do not run `scripts/build_corpus.py --force` on a document with a table block** — it now refuses
 > before writing, so the accident that lost `opp.md`'s §2.3 review on 2026-11-01 cannot recur. Read
@@ -94,19 +105,22 @@ wiring, the PRD close), session `1e`'s (the D80 PRD, S0's fixtures, S1's generat
 harness, the gate script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's
 measurement). **Check it, do not quote it:** `git rev-list --count origin/main..HEAD` must print `0`.
 
-**On this tree** (2026-11-03/04, session `1g`): `scripts/verify.sh` **green at 1674 passed /
-1 skipped / 8 xfailed in 141.85 s** (a busy box; the same gate measured 68.61 s earlier that day), run as
+**On this tree** (2026-11-04, session `1g`): `scripts/verify.sh` **green at 1674 passed /
+1 skipped / 8 xfailed in 141.85 s** (a busy box; the same gate measured 68.61 s earlier), run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). The same tree measured **219.16 s** in session `1e` on a
-cold box — quote cold *and* warm (§3.17). `scripts/fast.sh` measured **1656 passed / 1 skipped /
-15 deselected / 8 xfailed in 46.66 s**, and `--critical` **172 passed / 4 deselected in 10.64 s**.
+cold box — quote cold *and* warm (§3.17). `scripts/fast.sh` measured **1659 passed / 1 skipped /
+15 deselected / 8 xfailed in 42.06 s**, and `--critical` **172 passed / 4 deselected in 10.09 s**
+(both 2026-11-04).
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **nothing outstanding**:
 `git rev-list --count origin/main..HEAD` prints `0` (the number was wrong twice by being quoted;
 let the command answer).
-**Live:** `https://organicguarantee.africa` on the homtini VPS at **`06bb11a`**, deployed
-2026-11-03 with a **current** corpus (401 chunks). **A deploy is owed** for everything after it
-(the session `1f` push, and S4's commit on top): the dev box has no SSH key, so the operator runs
+**Live:** `https://organicguarantee.africa` on the homtini VPS, deployed 2026-11-03 at **`06bb11a`**
+(last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,
+but that body carries no commit, so **this file cannot see which commit is serving** — verify on the box
+with `git rev-parse --short HEAD`). It serves a **current** corpus (401 chunks). **A deploy is owed** for
+everything after `06bb11a` — sessions `1f` and `1g`: the dev box has no SSH key, so the operator runs
 `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh` and reads the `/health/` body back — the
 script verifies origin's tip on the box before it pulls. Its `deploy.sh` on disk is the pre-`3c2c39d`
 one, and **the §3.27 window is self-closing, not debt**: that script still `pull`s origin's tip,
@@ -125,7 +139,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
-- `1g` 2026-11-04 (session 19) — Docling measured, and it does not pass (in `SESSION_1f…` §7) — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
+- `1g` 2026-11-04 (session 19) — Docling measured, and it does not pass; a Gemini key is not a GCP key (in `SESSION_1f…` §7–§8) — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1e` 2026-11-03 (session 17) — the eight shapes, and the two that have no test — [`SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md`](product/docs/handover/SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md)
 - `1d` 2026-11-03 (session 16) — the state said what was not true, and the rows were cut — [`SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md`](product/docs/handover/SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md)
