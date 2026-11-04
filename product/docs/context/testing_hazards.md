@@ -1908,6 +1908,31 @@ Rule: when proving a guard can fail, break it in a way whose failure set is know
 check the *named* tests changed. A pattern that cannot match is `(?!)`; `$^` matches the empty
 string, and `[]` is an error rather than an empty class.
 
+### 1.35 A test that hardcodes a fee period has an expiry date of its own
+
+`MVP1A_PLAN.md` Task A1 was written on 2026-10-20 and its `is_paid_up` test says a payment
+made on `2025-03-01` with period `2025-03-01..2026-02-28` counts as paid up. That was true
+for 131 days. `Member.is_paid_up` reads `period_end >= today`, so from 2026-03-01 the test
+asserts `False is True` and the suite goes red for a reason that has nothing to do with the
+code being wrong.
+
+Evidence:
+    $ python -m pytest core/tests/test_membership.py -q
+    assert Member.objects.get(pk=member.pk).is_paid_up is True
+    E   assert False is True
+    E    +  where False = <Member: OUT-2026-0001>.is_paid_up
+
+Consequence: a plan written in the past ships a test that fails in the future, and the failure
+arrives as an apparent regression in code nobody touched. The first instinct is to "fix" the
+model. The model was right.
+
+Rule: any assertion about *now* computes its dates from `timezone.localdate()` — offsets like
+`today - timedelta(days=400)` — and never from a literal. Where the literal *is* the point
+(a period that expired), derive it from today too. A test may name a date only when the date is
+the input under test, and then it must also pin the clock (`freezegun`) so the test says what
+it means. Same trap applies to `joined_on`, `first_certified_on`, probation end dates and the
+three notice windows (5/3/5 days) in D3.
+
 ## 5. Template for a new entry
 
 ```markdown

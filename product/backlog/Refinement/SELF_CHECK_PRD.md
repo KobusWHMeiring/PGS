@@ -389,6 +389,70 @@ consent — a committee decision about the group's own data, not a design one).
 
 ---
 
+## 11. 2026-11-04 — the account at the end of the flow
+
+**Decision (product owner, this session):** the result page offers an **opt-in** *"Save my details and
+create an account"*, so a farmer who has decided they are serious can keep what they just entered and
+use it when they start an official visit. It does not change §3.6: with the box unticked, nothing is
+written and the result renders from the submitted form.
+
+The seam already exists. `PGS_PLATFORM_SPEC` §3.1: *"an account is created when they engage further,
+and `User.graduated_from_public_at` records when a public user became a member."* This addendum says
+what "further" is here, and what the account can honestly hold.
+
+### 11.1 What the check can and cannot carry forward
+
+The check was designed to collect **no identity data**. So "save my details" saves less than the
+words suggest, and the difference is worth stating before it is built:
+
+| Carries forward | How |
+|---|---|
+| Category ticks | → `FarmCategory` rows **at application**, status `APPLIED` — never at the check |
+| Turnover band | → `AssessmentFee.turnover_band` / `band_label` — label to label, no inference |
+| Records held, practices | → prefill the questionnaire (already **C2a**, plan line 521) |
+| **Farm name, nearest town, address, contact** | **the check never asks for any of them** |
+| **Total hectares** | **cannot:** the check stores a *band*; `Farm.total_hectares` is a number. §III's "declared, not computed" cuts both ways |
+
+So an account created purely from the check's answers holds an email address and some bands. To have a
+farm profile at that point the account step must **ask three new questions** — farm name, nearest
+town, contact person — which is new collection and a third consent, not a save button.
+
+### 11.2 What the account is, in schema terms
+
+Three candidate shapes were tested against the models Task A1 landed (`core/models/_core.py`,
+commit `243cedd`):
+
+| Shape | Verdict |
+|---|---|
+| `User` only | Cheapest, and honest — but "save my details" then saves nothing a farmer would miss, and the whole point is not retyping |
+| **`User` + `Member{APPLICANT}` + `Farm`** | **Recommended.** Flow A step 1 already creates exactly this at self-registration, *before* the pledge, categories, turnover and fee — so it is structurally the same row, not a new state. A7 already makes `assert_eligible_for_assessment` raise for `APPLICANT`, so **no gate changes** |
+| A sixth `Member.status` (`PROSPECT`) | Rejected. `Member.status` is frozen at five values by a guard test in A1, because `status` gates `assert_eligible_for_assessment` and feeds `FarmCategory` downstream |
+| `Farm` with no `Member` | Not possible: `Farm.member` is a non-null FK (A1) |
+
+**Wording consequence.** `APPLICANT` is the internal state; the public page must not say "application"
+until they apply. The account CTA reads *"Create an account"*, and the step after it is still the
+application flow (A6).
+
+### 11.3 Two things this must not do
+
+1. **It must not link `SelfCheckReport` to `Member` or `Farm`.** §4.1's "no FK to `Member` or `Farm`"
+   stands, and §8's "writes nothing that could be mistaken for an assessment record" depends on it. The
+   account captures its own fields by **prefill from the submitted form**, not by joining to a
+   consented research row.
+2. **It must not create `FarmCategory` rows.** "A tick is not an application" (A1 guard test
+   `test_a_tick_is_not_an_application`): `FarmCategory.status` has no pre-application value, so the
+   ticks wait for A6.
+
+### 11.4 What is still open
+
+| # | Question | Who decides | Default this addendum takes |
+|---|---|---|---|
+| Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | Product owner | **Collected** — otherwise the farm profile is empty and the account only saves an email |
+| Q8 | The third consent: holding an account is a new processing purpose, separate from research and demographics. Who writes and who approves that text? | Group / product owner | Not drafted. It needs a retention answer, which the self-check deliberately does not have |
+| Q9 | Does an account require a verified email before it can be used again? | Product owner | No — `User.email_verified_at` exists; verification is a friction decision, not a schema one |
+
+---
+
 ## Pre-Flight Checklist
 
 - [x] Models in a domain module — `core/models/_selfcheck.py`, re-exported from `core/models/__init__.py`
