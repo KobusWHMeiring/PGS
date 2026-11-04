@@ -1,0 +1,721 @@
+{
+  "instrument": "scripts/eval_extractors.py",
+  "extractor": "docling 2.146.0",
+  "python": "3.13.3",
+  "checked": "8 shapes; 0 pass as extracted, 1 pass once row 0 is taken as the header",
+  "results": [
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "seconds": 24.4,
+      "tables_on_pages": [
+        {
+          "pages": [
+            2
+          ],
+          "rows": 7,
+          "cols": 3
+        }
+      ],
+      "found": true,
+      "verdict": "pass (needs header convention)",
+      "table_pages": [
+        2
+      ],
+      "rows_found": 7,
+      "rows_expected": 6,
+      "columns_found": 0,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "numeric_row: columns () != ('Annual farm turnover (gross sales)', 'Initial certification fee (R)', 'Renewal fee (R)')",
+          "numeric_row: 7 rows, the page prints 6",
+          "numeric_row: row pages (2, 2, 2, 2, 2, 2, 2) != (2, 2, 2, 2, 2, 2)",
+          "numeric_row: row 0 cell 0 is 'Annual farm turnover (gross sales)', expected 'Below R 250,000'",
+          "numeric_row: row 0 cell 1 is 'Initial certification fee (R)', expected '1,500'",
+          "numeric_row: row 0 cell 2 is 'Renewal fee (R)', expected '900'",
+          "numeric_row: row 5 cell 0 is 'R 2,500,001 - R 5,000,000', expected 'Above R 5,000,000'",
+          "numeric_row: row 5 cell 2 is '5,000', expected '8,000'"
+        ],
+        "columns": [],
+        "rows": [
+          [
+            "Annual farm turnover (gross sales)",
+            "Initial certification fee (R)",
+            "Renewal fee (R)"
+          ],
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 - R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 - R 1,000,000",
+            "3,000",
+            "2,500"
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 - R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 - R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 - R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      }
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "seconds": 13.6,
+      "tables_on_pages": [
+        {
+          "pages": [
+            86
+          ],
+          "rows": 21,
+          "cols": 2
+        }
+      ],
+      "found": true,
+      "verdict": "fail",
+      "table_pages": [
+        86
+      ],
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: row 2 cell 0 is 'Other bov ine animals less than one year old', expected 'Other bovine animals less than one year old'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other bov ine animals less than one year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: row 2 cell 0 is 'Other bov ine animals less than one year old', expected 'Other bovine animals less than one year old'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other bov ine animals less than one year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      }
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "seconds": 11.2,
+      "tables_on_pages": [
+        {
+          "pages": [
+            89
+          ],
+          "rows": 8,
+          "cols": 5
+        }
+      ],
+      "found": true,
+      "verdict": "fail",
+      "table_pages": [
+        89
+      ],
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 5,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is 'Aeration or oxygenation using gaseous oxygen', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b'",
+          "column_major: row 6 cell 3 does not hold 'No more than 0,6 mg/l'"
+        ],
+        "columns": [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1",
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature 70 o C",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite, Cellulose, Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product"
+          ],
+          [
+            "4",
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen, Carbon dioxide, Argon",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+            "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is 'Aeration or oxygenation using gaseous oxygen', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b'",
+          "column_major: row 6 cell 3 does not hold 'No more than 0,6 mg/l'"
+        ],
+        "columns": [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1",
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature 70 o C",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite, Cellulose, Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product"
+          ],
+          [
+            "4",
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen, Carbon dioxide, Argon",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+            "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      }
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "seconds": 61.7,
+      "tables_on_pages": [],
+      "found": false,
+      "verdict": "no table found on the page",
+      "table_pages": [],
+      "rows_found": 0,
+      "rows_expected": 1,
+      "columns_found": 0,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: the extractor returned no table on pages [5] (0 table(s) found on those pages)"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: the extractor returned no table on pages [5] (0 table(s) found on those pages)"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      }
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "seconds": 58.2,
+      "tables_on_pages": [
+        {
+          "pages": [
+            4
+          ],
+          "rows": 3,
+          "cols": 6
+        }
+      ],
+      "found": true,
+      "verdict": "fail",
+      "table_pages": [
+        4
+      ],
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 6,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: columns ('Key steps', 'Resource documents, guidelines and requirements', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.",
+            "\u00b7 \u00b7",
+            "IFOAM PGS tool kit PGS SA: How to set up a PGS group",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: columns ('Key steps', 'Resource documents, guidelines and requirements', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.",
+            "\u00b7 \u00b7",
+            "IFOAM PGS tool kit PGS SA: How to set up a PGS group",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      }
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "seconds": 107.8,
+      "tables_on_pages": [
+        {
+          "pages": [
+            4
+          ],
+          "rows": 3,
+          "cols": 6
+        }
+      ],
+      "found": true,
+      "verdict": "fail",
+      "table_pages": [
+        4
+      ],
+      "rows_found": 2,
+      "rows_expected": 3,
+      "columns_found": 6,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: columns ('Key steps', 'Resource documents, guidelines and requirements', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "page_break_row: 2 rows, the page prints 3",
+          "page_break_row: row pages (4, 4) != (4, 4, 5)",
+          "page_break_row: row 1 cell 0 does not start 'Step 2': 'Farmers who are already producing a surplus of organic produ'",
+          "page_break_row: row 2 cell 0 is missing from the read",
+          "page_break_row: row 2 cell 4 is missing from the read"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.",
+            "\u00b7 \u00b7",
+            "IFOAM PGS tool kit PGS SA: How to set up a PGS group",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: columns ('Key steps', 'Resource documents, guidelines and requirements', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "page_break_row: 2 rows, the page prints 3",
+          "page_break_row: row pages (4, 4) != (4, 4, 5)",
+          "page_break_row: row 1 cell 0 does not start 'Step 2': 'Farmers who are already producing a surplus of organic produ'",
+          "page_break_row: row 2 cell 0 is missing from the read",
+          "page_break_row: row 2 cell 4 is missing from the read"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.",
+            "\u00b7 \u00b7",
+            "IFOAM PGS tool kit PGS SA: How to set up a PGS group",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      }
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "seconds": 9.7,
+      "tables_on_pages": [
+        {
+          "pages": [
+            77
+          ],
+          "rows": 14,
+          "cols": 2
+        }
+      ],
+      "found": true,
+      "verdict": "fail",
+      "table_pages": [
+        77
+      ],
+      "rows_found": 13,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: 13 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers () != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'South African specific', expected 'Guano'",
+          "qualifier: row 2 cell 1 must be empty, the read says 'South African specific'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production systems without prior permission from the control body Coming from extensive livestock farming. If sourced from intensive livestock farming or not sourced from organic production systems, then the need for use thereof shall be motivated to the certification body, and it shall be composted."
+          ],
+          [
+            "South African specific",
+            "South African specific"
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Forbidden if from factory farming origin. Manure applications should not be the primary source of nitrogen. See Section B - Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species and Types of Production for the density of livestock for the equivalent of 170 Kg nitrogen per hectare per year."
+          ]
+        ],
+        "rows_total": 13,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: 13 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers () != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'South African specific', expected 'Guano'",
+          "qualifier: row 2 cell 1 must be empty, the read says 'South African specific'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production systems without prior permission from the control body Coming from extensive livestock farming. If sourced from intensive livestock farming or not sourced from organic production systems, then the need for use thereof shall be motivated to the certification body, and it shall be composted."
+          ],
+          [
+            "South African specific",
+            "South African specific"
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Forbidden if from factory farming origin. Manure applications should not be the primary source of nitrogen. See Section B - Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species and Types of Production for the density of livestock for the equivalent of 170 Kg nitrogen per hectare per year."
+          ]
+        ],
+        "rows_total": 13,
+        "rows_sampled": 4
+      }
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "seconds": 42.1,
+      "tables_on_pages": [],
+      "found": false,
+      "verdict": "no table found on the page",
+      "table_pages": [],
+      "rows_found": 0,
+      "rows_expected": 2,
+      "columns_found": 0,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: the extractor returned no table on pages [6] (0 table(s) found on those pages)"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: the extractor returned no table on pages [6] (0 table(s) found on those pages)"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      }
+    }
+  ]
+}

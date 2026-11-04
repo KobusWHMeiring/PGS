@@ -1,53 +1,58 @@
-# Handover — D80 has a PRD, three slices are in, and the harness now reads the tables
+# Handover — Docling measured 1 of 8, and the next step needs a Google Cloud account
 
-> ## START HERE — S0, S1 and S4 are in; **S2 (an extractor) is next**, and it needs an install
+> ## START HERE — S2 is half done: **Docling failed the bar, and Document AI is now the next step**
 >
-> **`INGESTION_ENGINE_PRD.md` is `In Progress` (session `1e`/`1f`, 2026-11-03)** and carries D80's
-> decision as prose (X2 now, X3 when a document demands it) plus six slices. **S0, S1 and S4 landed.**
-> `scripts/verify.sh` **green: 1671 passed / 1 skipped / 8 xfailed in 68.61 s** (a warm box; the
-> 1e run on the same tree measured 219.16 s cold — quote cold *and* warm, §3.17).
-> `scripts/fast.sh` **1656 passed / 1 skipped / 15 deselected / 8 xfailed in 46.66 s**;
-> `scripts/fast.sh --critical` **172 passed / 4 deselected in 10.64 s**.
+> **`INGESTION_ENGINE_PRD.md` is `In Progress`** and carries D80's decision as prose (X2 now, X3 when a
+> document demands it) plus six slices. **S0, S1 and S4 landed. S2 is measured for Docling** (§3.5):
+> **0 of 8 shapes pass as extracted, 1 of 8 passes once row 0 is taken as the header, and 2 of 8 tables
+> are not detected at all** — landscape p5 and p6 come back as 2 pictures and headings. The failures are
+> exactly requirements 2, 4 and 6: **header association** (Docling marks no cell as a column header on
+> any page), **spans** (6a's two header labels merged into one cell; p4's five columns split into six),
+> **dividers** (App 2's two divider labels became rows), **page-break rows** (p5's continuation is a
+> second table and was not returned) and **non-text**.
+> `scripts/verify.sh` **green: 1674 passed / 1 skipped / 8 xfailed in 141.85 s** (a busy box; the same
+> gate measured 68.61 s earlier — quote cold *and* warm, §3.17). `scripts/fast.sh --critical` 172 in 10.6 s.
+>
+> **D81's threshold fired**, so the next act is **Document AI — and it needs the owner, not an agent**: a
+> Google Cloud project with billing, the API enabled, a processor, and a service-account key. The
+> explainer (`product/design/d80_s2_extractor_evaluation.html`) says what each is and why the key is a
+> spending credential; **Addendum A** there answers "why not a vision model" (Document AI is *extractive*
+> vision; D80 rejected X4, answering from page images). Until those exist, **S2 stops here** — see §3.5 of
+> the PRD for what a second run must beat, and `product/docs/evidence/2026-11-03_s2_docling_scores.json`
+> for the numbers, regenerable by one command.
+>
+> **The instrument is committed and is not a dependency:** `scripts/eval_extractors.py` converts only a
+> shape's pages, maps the extractor's table onto `TableRead`, scores it with S0's own `mismatches()`, and
+> scores twice (as extracted, and with row 0 as the header). `tests/tools/test_eval_extractors.py` proves
+> it imports with no `docling` installed and refuses to score an empty document. That keeps requirement
+> 10 true: **the gate needs no extractor.**
 >
 > **The audit was established, not inherited** (`SESSION_1e…` §1). Measured: **44** reviewed rows
 > carrying column meaning across **three** documents (OPP §2.3 6, landscape 8, Appendix 2 30), plus
 > **20** Appendix 6a rows that carry none, **ten** table-shape test modules (not four), Appendix 7's
-> **4** interleaved chunks, and the landscape's longest cell at **1,112** characters. And the answer
-> that matters: **six of the eight shapes have a test, and none of the eight has a test whose input
-> is the shape** — every existing assertion reads a human's fix. The two with no test are exactly the
-> two live defects, and that is now `test_the_two_live_defects_are_the_two_shapes_with_no_test`.
+> **4** interleaved chunks, and the landscape's longest cell at **1,112** characters.
 >
 > **S0** = `knowledge/tests/shape_fixtures.py` (eight `ShapeCase`s: page provenance, expectation,
 > IR verdict, gap, `covered_by`; the page is **read** from the committed fixtures, never copied) and
 > `test_ingestion_shapes.py` (28 green, **8 strict-xfail targets** calling a `read_table()` that does
 > not exist yet, so the gap is counted every run and an `XPASS` fails the suite). **S1** =
 > `build_corpus.py --force` **refuses** to drop a reviewed `<!-- table -->` block and names
-> `--discard-tables` as the override (hazard §3.25; two proofs watched red).
+> `--discard-tables` as the override (hazard §3.25).
 >
 > **S4** = `knowledge/table_harness.py` (requirements 2–7 as `check_table`/`check_document`, named
 > `R2`–`R7` violations, no extractor, no PDF), `scripts/check_tables.py` (the gate: one document and
-> its declared row counts per run) and 27 tests. **The four reviewed tables — 14 rows — pass**, there
-> is **one mutation per requirement** the harness names, and two guards were broken and watched red.
-> **Two things it refuses to guess:** the row count (`--rows`; undeclared is a violation, and
-> `expected_tables` makes a missing block fail rather than pass with nothing to check) and **the
-> extraction mode the cells came from** — the landscape passes against `-table` and fails 10 ways
-> against `-layout`, so the mode is information. **That mode is now the last per-document datum in
-> the path; S3 is where the generator records it.** R3 was generalised by measurement: a cell line is
-> matched inside one printed line, else split at its own hyphen with both halves printed lines in
-> order (the strict rule reported 3 cells, all wraps). A shared cursor across a row's cells was
-> measured and dropped (171 false violations: the fee box is filed under the row it starts beside).
+> its declared row counts per run) and 27 tests. **The four reviewed tables — 14 rows — pass**, there is
+> **one mutation per requirement** the harness names, and two guards were broken and watched red. Two
+> things it refuses to guess: the row count (`--rows`; undeclared is a violation) and **the extraction
+> mode the cells came from** (the landscape passes against `-table` and fails 10 ways against `-layout`),
+> which S3 must record on the artefact.
 >
-> **What is next:** **S2 — Docling first (D81, decided 2026-11-03)**, on the eight pages, graded by S0's
-> expectations and S4's checker; **Document AI only if Docling loses spans, qualifiers or header
-> association on three or more of the eight.** Why, and what a GCP key would cost: the explainer
-> `product/design/d80_s2_extractor_evaluation.html` (Addendum A answers "why not a vision model" —
-> Document AI is *extractive* vision; what D80 rejected was X4, answering from page images, because a
-> quote must stay characters we verified). **Two frictions, measured:** `docling` and `torch` are not
-> installed here, and Document AI needs a project, billing, a processor and a service-account key the
-> dev `.env` does not hold (it has `DJANGO_SECRET_KEY` only). Then S3 (generator emits blocks, and
-> records the extraction mode), S5 (re-review Appendices 6a and 7 *through* the harness — no extractor
-> can see a table that is not a block, which is why `expected_tables` exists). **`read_table()` is the
-> seam.**
+> **What is next, in order:** **B — Document AI**, once the owner has created the four things (it is the
+> strongest table parser available and D81 gates it on exactly this result); then **S3** (the generator
+> emits blocks, and records the extraction mode); then **S5** (re-review Appendices 6a and 7 *through*
+> the harness — no extractor can see a table that is not a block, which is why `expected_tables` exists).
+> **If Document AI is not wanted**, D is the honest fallback: hand-review those 24 chunks and write the
+> generalisation debt down. **`read_table()` is still the seam.**
 >
 > **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
 > a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
@@ -75,16 +80,16 @@ D80 by name.
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off, chat-split, handover-truth-up and shapes-harness sessions
+landscape-sign-off, chat-split, handover-truth-up, shapes-harness and docling-evaluation sessions
 **Repo state:** `main` — **`origin/main` == `HEAD`** (session `1f` pushed everything, then committed
 S4 on top of it): the licence commit, the chat-split follow-ups, the six test/generator cuts, the
 flake fix, `1c`'s close, session `1d`'s (the truth-up, five row batches, the link guard, the gate
-wiring, the PRD close), session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3) and
-session `1f`'s (the S4 harness, the gate script, and a corrected unpushed count). **Check it, do not
-quote it:** `git rev-list --count origin/main..HEAD` must print `0`.
+wiring, the PRD close), session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), session `1f`'s (the S4
+harness, the gate script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's
+measurement). **Check it, do not quote it:** `git rev-list --count origin/main..HEAD` must print `0`.
 
-**On this tree** (2026-11-03, session `1f`): `scripts/verify.sh` **green at 1671 passed /
-1 skipped / 8 xfailed in 68.61 s**, run as
+**On this tree** (2026-11-03/04, session `1g`): `scripts/verify.sh` **green at 1674 passed /
+1 skipped / 8 xfailed in 141.85 s** (a busy box; the same gate measured 68.61 s earlier that day), run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). The same tree measured **219.16 s** in session `1e` on a
 cold box — quote cold *and* warm (§3.17). `scripts/fast.sh` measured **1656 passed / 1 skipped /
@@ -114,6 +119,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1g` 2026-11-04 (session 19) — Docling measured, and it does not pass (in `SESSION_1f…` §7) — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1e` 2026-11-03 (session 17) — the eight shapes, and the two that have no test — [`SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md`](product/docs/handover/SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md)
 - `1d` 2026-11-03 (session 16) — the state said what was not true, and the rows were cut — [`SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md`](product/docs/handover/SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md)

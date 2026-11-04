@@ -147,6 +147,48 @@ is why `expected_tables` exists and why S5 is still the work that closes them. T
 requirements, not shapes: the eight `read_table()` targets in `test_ingestion_shapes.py` still
 wait for S2's reader.
 
+### 3.5 What S2 measured (2026-11-03): Docling scores 1 of 8, and the gaps are the ones the requirements predicted
+
+Run: `scripts/eval_extractors.py` against the eight shapes, **docling 2.146.0** on Python 3.13.3, on a
+laptop CPU, at Docling's own defaults — measured, not assumed: `TableFormerMode.ACCURATE` with
+`do_cell_matching=True`, i.e. its high-quality path, not its fast one. Instrument and output are
+committed: `product/docs/evidence/2026-11-03_s2_docling_scores.json`.
+
+Every shape is scored twice, because the tool marks no cell as a column header on any page we gave it:
+`as extracted` (the strict reading) and `once row 0 is taken as the header` (a one-line convention).
+Both columns are published; a tool that needs a convention is a different finding from one that cannot
+pass.
+
+| Shape | Table found | Grid | Strict | With row 0 as header | The failure, named |
+|---|---|---|---|---|---|
+| Numeric row, no labels (OPP) | yes | 7x3 | fail | **pass** | none in the grid: it is exact, and only the header is unmarked |
+| Header lost entirely (6a) | yes | 21x2 | fail | fail | the two printed header labels **merged into one cell**; and `Other bov ine animals` — a word split inside itself |
+| Column-major interleaving (App 7) | yes | 8x5 | fail | fail | an extra leading column (the paper's row numbers, useful) and a condition cell lost |
+| Very long cell (landscape p5) | **no** | — | — | — | **no table detected**: the page's text comes back as headings and 2 pictures |
+| Deliberate empty cell (p4) | yes | 3x6 | fail | fail | the five-column grid split into six; the fee `R500` and `Proud member of` are lost |
+| Row across a page break (p4-5) | partly | 3x6 on p4 | fail | fail | the rows that continue on p5 are a second table and were not returned |
+| Two-level qualifiers (App 2) | yes | 14x2 | fail | fail | both divider labels became **rows** (2 extra); nothing marks a divider as a divider |
+| A picture in a cell (p6) | **no** | — | — | — | **no table detected**: 2 pictures, text as headings |
+
+**0 of 8 pass as extracted; 1 of 8 passes once row 0 is taken as the header; 2 of 8 tables are not
+detected at all.** Rows and columns are usually *found* (6a: 20 of 20 rows, 2 of 2 columns), so this is
+not a tool that cannot see — it is a tool whose structure loses exactly what requirements 2, 4 and 6
+name: **header association, spanning/merged cells, dividers, page-break rows, and non-text**.
+
+Speed, quoted as the range because it was measured twice on the same box with the same verdicts:
+**163 s total** on a quiet run, **330 s** on a busy one — 7-14 s per SAOSO page, 19-58 s per landscape
+page, 45-108 s for the two-page shape. The runner reuses one converter, because the first version built
+one per shape and the model load landed inside every timing.
+
+**What this triggers.** D81's threshold was "Document AI only if Docling loses spans, qualifiers or
+header association on three or more of the eight". It loses all three, on more than three. So the next
+step is **Document AI — which needs a Google Cloud project, billing, a processor and a service-account
+key, and therefore the owner**, not an agent. That is where S2 stops until those exist.
+
+**What this does not say.** One version, one laptop, one run per shape. A newer Docling, a different
+pipeline (OCR off, `fast` table mode), or a page-range quirk could move a cell or two — and none of it
+would change the shape of the result: the failures are structural, not marginal.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -178,7 +220,7 @@ wait for S2's reader.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate two extractors (Docling, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **decided 2026-11-03 (D81): Docling first**, graded by S0's expectations and S4's checker; Document AI only if Docling loses spans, qualifiers or header association on three or more of the eight. Why, and what a GCP key would cost: `product/design/d80_s2_extractor_evaluation.html` |
+| **S2** | Evaluate two extractors (Docling, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Docling measured 2026-11-03 (§3.5): 0/8 as extracted, 1/8 with a header convention, 2/8 tables not detected.** D81's threshold fired — Document AI is next and **needs the owner's GCP project, billing, processor and key**. Why, and what that costs: `product/design/d80_s2_extractor_evaluation.html` |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |

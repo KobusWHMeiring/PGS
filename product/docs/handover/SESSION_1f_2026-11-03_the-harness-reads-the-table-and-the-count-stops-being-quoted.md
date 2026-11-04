@@ -106,3 +106,48 @@ page was written, *why Document AI instead of a vision model, and what does the 
   end-to-end VLM for scans and handwriting (solving a problem our PDFs do not have — they carry text),
   and region citation as the industry's own output shape (which is our X3, so adopting an extractor
   later is cheaper than it looks).
+
+## 7. Session `1g` — Docling, measured, and it does not pass
+
+The owner said "let's walk the Docling route", so S2 was run rather than argued.
+
+**Setup, and what it cost.** Docling 2.146.0 into a throwaway venv (`_scratch/docling/venv`, not a
+project dependency): **1.5 GB** installed, plus model weights. Its defaults were checked rather than
+assumed — `TableFormerMode.ACCURATE`, `do_cell_matching=True`, `do_ocr=True` — so this is its
+high-quality path, not a fast one. Python 3.13.3, CPU only.
+
+**The instrument is `scripts/eval_extractors.py`**: convert only the pages a shape is printed on
+(`page_range`), pick the table that best overlaps the shape's anchors (the choice is printed, so it can
+be audited), map the extractor's table onto `TableRead`, and score with S0's own `mismatches()` — twice:
+*as extracted*, and *once row 0 is taken as the header*. The second reading exists because Docling
+**marks no cell as a column header on any page we gave it**, and a tool that needs a convention is a
+different finding from a tool that cannot pass.
+
+**The result (PRD §3.5, `product/docs/evidence/2026-11-03_s2_docling_scores.json`):**
+
+| | |
+|---|---|
+| as extracted | **0 of 8** |
+| with row 0 as the header | **1 of 8** (the OPP's fee table, whose grid is exact) |
+| tables not detected | **2 of 8** — landscape p5 and p6 come back as 2 pictures and headings |
+| rows and columns usually found | yes — 6a returns 20 of 20 rows and 2 of 2 columns |
+
+So it is not a tool that cannot see. It is a tool whose structure loses exactly what requirements 2, 4
+and 6 name: header association (8/8), spans (6a's two header labels merged into one cell; p4's five
+columns split into six), dividers (App 2's two divider labels became rows), page-break rows (p5's
+continuation is a second table and was not returned), and non-text (two undetected tables).
+
+**Three bugs were mine, and each is now measured rather than remembered:** the `*_offset_idx` fields are
+half-open (a cell printed `r0-1` is row 0) and the first mapping indexed one past the grid; `TableRead.pages`
+is the *printed* page, so SAOSO pdf 86 is 85 and the mapping must be read from the case, not inferred; and
+building a `DocumentConverter` per shape put the model load inside every timing, so one converter is
+shared now.
+
+**What it triggers.** D81's threshold — "Document AI only if Docling loses spans, qualifiers or header
+association on three or more of the eight" — has fired on all three. **The next step needs the owner**: a
+Google Cloud project with billing, the API enabled, a processor, and a service-account key. That is where
+S2 stops, and the handover says so instead of leaving a plan that cannot run.
+
+**Speed, quoted as a range because it was measured twice** on the same box with the same verdicts:
+**163 s** total on a quiet run, **330 s** on a busy one. 7–14 s per SAOSO page, 19–58 s per landscape
+page. A laptop under load is not a benchmark, and one number would have been fiction.
