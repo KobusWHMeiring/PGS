@@ -24,32 +24,29 @@
 > is not better than the cheap one and no form dominates, so this is a finding about the task.
 >
 > **§3.8 corrects the first reading of this, and the correction is the finding.** The `indices` form
-> scores 0 of 8 because a printed line **is a whole row** (`Below R 250,000 1,500 900`), and a
-> row-structured pass **cannot be built from the committed text at all**: on Appendix 7 the gap
-> between two columns collapses to one space when a cell overflows (`1 Aeration or oxygenation Air,`),
-> so de-interleaving needs per-word geometry that neither pass carries. But re-scoring the **cached**
-> answers showed the biggest single defect was ours, not the tools': the paper prints a bare row number
-> beside each row (`1`, `6b`) and **both arms read it as a fifth leading column**. Declare that as a
-> normalisation (`--row-number-gutter`) and the arm's Appendix 7 grid is **exact** — one quote
-> violation left, the model writing `70°C` where the page prints `70oC`, which is R3 doing its job —
-> and **Docling's committed grid turns out to have been right too**, plus the same furniture column.
-> So the arm's honest score is **1 pass + 3 grid-only: four of eight grids right**, and a different
-> committed pass never helps (it makes three shapes worse). **Re-run both arms with the declared
-> normalisations before buying any credential** — Docling needs its venv back, not a GCP project.
+> scores 0 of 8 because a printed line **is a whole row**, and a row-structured pass **cannot be built
+> from the committed text at all**: on Appendix 7 the gap between two columns collapses to one space
+> when a cell overflows (`1 Aeration or oxygenation Air,`), so de-interleaving needs per-word geometry
+> neither pass carries. But re-scoring the **cached** answers showed the biggest single defect was
+> ours, not the tools': the paper prints a bare row number beside each row (`1`, `6b`) and **both arms
+> read it as a leading column**, shifting every cell. Declare it (`drop_row_number_gutter`, narrow
+> enough that a real first column is never touched) and **both arms pass Appendix 7** — Docling 2.146.0
+> re-run on 2026-11-04 with the same instrument: `rows 7/7, cols 5/4`, `pass (needs row-number gutter)`.
 >
-> **The instrument is committed and is not a dependency:** `scripts/eval_openrouter.py` (three prompt
-> forms, a per-cell contiguity check that *declares* its one normalisation, row-band ordering, a raw
-> response cache so a re-score needs no network call) and `tests/tools/test_eval_openrouter.py` (17
-> tests; three guards broken and watched red). It imports with no key and no rasteriser, and
-> `pypdfium2` lives in a throwaway venv — requirement 10 stays true. Evidence:
-> `product/docs/evidence/2026-11-04_s2b_openrouter_scores.json`.
+> **So the honest scoreboard is: Docling 2/8, VLM 3/8 — and they pass different shapes.** Best arm is
+> sonnet `lines` (numeric_row, column_major, artwork_cell); flash-lite `anchors` gets qualifier;
+> Docling gets numeric_row and column_major. **Union of everything any arm passes: 4 of 8.** Never
+> passed by anyone: **headerless_values** (one header printed across four lines), **long_cell** (a
+> 1,112-character cell boundary), **empty_cells** (a merged fee box plus a label beside a seal), and
+> **page_break_row** (right grid, characters unverified). Those four are **semantic**, not structural —
+> judgements a human made in the fixtures.
 >
-> **What is next, in order:** **re-score both arms with the declared normalisations** (free from cache
-> for the VLM; Docling needs its throwaway venv) and **give Docling the gutter** — that is the cheap
-> test that decides whether a credential buys anything. Then **Document AI**, still the ceiling
-> candidate and the only candidate that supplies **per-word geometry**, which is what de-interleaving
-> needs; it needs the owner's **four things** (GCP project, billing, an enabled processor, a
-> service-account key). **A Gemini API key is NOT a GCP credential** — verified 2026-11-04: 200 on
+> **What is next, in order: S3, then S5.** The extractor is no longer the load-bearing decision — a
+> credential would have to beat a union of four, and the three it would still lose are the three no
+> general extractor returns. **Document AI is now the least promising next spend** (§3.8 reverses
+> D81's reasoning), and should be reconsidered only if S5 shows the semantic shapes are cheaper to buy
+> than to review. The cheap interim is the `lines` form as a **proposer**: the model says which printed
+> lines are a cell, the page supplies the characters, the S4 harness checks the result. **A Gemini API key is NOT a GCP credential** — verified 2026-11-04: 200 on
 > `generativelanguage`, 401 on `documentai`. Cheaper options that need no account remain: a second
 > local parser (Unstructured `hi_res`, Marker, MinerU, PaddleOCR) and **`anchors` re-scored against a
 > row-structured pass**. Then **S3** (the generator emits blocks, and records the extraction mode), then
@@ -110,25 +107,25 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
 vlm-arm sessions
-**Repo state:** `main` — **two commits ahead of `origin/main`**, both session `1h`'s: the OpenRouter
-arm, its instrument and tests, the §3.7 measurement and this file; then §3.8's correction. Everything before it is pushed: the
+**Repo state:** `main` — **three commits ahead of `origin/main`**, all session `1h`'s: the OpenRouter
+arm and its instrument; §3.8's correction; and the Docling re-run with the shared normalisation. Everything before it is pushed: the
 licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
 session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
 `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
 script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `2` on this tree, and
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `3` on this tree, and
 `0` once session `1h` is pushed.
 
 **On this tree** (2026-11-04, session `1h`): `scripts/verify.sh` **green at 1695 passed /
-1 skipped / 8 xfailed in 126.54 s** (a busy box; 59.16 s on the same tree an hour earlier), run as
+1 skipped / 8 xfailed in 124.90 s** (a busy box; the same gate measured 59.16 s an hour earlier), run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17) — the same gate measured
 141.85 s on a busy box in session `1g` and 219.16 s cold in `1e`. `scripts/fast.sh` measured **1680
 passed / 1 skipped / 15 deselected / 8 xfailed in 43.77 s**, and `--critical` **172 passed /
 4 deselected in 9.83 s** (all three 2026-11-04).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **two commits to push** (session
-`1h`'s): `git rev-list --count origin/main..HEAD` prints `2` (the number was wrong twice by being
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **three commits to push** (session
+`1h`'s): `git rev-list --count origin/main..HEAD` prints `3` (the number was wrong twice by being
 quoted; let the command answer).
 **Live:** `https://organicguarantee.africa` on the homtini VPS, deployed 2026-11-03 at **`06bb11a`**
 (last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,

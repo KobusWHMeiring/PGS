@@ -137,10 +137,27 @@ Three follow-ups, all re-scored from the **cached** answers — no new call, not
    — 7×4, every cell right, one quote violation left (`70°C` where the page prints `70oC`) — and
    **Docling's committed grid turns out to have been right too**, plus the same furniture column.
 
-So the honest score with the normalisation declared is **1 pass + 3 grid-only: four of eight grids
-right**, against Docling's 0/8 header association. The order of work changes: **re-run both arms with
-the declared normalisations before buying a credential** — Docling needs its throwaway venv back, not a
-GCP project.
+**4. Docling re-run with the same instrument (2026-11-04, 281.7 s, 2.146.0 from the session-`1g`
+venv).** Its Appendix 7 grid was **right all along**: `rows 7/7, cols 5/4`,
+`pass (needs row-number gutter)`. So the scoreboard is:
+
+| Arm | Full passes | Which |
+|---|---|---|
+| Docling 2.146.0 | **2/8** | numeric_row (row-0 convention), column_major (gutter) |
+| VLM flash-lite `lines` | 1/8 (+3 grid-only) | numeric_row |
+| VLM flash-lite `anchors` | **2/8** | numeric_row, qualifier |
+| VLM sonnet `lines` | **3/8** | numeric_row, column_major (gutter), artwork_cell |
+| VLM sonnet `anchors` | 1/8 | numeric_row |
+
+**Union of everything any arm passes: 4 of 8** (numeric_row, column_major, qualifier, artwork_cell).
+Never passed by anyone: headerless_values, long_cell, empty_cells, page_break_row. Those are
+**semantic** — a header printed once across four lines, a 1,112-character cell boundary, a merged fee
+box beside a seal — and they are the judgements a human reviewer made in the fixtures.
+
+**So the order of work changes.** The extractor is no longer the load-bearing decision: a credential
+would have to beat a union of four, and the three it would still lose are the three no general
+extractor returns. **S3, then S5** — with the `lines` form as a proposer whose output the harness
+checks.
 
 ## 8. Next
 

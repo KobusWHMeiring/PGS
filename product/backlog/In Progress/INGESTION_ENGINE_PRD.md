@@ -338,26 +338,50 @@ never touched — the rule is narrow and tested). With it declared:
 | Arm | Before | After | What is left |
 |---|---|---|---|
 | VLM, flash-lite, `lines` | fail, 5 mismatches | **grid correct** (7×4, cells exact) | **one** quote violation: the model wrote `70°C` where the page prints `70oC` — R3 doing exactly its job |
-| Docling (committed sample, 4 of 7 rows) | "extra leading column, a condition cell lost" | columns and cells align | rows 4–6 are not in the committed sample, so this is *shown*, not scored |
+| VLM, sonnet, `lines` | fail, 6 mismatches | **pass** | nothing |
+| **Docling 2.146.0** | "extra leading column, a condition cell lost" | **pass** | nothing — `rows 7/7, cols 5/4`, gutter took out 7 rows |
 
-**The arm's honest score with the normalisation declared is 1 pass + 3 grid-only — four of eight
-grids right** (numeric_row pass; column_major, page_break_row, artwork_cell right grids with characters
-the model normalised or re-wrapped). Docling's header association was 0/8; the arm's is 7–8/8.
+**Both arms are now scored with the same instrument and the same declared normalisation**
+(`scripts/eval_extractors.py` carries it too; evidence
+`product/docs/evidence/2026-11-04_s2_docling_gutter_scores.json`, 281.7 s on this box). Docling's
+Appendix 7 grid was **right all along** — its geometry de-interleaved the four columns correctly, and
+the only defect was our counting the paper's row-number furniture as data.
 
-**What this changes.** The largest single defect found across both arms was a **mapping convention**,
-not a tool: our reading of the paper's row-number furniture. That does not make the arm adoptable (its
-characters still need checking, and three shapes still fail on content), but it changes the order of
-work: **re-run both arms with the declared normalisations before buying any credential**, Docling
-included — which needs its throwaway venv back, not a GCP project. If Docling + gutter + a
-row-structured pass scores in the same band, the credential buys little; if it does not, the geometry
-argument for Document AI stands on its own.
+**4. The two arms pass *different* shapes, and the union is 4 of 8.** With every reading published:
 
-**D81's consequence, unchanged in direction.** Document AI remains the ceiling candidate and still
-needs the owner's four things; this result adds one more reason to spend that money rather than less,
-because it shows the gap is in *structure*, which is the class Document AI is in. It also adds a
-cheaper interim: **the `anchors` form is the only shape in which a generative model may enter the
-corpus** (boundaries from the model, characters from a checkable pass), and it needs a row-structured
-extraction pass before it can be scored fairly.
+| Arm | Full passes | Which |
+|---|---|---|
+| Docling 2.146.0 | **2/8** | numeric_row (row-0 convention), column_major (gutter) |
+| VLM flash-lite `lines` | 1/8 (+3 grid-only) | numeric_row |
+| VLM flash-lite `anchors` | **2/8** | numeric_row, qualifier |
+| VLM sonnet `lines` | **3/8** | numeric_row, column_major (gutter), artwork_cell |
+| VLM sonnet `anchors` | 1/8 | numeric_row |
+
+Union of everything any arm passes: **numeric_row, column_major, qualifier, artwork_cell — 4 of 8.**
+Never passed by any arm, under any convention: **headerless_values** (the header is printed once,
+split across four lines, with the second column's continuation printed beneath it), **long_cell** (a
+1,112-character cell whose boundary no reader agrees on), **empty_cells** (a merged fee box plus a
+label printed beside a seal), and **page_break_row** (right grid, characters not verified).
+
+**What this changes.** The best arm is the VLM at 3 of 8 and the failures that remain are **semantic,
+not structural**: which printed lines are one header, where a paragraph-sized cell ends, and whether a
+label belongs to the artwork beside it. Those are judgements a human reviewer made in the fixtures.
+So the extractor choice is now clearly *not* the load-bearing decision: **a credential would have to
+beat a union of four, and the three it would still lose are the three no general extractor returns.**
+The order of work is S3 (emit the blocks, record the extraction mode) and S5 (re-review 6a and 7
+through the harness), with the arm's `lines` form as a **proposer** whose output the harness checks —
+not as an authority.
+
+**D81's consequence, reversed.** §3.5 said Document AI was the ceiling candidate because the gap was
+in *structure*. That is no longer the finding: both arms now read Appendix 7 correctly, the best arm
+passes 3 of 8, and what is left is **semantic** — a header printed once across four lines, a
+1,112-character cell, a merged box beside a seal. Document AI is the same class as Docling, so it would
+inherit those three and add geometry Docling already has. **The credential is now the least promising
+next spend on this problem**, and it should be reconsidered only if S5's re-review shows the semantic
+shapes are cheaper to buy than to review. The cheaper interim is the `lines` form as a **proposer**
+(the model says which printed lines are a cell; the page supplies the characters; the S4 harness
+checks the result) — which needs no credential, and whose remaining failures are visible as named
+mismatches rather than as trust.
 
 ## 4. Requirements
 
@@ -425,7 +449,7 @@ answer, with the review written down as debt.
 | Strict xfail becomes a place gaps go to die | `XPASS(strict)` fails the suite when a shape starts working, and the audit test pins the uncovered set |
 | `--force` keeps being run out of habit | S1 refuses before writing and names the override; the hazard entry (§3.25) points at the guard |
 | Appendix 6a/7 are "fixed" by another hand review | S5 requires them to close *through the harness*; the audit test keeps naming them until it does |
-| A vision path gets adopted for convenience | D70.2 and R9: a quote is characters we verified; page images are a fallback with a written claim. **Measured 2026-11-04 (§3.7):** the VLM arm scores 2/8, and the only admissible form is `anchors` — boundaries from the model, characters from the extraction pass |
+| A vision path gets adopted for convenience | D70.2 and R9: a quote is characters we verified; page images are a fallback with a written claim. **Measured 2026-11-04 (§3.7–§3.8):** the VLM arm's best is 3/8, every cell is checked against the page per printed line, and unresolved quotes are named rather than trusted |
 
 ## Pre-Flight Checklist
 

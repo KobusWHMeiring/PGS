@@ -50,6 +50,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 from knowledge.tests import page_fixtures  # noqa: E402
+from scripts.table_reads import drop_row_number_gutter  # noqa: E402
 from knowledge.tests.shape_fixtures import (  # noqa: E402
     BY_KEY,
     SHAPES,
@@ -232,6 +233,11 @@ def evaluate(case, verbose: bool = False) -> dict:
     conventional = as_table_read(table, page, first_row_is_header=True)
     strict_found = mismatches(case, strict)
     conventional_found = mismatches(case, conventional)
+    # The paper's row-number gutter, declared: measured 2026-11-04 both this arm and the VLM arm read
+    # the bare `1`/`6b` beside each row as a leading column, which shifted every cell of Appendix 7.
+    # Scored as a third reading rather than applied silently, so the delta is visible (§3.8).
+    guttered, gutter_dropped = drop_row_number_gutter(strict)
+    guttered_found = mismatches(case, guttered) if gutter_dropped else strict_found
     if verbose:
         print()
         print(f"--- {case.key}: chose a table on pages {pages}")
@@ -243,6 +249,8 @@ def evaluate(case, verbose: bool = False) -> dict:
 
     if not strict_found:
         verdict = "pass"
+    elif not guttered_found:
+        verdict = "pass (needs row-number gutter)"
     elif not conventional_found:
         verdict = "pass (needs header convention)"
     else:
@@ -268,6 +276,12 @@ def evaluate(case, verbose: bool = False) -> dict:
             "columns_found": len(strict.columns),
             "columns_expected": len(case.columns),
             "as_extracted": reading(strict, strict_found),
+            "with_row_number_gutter": (
+                {"identical_to_as_extracted": True}
+                if not gutter_dropped
+                else reading(guttered, guttered_found)
+            ),
+            "row_number_gutter_rows": gutter_dropped,
             "first_row_as_header": reading(conventional, conventional_found),
         }
     )
@@ -297,9 +311,11 @@ def main(argv: list[str] | None = None) -> int:
     for case in cases:
         result = evaluate(case, verbose=args.verbose)
         results.append(result)
-        mark = {"pass": "PASS", "pass (needs header convention)": "PASS*"}.get(
-            result["verdict"], "FAIL"
-        )
+        mark = {
+            "pass": "PASS",
+            "pass (needs header convention)": "PASS*",
+            "pass (needs row-number gutter)": "PASS+",
+        }.get(result["verdict"], "FAIL")
         detail = result["verdict"]
         if result["verdict"] == "fail":
             detail = f"{len(result['first_row_as_header']['mismatches'])} mismatches"
@@ -316,9 +332,16 @@ def main(argv: list[str] | None = None) -> int:
     conventional_pass = sum(
         1 for result in results if result.get("first_row_as_header", {}).get("verdict") == "pass"
     )
+    gutter_pass = sum(
+        1
+        for result in results
+        if result.get("with_row_number_gutter", {}).get("verdict") == "pass"
+        or result["verdict"] == "pass (needs row-number gutter)"
+    )
     print(
         f"\n{strict_pass}/{len(results)} shapes pass as extracted, "
-        f"{conventional_pass}/{len(results)} once row 0 is taken as the header "
+        f"{conventional_pass}/{len(results)} once row 0 is taken as the header, "
+        f"{gutter_pass}/{len(results)} once the row-number gutter is declared "
         f"· {elapsed:.1f}s total"
     )
 
@@ -331,7 +354,8 @@ def main(argv: list[str] | None = None) -> int:
             "python": sys.version.split()[0],
             "checked": (
                 f"{len(results)} shapes; {strict_pass} pass as extracted, "
-                f"{conventional_pass} pass once row 0 is taken as the header"
+                f"{conventional_pass} pass once row 0 is taken as the header, "
+                f"{gutter_pass} once the row-number gutter is declared"
             ),
             "results": results,
         }

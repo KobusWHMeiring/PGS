@@ -1,11 +1,16 @@
-"""The grid the model proposes, turned into a `TableRead` the page can vouch for.
+"""An extractor's answer, turned into a `TableRead` the page can vouch for — and the normalisations
+both arms need before it is scored.
 
-`scripts/eval_openrouter.py` is the runner: it renders pages, calls a model, and scores the answer
-with S0's `mismatches()`. This module is everything between the model's JSON and that score — the
+`scripts/eval_openrouter.py` is the VLM arm's runner: it renders pages, calls a model, and scores the
+answer with S0's `mismatches()`. This module is everything between a proposal and that score — the
 three mappings (verbatim lines, first/last anchors, line numbers), the printed-order bands, and the
-one declared normalisation. It is separate from the runner because the repo's rule is that a file over
+**declared normalisations**. It is separate from the runner because the repo's rule is that a file over
 30 KB is two files (`build_principles.md` §II), and because the resolver is the part worth testing on
 its own: it never touches a network, a key or a rasteriser.
+
+**Both arms use the normalisations.** `drop_row_number_gutter` is applied by Docling's instrument too
+(`scripts/eval_extractors.py`), because measured 2026-11-04 both arms read the paper's row-number
+furniture as a leading column — it was our defect, not either tool's (§3.8).
 
 Nothing here is imported by the application. It is an evaluation instrument, and requirement 10 says
 the gate must never need an extractor — a pure function over committed page text is not one.
@@ -60,14 +65,38 @@ _ROW_NUMBER = re.compile(r"^\d{1,3}[a-z]?$")
 
 
 def drop_row_number_gutter(read: TableRead) -> tuple[TableRead, int]:
-    """Drop a leading bare row number from every row that carries one.
+    """Drop the paper's row-number gutter — the bare `1`, `6b` printed beside each row.
 
     This is a **declared normalisation**, in the same class as the letter-spacing one and reported for
-    the same reason: the paper prints a number beside each row and a reader may count it as a column.
-    The rule is narrow on purpose — it fires only when the row has exactly one cell more than the
-    header and that extra cell is nothing but a row number — so a real first column ('1 Aeration or
-    oxygenation…') is never touched.
+    the same reason: the paper prints a number beside each row, a reader may count it as a column, and
+    measured 2026-11-04 *both* arms did — which shifted every cell of Appendix 7 right by one.
+
+    Two shapes of the same defect, and the rule is narrow enough to tell them from real data:
+
+    * **The label is in the header** (the VLM's case): the header carries the table's real columns and a
+      row has exactly one cell more than the header, whose first cell is nothing but a row number.
+    * **The label is the column** (Docling's case): the header's first label is blank *and* every body
+      row's first cell is a bare row number, so the whole column goes, label and all.
+
+    A real first column — `1 Aeration or oxygenation…` — matches neither, because a bare-number test
+    fails on it. Returns the read and how many rows the gutter took out (0 means nothing was dropped).
     """
+    if not read.rows:
+        return read, 0
+    if (
+        read.columns
+        and not flat(read.columns[0])
+        and all(row and _ROW_NUMBER.match(flat(row[0])) for row in read.rows)
+    ):
+        return (
+            TableRead(
+                columns=read.columns[1:],
+                rows=tuple(row[1:] for row in read.rows),
+                pages=read.pages,
+                dividers=read.dividers,
+            ),
+            len(read.rows),
+        )
     if not read.columns:
         return read, 0
     rows, dropped = [], 0
@@ -78,9 +107,7 @@ def drop_row_number_gutter(read: TableRead) -> tuple[TableRead, int]:
         else:
             rows.append(row)
     return (
-        TableRead(
-            columns=read.columns, rows=tuple(rows), pages=read.pages, dividers=read.dividers
-        ),
+        TableRead(columns=read.columns, rows=tuple(rows), pages=read.pages, dividers=read.dividers),
         dropped,
     )
 

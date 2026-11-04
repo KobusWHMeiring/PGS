@@ -12,31 +12,22 @@ imported lazily inside `render()`.
 
 **Why this arm is admissible at all.** A VLM *writes* the text it believes it read, so a wrong digit
 looks identical to a right one, and requirement 9 says a quote is characters we verified. So the model
-is asked for structure only — which printed line each cell holds — and every character of the scored
-cell comes from the **extraction pass** that is already committed for that page
-(`knowledge/tests/page_fixtures.py`, the `-layout`/`-table` text). The model proposes the grid; the
-page supplies the characters. Three consequences, all recorded rather than hidden:
+proposes the grid and the **extraction pass** already committed for that page
+(`knowledge/tests/page_fixtures.py`) supplies the characters. Three consequences, all recorded rather
+than hidden, and all implemented in `scripts/table_reads.py`:
 
-* A quoted line that is not a **contiguous run** of its page is a violation (requirement 3, `R3`), and
-  the cell is reported unresolved. A VLM that paraphrases therefore scores as a VLM that fails, which
-  is the point: the arm is only as good as the check.
-* **One declared normalisation**: the paper letter-spaces some words ('Other b o v i n e a n i m a l s')
-  and the reviewed literal rejoins them. The resolver de-spaces both sides and says so per cell
-  (`normalisation: ["letter_spacing"]`), because a normalisation applied silently is the defect S0's
-  fixtures exist to catch (`shape_fixtures.headerless_values` notes).
-* **A merged cell's text stays in its first cell and the cells it covers are `""`** — the paper's
-  silence, not a replicated value. This differs from `eval_extractors.as_table_read`, which replicates
-  a span across the cells it covers; the shape fixtures side with "filed under the cell that prints
-  it" (`empty_cells` notes: 'the merged cell is one cell and is filed under Step 1'), and the two arms'
-  numbers are compared per shape in the PRD, not summed.
-
-Spans are still requested and reported, so a `""` can be read as *covered by a merge* rather than *the
-paper is silent* — requirement 5's distinction, which the score alone cannot carry.
+* a quoted line that is not a **contiguous run** of its page is a violation (requirement 3), and the
+  cell is reported unresolved — the arm is only as good as the check;
+* the one **declared normalisation** (the paper letter-spaces some words) is reported per cell, never
+  applied silently;
+* a merged cell's text stays in the first cell it covers and the cells it covers are `""` — the
+  paper's silence, not a replicated value (Docling's mapping replicates; the fixtures side with
+  "filed under the cell that prints it", and the arms are compared per shape, never summed).
 
 **Three prompt forms, because the rule has three readings** — `lines` (the model copies each cell
-verbatim), `anchors` (the model names a cell's first and last words and the page is sliced between
-them) and `indices` (the model returns line numbers and never emits a character). They are scored
-identically, and the mapping from each to `TableRead` lives in `scripts/vlm_grid.py`.
+verbatim), `anchors` (it names a cell's first and last words and the page is sliced between them) and
+`indices` (it returns line numbers and never emits a character). Two readings are always published:
+as the model gave it, and once the paper's **row-number gutter** is declared.
 """
 
 from __future__ import annotations
@@ -58,7 +49,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 from knowledge.tests import page_fixtures  # noqa: E402
 from knowledge.tests.shape_fixtures import BY_KEY, SHAPES, TableRead, mismatches  # noqa: E402
-from scripts.vlm_grid import (  # noqa: E402
+from scripts.table_reads import (  # noqa: E402
     drop_row_number_gutter,
     has_letter_spacing,
     other_mode,
@@ -328,7 +319,6 @@ def evaluate(
     cache: Path | None = None,
     mode: str = "lines",
     text_mode: str | None = None,
-    row_number_gutter: bool = False,
 ) -> dict:
     """One shape, one model: render, ask, resolve, score. The score is `mismatches()`, S0's own."""
     pdf, doc_key = documents_for(case)
@@ -391,9 +381,12 @@ def evaluate(
         read, violations = read_from_indices(proposal, case, runs, numbered_lines)
     else:
         read, violations = read_from(proposal, case, runs)
-    if row_number_gutter:
-        read, gutter = drop_row_number_gutter(read)
+    # Both readings are always computed and published, like Docling's two: the answer as the model
+    # gave it, and the answer once the paper's row-number gutter is declared. A tool that needs a
+    # convention to pass is a different finding from one that cannot pass.
+    guttered_read, gutter = drop_row_number_gutter(read)
     strict = mismatches(case, read)
+    guttered = mismatches(case, guttered_read) if gutter else strict
     conventional = strict
     if not read.columns and len(read.rows) > 1:
         conventional_read = TableRead(
@@ -418,10 +411,12 @@ def evaluate(
     # into the fail column, because 'the structure was right and the quoting was not' is the finding.
     if not strict and not violations:
         verdict = "pass"
-    elif not strict:
-        verdict = "pass (grid only, quotes unresolved)"
+    elif not guttered and not violations:
+        verdict = "pass (needs row-number gutter)"
     elif not conventional and not violations:
         verdict = "pass (needs header convention)"
+    elif not (strict and guttered and conventional):
+        verdict = "pass (grid only, quotes unresolved)"
     else:
         verdict = "fail"
 
@@ -447,6 +442,11 @@ def evaluate(
             "columns_found": len(read.columns),
             "columns_expected": len(case.columns),
             "as_extracted": reading(read, strict),
+            "with_row_number_gutter": (
+                {"identical_to_as_extracted": True}
+                if not gutter
+                else reading(guttered_read, guttered)
+            ),
             # The second reading is only a second reading when the model returned no column labels:
             # otherwise the two grids are the same object, and writing it twice doubles the evidence
             # file for nothing. A consumer that wants the rows checks this flag.
@@ -515,12 +515,6 @@ def main(argv: list[str] | None = None) -> int:
         help="The pass the characters are verified against. 'other' means the pass the shape does "
         "not declare — the same cached model answer, re-scored against a different page text.",
     )
-    parser.add_argument(
-        "--row-number-gutter",
-        action="store_true",
-        help="Apply the declared normalisation that drops a bare leading row number ('6b') from a "
-        "row that carries one. Reported per shape as `row_number_gutter`.",
-    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args(argv)
     cache = Path(args.cache) if args.cache else None
@@ -559,7 +553,6 @@ def main(argv: list[str] | None = None) -> int:
                     cache=cache,
                     mode=mode,
                     text_mode=pass_mode,
-                    row_number_gutter=args.row_number_gutter,
                 )
                 results.append(result)
                 mark = {
@@ -583,14 +576,20 @@ def main(argv: list[str] | None = None) -> int:
             grid_only = sum(
                 1 for r in subset if r["verdict"] == "pass (grid only, quotes unresolved)"
             )
+            gutter_pass = sum(
+                1 for r in subset if r["verdict"] == "pass (needs row-number gutter)"
+            )
             conventional_pass = sum(
-                1 for r in subset if r["verdict"] in ("pass", "pass (needs header convention)")
+                1
+                for r in subset
+                if r["verdict"]
+                in ("pass", "pass (needs header convention)", "pass (needs row-number gutter)")
             )
             spend = sum(cost_of(r["usage"]) or 0 for r in subset)
             calls = [r["usage"] for r in subset]
             print(
                 f"  {results[-1]['model']} [{mode}]: {strict_pass}/{len(subset)} pass, "
-                f"{grid_only} grid-only, "
+                f"{gutter_pass} gutter-only, {grid_only} grid-only, "
                 f"{conventional_pass}/{len(subset)} with row 0 as header, "
                 f"{sum(c.get('prompt_tokens', 0) for c in calls)} in / "
                 f"{sum(c.get('completion_tokens', 0) for c in calls)} out tokens, "
@@ -621,6 +620,9 @@ def main(argv: list[str] | None = None) -> int:
                     "pass": sum(1 for r in rows if r["verdict"] == "pass"),
                     "grid_only": sum(
                         1 for r in rows if r["verdict"] == "pass (grid only, quotes unresolved)"
+                    ),
+                    "gutter_only": sum(
+                        1 for r in rows if r["verdict"] == "pass (needs row-number gutter)"
                     ),
                     "as_extracted": sum(1 for r in rows if r["as_extracted"]["verdict"] == "pass"),
                     "first_row_as_header": sum(1 for r in rows if _conventional_pass(r)),

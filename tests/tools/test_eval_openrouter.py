@@ -1,4 +1,4 @@
-"""`scripts/eval_openrouter.py` and `scripts/vlm_grid.py` — the VLM arm's instrument.
+"""`scripts/eval_openrouter.py` and `scripts/table_reads.py` — the VLM arm's instrument.
 
 The runner is the network half; `vlm_grid` is the half that decides whether the model's JSON becomes
 a `TableRead` the page can vouch for. That second half is where the three guards live.
@@ -31,7 +31,7 @@ from pathlib import Path
 import pytest
 
 import scripts.eval_openrouter as evaluator
-import scripts.vlm_grid as grid
+import scripts.table_reads as grid
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
