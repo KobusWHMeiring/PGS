@@ -1888,6 +1888,26 @@ Rule: a budget check must also check that what the budget is *for* still works. 
 (watched red: one row reverted to a bare basename → 1 failed, naming D78).
 Rows are repo-root-relative, never relative to the spec's own directory.
 
+### 3.30 "A pattern that matches nothing" matched the empty string
+
+While proving that S4's harness can fail (`knowledge/tests/test_table_harness.py`), the rule under
+test was neutered by replacing `NOT_TEXT = re.compile(r"<!--|\ufffd|[\ue000-\uf8ff]")` with
+`re.compile(r"$^")`, on the assumption that `$` followed by `^` can never be satisfied. It matches
+every **empty string**: end-of-input, then start-of-input, at the same position. The suite did go
+red — 12 violations, all of them ". . . carries ''" — so the proof looked green while the test that
+was supposed to catch it (`test_a_lost_glyph_in_a_cell_is_named`) never ran red at all.
+
+Evidence:
+    NOT_TEXT = re.compile(r"$^")   # -> 12 violations on the landscape corpus, all empty cells
+    NOT_TEXT = re.compile(r"(?!x)x")  # -> the two R7 tests red, and only those
+
+Consequence: "I broke it and the suite went red" is not evidence unless the *right* test went red.
+The break-and-restore proof has to name the assertion, not the run.
+
+Rule: when proving a guard can fail, break it in a way whose failure set is known in advance, and
+check the *named* tests changed. A pattern that cannot match is `(?!)`; `$^` matches the empty
+string, and `[]` is an error rather than an empty class.
+
 ## 5. Template for a new entry
 
 ```markdown

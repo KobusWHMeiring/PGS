@@ -1,12 +1,13 @@
-# Handover — D80 has a PRD, the eight shapes are fixtures, and two of them have no test
+# Handover — D80 has a PRD, three slices are in, and the harness now reads the tables
 
-> ## START HERE — D80's PRD and its first two slices are in; S2 (an extractor) is next
+> ## START HERE — S0, S1 and S4 are in; **S2 (an extractor) is next**, and it needs an install
 >
-> **`INGESTION_ENGINE_PRD.md` is `In Progress` (session `1e`, 2026-11-03)** and carries D80's
-> decision as prose (X2 now, X3 when a document demands it) plus six slices. **S0 and S1 landed.**
-> `scripts/verify.sh` **green: 1644 passed / 1 skipped / 8 xfailed in 219.16 s** (35 s of the rise is
-> the fixture reads hashing four PDFs; quote cold *and* warm, §3.17); step 1/4 printed
-> `every budget holds`. `scripts/fast.sh --critical` **172 passed / 4 deselected in 52.15 s**.
+> **`INGESTION_ENGINE_PRD.md` is `In Progress` (session `1e`/`1f`, 2026-11-03)** and carries D80's
+> decision as prose (X2 now, X3 when a document demands it) plus six slices. **S0, S1 and S4 landed.**
+> `scripts/verify.sh` **green: 1671 passed / 1 skipped / 8 xfailed in 68.61 s** (a warm box; the
+> 1e run on the same tree measured 219.16 s cold — quote cold *and* warm, §3.17).
+> `scripts/fast.sh` **1656 passed / 1 skipped / 15 deselected / 8 xfailed in 46.66 s**;
+> `scripts/fast.sh --critical` **172 passed / 4 deselected in 10.64 s**.
 >
 > **The audit was established, not inherited** (`SESSION_1e…` §1). Measured: **44** reviewed rows
 > carrying column meaning across **three** documents (OPP §2.3 6, landscape 8, Appendix 2 30), plus
@@ -23,9 +24,25 @@
 > `build_corpus.py --force` **refuses** to drop a reviewed `<!-- table -->` block and names
 > `--discard-tables` as the override (hazard §3.25; two proofs watched red).
 >
+> **S4** = `knowledge/table_harness.py` (requirements 2–7 as `check_table`/`check_document`, named
+> `R2`–`R7` violations, no extractor, no PDF), `scripts/check_tables.py` (the gate: one document and
+> its declared row counts per run) and 27 tests. **The four reviewed tables — 14 rows — pass**, there
+> is **one mutation per requirement** the harness names, and two guards were broken and watched red.
+> **Two things it refuses to guess:** the row count (`--rows`; undeclared is a violation, and
+> `expected_tables` makes a missing block fail rather than pass with nothing to check) and **the
+> extraction mode the cells came from** — the landscape passes against `-table` and fails 10 ways
+> against `-layout`, so the mode is information. **That mode is now the last per-document datum in
+> the path; S3 is where the generator records it.** R3 was generalised by measurement: a cell line is
+> matched inside one printed line, else split at its own hyphen with both halves printed lines in
+> order (the strict rule reported 3 cells, all wraps). A shared cursor across a row's cells was
+> measured and dropped (171 false violations: the fee box is filed under the row it starts beside).
+>
 > **What is next:** **S2** — evaluate Docling and Document AI against the eight pages and put the
-> result in the PRD as a table. Then S3 (generator emits blocks), S4 (the harness), S5 (re-review
-> Appendices 6a and 7 *through* it). **`read_table()` is the seam.**
+> result in the PRD as a table. **Two frictions found 2026-11-03:** `docling` is not installed here
+> (it pulls torch and layout models) and Document AI needs GCP credentials the dev `.env` does not
+> hold. Then S3 (generator emits blocks, and records the extraction mode), S5 (re-review Appendices
+> 6a and 7 *through* the harness — the harness cannot see a table that is not a block, which is why
+> `expected_tables` exists). **`read_table()` is the seam.**
 >
 > **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
 > a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
@@ -53,25 +70,29 @@ D80 by name.
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off, chat-split and handover-truth-up sessions
-**Repo state:** `main` — **`origin/main` == `HEAD`** (pushed 2026-11-03, session `1f`): the licence
-commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close, session
-`1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close) and session
-`1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3). **Check it, do not quote it:**
-`git rev-list --count origin/main..HEAD` must print `0`.
+landscape-sign-off, chat-split, handover-truth-up and shapes-harness sessions
+**Repo state:** `main` — **`origin/main` == `HEAD`** (session `1f` pushed everything, then committed
+S4 on top of it): the licence commit, the chat-split follow-ups, the six test/generator cuts, the
+flake fix, `1c`'s close, session `1d`'s (the truth-up, five row batches, the link guard, the gate
+wiring, the PRD close), session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3) and
+session `1f`'s (the S4 harness, the gate script, and a corrected unpushed count). **Check it, do not
+quote it:** `git rev-list --count origin/main..HEAD` must print `0`.
 
-**On this tree** (2026-11-03, session `1e`): `scripts/verify.sh` **green at 1644 passed /
-1 skipped / 8 xfailed**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate
-defaults to 5432 and this box serves 5433, `testing_hazards.md` §3.1). Quote that run as the number
-for this tree: **219.16 s** — the first cold run on this tree; the 8 xfailed are D80's shape targets,
-not failures. `scripts/fast.sh` (the lane) measured **172 passed / 4 deselected in 52.15 s** with
-`--critical`.
+**On this tree** (2026-11-03, session `1f`): `scripts/verify.sh` **green at 1671 passed /
+1 skipped / 8 xfailed in 68.61 s**, run as
+`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
+serves 5433, `testing_hazards.md` §3.1). The same tree measured **219.16 s** in session `1e` on a
+cold box — quote cold *and* warm (§3.17). `scripts/fast.sh` measured **1656 passed / 1 skipped /
+15 deselected / 8 xfailed in 46.66 s**, and `--critical` **172 passed / 4 deselected in 10.64 s**.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **nothing outstanding**:
 `git rev-list --count origin/main..HEAD` prints `0` (the number was wrong twice by being quoted;
 let the command answer).
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`06bb11a`**, deployed
-2026-11-03 with a **current** corpus (401 chunks). Its `deploy.sh` on disk is the pre-`3c2c39d`
+2026-11-03 with a **current** corpus (401 chunks). **A deploy is owed** for everything after it
+(the session `1f` push, and S4's commit on top): the dev box has no SSH key, so the operator runs
+`sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh` and reads the `/health/` body back — the
+script verifies origin's tip on the box before it pulls. Its `deploy.sh` on disk is the pre-`3c2c39d`
 one, and **the §3.27 window is self-closing, not debt**: that script still `pull`s origin's tip,
 but it already carries the re-exec, so the next deploy re-runs the fixed script, which verifies
 origin's tip afresh and fast-forwards to *that* — before the backup and the first migration
@@ -88,6 +109,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1e` 2026-11-03 (session 17) — the eight shapes, and the two that have no test — [`SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md`](product/docs/handover/SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md)
 - `1d` 2026-11-03 (session 16) — the state said what was not true, and the rows were cut — [`SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md`](product/docs/handover/SESSION_1d_2026-11-03_the-state-said-what-was-not-true-and-t.md)
 - `1c` 2026-11-03 (session 15) — the six remaining cuts, and every file is inside its cap — [`SESSION_1c_2026-11-03_the-six-remaining-cuts.md`](product/docs/handover/SESSION_1c_2026-11-03_the-six-remaining-cuts.md)

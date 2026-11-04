@@ -110,6 +110,43 @@ writing, naming the block count and the sections, instead of replacing the revie
 and exiting 0 (`testing_hazards.md` §3.25). `--discard-tables` is the explicit, named override; it is
 not spelled `--force`, because the whole point is that `--force` may not mean "delete the review".
 
+### 3.4 What S4 landed (2026-11-03): the harness, and the two things it cannot infer
+
+`knowledge/table_harness.py` implements requirements 2-7 as one check over a parsed document:
+`check_table()` per table, `check_document()` over a whole artefact, returning named `Violation`s
+(`R2`-`R7`). `scripts/check_tables.py` is the gate, and `knowledge/tests/test_table_harness.py`
+is the proof: **the four reviewed tables (14 rows) pass every requirement that can be checked**, and
+there is **one mutation per requirement** that the harness names (a table with no columns, a cell
+that is not on its page, a cell whose lines are out of order, a wrong and an undeclared row count, a
+fabricated cell, an omitted cell, a divider claimed twice, a lost glyph, an annotation that reached a
+cell). Two guards were broken and watched go red before being trusted.
+
+**Two things the harness refuses to guess, and both are declarations:**
+
+- **The row count.** A page cannot say how many rows it prints in machine-readable form, so R4 takes
+  `--rows` (`check_tables.py`) or `expected_rows` (`check_document`). A count that was not declared
+  is reported as a violation, not as a pass — and `expected_tables` makes a document whose block
+  went missing fail instead of passing with nothing to check.
+- **The extraction mode the cells came from.** Measured: the landscape's tables pass against
+  `-table` pages and fail 10 ways against `-layout`, so the mode is real information, not a
+  preference. Today it is a flag; **S3 is where the generator records it on the artefact**.
+
+**R3 was generalised by measurement, not by preference.** The strict reading — a cell's line is a
+contiguous run of *one printed line* — is right for a single-column page and fails on the
+landscape's `-table` output, where two cells share a printed line, and on a word the paper hyphenates
+across the break (`self-` / `assessment`). Measured 2026-11-03: the strict rule reported 3 cells, all
+wraps, none a lost or reordered word. So a cell line is matched inside one printed line, and if that
+fails it is split at its own hyphen and **both halves must be printed lines, in order**. Joining
+every line instead would weaken R3 to "the words appear somewhere", which is what it exists not to
+be. A shared cursor across a row's cells was also measured and dropped (171 false violations): the
+landscape's fee box is one printed box filed under the row it starts beside.
+
+**What the harness cannot see, and says so.** A table that is not a `<!-- table … -->` block is not
+checked at all — Appendix 6a's 20 rows and Appendix 7's interleaved chunks are invisible to it, which
+is why `expected_tables` exists and why S5 is still the work that closes them. The harness asserts
+requirements, not shapes: the eight `read_table()` targets in `test_ingestion_shapes.py` still
+wait for S2's reader.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -143,7 +180,7 @@ not spelled `--force`, because the whole point is that `--force` may not mean "d
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
 | **S2** | Evaluate two extractors (Docling, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | open |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
-| **S4** | The verification harness (requirements 2–7) as the gate for any new document | open |
+| **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |
 
 **What would change this order** (from the exploration, kept here because it is the decision's own
@@ -161,7 +198,9 @@ answer, with the review written down as debt.
 - [ ] Appendix 6a's 20 chunks carry their column meaning; Appendix 7's chunks are rows, not
       interleaved text.
 - [ ] Cell fidelity, row count, header association and empty-cell preservation are asserted for every
-      table in the corpus, not for the reviewed ones only.
+      table in the corpus, not for the reviewed ones only. **Partly (S4, 2026-11-03):** asserted for
+      every table that *is* a block — 4 tables, 14 rows, 0 violations — and the rows outside any
+      block (Appendix 6a's 20, Appendix 7's 4 chunks) are exactly what S5 closes.
 - [ ] `scripts/verify.sh` is green with `PDFTOTEXT_BIN` poisoned, and no fixture needs a PDF or a
       network call to run.
 

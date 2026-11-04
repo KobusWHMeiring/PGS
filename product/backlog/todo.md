@@ -19,12 +19,16 @@ the generated index's "To Do" section.
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
 - [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
-      **has a PRD and its first two slices** (2026-11-03): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      **has a PRD and three of its six slices** (2026-11-03): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
       S0 is the **eight-shape fixture set** (`knowledge/tests/shape_fixtures.py`, 8 xfailed targets);
-      S1 is `build_corpus.py` refusing to overwrite a reviewed `<!-- table -->` block. Open: S2 the
-      extractor evaluation (Docling / Document AI) against the eight, S3 the generator emitting
-      table blocks, S4 the verification harness, S5 re-reviewing Appendix 6a and Appendix 7 through
-      it — the two live defects the PRD measures.
+      S1 is `build_corpus.py` refusing to overwrite a reviewed `<!-- table -->` block; S4 is the
+      **verification harness** (`knowledge/table_harness.py` + `scripts/check_tables.py`) — the four
+      reviewed tables, 14 rows, pass requirements 2-7 with one mutation proved per requirement.
+      Open: S2 the extractor evaluation (Docling / Document AI) against the eight — it needs an
+      install and GCP credentials, so it is a session with a preamble — S3 the generator emitting
+      table blocks (and recording the extraction mode, the harness's last per-document datum), and
+      S5 re-reviewing Appendix 6a and Appendix 7 through the harness: the two live defects the PRD
+      measures, and the two the harness **cannot see** because they are not table blocks at all.
 - [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
       (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
       email, the role description) and three decisions they force. No PRD references it and no
