@@ -178,7 +178,7 @@ wait for S2's reader.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate two extractors (Docling, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | open |
+| **S2** | Evaluate two extractors (Docling, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference. **The two tools and the credential question are explained for the owner in `product/design/d80_s2_extractor_evaluation.html`** (2026-11-03), which also records the sequencing decision it asks for | open |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<!-- EXPLORATION ARTIFACT (not a production template) | Outeniqua PGS - D80 S2: what an extractor evaluation is,
+     what Docling and Google Document AI actually are, and what "credentials" would cost us.
+     Companion to INGESTION_ENGINE_PRD.md S2 and knowledge/tests/shape_fixtures.py.
+     Self-contained: no CDN, no build step, no external requests. Answers autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS - S2: evaluating an extractor, and what it costs (D80)</title>
+<style>
+  :root {
+    --bg:#f4f6f2; --surface:#ffffff; --surface-low:#eaeee6; --surface-high:#dfe5da;
+    --accent:#35604a; --accent-soft:#e4efe7; --accent-line:#b9cfc0;
+    --text:#1c2620; --muted:#66756b;
+    --warn:#8a5a1c; --warn-soft:#f7efe1;
+    --stop:#8c3a32; --stop-soft:#f6e7e4;
+    --radius-lg:14px; --radius-xl:20px;
+    --shadow:0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:0 2px 10px rgba(28,38,32,.10);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:0 20px 160px; }
+
+  header.hero { background:linear-gradient(160deg,var(--accent) 0%,#274936 100%); color:#fff; padding:44px 20px 38px; margin-bottom:28px; }
+  header.hero .inner { max-width:940px; margin:0 auto; }
+  header.hero .eyebrow { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin:0 0 10px; font-weight:600; }
+  header.hero h1 { margin:0 0 10px; font-size:30px; line-height:1.2; letter-spacing:-.01em; }
+  header.hero p { margin:0; max-width:64ch; opacity:.92; font-size:15px; }
+  header.hero .meta { margin-top:18px; font-size:13px; opacity:.85; display:flex; flex-wrap:wrap; gap:8px 20px; }
+  header.hero .meta code { font-family:var(--mono); font-size:12px; background:rgba(255,255,255,.14); padding:2px 7px; border-radius:6px; }
+
+  .intro { background:var(--surface); border-radius:var(--radius-xl); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:30px; }
+  .intro h2 { margin:0 0 8px; font-size:17px; }
+  .intro p { margin:0 0 10px; font-size:14.5px; color:var(--muted); }
+  .intro ol { margin:10px 0 0; padding-left:20px; font-size:14.5px; color:var(--muted); }
+  .intro li { margin-bottom:5px; }
+
+  .section-head { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin:40px 0 14px; }
+  .section-head h2 { margin:0; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); }
+  .section-head .rule { flex:1; height:1px; background:var(--surface-high); min-width:40px; }
+  .section-note { font-size:14px; color:var(--muted); margin:-6px 0 16px; max-width:70ch; }
+
+  .card { background:var(--surface); border-radius:var(--radius-xl); padding:20px 22px 22px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .card h3 { margin:0 0 8px; font-size:16.5px; line-height:1.35; }
+  .card p { margin:0 0 10px; font-size:14.5px; }
+  .card p:last-child { margin-bottom:0; }
+  .card h4 { margin:18px 0 6px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+
+  .split { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px) { .split { grid-template-columns:1fr; } }
+  .for, .against { border-radius:var(--radius-lg); padding:12px 14px; font-size:14px; }
+  .for { background:var(--accent-soft); }
+  .against { background:var(--warn-soft); }
+  .for .label, .against .label { display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; margin-bottom:6px; }
+  .for .label { color:var(--accent); }
+  .against .label { color:var(--warn); }
+  .for ul, .against ul { margin:0; padding-left:18px; }
+  .for li, .against li { margin-bottom:5px; }
+
+  code, .mono { font-family:var(--mono); font-size:12.5px; }
+  .path { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  pre { margin:10px 0; padding:12px 14px; background:var(--surface-low); border-radius:var(--radius-lg); overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.5; }
+  pre .ok { color:var(--accent); font-weight:600; }
+  pre .bad { color:var(--stop); font-weight:600; }
+  pre .dim { color:var(--muted); }
+
+  table { width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13.5px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--surface-high); vertical-align:top; }
+  th { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; font-family:var(--mono); }
+  tr:last-child td { border-bottom:none; }
+
+  .pill { display:inline-block; font-family:var(--mono); font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; background:var(--surface-high); color:var(--text); }
+  .pill.yes { background:var(--accent-soft); color:var(--accent); }
+  .pill.no { background:var(--stop-soft); color:var(--stop); }
+  .pill.mid { background:var(--warn-soft); color:var(--warn); }
+
+  .pipe { display:flex; flex-wrap:wrap; gap:10px; align-items:stretch; margin:14px 0 6px; }
+  .step { flex:1 1 150px; background:var(--surface-low); border-radius:var(--radius-lg); padding:10px 12px; font-size:13px; position:relative; }
+  .step b { display:block; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  .step.bad { background:var(--stop-soft); }
+  .step.bad b { color:var(--stop); }
+  .step.warn { background:var(--warn-soft); }
+  .step.warn b { color:var(--warn); }
+  .step .arrow { position:absolute; right:-12px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; }
+  .legend { font-size:12.5px; color:var(--muted); margin-top:6px; }
+  .legend .k { display:inline-block; width:10px; height:10px; border-radius:3px; vertical-align:middle; margin-right:5px; }
+
+  .rec { margin:14px 0 0; background:var(--surface-low); border-radius:var(--radius-lg); padding:14px 16px; }
+  .rec .label { font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--accent); display:block; margin-bottom:6px; }
+  .rec p { margin:0 0 8px; font-size:14.5px; }
+  .rec p:last-child { margin-bottom:0; }
+
+  .callout { border-left:3px solid var(--accent-line); background:var(--accent-soft); border-radius:0 var(--radius-lg) var(--radius-lg) 0; padding:12px 15px; margin:14px 0; font-size:14px; }
+  .callout.warn { border-left-color:var(--warn); background:var(--warn-soft); }
+  .callout.stop { border-left-color:var(--stop); background:var(--stop-soft); }
+  .callout .k { display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:5px; color:var(--muted); }
+  .callout p { margin:0 0 8px; }
+  .callout p:last-child { margin-bottom:0; }
+
+  .opts { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .opt { cursor:pointer; font-size:13.5px; font-weight:550; padding:8px 15px; border-radius:999px; background:var(--surface-low); color:var(--muted); border:1px solid transparent; user-select:none; transition:background .12s, color .12s; }
+  .opt:hover { background:var(--surface-high); }
+  .opt input { position:absolute; opacity:0; pointer-events:none; }
+  .opt:has(input:checked) { background:var(--accent); color:#fff; }
+  .opt.neg:has(input:checked) { background:var(--warn); color:#fff; }
+
+  textarea { width:100%; margin-top:14px; min-height:88px; resize:vertical; font-family:var(--font); font-size:15px; line-height:1.5; color:var(--text); background:var(--surface-low); border:1px solid transparent; border-radius:var(--radius-lg); padding:12px 14px; }
+  textarea::placeholder { color:#9aa79f; }
+  textarea:focus { outline:none; border-color:var(--accent-line); background:var(--surface); }
+
+  button { font-family:var(--font); font-size:13.5px; font-weight:600; cursor:pointer; border-radius:10px; padding:8px 14px; border:1px solid transparent; background:var(--surface-low); color:var(--text); transition:background .12s; }
+  button:hover { background:var(--surface-high); }
+  button.primary { background:var(--accent); color:#fff; }
+  button.primary:hover { background:#2b5039; }
+  button.ghost { background:transparent; color:var(--muted); }
+  button.ghost:hover { background:var(--surface-low); }
+  button.tiny { font-size:12.5px; padding:6px 11px; }
+  .card-foot { display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+
+  .bar { position:fixed; left:0; right:0; bottom:0; z-index:20; background:rgba(255,255,255,.93); backdrop-filter:blur(10px); box-shadow:var(--shadow-sticky); padding:11px 20px; }
+  .bar .inner { max-width:940px; margin:0 auto; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .progress { font-size:13.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .progress b { color:var(--text); }
+  .bar .spacer { flex:1; }
+  .bar .saved { font-size:12.5px; color:var(--accent); opacity:0; transition:opacity .3s; }
+  .bar .saved.show { opacity:1; }
+
+  dialog { border:none; border-radius:var(--radius-xl); padding:0; width:min(820px,92vw); box-shadow:0 20px 60px rgba(0,0,0,.32); }
+  dialog::backdrop { background:rgba(20,28,24,.5); }
+  dialog .dlg-head { padding:18px 22px 14px; }
+  dialog h3 { margin:0 0 4px; font-size:17px; }
+  dialog .dlg-head p { margin:0; font-size:13.5px; color:var(--muted); }
+  dialog textarea { margin:0; border-radius:0; min-height:340px; max-height:52vh; font-family:var(--mono); font-size:12.5px; background:var(--surface-low); border-top:1px solid var(--surface-high); border-bottom:1px solid var(--surface-high); }
+  dialog .dlg-foot { padding:14px 22px 18px; display:flex; gap:10px; flex-wrap:wrap; }
+
+  @media print {
+    body { background:#fff; }
+    header.hero { background:#fff; color:#000; padding:0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity:1; }
+    header.hero .meta code { background:none; padding:0; }
+    .bar, .card-foot, dialog, .intro { display:none; }
+    .card { box-shadow:none; break-inside:avoid; }
+    .wrap { padding-bottom:0; }
+  }
+  /* A six-column evidence table cannot fit 390px without lying about a number, so the table
+     scrolls inside its card instead of the page scrolling sideways. */
+  @media (max-width:720px) {
+    table { display:block; overflow-x:auto; }
+    th, td { white-space:normal; }
+  }
+  @media (max-width:560px) {
+    header.hero h1 { font-size:23px; }
+    .card { padding:17px 16px 18px; }
+    .wrap { padding:0 14px 170px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS &middot; Decision exploration</p>
+    <h1>What S2 actually is: a measurement, two tools, and one credential away from a subscription</h1>
+    <p>Before we evaluate an extractor we should know what the words mean, what is already installed on
+       this box, and what each path costs in money, install time and risk. This page is the plain-language
+       version of the ingestion engine's S2 -- and the decision it needs from you.</p>
+    <div class="meta">
+      <span>PRD <code>INGESTION_ENGINE_PRD.md</code> S2</span>
+      <span>Instrument <code>knowledge/tests/shape_fixtures.py</code></span>
+      <span>2026-11-03</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="intro">
+    <h2>How to read this</h2>
+    <p>It is an <strong>explanation and one decision</strong>, not a proposal to buy anything. Everything
+       that could be checked was checked on this machine; those facts are marked
+       <span class="pill yes">verified</span>. Anything I am asserting from memory or from the tool's own
+       documentation is marked <span class="pill mid">inferred</span> -- treat it as a question to ask, not
+       a number to quote.</p>
+    <ol>
+      <li><strong>Part 1</strong> says what the words mean: extractor, Docling, Document AI, and "GCP credentials".</li>
+      <li><strong>Part 2</strong> says why S2 is harder than "run two tools".</li>
+      <li><strong>Parts 3-6</strong> are the four options, their cases, the rules that agree and disagree, and the matrix.</li>
+      <li><strong>Part 7</strong> is the recommendation. <strong>Part 8</strong> is your control -- it exports a spec row.</li>
+    </ol>
+  </div>
+
+  <!-- ============================================================ PART 1 -->
+  <div class="section-head"><h2>Part 1 &middot; What is actually true</h2><div class="rule"></div></div>
+  <p class="section-note">Four paragraphs of plain language, then the eight pages the evaluation actually runs
+     on. If you skip the rest of the page, read these.</p>
+
+  <div class="card">
+    <h3>1.1 What an "extractor" is, and why we would want one</h3>
+    <p>Today the path from a PDF page to a citable table row runs through a person. <code>pdftotext</code> gives us a
+       faithful wall of text; a human reads the printed grid and types it into the artefact as a
+       <code>&lt;!-- table --&gt;</code> block: columns, rows, cells, empty cells, dividers. That is why the
+       corpus is trustworthy, and why it cannot grow -- <strong>our table coverage is however many tables a
+       person has transcribed: 44 rows, four documents.</strong></p>
+    <p>An <em>extractor</em> is a program that reads the page's geometry and returns the table's
+       <em>structure</em>: which text is a column label, which cells belong to which row, which cell is
+       empty, which one spans two rows. Both tools below do that. Neither is free of consequences.</p>
+    <h4>The three jobs that are welded together today</h4>
+    <table>
+      <tr><th>Job</th><th>Today</th><th>Under D80 (X2)</th></tr>
+      <tr><td><strong>Extraction</strong> -- getting structure out of a page</td><td>a human, per table</td><td>a model drafts; a human reviews a diff</td></tr>
+      <tr><td><strong>Verification</strong> -- proving the structure is the page's</td><td>the same human, by eye</td><td>asserted: cell fidelity, row count, header association, spans</td></tr>
+      <tr><td><strong>Citation</strong> -- what a quote is</td><td>a substring of the artefact text</td><td>unchanged: still characters we verified</td></tr>
+    </table>
+    <p class="legend">S2 is only about the first job. The second was built last session (S4). The third never changes.</p>
+  </div>
+
+  <div class="card">
+    <h3>1.2 What Docling is</h3>
+    <p><strong>Docling is an open-source Python library that converts documents into structured data.</strong>
+       You install it with pip, point it at a PDF, and it returns a document tree: sections, paragraphs,
+       tables with rows and cells, and layout information. The parts that matter to us are its layout model
+       (where on the page is each block) and its table-structure model (which cells group into a row, and
+       which labels head which columns).</p>
+    <p>It runs <em>here</em>: no account, no key, no network at run time once its model files are on disk.
+       The cost is the install: it brings PyTorch and a set of model weights, and the first run downloads
+       those weights.</p>
+    <table>
+      <tr><th>Property</th><th>Value</th><th>How I know</th></tr>
+      <tr><td>Runs offline after install</td><td>yes</td><td><span class="pill yes">verified</span> by its design (local models); we would confirm on first run</td></tr>
+      <tr><td>Install on this box</td><td>not installed</td><td><span class="pill yes">verified</span> -- see 1.4</td></tr>
+      <tr><td>Install size</td><td>PyTorch plus model weights; <em>hundreds of megabytes</em></td><td><span class="pill mid">inferred</span> -- not measured here</td></tr>
+      <tr><td>Licence</td><td>open-source (permissive)</td><td><span class="pill mid">inferred</span> -- read the licence before we depend on it</td></tr>
+      <tr><td>Python 3.13 support</td><td>expected; PyTorch publishes 3.13 wheels</td><td><span class="pill mid">inferred</span> -- a 3.12 fallback is cheap if it fails</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>1.3 What Google Document AI is, and what "GCP credentials" means</h3>
+    <p><strong>Document AI is a Google Cloud service that reads documents for you</strong> -- a hosted
+       version of the same idea. You send it a page (an image or a PDF page) and it returns detected text,
+       layout, and for its <em>Form Parser</em> and <em>Layout Parser</em> processors, tables with headers,
+       rows and spanning cells. There is nothing to install; the work happens on Google's machines and you
+       are billed per page processed.</p>
+    <p><strong>"GCP credentials" is how a program proves to Google that it may spend your money.</strong>
+       Concretely, adopting it needs four things that do not exist on this box today:</p>
+    <table>
+      <tr><th>#</th><th>What</th><th>Why it is needed</th></tr>
+      <tr><td class="num">1</td><td>A Google Cloud <strong>project</strong> with <strong>billing enabled</strong></td><td>a paid API with no billing account refuses to run</td></tr>
+      <tr><td class="num">2</td><td>The <strong>Document AI API enabled</strong> on that project</td><td>an API that is off returns a permission error, not a result</td></tr>
+      <tr><td class="num">3</td><td>A <strong>processor</strong> created in it (Form Parser or Layout Parser), which has a project id, a location and a processor id</td><td>that triple is what the code calls: which reader, in which region, on which project</td></tr>
+      <tr><td class="num">4</td><td>A <strong>service-account key</strong>: a JSON file with a robot e-mail address and a private key, granted a role that may call Document AI</td><td>this is the "credential" -- the secret the code authenticates with</td></tr>
+    </table>
+    <div class="callout warn">
+      <span class="k">The part that matters for our repo</span>
+      <p>A GCP key is a <strong>secret like <code>GEMINI_API_KEY</code></strong>: it never enters git, never
+         enters a committed <code>.env</code>, and it must be revocable. It is also a
+         <strong>spending</strong> credential -- a leaked key is somebody else's bill. This repo already has
+         a live example of the same trap: the dev box cannot refresh the corpus because
+         <code>GEMINI_API_KEY</code> is absent, and a refresh without it writes NULL vectors that read
+         "already ingested" forever.</p>
+    </div>
+    <p>Prices are per page and vary by processor and region. <strong>Do not quote a number from this page</strong>
+       -- <span class="pill mid">inferred</span> and probably stale. For our scale -- 8 pages for the
+       evaluation, a handful of documents a year afterwards -- the question is not the money, it is whether
+       a recurring external dependency and a secret are worth it at all.</p>
+  </div>
+
+  <div class="card">
+    <h3>1.4 What this box actually has, checked rather than assumed</h3>
+    <pre><span class="dim">$ python -V</span>
+Python 3.13.3
+
+<span class="dim">$ python -c "import docling"</span>
+<span class="bad">ModuleNotFoundError: No module named 'docling'</span>
+
+<span class="dim">$ python -c "import torch"</span>
+<span class="bad">ModuleNotFoundError: No module named 'torch'</span>
+
+<span class="dim">$ pip --version</span>
+pip 26.2.1  <span class="dim">(.venv)</span>
+
+<span class="dim">$ rg -o "^[A-Z_]+=" .env</span>
+DJANGO_SECRET_KEY=   <span class="dim"># exactly one key, no API keys of any kind</span></pre>
+    <p>So <strong>both paths start with a preamble</strong>: Docling with an install, Document AI with an
+       account. Neither is a blocker; both are work that happens before the first useful measurement, and
+       that preamble is why S2 is a session and not a footnote.</p>
+  </div>
+
+  <div class="card">
+    <h3>1.5 The instrument already exists: the eight pages S2 measures</h3>
+    <p>This is the part that makes S2 cheap. S0 built a registry of the eight table shapes that already
+       exist in our corpus, each with the page it is printed on and a measured expectation. S4 built the
+       checker that scores a candidate read against an expectation and names each disagreement. S2's job is
+       to point an extractor at these eight pages and fill in one row per shape.</p>
+    <table>
+      <tr><th>Shape</th><th>Document</th><th class="num">PDF page</th><th class="num">Rows</th><th class="num">Cols</th><th>Can the artefact format hold it?</th></tr>
+      <tr><td>Numeric row, no labels</td><td>OPP &sect;2.3</td><td class="num">2</td><td class="num">6</td><td class="num">3</td><td>yes -- a fee band, and its column labels are what make it findable</td></tr>
+      <tr><td>Header lost entirely</td><td>SAOSO App 6a</td><td class="num">86</td><td class="num">20</td><td class="num">2</td><td>yes -- but the header is printed once, so it must be associated</td></tr>
+      <tr><td>Column-major interleaving</td><td>SAOSO App 7</td><td class="num">89</td><td class="num">7</td><td class="num">4</td><td><strong>no</strong> -- one printed order only; a human must de-interleave</td></tr>
+      <tr><td>Very long cell</td><td>landscape</td><td class="num">5</td><td class="num">1</td><td class="num">5</td><td>yes -- 1,112 characters in one cell</td></tr>
+      <tr><td>Deliberate empty cell</td><td>landscape</td><td class="num">4</td><td class="num">2</td><td class="num">5</td><td>yes -- and it must never be filled from the cell above</td></tr>
+      <tr><td>Row across a page break</td><td>landscape</td><td class="num">4-5</td><td class="num">3</td><td class="num">5</td><td>partly -- a row has one page; the format cannot say "continued"</td></tr>
+      <tr><td>Two-level qualifiers</td><td>SAOSO App 2</td><td class="num">77</td><td class="num">11</td><td class="num">2</td><td>yes, but authored -- a divider is a line a human writes</td></tr>
+      <tr><td>A picture in a cell</td><td>landscape</td><td class="num">6</td><td class="num">2</td><td class="num">5</td><td><strong>no</strong> -- artwork is a legend note plus its printed label</td></tr>
+    </table>
+    <p class="legend">Eight pages, four documents, five distinct pages on landscape/OPP and three on SAOSO.
+       Source: <span class="path">knowledge/tests/shape_fixtures.py</span>, every expectation measured 2026-11-03.</p>
+    <div class="callout">
+      <span class="k">Measured last session, and it changes S2's protocol</span>
+      <p>A table's cells are only faithful against <em>the extraction they were transcribed from</em>. The
+         landscape's tables pass every check against <code>-table</code> pages and report
+         <strong>10 violations</strong> against <code>-layout</code>. So S2 must record, per shape, which
+         extraction mode the candidate read claims to come from -- otherwise the score is a coin toss.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ PART 2 -->
+  <div class="section-head"><h2>Part 2 &middot; The shape of the problem</h2><div class="rule"></div></div>
+  <p class="section-note">Three asymmetries decide this more than any feature list.</p>
+
+  <div class="card">
+    <h3>2.1 S2 is a measurement, and a measurement is allowed to fail</h3>
+    <p>The PRD already wrote its own falsifier: <em>if the extractors lose spans or qualifiers on more than
+       two of the eight shapes, then X3 (cite a region) moves first</em>. That means a session spent on S2
+       can honestly end in <strong>"neither wins"</strong> -- and that is a result, not a wasted session, as
+       long as it is written down. The failure mode to avoid is adopting a tool because it was installed.</p>
+  </div>
+
+  <div class="card">
+    <h3>2.2 The gate must never need the extractor</h3>
+    <p>Requirement 10 of the PRD is blunt: <em>the gate needs no extractor</em>. The build machine and the
+       CI gate do not have <code>pdftotext</code> today (they are given committed page fixtures for exactly
+       this reason), so they will not have Docling or a Google key either. Whatever we adopt runs once, on a
+       machine that has it, and the thing that enters the repo is <strong>the artefact</strong>, plus the
+       recorded banner saying which extractor produced it.</p>
+    <p>That is also why "credentials" is a smaller question than it looks: a credential would be needed by
+       the person running the evaluation, not by the product.</p>
+  </div>
+
+  <div class="card">
+    <h3>2.3 The two tools are not symmetrical, and the difference is where they fail</h3>
+    <table>
+      <tr><th></th><th>Docling</th><th>Document AI</th></tr>
+      <tr><td>Where it runs</td><td>this machine</td><td>Google's</td></tr>
+      <tr><td>What it needs first</td><td>an install (~torch + models)</td><td>project, billing, processor, key</td></tr>
+      <tr><td>Marginal cost per page</td><td>CPU seconds</td><td>money, and a metered quota</td></tr>
+      <tr><td>Failure mode we should expect</td><td>a merged or spanning cell collapsed; a column header read as a data row</td><td>the same, plus: the *service* changes under us, and a page count becomes an invoice</td></tr>
+      <tr><td>Kept forever?</td><td>only if its output is good</td><td>only if we keep paying</td></tr>
+      <tr><td>Offline auditability</td><td>yes</td><td>no -- the evidence is a remote response</td></tr>
+    </table>
+    <p class="legend">The asymmetry: Docling's cost is <em>up front and reversible</em>; Document AI's is
+       <em>recurring and not</em>.</p>
+  </div>
+
+  <!-- ============================================================ PART 3 -->
+  <div class="section-head"><h2>Part 3 &middot; The options</h2><div class="rule"></div></div>
+  <p class="section-note">Four, including the two nobody puts in a proposal: running both, and running none.</p>
+
+  <div class="card">
+    <h3>A &middot; Docling first, and only then decide</h3>
+    <div class="pipe">
+      <div class="step"><b>1 install</b>pip install docling in a throwaway venv; first run fetches models</div>
+      <div class="step"><b>2 read</b>the eight pages &rarr; its document tree</div>
+      <div class="step"><b>3 map</b>its table model &rarr; our <code>TableRead</code></div>
+      <div class="step"><b>4 score</b><code>mismatches(case, read)</code> per shape</div>
+      <div class="step"><b>5 record</b>one row per shape in the PRD; commit the runner</div>
+    </div>
+    <p class="legend">Every edge labelled: install feeds read, read is mapped to our shape, the shape is scored
+       against S0's expectation, the score is written down. Steps 4-5 are already built.</p>
+  </div>
+
+  <div class="card">
+    <h3>B &middot; Document AI first</h3>
+    <div class="pipe">
+      <div class="step warn"><b>1 account</b>project, billing, API, processor, key <span class="pill mid">yours to hold</span></div>
+      <div class="step"><b>2 call</b>eight pages &rarr; Document AI response</div>
+      <div class="step"><b>3 map</b>its tables &rarr; our <code>TableRead</code></div>
+      <div class="step"><b>4 score</b><code>mismatches(case, read)</code> per shape</div>
+      <div class="step"><b>5 record</b>the rows, plus a per-page cost line</div>
+    </div>
+    <p class="legend">Same instrument, different first step -- and that first step cannot be done by an agent
+       on this box, because it needs a secret and a payment method only you can supply.</p>
+  </div>
+
+  <div class="card">
+    <h3>C &middot; Both, in one session</h3>
+    <p>Run A, then B on the same eight pages, and publish both columns. Justified only if the session has
+       room for the install <em>and</em> the account; otherwise it produces two half-measurements and no
+       decision.</p>
+  </div>
+
+  <div class="card">
+    <h3>D &middot; Neither -- close the two live defects by hand and write the debt down</h3>
+    <p>S5 without S2/S3: hand-review Appendix 6a's 20 rows and Appendix 7's 4 chunks into table blocks, so
+       the harness sees them and the two defects close. No install, no account, no new dependency -- and no
+       generalisation either: the next unseen document is still a transcription.</p>
+    <div class="callout warn">
+      <span class="k">This is a real option, not a straw man</span>
+      <p>It closes the two defects the PRD measures, it is entirely within the rules, and it can happen in
+         the same session as anything else. Its cost is that the PRD's goal -- "a document we have never seen
+         can be ingested with its tables intact" -- stays unstarted.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ PART 4 -->
+  <div class="section-head"><h2>Part 4 &middot; Evidence for and against</h2><div class="rule"></div></div>
+  <p class="section-note">The strongest case for each, then what is wrong with it.</p>
+
+  <div class="card">
+    <h3>A &middot; Docling first</h3>
+    <div class="split">
+      <div class="for"><span class="label">For</span><ul>
+        <li>No secret, no billing, no account -- an agent can do the whole slice unsupervised.</li>
+        <li>The result is reproducible: same pages, same version, same output, forever.</li>
+        <li>It fails <em>locally</em>, where we can read the failure, instead of remotely.</li>
+        <li>If it wins, the build step stays offline -- which is what requirement 10 wants anyway.</li>
+      </ul></div>
+      <div class="against"><span class="label">Against</span><ul>
+        <li>An install with model weights, on a laptop, for a measurement that may end in "no".</li>
+        <li>Its table model is younger than Google's; merged and spanning cells are exactly where young models lose.</li>
+        <li>It answers "can a local model do this", not "what is the best available".</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>B &middot; Document AI first</h3>
+    <div class="split">
+      <div class="for"><span class="label">For</span><ul>
+        <li>Form and Layout parsers are the strongest published table structure available; spanning cells and headers are what they are built for.</li>
+        <li>No install, no local model drift, no Python 3.13 risk.</li>
+        <li>If our documents are the hard part, this finds the ceiling fastest.</li>
+      </ul></div>
+      <div class="against"><span class="label">Against</span><ul>
+        <li>Four things you must create before one page is read: project, billing, processor, key.</li>
+        <li>A recurring dependency and a metered bill for a document set that changes rarely.</li>
+        <li>The evidence becomes "a response we received" -- harder to audit offline than a file we can diff.</li>
+        <li>It cannot be run by an agent at all, so the slice waits on you personally.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>C &middot; Both, and D &middot; Neither</h3>
+    <div class="split">
+      <div class="for"><span class="label">For</span><ul>
+        <li><strong>C:</strong> one comparison table settles the question for a year.</li>
+        <li><strong>D:</strong> the two live defects close now, with no dependency and no secret; S5 becomes checkable.</li>
+      </ul></div>
+      <div class="against"><span class="label">Against</span><ul>
+        <li><strong>C:</strong> doubles the preamble, and one of the two preambles is yours.</li>
+        <li><strong>D:</strong> the engine still does not generalise; the 45th table will be typed by a person too.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <!-- ============================================================ PART 5 -->
+  <div class="section-head"><h2>Part 5 &middot; What our own rules say, and where they disagree</h2><div class="rule"></div></div>
+  <p class="section-note">This repo is unusually explicit about its principles, which is convenient: they
+     can be checked against the options rather than gestured at.</p>
+
+  <div class="card">
+    <table>
+      <tr><th>Rule, and where it is written</th><th>What it says</th><th>Which option it favours</th><th>Does it hold <em>here</em>?</th></tr>
+      <tr><td>Requirement 10, <code>INGESTION_ENGINE_PRD.md</code></td><td>the gate needs no extractor; a build-time act with a recorded banner</td><td>A (offline) over B (remote)</td><td><strong>Yes</strong> -- but only for the <em>gate</em>; S2 itself may use either</td></tr>
+      <tr><td>R9 and D70.2</td><td>no new claim: a quote is characters we verified</td><td>Neither -- unchanged by both</td><td><strong>Yes</strong>, and it is why X4 (vision) is out</td></tr>
+      <tr><td>PRD &sect;5 falsifier</td><td>more than two of eight shapes lose spans &rarr; X3 moves first</td><td>Neither -- it constrains what a loss means</td><td><strong>Yes</strong>, and it is the reason S2 can say "no"</td></tr>
+      <tr><td><code>testing_hazards.md</code> &sect;2.9</td><td>a gate that asserts a tool the box lacks fails on the box</td><td>A, with the tool kept out of the gate</td><td><strong>Yes</strong> -- the lesson of <code>-table</code> not existing in poppler</td></tr>
+      <tr><td>"Run the thing before recommending it" (<code>pgs-writing-explorations</code>)</td><td>a plausible assumption about source format is the commonest way these documents mislead</td><td>B or C, i.e. measure the best available</td><td><strong>Disagrees with A-first</strong> -- see below</td></tr>
+    </table>
+    <div class="callout">
+      <span class="k">Where the rules point in different directions</span>
+      <p>The explore-skill rule ("run the strongest thing you can") points at Document AI; the repo's
+         engineering rules point at keeping the pipeline local, reproducible and secret-free. I break the tie
+         with a cost argument: <strong>the strongest thing you cannot run is not evidence.</strong> Docling
+         can be run today, by me, and it answers the question that actually gates the next slice --
+         <em>is a structure model good enough on these eight pages at all?</em> If it is, we may never need
+         the paid one. If it is not, the paid one is waiting and we will know exactly which shapes to test
+         it on.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ PART 6 -->
+  <div class="section-head"><h2>Part 6 &middot; Comparison</h2><div class="rule"></div></div>
+  <p class="section-note">Unweighted on purpose: you weigh them. Every cell is a fact or an explicit
+     uncertainty, not a score.</p>
+
+  <div class="card">
+    <table>
+      <tr><th>Criterion</th><th>A &middot; Docling</th><th>B &middot; Document AI</th><th>D &middot; Neither</th></tr>
+      <tr><td>Can an agent start it today</td><td><span class="pill yes">yes</span></td><td><span class="pill no">no -- needs your secret</span></td><td><span class="pill yes">yes</span></td></tr>
+      <tr><td>Money</td><td>none</td><td>per page, metered <span class="pill mid">inferred</span></td><td>none</td></tr>
+      <tr><td>Offline</td><td>after install</td><td>never</td><td>n/a</td></tr>
+      <tr><td>New runtime dependency kept?</td><td>only if we adopt it</td><td>yes, and a secret</td><td>no</td></tr>
+      <tr><td>Answers "can structure be recovered at all"</td><td>yes</td><td>yes, and at the ceiling</td><td>no</td></tr>
+      <tr><td>Closes 6a and Appendix 7</td><td>no -- that is S5</td><td>no -- that is S5</td><td><strong>yes</strong></td></tr>
+      <tr><td>Time to a written result</td><td>one session</td><td>one session, after the account exists</td><td>one session, on the 24 chunks</td></tr>
+      <tr><td>Risk if the tool is retired</td><td>none -- output is committed text</td><td>the pipeline stops until replaced</td><td>none</td></tr>
+      <tr><td>What it leaves undone</td><td>the ceiling question</td><td>the offline question</td><td>the whole PRD goal</td></tr>
+    </table>
+  </div>
+
+  <!-- ============================================================ PART 7 -->
+  <div class="section-head"><h2>Part 7 &middot; Recommendation</h2><div class="rule"></div></div>
+
+  <div class="card">
+    <h3>Run A, with B as the named second step -- and do not couple it to anything</h3>
+    <div class="rec">
+      <span class="label">Recommendation</span>
+      <p><strong>Evaluate Docling first, on the eight pages, with S0's expectations and S4's checker.</strong>
+         Publish the result as one row per shape in <code>INGESTION_ENGINE_PRD.md</code>, with a column for
+         the extraction mode the read claims, and a seconds-per-page figure. Adopt nothing in that session:
+         S2's deliverable is a table, and S3 is where a tool enters the pipeline.</p>
+      <p><strong>Then:</strong> if Docling loses spans, qualifiers or header association on <strong>three or
+         more</strong> of the eight, run B on exactly those shapes -- that is when a GCP project and a key
+         become worth creating, and by then we have a list of the shapes to grade it on. If both lose on
+         more than two, the PRD's own falsifier applies: <strong>X3 moves first</strong>.</p>
+      <p><strong>In parallel, and independent of all of it:</strong> D is worth doing anyway -- hand-review
+         Appendix 6a's 20 rows and Appendix 7's 4 chunks into table blocks, so the harness sees them and the
+         two live defects stop being live. It is S5, it needs no tool, and it is the only option that
+         improves the corpus <em>today</em>.</p>
+    </div>
+    <h4>What this changes</h4>
+    <p>Nothing in production. One install in a throwaway venv, one runner script, one results table, and a
+       session record that says either "good enough, proceed to S3" or "here are the three shapes to take to
+       a paid parser".</p>
+    <h4>What would change my mind</h4>
+    <ul>
+      <li><strong>You already have a GCP project and a Document AI processor.</strong> Then B first costs
+          nothing new, and it is the stronger tool -- the argument for A collapses to "offline".</li>
+      <li><strong>The install fails on Python 3.13 and a 3.12 fallback is not worth it.</strong> Then B, or D.</li>
+      <li><strong>Docling's output keeps pictures and page images as blocks we cannot cite.</strong> Then the
+          measure that matters is R7, and the honest answer may be "text extractors are not the whole
+          answer" -- which is X3's argument, not a tool's.</li>
+      <li><strong>A document arrives this week that must be ingested.</strong> Then D is the answer and S2
+          waits; the PRD says the same thing.</li>
+    </ul>
+    <div class="callout stop">
+      <span class="k">What I will not do without you</span>
+      <p>Create a Google Cloud project, enable billing, or hold a service-account key. Not because the
+         paperwork is hard, but because it is a spending credential in a repo whose whole claim is that its
+         evidence is checkable offline. If we go that way it should be a decision with your name on it.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================ PART 8 -->
+  <div class="section-head"><h2>Part 8 &middot; Your decision</h2><div class="rule"></div></div>
+
+  <div class="card">
+    <h3>How should S2 run?</h3>
+    <p>Pick one, add anything you want recorded, and export -- the export is a row shaped for
+       <code>PGS_PLATFORM_SPEC.md</code> &sect;18.3, and the next free number is <strong>D81</strong>.</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="s2" value="A">A &middot; Docling first</label>
+      <label class="opt"><input type="radio" name="s2" value="B">B &middot; Document AI first</label>
+      <label class="opt"><input type="radio" name="s2" value="C">C &middot; Both</label>
+      <label class="opt neg"><input type="radio" name="s2" value="D">D &middot; Neither, close S5 by hand</label>
+    </div>
+    <p class="card-foot">
+      <button class="tiny" data-accept="s2" data-value="A">Accept the recommendation (A)</button>
+      <button class="tiny ghost" data-clear="s2">Clear</button>
+    </p>
+    <textarea data-notes="s2" placeholder="Anything to record -- e.g. &quot;we already have a GCP project&quot;, or &quot;do D first, S2 next session&quot;."></textarea>
+  </div>
+
+  <div class="card">
+    <h3>Is S5 worth doing alongside, whichever extractor you pick?</h3>
+    <p>The 24 chunks (6a's 20 rows, Appendix 7's 4) close by hand and need no tool. This is the one part of
+       the plan that improves the corpus without waiting for an evaluation.</p>
+    <div class="opts">
+      <label class="opt"><input type="radio" name="s5" value="yes">Yes, do it alongside</label>
+      <label class="opt"><input type="radio" name="s5" value="no">No, keep S2 pure</label>
+      <label class="opt"><input type="radio" name="s5" value="later">Later, as its own session</label>
+    </div>
+    <p class="card-foot">
+      <button class="tiny ghost" data-clear="s5">Clear</button>
+    </p>
+    <textarea data-notes="s5" placeholder="Notes on sequencing."></textarea>
+  </div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress"><b id="answered">0</b> of 2 answered</span>
+    <span class="spacer"></span>
+    <span class="saved" id="saved">Saved</span>
+    <button class="ghost" id="reset">Reset</button>
+    <button class="primary" id="export">Export spec row</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-head">
+    <h3>Spec row &mdash; D81</h3>
+    <p>Paste into <code>PGS_PLATFORM_SPEC.md</code> &sect;18.3 with the next free number if 81 is taken.</p>
+  </div>
+  <textarea id="out" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="copy">Copy</button>
+    <button id="download">Download .md</button>
+    <button class="ghost" id="close">Close</button>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  var KEY = 'pgs.d80.s2.v1';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    var el = document.getElementById('saved');
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 1200);
+  }
+  function count() {
+    var done = ['s2', 's5'].filter(function (k) { return !!(state[k] && state[k].choice); }).length;
+    document.getElementById('answered').textContent = done;
+  }
+  document.querySelectorAll('input[type=radio]').forEach(function (input) {
+    var key = input.name;
+    if (state[key] && state[key].choice === input.value) input.checked = true;
+    input.addEventListener('change', function () {
+      state[key] = state[key] || {};
+      state[key].choice = input.value;
+      save(); count();
+    });
+  });
+  document.querySelectorAll('textarea[data-notes]').forEach(function (area) {
+    var key = area.getAttribute('data-notes');
+    if (state[key] && state[key].notes) area.value = state[key].notes;
+    area.addEventListener('input', function () {
+      state[key] = state[key] || {};
+      state[key].notes = area.value;
+      save();
+    });
+  });
+  document.querySelectorAll('button[data-accept]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-accept');
+      var input = document.querySelector('input[name="' + key + '"][value="' + btn.getAttribute('data-value') + '"]');
+      if (input) { input.checked = true; input.dispatchEvent(new Event('change')); }
+    });
+  });
+  document.querySelectorAll('button[data-clear]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-clear');
+      state[key] = {};
+      document.querySelectorAll('input[name="' + key + '"]').forEach(function (i) { i.checked = false; });
+      var area = document.querySelector('textarea[data-notes="' + key + '"]');
+      if (area) area.value = '';
+      save(); count();
+    });
+  });
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!confirm('Clear every answer on this page?')) return;
+    state = {};
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    document.querySelectorAll('input[type=radio]').forEach(function (i) { i.checked = false; });
+    document.querySelectorAll('textarea').forEach(function (t) { if (!t.readOnly) t.value = ''; });
+    count();
+  });
+
+  var LABELS = {
+    A: 'A - Docling first, on the eight pages, with S0 expectations and S4 checker; B only if it loses spans, qualifiers or header association on three or more shapes',
+    B: 'B - Document AI first (project, billing, processor and key supplied by the owner); Docling only as the offline fallback',
+    C: 'C - both in one session, published side by side',
+    D: 'D - neither: close Appendix 6a and Appendix 7 by hand, keep the engine local, and write the generalisation debt down'
+  };
+  var S5 = {
+    yes: 'S5 alongside the evaluation', no: 'S2 kept pure, S5 after it', later: 'S5 as its own later session'
+  };
+  function markdown() {
+    var s = state.s2 || {};
+    var t = state.s5 || {};
+    var answer = LABELS[s.choice] || '(not answered)';
+    var s5 = S5[t.choice] || '(not answered)';
+    var notes = (s.notes || '').trim().replace(/\s*\n\s*/g, ' ');
+    var tnotes = (t.notes || '').trim().replace(/\s*\n\s*/g, ' ');
+    return '| D81 | How does S2 evaluate an extractor, and which one first? | **' + answer + '**, decided 2026-11-03 ' +
+      '(exploration `product/design/d80_s2_extractor_evaluation.html`). The evaluation instrument already exists: ' +
+      '**eight shapes, eight pages, four documents** in `knowledge/tests/shape_fixtures.py`, scored by S4\'s ' +
+      '`mismatches()` against measured expectations. Two candidates: **Docling** (open-source, local, needs an ' +
+      'install with PyTorch and model weights, no secret) and **Google Document AI** (managed Form/Layout parser, ' +
+      'no install, but needs a GCP project, billing, a processor and a service-account key -- a spending ' +
+      'credential). Verified on the dev box 2026-11-03: neither docling nor torch is installed and `.env` holds ' +
+      'only `DJANGO_SECRET_KEY`, so both paths start with a preamble. The gate must never need an extractor ' +
+      '(requirement 10), so an evaluation runs once and commits its artefact plus a recorded banner. Measured: ' +
+      'cells are faithful only against the extraction they came from -- the landscape passes every check against ' +
+      '`-table` and fails **10** against `-layout` -- so each row must record its mode. **Sequencing:** ' + s5 + '. ' +
+      (notes ? 'Owner\'s note: ' + notes + ' ' : '') +
+      (tnotes ? 'Sequencing note: ' + tnotes + ' ' : '') +
+      'The PRD\'s falsifier still governs: if the extractors lose spans or qualifiers on more than two of the ' +
+      'eight, X3 moves first, and the two live defects (6a\'s 20 rows, Appendix 7\'s 4 chunks) close by hand ' +
+      'either way. |';
+  }
+
+  var dlg = document.getElementById('dlg');
+  document.getElementById('export').addEventListener('click', function () {
+    document.getElementById('out').value = markdown();
+    dlg.showModal();
+  });
+  document.getElementById('close').addEventListener('click', function () { dlg.close(); });
+  document.getElementById('copy').addEventListener('click', function () {
+    var out = document.getElementById('out'); out.select(); document.execCommand('copy');
+  });
+  document.getElementById('download').addEventListener('click', function () {
+    var blob = new Blob([markdown() + '\n'], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'd81-s2-extractor-evaluation.md';
+    a.click();
+  });
+  count();
+})();
+</script>
+</body>
+</html>
