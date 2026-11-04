@@ -383,6 +383,92 @@ class FarmContact(models.Model):
         return f"{self.name} ({self.role})" if self.role else self.name
 
 
+class CommitteePosition(models.TextChoices):
+    """The eleven positions OPP §3.1 defines and OPP §VII fills (spec §3.2).
+
+    A committee *position* is not the `COMMITTEE` account role: the position is a
+    governance fact about a term, the role is a capability on a login. They are
+    deliberately separate, because the roster is renewed at every AGM while the
+    logins are not.
+    """
+
+    CHAIRPERSON = "CHAIRPERSON", "Chairperson"
+    VICE_CHAIRPERSON = "VICE_CHAIRPERSON", "Vice-Chairperson"
+    SECRETARY = "SECRETARY", "Secretary"
+    TREASURER = "TREASURER", "Treasurer"
+    FARM_VISIT_ADMINISTRATION = (
+        "FARM_VISIT_ADMINISTRATION",
+        "Farm visit administration and reporting",
+    )
+    TECHNICAL_FARMING_SUPPORT = "TECHNICAL_FARMING_SUPPORT", "Technical farming support"
+    COMMUNICATIONS = "COMMUNICATIONS", "Communications"
+    EVENTS_COORDINATION = "EVENTS_COORDINATION", "Events coordination and management"
+    CONSUMER_REPRESENTATIVE = "CONSUMER_REPRESENTATIVE", "Consumer representative"
+    RETAIL_MARKET_REPRESENTATIVE = (
+        "RETAIL_MARKET_REPRESENTATIVE",
+        "Retail and market representative",
+    )
+    ACADEMIC_REPRESENTATIVE = "ACADEMIC_REPRESENTATIVE", "Academic representative"
+
+
+class CommitteeTerm(models.Model):
+    """One person's hold on one committee position for one AGM year.
+
+    A **term**, not an attribute (spec §3.2): composition is renewed at every AGM, so
+    a `User.is_committee` flag would have to be cleared every year and would lose the
+    history of who served when.
+
+    `user` is **nullable**, and `holder_name` is the printed name. The OPP's roster
+    names eight people who do not have accounts — and should not be given empty ones
+    to satisfy a FK. When a holder registers, the term is linked; until then the name
+    is the record.
+
+    A **blank `holder_name` is a vacancy**, not a missing row: the OPP advertises
+    events coordination and academic representation as open (`TBC — call for
+    expressions of interest`). Deleting the row instead would make "nobody has
+    applied" indistinguishable from "we lost the data".
+
+    No contact details: a position is a public governance fact (plan A2).
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="committee_terms",
+        help_text="Set once the holder has an account. The roster precedes the login.",
+    )
+    holder_name = models.CharField(max_length=200, blank=True)
+    position = models.CharField(max_length=64, choices=CommitteePosition.choices)
+    agm_year = models.PositiveSmallIntegerField()
+    elected_on = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Null when the source names only the AGM year — never invent the day.",
+    )
+    vacated_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["agm_year", "position", "holder_name"]
+        constraints = [
+            # The natural key that makes seeding idempotent. It is NOT unique on
+            # (position, agm_year): one position can be held by several people at once
+            # (farm visit administration: four), and one person can hold two positions.
+            models.UniqueConstraint(
+                fields=["position", "agm_year", "holder_name"], name="uniq_committee_term"
+            ),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.get_position_display()}: {self.holder_name or 'vacant'} ({self.agm_year})"
+
+    @property
+    def is_vacant(self) -> bool:
+        """True for an advertised open seat — a row that exists and has no holder."""
+        return not (self.holder_name or "").strip()
+
+
 class MembershipFee(models.Model):
     """A membership subscription payment for one explicit period.
 

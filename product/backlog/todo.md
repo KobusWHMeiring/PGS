@@ -8,6 +8,12 @@ the generated index's "To Do" section.
 - [ ] Set up `summarise.py` to generate `product/docs/state/` once there is code to summarise.
 - [ ] `docker-compose.yml` + `Dockerfile` (MVP 0, sub-plan A).
 - [ ] Decide the production host for the platform (the group currently has no server).
+- [ ] **SMTP for the platform.** Nothing in dev sends mail: there is no transactional provider,
+      no sender domain and no `.env` key for one. It gates three things at once — **email
+      verification** at account creation (`User.email_verified_at` exists and nothing sets it;
+      decided 2026-11-04, `SELF_CHECK_PRD` §11.4 Q9), **password reset**, and the administrator's
+      escalation path (`Refinement/ESCALATION_ANSWER_PATH_PRD.md`, which is still waiting on a
+      published contact). Measured 2026-11-04: the dev `.env` holds `DJANGO_SECRET_KEY` only.
 - [ ] Add a second physical backup copy — currently a single local external drive (R11, accepted gap).
 
 ## Decided, not yet queued (2026-11-02)

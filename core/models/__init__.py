@@ -27,6 +27,8 @@ from core.models._chat import (
 )
 from core.models._core import (
     ASSESSOR_CAPABILITY,
+    CommitteePosition,
+    CommitteeTerm,
     Farm,
     FarmAlias,
     FarmCategory,
@@ -45,6 +47,8 @@ __all__ = [
     "Category",
     "ChatMessage",
     "ChatSession",
+    "CommitteePosition",
+    "CommitteeTerm",
     "EscalatedQuery",
     "EscalationReason",
     "Farm",

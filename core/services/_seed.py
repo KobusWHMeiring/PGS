@@ -27,7 +27,7 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
-from core.models import Category, Seal
+from core.models import Category, CommitteePosition, CommitteeTerm, Seal
 from knowledge.models import StandardSet
 
 
@@ -143,6 +143,66 @@ CATEGORIES: tuple[CategorySpec, ...] = (
 )
 
 
+# --- The 2026 committee (OPP §VII, page 12) ----------------------------------
+#
+# Read from the reviewed corpus (`knowledge/corpus/opp.md`), not from the plan's
+# summary of it. `holder_name` is the printed name; parentheticals in the source are
+# support relationships ("with support from Lilani Pretorius", "Wild Oats"), not
+# second holders, so they are not rows.
+#
+# A blank name is a **vacancy** (spec §3.2), not an omission: the OPP advertises both
+# seats as open. `elected_on` is left None throughout because the source says only
+# "the AGM held in 2025" — no day, no month. `vacated_on` is never written here; see
+# `_seed_committee_terms`.
+
+COMMITTEE_AGM_YEAR = 2026
+
+COMMITTEE_ROSTER: tuple[tuple[str, str], ...] = (
+    (CommitteePosition.CHAIRPERSON, "Sasha Mentz"),
+    (CommitteePosition.VICE_CHAIRPERSON, "Alison Evans"),
+    (CommitteePosition.SECRETARY, "Rebecca Dixon"),
+    (CommitteePosition.TREASURER, "Van Wyk Pretorius"),
+    # Four people, one position — the reason the natural key includes the holder.
+    (CommitteePosition.FARM_VISIT_ADMINISTRATION, "Sasha Mentz"),
+    (CommitteePosition.FARM_VISIT_ADMINISTRATION, "Nina Wardman"),
+    (CommitteePosition.FARM_VISIT_ADMINISTRATION, "Avril Dawson"),
+    (CommitteePosition.FARM_VISIT_ADMINISTRATION, "Tony"),
+    (CommitteePosition.TECHNICAL_FARMING_SUPPORT, "Robyn"),
+    (CommitteePosition.COMMUNICATIONS, "Rebecca Dixon"),
+    (CommitteePosition.EVENTS_COORDINATION, ""),  # TBC — call for expressions of interest
+    (CommitteePosition.CONSUMER_REPRESENTATIVE, "Avril Dawson"),
+    (CommitteePosition.RETAIL_MARKET_REPRESENTATIVE, "Charlene"),
+    (CommitteePosition.RETAIL_MARKET_REPRESENTATIVE, "Nina Wardman"),
+    (CommitteePosition.ACADEMIC_REPRESENTATIVE, ""),  # TBC — call for expressions of interest
+)
+
+
+def _seed_committee_terms() -> tuple[int, int]:
+    """Create the 2026 committee terms. Returns (created, updated).
+
+    **`vacated_on` is never written.** It is created null and then left alone, for the
+    same reason `is_active` on seals is applied on create only: once the group records
+    that a holder stood down, a deploy must not quietly put the seat back. A seat the
+    group has filled is also left alone — `holder_name` is the natural key, so
+    re-seeding an empty seat creates the vacant row again only if someone deleted it,
+    which is a different event and should be visible.
+    """
+    created = updated = 0
+    for position, holder_name in COMMITTEE_ROSTER:
+        term, was_created = CommitteeTerm.objects.get_or_create(
+            position=position,
+            agm_year=COMMITTEE_AGM_YEAR,
+            holder_name=holder_name,
+        )
+        if was_created:
+            created += 1
+            continue
+        # Nothing to refresh: every stored field of a term is either the natural key
+        # or a fact about a person that the seeder must not overwrite.
+        updated += 1
+    return created, updated
+
+
 def _seed_standard_set() -> tuple[int, int]:
     """Create the corpus set, or refresh an existing one's description.
 
@@ -230,9 +290,11 @@ def seed_deployment() -> dict[str, tuple[int, int]]:
     """Apply the group's data. Safe to run on every deploy.
 
     In: none.
-    Out: `{"standard_sets": …, "seals": (created, updated), "categories": …}`.
-    Side Effects: writes `StandardSet`, `Seal` and `Category` rows. Does **not** change
-         `is_active` on seals, or `is_default` on the set, once they exist.
+    Out: `{"standard_sets": …, "seals": (created, updated), "categories": …,`
+         `"committee_terms": (created, updated)}`.
+    Side Effects: writes `StandardSet`, `Seal`, `Category` and `CommitteeTerm` rows.
+         Does **not** change `is_active` on seals, `is_default` on the set, or
+         `vacated_on` on a committee term, once they exist.
     Fails: never deliberately; a database error propagates. The whole seed is one
          transaction, so a partial deployment state is not reachable.
     Idempotency: yes — this is the requirement, not a nicety, because it runs on
@@ -242,4 +304,5 @@ def seed_deployment() -> dict[str, tuple[int, int]]:
         "standard_sets": _seed_standard_set(),
         "seals": _seed_seals(),
         "categories": _seed_categories(),
+        "committee_terms": _seed_committee_terms(),
     }

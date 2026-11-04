@@ -443,10 +443,21 @@ application flow (A6).
    `test_a_tick_is_not_an_application`): `FarmCategory.status` has no pre-application value, so the
    ticks wait for A6.
 
-### 11.4 What is still open
+### 11.4 Decided 2026-11-04
 
-| # | Question | Who decides | Default this addendum takes |
-|---|---|---|---|
+| # | Question | Decision |
+|---|---|---|
+| Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | **Collected at account creation.** Otherwise the farm profile is empty and the account saves nothing a farmer would miss. The three fields are new collection and need the consent in Q8. |
+| Q8 | The third consent: holding an account is a processing purpose separate from research and demographics. | **Yes, a third consent is required and does not exist yet.** It is not research consent (that one is about aggregate reporting) and not demographic consent (that one is about the census). It needs a retention answer, which this PRD deliberately does not have, and it is written by the group rather than by the build. |
+| Q9 | Does an account require a verified email before it can be used again? | **Yes — but deferred until the platform has SMTP.** `User.email_verified_at` already exists for exactly this, and `todo.md` carries the dependency. Until then an address is accepted as given, and the account is usable immediately. |
+
+**Consequence for the build order, stated so it is not discovered late:** Q8 means the account
+step cannot ship before its consent text exists. The self-check result page can therefore ship with
+the account CTA **visible but the consent copy absent** only if the CTA is absent too — a form that
+collects a farm name under the research consent would be a purpose mismatch, which is the one thing
+§3.6 was written to prevent.
+
+---|---|---|---|
 | Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | Product owner | **Collected** — otherwise the farm profile is empty and the account only saves an email |
 | Q8 | The third consent: holding an account is a new processing purpose, separate from research and demographics. Who writes and who approves that text? | Group / product owner | Not drafted. It needs a retention answer, which the self-check deliberately does not have |
 | Q9 | Does an account require a verified email before it can be used again? | Product owner | No — `User.email_verified_at` exists; verification is a friction decision, not a schema one |
