@@ -1,41 +1,54 @@
 # Handover — Docling scored 0 of 8 as extracted, and the next arm needs no new account
 
-> ## START HERE — S2's first arm is measured and failed; **the next arm is a choice from PRD §3.6**
+> ## START HERE — S2 is measured for two arms and **both fail; the failures have moved, and that is the finding**
 >
 > **`INGESTION_ENGINE_PRD.md` is `In Progress`** and carries D80's decision as prose (X2 now, X3 when a
-> document demands it) plus six slices. **S0, S1 and S4 landed. S2 is measured for Docling** (§3.5):
-> **0 of 8 shapes pass as extracted, 1 of 8 passes once row 0 is taken as the header, and 2 of 8 tables
-> are not detected at all** — landscape p5 and p6 come back as 2 pictures and headings. The failures are
-> exactly requirements 2, 4 and 6: **header association** (Docling marks no cell as a column header on
-> any page), **spans** (6a's two header labels merged into one cell; p4's five columns split into six),
-> **dividers** (App 2's two divider labels became rows), **page-break rows** (p5's continuation is a
-> second table and was not returned) and **non-text**.
-> `scripts/verify.sh` **green: 1674 passed / 1 skipped / 8 xfailed in 141.85 s** (a busy box; the same
-> gate measured 68.61 s earlier that day — quote cold *and* warm, §3.17). `scripts/fast.sh` **1659 passed
-> / 1 skipped / 15 deselected / 8 xfailed in 42.06 s**; `--critical` **172 passed / 4 deselected in
-> 10.09 s** (both measured 2026-11-04 on this tree).
+> document demands it) plus six slices. **S0, S1 and S4 landed. S2 is measured for two arms** (§3.5
+> Docling, §3.7 the OpenRouter VLM).
 >
-> **D81's threshold fired**, so the next act is **one more extractor arm**. Six are listed in **§3.6** with
-> what each needs; the cheapest two need **no new account**: a **VLM arm** (the session shell holds
-> `GEMINI_API_KEY` and `OPENROUTER_API_KEY`; OpenRouter's catalogue listed **455 models today, 310
-> accepting image input, 188 a PDF**) or a second **local** parser (Unstructured `hi_res`, Marker,
-> MinerU, PaddleOCR). **Document AI is the ceiling candidate and needs the owner**: a Google Cloud project
-> with billing, the API enabled, a processor, and a service-account key. **A Gemini API key is NOT a GCP
-> credential** — verified 2026-11-04: 200 on `generativelanguage`, 401 on `documentai` — so that route
-> cannot be walked by accident.
+> **Docling (§3.5): 0 of 8 shapes pass as extracted, 1 of 8 once row 0 is taken as the header, and 2 of
+> 8 tables are not detected at all.** It marks no cell as a column header on any page, merges 6a's two
+> header labels, splits p4's five columns into six, turns Appendix 2's dividers into rows, and loses
+> p5's continuation row set. 163–330 s for the eight.
 >
-> **The rule that admits a generative arm** (and the reason this repo can consider one at all): a VLM
-> *writes* the text it believes it read, so **R3 is the gate** — a cell that is not a contiguous run of
-> the page is a violation. Model proposes the grid; characters come from an extraction pass. The explainer
-> `product/design/d80_s2_extractor_evaluation.html` covers the tools and the credential question, and its
-> **Addendum A** answers "why not a vision model" (Document AI is *extractive* vision; D80 rejected X4,
-> answering from page images).
+> **The OpenRouter VLM arm (§3.7, measured 2026-11-04): 2 of 8 at best — and that is 2 better than
+> Docling, for $0.55.** Two models (`gemini-3.1-flash-lite`, `claude-sonnet-5.5`) × three prompt forms
+> (`lines` verbatim, `anchors` first/last words, `indices` line numbers only) × the same eight shapes:
+> **48 calls, 4–8× faster than Docling (5 s/shape).** It **finds every table (8/8)** and gets **header
+> association right on 7–8 of 8** — the requirement Docling lost completely — and it **proposes
+> dividers**, which no layout model returns (Appendix 2 passes outright in `anchors` form). What it
+> cannot do is be trusted with **characters** or with **where a cell ends**: it re-wraps the 1,112-char
+> cell, replicates the merged fee box into the row below, drops the label printed beside a seal, and
+> shifts Appendix 7 one column right by treating the paper's row number as a column — **Docling's exact
+> failure, from a different mechanism**. Up to sixteen times the price bought nothing: the expensive model
+> is not better than the cheap one and no form dominates, so this is a finding about the task.
 >
-> **The instrument is committed and is not a dependency:** `scripts/eval_extractors.py` converts only a
-> shape's pages, maps the extractor's table onto `TableRead`, scores it with S0's own `mismatches()`, and
-> scores twice (as extracted, and with row 0 as the header). `tests/tools/test_eval_extractors.py` proves
-> it imports with no `docling` installed and refuses to score an empty document. That keeps requirement
-> 10 true: **the gate needs no extractor.**
+> **The blocking finding is about our pass, not the model.** The `indices` form scores 0 of 8 because a
+> printed line in `-layout`/`-table` text **is a whole row** (`Below R 250,000 1,500 900`), so no set of
+> line numbers can produce three cells from it; and in `anchors` form every Appendix 7 cell is a
+> violation because the interleaved pass gives a cell **no contiguous run at all**. **A VLM cannot
+> repair an interleaved pass; it needs a row-structured one.** The only admissible form — boundaries
+> from the model, characters from a checkable pass — is therefore `anchors`, and it cannot be scored
+> fairly until the engine has a pass with cell granularity. That is the same thing S3 has to build.
+>
+> **The instrument is committed and is not a dependency:** `scripts/eval_openrouter.py` (three prompt
+> forms, a per-cell contiguity check that *declares* its one normalisation, row-band ordering, a raw
+> response cache so a re-score needs no network call) and `tests/tools/test_eval_openrouter.py` (17
+> tests; three guards broken and watched red). It imports with no key and no rasteriser, and
+> `pypdfium2` lives in a throwaway venv — requirement 10 stays true. Evidence:
+> `product/docs/evidence/2026-11-04_s2b_openrouter_scores.json`.
+>
+> **What is next, in order:** **Document AI** is still the ceiling candidate and D81 gates it on exactly
+> this result — it needs the owner's **four things** (GCP project, billing, an enabled processor, a
+> service-account key). **A Gemini API key is NOT a GCP credential** — verified 2026-11-04: 200 on
+> `generativelanguage`, 401 on `documentai`. Cheaper options that need no account remain: a second
+> local parser (Unstructured `hi_res`, Marker, MinerU, PaddleOCR) and **`anchors` re-scored against a
+> row-structured pass**. Then **S3** (the generator emits blocks, and records the extraction mode), then
+> **S5** (re-review Appendices 6a and 7 *through* the harness). **If no arm is wanted**, D is the honest
+> fallback: hand-review those 24 chunks and write the generalisation debt down. **`read_table()` is
+> still the seam.** The numbers a second run must beat are in
+> `product/docs/evidence/2026-11-03_s2_docling_scores.json` and `…2026-11-04_s2b_openrouter_scores.json`,
+> both regenerable in one command.
 >
 > **The audit was established, not inherited** (`SESSION_1e…` §1). Measured: **44** reviewed rows
 > carrying column meaning across **three** documents (OPP §2.3 6, landscape 8, Appendix 2 30), plus
@@ -45,8 +58,7 @@
 > **S0** = `knowledge/tests/shape_fixtures.py` (eight `ShapeCase`s: page provenance, expectation,
 > IR verdict, gap, `covered_by`; the page is **read** from the committed fixtures, never copied) and
 > `test_ingestion_shapes.py` (28 green, **8 strict-xfail targets** calling a `read_table()` that does
-> not exist yet, so the gap is counted every run and an `XPASS` fails the suite). **S1** =
-> `build_corpus.py --force` **refuses** to drop a reviewed `<!-- table -->` block and names
+> not exist yet, so the gap is counted every run and an `XPASS` fails the suite). **S1** = `build_corpus.py --force` **refuses** to drop a reviewed `<!-- table -->` block and names
 > `--discard-tables` as the override (hazard §3.25).
 >
 > **S4** = `knowledge/table_harness.py` (requirements 2–7 as `check_table`/`check_document`, named
@@ -56,16 +68,6 @@
 > things it refuses to guess: the row count (`--rows`; undeclared is a violation) and **the extraction
 > mode the cells came from** (the landscape passes against `-table` and fails 10 ways against `-layout`),
 > which S3 must record on the artefact.
->
-> **What is next, in order:** **one arm from §3.6, and its scorecard is §3.5** — cheapest first (a VLM via
-> OpenRouter/Gemini, or a second local parser), because both need no new account and the instrument already
-> exists. **Document AI** stays the ceiling candidate: D81 gates it on exactly this result and it needs the
-> owner's four things. Then **S3** (the generator emits blocks, and records the extraction mode), then
-> **S5** (re-review Appendices 6a and 7 *through* the harness — no extractor can see a table that is not a
-> block, which is why `expected_tables` exists). **If no arm is wanted**, D is the honest fallback:
-> hand-review those 24 chunks and write the generalisation debt down. **`read_table()` is still the seam.**
-> The numbers a second run must beat are in `product/docs/evidence/2026-11-03_s2_docling_scores.json`,
-> regenerable by `scripts/eval_extractors.py` in one command.
 >
 > **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
 > a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
@@ -97,30 +99,33 @@ D80 by name.
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off, chat-split, handover-truth-up, shapes-harness and docling-evaluation sessions
-**Repo state:** `main` — **`origin/main` == `HEAD`** (session `1f` pushed everything, then committed
-S4 on top of it): the licence commit, the chat-split follow-ups, the six test/generator cuts, the
-flake fix, `1c`'s close, session `1d`'s (the truth-up, five row batches, the link guard, the gate
-wiring, the PRD close), session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), session `1f`'s (the S4
-harness, the gate script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's
-measurement). **Check it, do not quote it:** `git rev-list --count origin/main..HEAD` must print `0`.
+landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
+vlm-arm sessions
+**Repo state:** `main` — **one commit ahead of `origin/main`**: session `1h`'s (the OpenRouter arm, its
+instrument and tests, the §3.7 measurement, and this file). Everything before it is pushed: the
+licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
+session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
+`1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
+script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `1` on this tree, and
+`0` once session `1h` is pushed.
 
-**On this tree** (2026-11-04, session `1g`): `scripts/verify.sh` **green at 1674 passed /
-1 skipped / 8 xfailed in 141.85 s** (a busy box; the same gate measured 68.61 s earlier), run as
+**On this tree** (2026-11-04, session `1h`): `scripts/verify.sh` **green at 1691 passed /
+1 skipped / 8 xfailed in 59.16 s**, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same tree measured **219.16 s** in session `1e` on a
-cold box — quote cold *and* warm (§3.17). `scripts/fast.sh` measured **1659 passed / 1 skipped /
-15 deselected / 8 xfailed in 42.06 s**, and `--critical` **172 passed / 4 deselected in 10.09 s**
-(both 2026-11-04).
+serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17) — the same gate measured
+141.85 s on a busy box in session `1g` and 219.16 s cold in `1e`. `scripts/fast.sh` measured **1676
+passed / 1 skipped / 15 deselected / 8 xfailed in 43.77 s**, and `--critical` **172 passed /
+4 deselected in 9.83 s** (all three 2026-11-04).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **nothing outstanding**:
-`git rev-list --count origin/main..HEAD` prints `0` (the number was wrong twice by being quoted;
-let the command answer).
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **one commit to push** (session
+`1h`'s): `git rev-list --count origin/main..HEAD` prints `1` (the number was wrong twice by being
+quoted; let the command answer).
 **Live:** `https://organicguarantee.africa` on the homtini VPS, deployed 2026-11-03 at **`06bb11a`**
 (last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,
 but that body carries no commit, so **this file cannot see which commit is serving** — verify on the box
 with `git rev-parse --short HEAD`). It serves a **current** corpus (401 chunks). **A deploy is owed** for
-everything after `06bb11a` — sessions `1f` and `1g`: the dev box has no SSH key, so the operator runs
+everything after `06bb11a` — sessions `1f`, `1g` and `1h`: the dev box has no SSH key, so the operator runs
 `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh` and reads the `/health/` body back — the
 script verifies origin's tip on the box before it pulls. Its `deploy.sh` on disk is the pre-`3c2c39d`
 one, and **the §3.27 window is self-closing, not debt**: that script still `pull`s origin's tip,
@@ -139,6 +144,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1h` 2026-11-04 (session 20) — the VLM arm scores 2 of 8, and the failures move — [`SESSION_1h_2026-11-04_the-vlm-arm-scores-2-of-8-and-the-failures-move.md`](product/docs/handover/SESSION_1h_2026-11-04_the-vlm-arm-scores-2-of-8-and-the-failures-move.md)
 - `1g` 2026-11-04 (session 19) — Docling measured, and it does not pass; a Gemini key is not a GCP key (in `SESSION_1f…` §7–§8) — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1e` 2026-11-03 (session 17) — the eight shapes, and the two that have no test — [`SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md`](product/docs/handover/SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md)

@@ -1,10 +1,11 @@
 # PRD: The ingestion engine — from "a person reviewed this document" to "a suite checks every document"
 
 **Status:** In Progress — **S0 (the eight-shape fixture set) and S1 (the generator's table-block
-guard) landed 2026-11-03, session `1e`.** S2–S5 (extractor evaluation, generator emits table blocks,
-the verification harness, re-review of Appendices 6a and 7) are open.
+guard) landed 2026-11-03, session `1e`; S2 is measured for two arms (Docling §3.5, the OpenRouter VLM
+§3.7).** S3–S5 (generator emits table blocks, re-review of Appendices 6a and 7) are open, and
+Document AI needs the owner's GCP credential.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
-**Last Updated:** 2026-11-03
+**Last Updated:** 2026-11-04
 **Scope:** How a table becomes reviewed data when no human has reviewed it. In: extraction, its
 verification, and the generator. Out: the reader's rendering (D70.1–D72), retrieval ranking (D79),
 and the chatbot's answer shape (G11).
@@ -190,7 +191,7 @@ key, and therefore the owner**, not an agent. That is where S2 stops until those
 pipeline (OCR off, `fast` table mode), or a page-range quirk could move a cell or two — and none of it
 would change the shape of the result: the failures are structural, not marginal.
 
-### 3.6 S2b (not run): the other arms, and what each actually needs
+### 3.6 S2b (run 2026-11-04): the other arms, and what each actually needs
 
 Docling is one arm. §3.5 says "not good enough", not "give up", and the field has more than one
 candidate. What each needs, verified on this box on 2026-11-04:
@@ -225,6 +226,92 @@ enters a corpus whose claim is that a quote is characters we verified.
 **What S2b must produce:** the same table as §3.5, for each arm, scored by the same `mismatches()`.
 None of this is a reason to adopt; it is a reason to measure.
 
+### 3.7 What S2b measured (2026-11-04): the OpenRouter VLM arm scores 2 of 8, and the failures move
+
+Run: `scripts/eval_openrouter.py` — committed, and the gate never needs it. Instrument and output:
+`product/docs/evidence/2026-11-04_s2b_openrouter_scores.json`. Two models, three prompt forms, all
+eight shapes: **48 calls, $0.55 total** (priced by the provider per call, not from a price list).
+`google/gemini-3.1-flash-lite` and `anthropic/claude-sonnet-5.5`, at `temperature: 0`, 200 dpi page
+images, one image per printed page of the shape.
+
+**The catalogue is a moving list, so it is quoted with its timestamp.** Read from
+`/api/v1/models` on 2026-11-04 at 11:24: **419 models, 276 accepting image input, 154 accepting a
+file/PDF** — §3.6's 455/310/188 was the same endpoint earlier the same day. The key was live
+($50 limit, $0 spent) and the arm needed nothing else: no account, no venv, no download.
+
+**The rule, implemented three ways, because the rule has three readings.** All three send the page
+image; what changes is who supplies the characters.
+
+| Form | What the model returns | Where the characters come from |
+|---|---|---|
+| `lines` | each cell's printed lines, copied verbatim | the **page**, checked line by line (a paraphrase is a violation) |
+| `anchors` | each cell's first and last words | the **page**, sliced between the anchors — the faithful reading of §3.6's rule |
+| `indices` | line numbers only | the **page**, by construction: the model never emits a character |
+
+| Model | Form | Pass | Grid only (quotes unresolved) | Tables found | Rows right | Columns right | Cost | Wall |
+|---|---|---|---|---|---|---|---|
+| gemini-3.1-flash-lite | `lines` | **1/8** | 2 | 8/8 | 7/8 | 8/8 | $0.012 | 39 s |
+| gemini-3.1-flash-lite | `anchors` | **2/8** | 0 | 8/8 | 8/8 | 8/8 | $0.012 | 40 s |
+| gemini-3.1-flash-lite | `indices` | 0/8 | 0 | 8/8 | 7/8 | 8/8 | $0.011 | 38 s |
+| claude-sonnet-5.5 | `lines` | **2/8** | 1 | 8/8 | 7/8 | 7/8 | $0.164 | 64 s |
+| claude-sonnet-5.5 | `anchors` | **1/8** | 0 | 8/8 | 7/8 | 7/8 | $0.148 | 55 s |
+| claude-sonnet-5.5 | `indices` | 0/8 | 0 | 7/8 | 7/8 | 7/8 | $0.199 | 84 s |
+
+**The best VLM cell is 2 of 8; Docling was 0 of 8 as extracted (1 of 8 with a header convention).**
+Up to sixteen times the price bought nothing — the expensive model is not better than the cheap one, and no
+form dominates — so this is a finding about the *task*, not about a vendor. The arm is **4–8× faster**
+than Docling on the same box (5 s/shape vs 20–40 s), which is the one axis where it clearly wins.
+
+| Shape | Docling | Best VLM | The failure, named |
+|---|---|---|---|
+| Numeric row, no labels (OPP) | pass* | **pass** (3 forms) | none — and `indices` fails it, see below |
+| Header lost entirely (6a) | fail | fail | the two printed header labels merged into one column's label (`Maximum number of animals per ha Class or species`); the letter-spaced row is reported, not silently rejoined |
+| Column-major interleaving (App 7) | fail | fail | the paper's row number becomes an **extra leading column** and every cell shifts right — Docling's exact failure, from a completely different mechanism |
+| Very long cell (landscape p5) | **not detected** | fail | the model **over-includes** ('Step 3 The group conducts farm visits…') and re-wraps the 1,112-character cell at its own width (4–11 quote violations) |
+| Deliberate empty cell (p4) | fail | fail | the merged fee box is **replicated into the row below**, and `Proud member of` — the label printed beside the seal — is lost |
+| Row across a page break (p4-5) | partly | **grid only** | 3 rows on pages 4, 4, 5 and 5 columns are right; the quotes do not resolve, so the characters would have been the model's |
+| Two-level qualifiers (App 2) | fail | **pass** (`anchors`, flash-lite) | none — 11 rows and all 3 dividers, which is the one shape where the arm **beats** Docling outright |
+| A picture in a cell (p6) | **not detected** | **pass** (`lines`, sonnet) | none |
+
+**What this says, and it is not "try another vendor".** The arm **finds every table** (8/8, against
+Docling's 6/8) and gets **header association right on 7–8 of 8 shapes** — the requirement Docling lost
+completely, because Docling marks no cell as a column header on any page. It also proposes **dividers**,
+which no layout model returns. So the failure has moved: it is no longer "the tool cannot see" but
+**"the tool cannot be trusted with characters, or with where a cell ends"**. Those are exactly the two
+things requirement 3 and requirement 9 exist to refuse, and the arm's three forms measure them
+directly: transcription fails on wrapped cells, anchors fix the characters but leave the boundary to
+the model, and line numbers cannot separate cells at all.
+
+**The blocking finding is about our extraction pass, not the model.** The `indices` form scores 0 of 8
+because a printed line in `-layout`/`-table` text **is a whole row**: `Below R 250,000 1,500 900` is
+one line, so no set of line numbers can ever produce three cells from it. The arm is therefore
+admissible only once the engine has a pass with **cell granularity** — which is the thing the engine
+is being built to produce. In `anchors` mode the same defect appears from the other side: on Appendix
+7, where the pass interleaves four columns, **no cell has a contiguous run on the page**, so every
+cell is a violation whatever the model does. A VLM cannot repair an interleaved pass; it needs a
+row-structured one.
+
+**Speed and cost, quoted as measured.** 5 s and $0.0015 per shape for the cheap model, 7–10 s and
+$0.019 for the expensive one, against Docling's 20–40 s per shape. Cheap enough that cost is not the
+argument either way; the score is.
+
+**What this does not say.** One run per shape per cell, one day, one key. `temperature: 0` is not a
+guarantee of identical output across providers, so the instrument **caches the raw response** per
+(model, shape, dpi, form) and can re-score without buying a new sample — every number above was
+re-scored from that cache, unchanged, after the resolver was fixed and after the instrument was split
+in two. The cache is 332 KB and is not committed (it lives in `_scratch/`); a fresh clone re-runs the
+48 calls for about $0.55. And a shape failing here is not proof
+that no VLM can pass it: three prompt forms is a small space, and the two failures that look most like
+model judgement (`Proud member of`, `Step 3`) are boundary calls a human reviewer made in the fixtures
+and could reasonably make differently.
+
+**D81's consequence, unchanged in direction.** Document AI remains the ceiling candidate and still
+needs the owner's four things; this result adds one more reason to spend that money rather than less,
+because it shows the gap is in *structure*, which is the class Document AI is in. It also adds a
+cheaper interim: **the `anchors` form is the only shape in which a generative model may enter the
+corpus** (boundaries from the model, characters from a checkable pass), and it needs a row-structured
+extraction pass before it can be scored fairly.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -256,7 +343,7 @@ None of this is a reason to adopt; it is a reason to measure.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate two extractors (Docling, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Docling measured 2026-11-03 (§3.5): 0/8 as extracted, 1/8 with a header convention, 2/8 tables not detected.** D81's threshold fired — Document AI is next and **needs the owner's GCP project, billing, processor and key**. Why, and what that costs: `product/design/d80_s2_extractor_evaluation.html` |
+| **S2** | Evaluate extractors (Docling, the OpenRouter VLM arm, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Docling measured 2026-11-03 (§3.5): 0/8 as extracted, 1/8 with a header convention, 2/8 tables not detected. The OpenRouter VLM arm measured 2026-11-04 (§3.7): 2/8 at best, 8/8 tables found, header association 7–8/8, and `indices` form blocked by our pass having no cell granularity.** Document AI is next and **needs the owner's GCP project, billing, processor and key**. Why, and what that costs: `product/design/d80_s2_extractor_evaluation.html` |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |
@@ -291,7 +378,7 @@ answer, with the review written down as debt.
 | Strict xfail becomes a place gaps go to die | `XPASS(strict)` fails the suite when a shape starts working, and the audit test pins the uncovered set |
 | `--force` keeps being run out of habit | S1 refuses before writing and names the override; the hazard entry (§3.25) points at the guard |
 | Appendix 6a/7 are "fixed" by another hand review | S5 requires them to close *through the harness*; the audit test keeps naming them until it does |
-| A vision path gets adopted for convenience | D70.2 and R9: a quote is characters we verified; page images are a fallback with a written claim |
+| A vision path gets adopted for convenience | D70.2 and R9: a quote is characters we verified; page images are a fallback with a written claim. **Measured 2026-11-04 (§3.7):** the VLM arm scores 2/8, and the only admissible form is `anchors` — boundaries from the model, characters from the extraction pass |
 
 ## Pre-Flight Checklist
 
