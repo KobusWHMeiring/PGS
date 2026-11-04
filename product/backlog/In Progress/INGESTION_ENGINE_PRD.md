@@ -189,6 +189,41 @@ key, and therefore the owner**, not an agent. That is where S2 stops until those
 pipeline (OCR off, `fast` table mode), or a page-range quirk could move a cell or two — and none of it
 would change the shape of the result: the failures are structural, not marginal.
 
+### 3.6 S2b (not run): the other arms, and what each actually needs
+
+Docling is one arm. §3.5 says "not good enough", not "give up", and the field has more than one
+candidate. What each needs, verified on this box on 2026-11-04:
+
+| Arm | What it is | What it needs |
+|---|---|---|
+| **Local open-source parsers** — Unstructured (`hi_res`), Marker, MinerU, PaddleOCR PP-Structure | pip install, layout + table models, no account | nothing but disk and time |
+| **VLM via OpenRouter** — its public catalogue listed **455 models today, 310 accepting image input and 188 accepting a PDF/file** (read from the API, not from memory) | a generative model asked for the table as JSON | the existing `OPENROUTER_API_KEY` |
+| **VLM via Gemini** — `gemini-2.5-flash` and family answered **HTTP 200** with the key in this session | the same | the existing `GEMINI_API_KEY` |
+| **Azure Document Intelligence, AWS Textract, hosted OCR (e.g. Mistral OCR)** | the extractive class Document AI belongs to | a subscription and a key each; free tiers exist but were **not read here** |
+| **Document AI** | the ceiling candidate D81 names | GCP project + billing + processor + **service-account key** |
+| **None — hand-review the 24 chunks** | closes the two live defects, generalises nothing | nothing |
+
+**A Gemini API key is not a GCP credential.** Verified in one minute: the key answers **200** on
+`generativelanguage.googleapis.com/v1beta/models`, and the *same* key gets **401** on
+`documentai.googleapis.com/.../processors` — *"API keys are not supported by this API. Expected OAuth2
+access token or other authentication credentials that assert a principal."* A key is a bearer token for
+one API; a Cloud API wants a principal with IAM roles. They can share a billing account and still be
+different doors.
+
+**This repo's state is subtler than "we have no credentials":** `.env` holds only `DJANGO_SECRET_KEY`,
+while the *session environment* holds `GEMINI_API_KEY` and `OPENROUTER_API_KEY`. Django scripts see the
+first; an agent shell sees both. Say which one is meant.
+
+**The rule that governs every generative arm.** A VLM writes the text it believes it read, so a wrong
+digit looks identical to a right one. R3 is the answer and it is already built: a cell that is not a
+contiguous run of the page is a violation. A VLM arm is therefore admissible **when its cell text is
+taken from an extraction pass rather than from the model's prose** — the model proposes the grid, the
+characters come from somewhere checkable. That hybrid is the only form in which a generative model
+enters a corpus whose claim is that a quote is characters we verified.
+
+**What S2b must produce:** the same table as §3.5, for each arm, scored by the same `mismatches()`.
+None of this is a reason to adopt; it is a reason to measure.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed

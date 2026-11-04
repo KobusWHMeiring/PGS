@@ -151,3 +151,25 @@ S2 stops, and the handover says so instead of leaving a plan that cannot run.
 **Speed, quoted as a range because it was measured twice** on the same box with the same verdicts:
 **163 s** total on a quiet run, **330 s** on a busy one. 7–14 s per SAOSO page, 19–58 s per landscape
 page. A laptop under load is not a benchmark, and one number would have been fiction.
+
+## 8. Then the owner asked whether a Gemini key is a GCP key, and what else could be measured
+
+Two answers, both verified rather than asserted, and both now in PRD §3.6:
+
+- **A Gemini API key is not a GCP credential.** One key, two doors, measured in the same minute:
+  `200` on `generativelanguage.googleapis.com/v1beta/models` and `401` on
+  `documentai.googleapis.com/.../processors`, with Google's own words — *"API keys are not supported by
+  this API. Expected OAuth2 access token or other authentication credentials that assert a principal."*
+  A key is a bearer token for one API; a Cloud API wants a principal with IAM roles.
+- **The repo's credential state is subtler than the handover said.** `.env` holds
+  `DJANGO_SECRET_KEY` only — true, and what Django scripts see — while the *session shell* holds
+  `GEMINI_API_KEY` and `OPENROUTER_API_KEY`. "We have no credentials" and "Django has no `.env` keys" are
+  different sentences, and the first one was wrong.
+- **OpenRouter's public catalogue today: 455 models, 310 accepting image input, 188 accepting a
+  PDF/file.** So a VLM arm needs no new account at all — which moves the next experiment away from
+  Google Cloud and onto an instrument that already exists.
+
+**Deliberately stopped there.** The multi-arm evaluation is a new investigation with its own prompt
+design, schema validation and retries — not a tail on this session. The brief is PRD §3.6, the ruler is
+`scripts/eval_extractors.py` + S0's `mismatches()`, and the gate to clear is R3: a cell that is not a
+contiguous run of the page is a violation, whoever proposed it.

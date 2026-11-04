@@ -13,7 +13,13 @@
 > `scripts/verify.sh` **green: 1674 passed / 1 skipped / 8 xfailed in 141.85 s** (a busy box; the same
 > gate measured 68.61 s earlier — quote cold *and* warm, §3.17). `scripts/fast.sh --critical` 172 in 10.6 s.
 >
-> **D81's threshold fired**, so the next act is **Document AI — and it needs the owner, not an agent**: a
+> **D81's threshold fired**, so the next act is another extractor arm — see **§3.6 of the PRD** for the six
+> candidates and what each needs. **A Gemini API key is NOT a GCP credential** (verified 2026-11-04: 200 on
+> `generativelanguage`, 401 on `documentai` — *"API keys are not supported by this API"*), and the session
+> shell holds `GEMINI_API_KEY` and `OPENROUTER_API_KEY` even though the repo `.env` holds neither. That
+> makes a **VLM arm (Gemini or OpenRouter: 310 image-capable models listed today) runnable with no new
+> account** — with R3 as the gate, cell text taken from an extraction pass, never from the model's prose.
+> **Document AI** remains the ceiling candidate and needs the owner, not an agent: a
 > Google Cloud project with billing, the API enabled, a processor, and a service-account key. The
 > explainer (`product/design/d80_s2_extractor_evaluation.html`) says what each is and why the key is a
 > spending credential; **Addendum A** there answers "why not a vision model" (Document AI is *extractive*
