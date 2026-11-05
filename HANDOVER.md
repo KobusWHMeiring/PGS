@@ -1,102 +1,80 @@
-# Handover — two strands in flight, and the application flow now walks end to end
+# Handover — sub-plan A is five of eight and sub-plan B is complete; the Crops sheet is data
 
-> ## START HERE — **MVP 1a sub-plan A is 5 of 8 tasks in; the application walks and the money stays with the group**
+> ## START HERE — **A is 5 of 8, B is 4 of 4, and A8 is unblocked**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
 > a second agent is running D80's S2 (Docling) there. Nothing in this strand has touched `main`.
 >
-> **Landed:** **A1** (`243cedd`) — `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`,
-> `MembershipFee`, migration `0010`, 19 tests. **A2** (`4e86a81`) — `CommitteePosition`,
-> `CommitteeTerm`, the OPP §VII roster, migration `0011`, 12 tests. **A3** (`a4b2e4b`) — `Pledge`,
-> `record_pledge`, migration `0012`, 30 tests. **A5** (`66977cb`) — `TurnoverBand`,
-> `AssessmentFee`, migration `0013`, the OPP §2.3 scale seeded, `declare_assessment_fee` and the
-> gate, 32 tests. **A6** (`5f64fd6`) — `ConsentText`, `ConsentRecord`, migration `0014`, the Q8 draft
-> seeded, `core/services/_application.py`, four steps + a summary, 32 tests. **D83** (`0cc2112` and
-> session `1i`'s close) — the pledge stays in the application. **D84** — 1a sends no mail, and the
-> interface says so. **Two seam cuts, both driven by the 30 KB cap:** `_core.py` → `_membership.py`
-> (`ab42443`), and `_membership.py` → `_fees.py` (`66977cb`, the OPP's own §II seam).
+> **Landed:** **A1** (`243cedd`) `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`,
+> migration `0010`, 19 tests. **A2** (`4e86a81`) the OPP §VII committee roster, `0011`, 12 tests.
+> **A3** (`a4b2e4b`) `Pledge`, `record_pledge`, `0012`, 30 tests. **A5** (`66977cb`) `TurnoverBand`,
+> `AssessmentFee`, the OPP §2.3 scale as data, `declare_assessment_fee` and the gate, `0013`, 32 tests.
+> **A6** (`5f64fd6`) `ConsentText`/`ConsentRecord`, `_application.py`, the four application steps and
+> the summary, `0014`, 32 tests. **B1/B2/B4** (`36eedfe`) `AssessmentTemplate`, `validate_schema`, one
+> live version per category, `load_template`, `0015`–`0016`, 49 tests. **B3** (`93a5cac`) the Crops
+> template and its review copy, 27 tests. **D83** the pledge stays in the application. **D84** 1a
+> sends no mail, and the interface says so. **Two seam cuts, both driven by the 30 KB cap:**
+> `_core.py` → `_membership.py` (`ab42443`), `_membership.py` → `_fees.py` (`66977cb`).
 >
-> **A6 in one paragraph, so nothing has to be re-derived:** self-register → the Q8 consent → the
-> account (`Member{APPLICANT}`, `email_verified_at` null, CTA "Create an account") → **the pledge,
-> after the account**, via A3's `record_pledge` → categories (a tick becomes a `FarmCategory` here,
-> never in the self-check) → turnover, via A5's `declare_assessment_fee` → a summary that names the
-> band, the assessment fee and the membership fee, and says who records the money. **Steps are
-> derived from rows, never a session**, so `/apply/` resumes where a farmer got to; the order is
-> enforced in `core.views._portal._step` by `assert_step_ready()`, not by URL shape.
+> **Sub-plan B in one paragraph:** a questionnaire is **data**, so `core/templates_data/crops.v1.json`
+> holds the FORM's 38 numbered questions (79 answerable sub-items), 37 verdicts, 9 printed child rows
+> and 7 Sheet I §2 records. `validate_schema` returns *every* problem with its path;
+> `load_template` validates, refuses to overwrite an existing version, and activates only on request;
+> `activate_template` moves one flag and the **partial unique index** makes "two live templates for one
+> category" impossible. Nothing starts an assessment yet — `assert_template_usable` is the guard C1/E
+> calls (A5's pattern).
 >
-> **Three refusals are A6's substance, and each is a place a friendlier shortcut would lie:**
-> (1) **No consent, no account.** `ConsentText` is versioned, never edited, and the step posts the
-> version it *rendered* — a form opened before the wording changed is refused, because a consent
-> record naming the wrong text is worse than none. With no `ACCOUNT` row, the page says so and
-> creates nothing. (2) **The applicant cannot pay.** No view writes a `MembershipFee`: the fee year is
-> the group's (D39) and a `paid_on` from a self-registration would make
-> `assert_fees_paid_for_assessment()` lie. `record_membership_fee()` and
-> `record_membership_payment()` (APPLICANT → ACTIVE, never out of TERMINATED) are built, tested, and
-> called by nothing yet — A5's pattern, waiting for A7/C1. (3) **The pledge is history:** a second
-> POST redirects instead of appending a second attestation.
+> **B3 corrected the plan three times, and the printed FORM won each time** (evidence in
+> `test_crops_template.py`'s docstring, assertions that hold it, and `SELF_CHECK_PRD` §3.4/§4.6 +
+> D71 amended in place): (1) the Crops template carries **eleven** D71 self-check markers, not twelve —
+> C5's aggregation question is **FORM Sheet A**, so it is an own control in `SELF_CHECK_ITEMS`;
+> (2) the sheet prints **nine** child rows, not thirteen (rows 30–31, 42, 64, 79, 122–123, 136, 213);
+> (3) a "Question N" is a **container** whose `items` are the answerable lines, because the plan's own
+> marker example is `crops.Q4.2`.
 >
-> **The Q8 draft is shown as a draft** (`SELF_CHECK_PRD` §11.6/§11.7): both `[DECIDE]` markers are
-> rendered on the page a farmer reads, with a banner saying the group has not approved the wording,
-> and an account *is* allowed under it — refusing every account until approval dead-ends the demo,
-> and "must not ship while either marker remains" is a release rule. Approval is one data edit
-> (`ConsentText.approved_at`), the banner disappears, nothing else changes. **The product owner
-> should confirm this reading**; overruling it is one line.
+> **Read the template as a document, not as JSON:** `product/docs/templates/crops_v1_review.md` is
+> generated from the shipped file by `scripts/crops_template_review.py`, one row per printed line in
+> sheet order, and a test fails if the committed copy is stale. That is B3's "second pair of eyes".
 >
-> **Gate** (its five steps run with `python`; `scripts/verify.sh` cannot start here — §3.31): 0
-> context breaches, `manage.py check` clean, `makemigrations --check` clean, `lint-imports` 1 kept /
-> 0 broken, **1794 passed / 1 skipped / 8 xfailed** — `--create-db`, test DB dropped first (§3.15,
-> `_scratch/a5/dropdb.py`), at **152.70 s and 261.21 s on the same tree forty minutes apart**
-> (§3.17: the box, not the suite — quote both, never one). Warm without `--create-db`: 153.55 s.
+> **What is next: A8 — the public self-check** (D71, `SELF_CHECK_PRD`, prototype
+> `product/design/before_you_apply_prototype.html`, approved 2026-11-04 as a stepped wizard). It is
+> unblocked on every count it needed: eleven markers in the frozen template, C5 beside them as an own
+> control, and its only exit — the application flow — built in A6. **Then A7** (eligibility gates,
+> which still needs the payment surface named in `todo.md`) and **A4**.
 >
-> **What is next: B1 + B3** (the template's `self_check` markers), and **then A8** (the public
-> self-check) — its only exit is this application flow, which now exists. **A7** (eligibility gates)
-> can move after A8. **A4** likewise. **Do not build A8 before A6**; it is done.
+> **Three things are still the product owner's, none of them blocks A8:** the three roster ambiguities
+> from `1i`; whether `APPLICANT` is the right word for an account that has not applied; and the two
+> `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6 (retention period, withdrawal address — the latter also
+> blocked on publishing the administrator's contact details). **A fourth is now queued:** whether the
+> FORM's V21 child should ask for a percentage instead of Yes/No (`todo.md`).
 >
-> **A7 has a named prerequisite now:** in a running instance every applicant stays `APPLICANT` and
-> unpaid, because nothing records a membership fee or its payment. The transition exists
-> (`record_membership_payment`), the way to reach it does not. `todo.md` carries it as a decision
-> (A7's own surface, or a one-screen administrator page), not a bug.
+> **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a period
+> that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
+> mutation-testing restore — §1.36. (3) A `CheckConstraint` containing `NULL IN (…)` **is satisfied** by
+> Postgres — §1.37. (4) `FileField(storage=callable)` resolves the callable at import — §1.38. (5) A
+> boundary test whose samples never land on the boundary cannot see the rule — §1.39. (6) A suite timed
+> once is timed wrong: the same tree measured 152.70 s and 261.21 s forty minutes apart — §3.17, with
+> both numbers on record. (7) **The commit count in this block was carried forward instead of
+> measured** — `1m` said 18 and the true count was 19, `1n` said 19 and it was 22, this block first said
+> 21 and it is 25 — so it now names the command that produces it.
 >
-> **Approved by the product owner on 2026-11-04:** `product/design/before_you_apply_prototype.html`,
-> the `/before-you-apply/` flow as a **stepped wizard** (5 question steps + result + account), built
-> from the D71 wording ledger and driven with Playwright. It is the build target for **A8** and is
-> labelled `DESIGN SPEC … Ready for implementation` at the top of the file.
->
-> **Three things are still the product owner's, and none of them blocks A8's structure:** the three
-> roster ambiguities from `1i` (first-name-only holders; whether Lilani Pretorius is a co-treasurer;
-> Guy and Jacques unrecorded), whether `APPLICANT` is the right word for an account that has not
-> applied, and the two `[DECIDE]` markers in §11.6 (retention period, withdrawal address — the latter
-> is also blocked on publishing the administrator's contact details).
->
-> **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
-> period that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
-> mutation-testing restore; it deleted a session's uncommitted model — §1.36. (3) A
-> `CheckConstraint` containing `NULL IN (…)` **is satisfied** by Postgres, so A3's in-conversion rule
-> passed the row it existed to refuse — §1.37. (4) `FileField(storage=callable)` resolves the
-> callable at import, so a settings-derived storage cannot be redirected in a test and bakes a path
-> into the migration — §1.38. (5) A boundary test whose samples never land on the boundary cannot see
-> the rule — §1.39.
->
-> **D83's substance:** the pledge cannot move to account creation, because it attests to *"all the
-> land for which I/we are applying"*. The account collects identity + farm name, nearest town,
-> contact, and nothing declarative. **The land-history contradiction is three-way, not two**
-> (SAOSO 4.2.3 and the OPP pledge both say 12/12/18; OPP §V alone says 18/12/12), so A3's
-> `land_history_conflict` is `min_reading <= declared < max_reading` — the band where the documents
-> actually disagree — and **not** a comparison against OPP §V. Below the lower reading the two agree,
-> and that is the visit's business, not the flag's (D31). `land_history_conflict` is **stored**, where
-> `is_paid_up` is derived: a declaration does not roll over, and the flag records what the documents
-> said the day it was signed.
+> **D83's substance:** the pledge cannot move to account creation, because it attests to *"all the land
+> for which I/we are applying"*. The account collects identity + farm name, nearest town, contact, and
+> nothing declarative. **The land-history contradiction is three-way, not two** (SAOSO 4.2.3 and the
+> OPP pledge both say 12/12/18; OPP §V alone says 18/12/12), so A3's `land_history_conflict` is
+> `min_reading <= declared < max_reading` — the band where the documents actually disagree — and **not**
+> a comparison against OPP §V. It is **stored**, where `is_paid_up` is derived.
 >
 > **A5's finding worth knowing before A8:** the OPP §2.3 table as printed has a hole — *"Below
 > R 250,000"* then *"R 250,001 – R 500,000"* — so band bounds are stored half-open and the printed
 > wording is the `label`. `AssessmentFee` snapshots the band, its label and the amount; it never
-> re-reads the schedule. The guard is `assert_fees_paid_for_assessment(member, farm)` (membership
-> first, then the fee): **C1's `confirm_visit()` calls it** — A5 did not pre-build `FarmVisit`.
+> re-reads the schedule. The guard is `assert_fees_paid_for_assessment(member, farm)` (membership first,
+> then the fee): **C1's `confirm_visit()` calls it** — A5 did not pre-build `FarmVisit`.
 >
-> **A6's finding worth knowing before A8:** the self-check's account step (§11.5 screen 7) is the
-> same account `create_application()` makes, so A8 should call that service rather than write its own
-> — and it carries the three Q7 fields the check never asks. The check's ticks still must **not**
-> become `FarmCategory` rows; they wait for A6's categories step, which is where they now belong.
+> **A6's finding worth knowing before A8:** the self-check's account step (§11.5 screen 7) is the same
+> account `create_application()` makes, so A8 should call that service rather than write its own — and
+> it carries the three Q7 fields the check never asks. The check's ticks still must **not** become
+> `FarmCategory` rows; they wait for A6's categories step.
 >
 > **The current purpose is a demo to PGS** (product owner, 2026-11-05): show the *shape* of the flow —
 > the self-check, the application, the account — before the group's go-ahead. That changes the bar
@@ -107,29 +85,30 @@
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off, chat-split, handover-truth-up, shapes-harness **and the MVP1a sub-plan A
+landscape-sign-off, chat-split, handover-truth-up, shapes-harness **and the MVP1a sub-plan A and B
 sessions** (`1i` onward)
 **Repo state:** **two worktrees, and the path matters.**
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **19 commits**: A1, A2, A3, A5, A6, D83, D84, Q8's draft consent, the approved
+  of `781cf37`, **25 commits**: A1, A2, A3, A5, A6, B1–B4, D83, D84, Q8's draft consent, the approved
   prototype, two model-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
-prints `19` and `git ls-remote --heads origin feat/mvp1a-visit` prints nothing. **Both worktrees
+prints `25` (measured, `git log --oneline 781cf37..HEAD | wc -l`) and
+`git ls-remote --heads origin feat/mvp1a-visit` prints nothing. **Both worktrees
 have rewritten the START HERE block, so a merge conflicts here by design: keep both strands' state,
 do not pick one.**
 
-**Start the next agent here, not in `pgs`:** the A-sub-plan's code is only in `pgs-visit`. Run
-everything from that worktree, note that it has no `.venv` (`testing_hazards.md` §3.31 — the gate's
-own script picks `python3`, which has no `celery`; use `python` and the five steps in §5), and drop
-the leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
+**Start the next agent here, not in `pgs`:** the A and B sub-plans' code is only in `pgs-visit`. Run
+everything from that worktree, note that it has no `.venv` (`testing_hazards.md` §3.31 — the gate's own
+script picks `python3`, which has no `celery`; use `python` and the five steps in §5), and drop the
+leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
 
-**On this tree** (2026-11-05, sessions `1j`–`1n`): the gate's five steps — not `scripts/verify.sh`
-itself, which cannot start here (§3.31) — **green at 1794 passed / 1 skipped / 8 xfailed**, run with
-`--create-db` and the test database dropped first, at **152.70 s and 261.21 s on the same tree forty
-minutes apart**. That spread is the box (§3.17, re-measured today); test-cost claims need `testcost`
-with `--reps 2`, never a single wall-clock number.
+**On this tree** (2026-11-05, sessions `1j`–`1o`): the gate's five steps — not `scripts/verify.sh`
+itself, which cannot start here (§3.31) — **green at 1883 passed / 1 skipped / 8 xfailed**, run with
+`--create-db` and the test database dropped first, at **204.69 s** (the pre-B3 tree, same session, at
+233.18 s). Two numbers from one day are not a benchmark: use `testcost profile --reps 2` for a claim
+(§3.17).
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
 local** (`18` commits ahead of `origin/main`, no remote branch). That is the session-`1f` line
@@ -157,6 +136,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1o` 2026-11-05 (session 24) — sub-plan B lands, and the printed FORM corrects the plan three times — [`SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md`](product/docs/handover/SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md)
 - `1n` 2026-11-05 (session 23) — the application flow walks, and the money stays with the group — [`SESSION_1n_2026-11-05_the-application-flow-walks-and-the-money-stays-with-the-group.md`](product/docs/handover/SESSION_1n_2026-11-05_the-application-flow-walks-and-the-money-stays-with-the-group.md)
 - `1m` 2026-11-05 (session 22) — the consent drafted, the mail decision taken, and the worktree handed over — [`SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md`](product/docs/handover/SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md)
 - `1k` 2026-11-05 (session 21) — the fee scale is data, the gate is a service, and my own tests were the weak part — [`SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md`](product/docs/handover/SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md)
