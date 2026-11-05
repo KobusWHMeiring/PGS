@@ -41,6 +41,10 @@
 > **page_break_row** (right grid, characters unverified). Those four are **semantic**, not structural —
 > judgements a human made in the fixtures.
 >
+> **The story for a non-developer is one page:** `product/design/d82_table_extraction_what_we_learned.html`
+> — the three investigations, the scoreboard, four options and a §18.3 export. It asks the owner to
+> decide **D82**; nothing is written into the spec until that answer exists.
+>
 > **What is next, in order: S3, then S5.** The extractor is no longer the load-bearing decision — a
 > credential would have to beat a union of four, and the three it would still lose are the three no
 > general extractor returns. **Document AI is now the least promising next spend** (§3.8 reverses
@@ -107,13 +111,14 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
 vlm-arm sessions
-**Repo state:** `main` — **three commits ahead of `origin/main`**, all session `1h`'s: the OpenRouter
-arm and its instrument; §3.8's correction; and the Docling re-run with the shared normalisation. Everything before it is pushed: the
+**Repo state:** `main` — **four commits ahead of `origin/main`**, all session `1h`'s: the OpenRouter
+arm and its instrument; §3.8's correction; the Docling re-run with the shared normalisation; and the
+D82 explanation page. Everything before it is pushed: the
 licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
 session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
 `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
 script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `3` on this tree, and
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `4` on this tree, and
 `0` once session `1h` is pushed.
 
 **On this tree** (2026-11-04, session `1h`): `scripts/verify.sh` **green at 1695 passed /
@@ -124,8 +129,8 @@ serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17) — the
 passed / 1 skipped / 15 deselected / 8 xfailed in 43.77 s**, and `--critical` **172 passed /
 4 deselected in 9.83 s** (all three 2026-11-04).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **three commits to push** (session
-`1h`'s): `git rev-list --count origin/main..HEAD` prints `3` (the number was wrong twice by being
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **four commits to push** (session
+`1h`'s): `git rev-list --count origin/main..HEAD` prints `4` (the number was wrong twice by being
 quoted; let the command answer).
 **Live:** `https://organicguarantee.africa` on the homtini VPS, deployed 2026-11-03 at **`06bb11a`**
 (last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,

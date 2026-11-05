@@ -372,6 +372,11 @@ The order of work is S3 (emit the blocks, record the extraction mode) and S5 (re
 through the harness), with the arm's `lines` form as a **proposer** whose output the harness checks —
 not as an authority.
 
+**Where a non-developer should start:** `product/design/d82_table_extraction_what_we_learned.html` —
+the same three investigations, the scoreboard, the four options and a §18.3 export, written for the
+product owner to decide D82 (which extractor, and whether to buy a credential). It is a review surface,
+not a plan; the numbers in it are the numbers above.
+
 **D81's consequence, reversed.** §3.5 said Document AI was the ceiling candidate because the gap was
 in *structure*. That is no longer the finding: both arms now read Appendix 7 correctly, the best arm
 passes 3 of 8, and what is left is **semantic** — a header printed once across four lines, a

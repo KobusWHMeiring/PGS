@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<!-- REVIEW ARTIFACT (not a production template) | Outeniqua PGS — D82, reading tables | 2026-11-04
+     Companion to INGESTION_ENGINE_PRD.md §3.5, §3.7 and §3.8, and to PGS_PLATFORM_SPEC.md §18.3 D80/D81.
+     Self-contained: no CDN, no build step, no network. Answers autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outeniqua PGS — What we learned about reading tables (D82)</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --bad:             #8a3b2c;
+    --bad-soft:        #f7e7e3;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 170px; }
+
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff; padding: 44px 20px 38px; margin-bottom: 28px;
+  }
+  header.hero .inner { max-width: 940px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero .q {
+    margin: 0; max-width: 66ch; font-size: 17px; line-height: 1.45;
+    background: rgba(255,255,255,.10); border-left: 3px solid rgba(255,255,255,.55);
+    padding: 12px 16px; border-radius: 0 10px 10px 0;
+  }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .85;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code {
+    font-family: var(--mono); font-size: 12px;
+    background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 6px;
+  }
+
+  .intro { background: var(--surface); border-radius: var(--radius-xl); padding: 22px 24px;
+           box-shadow: var(--shadow); margin-bottom: 30px; }
+  .intro h2 { margin: 0 0 8px; font-size: 17px; }
+  .intro p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); }
+  .intro p:last-child { margin-bottom: 0; }
+
+  .glossary { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-top: 16px; }
+  .term { background: var(--surface-low); border-radius: var(--radius-lg); padding: 11px 13px; }
+  .term b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .term span { font-size: 13px; color: var(--muted); }
+
+  .section-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 40px 0 12px; }
+  .section-head h2 { margin: 0; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .section-head .rule { flex: 1; height: 1px; background: var(--surface-high); min-width: 40px; }
+  .section-note { font-size: 14.5px; color: var(--muted); margin: -2px 0 16px; max-width: 70ch; }
+
+  .card { background: var(--surface); border-radius: var(--radius-xl); padding: 20px 22px 22px;
+          box-shadow: var(--shadow); margin-bottom: 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 16.5px; line-height: 1.35; letter-spacing: -.005em; }
+  .card h4 { margin: 18px 0 6px; font-size: 14px; letter-spacing: .02em; }
+  .card p { margin: 0 0 10px; font-size: 14.5px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul { margin: 6px 0 10px; padding-left: 20px; font-size: 14.5px; }
+  .card li { margin-bottom: 5px; }
+  .lede { font-size: 15.5px; }
+
+  .tag {
+    display: inline-block; font-family: var(--mono); font-size: 11.5px; font-weight: 600;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 3px 8px; border-radius: 7px; letter-spacing: .02em; margin-bottom: 8px;
+  }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.bad { background: var(--bad-soft); color: var(--bad); }
+
+  .callout { background: var(--accent-soft); border-radius: var(--radius-lg); padding: 13px 15px; margin: 14px 0; }
+  .callout .label { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+                    font-weight: 700; color: var(--accent); display: block; margin-bottom: 5px; }
+  .callout p { margin: 0; font-size: 14.5px; }
+  .callout.warn { background: var(--warn-soft); }
+  .callout.warn .label { color: var(--warn); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+                padding: 1px 5px; border-radius: 5px; }
+  pre { font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+        padding: 12px 14px; border-radius: var(--radius-lg); overflow-x: auto; margin: 10px 0; }
+  pre code { background: none; padding: 0; }
+
+  .ok { color: var(--accent); font-weight: 700; }
+  .part { color: var(--warn); font-weight: 700; }
+  .no { color: var(--bad); font-weight: 700; }
+
+  /* scoreboard bars */
+  .bars { margin: 8px 0 4px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-row .who { flex: none; width: 176px; font-size: 13px; }
+  .bar-row .track { flex: 1; height: 22px; background: var(--surface-low); border-radius: 6px; overflow: hidden; display: flex; }
+  .bar-row .seg { height: 100%; }
+  .seg.pass { background: var(--accent); }
+  .seg.grid { background: var(--accent-line); }
+  .bar-row .n { flex: none; width: 46px; text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .sw-pass { background: var(--accent); }
+  .sw-grid { background: var(--accent-line); }
+
+  /* matrix */
+  .matrix td, .matrix th { text-align: center; }
+  .matrix td:first-child, .matrix th:first-child { text-align: left; }
+  .dot { font-size: 15px; line-height: 1; }
+  .dot.pass { color: var(--accent); }
+  .dot.grid { color: var(--warn); }
+  .dot.no { color: #b9c3bc; }
+
+  /* options */
+  .opt-card { border-left: 3px solid var(--accent-line); }
+  .opt-card.rec { border-left-color: var(--accent); box-shadow: var(--shadow), inset 0 0 0 1px var(--accent-line); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  .two-col h5 { margin: 0 0 4px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .two-col ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .two-col li { margin-bottom: 4px; }
+
+  .diagram { background: var(--surface-low); border-radius: var(--radius-lg); padding: 14px 12px 8px; margin: 14px 0; }
+  .table-scroll { overflow-x: auto; }
+  .diagram svg { display: block; width: 100%; height: auto; }
+  .diagram .cap { font-size: 12.5px; color: var(--muted); margin: 8px 2px 0; }
+
+  /* decision control */
+  .opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .opt { cursor: pointer; font-size: 13.5px; font-weight: 550; padding: 8px 15px; border-radius: 999px;
+         background: var(--surface-low); color: var(--muted); border: 1px solid transparent;
+         user-select: none; transition: background .12s, color .12s; position: relative; }
+  .opt:hover { background: var(--surface-high); }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .opt:has(input:checked) { background: var(--accent); color: #fff; }
+
+  textarea { width: 100%; margin-top: 12px; min-height: 92px; resize: vertical;
+             font-family: var(--font); font-size: 15px; line-height: 1.5; color: var(--text);
+             background: var(--surface-low); border: 1px solid transparent;
+             border-radius: var(--radius-lg); padding: 12px 14px; }
+  textarea::placeholder { color: #9aa79f; }
+  textarea:focus { outline: none; border-color: var(--accent-line); background: var(--surface); }
+
+  button { font-family: var(--font); font-size: 13.5px; font-weight: 600; cursor: pointer;
+           border-radius: 10px; padding: 8px 14px; border: 1px solid transparent;
+           background: var(--surface-low); color: var(--text); transition: background .12s; }
+  button:hover { background: var(--surface-high); }
+  button.primary { background: var(--accent); color: #fff; }
+  button.primary:hover { background: #2b5039; }
+  button.ghost { background: transparent; color: var(--muted); }
+  button.ghost:hover { background: var(--surface-low); }
+
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+         background: rgba(255,255,255,.93); backdrop-filter: blur(10px);
+         box-shadow: var(--shadow-sticky); padding: 11px 20px; }
+  .bar .inner { max-width: 940px; margin: 0 auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .progress { font-size: 13.5px; color: var(--muted); }
+  .progress b { color: var(--text); }
+  .bar .spacer { flex: 1; }
+  .bar .saved { font-size: 12.5px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+  .bar .saved.show { opacity: 1; }
+
+  dialog { border: none; border-radius: var(--radius-xl); padding: 0; width: min(820px, 92vw);
+           box-shadow: 0 20px 60px rgba(0,0,0,.32); }
+  dialog::backdrop { background: rgba(20,28,24,.5); }
+  dialog .dlg-head { padding: 18px 22px 14px; }
+  dialog h3 { margin: 0 0 4px; font-size: 17px; }
+  dialog .dlg-head p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  dialog textarea { margin: 0; border-radius: 0; min-height: 320px; max-height: 52vh;
+                    font-family: var(--mono); font-size: 12.5px; background: var(--surface-low);
+                    border-top: 1px solid var(--surface-high); border-bottom: 1px solid var(--surface-high); }
+  dialog .dlg-foot { padding: 14px 22px 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+  @media print {
+    body { background: #fff; }
+    header.hero { background: #fff; color: #000; padding: 0 0 16px; }
+    header.hero .eyebrow, header.hero .meta { opacity: 1; }
+    header.hero .q { background: none; border-left-color: #000; padding-left: 12px; }
+    header.hero .meta code { background: none; padding: 0; }
+    .bar, dialog, .card-foot { display: none; }
+    .card, .intro, .diagram { box-shadow: none; break-inside: avoid; }
+    .wrap { padding-bottom: 0; }
+    textarea { background: #fff; min-height: 60px; }
+  }
+  @media (max-width: 620px) {
+    header.hero h1 { font-size: 23px; }
+    .card { padding: 17px 16px 18px; }
+    .wrap { padding: 0 14px 180px; }
+    .two-col { grid-template-columns: 1fr; }
+    .bar-row .who { width: 118px; font-size: 12px; }
+    /* A diagram scaled to 390 px would render its labels at ~5 px: scroll the box, not the page. */
+    .diagram { overflow-x: auto; }
+    .diagram svg { min-width: 600px; }
+    .matrix { font-size: 12px; min-width: 520px; }
+    .matrix th, .matrix td { padding: 6px 5px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Review artifact · D80 slice S2 · 2026-11-04</p>
+    <h1>What we learned about reading tables</h1>
+    <p class="q">Three measurements and one correction later: which tool should turn a printed
+      table into our corpus — and is a Google Cloud credential worth buying to find out?</p>
+    <div class="meta">
+      <span>PRD <code>INGESTION_ENGINE_PRD.md</code> §3.5 · §3.7 · §3.8</span>
+      <span>Evidence <code>product/docs/evidence/</code> (3 files)</span>
+      <span>Spent so far <code>$0.55</code></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="intro">
+    <h2>How to read this</h2>
+    <p>This is a <strong>record of what was measured</strong>, in order, with the correction that came
+      after it. It is not a proposal and not a status report. Every number here comes from a committed
+      evidence file or a command you can re-run; nothing is estimated unless it says “inferred”.</p>
+    <p>The short version: we measured two tools, both failed most of the eight test tables, and then
+      discovered the single biggest defect was <em>ours</em> — a mapping mistake that made both tools
+      look worse than they are. Fixing it changed the scoreboard, and reversed the plan.</p>
+    <div class="glossary">
+      <div class="term"><b>Shape</b><span>One of eight printed table patterns our corpus contains. The test set.</span></div>
+      <div class="term"><b>Arm</b><span>One candidate tool being measured: Docling, or a vision model via OpenRouter.</span></div>
+      <div class="term"><b>Pass</b><span>All of a shape's expected cells, rows, headers and dividers match. Scored by one function, for every arm.</span></div>
+      <div class="term"><b>R3</b><span>Requirement 3: every cell must be a contiguous run of the printed page, in printed order.</span></div>
+      <div class="term"><b>Gutter</b><span>The bare <code>1</code>, <code>6b</code> printed beside each table row. Furniture, not data.</span></div>
+      <div class="term"><b>Pass (the text)</b><span>The already-extracted page text a cell is checked against — <code>-layout</code> or <code>-table</code>.</span></div>
+    </div>
+  </section>
+
+  <!-- ============================ PART 1 ============================ -->
+  <div class="section-head"><h2>Part 1 — What is actually true</h2><div class="rule"></div></div>
+  <p class="section-note">Enumerated from the repository, not from memory.</p>
+
+  <div class="card">
+    <span class="tag">The test set</span>
+    <h3>Eight table shapes, all of them already in our corpus</h3>
+    <p>Every one is something today's pipeline either mangles or special-cases by hand. Each is pinned to
+      a page of a governed PDF, with the expected cells written down by a human reviewer.</p>
+    <table>
+      <thead><tr><th>Shape</th><th>Where</th><th>Why it is hard</th></tr></thead>
+      <tbody>
+        <tr><td>Numeric row, no labels</td><td>OPP §2.3, p2</td><td>The header is one printed line holding three column labels</td></tr>
+        <tr><td>Header lost entirely</td><td>SAOSO App 6a, p85</td><td>Header printed once, split over four lines; 20 rows carry no column meaning today</td></tr>
+        <tr><td>Column-major interleaving</td><td>SAOSO App 7, p88</td><td>Four columns print as interleaved lines; 4 chunks are unusable today</td></tr>
+        <tr><td>Very long cell</td><td>Landscape p5</td><td>One cell is 1,112 characters — a paragraph, not a label</td></tr>
+        <tr><td>Deliberate empty cell</td><td>Landscape p4</td><td>An empty cell must stay empty, and a merged fee box must not be copied down</td></tr>
+        <tr><td>Row across a page break</td><td>Landscape p4–5</td><td>One row starts on page 4 and finishes on page 5</td></tr>
+        <tr><td>Two-level qualifiers</td><td>SAOSO App 2, p76</td><td>A label printed <em>between</em> rows governs the rows beneath it</td></tr>
+        <tr><td>A picture in a cell</td><td>Landscape p6</td><td>Artwork is not text; the label printed beside it is</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <span class="label">Why this matters</span>
+      <p>These eight are the whole scoreboard. A tool's score is “how many of these eight it reads
+        correctly”, scored by one function — <code>mismatches()</code> in
+        <code>knowledge/tests/shape_fixtures.py</code> — that both arms share. No arm gets its own
+        scoring rules.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">The stakes</span>
+    <h3>What is broken today, in numbers</h3>
+    <table>
+      <thead><tr><th>Fact</th><th class="num">Count</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Reviewed rows that carry column meaning</td><td class="num">44</td><td>A human typed these. This is the whole defensible corpus.</td></tr>
+        <tr><td>Rows that carry <em>none</em></td><td class="num">20</td><td>Appendix 6a ships as <code>"Equines over six months old\n2"</code> — <code>2</code> is “what, per what?”</td></tr>
+        <tr><td>Chunks of interleaved text</td><td class="num">4</td><td>Appendix 7 reads <code>"7 Use of sulphur dioxide, Sulphur dioxide, / potassium bisulphite or …"</code></td></tr>
+        <tr><td>Tests that assert a table shape</td><td class="num">10</td><td>Every one asserts what a human already fixed</td></tr>
+      </tbody>
+    </table>
+    <p>So the problem is not “our tables are wrong”. It is: <strong>our coverage is a review, not a
+      mechanism</strong> — and a review does not generalise to a new document.</p>
+  </div>
+
+  <!-- ============================ PART 2 ============================ -->
+  <div class="section-head"><h2>Part 2 — The shape of the problem</h2><div class="rule"></div></div>
+  <p class="section-note">Why this is hard, in one diagram. Three different things have to be right,
+    and different tools get different ones right.</p>
+
+  <div class="card">
+    <h3>Reading a table is three jobs, not one</h3>
+    <div class="two-col">
+      <div>
+        <h5>1 · Structure</h5>
+        <p>Which printed lines are the header, which are rows, which are dividers, which cells are
+          merged. A <em>layout model</em> does this with geometry; a <em>vision model</em> does it by
+          looking.</p>
+      </div>
+      <div>
+        <h5>2 · Characters</h5>
+        <p>What each cell actually says. An extractive tool copies what is on the page. A generative
+          model <strong>writes what it believes it read</strong> — a wrong digit looks identical to a
+          right one.</p>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:14px">
+      <div>
+        <h5>3 · Meaning</h5>
+        <p>Is <code>1</code> a row number or a value? Does a label beside a seal belong to the artwork
+          column? Is “South African specific” a row or a qualifier? <em>No general tool knows.</em></p>
+      </div>
+      <div>
+        <h5>…and one rule that binds them</h5>
+        <p><strong>R3</strong>: every cell must be a contiguous run of the printed page, in printed
+          order. That is what makes a quote a quote rather than a plausible reconstruction.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 880 250" role="img" aria-label="The verification loop: a model or extractor proposes a grid, a resolver checks every cell against the page text, and one shared scorer produces a verdict">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#35604a"/>
+          </marker>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#8a5a1c"/>
+          </marker>
+        </defs>
+        <rect x="8" y="26" width="176" height="58" rx="10" fill="#ffffff" stroke="#b9cfc0"/>
+        <text x="96" y="49" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1c2620">The proposal</text>
+        <text x="96" y="67" text-anchor="middle" font-size="11" fill="#66756b">Docling table, or a model's JSON</text>
+
+        <rect x="228" y="26" width="196" height="58" rx="10" fill="#ffffff" stroke="#b9cfc0"/>
+        <text x="326" y="49" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1c2620">The resolver</text>
+        <text x="326" y="67" text-anchor="middle" font-size="11" fill="#66756b">every cell checked against the page</text>
+
+        <rect x="468" y="26" width="196" height="58" rx="10" fill="#e4efe7" stroke="#b9cfc0"/>
+        <text x="566" y="45" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1c2620">Three checks</text>
+        <text x="566" y="61" text-anchor="middle" font-size="10.5" fill="#35604a">contiguous run · printed order</text>
+        <text x="566" y="75" text-anchor="middle" font-size="10.5" fill="#35604a">· declared normalisations only</text>
+
+        <rect x="708" y="26" width="164" height="58" rx="10" fill="#ffffff" stroke="#b9cfc0"/>
+        <text x="790" y="49" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1c2620">mismatches()</text>
+        <text x="790" y="67" text-anchor="middle" font-size="11" fill="#66756b">one scorer, both arms</text>
+
+        <line x1="184" y1="55" x2="224" y2="55" stroke="#35604a" stroke-width="1.6" marker-end="url(#a1)"/>
+        <line x1="424" y1="55" x2="464" y2="55" stroke="#35604a" stroke-width="1.6" marker-end="url(#a1)"/>
+        <line x1="664" y1="55" x2="704" y2="55" stroke="#35604a" stroke-width="1.6" marker-end="url(#a1)"/>
+
+        <rect x="228" y="150" width="196" height="56" rx="10" fill="#f7efe1" stroke="#e3cfa8"/>
+        <text x="326" y="172" text-anchor="middle" font-size="12" font-weight="600" fill="#8a5a1c">Named violation</text>
+        <text x="326" y="189" text-anchor="middle" font-size="10.5" fill="#8a5a1c">“not a contiguous run of any page”</text>
+        <line x1="326" y1="84" x2="326" y2="146" stroke="#8a5a1c" stroke-width="1.6" marker-end="url(#a2)" stroke-dasharray="4 3"/>
+        <text x="336" y="118" font-size="10.5" fill="#8a5a1c">fails a check</text>
+
+        <rect x="468" y="150" width="404" height="56" rx="10" fill="#ffffff" stroke="#dfe5da"/>
+        <text x="670" y="171" text-anchor="middle" font-size="12" font-weight="600" fill="#1c2620">The page text is the witness</text>
+        <text x="670" y="188" text-anchor="middle" font-size="10.5" fill="#66756b">committed <tspan font-family="monospace">-layout</tspan> / <tspan font-family="monospace">-table</tspan> text, sha256-pinned</text>
+        <line x1="566" y1="146" x2="566" y2="86" stroke="#66756b" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a1)"/>
+        <text x="576" y="120" font-size="10.5" fill="#66756b">is read, never retyped</text>
+
+        <text x="8" y="232" font-size="10.5" fill="#66756b">Grey arrows: data. Dashed: a check that can fail. A pass that leans on the model's own characters is reported as “grid only”, never as a pass.</text>
+      </svg>
+      <p class="cap">Figure 1 — the loop both arms run. The tool's job is to propose; the page's job is to
+        be the witness; one scorer decides.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 3 ============================ -->
+  <div class="section-head"><h2>Part 3 — The three investigations</h2><div class="rule"></div></div>
+  <p class="section-note">In the order they happened. Each one is a committed evidence file and a
+    command that regenerates it.</p>
+
+  <div class="card">
+    <span class="tag warn">Investigation 1 · 2026-11-03</span>
+    <h3>Docling: the local layout model — 0 of 8</h3>
+    <p>A local, offline table model. No account, no key, no network. It converts a page and returns
+      tables with cells and their boxes. Measured at its own high-quality defaults, on a laptop CPU.</p>
+    <table>
+      <thead><tr><th>Shape</th><th>Table found</th><th>Result</th><th>The failure, named</th></tr></thead>
+      <tbody>
+        <tr><td>Numeric row (OPP)</td><td>yes, 7×3</td><td class="part">pass, with a convention</td><td>It marks no cell as a header — on <em>any</em> page</td></tr>
+        <tr><td>Header lost entirely (6a)</td><td>yes, 21×2</td><td class="no">fail</td><td>Two header labels merged into one cell</td></tr>
+        <tr><td>Column-major (App 7)</td><td>yes, 8×5</td><td class="no">fail</td><td>The row numbers became an extra leading column</td></tr>
+        <tr><td>Very long cell (p5)</td><td class="no">no</td><td class="no">not detected</td><td>The page came back as headings and two pictures</td></tr>
+        <tr><td>Empty cell (p4)</td><td>yes, 3×6</td><td class="no">fail</td><td>Five columns split into six; the fee and a label lost</td></tr>
+        <tr><td>Page-break row</td><td>partly</td><td class="no">fail</td><td>The continuation is a second table and was not returned</td></tr>
+        <tr><td>Two-level qualifiers (App 2)</td><td>yes, 14×2</td><td class="no">fail</td><td>Both divider labels became rows</td></tr>
+        <tr><td>Picture in a cell (p6)</td><td class="no">no</td><td class="no">not detected</td><td>Two pictures, text as headings</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn">
+      <span class="label">The finding</span>
+      <p><strong>0 of 8 as extracted; 1 of 8 if you agree “row 0 is the header”; 2 of 8 tables not
+        detected at all.</strong> Rows and columns are usually <em>found</em> — this is not a tool that
+        cannot see. It is a tool whose structure loses header association, spans, dividers, page-break
+        rows and non-text. 163–330 s for the eight pages.</p>
+    </div>
+    <p>That fired the threshold in decision <strong>D81</strong>: “Document AI only if Docling loses
+      spans, qualifiers or header association on three or more of the eight.” It loses all three, on
+      more than three. So the plan at that point was: buy a Google Cloud credential.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag">Investigation 2 · 2026-11-04</span>
+    <h3>The vision model via OpenRouter: 8 of 8 tables found, 2 of 8 read</h3>
+    <p>The other class of tool. No install, no local model — you send page images and a generative
+      model answers. The catalogue that day listed <strong>419 models</strong>, of which
+      <strong>276 accept an image</strong> and <strong>154 a PDF</strong>. Two were measured:
+      <code>gemini-3.1-flash-lite</code> and <code>claude-sonnet-5.5</code>.</p>
+    <p>But a generative model <em>writes</em> what it believes it read. So it was never asked for text.
+      It was asked for <strong>structure</strong>, and every character was checked against the page.
+      Three forms were tried, because the rule has three readings:</p>
+    <table>
+      <thead><tr><th>Form</th><th>What the model returns</th><th>Where the characters come from</th></tr></thead>
+      <tbody>
+        <tr><td><code>lines</code></td><td>each cell's printed lines, copied</td><td>the page, checked line by line</td></tr>
+        <tr><td><code>anchors</code></td><td>a cell's first and last words</td><td>the page, sliced between them</td></tr>
+        <tr><td><code>indices</code></td><td>line numbers only</td><td>the page, by construction</td></tr>
+      </tbody>
+    </table>
+    <p><strong>48 calls across the three forms, $0.55 in total, 5–10 s per shape.</strong> (The two
+      surviving forms are the ones published; the line-number form was measured and dropped.) It found
+      <em>every</em> table (8/8) and got
+      header association right on 7–8 of 8 — the requirement Docling lost completely — and it proposed
+      dividers, which no layout model returns. But the best form passed only <strong>2 of 8</strong>.</p>
+    <p>Two hard limits showed up immediately:</p>
+    <ul>
+      <li><strong>Line numbers cannot separate cells.</strong> In the extracted text a printed line
+        <em>is</em> a whole row — <code>Below R 250,000 1,500 900</code> — so no set of line numbers can
+        produce three cells from it. The <code>indices</code> form scored 0 of 8.</li>
+      <li><strong>Anchors need a cell to be contiguous.</strong> On Appendix 7 every cell failed,
+        because the page text interleaves four columns. <em>This turned out to be the wrong conclusion —
+        see Investigation 3.</em></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <span class="tag bad">Investigation 3 · 2026-11-04, an hour later</span>
+    <h3>The follow-up that changed the answer: the biggest defect was ours</h3>
+    <p>Three checks, all re-scored from the <strong>cached model answers</strong> — no new call, so
+      nothing was bought:</p>
+
+    <h4>3.1 · Would a different pass have helped? No.</h4>
+    <p>Re-scoring the same answer against the pass each shape does <em>not</em> declare: no verdict
+      improved, and three got worse. <code>empty_cells</code> went from 0 to 11 quote violations;
+      <code>page_break_row</code> from 6 to 17; and a passing shape demoted. <strong>The pass we already
+      used is the better of the two available.</strong></p>
+
+    <h4>3.2 · Could a better pass be built? Not from what we have.</h4>
+    <p>Appendix 7's extracted page is decisive: the gap between two columns <strong>collapses to a
+      single space when a cell overflows</strong>. There is no gutter to split on, so no
+      character-offset de-interleaver can recover the cells. De-interleaving needs <em>per-word
+      geometry</em>, which neither committed pass carries.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 880 210" role="img" aria-label="The extracted page line versus the row-structured grid: the gap between two columns collapses to one space">
+        <text x="8" y="16" font-size="11.5" font-weight="700" fill="#8a3b2c">What the page text gives us — line 9 of Appendix 7</text>
+        <rect x="8" y="24" width="560" height="30" rx="7" fill="#f7e7e3" stroke="#e0c3bb"/>
+        <text x="18" y="44" font-family="monospace" font-size="12.5" fill="#1c2620">1 Aeration or oxygenation Air,</text>
+        <text x="580" y="44" font-size="11" fill="#8a3b2c">one space = no gutter</text>
+
+        <text x="8" y="80" font-size="11.5" font-weight="700" fill="#35604a">What we need — four cells</text>
+        <rect x="8" y="88" width="150" height="30" rx="7" fill="#e4efe7" stroke="#b9cfc0"/>
+        <text x="18" y="108" font-family="monospace" font-size="12" fill="#1c2620">1</text>
+        <rect x="166" y="88" width="230" height="30" rx="7" fill="#e4efe7" stroke="#b9cfc0"/>
+        <text x="176" y="108" font-family="monospace" font-size="12" fill="#1c2620">Aeration or oxygenation</text>
+        <rect x="404" y="88" width="150" height="30" rx="7" fill="#e4efe7" stroke="#b9cfc0"/>
+        <text x="414" y="108" font-family="monospace" font-size="12" fill="#1c2620">Air,</text>
+        <rect x="562" y="88" width="120" height="30" rx="7" fill="#ffffff" stroke="#dfe5da" stroke-dasharray="4 3"/>
+        <text x="572" y="108" font-family="monospace" font-size="12" fill="#66756b">(empty)</text>
+
+        <text x="8" y="146" font-size="11.5" font-weight="700" fill="#8a5a1c">The correction — the row number is not a column</text>
+        <rect x="8" y="154" width="674" height="30" rx="7" fill="#f7efe1" stroke="#e3cfa8"/>
+        <text x="18" y="174" font-family="monospace" font-size="12" fill="#1c2620">Aeration or oxygenation   |   Air,   |   (empty)   |   (empty)</text>
+        <text x="8" y="200" font-size="10.5" fill="#66756b">Both arms read the bare <tspan font-family="monospace">1</tspan> as a fifth leading column and shifted every cell right by one.</text>
+      </svg>
+      <p class="cap">Figure 2 — two separate problems in one line of text. The collapsed gap needs
+        geometry. The row number needs a decision.</p>
+    </div>
+
+    <h4>3.3 · The row number: a declared normalisation</h4>
+    <p>The paper prints a bare row number beside each row. <strong>Both arms counted it as data.</strong>
+      Declared as a narrow rule — drop a bare leading row number from a row carrying exactly one cell
+      more than the header; a real first column (<code>1 Aeration or oxygenation…</code>) is never
+      touched — Appendix 7 flipped for both arms at once.</p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 880 200" role="img" aria-label="Timeline: Docling measured 0 of 8, vision model 2 of 8, follow-ups find no pass helps, then the gutter normalisation makes Appendix 7 pass for both arms">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#35604a"/>
+          </marker>
+        </defs>
+        <line x1="20" y1="60" x2="860" y2="60" stroke="#b9cfc0" stroke-width="2"/>
+        <circle cx="70" cy="60" r="6" fill="#8a3b2c"/>
+        <circle cx="270" cy="60" r="6" fill="#8a5a1c"/>
+        <circle cx="470" cy="60" r="6" fill="#35604a"/>
+        <circle cx="670" cy="60" r="6" fill="#35604a"/>
+        <circle cx="820" cy="60" r="6" fill="#35604a"/>
+
+        <text x="70" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#8a3b2c">Docling</text>
+        <text x="70" y="84" text-anchor="middle" font-size="10.5" fill="#66756b">0 of 8</text>
+        <text x="70" y="98" text-anchor="middle" font-size="10.5" fill="#66756b">2 tables unseen</text>
+
+        <text x="270" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#8a5a1c">Vision model</text>
+        <text x="270" y="84" text-anchor="middle" font-size="10.5" fill="#66756b">2 of 8</text>
+        <text x="270" y="98" text-anchor="middle" font-size="10.5" fill="#66756b">but 8/8 found</text>
+
+        <text x="470" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#35604a">Follow-up</text>
+        <text x="470" y="84" text-anchor="middle" font-size="10.5" fill="#66756b">a different pass</text>
+        <text x="470" y="98" text-anchor="middle" font-size="10.5" fill="#66756b">never helps</text>
+
+        <text x="670" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#35604a">The gutter</text>
+        <text x="670" y="84" text-anchor="middle" font-size="10.5" fill="#66756b">declared, not silent</text>
+        <text x="670" y="98" text-anchor="middle" font-size="10.5" fill="#66756b">Appendix 7 flips</text>
+
+        <text x="820" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#35604a">Docling again</text>
+        <text x="820" y="84" text-anchor="middle" font-size="10.5" fill="#66756b">2 of 8</text>
+        <text x="820" y="98" text-anchor="middle" font-size="10.5" fill="#66756b">App 7 passes too</text>
+
+        <rect x="360" y="130" width="470" height="54" rx="10" fill="#e4efe7" stroke="#b9cfc0"/>
+        <text x="374" y="150" font-size="12" font-weight="600" fill="#1c2620">Both arms now pass Appendix 7 — with the same normalisation</text>
+        <text x="374" y="168" font-size="10.5" fill="#35604a">Docling: rows 7/7, cols 5/4 · sonnet lines: exact grid · flash-lite lines: one character off (70°C vs 70oC)</text>
+        <line x1="670" y1="68" x2="600" y2="126" stroke="#35604a" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#a3)"/>
+      </svg>
+      <p class="cap">Figure 3 — the session, in order. The correction is not a better tool; it is a
+        better reading of what the page prints.</p>
+    </div>
+
+    <div class="callout">
+      <span class="label">The correction, stated plainly</span>
+      <p>The single biggest defect found across both arms was <strong>a mapping convention</strong>, not
+        a tool. That does not make any arm adoptable — its characters still need checking — but it
+        changes which question is worth spending money on.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 4 ============================ -->
+  <div class="section-head"><h2>Part 4 — Where we are now</h2><div class="rule"></div></div>
+  <p class="section-note">Both arms, one instrument, one set of declared normalisations, same day.</p>
+
+  <div class="card">
+    <h3>The scoreboard</h3>
+    <div class="bars">
+      <div class="bar-row">
+        <div class="who">Docling 2.146.0</div>
+        <div class="track"><div class="seg pass" style="width:25%"></div></div>
+        <div class="n">2 / 8</div>
+      </div>
+      <div class="bar-row">
+        <div class="who">flash-lite · lines</div>
+        <div class="track"><div class="seg pass" style="width:12.5%"></div><div class="seg grid" style="width:37.5%"></div></div>
+        <div class="n">1 / 8</div>
+      </div>
+      <div class="bar-row">
+        <div class="who">flash-lite · anchors</div>
+        <div class="track"><div class="seg pass" style="width:25%"></div></div>
+        <div class="n">2 / 8</div>
+      </div>
+      <div class="bar-row">
+        <div class="who">sonnet · lines</div>
+        <div class="track"><div class="seg pass" style="width:37.5%"></div></div>
+        <div class="n">3 / 8</div>
+      </div>
+      <div class="bar-row">
+        <div class="who">sonnet · anchors</div>
+        <div class="track"><div class="seg pass" style="width:12.5%"></div></div>
+        <div class="n">1 / 8</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="sw-pass"></i>full pass</span>
+      <span><i class="sw-grid"></i>right grid, characters unverified (“grid only”)</span>
+    </div>
+
+    <h4>Which shapes each arm actually reads</h4>
+    <div class="table-scroll">
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th>Shape</th><th>Docling</th><th>flash-lite<br>lines</th><th>flash-lite<br>anchors</th>
+          <th>sonnet<br>lines</th><th>sonnet<br>anchors</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Numeric row (OPP)</td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td></tr>
+        <tr><td>Header lost entirely (6a)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Column-major (App 7)</td><td><span class="dot pass">●</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot pass">●</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Very long cell (p5)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Empty cell (p4)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Row across a page break</td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Two-level qualifiers (App 2)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot pass">●</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Picture in a cell (p6)</td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot pass">●</span></td><td><span class="dot no">○</span></td></tr>
+        <tr style="border-top:2px solid var(--surface-high)">
+          <td><strong>Full passes</strong></td><td><strong>2</strong></td><td><strong>1</strong></td>
+          <td><strong>2</strong></td><td><strong>3</strong></td><td><strong>1</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="legend">
+      <span><span class="dot pass">●</span> pass</span>
+      <span><span class="dot grid">◐</span> grid only</span>
+      <span><span class="dot no">○</span> fail</span>
+    </div>
+
+    <div class="callout">
+      <span class="label">Read this row</span>
+      <p><strong>The two arms pass different shapes, and the union of everything any arm passes is
+        4 of 8.</strong> The four nobody passes are the four that need a <em>judgement</em>, not an
+        extraction: a header printed once across four lines, a 1,112-character cell boundary, a merged
+        fee box with a label beside a seal, and a page-break row whose characters were never verified.</p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 5 ============================ -->
+  <div class="section-head"><h2>Part 5 — Evidence for and against each option</h2><div class="rule"></div></div>
+  <p class="section-note">Each option gets its strongest case first. The “against” list is the part
+    that matters.</p>
+
+  <div class="card opt-card">
+    <span class="tag">Option A</span>
+    <h3>Docling, with the declared normalisations, as the extractor of record</h3>
+    <div class="two-col">
+      <div>
+        <h5>Strongest case for</h5>
+        <ul>
+          <li><strong>Local, free, offline.</strong> No key, no per-page cost, no recurring dependency — it fits the “no credential” posture exactly.</li>
+          <li>Its geometry is real: it de-interleaves Appendix 7 correctly and returns cell boxes.</li>
+          <li>2 of 8 passes, the same as the cheap vision model — and the second one (Appendix 7) is the hard one.</li>
+        </ul>
+      </div>
+      <div>
+        <h5>Against</h5>
+        <ul>
+          <li>Marks <strong>no cell as a header on any page</strong>, so every table needs a convention or a review.</li>
+          <li>Returns <strong>nothing at all</strong> for two shapes (long cell, artwork).</li>
+          <li>163–330 s for eight pages — slow, and 1.5 GB of install.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card opt-card">
+    <span class="tag">Option B</span>
+    <h3>The vision model's <code>lines</code> form as a proposer, checked by the harness</h3>
+    <div class="two-col">
+      <div>
+        <h5>Strongest case for</h5>
+        <ul>
+          <li><strong>Best arm measured: 3 of 8</strong>, and it is the only arm that proposes dividers (Appendix 2).</li>
+          <li>Finds every table and gets header association right on 7–8 of 8 — Docling's worst failure.</li>
+          <li>Fast (5–10 s/shape) and cheap (<code>$0.16</code> for eight pages). Nothing to install.</li>
+          <li>Its characters are never trusted: every cell is checked against the page, and failures are named.</li>
+        </ul>
+      </div>
+      <div>
+        <h5>Against</h5>
+        <ul>
+          <li><strong>It writes text.</strong> Its remaining failures are exactly that: <code>70°C</code> for the page's <code>70oC</code>, re-wrapped lines, a paraphrased anchor.</li>
+          <li>Needs a key in the build path — a secret, and a network call per document.</li>
+          <li>Output is not reproducible in principle; the cache makes it re-scorable, not deterministic.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card opt-card">
+    <span class="tag">Option C</span>
+    <h3>Buy a Google Cloud credential and measure Document AI</h3>
+    <div class="two-col">
+      <div>
+        <h5>Strongest case for</h5>
+        <ul>
+          <li>It is the <strong>only candidate that supplies per-word geometry</strong> — the one thing §3.8 showed our committed text cannot give us.</li>
+          <li>Its schema has headers and spans as first-class fields, which is precisely what Docling lacked.</li>
+          <li>Money is not the argument: 8 pages now, a handful of documents a year.</li>
+        </ul>
+      </div>
+      <div>
+        <h5>Against</h5>
+        <ul>
+          <li><strong>It is the same class as Docling</strong> (extractive layout + table model), so it inherits the four semantic failures nobody passed.</li>
+          <li>The geometry argument was its strongest card — and Docling has just cashed it by passing Appendix 7.</li>
+          <li>Costs a <strong>spending credential</strong>, four things that do not exist on this box, and a recurring hosted dependency.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card opt-card">
+    <span class="tag">Option D</span>
+    <h3>No extractor: hand-author the blocks, review the 24 chunks, write the debt down</h3>
+    <div class="two-col">
+      <div>
+        <h5>Strongest case for</h5>
+        <ul>
+          <li>Closes the two live defects immediately and honestly.</li>
+          <li>Needs nothing new: no tool, no key, no install.</li>
+          <li>The four unpassable shapes need a human judgement anyway — this is the only option that admits it up front.</li>
+        </ul>
+      </div>
+      <div>
+        <h5>Against</h5>
+        <ul>
+          <li><strong>Generalises nothing.</strong> The next document needs the same review, and nobody will know that until it is late.</li>
+          <li>It is a decision to stop, and should be made explicitly rather than by exhaustion.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ PART 6 ============================ -->
+  <div class="section-head"><h2>Part 6 — The rules that govern this</h2><div class="rule"></div></div>
+  <p class="section-note">Not philosophy — the four repository rules that constrain any answer, and the
+    one place they pull against each other.</p>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Rule</th><th>What it says</th><th>Which options it constrains</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Requirement 3 (R3)</strong></td>
+          <td>A cell must be a contiguous run of the printed page, in printed order.</td>
+          <td>Rules out any arm whose characters are the model's own. This is why “grid only” is a separate verdict, not a pass.</td>
+        </tr>
+        <tr>
+          <td><strong>Requirement 9</strong></td>
+          <td>No new claim: a quote is a substring of the stored artefact.</td>
+          <td>Rules out region-only citations — so Document AI's boxes would need a different claim, not a free upgrade.</td>
+        </tr>
+        <tr>
+          <td><strong>Requirement 10</strong></td>
+          <td>The gate needs no extractor.</td>
+          <td>All four options survive: both instruments import with no tool and no key, and an evaluation is a build-time act with a recorded banner.</td>
+        </tr>
+        <tr>
+          <td><strong>Claim discipline</strong></td>
+          <td>The public surface publishes only what we can verify.</td>
+          <td>Argues against any pipeline whose output is plausible but unchecked — which is the vision model's whole failure mode.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout warn">
+      <span class="label">Where the rules disagree</span>
+      <p>R3 demands the characters come from the page; the vision model's advantage is that it can see
+        structure the page text cannot express. The <code>anchors</code> form was invented to satisfy
+        both — boundaries from the model, characters from the page — and it is the <em>worst</em>
+        performing form on the interleaved shape. The tie is broken by the evidence, not the principle:
+        <strong><code>lines</code> wins because a printed line is contiguous by construction.</strong></p>
+    </div>
+  </div>
+
+  <!-- ============================ PART 7 ============================ -->
+  <div class="section-head"><h2>Part 7 — Comparison, and the recommendation</h2><div class="rule"></div></div>
+  <p class="section-note">Unweighted on purpose. The criteria are stated so you can weigh them
+    differently from me.</p>
+
+  <div class="card">
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Criteria</th><th>A · Docling</th><th>B · VLM lines</th><th>C · Document AI</th><th>D · hand review</th></tr></thead>
+      <tbody>
+        <tr><td>Shapes passed (measured)</td><td>2 of 8</td><td><strong>3 of 8</strong></td><td>not measured</td><td>0 by machine, 4 by hand</td></tr>
+        <tr><td>Tables found</td><td>6 of 8</td><td><strong>8 of 8</strong></td><td>inferred: 8</td><td>n/a</td></tr>
+        <tr><td>Header association</td><td class="no">0 of 8</td><td><strong>7–8 of 8</strong></td><td>inferred: yes</td><td>by the reviewer</td></tr>
+        <tr><td>Characters verifiable (R3)</td><td>yes</td><td>yes, per printed line</td><td>yes, per region (needs R9 decision)</td><td>yes, typed</td></tr>
+        <tr><td>Needs a secret</td><td>no</td><td>yes (one key)</td><td class="no">yes (service account)</td><td>no</td></tr>
+        <tr><td>Cost for 8 pages</td><td>free, 281 s</td><td><strong>$0.16</strong></td><td>inferred: cents</td><td>hours</td></tr>
+        <tr><td>Works offline</td><td>yes</td><td class="no">no</td><td class="no">no</td><td>yes</td></tr>
+        <tr><td>Generalises to a new document</td><td>partly</td><td><strong>partly</strong></td><td>probably</td><td class="no">no</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="callout">
+      <span class="label">Recommendation</span>
+      <p><strong>B, with the harness as the gate and hand-authored blocks for the four shapes nobody
+        passes.</strong> Use the vision model's <code>lines</code> form to propose the grid, check every
+        cell against the page, and let <code>knowledge/table_harness.py</code> decide. Keep Docling as
+        the offline fallback. <strong>Do not buy the credential</strong> — reconsider it only if S5's
+        re-review shows the semantic shapes cost more to review than a processor costs to run.</p>
+    </div>
+
+    <h4>What would change my mind</h4>
+    <ul>
+      <li>A tool that passes <strong>6 of 8</strong>, or that passes any of the four semantic shapes
+        without a human deciding.</li>
+      <li>S5's re-review of Appendix 6a and 7 taking <strong>more than a day</strong> — at that point a
+        paid extractor is cheaper than the review, and Document AI is worth measuring properly.</li>
+      <li>A document we <em>must</em> ingest this quarter whose columns interleave — that needs
+        per-word geometry, which is exactly Document AI's case.</li>
+      <li>Evidence that the vision model's character errors are systematic rather than occasional (a
+        wrong digit that resolves as a contiguous run would be invisible to R3, and that is the one
+        failure this instrument cannot see).</li>
+    </ul>
+  </div>
+
+  <!-- ============================ PART 8 ============================ -->
+  <div class="section-head"><h2>Part 8 — Your decision</h2><div class="rule"></div></div>
+  <p class="section-note">Pick one, add anything you want recorded, then export a row for
+    <code>PGS_PLATFORM_SPEC.md</code> §18.3.</p>
+
+  <div class="card" id="card_d82">
+    <span class="tag">D82 (proposed)</span>
+    <h3>What do we do about table extraction, now that both arms are measured?</h3>
+    <p class="lede">Measured 2026-11-04: Docling 2 of 8, the vision model 3 of 8, both passing
+      Appendix 7 once the row-number gutter is declared. Union 4 of 8. Four shapes need a human
+      judgement no extractor returns.</p>
+    <div class="opts" id="opts_d82">
+      <label class="opt"><input type="radio" name="d82" value="A"> A · Docling as extractor of record</label>
+      <label class="opt"><input type="radio" name="d82" value="B"> B · VLM lines as proposer + harness</label>
+      <label class="opt"><input type="radio" name="d82" value="C"> C · Buy the credential, measure Document AI</label>
+      <label class="opt"><input type="radio" name="d82" value="D"> D · No extractor: hand-review and write the debt</label>
+    </div>
+    <textarea id="note_d82" placeholder="Notes, conditions, or a different answer…"></textarea>
+    <div class="card-foot">
+      <button class="primary" onclick="exportRow()">Export §18.3 row</button>
+      <button class="ghost" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>What happens next, whatever you pick</h3>
+    <ul>
+      <li><strong>S3</strong> — the generator emits <code>&lt;!-- table … --&gt;</code> blocks and
+        records the extraction mode on the artefact. This is needed by every option, including D.</li>
+      <li><strong>S5</strong> — re-review Appendix 6a (20 rows) and Appendix 7 <em>through</em> the
+        harness, so the two live defects close with a check rather than a promise.</li>
+      <li><strong>Re-run Docling</strong> with the declared normalisations in CI-adjacent form, so the
+        offline fallback stays measured rather than remembered.</li>
+    </ul>
+    <p>Not owed by any of this: a deploy. The live site is unaffected by the evaluation; the deploy
+      owed is for the earlier sessions and is tracked in <code>HANDOVER.md</code>.</p>
+  </div>
+
+</div>
+
+<div class="bar">
+  <div class="inner">
+    <span class="progress" id="progress">D82 unanswered</span>
+    <span class="spacer"></span>
+    <span class="saved" id="saved">Saved</span>
+    <button class="ghost" onclick="clearAll()">Clear</button>
+    <button class="primary" onclick="exportRow()">Export §18.3 row</button>
+  </div>
+</div>
+
+<dialog id="outDlg">
+  <div class="dlg-head">
+    <h3>§18.3 decision row</h3>
+    <p>Paste into <code>PGS_PLATFORM_SPEC.md</code> §18.3, then apply the consequent edits to the PRD.</p>
+  </div>
+  <textarea id="outText" readonly></textarea>
+  <div class="dlg-foot">
+    <button class="primary" id="dlgCopy">Copy to clipboard</button>
+    <button id="dlgDl">Download .md</button>
+    <button class="ghost" id="dlgClose">Close</button>
+  </div>
+</dialog>
+
+<script>
+const KEY = 'pgs.d82.table_extraction.v1';
+const CHOICES = {
+  A: 'A - Docling, with the declared normalisations, as the extractor of record',
+  B: 'B - The vision model\'s `lines` form as a proposer, checked by the S4 harness',
+  C: 'C - Buy a Google Cloud credential and measure Document AI',
+  D: 'D - No extractor: hand-author the blocks, review the 24 chunks, write the debt down'
+};
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { state = {}; }
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+  const s = document.getElementById('saved');
+  s.classList.add('show');
+  clearTimeout(save.t);
+  save.t = setTimeout(() => s.classList.remove('show'), 1200);
+  render();
+}
+
+function render() {
+  const picked = state.answer || null;
+  document.querySelectorAll('#opts_d82 input').forEach(i => { i.checked = (i.value === picked); });
+  document.getElementById('note_d82').value = state.note || '';
+  document.getElementById('progress').innerHTML = picked
+    ? `D82 answered: <b>${picked}</b>`
+    : 'D82 unanswered';
+}
+
+document.querySelectorAll('#opts_d82 input').forEach(i => {
+  i.addEventListener('change', () => { state.answer = i.value; save(); });
+});
+document.getElementById('note_d82').addEventListener('input', e => {
+  state.note = e.target.value; save();
+});
+
+function buildRow() {
+  const picked = state.answer || '';
+  const note = (state.note || '').trim();
+  if (!picked) return '_(D82 unanswered — pick an option in the page first.)_';
+  return `| D82 | Which table extractor does the ingestion engine use, now that both arms are measured? | **${CHOICES[picked]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`; slice S2 of the ingestion engine PRD). Measured with one instrument, both arms, the same day: Docling 2.146.0 passes **2 of 8** shapes (numeric_row with the row-0 header convention; Appendix 7 with the row-number gutter) and finds 6 of 8 tables; the OpenRouter VLM arm passes **3 of 8** at best (\`claude-sonnet-5.5\`, \`lines\` form) and finds **8 of 8**, with header association right on 7-8 of 8. The union of what any arm passes is **4 of 8**; the four nobody passes need a human judgement (a header printed once across four lines, a 1,112-character cell, a merged fee box beside a seal, a page-break row). A different committed pass never helps (three shapes get worse), and a row-structured pass cannot be built from committed text because inter-column gaps collapse to one space when a cell overflows. Document AI is **not** adopted: it is the same class as Docling and would inherit the same four semantic failures, and the geometry argument for it was cashed by Docling passing Appendix 7. Every cell is still checked against the page per printed line (R3), and a grid that matches while quotes do not resolve is reported as "grid only", never as a pass. Evidence: \`product/docs/evidence/2026-11-03_s2_docling_scores.json\`, \`2026-11-04_s2_docling_gutter_scores.json\`, \`2026-11-04_s2b_openrouter_scores.json\`.${note ? ' Note: ' + note.replace(/\|/g, '/') : ''} |`;
+}
+
+const dlg = document.getElementById('outDlg');
+const out = document.getElementById('outText');
+
+function exportRow() {
+  out.value = buildRow();
+  dlg.showModal();
+}
+
+document.getElementById('dlgCopy').onclick = async () => {
+  const b = document.getElementById('dlgCopy');
+  try { await navigator.clipboard.writeText(out.value); b.textContent = 'Copied'; }
+  catch (e) { out.select(); document.execCommand('copy'); b.textContent = 'Copied'; }
+  setTimeout(() => { b.textContent = 'Copy to clipboard'; }, 1500);
+};
+document.getElementById('dlgDl').onclick = () => {
+  const blob = new Blob([out.value], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pgs-d82-table-extraction.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById('dlgClose').onclick = () => dlg.close();
+
+function clearAll() {
+  if (!confirm('Clear the answer and note? This cannot be undone.')) return;
+  state = {};
+  localStorage.removeItem(KEY);
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
