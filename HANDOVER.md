@@ -22,9 +22,24 @@
 > from the D71 wording ledger and driven with Playwright. It is the build target for **A8** and is
 > labelled `DESIGN SPEC … Ready for implementation` at the top of the file.
 >
-> **What is next: A6 (application flow)** — the self-check's only exit. Then B1 + B3 (the
-> template's `self_check` markers), and only then A8. A4 and A7 can move after A8. **Do not build A8 before A6**: its only
-> exit is the application, and the PRD rejects a page that dead-ends on the contact chips.
+> **What is next: A6 (application flow)** — the self-check's only exit, and the next thing the demo
+> needs. Then B1 + B3 (the template's `self_check` markers), and only then A8. A4 and A7 can move
+> after A8. **Do not build A8 before A6**: its only exit is the application, and the PRD rejects a page
+> that dead-ends on the contact chips.
+>
+> **A6 in one paragraph, so it starts without re-reading the plan:** self-register → the Q8 consent
+> (behind §11.6's DRAFT text, with an honest fallback if the group has not approved it) → account
+> (`Member{APPLICANT}`, `email_verified_at` null, CTA "Create an account" per D83) → **the pledge,
+> after the account**, via A3's `record_pledge` → categories (a tick becomes a `FarmCategory` here,
+> never in the self-check) → turnover, via A5's `declare_assessment_fee` → membership fee, unpaid
+> until recorded. **Build guards as services, not as forward dependencies:** `confirm_visit()` and
+> the assessment-team path belong to C1/E, exactly as A5 left
+> `assert_fees_paid_for_assessment()` waiting for it. Nothing about `FarmVisit` is pulled forward.
+>
+> **Three things are still the product owner's, and none of them blocks A6's structure:** the three
+> roster ambiguities from `1i` (first-name-only holders; whether Lilani Pretorius is a co-treasurer;
+> Guy and Jacques unrecorded), whether `APPLICANT` is the right word for an account that has not
+> applied, and the two `[DECIDE]` markers in §11.6 (retention period, withdrawal address).
 >
 > **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
 > period that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
@@ -68,21 +83,34 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness **and the MVP1a sub-plan A
 sessions** (`1i` onward)
-**Repo state:** **two worktrees.** `main` is the sibling strand (D80 S2 / D82 as of `b27b9a6`).
-This strand is `feat/mvp1a-visit` on top of `781cf37`: **A1, A2, A3, A5, D83, the approved
-prototype, two model-seam cuts, six doc commits.** Neither has been merged. **Check it, do not quote it:**
-`git log --oneline 781cf37..HEAD`.
+**Repo state:** **two worktrees, and the path matters.**
+- `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
+  `b27b9a6`). Still moving.
+- `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
+  of `781cf37`, **18 commits**: A1, A2, A3, A5, D83, D84, Q8's draft consent, the approved
+  prototype, two model-seam cuts, the doc closes.
+Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
+prints `18` and `git ls-remote --heads origin feat/mvp1a-visit` prints nothing. **Both worktrees
+have rewritten the START HERE block, so a merge conflicts here by design: keep both strands' state,
+do not pick one.**
 
-**On this tree** (2026-11-03, session `1f`): `scripts/verify.sh` **green at 1671 passed /
-1 skipped / 8 xfailed in 68.61 s**, run as
-`DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same tree measured **219.16 s** in session `1e` on a
-cold box — quote cold *and* warm (§3.17). `scripts/fast.sh` measured **1656 passed / 1 skipped /
-15 deselected / 8 xfailed in 46.66 s**, and `--critical` **172 passed / 4 deselected in 10.64 s**.
+**Start the next agent here, not in `pgs`:** the A-sub-plan's code is only in `pgs-visit`. Run
+everything from that worktree, note that it has no `.venv` (`testing_hazards.md` §3.31 — the gate's
+own script picks `python3`, which has no `celery`; use `python` and the five steps in §5), and drop
+the leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **nothing outstanding**:
-`git rev-list --count origin/main..HEAD` prints `0` (the number was wrong twice by being quoted;
-let the command answer).
+**On this tree** (2026-11-05, sessions `1j`–`1m`): the gate's five steps — not `scripts/verify.sh`
+itself, which cannot start here (§3.31) — **green at 1759 passed / 1 skipped / 8 xfailed in
+172.19 s**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to
+5432 and this box serves 5433, §3.1) with `--create-db` and the test database dropped first. `fast.sh`
+measured **1717 passed / 1 skipped / 8 xfailed in 80.65 s** warm before A5, and **199.18 s** cold.
+Quote cold *and* warm (§3.17) — never one number.
+
+**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
+local** (`18` commits ahead of `origin/main`, no remote branch). That is the session-`1f` line
+rewritten for the current tree, because the old one said `0` and was true of `main`, not of this
+worktree. Nothing needs pushing for the demo; pushing is a deliberate act because it makes the
+branch visible to the sibling agent.
 **Live:** `https://organicguarantee.africa` on the homtini VPS at **`06bb11a`**, deployed
 2026-11-03 with a **current** corpus (401 chunks). **A deploy is owed** for everything after it
 (the session `1f` push, and S4's commit on top): the dev box has no SSH key, so the operator runs
@@ -104,6 +132,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1m` 2026-11-05 (session 22) — the consent drafted, the mail decision taken, and the worktree handed over — [`SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md`](product/docs/handover/SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md)
 - `1k` 2026-11-05 (session 21) — the fee scale is data, the gate is a service, and my own tests were the weak part — [`SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md`](product/docs/handover/SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md)
 - `1j` 2026-11-05 (session 20) — the pledge lands, and two guards that were green for the wrong reason — [`SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md`](product/docs/handover/SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md)
 - `1i` 2026-11-04 (session 19) — the joining flow is designed before it is built — [`SESSION_1i_2026-11-04_the-joining-flow-designed-before-it-is-built.md`](product/docs/handover/SESSION_1i_2026-11-04_the-joining-flow-designed-before-it-is-built.md)
