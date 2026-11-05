@@ -7,6 +7,7 @@ not exist as far as the ORM is concerned.
 
 Slices (see MVP0_PLAN_V2.md §2):
     _core.py           User, UserRole, Role, Language
+    _assessment.py     AssessmentTemplate (the questionnaire, as versioned JSON)
     _consent.py        ConsentText, ConsentRecord, ConsentPurpose (POPIA consent)
     _membership.py     Member, Farm, FarmAlias, FarmCategory, FarmContact,
                        CommitteePosition, CommitteeTerm, Pledge
@@ -19,6 +20,7 @@ Keep each slice under the 30 KB cap (build_principles.md). When a slice
 approaches it, cut a new slice along a domain seam — do not grow the file.
 """
 
+from core.models._assessment import AssessmentTemplate
 from core.models._certification import Category, Seal
 from core.models._chat import (
     REFUSAL_NOTES,
@@ -52,6 +54,7 @@ from core.models._public import PublicDocument
 __all__ = [
     "ASSESSOR_CAPABILITY",
     "AssessmentFee",
+    "AssessmentTemplate",
     "Category",
     "ChatMessage",
     "ChatSession",
