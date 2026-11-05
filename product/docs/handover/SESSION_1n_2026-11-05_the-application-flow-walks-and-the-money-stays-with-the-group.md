@@ -24,9 +24,11 @@ summary that says what is owed and who records it. Then B1 + B3, then A8 — unc
 
 **Gate (its five steps run with `python`; `scripts/verify.sh` cannot start here — §3.31):**
 `context.py --check` 0 breaches · `manage.py check` clean · `makemigrations --check` clean ·
-`lint-imports` 1 kept / 0 broken · **1794 passed / 1 skipped / 8 xfailed in 152.70 s** `--create-db`,
-after dropping the leftover `test_pgs` (§3.15). Warm run without `--create-db`: 153.55 s. Quote both
-(§3.17) — they agree here because the database was created once in each.
+`lint-imports` 1 kept / 0 broken · **1794 passed / 1 skipped / 8 xfailed** `--create-db`, after
+dropping the leftover `test_pgs` (§3.15) — at **152.70 s** and then **261.21 s** on the same tree
+forty minutes apart, with nothing changed but documentation. Both numbers are quoted because the
+rule is §3.17: a suite timed once is timed wrong, and that 70% spread is the box, not the code.
+`testing_hazards.md` §3.17 now carries the pair as its second measurement.
 
 ## 2. Three refusals, which are the substance
 

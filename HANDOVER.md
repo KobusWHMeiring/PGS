@@ -44,8 +44,9 @@
 >
 > **Gate** (its five steps run with `python`; `scripts/verify.sh` cannot start here — §3.31): 0
 > context breaches, `manage.py check` clean, `makemigrations --check` clean, `lint-imports` 1 kept /
-> 0 broken, **1794 passed / 1 skipped / 8 xfailed in 152.70 s** `--create-db` (warm without it:
-> 153.55 s), after dropping the leftover `test_pgs` (§3.15, `_scratch/a5/dropdb.py`).
+> 0 broken, **1794 passed / 1 skipped / 8 xfailed** — `--create-db`, test DB dropped first (§3.15,
+> `_scratch/a5/dropdb.py`), at **152.70 s and 261.21 s on the same tree forty minutes apart**
+> (§3.17: the box, not the suite — quote both, never one). Warm without `--create-db`: 153.55 s.
 >
 > **What is next: B1 + B3** (the template's `self_check` markers), and **then A8** (the public
 > self-check) — its only exit is this application flow, which now exists. **A7** (eligibility gates)
@@ -125,9 +126,10 @@ own script picks `python3`, which has no `celery`; use `python` and the five ste
 the leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
 
 **On this tree** (2026-11-05, sessions `1j`–`1n`): the gate's five steps — not `scripts/verify.sh`
-itself, which cannot start here (§3.31) — **green at 1794 passed / 1 skipped / 8 xfailed in
-152.70 s**, run with `--create-db` and the test database dropped first. Warm without `--create-db`:
-**153.55 s**. Quote cold *and* warm (§3.17) — never one number.
+itself, which cannot start here (§3.31) — **green at 1794 passed / 1 skipped / 8 xfailed**, run with
+`--create-db` and the test database dropped first, at **152.70 s and 261.21 s on the same tree forty
+minutes apart**. That spread is the box (§3.17, re-measured today); test-cost claims need `testcost`
+with `--reps 2`, never a single wall-clock number.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
 local** (`18` commits ahead of `origin/main`, no remote branch). That is the session-`1f` line

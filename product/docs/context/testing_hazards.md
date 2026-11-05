@@ -1561,6 +1561,19 @@ time. `~/.agents/skills/measuring-test-suite-cost/scripts/testcost.py profile` d
 (`--reps 2`); `scripts/fast.sh` exists so the loop never has to pay this cost at all. Added
 2026-10-28 with `product/docs/context/TESTING_TIME_PLAN.md`.
 
+**Still true on a larger suite, and re-measured 2026-11-05.** The same tree, the same command
+(`python -m pytest --create-db -q`), the same box, forty minutes apart, with only documentation and
+two template buttons changed between them:
+
+```
+152.70s   1794 passed   <- session 1n, first run, test DB dropped first
+261.21s   1794 passed   <- the same tree at HEAD, after the docs commit
+```
+
+No code path differs between those two runs. The earlier number was quoted in `HANDOVER.md`; the
+second one is why the handover now carries both. A 70% spread with nothing changed is the box, and a
+session that quotes one of them has quoted a property of its afternoon.
+
 ### 3.18 A guard that asserts on a substring passes on the comment that documents it
 
 `tests/tools/test_test_harness.py` asserts that the gate still runs `pytest --create-db
