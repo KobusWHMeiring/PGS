@@ -1,0 +1,124 @@
+{
+  "doc_key": "landscape",
+  "sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+  "structure": "documentai-layout-v1.6-pro",
+  "processor": "68e47c3bc90cc6ab@pretrained-layout-parser-v1.6-pro-2025-12-01",
+  "project": "803140233794",
+  "captured": "2026-11-05",
+  "shape": "page_break_row",
+  "reduced_from": "_scratch/adc/responses/layout16pro__page_break_row.json",
+  "tables": [
+    {
+      "pdf_pages": [
+        4
+      ],
+      "columns": [
+        "Key steps",
+        "Resource documents, guidelines and requirements",
+        "Use of seals and logos",
+        "Seals and logos",
+        "Fee"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Step 1 Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.",
+            "",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ]
+        },
+        {
+          "cells": [
+            "Step 2 The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting. The group completes a self-assessment form (like a status report), shares the required information with PGS SA and pays an annual membership fee.",
+            "",
+            "Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the “member of PGS SA” logo. Groups may also create their own local logo identifying their group and use the “member of PGS SA” logo on their communication and certificates. Groups that do not wish to design their own logo may make use of a PGS SA logo customized to the name of their PGS group.",
+            "Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PGS",
+            "Annual membership fee (paid by the PGS group to PGS SA): R500 Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1 000"
+          ]
+        }
+      ],
+      "arm_text": [
+        [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        [
+          "Step 1 Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where there is consumer demand for organic produce, get together to form a PGS group.",
+          "",
+          "",
+          "",
+          "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+        ],
+        [
+          "Step 2 The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign pledges and formally establish the PGS group at a general meeting. The group completes a self-assessment form (like a status report), shares the required information with PGS SA and pays an annual membership fee.",
+          "",
+          "Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the “member of PGS SA” logo. Groups may also create their own local logo identifying their group and use the “member of PGS SA” logo on their communication and certificates. Groups that do not wish to design their own logo may make use of a PGS SA logo customized to the name of their PGS group.",
+          "Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PGS",
+          "Annual membership fee (paid by the PGS group to PGS SA): R500 Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1 000"
+        ]
+      ],
+      "extraction": "table"
+    },
+    {
+      "pdf_pages": [
+        5
+      ],
+      "columns": [
+        "Key steps",
+        "Resource documents, guidelines and requirements",
+        "Use of seals and logos",
+        "Seals and logos",
+        "Fee"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Step 3",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed alongside.",
+            "",
+            "These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed below. Groups may also create their own seals. PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submitted to PGS SA. Note: A PGS group may issue membership certificates to farmers whose production practises follow the group's organic standard but where there are exceptions that are more significant than what the standard and category of seals allows. This certificate is acknowledgement of the farmers' commitment to PGS and organic agriculture. Where farmers are transitioning to organic agriculture and additional deviations to the standards are required that cannot be accommodated within the “organic in conversion” category, PGS groups can develop their own intermediary seals. GMOs and synthetic pesticides and fertilizers remain strictly prohibited in this category. PGS SA is not responsible for monitoring the use of these seals.",
+            "",
+            "A newly established PGS group will have the following seals customised in the name of its PGS: Printing of seals is at own cost. Recommended annual fee for the use of stickers (paid by individual farmers): R350 [to be divided between PGS SA (30%) and PGS groups (70%) – the portion of the fee accruing to PGS SA should be paid when the PGS group renews its membership]"
+          ]
+        }
+      ],
+      "arm_text": [
+        [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        [
+          "Step 3",
+          "",
+          "",
+          "",
+          ""
+        ],
+        [
+          "The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed alongside.",
+          "",
+          "These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed below. Groups may also create their own seals. PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submitted to PGS SA. Note: A PGS group may issue membership certificates to farmers whose production practises follow the group's organic standard but where there are exceptions that are more significant than what the standard and category of seals allows. This certificate is acknowledgement of the farmers' commitment to PGS and organic agriculture. Where farmers are transitioning to organic agriculture and additional deviations to the standards are required that cannot be accommodated within the “organic in conversion” category, PGS groups can develop their own intermediary seals. GMOs and synthetic pesticides and fertilizers remain strictly prohibited in this category. PGS SA is not responsible for monitoring the use of these seals.",
+          "",
+          "A newly established PGS group will have the following seals customised in the name of its PGS: Printing of seals is at own cost. Recommended annual fee for the use of stickers (paid by individual farmers): R350 [to be divided between PGS SA (30%) and PGS groups (70%) – the portion of the fee accruing to PGS SA should be paid when the PGS group renews its membership]"
+        ]
+      ],
+      "extraction": "table"
+    }
+  ]
+}

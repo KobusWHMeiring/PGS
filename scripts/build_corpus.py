@@ -40,6 +40,15 @@ Five rules that matter:
    the PDF's column soup while every character-level guard stayed green
    (`testing_hazards.md` §3.25, measured on `opp.md` 2026-11-01). It refuses and names the loss;
    `--discard-tables` is the deliberate override, and it is not spelled `--force`.
+
+7. **The block is emitted, not hand-typed** (D82's S3). `scripts/table_blocks.py` resolves a
+   *proposed* structure — the arm's grid, committed under `knowledge/proposals/` — against the
+   body's printed lines and writes the block itself, splicing the page's own characters per cell.
+   A cell the page does not print, an annotation inside the table, or a printed line no cell claims
+   is a **refusal with a name on stderr**: the draft keeps the page's prose for that table, and S1's
+   guard still sees the reviewed block it would have dropped. The generator never invents a cell, a
+   legend or a shape — the first is the page's, the other two come from
+   `knowledge/proposals/<doc>.reviewed.json`.
 """
 
 from __future__ import annotations
@@ -72,7 +81,10 @@ from knowledge.extraction import extract_pages, sha256_of  # noqa: E402
 from knowledge.ingest import CORPUS_DOCUMENTS  # noqa: E402
 from knowledge.reflow import reflow_pages  # noqa: E402
 from knowledge.sections import is_furniture, registry  # noqa: E402
+from knowledge.table_proposals import proposals_for  # noqa: E402
+from scripts import table_blocks  # noqa: E402
 from scripts.corpus_pages import flatten, offsets, pages_of  # noqa: E402
+from scripts.corpus_review import apply_review, table_loss_refusal  # noqa: E402
 
 CORPUS_DIR = REPO_ROOT / "knowledge" / "corpus"
 
@@ -295,6 +307,50 @@ def insert_sub_refs(section, body: list[str]) -> list[str]:
     return marked
 
 
+def emit_tables(
+    doc_key: str,
+    proposals,
+    body: list[str],
+    attempted: set[int],
+    page: int | None,
+    printed: dict[int, int | None],
+) -> list[str]:
+    """Splice every table the document's proposals can account for into this section's body.
+
+    In:  `doc_key` — for the message only; `proposals` — the document's proposals (`proposals_for`);
+         `body` — one section's body lines; `attempted` — the proposal indexes already written or
+         refused (a document's sections are visited one at a time, and a table belongs to one of
+         them); `page`/`printed` — the PDF page and the number the paper prints, already in force
+         when this body begins.
+    Out: the body with each emitted block in place of the lines its cells claimed.
+    Side Effects: prints a line per emitted and per refused table to **stderr** — never stdout,
+         which may be the artefact itself (`--stdout`).
+    Fails: never. A refusal leaves that table's prose exactly as it arrived, so a reviewed block is
+         still *lost from* rather than silently retyped, and S1's `table_loss_refusal` refuses the
+         write (`--force` is where that matters).
+
+    **Why a warning and not a `SystemExit`:** a document with one unemittable table is still a
+    document worth drafting, and the operator's next command is the diff. The failure that has to be
+    loud is a *reviewed* block disappearing, and that is already fatal in `main`.
+    """
+    pending = [table for table in proposals if table.index not in attempted]
+    if not pending:
+        return body
+    start = (page or 0, printed.get(page) if page else None)
+    lines, emitted, refused = table_blocks.emit(pending, body, start_page=start)
+    attempted.update(table.index for table in emitted)
+    attempted.update(refusal.index for refusal in refused)
+    for table in emitted:
+        print(
+            f"{doc_key}: {table.rows} row(s) emitted from proposal {table.index + 1}, verified per "
+            "cell against the page's own lines",
+            file=sys.stderr,
+        )
+    for denial in refused:
+        print(f"{doc_key}: {denial}; the draft keeps the page's prose for it", file=sys.stderr)
+    return lines
+
+
 def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     """The artefact text for one document."""
     descriptor = CORPUS_DOCUMENTS[doc_key]
@@ -352,6 +408,9 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     ]
 
     current_page: int | None = None
+    digest = sha256_of(pdf_path)
+    proposals = proposals_for(digest)
+    attempted: set[int] = set()
 
     for index, section in enumerate(sections):
         heading_line, _ = spans[index]
@@ -383,7 +442,8 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
             after=current_page,
             with_content=content_pages,
         )
-        out.extend(insert_sub_refs(ref_sections.get(section.section_ref), body))
+        body = insert_sub_refs(ref_sections.get(section.section_ref), body)
+        out.extend(emit_tables(doc_key, proposals, body, attempted, current_page, printed))
 
     text = "\n".join(out) + "\n"
     # A private-use codepoint is a glyph slot, not a character: drop it before the reviewed
@@ -396,51 +456,6 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     return apply_review(text, CORPUS_EDITS.get(doc_key, ()))
 
 
-def apply_review(text: str, edits) -> str:
-    """Apply the reviewed corrections (`CORPUS_EDITS`) to a freshly generated artefact.
-
-    In: the draft text and the document's reviewed edits. Out: the text with each edit's
-    `replacement` in place of its `original`.
-    Fails: `SystemExit` when an edit matches nothing or matches more than once — a review
-    that no longer applies is a review of a different document, and regenerating on a reprint
-    must fail loudly rather than quietly drop a correction a person made.
-
-    Why here and not as a hand edit: a reprint regenerates this file, and a correction that
-    only lives in the working tree is lost the first time somebody runs `--force`. The edits
-    are data (`knowledge/corpus.py`), the generator applies them, and
-    `knowledge/tests/test_corpus_saoso.py` still proves each one was necessary and applied.
-
-    The match is **whitespace-tolerant**, because a correction can join lines: the `m²`
-    superscript sits on its own line, so the edit names the sentence by its words.
-
-    The **replacement keeps its own line breaks** (2026-10-30). It used to be `flat()`tened, which
-    is fine for a one-line correction and wrong for the only kind that needs two edits: a footnote
-    that has to sit three printed lines below the point where the extraction glued it. Collapsed
-    onto one line it is the same words in a different paragraph, and `flat()` comparison in
-    `test_corpus_bpp` cannot tell the difference — which is how a corrupting `move` shipped.
-
-    **The multiplicity guard was dead** (fixed 2026-10-30). It read `subn(..., count=1)` and
-    checked the substituted count, which is 1 whenever the pattern matches at all — so an edit
-    whose anchor occurred twice applied silently to the first. The count is now taken before the
-    substitution, which is the only place it can be taken.
-    """
-    for edit in edits:
-        if not edit.replacement:
-            continue
-        pattern = re.compile(
-            r"\s+".join(re.escape(word) for word in flat(edit.original).split())
-        )
-        found = len(pattern.findall(text))
-        if found != 1:
-            raise SystemExit(
-                f"the reviewed edit for PDF page {edit.page} matched {found} times in the "
-                f"draft: {edit.original[:60]!r}. A reprint has moved the text — re-review it "
-                "rather than deleting the edit."
-            )
-        text = pattern.sub(edit.replacement, text, count=1)
-    return text
-
-
 def shown(path: Path) -> Path:
     """The path as the operator sees it: repo-relative when it is inside the repo.
 
@@ -448,48 +463,6 @@ def shown(path: Path) -> Path:
     raises there — a guard that crashes instead of refusing is not a guard.
     """
     return path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
-
-
-def table_block_counts(text: str) -> dict[str, int]:
-    """How many of each table-format marker a text carries.
-
-    The five are the whole vocabulary of corpus format rule 5, so a block that is lost loses a
-    count here as well as every boundary it held. `-- /table` is deliberately not counted: it
-    pairs with `<!-- table`, and a doubled count would hide a lost block behind a gained closer.
-    """
-    return {
-        "table": text.count("<!-- table"),
-        "row": text.count("<!-- row:"),
-        "cell": text.count("<!-- cell"),
-        "divider": text.count("<!-- row-divider:"),
-    }
-
-
-def table_loss_refusal(existing: str, generated: str) -> str | None:
-    """In: the artefact on disk and the draft about to replace it. Out: a refusal, or None.
-
-    Returns a message when the draft would leave fewer table markers of any kind than the artefact
-    already carries. The draft having *more* is not a loss: that is the day the generator learns to
-    emit the block (D80's S3), and it must not be blocked by the guard that protects today's
-    reviews.
-
-    Out is a string rather than an exception so the decision is testable without a PDF or an
-    extractor — the same seam `body_filter()` exists for (`testing_hazards.md` §2.9).
-    """
-    before = table_block_counts(existing)
-    after = table_block_counts(generated)
-    lost = {name: (before[name], after[name]) for name in before if after[name] < before[name]}
-    if not lost:
-        return None
-    loss = ", ".join(f"{count} {name} marker(s) → {kept}" for name, (count, kept) in lost.items())
-    return (
-        f"the artefact on disk carries {before['table']} table block(s) and the draft carries "
-        f"{after['table']} ({loss}). build_corpus.py has no rule that emits a `<!-- table -->` "
-        "block, so writing this draft would replace a human's transcription with the PDF's "
-        "column soup — and every guard that compares characters would still pass "
-        "(testing_hazards.md §3.25). Nothing was written. Draft elsewhere with `--stdout`, or "
-        "pass `--discard-tables` to accept the loss and expect to retype the review."
-    )
 
 
 def main(argv: list[str] | None = None) -> int:

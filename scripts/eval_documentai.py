@@ -220,7 +220,7 @@ def grid(rows: list[dict], document: dict, width: int) -> list[list[str]]:
     return out
 
 
-def _layout_tables(blocks: list, printed_pages: tuple[int, ...]) -> list[dict]:
+def layout_tables(blocks: list, printed_pages: tuple[int, ...]) -> list[dict]:
     """Tables inside the Layout Parser's block hierarchy, which nests them under their heading."""
     found = []
     for block in blocks:
@@ -232,7 +232,7 @@ def _layout_tables(blocks: list, printed_pages: tuple[int, ...]) -> list[dict]:
         for kind in ("textBlock", "listBlock"):
             nested = (block.get(kind) or {}).get("blocks")
             if nested:
-                found.extend(_layout_tables(nested, printed_pages))
+                found.extend(layout_tables(nested, printed_pages))
     return found
 
 
@@ -245,7 +245,7 @@ def tables_from(document: dict, printed_pages: tuple[int, ...]) -> list[dict]:
     """
     found = []
     if document.get("documentLayout"):
-        for printed, table in _layout_tables(
+        for printed, table in layout_tables(
             (document["documentLayout"] or {}).get("blocks", []), printed_pages
         ):
             built = _rectangular(table, document)

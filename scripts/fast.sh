@@ -49,6 +49,9 @@ set -euo pipefail
 #   test_retrieval_scope       the corpus boundary is applied before ranking (D16)
 #   knowledge/test_retrieval   the retrieval floors that pin search_terms' behaviour
 #   test_eval_retrieval        the retrieval instrument cannot lie about what it measured
+#   test_check_tables          a table block must record the extraction its cells came from (R1),
+#                              and the gate judges it against *that* rendering; added 2026-11-05
+#                              with the field, and it costs ~1 s
 #   test_test_harness          the fast hasher cannot reach manage.py, WSGI or the gate
 #
 # The list is self-checking in one direction only: a renamed or deleted file is a pytest error
@@ -63,6 +66,7 @@ CRITICAL_TESTS=(
     core/tests/test_retrieval_scope.py
     knowledge/tests/test_retrieval.py
     tests/tools/test_eval_retrieval.py
+    tests/tools/test_check_tables.py
     tests/tools/test_test_harness.py
 )
 

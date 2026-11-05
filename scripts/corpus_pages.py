@@ -74,6 +74,34 @@ def repair_glued(raw_page: str, layout_page: str) -> str:
     return "\n".join(repair_line(line) for line in raw_page.split("\n"))
 
 
+def choose_pages(laid: list[str], raw: list[str]) -> tuple[list[str], tuple[int, ...]]:
+    """Which of the two renderings each page's text comes from, and which pages used `-raw`.
+
+    In:  `laid` — the geometry-first pages (de-columned, de-hyphenated); `raw` — the producer's
+         content-stream pages.
+    Out: the chosen pages, and the 1-based numbers of those taken from `raw`.
+    Fails: never. Two renderings that disagree about the page *count* are not mixed: pairing page 3
+         of one with page 3 of the other is only sound while both have the same pages.
+
+    Split out of `pages_of()` so the decision is testable without a PDF: the gate runs with
+    `PDFTOTEXT_BIN=/usr/bin/true` (`testing_hazards.md` §2.9), and S3's emitter is proved against a
+    body stream built from committed fixtures — which is only the generator's stream if this
+    function is the generator's function.
+    """
+    if len(raw) != len(laid):
+        return list(laid), ()
+    chosen: list[str] = []
+    used: list[int] = []
+    for number, (geometry, stream) in enumerate(zip(laid, raw), 1):
+        fixed = repair_glued(stream, geometry)
+        if words(geometry) == words(fixed):
+            chosen.append(fixed)
+            used.append(number)
+        else:
+            chosen.append(geometry)
+    return chosen, tuple(used)
+
+
 def pages_of(
     pdf_path: Path, doc_key: str, *, raw_fallback: bool = True
 ) -> tuple[list[str], tuple[int, ...], dict[int, int | None]]:
@@ -101,18 +129,8 @@ def pages_of(
     if not raw_fallback:
         return laid, (), stamps
     raw, _ = reflow_pages(extract_pages(pdf_path, mode="raw"))
-    if len(raw) != len(laid):  # pragma: no cover - the two modes always agree
-        return laid, (), stamps
-    chosen: list[str] = []
-    used: list[int] = []
-    for number, (geometry, stream) in enumerate(zip(laid, raw), 1):
-        fixed = repair_glued(stream, geometry)
-        if words(geometry) == words(fixed):
-            chosen.append(fixed)
-            used.append(number)
-        else:
-            chosen.append(geometry)
-    return chosen, tuple(used), stamps
+    chosen, used = choose_pages(laid, raw)
+    return chosen, used, stamps
 
 
 def flatten(pages: list[str]) -> tuple[list[tuple[int, str]], list[int], str]:

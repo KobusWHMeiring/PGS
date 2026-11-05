@@ -1,0 +1,104 @@
+{
+  "doc_key": "opp",
+  "sha256": "d2e305aa9852200117ee15dbfac018376a6a05238a3d8fc87d35d29cd7142bae",
+  "structure": "documentai-layout-v1.6-pro",
+  "processor": "68e47c3bc90cc6ab@pretrained-layout-parser-v1.6-pro-2025-12-01",
+  "project": "803140233794",
+  "captured": "2026-11-05",
+  "shape": "numeric_row",
+  "reduced_from": "_scratch/adc/responses/layout16pro__numeric_row.json",
+  "tables": [
+    {
+      "pdf_pages": [
+        2
+      ],
+      "columns": [
+        "Annual farm turnover (gross sales)",
+        "Initial certification fee (R)",
+        "Renewal fee (R)"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ]
+        },
+        {
+          "cells": [
+            "R 250,001 – R 500,000",
+            "2,500",
+            "2,000"
+          ]
+        },
+        {
+          "cells": [
+            "R 500,001 – R 1,000,000",
+            "3,000",
+            "2,500"
+          ]
+        },
+        {
+          "cells": [
+            "R 1,000,001 – R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        },
+        {
+          "cells": [
+            "R 2,500,001 – R 5,000,000",
+            "5,000",
+            "5,000"
+          ]
+        },
+        {
+          "cells": [
+            "Above R 5,000,000",
+            "8,000",
+            "8,000"
+          ]
+        }
+      ],
+      "arm_text": [
+        [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        [
+          "Below R 250,000",
+          "1,500",
+          "900"
+        ],
+        [
+          "R 250,001 – R 500,000",
+          "2,500",
+          "2,000"
+        ],
+        [
+          "R 500,001 – R 1,000,000",
+          "3,000",
+          "2,500"
+        ],
+        [
+          "R 1,000,001 – R 2,500,000",
+          "3,700",
+          "3,200"
+        ],
+        [
+          "R 2,500,001 – R 5,000,000",
+          "5,000",
+          "5,000"
+        ],
+        [
+          "Above R 5,000,000",
+          "8,000",
+          "8,000"
+        ]
+      ],
+      "extraction": "layout"
+    }
+  ]
+}

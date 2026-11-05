@@ -29,6 +29,9 @@ from types import SimpleNamespace
 import pytest
 
 import scripts.build_corpus as corpusgen
+import scripts.corpus_pages as corpus_pages
+import scripts.corpus_review as corpus_review
+from knowledge.table_proposals import ProposedRow, ProposedTable
 from knowledge.corpus import CorpusEdit
 
 #: The branch a document with no `body_lines` takes: bpp, opp and landscape.
@@ -223,7 +226,7 @@ def test_a_correction_that_moves_a_paragraph_keeps_its_lines():
         reason="a move, expressed as a lift plus a place",
     )
     text = "a. Sustainable land management2 –\nland available will not be allowed.\nb. Wetlands\n"
-    assert corpusgen.apply_review(text, (edit,)) == (
+    assert corpus_review.apply_review(text, (edit,)) == (
         "a. Sustainable land management2 –\n"
         "land available will not be allowed.\n"
         "2 Sustainable means: it does.\n"
@@ -235,7 +238,7 @@ def test_the_original_may_span_a_line_break():
     """The match is whitespace-tolerant: an edit names a sentence, not a line."""
     edit = CorpusEdit(page=3, original="the sentence as printed", replacement="corrected", reason="x")
     assert (
-        corpusgen.apply_review("intro\nthe sentence\nas printed\noutro\n", (edit,))
+        corpus_review.apply_review("intro\nthe sentence\nas printed\noutro\n", (edit,))
         == "intro\ncorrected\noutro\n"
     )
 
@@ -243,7 +246,7 @@ def test_the_original_may_span_a_line_break():
 def test_a_correction_that_no_longer_matches_fails_loudly():
     edit = CorpusEdit(page=4, original="text that is gone", replacement="x", reason="x")
     with pytest.raises(SystemExit, match="page 4.*matched 0 times"):
-        corpusgen.apply_review("nothing like it here", (edit,))
+        corpus_review.apply_review("nothing like it here", (edit,))
 
 
 def test_a_correction_that_matches_twice_fails_loudly():
@@ -255,7 +258,7 @@ def test_a_correction_that_matches_twice_fails_loudly():
     """
     edit = CorpusEdit(page=4, original="twice here", replacement="x", reason="x")
     with pytest.raises(SystemExit, match="matched 2 times"):
-        corpusgen.apply_review("twice here and twice here", (edit,))
+        corpus_review.apply_review("twice here and twice here", (edit,))
 
 
 # --- `--force` may not delete a table block (D80's S1) ------------------------
@@ -290,7 +293,7 @@ legend: Reviewed by hand.
 
 
 def test_a_draft_that_drops_the_reviewed_table_is_refused():
-    refusal = corpusgen.table_loss_refusal(
+    refusal = corpus_review.table_loss_refusal(
         ARTEFACT_WITH_TABLE, "## 2.3 PGS assessment fee structure\nBelow R 250,000 1,500 900\n"
     )
     assert refusal, "a draft with no table block must not be allowed to replace two rows"
@@ -301,18 +304,18 @@ def test_a_draft_that_drops_the_reviewed_table_is_refused():
 
 def test_an_artefact_with_no_table_block_is_never_blocked():
     """BPP and SAOSO carry none: the guard must not make the generator refuse everywhere."""
-    assert corpusgen.table_loss_refusal("## Intro\nText.\n", "## Intro\nText.\n") is None
+    assert corpus_review.table_loss_refusal("## Intro\nText.\n", "## Intro\nText.\n") is None
 
 
 def test_a_draft_that_keeps_every_marker_is_allowed():
     """The day S3 teaches the generator to emit blocks, the guard must step out of the way."""
-    assert corpusgen.table_loss_refusal(ARTEFACT_WITH_TABLE, ARTEFACT_WITH_TABLE) is None
+    assert corpus_review.table_loss_refusal(ARTEFACT_WITH_TABLE, ARTEFACT_WITH_TABLE) is None
 
 
 def test_a_draft_that_keeps_the_block_but_loses_a_row_is_refused():
     """A block that survives with fewer rows is still a lost review, not a smaller table."""
     half = ARTEFACT_WITH_TABLE.split("<!-- row: R 250,001")[0] + "<!-- /table -->\n"
-    refusal = corpusgen.table_loss_refusal(ARTEFACT_WITH_TABLE, half)
+    refusal = corpus_review.table_loss_refusal(ARTEFACT_WITH_TABLE, half)
     assert refusal and "1 row marker(s) → 0" not in refusal  # the first row survived
     assert "2 row marker(s) → 1" in refusal
 
@@ -346,3 +349,102 @@ def test_discard_tables_is_the_named_override(tmp_path, monkeypatch):
     assert "<!-- table" not in target.read_text(encoding="utf-8"), (
         "the override has to actually discard, or it is a second refusal with a longer name"
     )
+
+
+# --- The rendering choice, as a pure function (S3) ----------------------------------
+#
+# `pages_of()` is the only part of the drafting path that needs a PDF, and the gate runs with
+# `PDFTOTEXT_BIN=/usr/bin/true` — so the *decision* between the two renderings is split out where a
+# test can drive it. It matters beyond S3: `raw_pages:` in every artefact header is this function's
+# output, and the emitter's fixture-built body has to be the same stream the generator drafts.
+
+
+def test_the_raw_rendering_is_chosen_only_when_its_word_multiset_matches():
+    """`-raw` wins a page only where it is word-for-word the geometry page — its order is the
+    producer's, which is authoritative exactly when the words agree."""
+    chosen, used = corpus_pages.choose_pages(["a b c", "d e"], ["a b c", "d e f"])
+    assert chosen == ["a b c", "d e"], "page 2's raw text holds a word the geometry page does not"
+    assert used == (1,)
+
+
+def test_the_raw_order_is_kept_when_the_words_are_the_same():
+    """The multiset is order-insensitive on purpose: that is *why* `-raw` is admissible."""
+    chosen, used = corpus_pages.choose_pages(["d e"], ["e d"])
+    assert chosen == ["e d"] and used == (1,)
+
+
+def test_a_page_chosen_from_raw_is_named_in_the_header_field():
+    chosen, used = corpus_pages.choose_pages(["Sourced locally"], ["Sourcedlocally"])
+    assert chosen == ["Sourced locally"] and used == (1,)
+
+
+def test_two_renderings_that_disagree_about_the_page_count_are_not_mixed():
+    """A defensive branch that would be silent: pairing page 3 of one rendering with page 3 of the
+    other is only sound while both have the same pages."""
+    chosen, used = corpus_pages.choose_pages(["one", "two"], ["one"])
+    assert chosen == ["one", "two"] and used == ()
+
+
+def test_the_committed_fixtures_reproduce_the_artefacts_raw_pages():
+    """`raw_pages:` in the artefact header is the generator's own record of which pages came from
+    the content stream. Built from the committed fixtures, this must be the same list — otherwise
+    the body the emitter is tested on is not the body the generator drafts."""
+    from knowledge.columns import apply_layout
+    from knowledge.reflow import reflow_pages
+    from knowledge.tests import page_fixtures
+
+    laid, _ = apply_layout(page_fixtures.pages("opp", "layout"), doc_key="opp")
+    laid, _ = reflow_pages(laid)
+    raw, _ = reflow_pages(page_fixtures.pages("opp", "raw"))
+    _chosen, used = corpus_pages.choose_pages(laid, raw)
+    assert ",".join(map(str, used)) == "1,2,3,4,5,6,8,9,10,12,13,14,15"
+
+
+# --- the tables are emitted once per document, and refusals say so once ------------
+#
+# Measured 2026-11-05, the first time the emitter was wired in: `build()` visits 28 sections, so the
+# OPP's one proposal was refused in **27 of them** — "column 1 is not on the page", twenty-seven
+# times, and the twenty-eighth call was the one that could have emitted it. The `attempted` set and
+# the emitter's `absent` outcome are what turn that into one line an operator can act on.
+
+
+def test_a_proposal_is_attempted_once_across_a_documents_sections(capsys):
+    text = "<!-- page: 2 printed: 2 -->\nBand Fee\nBelow 1,500\n"
+    proposal = ProposedTable(
+        index=0,
+        pdf_pages=(2,),
+        columns=("Band", "Fee"),
+        rows=(ProposedRow(("Below", "1,500")),),
+        extraction="layout",
+        structure="arm",
+        processor="id@version",
+    )
+    attempted: set[int] = set()
+    first = corpusgen.emit_tables("opp", [proposal], text.splitlines(), attempted, 2, {2: 2})
+    assert attempted == {0}
+    assert "<!-- table" in "\n".join(first)
+    # A later section must not try again, so it cannot report the same table twice — and the body
+    # below *does* hold the table's words, so without the guard this call would try (and refuse,
+    # because the proposal says page 2 and these lines are page 3).
+    capsys.readouterr()
+    later = ["<!-- page: 3 printed: 3 -->", "Band Fee", "Below 1,500"]
+    second = corpusgen.emit_tables("opp", [proposal], later, attempted, 3, {3: 3})
+    assert second == later and capsys.readouterr().err == "", "the table was reported twice"
+
+
+def test_a_refused_table_keeps_its_prose_and_says_so_in_one_line(capsys):
+    text = ["<!-- page: 2 printed: 2 -->", "Band Fee", "Seventy degrees"]
+    proposal = ProposedTable(
+        index=0,
+        pdf_pages=(2,),
+        columns=("Band", "Fee"),
+        rows=(ProposedRow(("70°C",)),),
+        extraction="layout",
+        structure="arm",
+        processor="id@version",
+    )
+    attempted: set[int] = set()
+    lines = corpusgen.emit_tables("opp", [proposal], text, attempted, 2, {2: 2})
+    assert lines == text, "a refused table must not touch the draft"
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and "70°C" in err[0] and "keeps the page's prose" in err[0]
