@@ -229,12 +229,12 @@
   <div class="inner">
     <p class="eyebrow">Review artifact · D80 slice S2 · 2026-11-04</p>
     <h1>What we learned about reading tables</h1>
-    <p class="q">Three measurements and one correction later: which tool should turn a printed
-      table into our corpus — and is a Google Cloud credential worth buying to find out?</p>
+    <p class="q">Four measurements and one correction later, the real question turned out to be
+      different: <strong>should any tool be judged against an answer key nobody has checked?</strong></p>
     <div class="meta">
       <span>PRD <code>INGESTION_ENGINE_PRD.md</code> §3.5 · §3.7 · §3.8</span>
       <span>Evidence <code>product/docs/evidence/</code> (3 files)</span>
-      <span>Spent so far <code>$0.55</code></span>
+      <span>Spent <code>$0.55</code> on models · <code>$0.00</code> so far on Document AI</span>
     </div>
   </div>
 </header>
@@ -559,6 +559,37 @@
     </div>
   </div>
 
+  <div class="card">
+    <span class="tag">Investigation 4 · 2026-11-04</span>
+    <h3>Document AI: the credential was bought, and bought the answer</h3>
+    <p>You created a project with a <strong>Form Parser</strong> and a <strong>Layout Parser</strong>.
+      Authentication is a user credential on this machine — <strong>no key file, nothing in the repo</strong>.
+      Both were run on their <em>current</em> versions (the defaults were from 2022 and 2024 — a score
+      without its version is not evidence).</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Processor</th><th>Pass</th><th>Tables found</th><th>Time</th><th>What it does with the hard shapes</th></tr></thead>
+      <tbody>
+        <tr><td>Form Parser v2.1</td><td><strong>1 / 8</strong></td><td>7 of 8</td><td>72 s</td>
+            <td>Appendix 7 comes back as <strong>17 ragged cells in one row</strong> — it does not de-interleave. Landscape p4 returns <em>no table at all</em>.</td></tr>
+        <tr><td>Layout Parser v1.6-pro</td><td><strong>2 / 8</strong></td><td><strong>8 of 8</strong></td><td>495 s</td>
+            <td>The best <em>structure</em> of any arm: the long cell as 1 row × 5 columns, Appendix 7 at 5 columns, Appendix 6a 20 rows × 2 columns with <strong>one</strong> cell wrong.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="callout warn">
+      <span class="label">Two things worth inheriting</span>
+      <p><strong>An extractive tool's characters are not ours.</strong> It re-reads the page rather than
+        using the PDF's text layer: it returned <code>1~g/|</code> where the paper prints
+        <code>1 g/l</code>, and <strong>57 cells</strong> our committed page text cannot confirm. R3
+        caught it — which is the instrument working, not failing.</p>
+      <p style="margin-top:8px"><strong>And my first result was wrong.</strong> I scored the Layout Parser
+        <strong>0 of 8, "no table found" on every page</strong> — because it returns tables nested inside
+        the heading they sit under, with no plain text at all, and I read it like the Form Parser. One
+        probe of the raw response found it. <em>Read the response before believing the score.</em></p>
+    </div>
+  </div>
+
   <!-- ============================ PART 4 ============================ -->
   <div class="section-head"><h2>Part 4 — Where we are now</h2><div class="rule"></div></div>
   <p class="section-note">Both arms, one instrument, one set of declared normalisations, same day.</p>
@@ -588,6 +619,16 @@
       </div>
       <div class="bar-row">
         <div class="who">sonnet · anchors</div>
+        <div class="track"><div class="seg pass" style="width:12.5%"></div></div>
+        <div class="n">1 / 8</div>
+      </div>
+      <div class="bar-row">
+        <div class="who">Document AI · Layout v1.6-pro</div>
+        <div class="track"><div class="seg pass" style="width:25%"></div></div>
+        <div class="n">2 / 8</div>
+      </div>
+      <div class="bar-row">
+        <div class="who">Document AI · Form v2.1</div>
         <div class="track"><div class="seg pass" style="width:12.5%"></div></div>
         <div class="n">1 / 8</div>
       </div>
@@ -626,6 +667,27 @@
       <span><span class="dot pass">●</span> pass</span>
       <span><span class="dot grid">◐</span> grid only</span>
       <span><span class="dot no">○</span> fail</span>
+    </div>
+
+    <h4>The finding that outranks the scoreboard</h4>
+    <p>Three readers of the same paper, built on completely different principles, make the
+      <strong>same call against us</strong>:</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Shape</th><th>Docling</th><th>Vision model</th><th>Layout Parser</th><th>Our key says</th></tr></thead>
+      <tbody>
+        <tr><td>Appendix 6a header</td><td>merged the two labels</td><td>merged them the same way</td><td><strong>merged them the same way</strong></td><td>two separate labels</td></tr>
+        <tr><td>Long cell, p5</td><td>not detected</td><td><code>Step 3 The group conducts…</code></td><td><strong>the same <code>Step 3</code></strong></td><td>starts <code>The group conducts…</code></td></tr>
+        <tr><td>Page-break row</td><td>one page only</td><td>3 rows, characters unverified</td><td><strong>4 rows</strong> — the repeated header counted</td><td>3 rows</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="callout warn">
+      <span class="label">Which means</span>
+      <p>When three independent tools agree with each other and disagree with the key, the likeliest
+        explanation is the key. <strong>No human has ever checked a cell in it.</strong> So every
+        "pass" on this page means <em>"agrees with our grouping"</em>, not <em>"matches the paper"</em> —
+        and the ranking below is <strong>not established</strong>.</p>
     </div>
 
     <div class="callout">
@@ -798,12 +860,14 @@
     </div>
 
     <div class="callout">
-      <span class="label">Recommendation</span>
-      <p><strong>B, with the harness as the gate and hand-authored blocks for the four shapes nobody
-        passes.</strong> Use the vision model's <code>lines</code> form to propose the grid, check every
-        cell against the page, and let <code>knowledge/table_harness.py</code> decide. Keep Docling as
-        the offline fallback. <strong>Do not buy the credential</strong> — reconsider it only if S5's
-        re-review shows the semantic shapes cost more to review than a processor costs to run.</p>
+      <span class="label">Recommendation — and it changed twice today</span>
+      <p><strong>Do not pick a tool yet. Check the key first (D83), then re-score.</strong> The arms
+        differ by one or two shapes and the four shapes that separate them are the judgement ones, so
+        choosing now would be choosing on a ranking we know is unreliable. Once the cells are judged:
+        the <strong>Layout Parser v1.6-pro</strong> is the strongest on structure (8 of 8 tables, the
+        long cell and Appendix 7 read correctly) and the <strong>vision model's <code>lines</code>
+        form</strong> is the fastest and the only one that proposes dividers; Docling stays the offline
+        fallback. Re-scoring all three costs <strong>nothing</strong> — every raw answer is cached.</p>
     </div>
 
     <h4>What would change my mind</h4>
@@ -825,12 +889,26 @@
   <p class="section-note">Pick one, add anything you want recorded, then export a row for
     <code>PGS_PLATFORM_SPEC.md</code> §18.3.</p>
 
+  <div class="card" id="card_d83">
+    <span class="tag">D83 (proposed) — the gate</span>
+    <h3>Do we review the eight-shape answer key before choosing a tool?</h3>
+    <p class="lede">The key that judges all three arms was written by an agent. The signed UAT judged
+      how tables <em>read</em>, not whether a cell's characters match the paper. Three independent tools
+      disagree with the key on the same three shapes.</p>
+    <div class="opts" id="opts_d83">
+      <label class="opt"><input type="radio" name="d83" value="Y"> Y · Review the key first (page image beside the expected grid)</label>
+      <label class="opt"><input type="radio" name="d83" value="N"> N · Accept the key as it stands</label>
+      <label class="opt"><input type="radio" name="d83" value="S"> S · Review only the four judgement shapes</label>
+    </div>
+    <textarea id="note_d83" placeholder="Anything to record about the key…"></textarea>
+  </div>
+
   <div class="card" id="card_d82">
-    <span class="tag">D82 (proposed)</span>
-    <h3>What do we do about table extraction, now that both arms are measured?</h3>
-    <p class="lede">Measured 2026-11-04: Docling 2 of 8, the vision model 3 of 8, both passing
-      Appendix 7 once the row-number gutter is declared. Union 4 of 8. Four shapes need a human
-      judgement no extractor returns.</p>
+    <span class="tag warn">D82 (proposed) — blocked on D83</span>
+    <h3>Which table extractor does the ingestion engine use?</h3>
+    <p class="lede">Measured 2026-11-04: Docling 2 of 8, the vision model 3 of 8, Document AI Layout
+      Parser 2 of 8 with 8 of 8 tables found. Not decidable until the key is reviewed — the four shapes
+      that separate them are the judgement ones.</p>
     <div class="opts" id="opts_d82">
       <label class="opt"><input type="radio" name="d82" value="A"> A · Docling as extractor of record</label>
       <label class="opt"><input type="radio" name="d82" value="B"> B · VLM lines as proposer + harness</label>
@@ -885,6 +963,11 @@
 
 <script>
 const KEY = 'pgs.d82.table_extraction.v1';
+const CHOICES83 = {
+  Y: 'Y - Review the eight-shape answer key first, then re-score all three arms',
+  N: 'N - Accept the agent-authored key as it stands',
+  S: 'S - Review only the four judgement shapes (6a header, long cell, empty cell, artwork)'
+};
 const CHOICES = {
   A: 'A - Docling, with the declared normalisations, as the extractor of record',
   B: 'B - The vision model\'s `lines` form as a proposer, checked by the S4 harness',
@@ -908,13 +991,24 @@ function render() {
   const picked = state.answer || null;
   document.querySelectorAll('#opts_d82 input').forEach(i => { i.checked = (i.value === picked); });
   document.getElementById('note_d82').value = state.note || '';
-  document.getElementById('progress').innerHTML = picked
-    ? `D82 answered: <b>${picked}</b>`
-    : 'D82 unanswered';
+  document.querySelectorAll('#opts_d83 input').forEach(i => { i.checked = (i.value === (state.key83 || null)); });
+  document.getElementById('note_d83').value = state.note83 || '';
+  const k = state.key83 || null;
+  document.getElementById('progress').innerHTML = k && picked
+    ? `D83 <b>${k}</b> · D82 <b>${picked}</b>`
+    : k ? `D83 answered: <b>${k}</b> — D82 still open`
+    : picked ? `D82 answered: <b>${picked}</b> — but D83 is the gate`
+    : 'D83 (the gate) unanswered';
 }
 
 document.querySelectorAll('#opts_d82 input').forEach(i => {
   i.addEventListener('change', () => { state.answer = i.value; save(); });
+});
+document.querySelectorAll('#opts_d83 input').forEach(i => {
+  i.addEventListener('change', () => { state.key83 = i.value; save(); });
+});
+document.getElementById('note_d83').addEventListener('input', e => {
+  state.note83 = e.target.value; save();
 });
 document.getElementById('note_d82').addEventListener('input', e => {
   state.note = e.target.value; save();
@@ -923,8 +1017,14 @@ document.getElementById('note_d82').addEventListener('input', e => {
 function buildRow() {
   const picked = state.answer || '';
   const note = (state.note || '').trim();
-  if (!picked) return '_(D82 unanswered — pick an option in the page first.)_';
-  return `| D82 | Which table extractor does the ingestion engine use, now that both arms are measured? | **${CHOICES[picked]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`; slice S2 of the ingestion engine PRD). Measured with one instrument, both arms, the same day: Docling 2.146.0 passes **2 of 8** shapes (numeric_row with the row-0 header convention; Appendix 7 with the row-number gutter) and finds 6 of 8 tables; the OpenRouter VLM arm passes **3 of 8** at best (\`claude-sonnet-5.5\`, \`lines\` form) and finds **8 of 8**, with header association right on 7-8 of 8. The union of what any arm passes is **4 of 8**; the four nobody passes need a human judgement (a header printed once across four lines, a 1,112-character cell, a merged fee box beside a seal, a page-break row). A different committed pass never helps (three shapes get worse), and a row-structured pass cannot be built from committed text because inter-column gaps collapse to one space when a cell overflows. Document AI is **not** adopted: it is the same class as Docling and would inherit the same four semantic failures, and the geometry argument for it was cashed by Docling passing Appendix 7. Every cell is still checked against the page per printed line (R3), and a grid that matches while quotes do not resolve is reported as "grid only", never as a pass. Evidence: \`product/docs/evidence/2026-11-03_s2_docling_scores.json\`, \`2026-11-04_s2_docling_gutter_scores.json\`, \`2026-11-04_s2b_openrouter_scores.json\`.${note ? ' Note: ' + note.replace(/\|/g, '/') : ''} |`;
+  const key = state.key83 || '';
+  const keyNote = (state.note83 || '').trim();
+  const row83 = key
+    ? `| D83 | Do we review the eight-shape answer key before choosing an extractor? | **${CHOICES83[key]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`). The key that judges every arm (\`knowledge/tests/shape_fixtures.py\`, commit \`5c45550\`) was written by an agent and no human has validated a cell; the signed landscape UAT judged rendering, not transcription. Three independent readers (Docling, a VLM, Document AI's Layout Parser) agree with each other and disagree with the key on Appendix 6a's header grouping, the \`Step 3\` prefix on the landscape's long cell, and the page-break row count. Characters are already verified (R3 against the committed page text); the groupings are what needs a human.${keyNote ? ' Note: ' + keyNote.replace(/\|/g, '/') : ''} |
+`
+    : '';
+  if (!picked) return row83 + '_(D82 unanswered — pick an option in the page first.)_';
+  return row83 + `| D82 | Which table extractor does the ingestion engine use, now that both arms are measured? | **${CHOICES[picked]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`; slice S2 of the ingestion engine PRD). Measured with one instrument, both arms, the same day: Docling 2.146.0 passes **2 of 8** shapes (numeric_row with the row-0 header convention; Appendix 7 with the row-number gutter) and finds 6 of 8 tables; the OpenRouter VLM arm passes **3 of 8** at best (\`claude-sonnet-5.5\`, \`lines\` form) and finds **8 of 8**, with header association right on 7-8 of 8. The union of what any arm passes is **4 of 8**; the four nobody passes need a human judgement (a header printed once across four lines, a 1,112-character cell, a merged fee box beside a seal, a page-break row). A different committed pass never helps (three shapes get worse), and a row-structured pass cannot be built from committed text because inter-column gaps collapse to one space when a cell overflows. Document AI is **not** adopted: it is the same class as Docling and would inherit the same four semantic failures, and the geometry argument for it was cashed by Docling passing Appendix 7. Every cell is still checked against the page per printed line (R3), and a grid that matches while quotes do not resolve is reported as "grid only", never as a pass. Evidence: \`product/docs/evidence/2026-11-03_s2_docling_scores.json\`, \`2026-11-04_s2_docling_gutter_scores.json\`, \`2026-11-04_s2b_openrouter_scores.json\`.${note ? ' Note: ' + note.replace(/\|/g, '/') : ''} |`;
 }
 
 const dlg = document.getElementById('outDlg');

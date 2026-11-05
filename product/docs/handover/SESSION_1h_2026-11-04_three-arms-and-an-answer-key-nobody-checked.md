@@ -1,4 +1,4 @@
-# Session `1h` — the VLM arm scores 2 of 8, and the failures move
+# Session `1h` — three arms measured, and an answer key nobody checked
 
 **Date:** 2026-11-04
 **PRD:** `product/backlog/In Progress/INGESTION_ENGINE_PRD.md` — S2b, the OpenRouter arm of §3.6
@@ -169,3 +169,58 @@ service-account key) — a Gemini API key is not one of them. The cheap options
 that need no account are a second local parser, and **`anchors` re-scored against a row-structured
 pass**. Then S3, then S5. If no arm is wanted, D — hand-review the 24 chunks and write the debt down —
 is the honest fallback.
+
+## 9. Document AI, on the owner's project (2026-11-04, same session)
+
+The owner created a project with a Form Parser and a Layout Parser in `us`; auth is **ADC**, so no key
+file exists and nothing entered the repo. `scripts/eval_documentai.py` scores it with the same
+`mismatches()`, caches every raw response, and retries — one long run died with `WinError 10053` after
+10 of 16 calls.
+
+**Both processors were re-run on current versions**, because the defaults were from 2022 and 2024 and a
+score without its version is not evidence.
+
+| Processor | Pass | Tables found | Time |
+|---|---|---|---|
+| Form Parser v2.1 | 1/8 | 7/8 | 72 s |
+| Layout Parser v1.6-pro | **2/8** | **8/8** | 495 s |
+
+Two findings that outlive the numbers. **Its characters are not ours**: it re-OCRs rather than reading
+the PDF's text layer, returning `1~g/|` for `1 g/l` and `0,6~mg/l` for `0,6 mg/l`, with **57 cells**
+our committed pass cannot confirm — so "extractive" is not the same as "safe". And **my first Layout
+Parser result was wrong**: it returns tables nested in `textBlock.blocks[]` with no `document.text`,
+and reading it like the Form Parser scored it 0/8 "no table found" on every page. Corrected, its
+numeric_row is a clean pass. Both are now guards in `tests/tools/test_eval_documentai.py` (8 tests; the
+anchor-only reader was reintroduced and watched red).
+
+## 10. The finding that outranks all three arms: the key is agent-authored
+
+Asked whether any human had ever validated a table, the owner said no. Checked: `shape_fixtures.py` was
+written by commit `5c45550` — an agent. The signed `landscape_tables_uat.md` judged *how it reads* (fee
+answer, cards, folds, phone, claims), never whether a cell's characters match the paper; the
+cell-verbatim check is listed as automated coverage, "not shown to the reviewer as work".
+
+So a **pass means "agrees with our grouping"**. Characters are verified by R3 against the page;
+groupings are not — row numbers as a column, `Proud member of`, the seal label, `Step 3`, and Appendix
+6a's four-line header are all decisions no human made. Appendix 7 already proved it can change an
+answer: it failed for both arms until the convention was declared.
+
+**The clincher is agreement.** Three independent readers — Docling, the VLM, Document AI's Layout
+Parser — make the *same* call against the key on three shapes: Appendix 6a's header merges into one
+label, the long cell takes a `Step 3` prefix, and the page-break table counts its repeated header as a
+row. Three tools agreeing with each other and disagreeing with us is evidence about the key.
+
+**Therefore the ranking is not established**, and the order of work is: build the verification surface
+(page image beside the expected grid, judged by the owner), then **re-score all three arms from cache**
+— free, because every arm's raw answer is stored.
+
+## 11. State left for the next agent
+
+* **Open:** D83 (review the key — the gate) and D82 (which extractor — blocked on D83). Both are on
+  `product/design/d82_table_extraction_what_we_learned.html`, which exports §18.3 rows for both.
+* **Ready to run:** `scripts/eval_documentai.py` with the raw responses cached in
+  `_scratch/adc/responses/`; `scripts/eval_openrouter.py` with its cache in `_scratch/or/responses/`.
+  A re-score after a key fix needs no network call.
+* **Not done:** S3 (the generator emits blocks and records the extraction mode) and S5 (re-review 6a
+  and 7 through the harness). Both are unaffected by the key question and can start any time.
+* **Deploy debt unchanged:** sessions `1f`, `1g`, `1h` are undeployed.

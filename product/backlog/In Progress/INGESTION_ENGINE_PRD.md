@@ -1,10 +1,9 @@
 # PRD: The ingestion engine — from "a person reviewed this document" to "a suite checks every document"
 
-**Status:** In Progress — **S0 (the eight-shape fixture set) and S1 (the generator's table-block
-guard) landed 2026-11-03, session `1e`; S2 is measured for two arms (Docling §3.5, the OpenRouter VLM
-§3.7) and both are corrected in §3.8: a mapping normalisation, not a tool, was the largest defect.**
-S3–S5 (generator emits table blocks, re-review of Appendices 6a and 7) are open, and Document AI needs
-the owner's GCP credential.
+**Status:** In Progress — **S0 and S1 landed 2026-11-03 (session `1e`); S2 is measured for three arms
+(Docling §3.5/§3.8, the OpenRouter VLM §3.7, Document AI §3.9). §3.10 is the open item that gates the
+choice: the eight-shape answer key is agent-authored and unreviewed, so the arms' ranking is not
+established until the owner judges the cells.** S3–S5 are open.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
 **Last Updated:** 2026-11-04
 **Scope:** How a table becomes reviewed data when no human has reviewed it. In: extraction, its
@@ -372,6 +371,94 @@ The order of work is S3 (emit the blocks, record the extraction mode) and S5 (re
 through the harness), with the arm's `lines` form as a **proposer** whose output the harness checks —
 not as an authority.
 
+### 3.9 What S2 measured (2026-11-04): Document AI, on the owner's project — and the credential bought the answer
+
+The owner created a project with a **Form Parser** and a **Layout Parser** in `us`; authentication is
+**Application Default Credentials** (a user credential from `gcloud auth application-default login`),
+so **no service-account key exists and nothing entered the repo**. `scripts/eval_documentai.py` scores
+it with the same `mismatches()`, publishing `as_extracted` and `with_row_number_gutter` like the other
+two arms, and caching every raw response so a key fix re-scores for free.
+
+**The default versions are old, and that matters.** The Form Parser defaulted to
+`pretrained-form-parser-v2.0-2022-11-10` and the Layout Parser to
+`pretrained-layout-parser-v1.0-2024-06-03`. Both were re-run on the current deployed versions
+(`v2.1-2023-06-26`, `v1.6-pro-2025-12-01`) because **a score without its version is not evidence** —
+the same rule that made the Docling arm record `2.146.0`.
+
+| Processor | Pass | What it does with the eight shapes |
+|---|---|---|
+| **Form Parser v2.1** | **1/8** (numeric_row) | Appendix 7 comes back as **17 ragged cells in one row** — it does not de-interleave. Landscape p4 returns **no table at all** (28 blocks, 1,928 characters of text, no table). Appendix 2's dividers become rows (21 rows for 11). Landscape p5: 29 columns. |
+| **Layout Parser v1.6-pro** | **2/8** (numeric_row, artwork_cell) | **8 of 8 tables found** — the best structure of any arm — but 30–75 s per page (495 s for the eight). Its failures are *near misses*: Appendix 6a 20 rows/2 cols with **one** mismatch, the long cell 1 row/5 cols with **one**, and Appendix 7 right once the gutter is declared. |
+
+**Its characters are not ours, and that is a finding about "extractive".** The Form Parser re-OCRs the
+page rather than reading the embedded text layer: on Appendix 7 it returned
+`No more than 1~g/|` where the paper prints `1 g/l`, and `0,6~mg/l` for `0,6 mg/l`. **57 cells across
+the eight shapes do not resolve against our committed page pass.** So the argument that an extractive
+tool's characters are safe by construction is **wrong** — it does not *invent* text, but it *misreads*
+it. R3 catches this, which is the instrument earning its keep.
+
+**A wrong result, recorded as a hazard.** The first Layout Parser run scored **0 of 8, "no table found"
+on every page**. That was **our bug**: the Layout Parser returns a *hierarchy* (`textBlock.blocks[]`
+nested under its heading, `tableBlock` inside, cells as `blocks[].textBlock.text`) and **no
+`document.text` at all**, while the Form Parser returns `pages[].tables[]` with text anchors. Reading
+one shape scored the other processor as blind. Corrected, the Layout Parser's numeric_row is a clean
+pass. *Read the response before believing the score.*
+
+**The three arms agree with each other and disagree with our key, on the same shapes.** That is the
+strongest evidence yet that the key, not the tools, is the open question:
+
+| Shape | Docling | VLM (sonnet, `lines`) | Layout Parser v1.6-pro | Our key |
+|---|---|---|---|---|
+| Appendix 6a header | merged the two labels | merged them the same way | **merged them the same way** (`Maximum number of animals per ha Class or species`) | two labels: `Class or species` \| `Maximum number of animals per ha equivalent…` |
+| Long cell, p5 | not detected | `Step 3 The group conducts farm visits…` | **the same `Step 3` prefix** | cell starts `The group conducts farm visits` |
+| Page-break row | one page only | 3 rows, characters unverified | **4 rows** — the repeated header counted as a row | 3 rows, pages 4, 4, 5 |
+
+Three readers of the same paper, built on completely different principles, making the **same** call
+against us is a reason to re-read the key — not to mark them all wrong. The page-break case has a third
+explanation (the page restarts the table with its header, which is a normalisation like the gutter), and
+that is exactly the kind of rule a reviewer should decide rather than an agent.
+
+**Cost and speed, measured:** 9 pages per processor, 18 pages total, well under a dollar; Form Parser
+7–14 s/page, Layout Parser 30–40 s/page. One long run died mid-flight with `WinError 10053` after 10 of
+16 calls, so the runner now retries and caches.
+
+### 3.10 The finding that outranks all three arms: **the answer key is agent-authored and unreviewed**
+
+Asked, mid-session, whether any human had ever validated a table, the owner said no. Checked:
+
+* **`knowledge/tests/shape_fixtures.py`** — the expected columns, cells, row counts and dividers for all
+  eight shapes — was written by commit `5c45550` *"D80 S0: the eight-shape fixture set"*, i.e. **by an
+  agent**. Its expectations are *anchored* (every string is proved to be on the page) but the
+  **groupings are one agent's reading**.
+* **`tests/uat/landscape_tables_uat.md` is genuinely signed** (Kobus, 2026-11-01, re-signed 2026-11-03,
+  6 PASS) — but its six scenarios are *the fee question, a card you can scan, the fork reads as a fork,
+  the comparison as a spreadsheet, a real phone in daylight, what the pages refuse to claim*. **Every
+  one judges how it reads. None asks whether a cell's characters are what the paper prints.** The
+  cell-verbatim check that exists is listed as *automated coverage* — explicitly "not shown to the
+  reviewer as work".
+
+**So a "pass" means "agrees with our grouping", not "matches the paper".** The two halves separate
+cleanly:
+
+* **Characters are verified.** R3 checks every cell against `pdftotext`'s output of the actual PDF, so
+  "not a contiguous run of the page" is a fact. That is why `1~g/|` and `70°C` are real findings.
+* **Groupings are not.** Whether the paper's bare row numbers are a column, whether `Proud member of`
+  belongs in column 3, whether a seal's label sits in column 2 while column 3 stays empty, whether
+  `Step 3` belongs inside the long cell, and how Appendix 6a's four printed header lines group into two
+  labels — **all five are decisions the fixtures encode that no human made.**
+
+**And we have already seen it change an answer.** Appendix 7 was a failure for *both* arms until the
+row-number convention was declared — after which both passed. That was the key being a convention, not
+a fact. The four shapes no arm passes are exactly the judgement ones, so "never passed by any arm" may
+mean **"no arm guessed the reviewer's call"**.
+
+**What this changes.** The ranking between the arms (VLM 3/8, Docling 2/8, Document AI Layout 2/8 with 8/8 tables found,
+Form 1/8) is **not established**, because the thing they are ranked against is unreviewed. Requirement 1 of this PRD says
+*no unreviewed table reaches the corpus*; the same standard has to apply to the key that judges them.
+The order of work is therefore: **build the verification surface** (page image beside the expected grid,
+cell by cell, judged by the owner), **then re-score all three arms from cache** — which costs nothing,
+because every arm's raw answer is now stored.
+
 **Where a non-developer should start:** `product/design/d82_table_extraction_what_we_learned.html` —
 the same three investigations, the scoreboard, the four options and a §18.3 export, written for the
 product owner to decide D82 (which extractor, and whether to buy a credential). It is a review surface,
@@ -419,7 +506,7 @@ mismatches rather than as trust.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate extractors (Docling, the OpenRouter VLM arm, Document AI) against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Docling measured 2026-11-03 (§3.5): 0/8 as extracted, 1/8 with a header convention, 2/8 tables not detected. The OpenRouter VLM arm measured 2026-11-04 (§3.7): 2/8 at best, 8/8 tables found, header association 7–8/8. §3.8 corrects both: one declared mapping normalisation (the paper's row-number gutter) makes the arm's Appendix 7 grid correct and Docling's too, so the arm is 1 pass + 3 grid-only (4/8 grids right) and *both* arms need re-running before a credential is bought.** Document AI needs the owner's GCP project, billing, processor and key. Why, and what that costs: `product/design/d80_s2_extractor_evaluation.html` |
+| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Three arms measured 2026-11-03/04: Docling 2/8 (§3.5, §3.8), the OpenRouter VLM 3/8 (§3.7), Document AI 1/8 Form Parser and 2/8 Layout Parser (§3.9). One declared normalisation — the paper's row-number gutter — makes Appendix 7 pass for Docling *and* the VLM (§3.8). The credential was bought and bought the answer: no arm beats the free ones. §3.10 outranks all of it: the eight-shape key is agent-authored and no human has validated a cell, so the ranking is not established. Next is the verification surface, then a free re-score.** |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |
