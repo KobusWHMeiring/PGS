@@ -120,7 +120,43 @@ The PRD stays in `In Progress/`. §5's S5 row and §6 carry what is true now, wi
   `test_corpus_saoso.py`, `test_passages.py`.
 * `product/docs/context/testing_hazards.md` §3.35–§3.38; `INGESTION_ENGINE_S5_PLAN.md`; PRD §3.16.
 
-## 6. The next session's first command
+## 6. The owner read the paper, and it paid (added after the fact)
+
+S5-b looked like a decision that could be made from measurements. It could not, and the thing that
+settled it was a person looking at the page.
+
+Two artefacts were built for that in `product/design/`:
+
+* `s5b_appendix_2_rows_exploration.html` — the decision: Appendix 2 prints 30 rows on three pages,
+  the cached arm read 11, and **39 of 41 cells are already runs of the page** once the printed line is
+  cut at the column boundary `TABLE_BANDS` has held since 2026-10-21. Recommendation A (band + the two
+  continuations, 30 rows, delete the bespoke path); "what would change my mind" included.
+* `s5b_appendix_2_pages.html` — Appendix 2's three printed pages beside the review, the machine read
+  and the artefact's current text. Flag-a-row, verdict, export.
+
+From the second, three findings:
+
+1. **The seaweed row's tail is printed `(iii) fermentation.`** — with the opening bracket — as the
+   first line of printed 77. The reviewed cell had dropped it. `_scratch/seaweed_probe.py` shows the
+   string in all three passes.
+2. **Where the wrong spelling came from:** printed 79, where Appendix 3 prints
+   `Coffee grounds    iii) fermentation.` — a different table, two pages later. One phrase, two
+   spellings, one document.
+3. **Rows 27–29 (printed 78) read right**, as printed.
+
+**The guard could not have caught it.**
+`test_the_seaweed_condition_crosses_the_page_break` asserted `endswith("iii) fermentation.")` and
+`"iii) fermentation." in <printed 77>`; both were true of the wrong text because the shorter string is
+a substring of the page's. It is character-level now, proved red on the old data, and the cell is
+corrected by one character (hazard §3.39). `_words()` strips brackets by design, so every word-level
+guard in `test_tables.py` is blind to this class.
+
+The correction reaches `DocumentChunk` on the next `ingest_standard --doc saoso --force`; the artefact
+is untouched, because Appendix 2's rows are still Python data — which is S5-b's job. **The lesson for
+S5-b is in the plan §4:** the reviewed rows are a good source and *not an oracle*, so every one of
+them enters as a locator the emitter must find on the page.
+
+## 7. The next session's first command
 
 ```bash
 python scripts/check_tables.py --doc saoso --rows 20   # ok, 0 violations

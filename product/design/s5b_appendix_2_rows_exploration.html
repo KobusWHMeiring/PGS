@@ -294,11 +294,15 @@ cells that are a run of the band-sliced page: 39; not: 2</pre>
   <h3>3. The two exceptions are already known, and already named in the code</h3>
   <div class="card tight">
     <p><b>Row 10 — the seaweed row (printed 76).</b> Its condition ends
-    <code>…the minimum amount of solvent necessary is used for extraction; iii) fermentation.</code>
-    and <code>iii) fermentation.</code> is printed at the top of the <em>next</em> page.
-    <code>knowledge/tables.py</code> assumption 4 says so verbatim: <em>“Cross-page continuations are
-    merged by hand and recorded, not inferred.”</em> This is requirement 4's own case — “including a
-    row whose later half is on the next page”.</p>
+    <code>…is used for extraction; (iii) fermentation.</code> and that line is the <b>first line of
+    printed page 77</b>. <code>knowledge/tables.py</code> assumption 4 says so: <em>“Cross-page
+    continuations are merged by hand and recorded, not inferred.”</em> Requirement 4's own case —
+    “including a row whose later half is on the next page”. <b>Corrected 2026-11-05 after the owner
+    read the page:</b> the cell had <code>iii) fermentation.</code>, without the opening bracket, and
+    that spelling is printed on <b>printed 79</b> beside <code>Coffee grounds</code> in Appendix 3 —
+    a different table two pages later. No guard could see it:
+    <code>"iii) fermentation." in "(iii) fermentation."</code> is true
+    (<code>testing_hazards.md</code> §3.39).</p>
     <p style="margin-bottom:0"><b>Row 25 — the trace-elements cell (printed 77).</b> Fails on one
     hyphen: the page prints <code>cobalt-</code> / <code>sulphate</code> across a line break. The
     harness already has that rule (<code>table_harness._locate</code> splits at a hyphen and requires

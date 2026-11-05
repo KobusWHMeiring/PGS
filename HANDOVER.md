@@ -1,6 +1,6 @@
-# Handover — S5 is half landed: Appendix 6a is a block, and a body is the pass its block declares
+# Handover — S5-a is landed and S5-b is decided by evidence: the owner read the page and found a bracket
 
-> ## START HERE — Appendix 6a is a `<!-- table -->` block; S5's other three tables need a review
+> ## START HERE — Appendix 6a is a block; Appendix 2's next step is decided; read its two pages first
 >
 > **`INGESTION_ENGINE_PRD.md` §3.16 is what landed, and `INGESTION_ENGINE_S5_PLAN.md` is the rest.**
 > S5's headline defect is gone: Appendix 6a's 20 rows are emitted from their page, carry their two
@@ -26,17 +26,33 @@
 > **Measured.** `build_corpus --doc saoso --force` → `101 insertions(+), 25 deletions(-)`, one section,
 > and the diff *corrects* the paper: the old artefact paired `Equines over six months old` with `5`
 > (its neighbour's value); the block pairs it with `2`. `build_corpus --doc opp --force` leaves
-> `opp.md` **byte for byte** unchanged. Full suite **1831 passed / 1 skipped / 8 xfailed in 97.74 s**
-> `--reuse-db` (79.19 s minutes earlier — quote both, §3.17); `fast.sh --critical` **182 passed / 4
-> deselected in 18.42 s**. Three guards were broken and watched red first.
+> `opp.md` **byte for byte** unchanged. `check_tables` → `opp` 6 rows, `landscape` 3+2+3,
+> `saoso` 20: **5 tables, 34 rows, 0 violations**. Full suite **1831 passed / 1 skipped / 8 xfailed**
+> (`--reuse-db`: 79.19 s, 97.74 s, 113.45 s on three runs — quote a range, §3.17);
+> `fast.sh --critical` **182 passed / 4 deselected in 18–31 s**. Four guards broken and watched red.
 >
 > **`scripts/verify.sh` still cannot be quoted green from this tree** — step 1 fails on **another
 > session's** `scripts/copy_deck.py` (32 KB). All my files are inside the cap (`build_corpus.py` grew
 > to 30.5 KB and is 29.1 KB again: `pass_texts` moved to `corpus_pages.py`).
 >
+> **The owner read the paper, and it mattered (2026-11-05).** `product/design/` now holds two pages
+> for S5-b: `s5b_appendix_2_rows_exploration.html` (the decision, with the measurements) and
+> `s5b_appendix_2_pages.html` (Appendix 2's three printed pages beside the review, the machine read
+> and the artefact's current text). From the second he found that the seaweed row's tail is printed
+> **`(iii) fermentation.`** — with a bracket the reviewed cell had dropped, transcribed from
+> **printed 79**, where Appendix 3 prints `iii) fermentation.` beside `Coffee grounds`. The guard for
+> that row could not see it (`"iii) fermentation." in "(iii) fermentation."` is true) and is now
+> character-level: **hazard §3.39**. One character corrected. **That is the argument for S5 in
+> miniature**, and it is why the remaining rows are re-read through a page rather than trusted.
+>
 > **S5's remaining three, and each is a review rather than a chore.** *Appendix 2* is **30 rows**
 > (three printed pages), and no arm read exists for printed 77–78 — the cached `qualifier` response is
-> the shape page's 11; emitting 11 would leave 19 interleaved and `APPENDIX_2_ROWS` in place.
+> the shape page's 11; emitting 11 would leave 19 interleaved and `APPENDIX_2_ROWS` in place. The
+> evidence for the recommended route: **39 of 41 cells are already runs of the page** once the printed
+> line is cut at the column boundary `TABLE_BANDS` has held since 2026-10-21, so promoting the reviewed
+> rows to locators is verification, not authorship. The two exceptions are the cross-page tail (now
+> bracket-exact) and **row 25**, which fails only on `cobalt-`/`sulphate` — the hyphen rule the harness
+> already has and the emitter does not. Read the exploration page's Part 6 before starting.
 > *Appendix 7* needs a cell that wraps **inside** a column (Docling's grid is the evidence for the
 > boundary). *The landscape* needs §3.15's four declarations, and its artefact **cannot be regenerated
 > wholesale**: pages 2–3 and 9 are the *reviewer's* front matter (commit `8674d7a`), so S5-d emits
@@ -68,17 +84,17 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation, vlm-arm,
 re-score, and arbitration sessions
-**Repo state:** `main` — **three unpushed commits at the start of session `1q`** (`b26609a`,
-`665b1fb`, and S3's close), all pushed by it; `1q`'s own commit is the S5-a slice plus its close.
-Everything before `1p` is pushed. The stale "three unpushed runs" note this file carried twice is
-itself the example of why the next line is the only one that answers it.
+**Repo state:** `main` — **four commits from session `1q`**, all pushed: `39f9764` S5-a, `e7c98a2`
+the S5-b exploration, `d39798d` the verification surface, `8563ba2` the owner's read and the bracket
+correction. Everything before `1p` is pushed. The stale "three unpushed runs" note this file carried
+twice is itself the example of why the next line is the only one that answers it.
 **Let the command answer:** `git rev-list --count origin/main..HEAD`.
 `main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate lines** with no code
 overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand on
 those two files.
 
-**On this tree** (2026-11-05, session `1q`, after its commit): `python -m pytest -q --reuse-db` —
-**1831 passed / 1 skipped / 8 xfailed in 79.19 s and in 97.74 s** on two runs minutes apart, run as
+**On this tree** (2026-11-05, session `1q`, after its last commit): `python -m pytest -q --reuse-db` —
+**1831 passed / 1 skipped / 8 xfailed in 79.19 s, 97.74 s and 113.45 s** on three runs, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17), and this box is not idle —
 session `1p` measured 240.27 s `--create-db` and 234.99 s warm on the same suite with 11 fewer tests.

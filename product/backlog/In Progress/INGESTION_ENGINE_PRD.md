@@ -837,16 +837,19 @@ answer, with the review written down as debt.
       arms. The first real ingestion runs `scripts/propose_tables.py --pdf <new> --pages …` once.
 - [ ] All eight shape targets pass, and the strict-xfail markers are gone (the audit test then
       reports zero uncovered shapes).
-- [x] Appendix 6a's 20 chunks carry their column meaning; Appendix 7's chunks are rows, not
-      interleaved text. **Appendix 6a: proved (S5, 2026-11-05).** Its twenty row chunks each carry
+- [ ] Appendix 6a's 20 chunks carry their column meaning; Appendix 7's chunks are rows, not
+      interleaved text. **Two halves, one tick: the tick waits for the second half.**
+      **Appendix 6a: proved (S5-a, 2026-11-05).** Its twenty row chunks each carry
       `Class or species: … · Maximum number of animals per ha equivalent to 170 kg N/ha/year: …`
       (`knowledge/tests/test_tables.py::test_one_chunk_per_six_a_row_and_none_of_them_invented`), and
       the pairing in the block is the paper's — the diff corrected `Equines over six months old 5` to
       `2`. **Appendix 7: not yet** — its cells wrap inside a column, which the emitter cannot bound.
 - [ ] Cell fidelity, row count, header association and empty-cell preservation are asserted for every
-      table in the corpus, not for the reviewed ones only. **Partly (S4, 2026-11-03):** asserted for
-      every table that *is* a block — 4 tables, 14 rows, 0 violations — and the rows outside any
-      block (Appendix 6a's 20, Appendix 7's 4 chunks) are exactly what S5 closes.
+      table in the corpus, not for the reviewed ones only. **Partly (S5-a, 2026-11-05):** asserted for
+      every table that *is* a block — **5 tables, 34 rows, 0 violations** (`landscape` 3+2+3, `opp` 6,
+      `saoso` Appendix 6a 20; `tests/tools/test_check_tables.py` pins the counts and
+      `knowledge/tests/test_table_harness.py` the checker). **Still outside any block:** Appendix 2's
+      30 rows and Appendix 7's 4 interleaved chunks — S5-b and S5-c.
 - [ ] `scripts/verify.sh` is green with `PDFTOTEXT_BIN` poisoned, and no fixture needs a PDF or a
       network call to run.
 
