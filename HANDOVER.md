@@ -92,12 +92,11 @@ sessions** (`1i` onward)
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **25 commits of work at the last code commit** (this session's doc closes follow it;
-measure with `git log --oneline 781cf37..HEAD | wc -l`): A1, A2, A3, A5, A6, B1–B4, D83, D84,
-Q8's draft consent, the approved
-  prototype, two model-seam cuts, the doc closes.
+  of `781cf37`, **27 commits** (measure it: `git log --oneline 781cf37..HEAD | wc -l` — at the A8
+  code commit; this session's doc close adds one): A1, A2, A3, A5, A6, A8, B1–B4, D83, D84, Q8's
+  draft consent, the approved prototype, three service-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
-prints the branch's own count (25 at the last code commit; the doc closes add one each) and
+prints the branch's own count (27 at the A8 code commit; the doc close adds one) and
 `git ls-remote --heads origin feat/mvp1a-visit` prints nothing — that command prints **nothing**, which
 is the fact that matters. **Both worktrees
 have rewritten the START HERE block, so a merge conflicts here by design: keep both strands' state,
@@ -108,14 +107,15 @@ everything from that worktree, note that it has no `.venv` (`testing_hazards.md`
 script picks `python3`, which has no `celery`; use `python` and the five steps in §5), and drop the
 leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
 
-**On this tree** (2026-11-05, sessions `1j`–`1o`): the gate's five steps — not `scripts/verify.sh`
-itself, which cannot start here (§3.31) — **green at 1883 passed / 1 skipped / 8 xfailed**, run with
-`--create-db` and the test database dropped first, at **204.69 s** (the pre-B3 tree, same session, at
-233.18 s). Two numbers from one day are not a benchmark: use `testcost profile --reps 2` for a claim
-(§3.17).
+**On this tree** (2026-11-05, session `1p`): the gate's five steps — not `scripts/verify.sh` itself,
+which cannot start here (§3.31) — **green at 1944 passed / 1 skipped / 8 xfailed**, run with
+`--create-db` and the test database dropped first, at **300.08 s and then 348.41 s** — the same suite,
+the same count, one hour apart on the same box. Quote both or claim nothing (§3.17). `tests/e2e` is outside the gate (it needs a browser) and its
+`test_selfcheck_wizard.py` was run separately: 7 passed.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
-local** (`18` commits ahead of `origin/main`, no remote branch). That is the session-`1f` line
+local** (`git rev-list --count origin/main..HEAD` prints 27, and `git ls-remote --heads origin
+feat/mvp1a-visit` prints nothing). That is the session-`1f` line
 rewritten for the current tree, because the old one said `0` and was true of `main`, not of this
 worktree. Nothing needs pushing for the demo; pushing is a deliberate act because it makes the
 branch visible to the sibling agent.
@@ -140,6 +140,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1p` 2026-11-05 (session 25) — the self-check lands, and the browser finds the form that was not there — [`SESSION_1p_2026-11-05_the-self-check-lands-and-the-browser-finds-the-form-that-was-not-there.md`](product/docs/handover/SESSION_1p_2026-11-05_the-self-check-lands-and-the-browser-finds-the-form-that-was-not-there.md)
 - `1o` 2026-11-05 (session 24) — sub-plan B lands, and the printed FORM corrects the plan three times — [`SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md`](product/docs/handover/SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md)
 - `1n` 2026-11-05 (session 23) — the application flow walks, and the money stays with the group — [`SESSION_1n_2026-11-05_the-application-flow-walks-and-the-money-stays-with-the-group.md`](product/docs/handover/SESSION_1n_2026-11-05_the-application-flow-walks-and-the-money-stays-with-the-group.md)
 - `1m` 2026-11-05 (session 22) — the consent drafted, the mail decision taken, and the worktree handed over — [`SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md`](product/docs/handover/SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md)
