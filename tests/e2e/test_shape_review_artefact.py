@@ -126,3 +126,22 @@ def test_a_complete_review_exports_json_the_signoff_accepts(page):
     record = shape_review_signoff.build_record(exported)
     assert record["summary"]["claims"] == len(ids)
     assert record["summary"]["shapes_confirmed"] == [case.key for case in shape_review.SHAPES]
+
+def test_the_page_is_complete_without_javascript(browser, artefact):
+    """Server-rendered: with the script off the reviewer still sees every page and every claim.
+
+    The script only adds state, so a page that needs it to show its claims is a page that fails on the
+    laptop of whoever has an extension blocking it — and the reviewer would blame the key.
+    """
+    context = browser.new_context(java_script_enabled=False, viewport={"width": 1400, "height": 1000})
+    page = context.new_page()
+    page.goto(artefact.resolve().as_uri())
+    try:
+        expected = len(shape_review.all_claims())
+        assert page.locator("fieldset.claim").count() == expected
+        assert page.locator("fieldset.claim input[type=radio]").count() == expected * 3
+        figures = sum(len(case.pdf_pages) for case in shape_review.SHAPES)
+        assert page.locator(".pages .shot").count() == figures
+        assert page.locator("table.expect tbody tr").count() > 0
+    finally:
+        context.close()
