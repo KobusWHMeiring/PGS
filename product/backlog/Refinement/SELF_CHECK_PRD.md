@@ -449,7 +449,7 @@ application flow (A6).
 |---|---|---|
 | Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | **Collected at account creation.** Otherwise the farm profile is empty and the account saves nothing a farmer would miss. The three fields are new collection and need the consent in Q8. |
 | Q8 | The third consent: holding an account is a processing purpose separate from research and demographics. | **Yes, a third consent is required and does not exist yet.** It is not research consent (that one is about aggregate reporting) and not demographic consent (that one is about the census). It needs a retention answer, which this PRD deliberately does not have, and it is written by the group rather than by the build. |
-| Q9 | Does an account require a verified email before it can be used again? | **Yes — but deferred until the platform has SMTP.** `User.email_verified_at` already exists for exactly this, and `todo.md` carries the dependency. Until then an address is accepted as given, and the account is usable immediately. |
+| Q9 | Does an account require a verified email before it can be used again? | **Yes — but not in 1a: there is no mail provider (D84, 2026-11-05).** `User.email_verified_at` already exists for exactly this and stays null; the account step must say verification is unavailable rather than imply it happened. Until a provider exists an address is accepted as given, and the account is usable immediately. |
 
 **Consequence for the build order, stated so it is not discovered late:** Q8 means the account
 step cannot ship before its consent text exists. The self-check result page can therefore ship with

@@ -50,8 +50,16 @@
 > re-reads the schedule. The guard is `assert_fees_paid_for_assessment(member, farm)` (membership
 > first, then the fee): **C1's `confirm_visit()` calls it** — A5 did not pre-build `FarmVisit`.
 >
-> **Still open, and blocking the account step only:** the third consent text (`SELF_CHECK_PRD` Q8) and
-> SMTP for email verification (`todo.md`).
+> **The two things that blocked the account step are now settled:** **Q8** has a **draft** consent
+> text (`SELF_CHECK_PRD` §11.6, marked DRAFT, with two `[DECIDE]` markers the group owns — the
+> retention period and the withdrawal address), and **D84** decides that **1a sends no mail**: no
+> provider, `email_verified_at` stays null, and the account step must say *"verification is not
+> available yet"* rather than show a fake tick. `todo.md` keeps the SMTP item with what it gates.
+>
+> **The current purpose is a demo to PGS** (product owner, 2026-11-05): the work now is to show the
+> *shape* of the flow — the self-check, the application, the account — before the group's go-ahead.
+> That changes the bar for A6 (make the flow real and honest, not production-complete) and it does
+> **not** change any rule below.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
