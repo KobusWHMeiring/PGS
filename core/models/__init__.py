@@ -6,8 +6,9 @@ models by importing this package, so a model that is not re-exported here does
 not exist as far as the ORM is concerned.
 
 Slices (see MVP0_PLAN_V2.md §2):
-    _core.py           User, UserRole, Role, Language, Member, Farm, FarmAlias,
-                       FarmCategory, FarmContact
+    _core.py           User, UserRole, Role, Language
+    _membership.py     Member, Farm, FarmAlias, FarmCategory, FarmContact,
+                       CommitteePosition, CommitteeTerm, MembershipFee
     _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _public.py         PublicDocument (the files the group publishes, D22)
     _chat.py           ChatSession, ChatMessage, EscalatedQuery, PublicQuestion
@@ -27,18 +28,20 @@ from core.models._chat import (
 )
 from core.models._core import (
     ASSESSOR_CAPABILITY,
+    Language,
+    Role,
+    User,
+    UserRole,
+)
+from core.models._membership import (
     CommitteePosition,
     CommitteeTerm,
     Farm,
     FarmAlias,
     FarmCategory,
     FarmContact,
-    Language,
     Member,
     MembershipFee,
-    Role,
-    User,
-    UserRole,
 )
 from core.models._public import PublicDocument
 
