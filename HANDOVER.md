@@ -1,6 +1,6 @@
-# Handover — two strands in flight, and the joining flow is designed before it is built
+# Handover — two strands in flight, and the application flow now walks end to end
 
-> ## START HERE — **MVP 1a sub-plan A is 4 of 8 tasks in; the fees are data and the gate is a service**
+> ## START HERE — **MVP 1a sub-plan A is 5 of 8 tasks in; the application walks and the money stays with the group**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
 > a second agent is running D80's S2 (Docling) there. Nothing in this strand has touched `main`.
@@ -10,36 +10,62 @@
 > `CommitteeTerm`, the OPP §VII roster, migration `0011`, 12 tests. **A3** (`a4b2e4b`) — `Pledge`,
 > `record_pledge`, migration `0012`, 30 tests. **A5** (`66977cb`) — `TurnoverBand`,
 > `AssessmentFee`, migration `0013`, the OPP §2.3 scale seeded, `declare_assessment_fee` and the
-> gate, 32 tests. **D83** (`0cc2112` and session `1i`'s close) — the pledge stays in the application.
-> **Two seam cuts, both driven by the 30 KB cap:** `_core.py` → `_membership.py` (`ab42443`), and
-> `_membership.py` → `_fees.py` (`66977cb`, the OPP's own §II seam). Gate (its four steps run with
-> `python`; drop the test DB first — `_scratch/a5/dropdb.py`, `testing_hazards.md` §3.15): **1759
-> passed / 1 skipped / 8 xfailed in 172.19 s** `--create-db`, `makemigrations --check` clean,
-> `lint-imports` 1 kept / 0 broken, context budgets 0 breaches.
+> gate, 32 tests. **A6** (`5f64fd6`) — `ConsentText`, `ConsentRecord`, migration `0014`, the Q8 draft
+> seeded, `core/services/_application.py`, four steps + a summary, 32 tests. **D83** (`0cc2112` and
+> session `1i`'s close) — the pledge stays in the application. **D84** — 1a sends no mail, and the
+> interface says so. **Two seam cuts, both driven by the 30 KB cap:** `_core.py` → `_membership.py`
+> (`ab42443`), and `_membership.py` → `_fees.py` (`66977cb`, the OPP's own §II seam).
+>
+> **A6 in one paragraph, so nothing has to be re-derived:** self-register → the Q8 consent → the
+> account (`Member{APPLICANT}`, `email_verified_at` null, CTA "Create an account") → **the pledge,
+> after the account**, via A3's `record_pledge` → categories (a tick becomes a `FarmCategory` here,
+> never in the self-check) → turnover, via A5's `declare_assessment_fee` → a summary that names the
+> band, the assessment fee and the membership fee, and says who records the money. **Steps are
+> derived from rows, never a session**, so `/apply/` resumes where a farmer got to; the order is
+> enforced in `core.views._portal._step` by `assert_step_ready()`, not by URL shape.
+>
+> **Three refusals are A6's substance, and each is a place a friendlier shortcut would lie:**
+> (1) **No consent, no account.** `ConsentText` is versioned, never edited, and the step posts the
+> version it *rendered* — a form opened before the wording changed is refused, because a consent
+> record naming the wrong text is worse than none. With no `ACCOUNT` row, the page says so and
+> creates nothing. (2) **The applicant cannot pay.** No view writes a `MembershipFee`: the fee year is
+> the group's (D39) and a `paid_on` from a self-registration would make
+> `assert_fees_paid_for_assessment()` lie. `record_membership_fee()` and
+> `record_membership_payment()` (APPLICANT → ACTIVE, never out of TERMINATED) are built, tested, and
+> called by nothing yet — A5's pattern, waiting for A7/C1. (3) **The pledge is history:** a second
+> POST redirects instead of appending a second attestation.
+>
+> **The Q8 draft is shown as a draft** (`SELF_CHECK_PRD` §11.6/§11.7): both `[DECIDE]` markers are
+> rendered on the page a farmer reads, with a banner saying the group has not approved the wording,
+> and an account *is* allowed under it — refusing every account until approval dead-ends the demo,
+> and "must not ship while either marker remains" is a release rule. Approval is one data edit
+> (`ConsentText.approved_at`), the banner disappears, nothing else changes. **The product owner
+> should confirm this reading**; overruling it is one line.
+>
+> **Gate** (its five steps run with `python`; `scripts/verify.sh` cannot start here — §3.31): 0
+> context breaches, `manage.py check` clean, `makemigrations --check` clean, `lint-imports` 1 kept /
+> 0 broken, **1794 passed / 1 skipped / 8 xfailed in 152.70 s** `--create-db` (warm without it:
+> 153.55 s), after dropping the leftover `test_pgs` (§3.15, `_scratch/a5/dropdb.py`).
+>
+> **What is next: B1 + B3** (the template's `self_check` markers), and **then A8** (the public
+> self-check) — its only exit is this application flow, which now exists. **A7** (eligibility gates)
+> can move after A8. **A4** likewise. **Do not build A8 before A6**; it is done.
+>
+> **A7 has a named prerequisite now:** in a running instance every applicant stays `APPLICANT` and
+> unpaid, because nothing records a membership fee or its payment. The transition exists
+> (`record_membership_payment`), the way to reach it does not. `todo.md` carries it as a decision
+> (A7's own surface, or a one-screen administrator page), not a bug.
 >
 > **Approved by the product owner on 2026-11-04:** `product/design/before_you_apply_prototype.html`,
 > the `/before-you-apply/` flow as a **stepped wizard** (5 question steps + result + account), built
 > from the D71 wording ledger and driven with Playwright. It is the build target for **A8** and is
 > labelled `DESIGN SPEC … Ready for implementation` at the top of the file.
 >
-> **What is next: A6 (application flow)** — the self-check's only exit, and the next thing the demo
-> needs. Then B1 + B3 (the template's `self_check` markers), and only then A8. A4 and A7 can move
-> after A8. **Do not build A8 before A6**: its only exit is the application, and the PRD rejects a page
-> that dead-ends on the contact chips.
->
-> **A6 in one paragraph, so it starts without re-reading the plan:** self-register → the Q8 consent
-> (behind §11.6's DRAFT text, with an honest fallback if the group has not approved it) → account
-> (`Member{APPLICANT}`, `email_verified_at` null, CTA "Create an account" per D83) → **the pledge,
-> after the account**, via A3's `record_pledge` → categories (a tick becomes a `FarmCategory` here,
-> never in the self-check) → turnover, via A5's `declare_assessment_fee` → membership fee, unpaid
-> until recorded. **Build guards as services, not as forward dependencies:** `confirm_visit()` and
-> the assessment-team path belong to C1/E, exactly as A5 left
-> `assert_fees_paid_for_assessment()` waiting for it. Nothing about `FarmVisit` is pulled forward.
->
-> **Three things are still the product owner's, and none of them blocks A6's structure:** the three
+> **Three things are still the product owner's, and none of them blocks A8's structure:** the three
 > roster ambiguities from `1i` (first-name-only holders; whether Lilani Pretorius is a co-treasurer;
 > Guy and Jacques unrecorded), whether `APPLICANT` is the right word for an account that has not
-> applied, and the two `[DECIDE]` markers in §11.6 (retention period, withdrawal address).
+> applied, and the two `[DECIDE]` markers in §11.6 (retention period, withdrawal address — the latter
+> is also blocked on publishing the administrator's contact details).
 >
 > **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
 > period that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
@@ -47,7 +73,8 @@
 > `CheckConstraint` containing `NULL IN (…)` **is satisfied** by Postgres, so A3's in-conversion rule
 > passed the row it existed to refuse — §1.37. (4) `FileField(storage=callable)` resolves the
 > callable at import, so a settings-derived storage cannot be redirected in a test and bakes a path
-> into the migration — §1.38.
+> into the migration — §1.38. (5) A boundary test whose samples never land on the boundary cannot see
+> the rule — §1.39.
 >
 > **D83's substance:** the pledge cannot move to account creation, because it attests to *"all the
 > land for which I/we are applying"*. The account collects identity + farm name, nearest town,
@@ -59,22 +86,20 @@
 > `is_paid_up` is derived: a declaration does not roll over, and the flag records what the documents
 > said the day it was signed.
 >
-> **A5's finding worth knowing before A6:** the OPP §2.3 table as printed has a hole — *"Below
+> **A5's finding worth knowing before A8:** the OPP §2.3 table as printed has a hole — *"Below
 > R 250,000"* then *"R 250,001 – R 500,000"* — so band bounds are stored half-open and the printed
 > wording is the `label`. `AssessmentFee` snapshots the band, its label and the amount; it never
 > re-reads the schedule. The guard is `assert_fees_paid_for_assessment(member, farm)` (membership
 > first, then the fee): **C1's `confirm_visit()` calls it** — A5 did not pre-build `FarmVisit`.
 >
-> **The two things that blocked the account step are now settled:** **Q8** has a **draft** consent
-> text (`SELF_CHECK_PRD` §11.6, marked DRAFT, with two `[DECIDE]` markers the group owns — the
-> retention period and the withdrawal address), and **D84** decides that **1a sends no mail**: no
-> provider, `email_verified_at` stays null, and the account step must say *"verification is not
-> available yet"* rather than show a fake tick. `todo.md` keeps the SMTP item with what it gates.
+> **A6's finding worth knowing before A8:** the self-check's account step (§11.5 screen 7) is the
+> same account `create_application()` makes, so A8 should call that service rather than write its own
+> — and it carries the three Q7 fields the check never asks. The check's ticks still must **not**
+> become `FarmCategory` rows; they wait for A6's categories step, which is where they now belong.
 >
-> **The current purpose is a demo to PGS** (product owner, 2026-11-05): the work now is to show the
-> *shape* of the flow — the self-check, the application, the account — before the group's go-ahead.
-> That changes the bar for A6 (make the flow real and honest, not production-complete) and it does
-> **not** change any rule below.
+> **The current purpose is a demo to PGS** (product owner, 2026-11-05): show the *shape* of the flow —
+> the self-check, the application, the account — before the group's go-ahead. That changes the bar
+> (make the flow real and honest, not production-complete) and does **not** change any rule below.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
@@ -87,10 +112,10 @@ sessions** (`1i` onward)
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **18 commits**: A1, A2, A3, A5, D83, D84, Q8's draft consent, the approved
+  of `781cf37`, **19 commits**: A1, A2, A3, A5, A6, D83, D84, Q8's draft consent, the approved
   prototype, two model-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
-prints `18` and `git ls-remote --heads origin feat/mvp1a-visit` prints nothing. **Both worktrees
+prints `19` and `git ls-remote --heads origin feat/mvp1a-visit` prints nothing. **Both worktrees
 have rewritten the START HERE block, so a merge conflicts here by design: keep both strands' state,
 do not pick one.**
 
@@ -99,12 +124,10 @@ everything from that worktree, note that it has no `.venv` (`testing_hazards.md`
 own script picks `python3`, which has no `celery`; use `python` and the five steps in §5), and drop
 the leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
 
-**On this tree** (2026-11-05, sessions `1j`–`1m`): the gate's five steps — not `scripts/verify.sh`
-itself, which cannot start here (§3.31) — **green at 1759 passed / 1 skipped / 8 xfailed in
-172.19 s**, run as `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to
-5432 and this box serves 5433, §3.1) with `--create-db` and the test database dropped first. `fast.sh`
-measured **1717 passed / 1 skipped / 8 xfailed in 80.65 s** warm before A5, and **199.18 s** cold.
-Quote cold *and* warm (§3.17) — never one number.
+**On this tree** (2026-11-05, sessions `1j`–`1n`): the gate's five steps — not `scripts/verify.sh`
+itself, which cannot start here (§3.31) — **green at 1794 passed / 1 skipped / 8 xfailed in
+152.70 s**, run with `--create-db` and the test database dropped first. Warm without `--create-db`:
+**153.55 s**. Quote cold *and* warm (§3.17) — never one number.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
 local** (`18` commits ahead of `origin/main`, no remote branch). That is the session-`1f` line
@@ -132,6 +155,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1n` 2026-11-05 (session 23) — the application flow walks, and the money stays with the group — [`SESSION_1n_2026-11-05_the-application-flow-walks-and-the-money-stays-with-the-group.md`](product/docs/handover/SESSION_1n_2026-11-05_the-application-flow-walks-and-the-money-stays-with-the-group.md)
 - `1m` 2026-11-05 (session 22) — the consent drafted, the mail decision taken, and the worktree handed over — [`SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md`](product/docs/handover/SESSION_1m_2026-11-05_the-consent-drafted-the-mail-decided-and-the-worktree-handed-over.md)
 - `1k` 2026-11-05 (session 21) — the fee scale is data, the gate is a service, and my own tests were the weak part — [`SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md`](product/docs/handover/SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md)
 - `1j` 2026-11-05 (session 20) — the pledge lands, and two guards that were green for the wrong reason — [`SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md`](product/docs/handover/SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md)

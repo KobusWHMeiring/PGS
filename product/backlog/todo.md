@@ -79,6 +79,24 @@ the generated index's "To Do" section.
 - [ ] Aquaculture, Wine and Input Supplier Attestation — forms and workflow (§17.1).
 - [ ] Complaints, hearings and discipline workflow (OPP §4.5–4.7).
 - [ ] Membership fee *collection* (fees are tracked only; no gateway).
+- [ ] **A surface that records a membership fee and its payment.** A6 (2026-11-05) built and
+      tested `record_membership_fee()` and `record_membership_payment()` (the APPLICANT → ACTIVE
+      transition, which OPP §2.3 and spec §7.7 tie to payment) and **no view calls them**: the
+      fee year is the group's (D39) and a self-registration must not write a `paid_on` it never
+      received. Until this exists, every applicant stays `APPLICANT` and unpaid, so A7's
+      eligibility gate passes for nobody in a running instance. It belongs with the committee's
+      work (A7 / C1) or a one-screen administrator page — decide which before the pilot.
+- [ ] **Approve the Q8 consent wording** (SELF_CHECK_PRD §11.6). A6 ships it as a **seeded draft**
+      with its two `[DECIDE]` markers, renders it as a DRAFT on the account step, and takes
+      consent against the exact version shown. Setting `ConsentText.approved_at` removes the
+      banner and changes nothing else; consents taken under a draft stay queryable
+      (`ConsentRecord.text.approved_at__isnull=True`). The retention period and the withdrawal
+      address are still the group's answers, and the address is also blocked on publishing the
+      administrator's contact details (below).
+- [ ] **UAT for the application flow.** A6 has 32 automated tests and no `tests/uat/` checklist:
+      the judgements left are the ones a person must make in a browser — does the four-step flow
+      read as one thing on a phone, is the consent block readable before it is ticked, and does
+      "Your part is done" leave a farmer with the right expectation about paying.
 
 ## Corpus and chat — found while building
 

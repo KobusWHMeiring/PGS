@@ -554,6 +554,33 @@ use:
 answer. "How long do you keep it" is the question a POPIA information officer asks first, and it is
 the one thing this PRD said it did not have.
 
+### 11.7 What A6 did with this draft (built 2026-11-05)
+
+A6 asked the question this section leaves open — *does an unapproved text block the account?* — and
+answered it in a way that keeps the demo walkable **and** the promise visible. Recorded here because
+the answer is the product owner's to overrule, and it is one data edit:
+
+- **The text is seeded data, not copy.** `core.services._seed.ACCOUNT_CONSENT`, version
+  `account-2026-11-05`, written into `ConsentText` with `approved_at` **null**. The `[DECIDE]` markers
+  are kept in the body and therefore rendered, so the two answers the group owes are on the page a
+  farmer reads, not only in this PRD.
+- **A draft is shown as a draft, and the account is allowed.** The account step renders a DRAFT
+  banner naming both markers and says the group has not approved the wording. The alternative —
+  refusing every account until approval — dead-ends the flow the demo exists to show, and §11.6's
+  "must not ship while either marker remains" is a release rule, not a walkthrough rule. **Approval
+  is one data edit** — `ConsentText.approved_at = now`; the banner disappears, nothing else changes,
+  and no migration is involved (spec §4.8).
+- **Consent is taken against the version on screen.** The step posts `consent_version` in a hidden
+  field and the service refuses a stale one (`ConsentTextChangedError`), so publishing new wording
+  while a form is open cannot record agreement to text that person did not read. A consent given
+  under a draft stays queryable — `ConsentRecord.objects.filter(text__approved_at__isnull=True)` is
+  the list to re-confirm or delete if the group rejects this wording.
+- **No consent text at all fails closed.** With no `ACCOUNT` row the page says the wording has not
+  been written and creates nothing; there is no checkbox without a text behind it.
+
+Still open, and unchanged by the build: the retention period, the withdrawal address, and whether
+`APPLICANT` is the right internal word for an account that has not applied.
+
 ## Pre-Flight Checklist
 
 - [x] Models in a domain module — `core/models/_selfcheck.py`, re-exported from `core/models/__init__.py`
