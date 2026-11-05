@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "banner": "pypdfium2",
+  "note": "Rendered from the committed PDFs by `scripts/render_shape_pages.py`. Both hashes are checked on every read (`knowledge/tests/shape_pages.py`): a swapped PDF or a hand-cropped image must fail loudly rather than quietly judging the key against different ink.",
+  "pages": {
+    "opp:2": {
+      "doc": "opp",
+      "pdf_page": 2,
+      "source": "pgs_docs/Outeniqua pgs principles, policies and procedures 2026.pdf",
+      "pdf_sha256": "d2e305aa9852200117ee15dbfac018376a6a05238a3d8fc87d35d29cd7142bae",
+      "image": "opp_p2.jpg",
+      "image_sha256": "07c664643e90c377fceae189b84ec8615880f6c57fd728424e1adc1cc087e0e7",
+      "dpi": 170,
+      "width": 1405,
+      "height": 1989,
+      "bytes": 242720
+    },
+    "saoso:86": {
+      "doc": "saoso",
+      "pdf_page": 86,
+      "source": "pgs_docs/saoso-version-2.1-2026.pdf",
+      "pdf_sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+      "image": "saoso_p86.jpg",
+      "image_sha256": "1cef5343451f50dba25b9c12855c85cdab3594b24016c47c92975b11de610f48",
+      "dpi": 170,
+      "width": 1445,
+      "height": 1870,
+      "bytes": 149050
+    },
+    "saoso:89": {
+      "doc": "saoso",
+      "pdf_page": 89,
+      "source": "pgs_docs/saoso-version-2.1-2026.pdf",
+      "pdf_sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+      "image": "saoso_p89.jpg",
+      "image_sha256": "cde3ee88643ac50d3b46124396885c8f9cfad2cc334264ecc932e06d4d6738ce",
+      "dpi": 170,
+      "width": 1445,
+      "height": 1870,
+      "bytes": 269763
+    },
+    "landscape:5": {
+      "doc": "landscape",
+      "pdf_page": 5,
+      "source": "pgs_docs/PGS Certification landscape_Final.pdf",
+      "pdf_sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+      "image": "landscape_p5.jpg",
+      "image_sha256": "7e283a7f6e8b35621d0aea6f5917c533b7ee823da5e149d8794e8025cb3fddfe",
+      "dpi": 170,
+      "width": 1988,
+      "height": 1406,
+      "bytes": 240890
+    },
+    "landscape:4": {
+      "doc": "landscape",
+      "pdf_page": 4,
+      "source": "pgs_docs/PGS Certification landscape_Final.pdf",
+      "pdf_sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+      "image": "landscape_p4.jpg",
+      "image_sha256": "2e6c7c792e416a1c3e473cb8b852fe71d8a1a9da129385e49aa49eabc4e3a48c",
+      "dpi": 170,
+      "width": 1988,
+      "height": 1406,
+      "bytes": 218841
+    },
+    "saoso:77": {
+      "doc": "saoso",
+      "pdf_page": 77,
+      "source": "pgs_docs/saoso-version-2.1-2026.pdf",
+      "pdf_sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+      "image": "saoso_p77.jpg",
+      "image_sha256": "e3b383f1ce71334555ed12dc40db6380f9ddb60d07fb801c5964c557b14d7581",
+      "dpi": 170,
+      "width": 1445,
+      "height": 1870,
+      "bytes": 265771
+    },
+    "landscape:6": {
+      "doc": "landscape",
+      "pdf_page": 6,
+      "source": "pgs_docs/PGS Certification landscape_Final.pdf",
+      "pdf_sha256": "93a4f96cf5879c5f11b44b0a5d5f65ff6e803667a10736a76f78e1720f31031f",
+      "image": "landscape_p6.jpg",
+      "image_sha256": "f600f9c96e6c692816eaf2753e1213038f6fc2f7a6243a00164213743fd82e3a",
+      "dpi": 170,
+      "width": 1988,
+      "height": 1406,
+      "bytes": 250115
+    }
+  }
+}
