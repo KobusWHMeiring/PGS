@@ -157,7 +157,11 @@ def build_data(arms: tuple[Arm, ...], items: tuple[Disagreement, ...]) -> dict:
 
 
 def build_html(arms: tuple[Arm, ...], items: tuple[Disagreement, ...]) -> str:
-    data = json.dumps(build_data(arms, items), sort_keys=True)
+    # Raw JSON, not HTML-escaped: a `<script type="application/json">` element holds text, not
+    # markup, so `&quot;` would reach JSON.parse literally (the page's script threw on exactly
+    # that the first time this ran in Chromium — `testing_hazards.md` §1.30). Only `<` needs
+    # escaping, and as a JSON escape so it parses back unchanged.
+    data = json.dumps(build_data(arms, items), sort_keys=True).replace("<", "\u003c")
     passing = {shape for arm in arms for shape in arm.passed} | set(PASSED_ELSEWHERE)
     set_aside = [case.key for case in SHAPES if case.key in passing]
     body = "".join(
@@ -166,7 +170,7 @@ def build_html(arms: tuple[Arm, ...], items: tuple[Disagreement, ...]) -> str:
     )
     return TEMPLATE.format(
         artefact=escape(ARTEFACT_NAME),
-        data=escape(data),
+        data=data,
         arms=_arm_table(arms),
         body=body,
         count=len(items),
