@@ -2056,6 +2056,57 @@ say so in the handover — `context.py --check`, `manage.py check`,
 `pytest --create-db` with `PDFTOTEXT_BIN=scripts/_no_extractor`. Do not read an import error in
 step 2 as a code failure until step 2 has named its interpreter.
 
+### 1.39 A boundary test whose samples never land on the boundary cannot see the rule
+
+A5's "the printed scale has no hole" test swept turnover in steps of 3 333 333 cents and
+compared each band's `max` against the next band's `min`. Both checks are true of
+**closed** bounds as well: with `min <= x <= max`, band B1 ends at 25 000 000 and B2
+starts at 25 000 000, so the "no gap" assertion still holds — the defect is an *overlap*
+of one cent, and no sampled value ever hit it.
+
+Evidence — the mutation that closed the bounds, run before the test was rewritten:
+
+    $ # covers(): `x < max` mutated to `x <= max`
+    $ pytest core/tests/test_fees.py -k test_the_printed_scale_has_no_hole
+    .  [100%]        # 1 passed — the test could not see it
+    $ # after probing band.min, band.min+1, band.max-1, band.max, band.max+1:
+    E  AssertionError: 25000000 cents matched ['B1', 'B2']
+
+Consequence: the test looked like it proved the property and proved only that the sweep
+skipped the boundaries. A gap-and-overlap property is decided entirely at the seams.
+
+Rule: probe every bound explicitly — `min`, `min + 1`, `max - 1`, `max`, `max + 1`, and
+assert that a band does **not** cover its own `max` — and keep the coarse sweep as a
+second, weaker net. Then run the mutation: if closing the bounds does not turn the test
+red, the test is about the sweep, not the scale.
+
+### 3.32 A scripted slice move still imports, and still loses what sat between the classes
+
+Cutting `MembershipFee`, `TurnoverBand` and `AssessmentFee` out of `_membership.py` was
+scripted: split the file at top-level `class` lines, move three blocks, write two files.
+`python -c "import core.models"` passed after the move. The suite did not.
+
+Evidence:
+
+    $ pytest core/tests/test_pledge.py -k uploaded_under_the_private_root
+      core/models/_membership.py:367: in location
+        return pledge_evidence_storage_location()
+    E   NameError: name 'pledge_evidence_storage_location' is not defined
+
+A `def` and a `@deconstructible` decorator sat **between** two `class` statements, so the
+block boundary swallowed them: the function travelled into `_fees.py` (which imported
+`os` and used it nowhere else, so nothing complained) and the decorator was stripped from
+the file that needed it. Both files imported; only a test that *writes a file* noticed.
+
+Consequence: an import check is not a move check. Anything that is not a `class` — a
+module-level function, a decorator, a constant between classes — is exactly what a
+class-boundary split loses, and it loses it silently.
+
+Rule: after a mechanical file move, run the tests that exercise the moved code's
+*behaviour* (a file write, a query, a save), not just `import`; and grep the new file for
+helpers it now owns but never calls. Better still, cut the boundary by hand and read the
+diff — the script saved a minute and cost a debug cycle.
+
 ## 5. Template for a new entry
 
 ```markdown

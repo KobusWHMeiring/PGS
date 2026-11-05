@@ -1,6 +1,6 @@
 # Handover — two strands in flight, and the joining flow is designed before it is built
 
-> ## START HERE — **MVP 1a sub-plan A is 3 of 8 tasks in; the pledge is recorded, not adjudicated**
+> ## START HERE — **MVP 1a sub-plan A is 4 of 8 tasks in; the fees are data and the gate is a service**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
 > a second agent is running D80's S2 (Docling) there. Nothing in this strand has touched `main`.
@@ -8,20 +8,22 @@
 > **Landed:** **A1** (`243cedd`) — `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`,
 > `MembershipFee`, migration `0010`, 19 tests. **A2** (`4e86a81`) — `CommitteePosition`,
 > `CommitteeTerm`, the OPP §VII roster, migration `0011`, 12 tests. **A3** (`a4b2e4b`) — `Pledge`,
-> `record_pledge`, migration `0012`, 30 tests. **D83** (`0cc2112` and session `1i`'s close) — the
-> pledge stays in the application. **Refactor** (`ab42443`) — `_core.py` cut at the spec's own seam:
-> the account stays, `_membership.py` takes the membership record and `Pledge`. Gate (its four steps
-> run with `python`; see `testing_hazards.md` §3.31): **1732 passed / 1 skipped / 8 xfailed in
-> 218.71 s** `--create-db`, `makemigrations --check` clean, `lint-imports` 1 kept / 0 broken,
-> context budgets 0 breaches.
+> `record_pledge`, migration `0012`, 30 tests. **A5** (`66977cb`) — `TurnoverBand`,
+> `AssessmentFee`, migration `0013`, the OPP §2.3 scale seeded, `declare_assessment_fee` and the
+> gate, 32 tests. **D83** (`0cc2112` and session `1i`'s close) — the pledge stays in the application.
+> **Two seam cuts, both driven by the 30 KB cap:** `_core.py` → `_membership.py` (`ab42443`), and
+> `_membership.py` → `_fees.py` (`66977cb`, the OPP's own §II seam). Gate (its four steps run with
+> `python`; drop the test DB first — `_scratch/a5/dropdb.py`, `testing_hazards.md` §3.15): **1759
+> passed / 1 skipped / 8 xfailed in 172.19 s** `--create-db`, `makemigrations --check` clean,
+> `lint-imports` 1 kept / 0 broken, context budgets 0 breaches.
 >
 > **Approved by the product owner on 2026-11-04:** `product/design/before_you_apply_prototype.html`,
 > the `/before-you-apply/` flow as a **stepped wizard** (5 question steps + result + account), built
 > from the D71 wording ledger and driven with Playwright. It is the build target for **A8** and is
 > labelled `DESIGN SPEC … Ready for implementation` at the top of the file.
 >
-> **What is next: A5 (fees).** Then A6 (application flow), B1 + B3 (the template's `self_check`
-> markers), and only then A8. A4 and A7 can move after A8. **Do not build A8 before A6**: its only
+> **What is next: A6 (application flow)** — the self-check's only exit. Then B1 + B3 (the
+> template's `self_check` markers), and only then A8. A4 and A7 can move after A8. **Do not build A8 before A6**: its only
 > exit is the application, and the PRD rejects a page that dead-ends on the contact chips.
 >
 > **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
@@ -42,6 +44,12 @@
 > `is_paid_up` is derived: a declaration does not roll over, and the flag records what the documents
 > said the day it was signed.
 >
+> **A5's finding worth knowing before A6:** the OPP §2.3 table as printed has a hole — *"Below
+> R 250,000"* then *"R 250,001 – R 500,000"* — so band bounds are stored half-open and the printed
+> wording is the `label`. `AssessmentFee` snapshots the band, its label and the amount; it never
+> re-reads the schedule. The guard is `assert_fees_paid_for_assessment(member, farm)` (membership
+> first, then the fee): **C1's `confirm_visit()` calls it** — A5 did not pre-build `FarmVisit`.
+>
 > **Still open, and blocking the account step only:** the third consent text (`SELF_CHECK_PRD` Q8) and
 > SMTP for email verification (`todo.md`).
 
@@ -53,8 +61,8 @@ display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness **and the MVP1a sub-plan A
 sessions** (`1i` onward)
 **Repo state:** **two worktrees.** `main` is the sibling strand (D80 S2 / D82 as of `b27b9a6`).
-This strand is `feat/mvp1a-visit` on top of `781cf37`: **A1, A2, A3, D83, the approved prototype,
-the model-seam refactor, five doc commits.** Neither has been merged. **Check it, do not quote it:**
+This strand is `feat/mvp1a-visit` on top of `781cf37`: **A1, A2, A3, A5, D83, the approved
+prototype, two model-seam cuts, six doc commits.** Neither has been merged. **Check it, do not quote it:**
 `git log --oneline 781cf37..HEAD`.
 
 **On this tree** (2026-11-03, session `1f`): `scripts/verify.sh` **green at 1671 passed /
@@ -88,6 +96,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1k` 2026-11-05 (session 21) — the fee scale is data, the gate is a service, and my own tests were the weak part — [`SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md`](product/docs/handover/SESSION_1k_2026-11-05_the-fee-scale-is-data-and-my-own-tests-were-the-weak-part.md)
 - `1j` 2026-11-05 (session 20) — the pledge lands, and two guards that were green for the wrong reason — [`SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md`](product/docs/handover/SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md)
 - `1i` 2026-11-04 (session 19) — the joining flow is designed before it is built — [`SESSION_1i_2026-11-04_the-joining-flow-designed-before-it-is-built.md`](product/docs/handover/SESSION_1i_2026-11-04_the-joining-flow-designed-before-it-is-built.md)
 - `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
