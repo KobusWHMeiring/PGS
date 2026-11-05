@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<!-- DECISION ARTIFACT (not a production template) | Outeniqua PGS — S5-b | 2026-11-05
+     Companion to product/backlog/In Progress/INGESTION_ENGINE_S5_PLAN.md §4–§5 and
+     INGESTION_ENGINE_PRD.md §3.16.
+     Self-contained: no CDN, no build step, no network. Answers autosave to localStorage. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S5-b — How do Appendix 2's 19 unread rows get their column meaning?</title>
+<style>
+  :root {
+    --bg:              #f4f6f2;
+    --surface:         #ffffff;
+    --surface-low:     #eaeee6;
+    --surface-high:    #dfe5da;
+    --accent:          #35604a;
+    --accent-soft:     #e4efe7;
+    --accent-line:     #b9cfc0;
+    --text:            #1c2620;
+    --muted:           #66756b;
+    --warn:            #8a5a1c;
+    --warn-soft:       #f7efe1;
+    --bad:             #7d2f2f;
+    --bad-soft:        #f7e7e7;
+    --radius-lg:       14px;
+    --radius-xl:       20px;
+    --shadow:          0 1px 2px rgba(28,38,32,.06), 0 6px 20px -8px rgba(28,38,32,.14);
+    --shadow-sticky:   0 2px 10px rgba(28,38,32,.10);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: var(--font); background: var(--bg); color: var(--text);
+    line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px 180px; }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    background: linear-gradient(160deg, var(--accent) 0%, #274936 100%);
+    color: #fff; padding: 44px 20px 38px; margin-bottom: 28px;
+  }
+  header.hero .inner { max-width: 940px; margin: 0 auto; }
+  header.hero .eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .78; margin: 0 0 10px; font-weight: 600;
+  }
+  header.hero h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.2; letter-spacing: -.01em; }
+  header.hero .q {
+    margin: 16px 0 0; padding: 14px 18px; background: rgba(255,255,255,.10);
+    border-left: 3px solid rgba(255,255,255,.55); border-radius: 0 10px 10px 0;
+    font-size: 17px; max-width: 68ch;
+  }
+  header.hero .meta {
+    margin-top: 18px; font-size: 13px; opacity: .82;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  header.hero .meta code { background: rgba(255,255,255,.14); padding: 1px 6px; border-radius: 5px; }
+
+  /* ---------- sections ---------- */
+  section { margin: 0 0 34px; }
+  h2 {
+    font-size: 20px; margin: 0 0 4px; letter-spacing: -.01em;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  h2 .part {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700;
+  }
+  .lede { color: var(--muted); margin: 0 0 18px; max-width: 72ch; }
+  h3 { font-size: 15px; margin: 22px 0 8px; }
+  p { margin: 0 0 12px; max-width: 74ch; }
+  a { color: var(--accent); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: var(--radius-lg); padding: 20px 22px; box-shadow: var(--shadow);
+    margin: 0 0 16px;
+  }
+  .card.tight { padding: 16px 18px; }
+  .card h3:first-child { margin-top: 0; }
+  .card.warn { background: var(--warn-soft); border-color: #e6d3b3; }
+  .card.bad  { background: var(--bad-soft);  border-color: #e3bcbc; }
+  .card.good { background: var(--accent-soft); border-color: var(--accent-line); }
+
+  code, pre { font-family: var(--mono); }
+  code { font-size: 13px; background: var(--surface-low); padding: 1px 5px; border-radius: 4px; }
+  pre {
+    font-size: 12.5px; line-height: 1.5; background: #1c2620; color: #e6efe8;
+    padding: 14px 16px; border-radius: 10px; overflow-x: auto; margin: 12px 0 16px;
+  }
+  pre .c { color: #93a89a; }
+
+  /* ---------- data table ---------- */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--surface-high); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: 2px 7px; border-radius: 999px;
+    border: 1px solid currentColor;
+  }
+  .badge.ok   { color: var(--accent); background: var(--accent-soft); }
+  .badge.no   { color: var(--bad); background: var(--bad-soft); }
+  .badge.open { color: var(--warn); background: var(--warn-soft); }
+
+  /* ---------- pipeline diagram ---------- */
+  .pipe { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 20px; }
+  .step {
+    flex: 1 1 200px; background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: var(--radius-lg); padding: 14px 16px; position: relative;
+    border-top: 4px solid var(--accent-line);
+  }
+  .step.has  { border-top-color: var(--accent); }
+  .step.none { border-top-color: var(--bad); background: var(--bad-soft); }
+  .step .page { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .step .what { font-size: 15px; font-weight: 600; margin: 4px 0 6px; }
+  .step .who  { font-size: 13px; color: var(--muted); }
+  .legend { font-size: 12px; color: var(--muted); display: flex; gap: 18px; flex-wrap: wrap; margin: -8px 0 18px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .swatch.a { background: var(--accent); }
+  .swatch.b { background: var(--bad); }
+  .swatch.c { background: var(--accent-line); }
+
+  /* ---------- band diagram ---------- */
+  .band { margin: 14px 0 8px; font-family: var(--mono); font-size: 12px; overflow-x: auto; }
+  .band .row { white-space: pre; }
+  .band .ruler { color: var(--muted); }
+  .band .cut { color: var(--accent); font-weight: 700; }
+
+  /* ---------- options ---------- */
+  .opt { border-left: 4px solid var(--accent-line); }
+  .opt .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .opt .head .id {
+    font-size: 12px; font-weight: 800; letter-spacing: .06em; color: #fff;
+    background: var(--accent); border-radius: 6px; padding: 2px 8px;
+  }
+  .opt .head h3 { margin: 0; font-size: 16px; }
+  .opt.rec { border-left-color: var(--accent); box-shadow: var(--shadow), inset 0 0 0 1px var(--accent-line); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0 0; }
+  @media (max-width: 720px) { .two { grid-template-columns: 1fr; } }
+  .two h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .two .for h4 { color: var(--accent); }
+  .two .against h4 { color: var(--bad); }
+  .two ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .two li { margin-bottom: 7px; }
+
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 14px 0;
+    font-size: 14px;
+  }
+  .callout b { color: var(--accent); }
+  .callout.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .callout.warn b { color: var(--warn); }
+
+  /* ---------- decision control ---------- */
+  .control { position: sticky; bottom: 0; z-index: 20; }
+  .picker {
+    background: var(--surface); border: 1px solid var(--surface-high);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0; box-shadow: var(--shadow-sticky);
+    padding: 16px 20px 12px; max-width: 940px; margin: 0 auto;
+  }
+  .picker .title { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+  .choices { display: flex; gap: 10px; flex-wrap: wrap; }
+  .choice {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    border: 1px solid var(--surface-high); border-radius: 999px; padding: 7px 14px;
+    font-size: 14px; background: var(--surface);
+  }
+  .choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .choice input { accent-color: var(--accent); margin: 0; }
+  .picker-actions { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    border-radius: 9px; padding: 8px 16px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff;
+  }
+  button.ghost { background: transparent; color: var(--accent); }
+  button:focus-visible, .choice:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .saved { font-size: 12px; color: var(--muted); }
+  textarea {
+    width: 100%; min-height: 110px; font: inherit; font-size: 14px; padding: 12px 14px;
+    border: 1px solid var(--surface-high); border-radius: 10px; background: var(--surface);
+    resize: vertical; margin-top: 8px;
+  }
+  textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  dialog {
+    border: none; border-radius: var(--radius-xl); padding: 0; max-width: 620px; width: calc(100% - 40px);
+    box-shadow: 0 24px 60px -20px rgba(28,38,32,.45);
+  }
+  dialog::backdrop { background: rgba(28,38,32,.42); }
+  dialog .body { padding: 22px 24px; }
+  dialog h3 { margin-top: 0; }
+  dialog pre { max-height: 220px; }
+  dialog .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+  @media print {
+    body { background: #fff; }
+    .control, dialog, header.hero .meta { display: none !important; }
+    .wrap { padding-bottom: 0; max-width: 100%; }
+    .card, .step, table { box-shadow: none !important; break-inside: avoid; }
+    header.hero { background: #274936 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    pre { background: #f2f4f1 !important; color: #1c2620 !important; border: 1px solid #ccc; }
+    a { color: #1c2620; text-decoration: none; }
+  }
+  @media (max-width: 430px) {
+    header.hero h1 { font-size: 24px; }
+    .band { font-size: 10.5px; }
+    th, td { padding: 7px 6px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <p class="eyebrow">Outeniqua PGS · ingestion engine · S5-b</p>
+    <h1>Appendix 2 has 30 rows and one arm read 11 of them</h1>
+    <p class="q">How do Appendix 2's 19 unread rows get their column meaning — and what does that
+    cost, given S5 may not run an extractor again?</p>
+    <div class="meta">
+      <span>Written 2026-11-05, session <code>1q</code></span>
+      <span>Repo <code>main</code> at <code>39f9764</code></span>
+      <span>Read time ~11 min</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2>How to read this <span class="part">not a proposal</span></h2>
+  <p class="lede">This is a decision document. It exists because S5-b has two defensible answers with
+  different failure modes, and because a page is the only form in which a future reader can audit
+  <em>why</em> one was taken.</p>
+  <div class="card tight">
+    <p style="margin:0">Everything in <b>Part 1</b> was produced by running something on this tree
+    today, and the command is quoted beside it. Where a claim is a reading of a document rather than
+    an execution, it says so. <b>Part 7</b> recommends one option; <b>Part 8</b> is where you decide,
+    and it exports a row for <code>PGS_PLATFORM_SPEC.md</code> §18.3.</p>
+  </div>
+  <div class="callout"><b>What S5 is, in one sentence.</b> Four tables in the corpus are still
+  reconstructed by Python instead of carried by the artefact; S5 turns each into an emitted
+  <code>&lt;!-- table --&gt;</code> block, proves it through the harness, and deletes the Python.
+  Session <code>1q</code> landed the first (Appendix 6a, 20 rows) and is now on the second.</div>
+</section>
+
+<section>
+  <h2><span class="part">Part 1</span> What is actually true</h2>
+  <p class="lede">Six measurements. The first three are why S5-b is a decision rather than a task.</p>
+
+  <h3>1. The paper prints Appendix 2 on three pages; the arm read one</h3>
+  <pre><span class="c">$ python _scratch/s5b_probe.py</span>
+rows per printed page: {76: 11, 77: 16, 78: 3} total 30</pre>
+  <p>The cached extractor responses are <b>per shape page</b>, not per document. Everything the
+  repository holds for Appendix 2 is one <code>qualifier</code> response covering PDF page 77, which
+  is <b>printed</b> page 76 — the eleven rows the S0 shape fixture names.</p>
+  <pre><span class="c">$ ls _scratch/adc/responses/</span>
+layout16pro__qualifier.json           <span class="c">&lt;- PDF 77 = printed 76, 11 rows</span>
+layout16pro__headerless_values.json   <span class="c">&lt;- Appendix 6a</span>
+layout16pro__column_major.json        <span class="c">&lt;- Appendix 7</span>
+... <span class="c">no response covers PDF 78 or 79</span></pre>
+  <p class="card warn" style="margin-top:12px">There is a trap here that cost me a probe run:
+  <code>APPENDIX_2_ROWS</code> records <b>printed</b> page numbers (76/77/78) while
+  <code>page_fixtures.pages()</code> is indexed by <b>PDF</b> page. SAOSO prints <code>pdf - 1</code>.
+  My first pass compared printed 77 against PDF 77 and reported every cell on pages 77 and 78 as
+  missing. The number below is the second, corrected run.</p>
+
+  <h3>2. The owner's 2026-10-21 review is already almost a locator set</h3>
+  <p>For each of the 41 non-empty cells, is it a contiguous run of the page once the printed line is
+  cut at the measured column boundary? <code>TABLE_BANDS</code> already holds that boundary
+  (<code>{76: 60, 77: 64, 78: 64}</code>, measured 2026-10-21 for exactly this purpose).</p>
+  <pre><span class="c">$ python _scratch/s5b_bands.py</span>
+cells that are a run of the band-sliced page: 39; not: 2</pre>
+  <table>
+    <tr><th>Measure</th><th class="num">Count</th><th>Verified by</th></tr>
+    <tr><td>Rows the paper prints in Appendix 2</td><td class="num">30</td><td><code>s5b_probe.py</code></td></tr>
+    <tr><td>Rows an extractor has read</td><td class="num">11</td><td><code>qualifier</code> shape page</td></tr>
+    <tr><td>Non-empty cells in the reviewed rows</td><td class="num">41</td><td><code>s5b_probe.py</code></td></tr>
+    <tr><td>Cells that are a run of the band-sliced page</td><td class="num">39</td><td><code>s5b_bands.py</code></td></tr>
+    <tr><td>Cells that are <em>not</em></td><td class="num">2</td><td><code>s5b_exceptions.py</code></td></tr>
+    <tr><td>Printed dividers inside the table</td><td class="num">7</td><td>all print as whole lines</td></tr>
+  </table>
+
+  <h3>3. The two exceptions are already known, and already named in the code</h3>
+  <div class="card tight">
+    <p><b>Row 10 — the seaweed row (printed 76).</b> Its condition ends
+    <code>…the minimum amount of solvent necessary is used for extraction; iii) fermentation.</code>
+    and <code>iii) fermentation.</code> is printed at the top of the <em>next</em> page.
+    <code>knowledge/tables.py</code> assumption 4 says so verbatim: <em>“Cross-page continuations are
+    merged by hand and recorded, not inferred.”</em> This is requirement 4's own case — “including a
+    row whose later half is on the next page”.</p>
+    <p style="margin-bottom:0"><b>Row 25 — the trace-elements cell (printed 77).</b> Fails on one
+    hyphen: the page prints <code>cobalt-</code> / <code>sulphate</code> across a line break. The
+    harness already has that rule (<code>table_harness._locate</code> splits at a hyphen and requires
+    both halves to be printed lines in order); the <em>emitter</em> does not.</p>
+  </div>
+
+  <h3>4. The dividers are expressible today</h3>
+  <pre><span class="c">$ python _scratch/s5b_probe.py</span>
+divider row  0 'I. PLANT AND ANIMAL ORIGIN'   printed on its page as a whole line: True
+divider row  1 'South African specific'       printed on its page as a whole line: True
+divider row  3 'South African specific'       printed on its page as a whole line: True
+divider row 14 'South African specific'       printed on its page as a whole line: True
+divider row 15 'II. MINERAL ORIGIN'           printed on its page as a whole line: True
+divider row 26 'III. MICROBIOLOGICAL'         printed on its page as a whole line: True
+divider row 28 'IV. OTHERS'                   printed on its page as a whole line: True</pre>
+  <p>The artefact format already has <code>&lt;!-- row-divider: … --&gt;</code>, the parser already
+  resolves it to <code>(text, kind)</code>, and R6 already claims each one exactly once. Nothing is
+  needed here beyond writing them.</p>
+
+  <h3>5. The arm's read of Appendix 2 is refused before it is a table</h3>
+  <pre><span class="c">$ python scripts/propose_tables.py --shape qualifier ...</span>
+layout16pro__qualifier.json table 1: headerRows[1] cell 0 covers 1x2 slots. A merged cell is a
+declaration the block format has no field for yet (S5 writes it with the paper in front of it);
+refusing rather than flattening it, because a flattened box is a cell the emitter cannot verify.</pre>
+  <p>That merged cell is the two-level header the page prints once
+  (<code>SUBSTANCES DESCRIPTION, COMPOSITIONAL / REQUIREMENTS</code> over
+  <code>CONDITIONS FOR USE</code>). It is the same class of problem S5-a solved for Appendix 6a with
+  the reviewed <code>columns</code> field — which is already built and merged.</p>
+
+  <h3>6. What S5-a left behind, measured</h3>
+  <pre><span class="c">$ python scripts/check_tables.py --doc saoso --rows 20</span>
+saoso: ok — 1 tables, 20 rows, 0 violations (table pages, recorded on the artefact)
+<span class="c">$ python scripts/build_corpus.py --doc opp --force</span>
+<span class="c">&lt;git status knowledge/corpus/opp.md: empty&gt;</span></pre>
+  <p>So the pipeline that would carry Appendix 2 exists, is green, and does not disturb the OPP.</p>
+</section>
+
+<section>
+  <h2><span class="part">Part 2</span> The shape of the problem</h2>
+  <p class="lede">Two facts pull in opposite directions, and the tension is the whole decision.</p>
+  <div class="two">
+    <div class="card good">
+      <h3>What the repository already has</h3>
+      <p style="margin-bottom:0">A <b>reviewed</b> 30-row pairing, signed by the owner on 2026-10-21,
+      with two tests proving the pairing against the paper — and a <b>measured</b> column boundary
+      per page in <code>TABLE_BANDS</code>. 39 of 41 cells are already locators the page prints.</p>
+    </div>
+    <div class="card bad">
+      <h3>What the repository may not do</h3>
+      <p style="margin-bottom:0">Run an extractor. The PRD is explicit: <em>“Do not re-open the
+      Document AI key and do not re-run the arm evaluation.”</em> And the one thing S5 exists to stop
+      is a person <b>typing</b> a table into the corpus.</p>
+    </div>
+  </div>
+  <p>So the question is not “how do we read the remaining 19 rows?”. It is: <b>is promoting an
+  existing reviewed pairing into a verified structure the same act as authoring a table?</b></p>
+  <div class="callout"><b>The distinction that decides it.</b> A <em>cell</em> is characters someone
+  wrote into the corpus. A <em>locator</em> is words used only to find where the page already holds
+  it — the emitter refuses anything it cannot find and splices out the page's own characters. The
+  reviewed rows can be promoted only if they enter as locators, every one of which the emitter
+  re-verifies. That is testable, and the test is cheap.</div>
+  <p>The asymmetry that makes this urgent rather than interesting: <b>Appendix 7 needs the same
+  capability</b>. Its cells also wrap inside a column (<code>Aeration or oxygenation</code> /
+  <code>using gaseous oxygen</code>, with <code>Air,</code> beside it on the same printed line).
+  A column-boundary declaration built once serves both tables.</p>
+</section>
+
+<section>
+  <h2><span class="part">Part 3</span> The options</h2>
+  <p class="lede">Three real options, plus one that is not available and should be named so nobody
+  proposes it again.</p>
+
+  <!-- A -->
+  <div class="card opt rec">
+    <div class="head"><span class="id">A</span><h3>Declare the column band and the two continuations; emit all 30 rows</h3></div>
+    <p>Promote the reviewed rows to locators. Add a reviewed <code>band:</code> declaration (the
+    measured column start, per page) so the emitter cuts a cell at the neighbouring column, extend the
+    continuation branch to honour it, teach the emitter the hyphen rule the harness already has, and
+    declare the seaweed row's cross-page tail. Thirty rows, seven dividers, one block.
+    <code>APPENDIX_2_ROWS</code>, <code>TABLE_ROWS</code>, <code>rows_for</code> and the
+    <code>chunks_for_rows</code> path all go.</p>
+
+    <div class="band" aria-label="Diagram: one printed line, cut at the measured column band">
+<span class="ruler">          column 0                                        60                    </span>
+<span class="row">page 76   Farmyard manure, slurry and urine    <span class="cut">|</span>   Shall not constitute the main</span>
+<span class="row">                                             <span class="cut">|</span>   source of nitrogen in the</span>
+<span class="row">                                             <span class="cut">|</span>   absence of complimentary and</span>
+<span class="ruler">                                     band cut <span class="cut">^</span>  (TABLE_BANDS[76] = 60)</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:0">The cut is the declaration. Left of it
+    is the substance cell, right of it the condition cell; the emitter still slices the page's own
+    characters, so a cell it cannot find is still a refusal by name.</p>
+
+    <div class="two">
+      <div class="for"><h4>For</h4><ul>
+        <li>39 of 41 cells are <em>already</em> runs of the band-sliced page — this is verification, not
+        authoring (Part 1, measurement 2).</li>
+        <li>Deletes the bespoke handling, which is the PRD's §6 criterion — the only option that does.</li>
+        <li>The band declaration is shared with Appendix 7 (S5-c), so one capability closes two slices.</li>
+        <li>The two exceptions are requirement 4's own case and the harness's existing hyphen rule —
+        neither is new semantics.</li>
+      </ul></div>
+      <div class="against"><h4>Against</h4><ul>
+        <li>Three code changes to the emitter at once (band, hyphen, continuation) — each must be
+        refused-then-declared, so it is the most expensive option by hours.</li>
+        <li>It makes reviewed data a locator source, which is a precedent. If that precedent is wrong,
+        it is wrong in a way that outlives the slice.</li>
+        <li><code>TABLE_BANDS</code> is currently only used to <em>verify</em>; using it to
+        <em>slice</em> changes what the number means, and the docstring must say so.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="card opt">
+    <div class="head"><span class="id">B</span><h3>Emit the 11 rows the arm actually read</h3></div>
+    <p>Take the <code>qualifier</code> page as a block — the reviewed <code>columns</code> field
+    handles its merged header — and leave rows 12–30 as they are.</p>
+    <div class="pipe">
+      <div class="step has"><div class="page">printed 76</div><div class="what">11 rows</div><div class="who">a block, emitted</div></div>
+      <div class="step none"><div class="page">printed 77</div><div class="what">16 rows</div><div class="who">still interleaved prose</div></div>
+      <div class="step none"><div class="page">printed 78</div><div class="what">3 rows</div><div class="who">still interleaved prose</div></div>
+    </div>
+    <div class="two">
+      <div class="for"><h4>For</h4><ul>
+        <li>Cheapest by far: one page, one declaration that already exists.</li>
+        <li>Every character is the arm's own read — nothing is promoted.</li>
+        <li>Proves the band is not needed, if that turns out to be true.</li>
+      </ul></div>
+      <div class="against"><h4>Against</h4><ul>
+        <li><b>Deletes nothing.</b> <code>APPENDIX_2_ROWS</code> must stay for the 19, so
+        <code>TABLE_ROWS</code>/<code>rows_for</code>/<code>chunks_for_rows</code> all stay.</li>
+        <li>Two storages for one table — the artefact block for page 76 and Python for the rest.
+        That is worse than either end state, and it is new.</li>
+        <li>The ingest would have to choose per page, which is a second rule nobody asked for.</li>
+        <li>PRD §6's “the bespoke handling is deleted” stays unmet, so the PRD stays open.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="card opt">
+    <div class="head"><span class="id">C</span><h3>Stop at Appendix 6a and close S5 as “partly landed”</h3></div>
+    <p>Ship what session <code>1q</code> already has (6a is a block, 20 chunks carry column meaning,
+    the Python is deleted for 6a), record Appendix 2 and 7 as named debt, and move on to other work.</p>
+    <div class="two">
+      <div class="for"><h4>For</h4><ul>
+        <li>Honest, already true, and zero risk — it is the current state.</li>
+        <li>The PRD's own §7 risk table says a hand-review “fix” for 6a/7 is the thing to avoid;
+        stopping avoids it.</li>
+        <li>Frees the next session for a differently-shaped slice.</li>
+      </ul></div>
+      <div class="against"><h4>Against</h4><ul>
+        <li>Appendix 2's 30 rows keep no column meaning in the artefact, and its quote-pairing risk
+        (the straw/wood defect this PRD opens with) stays live for 19 rows.</li>
+        <li>S5 is the <em>last</em> slice. Leaving it open leaves the PRD open indefinitely, and the
+        next session re-derives Part 1 to decide again.</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="card opt" style="opacity:.85">
+    <div class="head"><span class="id" style="background:var(--muted)">D</span><h3>Run the Layout Parser once on printed 77–78 <span class="badge no">not available</span></h3></div>
+    <p>The clean answer on paper: one arm call, three pages, complete structure. It is excluded by
+    the PRD's own constraint (<em>“do not re-open the Document AI key, do not re-run the arm
+    evaluation”</em>) and by requirement 10's spirit — the gate must not need an extractor. Recorded
+    so that nobody re-proposes it as a fresh idea.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="part">Part 4</span> What the repository's own rules say</h2>
+  <p class="lede">Including the one that argues against my recommendation.</p>
+  <table>
+    <tr><th>Rule, quoted</th><th>Where</th><th>Argues for</th><th>Does it hold here?</th></tr>
+    <tr>
+      <td>“Code encodes the PGS process; data encodes the standard and the group … a retarget must not require a migration.”</td>
+      <td><code>build_principles.md</code> §I</td>
+      <td><b>A</b></td>
+      <td>Yes — 30 rows as committed data in the artefact, found by sha256.</td>
+    </tr>
+    <tr>
+      <td>“Appendix 6a/7 are ‘fixed’ by another hand review.” (a risk to mitigate, listed as S5's own risk)</td>
+      <td>PRD §7</td>
+      <td><b>C</b>, and against A</td>
+      <td><b>Partly.</b> A is not a hand review — the review exists and is promoted to locators — but it is adjacent to that risk, and the mitigation must be a guard, not a promise.</td>
+    </tr>
+    <tr>
+      <td>“A quote remains a substring of the stored artefact text.” (requirement 9)</td>
+      <td>PRD §4</td>
+      <td><b>A</b></td>
+      <td>Yes, and only A satisfies it: today the 30 rows are quoted from text the artefact does not hold.</td>
+    </tr>
+    <tr>
+      <td>“The gate needs no extractor.” (requirement 10)</td>
+      <td>PRD §4</td>
+      <td>against <b>D</b></td>
+      <td>Yes — A adds no extractor to the gate; it reads the committed page fixtures.</td>
+    </tr>
+    <tr>
+      <td>“Refuse first, declare second.”</td>
+      <td>S5 brief, §3.15, <code>testing_hazards</code></td>
+      <td><b>A</b>, with a cost</td>
+      <td>Yes — and it is why A is measured in days, not hours: three capabilities, each needing a red test first.</td>
+    </tr>
+    <tr>
+      <td>“A test that passes for the wrong reason is worse than no test.”</td>
+      <td><code>AGENTS.md</code>; hazards §1.5, §3.34</td>
+      <td><b>A</b></td>
+      <td>Yes — and the exception probe in Part 1 is the example: my first run would have “proved” 23 cells missing.</td>
+    </tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="part">Part 5</span> Comparison, unweighted</h2>
+  <p class="lede">No scores. The criteria are stated and the reader weighs them — a matrix of invented
+  numbers reads as evidence and is not.</p>
+  <table>
+    <tr>
+      <th>Criterion</th><th>A — band + continuations</th><th>B — 11 rows</th><th>C — stop here</th>
+    </tr>
+    <tr><td>Deletes the bespoke handling</td><td><span class="badge ok">yes</span></td><td><span class="badge no">no</span></td><td><span class="badge no">no</span></td></tr>
+    <tr><td>Appendix 2's rows carry column meaning in the artefact</td><td>all 30</td><td>11 of 30</td><td>none</td></tr>
+    <tr><td>Requirement 9 (quote is a substring of the artefact)</td><td><span class="badge ok">satisfied</span></td><td><span class="badge no">19 rows break it</span></td><td><span class="badge no">break it</span></td></tr>
+    <tr><td>New reviewed declarations</td><td>band, cross-page tail</td><td>none</td><td>none</td></tr>
+    <tr><td>New emitter capability</td><td>band cut + hyphen + tail</td><td>none</td><td>none</td></tr>
+    <tr><td>Reuses what S5-a built</td><td>reviewed <code>columns</code>, pass substitution</td><td>reviewed <code>columns</code></td><td>—</td></tr>
+    <tr><td>Also unblocks Appendix 7 (S5-c)</td><td><span class="badge ok">yes — same band</span></td><td><span class="badge no">no</span></td><td><span class="badge no">no</span></td></tr>
+    <tr><td>Two storages for one table</td><td>no</td><td><span class="badge no">yes</span></td><td>one, but the wrong one</td></tr>
+    <tr><td>Guard that the review is not authoring</td><td>possible: emitter refuses a locator the page lacks</td><td>n/a</td><td>n/a</td></tr>
+    <tr><td>Effort</td><td>largest</td><td>smallest</td><td>zero</td></tr>
+    <tr><td>Leaves the PRD closable</td><td><span class="badge ok">yes, with S5-c</span></td><td><span class="badge open">no</span></td><td><span class="badge open">no</span></td></tr>
+  </table>
+  <div class="callout warn"><b>The one that decides it.</b> B and C both leave two storages or the
+  wrong one, and both leave requirement 9 broken for 19 rows — the exact defect this PRD was opened
+  to close. A is the only option that ends the bespoke path, and the measurement in Part 1 says it
+  costs verification rather than authorship.</div>
+</section>
+
+<section>
+  <h2><span class="part">Part 6</span> Recommendation</h2>
+  <div class="card good">
+    <p><b>A — declare the band and the two continuations, and emit all 30 rows.</b> In this order, each
+    step refused-then-declared:</p>
+    <ol>
+      <li><b>The band.</b> A red test that the emitter refuses a cell whose words cross the declared
+      column boundary; then <code>band:</code> in <code>saoso.reviewed.json</code> per page, cut with
+      the already-measured <code>TABLE_BANDS</code> number. <code>TABLE_BANDS</code>' docstring changes
+      from “used to verify” to “used to slice, and verified by <code>test_tables.py</code>”.</li>
+      <li><b>The hyphen.</b> A red test for <code>cobalt-</code> / <code>sulphate</code>; then the
+      emitter adopts the rule the harness already has, word-boundary checked.</li>
+      <li><b>The cross-page tail.</b> A red test for the seaweed row; then an explicit
+      <code>tail:</code> declaration naming <code>iii) fermentation.</code> and the page it prints
+      on — requirement 4's own case, declared rather than inferred.</li>
+      <li><b>The block.</b> Emit, diff, `check_tables --doc saoso --rows 30,20`, delete
+      <code>APPENDIX_2_ROWS</code>/<code>TABLE_ROWS</code>/<code>rows_for</code>/<code>chunks_for_rows</code>.</li>
+    </ol>
+    <p style="margin-bottom:0"><b>What it changes:</b> Appendix 2's 30 chunks carry their column
+    meaning; the artefact holds the pairing; the ingest has one path; the PRD's §6 loses two of its
+    five open criteria. <b>What it does not change:</b> the reviewed <em>pairing</em> — that was signed
+    in 2026-10-21 and no locator can alter it.</p>
+  </div>
+  <h3>What would change my mind</h3>
+  <ul>
+    <li><b>If more than a handful of band-sliced cells fail.</b> Today it is 2 of 41. If step 1's test
+    shows the band does not fit the page — say more than five cells crossing it — then the review is
+    not a locator set and A becomes authoring in disguise. Take B and record why.</li>
+    <li><b>If the cross-page tail turns out to be common.</b> One declared tail is a declaration; five
+    is a pattern, and a pattern wants the arm's page range, not a per-cell exception.</li>
+    <li><b>If Appendix 7's band needs a different shape</b> (a leading gutter <em>plus</em> four
+    columns). Then the band is Appendix 2's alone and A's cross-slice benefit disappears — but A is
+    still the only option that deletes the bespoke handling.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="part">Part 7</span> Your decision</h2>
+  <p class="lede">Pick one, add a note if you disagree with Part 6, and export — the export is a
+  §18.3-shaped row plus your note, ready to paste.</p>
+  <div class="card">
+    <label for="notes" style="font-weight:600;font-size:14px">Notes</label>
+    <textarea id="notes" placeholder="Anything the recommendation missed, or the condition you attach to your choice. e.g. “A, but only if the band fails fewer than 3 cells.”"></textarea>
+    <p class="saved" id="saved" aria-live="polite" style="margin:12px 0 0">Saved locally as you type.</p>
+  </div>
+</section>
+
+</div>
+
+<div class="control">
+  <div class="picker">
+    <div class="title">S5-b — Appendix 2's 19 unread rows</div>
+    <div class="choices" role="radiogroup" aria-label="Choose one option">
+      <label class="choice"><input type="radio" name="s5b" value="A"> A — band + continuations, 30 rows</label>
+      <label class="choice"><input type="radio" name="s5b" value="B"> B — emit the 11 the arm read</label>
+      <label class="choice"><input type="radio" name="s5b" value="C"> C — stop at Appendix 6a</label>
+      <label class="choice"><input type="radio" name="s5b" value="other"> Something else</label>
+    </div>
+    <div class="picker-actions">
+      <button id="export" type="button">Export row</button>
+      <button id="clear" type="button" class="ghost">Clear</button>
+      <span class="saved" id="status">No choice recorded yet.</span>
+    </div>
+  </div>
+</div>
+
+<dialog id="out">
+  <div class="body">
+    <h3>Paste this into <code>PGS_PLATFORM_SPEC.md</code> §18.3</h3>
+    <pre id="text"></pre>
+    <div class="row">
+      <button id="copy" type="button">Copy</button>
+      <button id="close" type="button" class="ghost">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "pgs.s5b.appendix2";
+  var LABELS = {
+    A: "band declaration plus the two continuations; emit all 30 rows and delete APPENDIX_2_ROWS",
+    B: "emit only the 11 rows the arm read; keep APPENDIX_2_ROWS for the other 19",
+    C: "stop at Appendix 6a; record Appendix 2 and 7 as named debt and leave the PRD open",
+    other: "a different answer (see the note)"
+  };
+  var radios = document.querySelectorAll('input[name="s5b"]');
+  var notes = document.getElementById("notes");
+  var status = document.getElementById("status");
+  var saved = document.getElementById("saved");
+
+  function read() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function write(data) {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* private mode */ }
+  }
+  function load() {
+    var data = read();
+    if (data.choice) {
+      Array.prototype.forEach.call(radios, function (r) { r.checked = (r.value === data.choice); });
+    }
+    if (data.notes) { notes.value = data.notes; }
+    paint();
+  }
+  function chosen() {
+    var found = null;
+    Array.prototype.forEach.call(radios, function (r) { if (r.checked) { found = r.value; } });
+    return found;
+  }
+  function paint() {
+    var c = chosen();
+    status.textContent = c
+      ? "Recorded: " + c + (read().when ? " (" + read().when + ")" : "")
+      : "No choice recorded yet.";
+  }
+  function persist() {
+    write({ choice: chosen(), notes: notes.value, when: new Date().toISOString().slice(0, 16).replace("T", " ") });
+    paint();
+    saved.textContent = "Saved locally " + new Date().toLocaleTimeString() + ".";
+  }
+
+  Array.prototype.forEach.call(radios, function (r) { r.addEventListener("change", persist); });
+  notes.addEventListener("input", persist);
+
+  document.getElementById("export").addEventListener("click", function () {
+    var c = chosen();
+    if (!c) { status.textContent = "Choose an option first."; return; }
+    var when = new Date().toISOString().slice(0, 10);
+    var row = "| D86 | Appendix 2's 19 unread rows: how they get their column meaning | " +
+      c + " — " + LABELS[c] + " | S5-b exploration, " + when +
+      (notes.value.trim() ? " — reviewer note: " + notes.value.trim().replace(/\s+/g, " ") : "") + " |";
+    document.getElementById("text").textContent = row;
+    document.getElementById("out").showModal();
+  });
+  document.getElementById("close").addEventListener("click", function () {
+    document.getElementById("out").close();
+  });
+  document.getElementById("copy").addEventListener("click", function () {
+    var text = document.getElementById("text").textContent;
+    if (navigator.clipboard) { navigator.clipboard.writeText(text); }
+    document.getElementById("copy").textContent = "Copied";
+    setTimeout(function () { document.getElementById("copy").textContent = "Copy"; }, 1400);
+  });
+  document.getElementById("clear").addEventListener("click", function () {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    Array.prototype.forEach.call(radios, function (r) { r.checked = false; });
+    notes.value = "";
+    status.textContent = "No choice recorded yet.";
+    saved.textContent = "Saved locally as you type.";
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
