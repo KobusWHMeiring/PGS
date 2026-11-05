@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Before you apply — prototype (Task A8 / D71)</title>
+<!--
+  PROTOTYPE — product/design/before_you_apply_prototype.html
+  Not a production template. Never deployed. Task A8 is this page; the words are
+  D71's ledger (product/design/d71_self_check_questions.html), generated from it
+  rather than retyped. Design: DESIGN.md (brand-* tokens, Lora + Mulish, >=44px).
+
+  Deliberately missing #1: the third consent text (SELF_CHECK_PRD Q8, undecided) is a
+  visible placeholder chip, per DESIGN.md rule 8 — never plausible-looking fake copy.
+  Deliberately missing #2: the real exit. D83 puts the pledge inside the application,
+  which is Task A6 and does not exist yet.
+-->
+<style>
+@font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;src:url("../../core/static/fonts/lora-normal.woff2") format("woff2")}
+@font-face{font-family:"Lora";font-style:italic;font-weight:400 700;font-display:swap;src:url("../../core/static/fonts/lora-italic.woff2") format("woff2")}
+@font-face{font-family:"Mulish";font-style:normal;font-weight:300 700;font-display:swap;src:url("../../core/static/fonts/mulish-normal.woff2") format("woff2")}
+
+:root{
+  --brand-cream:#fdfbf7; --brand-creamWarm:#f6f1e7; --brand-sageLight:#f3ece0; --brand-sand:#e6dece;
+  --brand-charcoal:#282622; --brand-muted:#6b665d; --brand-forestDark:#242d1e; --brand-forest:#323e2a;
+  --brand-forestDeep:#1a2116; --brand-ochre:#b87b2e; --brand-ochreDark:#9c641e; --brand-ochreInk:#8a6828;
+  --brand-ochreLight:#f9f1e2; --brand-moss:#425337;
+  --font-serif:"Lora",Georgia,"Times New Roman",serif;
+  --font-sans:"Mulish",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius-xs:.375rem; --radius-sm:.5rem; --radius-md:.75rem; --radius-lg:1rem; --radius-pill:9999px;
+  --shadow-card:0 1px 3px rgb(40 38 34/.08),0 1px 2px rgb(40 38 34/.04);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--brand-cream);color:var(--brand-charcoal);
+  font-family:var(--font-sans);font-size:16px;line-height:1.625;
+  font-feature-settings:"cv02","cv03","cv04","cv11";-webkit-font-smoothing:antialiased}
+.serif,h1,h2,h3{font-family:var(--font-serif);font-weight:400;letter-spacing:-.015em;line-height:1.2}
+h1{font-size:clamp(1.9rem,4vw,2.75rem);margin:0 0 14px}
+h2{font-size:clamp(1.4rem,2.6vw,1.85rem);margin:0 0 6px}
+h3{font-size:1.0625rem;margin:0}
+p{margin:0 0 12px}
+a{color:var(--brand-ochreInk)}
+a:hover{color:var(--brand-ochreDark)}
+:focus-visible{outline:2px solid var(--brand-ochre);outline-offset:2px;border-radius:4px}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+.eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--brand-ochreInk);margin:0 0 8px}
+.muted{color:var(--brand-muted)}
+.small{font-size:.8125rem}
+
+.proto{background:var(--brand-forest);color:var(--brand-ochreLight);font-size:.75rem;
+  padding:8px 20px;letter-spacing:.02em}
+.proto strong{color:#fff;letter-spacing:.08em;text-transform:uppercase;font-size:.6875rem;margin-right:8px}
+
+header.site{position:sticky;top:0;z-index:30;background:var(--brand-cream);
+  border-bottom:1px solid var(--brand-sand)}
+header.site .bar{max-width:1100px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px}
+.mark{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.mark img{width:34px;height:34px;object-fit:contain}
+.mark .wm{font-size:.6875rem;font-weight:700;line-height:1.2;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--brand-forestDark)}
+.mark .wm em{display:block;font-style:normal;font-weight:400;letter-spacing:.13em;
+  color:var(--brand-muted);font-size:.625rem}
+header.site nav{margin-left:auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header.site nav a{font-size:.75rem;text-transform:uppercase;letter-spacing:.09em;
+  text-decoration:none;color:var(--brand-charcoal);min-height:44px;display:inline-flex;align-items:center}
+header.site nav a:hover{color:var(--brand-ochreDark)}
+.pill{border:1px solid var(--brand-sand);border-radius:var(--radius-pill);padding:0 12px;
+  font-size:.6875rem;font-weight:700;letter-spacing:.08em;min-height:32px;display:inline-flex;
+  align-items:center;gap:6px;color:var(--brand-muted)}
+
+.band{padding:44px 0}
+.band--warm{background:var(--brand-creamWarm)}
+.band--sage{background:var(--brand-sageLight)}
+.band--dark{background:var(--brand-forest);color:var(--brand-cream)}
+.band--dark .lead,.band--dark .muted{color:rgb(253 251 247/.78)}
+.band--dark h2,.band--dark h3{color:#fff}
+.lead{font-size:1.0625rem;color:var(--brand-muted);max-width:60ch;margin-bottom:22px}
+.lead strong{color:var(--brand-forestDark)}
+
+.qs{display:grid;gap:14px}
+.q{background:var(--brand-cream);border-radius:var(--radius-md);padding:18px 18px 14px;
+  box-shadow:var(--shadow-card)}
+.q__head{display:flex;gap:10px;align-items:baseline;margin-bottom:6px}
+.q__id{font-size:.6875rem;font-weight:700;letter-spacing:.08em;color:var(--brand-ochreInk);
+  min-width:22px;font-variant-numeric:tabular-nums}
+.help{font-size:.8125rem;color:var(--brand-muted);margin:0 0 12px}
+.opts{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.opts--wrap{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  grid-auto-columns:auto}
+.opt{position:relative;display:flex;align-items:center;gap:9px;min-height:44px;padding:9px 13px;
+  border:1px solid var(--brand-sand);border-radius:var(--radius-pill);cursor:pointer;
+  font-size:.875rem;background:var(--brand-cream);transition:background .15s,border-color .15s}
+.opt:hover{background:var(--brand-sageLight)}
+.opt input{accent-color:var(--brand-forest);width:16px;height:16px;margin:0;flex:0 0 auto}
+.opt:has(input:checked){background:#eef2e8;border-color:var(--brand-forest)}
+.opt:has(input:checked) span{font-weight:600}
+.opt--consent{border-radius:var(--radius-sm);align-items:flex-start}
+.opt--consent strong{display:block;font-weight:650;font-size:.9375rem}
+.opt--consent em{display:block;font-style:normal;font-size:.8125rem;color:var(--brand-muted);margin-top:2px}
+.consent[data-locked="true"]{opacity:.55}
+.note{width:100%;margin-top:10px;padding:10px 12px;font-family:var(--font-sans);font-size:.875rem;
+  border:1px solid var(--brand-sand);border-radius:var(--radius-sm);background:var(--brand-cream);
+  color:var(--brand-charcoal);resize:vertical}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.8125rem;font-weight:650;margin-bottom:5px}
+.field .hint{font-size:.75rem;font-weight:400;color:var(--brand-muted)}
+.field input{width:100%;min-height:44px;padding:10px 12px;font-family:var(--font-sans);font-size:.9375rem;
+  border:1px solid var(--brand-sand);border-radius:var(--radius-sm);background:var(--brand-cream);
+  color:var(--brand-charcoal)}
+details.why{margin-top:10px;border-top:1px solid var(--brand-sand);padding-top:8px}
+details.why summary{cursor:pointer;font-size:.75rem;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--brand-ochreInk);list-style:none;min-height:32px;
+  display:flex;align-items:center;gap:6px}
+details.why summary::-webkit-details-marker{display:none}
+details.why summary::before{content:"+";font-size:.9rem;line-height:1}
+details.why[open] summary::before{content:"-"}
+.why__body{font-size:.8125rem;color:var(--brand-muted);padding:4px 0 2px}
+.why__body p{margin:0 0 8px}
+.why__ref{font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--brand-ochreInk);margin:0}
+
+.submit{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:26px}
+.btn{font-family:var(--font-sans);font-size:.875rem;font-weight:700;letter-spacing:.04em;
+  min-height:48px;padding:0 26px;border-radius:var(--radius-pill);border:1px solid var(--brand-forest);
+  background:var(--brand-forest);color:var(--brand-cream);cursor:pointer;
+  transition:background .15s,transform .15s;text-decoration:none;display:inline-flex;align-items:center}
+.btn:hover{background:var(--brand-forestDark)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.counter{font-size:.8125rem;color:var(--brand-muted);font-variant-numeric:tabular-nums}
+
+.mirror{font-family:var(--font-serif);font-size:clamp(1.25rem,2.6vw,1.6rem);line-height:1.45;
+  color:#fff;margin:0 0 22px;max-width:34ch}
+.mirror b{color:var(--brand-ochreLight);font-weight:700}
+.fixed{background:rgb(253 251 247/.07);border-left:3px solid var(--brand-ochreLight);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:13px 17px;margin:0 0 12px;
+  font-size:.9375rem;color:#fff}
+.fixed b{color:var(--brand-ochreLight)}
+.todo{list-style:none;padding:0;margin:0 0 6px;display:grid;gap:8px}
+.todo li{display:flex;gap:10px;align-items:flex-start;font-size:.9375rem}
+.todo .dot{width:7px;height:7px;border-radius:50%;background:var(--brand-ochreLight);
+  margin-top:9px;flex:0 0 auto}
+.todo cite{display:block;font-style:normal;font-size:.6875rem;letter-spacing:.06em;
+  text-transform:uppercase;color:rgb(253 251 247/.6);margin-top:2px}
+.note-box{background:rgb(253 251 247/.07);border-radius:var(--radius-sm);padding:14px 17px;
+  margin:16px 0 0;font-size:.875rem}
+.note-box h4{margin:0 0 6px;font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--brand-ochreLight)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:var(--radius-pill);
+  border:1px dashed var(--brand-ochre);color:var(--brand-ochre);background:transparent;
+  padding:3px 11px;font-size:.6875rem;font-weight:700;letter-spacing:.04em}
+.band--dark .chip{border-color:var(--brand-ochreLight);color:var(--brand-ochreLight)}
+h4.block{font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--brand-ochreInk);margin:26px 0 10px}
+.band--dark h4.block{color:var(--brand-ochreLight)}
+footer.site{background:var(--brand-forestDeep);color:rgb(253 251 247/.7);padding:26px 0;
+  font-size:.8125rem}
+footer.site .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+[hidden]{display:none !important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+@media print{
+  .proto,header.site,footer.site,#account,.submit{display:none!important}
+  body{background:#fff}
+  .band,.band--dark{background:#fff;color:#000;padding:18px 0}
+  .band--dark h2,.band--dark h3,.mirror,.fixed{color:#000}
+  .q{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="proto"><strong>Prototype</strong> Design only, not deployed. The 20 questions and every word of them come from the D71 ledger. The exit — applying — is Task A6 and does not exist yet.</div>
+
+<header class="site">
+  <div class="bar">
+    <a class="mark" href="#">
+      <img src="assets/logo_mark.png" alt="">
+      <span class="wm">Outeniqua PGS<em>Natural &amp; Organic</em></span>
+    </a>
+    <nav>
+      <a href="#">Organics</a><a href="#">How it works</a><a href="#">Documents</a>
+      <a href="#">Members</a><a href="#">Ask</a>
+      <span class="pill">EN · AF</span>
+      <a href="#">Become a member</a>
+    </nav>
+  </div>
+</header>
+
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">Before you apply</p>
+    <h1>Find out what a visit checks — before you spend a day on a form</h1>
+    <p class="lead">Twenty questions, about five minutes, no account needed. You get back a list of what
+      to gather, a count of the records you already hold, and the two facts nobody publishes: when your
+      land could be assessable, and which fee band you are in.</p>
+    <p class="lead"><strong>This is not a test and it is not an application.</strong> Nothing you answer
+      here decides anything. The farm visit decides, and it happens after you apply.</p>
+    <div class="submit">
+      <a class="btn" href="#group-A">Start</a>
+      <span class="counter" id="counter">0 of 20 answered</span>
+    </div>
+  </div>
+</section>
+
+<form id="check">
+<section class="band" id="group-A">
+    <div class="wrap">
+      <p class="eyebrow">Part A</p>
+      <h2 class="serif">About your farm</h2>
+      <p class="lead">Five things about the farm. Bands only — the application asks for exact figures.</p>
+      <div class="qs"><div class="q" id="q-A1">
+    <div class="q__head">
+      <span class="q__id">A1</span>
+      <h3 class="q__title">What do you produce?</h3>
+    </div>
+    <p class="help">Tick everything that applies.</p>
+    <div class="opts opts--wrap">
+      <label class="opt"><input type="checkbox" name="A1" value="0"><span>Crops &mdash; vegetables, fruit, grain, pasture</span></label>
+      <label class="opt"><input type="checkbox" name="A1" value="1"><span>Livestock and animal products</span></label>
+      <label class="opt"><input type="checkbox" name="A1" value="2"><span>Seed</span></label>
+      <label class="opt"><input type="checkbox" name="A1" value="3"><span>Processing &mdash; jam, cheese, flour, and so on</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The group assesses crops, livestock, seed and processing under different questionnaires, and a seed producer should not be asked about compost. Telling us which one you are under means the next page is the right one.</p><p class="why__ref">Source: FORM Sheet A</p></div>
+  </details>
+  </div><div class="q" id="q-A2">
+    <div class="q__head">
+      <span class="q__id">A2</span>
+      <h3 class="q__title">How much land do you farm in total?</h3>
+    </div>
+    <p class="help">Your best estimate is fine — the application asks for the exact figure.</p>
+    <div class="opts opts--wrap" role="radiogroup" aria-label="How much land do you farm in total?">
+      <label class="opt"><input type="radio" name="A2" value="0"><span>Less than 1 ha</span></label>
+      <label class="opt"><input type="radio" name="A2" value="1"><span>1&ndash;5 ha</span></label>
+      <label class="opt"><input type="radio" name="A2" value="2"><span>5&ndash;20 ha</span></label>
+      <label class="opt"><input type="radio" name="A2" value="3"><span>20&ndash;100 ha</span></label>
+      <label class="opt"><input type="radio" name="A2" value="4"><span>More than 100 ha</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Land area is <strong>not</strong> used to set your fee — fees follow turnover (OPP §2.3). It is asked because the visit checks field diagrams against acreage (FORM Sheet I §2 b), and because the group reports the scale of farms it serves.</p><p class="why__ref">Source: FORM B.1 Q2.1&ndash;2.3</p></div>
+  </details>
+  </div><div class="q" id="q-A3">
+    <div class="q__head">
+      <span class="q__id">A3</span>
+      <h3 class="q__title">How much of that is pasture or grazing?</h3>
+    </div>
+    <p class="help">Skip if none of your land is grazed.</p>
+    <div class="opts opts--wrap" role="radiogroup" aria-label="How much of that is pasture or grazing?">
+      <label class="opt"><input type="radio" name="A3" value="0"><span>None</span></label>
+      <label class="opt"><input type="radio" name="A3" value="1"><span>Less than 1 ha</span></label>
+      <label class="opt"><input type="radio" name="A3" value="2"><span>1&ndash;5 ha</span></label>
+      <label class="opt"><input type="radio" name="A3" value="3"><span>5&ndash;20 ha</span></label>
+      <label class="opt"><input type="radio" name="A3" value="4"><span>More than 20 ha</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Pasture and meadow have their own conversion period — 12 months before grazing or harvest (SAOSO 4.2.3 b) — which is different from other perennials. Without this answer the timing note would be wrong for a grazing farm.</p><p class="why__ref">Source: FORM B.1 Q2.2</p></div>
+  </details>
+  </div><div class="q" id="q-A4">
+    <div class="q__head">
+      <span class="q__id">A4</span>
+      <h3 class="q__title">How long has this land been farmed organically?</h3>
+    </div>
+    <p class="help">The land, not you — count from when the last non-organic input was used on it.</p>
+    <div class="opts opts--wrap" role="radiogroup" aria-label="How long has this land been farmed organically?">
+      <label class="opt"><input type="radio" name="A4" value="0"><span>Not yet</span></label>
+      <label class="opt"><input type="radio" name="A4" value="1"><span>Under 12 months</span></label>
+      <label class="opt"><input type="radio" name="A4" value="2"><span>12&ndash;17 months</span></label>
+      <label class="opt"><input type="radio" name="A4" value="3"><span>18 months or more</span></label>
+      <label class="opt"><input type="radio" name="A4" value="4"><span>I am not sure</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The conversion period is the most common reason someone is not yet assessable. The standard sets it at 12 months for annuals, 12 for pasture, 18 for other perennials, and 36 where inputs not permitted by organic principles were used (SAOSO 4.2.3). The group’s In-Conversion seal applies for less than 18 months for annuals (OPP §V). We ask so we can tell you which applies — not to judge you. <em>Reserved: if the group settles D31 the bands may move.</em></p><p class="why__ref">Source: FORM B.1 Q3.1</p></div>
+  </details>
+  </div><div class="q" id="q-A5">
+    <div class="q__head">
+      <span class="q__id">A5</span>
+      <h3 class="q__title">Roughly what was your turnover last year?</h3>
+    </div>
+    <p class="help">This is what the group’s fee scale uses. Bands only — and you can skip it.</p>
+    <div class="opts opts--wrap" role="radiogroup" aria-label="Roughly what was your turnover last year?">
+      <label class="opt"><input type="radio" name="A5" value="0"><span>Below R250 000</span></label>
+      <label class="opt"><input type="radio" name="A5" value="1"><span>R250 001 – R500 000</span></label>
+      <label class="opt"><input type="radio" name="A5" value="2"><span>R500 001 – R1 000 000</span></label>
+      <label class="opt"><input type="radio" name="A5" value="3"><span>R1 000 001 – R2 500 000</span></label>
+      <label class="opt"><input type="radio" name="A5" value="4"><span>R2 500 001 – R5 000 000</span></label>
+      <label class="opt"><input type="radio" name="A5" value="5"><span>Above R5 000 000</span></label>
+      <label class="opt"><input type="radio" name="A5" value="6"><span>I would rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Fees follow a six-band turnover scale (OPP §2.3), and turnover is <strong>self-declared by the farmer and peer-reviewed</strong> — the platform stores the band you choose and never calculates one from sales data. If you would rather not say, you simply will not see a fee figure here; the public table on /become-a-member/ is there either way.</p><p class="why__ref">Source: OPP §2.3</p></div>
+  </details>
+  </div></div>
+    </div>
+  </section>
+<section class="band band--warm" id="group-B">
+    <div class="wrap">
+      <p class="eyebrow">Part B</p>
+      <h2 class="serif">Records a visit checks</h2>
+      <p class="lead">Do you have these? <strong>None of them are needed to apply.</strong> A missing record does not stop an assessment — the visit records it and you agree what happens next. What does stop a visit is a question left blank.</p>
+      <div class="qs"><div class="q" id="q-B1">
+    <div class="q__head">
+      <span class="q__id">B1</span>
+      <h3 class="q__title">Do you have a sketch of the farm?</h3>
+    </div>
+    <p class="help">Layout, buildings, production areas, natural bush, access roads, neighbours.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have a sketch of the farm?">
+      <label class="opt"><input type="radio" name="B1" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B1" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B1" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B1" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The visit needs to see the farm’s shape on one page — production areas, water, natural vegetation, and what is next door, because what neighbours do can affect what reaches your land (SAOSO 4.6, Avoiding contamination). A sketch is usually the fastest way to show it.</p><p class="why__ref">Source: FORM Sheet I §2 a</p></div>
+  </details>
+  </div><div class="q" id="q-B2">
+    <div class="q__head">
+      <span class="q__id">B2</span>
+      <h3 class="q__title">Do you have sketches or diagrams of your fields?</h3>
+    </div>
+    <p class="help">Acreage, what is growing where, grazing areas, stock numbers.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have sketches or diagrams of your fields?">
+      <label class="opt"><input type="radio" name="B2" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B2" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B2" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B2" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Field diagrams are how the visit checks that what you describe on paper matches what is planted — the record is compared against the land, not only read.</p><p class="why__ref">Source: FORM Sheet I §2 b</p></div>
+  </details>
+  </div><div class="q" id="q-B3">
+    <div class="q__head">
+      <span class="q__id">B3</span>
+      <h3 class="q__title">Do you have a farm diary?</h3>
+    </div>
+    <p class="help">Plantings, harvest quantities, anything you apply to the land.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have a farm diary?">
+      <label class="opt"><input type="radio" name="B3" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B3" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B3" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B3" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>A diary is the evidence trail behind everything else you tell us: what was planted, what was harvested, what was applied. It is also what makes an input/output reconciliation possible at all.</p><p class="why__ref">Source: FORM Sheet I §2 c</p></div>
+  </details>
+  </div><div class="q" id="q-B4">
+    <div class="q__head">
+      <span class="q__id">B4</span>
+      <h3 class="q__title">Do you have records of the inputs you buy or receive?</h3>
+    </div>
+    <p class="help">Including seeds and seedlings, and donations as well as purchases.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have records of the inputs you buy or receive?">
+      <label class="opt"><input type="radio" name="B4" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B4" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B4" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B4" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Inputs are where a visit starts, because that is where an organic claim is easiest to lose: one treated seedling or one bag of conventional compost changes what the land has received. The evidence needed is <em>what</em> was bought and from where. <strong>The group does not ask what you paid</strong>, and it does not ask for your supplier contracts.</p><p class="why__ref">Source: FORM Sheet I §2 d</p></div>
+  </details>
+  </div><div class="q" id="q-B5">
+    <div class="q__head">
+      <span class="q__id">B5</span>
+      <h3 class="q__title">Do you have sales records?</h3>
+    </div>
+    <p class="help">Whatever form they take — a book, slips, a spreadsheet, invoices.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have sales records?">
+      <label class="opt"><input type="radio" name="B5" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B5" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B5" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B5" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Sales records are how the visit shows that produce sold as yours was grown by you — the same traceability requirement that applies to bought-in produce (OPP §VI.3). The group does not ask what you earned, and the figure it looks for is the quantity, not the price.</p><p class="why__ref">Source: FORM Sheet I §2 e</p></div>
+  </details>
+  </div><div class="q" id="q-B6">
+    <div class="q__head">
+      <span class="q__id">B6</span>
+      <h3 class="q__title">Do you have an input/output reconciliation?</h3>
+    </div>
+    <p class="help">Your sales compared against what you produced, to show nothing came in from outside.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have an input/output reconciliation?">
+      <label class="opt"><input type="radio" name="B6" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B6" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B6" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B6" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>This is the one comparison that proves the two halves agree: what you produced against what you sold. Where it does not exist, the group can help set one up — it is a record you build forward, and there is no requirement that you have been keeping it.</p><p class="why__ref">Source: FORM Sheet I §2 f</p></div>
+  </details>
+  </div><div class="q" id="q-B7">
+    <div class="q__head">
+      <span class="q__id">B7</span>
+      <h3 class="q__title">Do you have soil and water test results?</h3>
+    </div>
+    <p class="help">Including soil organic matter and cation exchange capacity, if your lab reports them.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you have soil and water test results?">
+      <label class="opt"><input type="radio" name="B7" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="B7" value="1"><span>Partly</span></label>
+      <label class="opt"><input type="radio" name="B7" value="2"><span>No</span></label>
+      <label class="opt"><input type="radio" name="B7" value="3"><span>Rather not say</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>A soil test is a snapshot of soil health, not a pass mark, and neither the standard nor the assessment form sets a maximum age. A test from a few years ago is still a starting point — tell the visit when it was taken. A missing test is recorded, not held against you.</p><p class="why__ref">Source: FORM Sheet I §2 (unnumbered line)</p></div>
+  </details>
+  </div></div>
+    </div>
+  </section>
+<section class="band" id="group-C">
+    <div class="wrap">
+      <p class="eyebrow">Part C</p>
+      <h2 class="serif">Practices the visit looks at</h2>
+      <p class="lead">How you farm, in five questions the visit asks too.</p>
+      <div class="qs"><div class="q" id="q-C1">
+    <div class="q__head">
+      <span class="q__id">C1</span>
+      <h3 class="q__title">Do you make your own compost?</h3>
+    </div>
+    
+    <div class="opts" role="radiogroup" aria-label="Do you make your own compost?">
+      <label class="opt"><input type="radio" name="C1" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="C1" value="1"><span>No</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The FORM’s verdict V4 describes adequate on-farm composting as "a key requirement of organic principles", so it is one of the first practices a visit looks at.</p><p class="why__ref">Source: FORM B.1 Q4.2</p></div>
+  </details>
+  </div><div class="q" id="q-C2">
+    <div class="q__head">
+      <span class="q__id">C2</span>
+      <h3 class="q__title">Do you buy in compost?</h3>
+    </div>
+    <p class="help">Purchased compost has to come from an acceptable source.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you buy in compost?">
+      <label class="opt"><input type="radio" name="C2" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="C2" value="1"><span>No</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Purchased compost is allowed, but its source and quality are checked (FORM V5) — the risk is what came in with it. The supplier list belongs in the application, not here.</p><p class="why__ref">Source: FORM B.1 Q5.1</p></div>
+  </details>
+  </div><div class="q" id="q-C3">
+    <div class="q__head">
+      <span class="q__id">C3</span>
+      <h3 class="q__title">Where do your seeds come from?</h3>
+    </div>
+    <p class="help">Tick the one that is most of it.</p>
+    <div class="opts opts--wrap" role="radiogroup" aria-label="Where do your seeds come from?">
+      <label class="opt"><input type="radio" name="C3" value="0"><span>Organic seed</span></label>
+      <label class="opt"><input type="radio" name="C3" value="1"><span>Conventional, untreated</span></label>
+      <label class="opt"><input type="radio" name="C3" value="2"><span>Conventional, treated</span></label>
+      <label class="opt"><input type="radio" name="C3" value="3"><span>I save my own</span></label>
+      <label class="opt"><input type="radio" name="C3" value="4"><span>A mix</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The standard prefers organically produced seed, allows in-conversion material, and then permits conventional seed provided it has not been treated with prohibited post-harvest pesticides (SAOSO 4.1.1). So "a mix" or "conventional untreated" does not disqualify you. What the visit needs later is the status of <em>each</em> seed lot, because the FORM uses that as the baseline for improvement — which is why one word is enough here and not enough then.</p><p class="why__ref">Source: FORM B.1 Q11.1</p></div>
+  </details>
+  </div><div class="q" id="q-C4">
+    <div class="q__head">
+      <span class="q__id">C4</span>
+      <h3 class="q__title">Are all your seeds non-GMO?</h3>
+    </div>
+    <p class="help">If you buy conventional seed, the group will ask for a letter from the supplier saying the seed is not treated and not GMO.</p>
+    <div class="opts" role="radiogroup" aria-label="Are all your seeds non-GMO?">
+      <label class="opt"><input type="radio" name="C4" value="0"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="C4" value="1"><span>No</span></label>
+      <label class="opt"><input type="radio" name="C4" value="2"><span>Some are, some aren’t</span></label>
+      <label class="opt"><input type="radio" name="C4" value="3"><span>I do not know</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The standard does not permit ingredients, additives or processing aids derived from GMOs (SAOSO 2.3.2), and the group can take samples for laboratory analysis (SAOSO 1.4.1). "Some are, some aren’t" is a common and answerable answer — it becomes a list of what to replace, not a refusal.</p><p class="why__ref">Source: FORM B.1 Q11.2</p></div>
+  </details>
+  </div><div class="q" id="q-C5">
+    <div class="q__head">
+      <span class="q__id">C5</span>
+      <h3 class="q__title">Do you buy in produce from other farmers to sell on?</h3>
+    </div>
+    <p class="help">Buying in other people’s produce is allowed, with conditions.</p>
+    <div class="opts" role="radiogroup" aria-label="Do you buy in produce from other farmers to sell on?">
+      <label class="opt"><input type="radio" name="C5" value="0"><span>No</span></label>
+      <label class="opt"><input type="radio" name="C5" value="1"><span>Yes</span></label>
+      <label class="opt"><input type="radio" name="C5" value="2"><span>No, but we plan to</span></label></div>
+    
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Buying in produce is allowed, and OPP §VI sets the conditions: the group assesses each case, every supplying farm signs a declaration and commits to progressing towards certification within six months, traceability runs through invoices and delivery notes, organic and conventional produce are physically separated, and batches are labelled by production method (OPP §VI.1–6.5). A "yes" changes what the visit checks, not whether you can join.</p><p class="why__ref">Source: FORM Sheet A, Aggregation</p></div>
+  </details>
+  </div></div>
+    </div>
+  </section>
+<section class="band band--warm" id="group-D">
+    <div class="wrap">
+      <p class="eyebrow">Part D</p>
+      <h2 class="serif">On your way out</h2>
+      <p class="lead">Only if you are not applying yet.</p>
+      <div class="qs"><div class="q" id="q-D1">
+    <div class="q__head">
+      <span class="q__id">D1</span>
+      <h3 class="q__title">If you are not going to apply just yet, what would need to change?</h3>
+    </div>
+    <p class="help">Optional. It never appears on your application.</p>
+    <div class="opts opts--wrap" role="radiogroup" aria-label="If you are not going to apply just yet, what would need to change?">
+      <label class="opt"><input type="radio" name="D1" value="0"><span>The cost</span></label>
+      <label class="opt"><input type="radio" name="D1" value="1"><span>Records and paperwork</span></label>
+      <label class="opt"><input type="radio" name="D1" value="2"><span>Land history / conversion time</span></label>
+      <label class="opt"><input type="radio" name="D1" value="3"><span>Time</span></label>
+      <label class="opt"><input type="radio" name="D1" value="4"><span>I am not sure the group is right for me</span></label>
+      <label class="opt"><input type="radio" name="D1" value="5"><span>Something else</span></label></div>
+    <textarea class="note" name="D1_note" rows="2" maxlength="280" placeholder="Anything else (280 characters, optional)"></textarea>
+    <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>Nobody who completes the assessment form can tell us why people stop before it — by definition. This is the only question that can, and it is not part of your application.</p><p class="why__ref">Source: —</p></div>
+  </details>
+  </div></div>
+    </div>
+  </section>
+<section class="band band--sage" id="group-E">
+    <div class="wrap">
+      <p class="eyebrow">Last</p>
+      <h2 class="serif">Two consents</h2>
+      <p class="lead">Both are unticked. Nothing is stored unless you tick the first one.</p>
+      <div class="qs"><div class="consent" data-consent="E1">
+      <label class="opt opt--consent"><input type="checkbox" name="E1" value="on">
+        <span><strong>May we count your answers?</strong><em>Unticked by default. Nothing is stored unless you tick this.</em></span></label>
+      <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The group is asked by PGS South Africa and SAOSA what farmers are looking for and what stands in the way, and today it can only answer from the farms that already joined — which is the one group guaranteed to be positive about joining. Your answers, in totals, are what makes that answer honest.</p><p class="why__ref">Source: D64, 2026-10-23</p></div>
+  </details>
+    </div><div class="consent" data-consent="E2">
+      <label class="opt opt--consent"><input type="checkbox" name="E2" value="on">
+        <span><strong>May we include your demographic details in those totals?</strong><em>Separately from the question above. Unticked by default.</em></span></label>
+      <details class="why"><summary>Why we ask</summary>
+    <div class="why__body"><p>The assessment form collects gender, age group and demographic group and states the purpose on the form itself: "for census purposes — PGS SA & SAOSO collect this data to profile small-scale organic farmers in South Africa for advocacy & support purposes". That is the whole of what it is for. <strong>Funding applications are not covered by this consent</strong> — they would need different information and a separate agreement (Part 6A).</p><p class="why__ref">Source: FORM Sheet A, census; POPIA special information</p></div>
+  </details>
+    </div></div>
+    </div>
+  </section>
+  <section class="band band--sage">
+    <div class="wrap">
+      <div class="submit" style="margin-top:0">
+        <button class="btn" type="submit">Show me what this means</button>
+        <span class="counter" id="counter2">0 of 20 answered</span>
+      </div>
+    </div>
+  </section>
+</form>
+
+<section class="band band--dark" id="result" hidden>
+  <div class="wrap">
+    <p class="eyebrow" style="color:var(--brand-ochreLight)">What your answers show</p>
+    <p class="mirror" id="mirror"></p>
+
+    <div class="fixed">The farm visit decides. This is only what your answers show, and the visit
+      happens after you apply.</div>
+    <div class="fixed">A missing record does not stop an assessment. The visit records it, and you and
+      the group agree what happens next.</div>
+
+    <h4 class="block">What to gather</h4>
+    <ul class="todo" id="todo"></ul>
+    <p class="small muted" id="todo-none" hidden>Nothing on this list. Every record the visit checks is
+      one you say you already hold.</p>
+
+    <div class="note-box" id="land" hidden>
+      <h4>When your land could be assessable</h4>
+      <p id="land-body"></p>
+      <p class="small muted" style="margin:0">The two documents disagree — <strong>12 months</strong>
+        and <strong>18 months</strong> — and the group has not settled which applies. We will not tell
+        you it is one number when it is not.</p>
+    </div>
+
+    <div class="note-box" id="fee" hidden>
+      <h4>What the assessment fee would be</h4>
+      <p id="fee-body" style="margin:0"></p>
+      <p class="small muted" style="margin:6px 0 0">Turnover is declared by you and peer-reviewed. The
+        platform stores the band you chose; it never calculates one from sales figures.</p>
+    </div>
+
+    <div class="note-box" id="caveat" hidden>
+      <h4>About the check you just did</h4>
+      <p style="margin:0">Only a <strong>crops</strong> farm has a full check today. The other
+        categories' questionnaires are still being written — so treat the records list above as an
+        example, not as your list. The administrator can tell you what your category will ask.</p>
+    </div>
+
+    <h4 class="block">If you want to go further</h4>
+    <div class="submit">
+      <button class="btn" type="button" id="to-account">Save my details and create an account</button>
+      <span class="small muted">Or keep the answers to yourself — nothing above has been stored.</span>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="account" hidden>
+  <div class="wrap">
+    <p class="eyebrow">Optional</p>
+    <h2>Save my details</h2>
+    <p class="lead">An account means you do not retype this when you start your application. It is
+      <strong>not</strong> an application, and it carries no declaration.</p>
+
+    <div class="field"><label for="farm-name">Farm name <span class="hint">— as you would write it</span></label>
+      <input id="farm-name" type="text" autocomplete="organization"></div>
+    <div class="field"><label for="town">Nearest town <span class="hint">— this is how the group describes where you are</span></label>
+      <input id="town" type="text" autocomplete="address-level2"></div>
+    <div class="field"><label for="contact">Contact person</label>
+      <input id="contact" type="text" autocomplete="name"></div>
+    <div class="field"><label for="email">Email <span class="hint">— so you can get back in</span></label>
+      <input id="email" type="email" autocomplete="email"></div>
+
+    <div class="consent" data-consent="A0" style="margin-top:18px">
+      <label class="opt opt--consent"><input type="checkbox" disabled>
+        <span><strong>Holding an account is its own processing purpose</strong>
+          <em>This consent text does not exist yet. It is a group decision, not a build one — and it
+          needs a retention answer the self-check does not have.</em></span></label>
+      <p style="margin:10px 0 0"><span class="chip">consent text pending — Q8</span></p>
+    </div>
+
+    <div class="note-box" style="background:var(--brand-creamWarm);color:var(--brand-charcoal);margin-top:22px">
+      <h4 style="color:var(--brand-ochreInk)">Where the pledge goes</h4>
+      <p style="margin:0">Not here. <strong>D83</strong> puts the farmer pledge inside the application,
+        after the account, because it attests to "all the land for which I/we are applying" and that
+        sentence cannot be signed before there is an application. Creating an account asks for nothing
+        but the four fields above.</p>
+    </div>
+
+    <div class="submit"><button class="btn" type="button" disabled>Create my account</button>
+      <span class="small muted">Disabled in the prototype: Task A6 does not exist yet.</span></div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Outeniqua Natural &amp; Organic PGS — prototype for Task A8</span>
+    <span class="small">Words: D71 ledger. Flow decision: D83. Design: DESIGN.md</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var FEE_BANDS = [
+    { label: 'Below R250 000',              initial: 150000 },
+    { label: 'R250 001 – R500 000',         initial: 250000 },
+    { label: 'R500 001 – R1 000 000',       initial: 300000 },
+    { label: 'R1 000 001 – R2 500 000',     initial: 370000 },
+    { label: 'R2 500 001 – R5 000 000',     initial: 500000 },
+    { label: 'Above R5 000 000',            initial: 800000 }
+  ];
+  var RECORDS = ['B1','B2','B3','B4','B5','B6','B7'];
+  var form = document.getElementById('check');
+  var result = document.getElementById('result');
+
+  function zar(cents) {
+    return 'R' + String(cents / 100).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
+  function answers() {
+    var out = {};
+    new FormData(form).forEach(function (v, k) {
+      if (k.slice(-5) === '_note') return;
+      if (out[k] === undefined) out[k] = [];
+      out[k].push(v);
+    });
+    return out;
+  }
+  function optionText(id, index) {
+    var el = form.querySelector('input[name="' + id + '"][value="' + index + '"]');
+    return el ? el.closest('label').querySelector('span').textContent.trim() : '';
+  }
+  function state(a, id) { return a[id] ? optionText(id, a[id][0]) : null; }
+  function answered(a) {
+    var n = 0;
+    ['A1','A2','A3','A4','A5','B1','B2','B3','B4','B5','B6','B7','C1','C2','C3','C4','C5','D1']
+      .forEach(function (id) { if (a[id]) n++; });
+    return n;
+  }
+  function count() {
+    var txt = answered(answers()) + ' of 20 answered';
+    document.getElementById('counter').textContent = txt;
+    document.getElementById('counter2').textContent = txt;
+  }
+
+  form.addEventListener('change', function (e) {
+    if (e.target && e.target.name === 'E1') {
+      var e2 = form.querySelector('[data-consent="E2"]');
+      var box = e2.querySelector('input');
+      e2.setAttribute('data-locked', e.target.checked ? 'false' : 'true');
+      box.disabled = !e.target.checked;
+      if (!e.target.checked) box.checked = false;
+    }
+    count();
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var a = answers();
+
+    var inPlace = 0, todo = [], missing = 0;
+    RECORDS.forEach(function (id) {
+      var s = state(a, id);
+      if (s === 'Yes') inPlace++;
+      else if (s === 'Partly') { inPlace++; missing++; todo.push(id); }
+      else if (s === 'No') { missing++; todo.push(id); }
+    });
+    document.getElementById('mirror').innerHTML =
+      'Of the seven records a visit checks, your answers show <b>' + inPlace + ' in place</b>.';
+
+    var ul = document.getElementById('todo');
+    ul.innerHTML = '';
+    todo.forEach(function (id) {
+      var el = form.querySelector('#q-' + id);
+      var title = el.querySelector('.q__title').textContent.replace(/^Do you have /, '').replace(/\?$/, '');
+      var ref = (el.querySelector('.why__ref') || { textContent: '' }).textContent;
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="dot"></span><span>You do not fully have: <strong>' + title +
+        '</strong><cite>' + ref.replace('Source: ', '') + '</cite></span>';
+      ul.appendChild(li);
+    });
+    document.getElementById('todo-none').hidden = todo.length > 0;
+
+    var landEl = document.getElementById('land');
+    var land = state(a, 'A4');
+    if (land) {
+      landEl.hidden = false;
+      var bodies = {
+        'Not yet': 'Your land has not started its organic period. On the shortest reading that is 12 months; on the group\u2019s own seal page it is 18 before sowing or planting for annuals.',
+        'Under 12 months': 'You are inside both thresholds, so the answer is the same either way: not yet assessable as organic, and In-Conversion is where you would start.',
+        '12\u201317 months': 'You are past 12 months and short of 18. This is the band where the two documents disagree, so the answer depends on what you grow \u2014 and the group has not settled it.',
+        '18 months or more': 'You are past both thresholds. The disagreement no longer affects you.',
+        'I am not sure': 'That is a normal answer. The visit establishes it from your records rather than from memory.'
+      };
+      document.getElementById('land-body').textContent = bodies[land] || '';
+    }
+
+    var feeEl = document.getElementById('fee');
+    var turnover = state(a, 'A5');
+    if (turnover && turnover !== 'I would rather not say') {
+      var band = FEE_BANDS.filter(function (b) { return b.label === turnover; })[0];
+      if (band) {
+        feeEl.hidden = false;
+        document.getElementById('fee-body').innerHTML =
+          'On the band you declared \u2014 <strong>' + band.label + '</strong> \u2014 the assessment fee is <strong>' +
+          zar(band.initial) + '</strong> for an initial assessment.';
+      }
+    } else {
+      feeEl.hidden = true;
+    }
+
+    var cats = (a.A1 || []);
+    document.getElementById('caveat').hidden = cats.length === 0 || cats.indexOf('0') >= 0;
+
+    result.hidden = false;
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('to-account').addEventListener('click', function () {
+    var acct = document.getElementById('account');
+    acct.hidden = false;
+    acct.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  var e2 = form.querySelector('[data-consent="E2"]');
+  e2.setAttribute('data-locked', 'true');
+  e2.querySelector('input').disabled = true;
+  count();
+})();
+</script>
+</body>
+</html>
