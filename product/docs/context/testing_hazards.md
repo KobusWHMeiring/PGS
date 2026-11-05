@@ -1999,6 +1999,75 @@ names — reached through the *input* rather than through the mutation.
 Rule: when proving a guard red, the mutated run must fail the named test **and** the input must be able
 to reach the guard. If a second, cheaper rule can short-circuit first, the test is about that rule.
 
+### 3.35 A page is not a section, and a section is not a page
+
+Appendix 5's body runs to the line *before* Appendix 6a's heading, so it carries page 86's top lines
+too. S5 substitutes a page's lines from the extraction pass the block declares, and substituting by
+page alone put Appendix 6a's whole `-table` page — appendix title, header and 20 rows — inside
+Appendix 5 as well. The block was emitted once and the page appeared twice.
+
+Evidence:
+    emit: "20 row(s) emitted from proposal 1"
+    artefact: "Equines over six months old" at 156555 (the block) and again at 159045 (Appendix 5)
+    (guard: `if heading_page not in wanted: continue` -> one occurrence, diff is the block)
+
+Consequence: a page-scoped rewrite of a line stream silently duplicates text into the section that
+*precedes* the one that owns the page. Every character guard stays green: the second copy is on the
+page.
+
+Rule: when substituting a page, decide the owning section by a section-level fact (the page the
+heading is printed on), never by "which body contains lines from this page".
+
+### 3.36 `substitute_pass` kept the lines it had just replaced
+
+The first version emitted the replacement for a page and then, for every *later* line of that same
+page, appended the original — because the "already done" test fell into the same branch as "not
+wanted".
+
+Evidence:
+    page 86 read: `[-] Equines ... 5` (interleaved) then the `-table` rows, twice over
+    (guard: `if page == previous: continue`)
+
+Consequence: the emitter resolved the `-table` copy, wrote the block, and left the geometry copy after
+it — so the artefact held the defect *and* the fix.
+
+Rule: a "skip the rest of this run" branch must be written before the "append" branch, and the test
+must feed a page whose lines are contiguous (one line per page never reaches it).
+
+### 3.37 The page in force at the start of a body is not the page it ends on
+
+`build_corpus.emit_tables` was handed `assemble_body`'s **return** value as the page already in
+force, and that value is the last page the body emitted. Appendix 6a's body continues onto printed 86
+while its 20 rows are all on printed 85, so every row line fell outside the emitter's `allowed`
+set and was refused as "not a contiguous run of any printed line after the cell before it".
+
+Evidence:
+    saoso: proposal 1, row 1, column 1: 'Equines over six months old' is not a contiguous run ...
+    (passing the pre-assembly page: 20 row(s) emitted)
+
+Consequence: a page-scoped search that starts on the wrong page reports a content defect for a
+bookkeeping defect, and the message points at the table rather than at the page.
+
+Rule: capture the page already in force *before* assembling the body, and pass that.
+
+### 3.38 A dict comprehension keyed by extraction keeps only the last table's pages
+
+`declared_passes = {table.extraction: set(table.pdf_pages) for table in proposals}` looks like "the
+pages each pass covers" and is actually "the pages of the *last* table that names each pass". The
+landscape's two `-table` proposals meant only page 5 was ever substituted, so the page-4 header stayed
+in `-raw` order and the emitter still refused at `column 1` — the refusal S3 recorded, now with a
+reason nobody could see in the code.
+
+Evidence:
+    (before: `proposal 1, column 1: 'Key steps' is not a contiguous run ...`)
+    (after the union: `proposal 1, column 2: 'Resource documents, guidelines and requirements' ...`)
+
+Consequence: a capability that works for one table appears not to work at all, and the next session
+re-implements it.
+
+Rule: accumulate with `setdefault(...).update(...)`. A dict comprehension over a key that can repeat
+is a silent "last one wins".
+
 ## 5. Template for a new entry
 
 ```markdown

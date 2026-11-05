@@ -398,3 +398,62 @@ def test_a_document_with_no_proposal_is_drafted_exactly_as_before():
     lines, emitted, refused = emit(proposals_for("0" * 64), fixture_body("opp"))
     assert emitted == () and refused == ()
     assert "<!-- table" not in lines
+
+
+# --- the reviewed label: a declaration, not a widened matcher --------------------------
+
+
+ARM_COLUMNS = (
+    "Maximum number of animals per ha Class or species",
+    "Maximum number of animals per ha equivalent to 170 kg N/ha/year",
+)
+REVIEWED_COLUMNS = (
+    "Class or species",
+    "Maximum number of animals per ha equivalent to 170 kg N/ha/year",
+)
+SIX_A = [
+    "<!-- page: 86 printed: 85 -->",
+    "             Maximum number of animals per ha          Maximum  number of animals per ha     equivalent",
+    "                         Class or species                            to 170 kg N/ha/year",
+    "Equines over six months old                                                     2",
+    "Calves for fattening                                                            5",
+]
+
+
+def six_a(rows=(("Equines over six months old", "2"), ("Calves for fattening", "5")), **profile):
+    return ProposedTable(
+        index=0,
+        pdf_pages=(86,),
+        columns=ARM_COLUMNS,
+        rows=tuple(ProposedRow(tuple(row)) for row in rows),
+        extraction="table",
+        structure="documentai-layout-v1.6-pro",
+        processor="id@version",
+        profile=ProposedProfile(columns=REVIEWED_COLUMNS, **profile),
+    )
+
+
+def test_a_reviewed_column_label_is_used_instead_of_the_arms():
+    """The paper prints Appendix 6a's header once, as two levels of type across four lines with a
+    merged cell the arm flattened into one string. A one-line `cols:` cannot be a run of that, so
+    the owner's arbitration (two labels, 2026-11-05) is reviewed data and the emitter writes it.
+
+    The arm's own label is not a run of any printed line, which is what made the table refuse.
+    """
+    lines, emitted, refused = emit([six_a()], SIX_A)
+    assert refused == ()
+    table = first_table(lines)
+    assert table.columns == REVIEWED_COLUMNS
+    assert [cell.text for cell in table.rows[0].cells] == ["Equines over six months old", "2"]
+
+
+def test_a_reviewed_label_never_makes_a_cell_the_reviewers():
+    """The declaration replaces the header and nothing else: a cell the page does not print is
+    still refused, which is the difference between reviewing a structure and authoring a table."""
+    body = ["<!-- page: 86 printed: 85 -->", "Class or species Fee", "Equines over six months old 2"]
+    _lines, emitted, refused = emit(
+        [six_a(rows=(("Equines over six months old", "2,5"),))], body
+    )
+    assert emitted == ()
+    assert refused[0].where == "row 1, column 2"
+    assert "2,5" in refused[0].detail

@@ -3739,49 +3739,125 @@ SOUTH AFRICAN specific
 <!-- ref: Appendix 6a -->
 ## Appendix 6a
 
-NUMBER OF ANIMALS PER HA EQUIVALENT TO 170 KG N/HA/YEAR
+                                           SOUTH AFRICAN specific
 
-Source: EU 2092/91
+                                                             APPENDIX 6a:
 
-                 Maximum number of animals per ha            Maximum number of animals per ha equivalent
-                              Class or species                                to 170 kg N/ha/year
+                       NUMBER OF ANIMALS PER HA EQUIVALENT TO 170 KG N/HA/YEAR
 
-Equines over six months old                                                               5
+                                           Source: EU 2092/91
+
+             Maximum number of animals per ha                              Maximum  number of animals per ha     equivalent
+
+                         Class or species                                               to 170 kg N/ha/year
+
+<!-- table
+cols: Class or species | Maximum number of animals per ha equivalent to 170 kg N/ha/year
+layout: grid
+legend: The standard prints this appendix as a table: each row is a class of animal and the maximum number of animals per hectare whose manure it may contribute, at the limit of 170 kg of nitrogen per hectare per year. The two column labels are the owner's arbitration of 2026-11-05: the paper prints the header once, as two levels of type across four lines, and all four readers merged the two labels into one. The labels are therefore reviewed wording, not a slice of the page; every cell beneath them is still the page's own characters.
+extraction: table
+-->
+<!-- row: Equines over six months old -->
+<!-- cell -->
+Equines over six months old
+<!-- cell -->
+2
+<!-- row: Calves for fattening -->
+<!-- cell -->
 Calves for fattening
-Other bovine animals less than one year old                             3,3
-Male bovine animals from one to less than two years old                                 3,3
-Female bovine animals from one to less than two years old                                 2
-Male bovine animals two years old or over                                               2,5
+<!-- cell -->
+5
+<!-- row: Other bovine animals less than one year old -->
+<!-- cell -->
+Other bovine animals less than one year old
+<!-- cell -->
+5
+<!-- row: Male bovine animals from one to less than two years old -->
+<!-- cell -->
+Male bovine animals from one to less than two years old
+<!-- cell -->
+3,3
+<!-- row: Female bovine animals from one to less than two years old -->
+<!-- cell -->
+Female bovine animals from one to less than two years         old
+<!-- cell -->
+3,3
+<!-- row: Male bovine animals two years old or over -->
+<!-- cell -->
+Male bovine animals two years old or over
+<!-- cell -->
+2
+<!-- row: Breeding heifers -->
+<!-- cell -->
 Breeding heifers
+<!-- cell -->
+2,5
+<!-- row: Heifers for fattening -->
+<!-- cell -->
 Heifers for fattening
+<!-- cell -->
+2,5
+<!-- row: Dairy cows -->
+<!-- cell -->
 Dairy cows
+<!-- cell -->
+2
+<!-- row: Cull dairy cows -->
+<!-- cell -->
 Cull dairy cows
+<!-- cell -->
+2
+<!-- row: Other cows -->
+<!-- cell -->
 Other cows
+<!-- cell -->
+2,5
+<!-- row: Female breeding rabbits -->
+<!-- cell -->
 Female breeding rabbits
+<!-- cell -->
+100
+<!-- row: Ewes -->
+<!-- cell -->
 Ewes
+<!-- cell -->
+13,3
+<!-- row: Goats -->
+<!-- cell -->
 Goats
+<!-- cell -->
+13,3
+<!-- row: Piglets -->
+<!-- cell -->
 Piglets
+<!-- cell -->
+74
+<!-- row: Breeding sows -->
+<!-- cell -->
 Breeding sows
+<!-- cell -->
+6,5
+<!-- row: Pigs for fattening -->
+<!-- cell -->
 Pigs for fattening
+<!-- cell -->
+14
+<!-- row: Other pigs -->
+<!-- cell -->
 Other pigs
+<!-- cell -->
+14
+<!-- row: Table chickens -->
+<!-- cell -->
 Table chickens
+<!-- cell -->
+580
+<!-- row: Laying hens -->
+<!-- cell -->
 Laying hens
-
-         2
-         5
-       2,5
-         2
-         2
-       2,5
-       100
-       13,3
-       13,3
-        74
-       6,5
-        14
-        14
-       580
-       230
+<!-- cell -->
+230
+<!-- /table -->
 
 <!-- page: 87 printed: 86 -->
 

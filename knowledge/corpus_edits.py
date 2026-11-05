@@ -46,6 +46,13 @@ class CorpusEdit:
     #: a place**: a `replace` that removes the text from where the extraction glued it, and a
     #: `replace` anchored on the text it belongs beside (`LANDSCAPE_TABLES_PRD` §12b.2).
     kind: str = "replace"
+    #: How many times `original` must occur in the draft. **A declaration, not a tolerance**
+    #: (2026-11-05). It was `1` for every edit until Appendix 6a became a table block: a block
+    #: writes the row's *label* as an annotation and the same words again as the cell's first line,
+    #: so a corrected cell now occurs twice in one artefact. Counting that as "the anchor moved"
+    #: would refuse a review that is exactly right, and applying it once would leave half the row
+    #: letter-spaced. The guard is kept — a count that disagrees still fails loudly.
+    occurrences: int = 1
 
 
 #: Reviewed corrections, per corpus document. **Every entry is a generator defect that
@@ -81,6 +88,7 @@ CORPUS_EDITS: dict[str, tuple[CorpusEdit, ...]] = {
             page=86,
             original="Other b o v i n e a n i m a l s less t h a n o n e year old",
             replacement="Other bovine animals less than one year old",
+            occurrences=2,
             reason=(
                 "Two letterspaced runs inside one Appendix 6a row (`bovine animals`, "
                 "`than one`). Recorded as one edit because both are on the same printed "

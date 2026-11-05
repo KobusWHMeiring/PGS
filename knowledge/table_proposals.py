@@ -57,6 +57,9 @@ class ProposedProfile:
     titles: tuple[str, ...] = ()
     fee_labels: tuple[str, ...] = ()
     branch: int | None = None
+    #: The labels the reader prints, when the paper's header is not one line the emitter can slice
+    #: (Appendix 6a prints two levels of type across four lines). Reviewed wording, flat.
+    columns: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -85,7 +88,7 @@ def _load(path: Path) -> dict:
         raise ProposalError(f"{path.name}: not JSON ({error})") from None
 
 
-def _profile(raw: dict, path: Path, index: int, rows: int) -> ProposedProfile:
+def _profile(raw: dict, path: Path, index: int, rows: int, width: int) -> ProposedProfile:
     titles = tuple(raw.get("titles", ()) or ())
     fee_labels = tuple(raw.get("fee_labels", ()) or ())
     for name, values in (("titles", titles), ("fee_labels", fee_labels)):
@@ -94,6 +97,20 @@ def _profile(raw: dict, path: Path, index: int, rows: int) -> ProposedProfile:
                 f"{path.name} table {index + 1}: {len(values)} {name} for {rows} rows. The block "
                 "format pairs them one-to-one, so a short list would silently shift every label "
                 "onto the row above."
+            )
+    columns = tuple(raw.get("columns", ()) or ())
+    if columns:
+        if len(columns) != width:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: {len(columns)} reviewed column labels for "
+                f"{width} columns. R2 attaches every cell to its printed column, so a label list "
+                "that is short or long attaches a value to the wrong heading — the defect the "
+                "declaration exists to prevent."
+            )
+        if any(not str(label).strip() for label in columns):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a reviewed column label is blank. A blank label "
+                "is the Appendix 6a defect with a human's signature on it."
             )
     branch = raw.get("branch")
     if branch is not None and not 0 <= int(branch) < rows:
@@ -115,6 +132,7 @@ def _profile(raw: dict, path: Path, index: int, rows: int) -> ProposedProfile:
         titles=titles,
         fee_labels=fee_labels,
         branch=None if branch is None else int(branch),
+        columns=tuple(str(label) for label in columns),
     )
 
 
@@ -176,7 +194,7 @@ def _tables(payload: dict, path: Path, reviewed: dict | None) -> tuple[ProposedT
                 extraction=extraction,
                 structure=structure,
                 processor=processor,
-                profile=_profile(profile_raw, path, index, len(rows)),
+                profile=_profile(profile_raw, path, index, len(rows), len(columns)),
             )
         )
     return tuple(out)

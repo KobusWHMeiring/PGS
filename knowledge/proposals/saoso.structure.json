@@ -1,0 +1,230 @@
+{
+  "doc_key": "saoso",
+  "sha256": "9214e86597d2bd15c7aee5e1032a0f15cdfbe00070a1f3fa4098cc73355eda17",
+  "structure": "documentai-layout-v1.6-pro",
+  "processor": "68e47c3bc90cc6ab@pretrained-layout-parser-v1.6-pro-2025-12-01",
+  "project": "803140233794",
+  "captured": "2026-11-05",
+  "shape": "headerless_values",
+  "reduced_from": "_scratch/adc/responses/layout16pro__headerless_values.json",
+  "tables": [
+    {
+      "pdf_pages": [
+        86
+      ],
+      "columns": [
+        "Maximum number of animals per ha Class or species",
+        "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Equines over six months old",
+            "2"
+          ]
+        },
+        {
+          "cells": [
+            "Calves for fattening",
+            "5"
+          ]
+        },
+        {
+          "cells": [
+            "Other bovine animals less than one year old",
+            "5"
+          ]
+        },
+        {
+          "cells": [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        },
+        {
+          "cells": [
+            "Female bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        },
+        {
+          "cells": [
+            "Male bovine animals two years old or over",
+            "2"
+          ]
+        },
+        {
+          "cells": [
+            "Breeding heifers",
+            "2,5"
+          ]
+        },
+        {
+          "cells": [
+            "Heifers for fattening",
+            "2,5"
+          ]
+        },
+        {
+          "cells": [
+            "Dairy cows",
+            "2"
+          ]
+        },
+        {
+          "cells": [
+            "Cull dairy cows",
+            "2"
+          ]
+        },
+        {
+          "cells": [
+            "Other cows",
+            "2,5"
+          ]
+        },
+        {
+          "cells": [
+            "Female breeding rabbits",
+            "100"
+          ]
+        },
+        {
+          "cells": [
+            "Ewes",
+            "13,3"
+          ]
+        },
+        {
+          "cells": [
+            "Goats",
+            "13,3"
+          ]
+        },
+        {
+          "cells": [
+            "Piglets",
+            "74"
+          ]
+        },
+        {
+          "cells": [
+            "Breeding sows",
+            "6,5"
+          ]
+        },
+        {
+          "cells": [
+            "Pigs for fattening",
+            "14"
+          ]
+        },
+        {
+          "cells": [
+            "Other pigs",
+            "14"
+          ]
+        },
+        {
+          "cells": [
+            "Table chickens",
+            "580"
+          ]
+        },
+        {
+          "cells": [
+            "Laying hens",
+            "230"
+          ]
+        }
+      ],
+      "arm_text": [
+        [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        [
+          "Equines over six months old",
+          "2"
+        ],
+        [
+          "Calves for fattening",
+          "5"
+        ],
+        [
+          "Other bovine animals less than one year old",
+          "5"
+        ],
+        [
+          "Male bovine animals from one to less than two years old",
+          "3,3"
+        ],
+        [
+          "Female bovine animals from one to less than two years old",
+          "3,3"
+        ],
+        [
+          "Male bovine animals two years old or over",
+          "2"
+        ],
+        [
+          "Breeding heifers",
+          "2,5"
+        ],
+        [
+          "Heifers for fattening",
+          "2,5"
+        ],
+        [
+          "Dairy cows",
+          "2"
+        ],
+        [
+          "Cull dairy cows",
+          "2"
+        ],
+        [
+          "Other cows",
+          "2,5"
+        ],
+        [
+          "Female breeding rabbits",
+          "100"
+        ],
+        [
+          "Ewes",
+          "13,3"
+        ],
+        [
+          "Goats",
+          "13,3"
+        ],
+        [
+          "Piglets",
+          "74"
+        ],
+        [
+          "Breeding sows",
+          "6,5"
+        ],
+        [
+          "Pigs for fattening",
+          "14"
+        ],
+        [
+          "Other pigs",
+          "14"
+        ],
+        [
+          "Table chickens",
+          "580"
+        ],
+        [
+          "Laying hens",
+          "230"
+        ]
+      ],
+      "extraction": "table"
+    }
+  ]
+}

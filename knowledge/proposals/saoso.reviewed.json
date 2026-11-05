@@ -1,0 +1,13 @@
+{
+  "doc_key": "saoso",
+  "tables": [
+    {
+      "columns": [
+        "Class or species",
+        "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+      ],
+      "layout": "grid",
+      "legend": "The standard prints this appendix as a table: each row is a class of animal and the maximum number of animals per hectare whose manure it may contribute, at the limit of 170 kg of nitrogen per hectare per year. The two column labels are the owner's arbitration of 2026-11-05: the paper prints the header once, as two levels of type across four lines, and all four readers merged the two labels into one. The labels are therefore reviewed wording, not a slice of the page; every cell beneath them is still the page's own characters."
+    }
+  ]
+}

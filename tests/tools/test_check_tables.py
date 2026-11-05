@@ -20,12 +20,14 @@ import pytest
 
 import scripts.check_tables as check_tables
 
-#: `doc_key -> row count per table in document order`. Measured from the artefacts on 2026-11-03:
-#: landscape 3+2+3, opp 6. Same numbers as `knowledge/tests/test_table_harness.py`, pinned twice on
-#: purpose — the harness's copy proves the checker, this one proves the command.
+#: `doc_key -> row count per table in document order`. Measured from the artefacts on 2026-11-03
+#: (landscape 3+2+3, opp 6) and 2026-11-05 (saoso's Appendix 6a, 20 — S5's first emitted table).
+#: Same numbers as `knowledge/tests/test_table_harness.py`, pinned twice on purpose — the harness's
+#: copy proves the checker, this one proves the command.
 CORPUS = {
     "landscape": "3,2,3",
     "opp": "6",
+    "saoso": "20",
 }
 
 HEADER = """<!-- corpus

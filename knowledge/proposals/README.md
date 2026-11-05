@@ -7,12 +7,22 @@ finds no proposal — which is the truthful outcome: nobody has read its tables 
 | File | Who writes it | What it holds |
 |---|---|---|
 | `<doc>.structure.json` | `scripts/propose_tables.py`, from a cached extractor response | the arm's grid: columns, rows, the pages, and the banner (`structure`, `processor`, `project`, `captured`, `reduced_from`) |
-| `<doc>.reviewed.json` | a person, once per table | the block fields **no extractor produces**: `legend`, `layout`, `titles`, `fee_labels`, `branch` |
+| `<doc>.reviewed.json` | a person, once per table | the block fields **no extractor produces**: `legend`, `layout`, `titles`, `fee_labels`, `branch`, and **`columns`** — the labels the reader prints, when the paper's header is multi-line and two-level so a one-line `cols:` cannot be a slice of it (Appendix 6a, S5) |
 
 **What must never be edited by hand** is `.structure.json`. It is a transcription of what the arm
 returned, and hand-editing it would make the one thing in this path that is *not* a guess into one.
 If the arm's read is wrong, the cell is wrong in the diff — the emitter verifies every cell against
 the page's own text layer and refuses the ones the arm got wrong, naming them.
+
+## Assembling one document from several responses
+
+One arm response covers the pages it was sent, and an appendix is not one page. `--append` merges a
+second response into an existing proposal, refusing a differing `sha256`, `structure`, `processor` or
+`project` (one file, one banner) and refusing two tables for the same page:
+
+```bash
+python scripts/propose_tables.py --append --response _scratch/adc/responses/layout16pro__qualifier.json     --structure documentai-layout-v1.6-pro --processor … --project … --shape qualifier --doc saoso     --json knowledge/proposals/saoso.structure.json
+```
 
 **What must never be put here** is a typed-out table. The cell characters come from the page
 (`scripts/table_blocks.py` slices them out of the artefact's body stream); a cell typed here would be
@@ -20,6 +30,12 @@ a quote nobody verified, and the harness would pass it.
 
 `reviewed` entries are matched to tables by **index, in document order**, and a review that names an
 index the structure does not have is an error rather than an ignored line.
+
+**`columns` reviews a header, never a cell.** The paper prints a table's header once, as two levels of
+type across several lines with merged cells; every arm flattens it. A one-line `cols:` field cannot be
+a run of that, so those labels are reviewed data — the same status the reader's own column labels
+already had. What must not follow is a shorthand for a *cell*: the emitter still locates every cell on
+the page and refuses the ones that are not there, so a review cannot author a value.
 
 ## Regenerating
 

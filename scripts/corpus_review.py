@@ -53,13 +53,13 @@ def apply_review(text: str, edits) -> str:
             r"\s+".join(re.escape(word) for word in flat(edit.original).split())
         )
         found = len(pattern.findall(text))
-        if found != 1:
+        if found != edit.occurrences:
             raise SystemExit(
                 f"the reviewed edit for PDF page {edit.page} matched {found} times in the "
-                f"draft: {edit.original[:60]!r}. A reprint has moved the text — re-review it "
-                "rather than deleting the edit."
+                f"draft, and it declares {edit.occurrences}: {edit.original[:60]!r}. A reprint has "
+                "moved the text — re-review it rather than deleting the edit."
             )
-        text = pattern.sub(edit.replacement, text, count=1)
+        text = pattern.sub(edit.replacement, text, count=edit.occurrences)
     return text
 
 

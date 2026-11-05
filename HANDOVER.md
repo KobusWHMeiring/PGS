@@ -1,59 +1,58 @@
-# Handover — S3 is closed: the generator writes the table block, and the page supplies the characters
+# Handover — S5 is half landed: Appendix 6a is a block, and a body is the pass its block declares
 
-> ## START HERE — S3 is closed: the block is emitted, and the extraction is on the artefact
+> ## START HERE — Appendix 6a is a `<!-- table -->` block; S5's other three tables need a review
 >
-> **`INGESTION_ENGINE_PRD.md` §3.15 is what S3 landed, and §3.14 is still the decision it implements.**
-> D82's composite is now operative: **structure from the Layout Parser** (committed under
-> `knowledge/proposals/`, found by the PDF's **sha256**, not by a registry key), **characters from the
-> page's own text layer verified per cell** (R3's rule, applied at emission), **the harness for the
-> verdict**. `scripts/table_blocks.py` resolves a proposed cell against the body's *printed lines* and
-> splices the page's characters out; it never writes a character the page did not print.
+> **`INGESTION_ENGINE_PRD.md` §3.16 is what landed, and `INGESTION_ENGINE_S5_PLAN.md` is the rest.**
+> S5's headline defect is gone: Appendix 6a's 20 rows are emitted from their page, carry their two
+> printed column labels, and `APPENDIX_6A_ROWS` is **deleted**. `scripts/check_tables.py --doc saoso
+> --rows 20` → `ok — 1 tables, 20 rows, 0 violations (table pages, recorded on the artefact)`.
 >
-> **The measurement that matters:** `python scripts/build_corpus.py --doc opp --force` reproduces
-> `knowledge/corpus/opp.md` **byte for byte** (660 lines, `git status` clean). The block the generator
-> writes *is* the block a reviewer signed — and a test proves it again from the committed page
-> fixtures, so the regression needs no PDF and no extractor.
+> **The capability all four S5 tables needed, and it was not cosmetic.** A block records
+> `extraction: table|layout|raw` and the gate judges its cells against *that* pass — but the generator
+> sliced every section from the de-columned geometry stream, so a `-table` block was assembled from
+> `-layout` text and judged against `-table` text. `scripts/corpus_pages.substitute_pass` (with
+> `pass_texts`) takes the pages a proposal names from the pass it declares, sliced through the
+> document's own `body_lines` rule. That is exactly why S3 could not emit the landscape: its pages come
+> from `-raw`, the page-4 header is not a run of any line there, and the emitter refused at `column 1`.
+> **With the rule in place the landscape's refusal moved to `column 2`** — a multi-line column label.
 >
-> **The datum that was on a command line is now on the artefact.** `extraction: layout|raw|table` is a
-> validated block field, the harness gains **R1** (a block that does not record its pass is a
-> violation), and `scripts/check_tables.py` judges the rendering the artefact names. `--pages-mode` is
-> the draft-only escape, refused when it contradicts the artefact. The four reviewed blocks declare
-> theirs — four added lines in `opp.md`/`landscape.md` and nothing else.
+> **The reviewed label is a declaration, not a widened matcher.** Appendix 6a prints its header once,
+> as two levels of type across four lines; all four arms flattened it, and the owner arbitrated the two
+> labels on 2026-11-05. A one-line `cols:` cannot be a slice of a multi-line header, so
+> `knowledge/proposals/saoso.reviewed.json` carries `columns` and the emitter writes it. Cells are
+> untouched: a cell the page does not print is still refused. R3 accepts the `CORPUS_EDITS` rejoin of a
+> letter-spaced run **only** on a line that itself carries one.
 >
-> **What the landscape refuses, and why that is the right outcome.** Its proposal is committed and
-> refused on two cells: its page-4 table's rows are printed *before* the heading the de-columned page
-> found, and the arm splits the merged fee box and reads the seal artwork. Three rules produce those
-> refusals: a cell is the page's (exact, then despaced only where the page letter-spaces, word-boundary
-> checked), cells resolve in one forward-only cursor **on the pages the proposal names**, and every
-> printed line inside the region must be claimed by a cell. **S5** adds the four declarations (bullets,
-> the merged box, artwork, the page-break row) and closes Appendix 6a and 7.
+> **Measured.** `build_corpus --doc saoso --force` → `101 insertions(+), 25 deletions(-)`, one section,
+> and the diff *corrects* the paper: the old artefact paired `Equines over six months old` with `5`
+> (its neighbour's value); the block pairs it with `2`. `build_corpus --doc opp --force` leaves
+> `opp.md` **byte for byte** unchanged. Full suite **1831 passed / 1 skipped / 8 xfailed in 97.74 s**
+> `--reuse-db` (79.19 s minutes earlier — quote both, §3.17); `fast.sh --critical` **182 passed / 4
+> deselected in 18.42 s**. Three guards were broken and watched red first.
 >
-> **Do not re-run the arms and do not re-open the key** — the two claims that mattered are settled
-> (§3.14) and the seven unjudged ones gate nothing. A genuinely new document's structure is one
-> command: `python scripts/propose_tables.py --pdf <new> --pages …` (it reads a cached response or a
-> fresh one; the gate itself never needs an extractor).
+> **`scripts/verify.sh` still cannot be quoted green from this tree** — step 1 fails on **another
+> session's** `scripts/copy_deck.py` (32 KB). All my files are inside the cap (`build_corpus.py` grew
+> to 30.5 KB and is 29.1 KB again: `pass_texts` moved to `corpus_pages.py`).
 >
-> **What the tests say, on this box, 2026-11-05.** `scripts/fast.sh --critical` **182 passed / 4
-> deselected in 45.33 s** (`tests/tools/test_check_tables.py` joined the lane in this commit and costs
-> ~1 s). The gate's own pytest step, `--create-db` against `…/5433/pgs_verify`, is **1820 passed / 1
-> skipped / 8 xfailed in 240.27 s** — and the eight strict-xfail shape targets are untouched
-> (`git status` on `test_ingestion_shapes.py`: empty). `manage.py check`, `makemigrations --check` and
-> `lint-imports` all pass by hand. **`scripts/verify.sh` still cannot be quoted green from this tree:**
-> its first step fails on **another session's** `scripts/copy_deck.py` (32 KB) — not on any commit.
+> **S5's remaining three, and each is a review rather than a chore.** *Appendix 2* is **30 rows**
+> (three printed pages), and no arm read exists for printed 77–78 — the cached `qualifier` response is
+> the shape page's 11; emitting 11 would leave 19 interleaved and `APPENDIX_2_ROWS` in place.
+> *Appendix 7* needs a cell that wraps **inside** a column (Docling's grid is the evidence for the
+> boundary). *The landscape* needs §3.15's four declarations, and its artefact **cannot be regenerated
+> wholesale**: pages 2–3 and 9 are the *reviewer's* front matter (commit `8674d7a`), so S5-d emits
+> blocks and splices them where the table region is. Plan §5 has the slices and their gates.
+>
+> **Do not re-run the arms and do not re-open the key.** **Do not delete a test** to make a count
+> match; the four `test_tables.py` Appendix 6a tests were *converted* to read the block, and the chunk
+> count moved 338 → 340 because the printed header and the part banner are now chunks (they were
+> dropped with the interleaving).
 >
 > **Housekeeping.** This working tree still carries **another session's uncommitted work**
 > (`scripts/copy_deck.py`, `product/design/COPY_DECK.md`, `COPY_VOICE.md`, `REFERENCE_COPY_CORPUS.md`,
-> `fetch_reference_copy.py`, and edits to the public templates and `core/services/_public.py`) — commit
-> paths explicitly, never `git add -A`. Splitting `copy_deck.py` is that session's job.
->
-> **Do not run `scripts/build_corpus.py --force` on a document with a table block without reading the
-> diff** — S1 refuses before writing, and `--discard-tables` means the review is yours to retype. After
-> a chunker or parser change: `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
-> "Corpus is current" compares the artefact's hash and the chunk count, not the derived text (§3.24).
->
-> **Do not refresh the dev corpus.** `GEMINI_API_KEY` is in this shell but not in the repo `.env`; a
-> refresh without it writes 17 NULL vectors that report "already ingested" forever
-> (`deploy/README.md` §4).
+> `fetch_reference_copy.py`, and edits to the public templates and `core/services/_public.py`) — stage
+> explicit paths, never `git add -A`. **Do not refresh the dev corpus** — `GEMINI_API_KEY` is in the
+> shell but not in the repo `.env`, and a refresh without it writes 17 NULL vectors that report
+> "already ingested" forever (`deploy/README.md` §4).
 
 ---
 
@@ -69,23 +68,21 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation, vlm-arm,
 re-score, and arbitration sessions
-**Repo state:** `main` — **three unpushed commits**, all this session's (`b26609a` the extraction
-field with R1, `665b1fb` the emitter with the proposals, and the close: hazards, the PRD's §3.15 and
-S3 row, the handover and this file). Everything before `1p` is **pushed** — `1h`, `1n` and `1o`
-were pushed before this session started, so the stale "three unpushed runs" note this file carried is
+**Repo state:** `main` — **three unpushed commits at the start of session `1q`** (`b26609a`,
+`665b1fb`, and S3's close), all pushed by it; `1q`'s own commit is the S5-a slice plus its close.
+Everything before `1p` is pushed. The stale "three unpushed runs" note this file carried twice is
 itself the example of why the next line is the only one that answers it.
 **Let the command answer:** `git rev-list --count origin/main..HEAD`.
 `main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate lines** with no code
 overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand on
 those two files.
 
-**On this tree** (2026-11-05, session `1p`, after the last commit): `python -m pytest -q --create-db`
-— the gate's own pytest step — **1820 passed / 1 skipped / 8 xfailed in 240.27 s**, run as
+**On this tree** (2026-11-05, session `1q`, after its commit): `python -m pytest -q --reuse-db` —
+**1831 passed / 1 skipped / 8 xfailed in 79.19 s and in 97.74 s** on two runs minutes apart, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same suite measured **234.99 s** with `--reuse-db` a few
-minutes earlier — quote cold *and* warm (§3.17), and this box is not idle. `scripts/fast.sh --critical`
-**182 passed / 4 deselected in 45.33 s** (the file that joined the lane, `tests/tools/test_check_tables.py`,
-costs ~1 s; the lane was 172 in ~40 s before it). **`scripts/verify.sh` cannot be quoted green from this
+serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17), and this box is not idle —
+session `1p` measured 240.27 s `--create-db` and 234.99 s warm on the same suite with 11 fewer tests.
+`scripts/fast.sh --critical` **182 passed / 4 deselected in 18.42 s**. **`scripts/verify.sh` cannot be quoted green from this
 working tree**: its first step fails on **another session's** `scripts/copy_deck.py` (32 KB); my own
 files are all inside the cap, and steps 2–4 pass by hand — `manage.py check` clean,
 `makemigrations --check` "No changes detected", `lint-imports` `knowledge must never import core KEPT`,
@@ -114,6 +111,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1q` 2026-11-05 (session 24) — S5-a: Appendix 6a becomes a block, and a body is the pass its block declares — [`SESSION_1q_2026-11-05_appendix-6a-becomes-a-block.md`](product/docs/handover/SESSION_1q_2026-11-05_appendix-6a-becomes-a-block.md)
 - `1p` 2026-11-05 (session 23) — S3: the generator emits the table block, and the page supplies the characters — [`SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md`](product/docs/handover/SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md)
 - `1o` 2026-11-05 (session 22) — the re-score moves an arm a shape, and a surface that stacked its evidence — [`SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md`](product/docs/handover/SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md)
 - `1n` 2026-11-05 (session 21) — the verification surface, and 68 claims the owner has not judged — [`SESSION_1n_2026-11-05_the-verification-surface.md`](product/docs/handover/SESSION_1n_2026-11-05_the-verification-surface.md)

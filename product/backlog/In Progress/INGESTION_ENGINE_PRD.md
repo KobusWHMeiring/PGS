@@ -710,6 +710,67 @@ builds its body from the committed page fixtures, so it needs no PDF and no extr
 found) and `proposal 2, row 2, column 3` (the arm splits a merged box, and the seal artwork cell) —
 S5's four declarations, written down rather than guessed.
 
+### 3.16 What S5 landed (2026-11-05): Appendix 6a is a block, and a body is the pass its block declares
+
+S5 is one PRD slice with four tables in it. This session landed the **first** of them and the two
+capabilities all four need, and wrote `INGESTION_ENGINE_S5_PLAN.md` for the rest. The plan is the
+honest artefact here: three of the four tables need a review with the paper in front of them, and
+landing half of one in a commit is how a block becomes a hand-tidied copy of a page.
+
+**The missing capability, and it was not cosmetic.** A block records `extraction: table|layout|raw`
+and the gate judges its cells against *that pass* — but the generator sliced every section from the
+de-columned geometry stream regardless. So a `-table` block was assembled from `-layout` text and
+judged against `-table` text: one of the two was always wrong. `scripts/corpus_pages.substitute_pass`
+is the fix, and it is declarative: a proposal's `pdf_pages` + `extraction` say which pages to take
+from which pass, and `build_corpus.build()` takes exactly those, sliced through the document's own
+`body_lines` rule (a parser that owns its furniture judgement keeps owning it). Measured on the
+landscape, which is why S3 could not emit it: its tables' pages are taken from `-raw`, so the page-4
+header was not a run of any printed line and the emitter refused at `column 1`. With the rule in
+place that refusal moves on to `column 2` — the multi-line column label, which is S5-d's declaration.
+
+**The reviewed label (requirement 2's other half).** Appendix 6a prints its header once, as two
+levels of type across four lines with a merged cell; all four arms flattened the two labels into one
+string (`Maximum number of animals per ha Class or species`), and the owner arbitrated the two labels
+on 2026-11-05. A one-line `cols:` field cannot be a slice of a multi-line header, so the labels are
+**reviewed data** in `knowledge/proposals/saoso.reviewed.json` — the same status
+`TABLE_SECTIONS["Appendix 2"].columns` already had. The cells are untouched by that declaration: a
+cell the page does not print is still refused (`test_a_reviewed_label_never_makes_a_cell_the_reviewers`).
+
+**The one declared normalisation, now declared where it is used.** The paper letter-spaces part of
+the class column (`Other b o v i n e a n i m a l s less t h a n o n e year old`); `CORPUS_EDITS` already
+rejoins it, with a page number and a reason, and `test_corpus_saoso` proves that edit was necessary
+and applied. R3 now accepts the review's spelling **only** on a printed line that itself carries a
+spaced run, and refuses a page that glues its letters — the guard on the guard.
+
+**Measured.**
+
+* `python scripts/build_corpus.py --doc saoso --force` → **the diff is the review**: Appendix 6a's
+  interleaved page becomes a 20-row block, `101 insertions(+), 25 deletions(-)` in one section. The
+  diff also *corrects* the page: the old artefact paired `Equines over six months old` with `5`
+  (its neighbour's value); the block pairs it with `2`. That is the defect the PRD opened with,
+  visible in one hunk.
+* `python scripts/check_tables.py --doc saoso --rows 20` → `ok — 1 tables, 20 rows, 0 violations
+  (table pages, recorded on the artefact)`.
+* `python scripts/build_corpus.py --doc opp --force` leaves `opp.md` **byte for byte** unchanged —
+  S3's regression still holds.
+* `APPENDIX_6A_ROWS` and `TABLE_ROWS["Appendix 6a"]` are **deleted**; the artefacts 6a section is a
+  block and the ingest reads it through `chunks_for_parsed_section`. `APPENDIX_2_ROWS` stays for now
+  and is S5-b's.
+* Full suite `--create-db`-equivalent (`--reuse-db`, this box, 2026-11-05): **1831 passed / 1 skipped
+  / 8 xfailed in 79 s warm**; `scripts/fast.sh --critical` **182 passed / 4 deselected in 18 s**.
+* Three guards were broken and watched red before being trusted: the reviewed label, the pass
+  substitution, and R3's letter-spacing fallback (`3 failed` mutated, `3 passed` restored).
+
+**What is left, with the reason each is a review rather than a chore.** Appendix 2 needs 30 rows and
+no arm read exists for printed 77–78 (the cached `qualifier` response is the shape page), so its
+locators have to come from the owner's 2026-10-21 review, declared and recorded — or the block is 11
+rows and `APPENDIX_2_ROWS` stays, which deletes nothing. Appendix 7 needs a cell that wraps *inside*
+a column (`Aeration or oxygenation` / `using gaseous oxygen`, with `Air,` beside it on the same line),
+which `_resolve`'s continuation branch cannot express; Docling's grid is the evidence for the column
+boundary. The landscape needs the four declarations §3.15 named, and its artefact cannot be
+regenerated wholesale — pages 2–3 and 9 are the **reviewer's** front matter (commit `8674d7a`), so
+S5-d emits blocks and splices them in place of the current table region.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -744,7 +805,7 @@ S5's four declarations, written down rather than guessed.
 | **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Closed 2026-11-05. Six measurements (§3.5–§3.9), the key reviewed and signed (§3.11, D85), all three arms re-scored against it at no cost (§3.12), and D82 answered as a composite — Layout Parser for structure, the page's text layer for characters, Docling for Appendix 7's columns, the harness for the verdict (§3.14). The credential bought its own answer: no arm beats the free ones, and the union stops at 5 of 8 because the rest is semantic. S3 and S5 are what is left.** |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | **Landed 2026-11-05 (§3.15).** `scripts/table_blocks.py` resolves a proposed structure against the body's printed lines and writes the block, splicing the page's own characters per cell; the structure is committed data found by the PDF's **sha256** (`knowledge/proposals/`, reduced from the cached arm response by `scripts/propose_tables.py`). `python scripts/build_corpus.py --doc opp --force` reproduces `opp.md` **byte for byte**, and the block carries `extraction:` so the gate judges it against the pass it came from (R1). The landscape's proposal is committed and refused on two cells — its page order and merged fee box are S5's. |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
-| **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |
+| **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | **Partly landed 2026-11-05 (§3.16).** Appendix 6a is a `<!-- table -->` block of 20 rows emitted from its page (`check_tables --doc saoso --rows 20` → ok) and `APPENDIX_6A_ROWS` is deleted. The two capabilities all four tables need are in: **the body is the pass the block declares** (`corpus_pages.substitute_pass`) and **the reviewed column labels** (`reviewed.json`'s `columns`). Appendix 2 (30 rows, no arm read for printed 77–78), Appendix 7 (a cell that wraps inside a column) and the landscape's four declarations carry a plan each — `INGESTION_ENGINE_S5_PLAN.md` §5. |
 
 **What would change this order** (from the exploration, kept here because it is the decision's own
 falsifier): if S2 shows extractors lose spans or qualifiers on more than two of the eight shapes,
@@ -764,8 +825,12 @@ answer, with the review written down as debt.
       arms. The first real ingestion runs `scripts/propose_tables.py --pdf <new> --pages …` once.
 - [ ] All eight shape targets pass, and the strict-xfail markers are gone (the audit test then
       reports zero uncovered shapes).
-- [ ] Appendix 6a's 20 chunks carry their column meaning; Appendix 7's chunks are rows, not
-      interleaved text.
+- [x] Appendix 6a's 20 chunks carry their column meaning; Appendix 7's chunks are rows, not
+      interleaved text. **Appendix 6a: proved (S5, 2026-11-05).** Its twenty row chunks each carry
+      `Class or species: … · Maximum number of animals per ha equivalent to 170 kg N/ha/year: …`
+      (`knowledge/tests/test_tables.py::test_one_chunk_per_six_a_row_and_none_of_them_invented`), and
+      the pairing in the block is the paper's — the diff corrected `Equines over six months old 5` to
+      `2`. **Appendix 7: not yet** — its cells wrap inside a column, which the emitter cannot bound.
 - [ ] Cell fidelity, row count, header association and empty-cell preservation are asserted for every
       table in the corpus, not for the reviewed ones only. **Partly (S4, 2026-11-03):** asserted for
       every table that *is* a block — 4 tables, 14 rows, 0 violations — and the rows outside any

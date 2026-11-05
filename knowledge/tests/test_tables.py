@@ -20,10 +20,10 @@ from knowledge.tests.page_fixtures import pages
 
 from knowledge.extraction import extract_pages
 from knowledge.corpus import CORPUS_EDITS
-from knowledge.table_chunks import chunks_for_rows
+from knowledge.corpus import load_document
+from knowledge.table_chunks import chunks_for_parsed_section, chunks_for_rows
 from knowledge.tables import (
     APPENDIX_2_ROWS,
-    APPENDIX_6A_ROWS,
     TABLE_BANDS,
     rows_for,
 )
@@ -260,13 +260,28 @@ def test_an_unreviewed_section_has_no_rows():
 # pairing and not merely the presence of the words.
 
 
+def _six_a():
+    """Appendix 6a as the corpus holds it: a `<!-- table -->` block in the artefact (S5).
+
+    It used to be 20 Python literals (`APPENDIX_6A_ROWS`); the assertions below did not change,
+    their source did. That is the point of S5 — the pairing is data the artefact carries, not a
+    reconstruction beside it.
+    """
+    document = load_document(REPO_ROOT / "knowledge" / "corpus" / "saoso.md")
+    section = next(s for s in document.sections if s.section_ref == "Appendix 6a")
+    return section, tuple(
+        (row.cells[0].text, row.cells[1].text, row.page) for row in section.tables[0].rows
+    )
+
+
 def test_appendix_6a_is_twenty_classes_and_1_2_3_4_5_6_7_8_9_10_11_12_13_14_15_16_17_18_19_20_values():
-    assert len(APPENDIX_6A_ROWS) == 20, "the paper prints twenty classes"
-    assert all(row.condition for row in APPENDIX_6A_ROWS), (
+    section, rows = _six_a()
+    assert section.section_ref == "Appendix 6a"
+    assert len(rows) == 20, "the paper prints twenty classes"
+    assert all(value for _substance, value, _page in rows), (
         "every 6a row prints a stocking rate: a silent row would divide by nothing"
     )
-    assert all(row.section_ref == "Appendix 6a" for row in APPENDIX_6A_ROWS)
-    assert all(row.page == 85 for row in APPENDIX_6A_ROWS)
+    assert all(page == 85 for _substance, _value, page in rows)
 
 
 def _corrected(page: str) -> str:
@@ -282,11 +297,12 @@ def _corrected(page: str) -> str:
     return page
 
 
-@pytest.mark.parametrize("row", APPENDIX_6A_ROWS, ids=lambda row: row.substance[:40])
+@pytest.mark.parametrize("row", _six_a()[1], ids=lambda row: row[0][:40])
 def test_every_six_a_class_is_in_the_left_column_of_its_page(table_pages, row):
-    left, _right = _streams([_corrected(page) for page in table_pages], row.page)
-    assert _contains(left, row.substance), (
-        f"{row.substance!r} is not in the left column of printed page {row.page}"
+    substance, _value, page = row
+    left, _right = _streams([_corrected(one) for one in table_pages], page)
+    assert _contains(left, substance), (
+        f"{substance!r} is not in the left column of printed page {page}"
     )
 
 
@@ -309,7 +325,7 @@ def _follows(line: str, substance: str, value: str) -> bool:
     return False
 
 
-@pytest.mark.parametrize("row", APPENDIX_6A_ROWS, ids=lambda row: row.substance[:40])
+@pytest.mark.parametrize("row", _six_a()[1], ids=lambda row: row[0][:40])
 def test_every_six_a_value_is_paired_with_its_class_on_one_line(table_pages, row):
     """The `-layout` defect in one assertion: the value must sit on the class's own line.
 
@@ -317,22 +333,38 @@ def test_every_six_a_value_is_paired_with_its_class_on_one_line(table_pages, row
     five of them were on a *neighbour's* line while fifteen piled up at the foot of it. This
     is the guard that says which class owns which number.
     """
+    substance, value, page = row
     lines = [
         line
-        for line in _corrected(table_pages[row.page]).splitlines()
-        if _contains(line, row.substance)
+        for line in _corrected(table_pages[page]).splitlines()
+        if _contains(line, substance)
     ]
-    assert lines, f"{row.substance!r} is not on printed page {row.page}"
-    assert any(_follows(line, row.substance, row.condition) for line in lines), (
-        f"printed p.{row.page}: {row.condition!r} is not on the line of {row.substance!r} "
+    assert lines, f"{substance!r} is not on printed page {page}"
+    assert any(_follows(line, substance, value) for line in lines), (
+        f"printed p.{page}: {value!r} is not on the line of {substance!r} "
         f"— the curated pairing has drifted from the paper"
     )
 
 
 def test_one_chunk_per_six_a_row_and_none_of_them_invented():
-    chunks = chunks_for_rows("Appendix 6a")
-    assert len(chunks) == 20
+    """The block's rows *are* the chunks, and each carries its column meaning (R2).
+
+    Twenty row chunks, and two prose chunks the block does not swallow: the printed title and
+    header above it (`NUMBER OF ANIMALS PER HA EQUIVALENT TO 170 KG N/HA/YEAR`, `Source: EU
+    2092/91`, and the two labels) and the part banner the section's body carries onto the next
+    page. Those are the page's own words, and the header is where a citation of *per hectare*
+    comes from — before S5 they were dropped together with the interleaved cells.
+    """
+    section, rows = _six_a()
+    chunks = chunks_for_parsed_section(section)
     assert all(chunk.section_ref == "Appendix 6a" for chunk in chunks)
-    assert all(chunk.heading_path.startswith("Appendix 6a — ") for chunk in chunks)
-    for chunk, row in zip(chunks, APPENDIX_6A_ROWS):
-        assert chunk.text == row.text
+    row_chunks = [chunk for chunk in chunks if chunk.heading_path.startswith("Appendix 6a — ")]
+    assert len(row_chunks) == 20
+    for chunk, (substance, value, _page) in zip(row_chunks, rows):
+        assert chunk.text == substance + chr(10) + value
+        assert "Class or species:" in chunk.embedding_text
+        assert "Maximum number of animals per ha" in chunk.embedding_text
+    prose = [chunk.text for chunk in chunks if chunk not in row_chunks]
+    assert len(prose) == 2, prose
+    assert "NUMBER OF ANIMALS PER HA" in prose[0] and "Source: EU 2092/91" in prose[0]
+    assert prose[1].strip().endswith("SOUTH AFRICAN specific")

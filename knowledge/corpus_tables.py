@@ -80,6 +80,32 @@ TABLE_LAYOUTS = ("grid", "process")
 #: pass, judge it anyway", which is the class of silence this format exists to make loud.
 EXTRACTION_MODES = ("layout", "raw", "table")
 
+#: A letter-spaced run is at least this many single letters in a row (`b o v i n e` is 6,
+#: `( S A O S O` is 5). The same threshold the emitter (`scripts/table_blocks.py`) and the row
+#: reader (`scripts/table_reads.py`) use, for the same reason, kept here because both the emitter
+#: and the harness must agree about what "the page letter-spaces this word" means.
+SPACED_RUN = 3
+
+
+def has_letter_spacing(text: str) -> bool:
+    """Whether the page prints a run of single letters ('t h a n', 'b o v i n e') in this text.
+
+    Appendix 6a prints its class column in tracking: the text layer emits one token per letter, so
+    the corpus's quote (`Other bovine animals less than one year old`, a reviewed `CORPUS_EDITS`
+    replacement) is not a substring of the printed line. Both the emitter (which slices the page)
+    and the harness (which locates a cell on it) need the same narrow answer to "is this line
+    letter-spaced?", and a second copy of the rule would be a second answer.
+    """
+    run = 0
+    for token in text.split(" "):
+        if len(token) == 1 and token.isalpha():
+            run += 1
+            if run >= SPACED_RUN:
+                return True
+        else:
+            run = 0
+    return False
+
 
 def row_divider(value: str):
     """A `row-divider`'s text and kind. The kind trails, as the format says it does."""

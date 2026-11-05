@@ -102,6 +102,88 @@ def choose_pages(laid: list[str], raw: list[str]) -> tuple[list[str], tuple[int,
     return chosen, tuple(used)
 
 
+def substitute_pass(
+    lines: list[tuple[int, str]],
+    pass_pages: dict[int, str],
+    wanted: set[int],
+    keep=None,
+) -> list[tuple[int, str]]:
+    """Replace the lines of `wanted` pages with the same pages from another extraction pass.
+
+    In:  `lines` — `(pdf page, text)` in document order, one run per page; `pass_pages` — the other
+         pass's page text, keyed by 1-based PDF page; `wanted` — the pages to take from it; `keep` —
+         the document's body filter, applied to the substituted lines so the two passes carry the
+         same furniture rule.
+    Out: the same stream with each wanted page's lines replaced, in place.
+    Fails: never. A wanted page the other pass does not have is left as it arrived — the emitter
+         will then refuse the cell it cannot find, which is the loud outcome.
+
+    **Why this exists (S5).** A block records the extraction its cells came from
+    (`extraction: table|layout|raw`), and the gate judges the cells against *that* pass
+    (`scripts/check_tables.py` → `page_fixtures.pages(doc, mode)`). Until S5 the generator sliced
+    every section from the geometry stream regardless, so a `-table` block was assembled from
+    `-layout` text and judged against `-table` text: one of the two was always wrong. The
+    landscape's page-4 header is the measured case — `-raw` content-stream order put the five
+    column labels on lines of their own and the emitter refused at `column 1` (2026-11-05).
+
+    The page's *printed* number is not disturbed: `stamps` is computed from the geometry pass, and
+    a page's stamp does not depend on which rendering its words came from.
+    """
+    out: list[tuple[int, str]] = []
+    previous: int | None = None
+    for page, text in lines:
+        if page not in wanted:
+            out.append((page, text))
+            previous = page
+            continue
+        if page == previous:
+            # The rest of a run already substituted: those lines are the pass's now.
+            continue
+        replacement = pass_pages.get(page)
+        if replacement is None:
+            out.append((page, text))
+            previous = page
+            continue
+        new_lines = replacement.split("\n")
+        if keep is not None:
+            new_lines = [line for line in new_lines if keep(line)]
+        out.extend((page, line) for line in new_lines)
+        previous = page
+    return out
+
+
+NEWLINE = chr(10)
+FORMFEED = chr(12)
+
+
+def pass_texts(parser, pdf_path: Path, wanted: dict[str, set[int]]) -> dict[str, dict[int, str]]:
+    """`mode -> {pdf page: the page's body lines, as this document's parser slices them}`.
+
+    In:  `parser` — the document's section parser; `pdf_path` — the PDF; `wanted` — which pages
+         each extraction pass must supply.
+    Out: one page-text map per pass, ready for `substitute_pass`.
+    Fails: whatever `pdftotext` fails with — a build-time act, not the gate (requirement 10).
+
+    **Sliced through the document's own rule, not a second one.** A parser that declares
+    `body_lines` (SAOSO) owns its furniture judgement: the running part banner, the printed page
+    number and the appendix head are all decided there. Applying only `body_filter` to a
+    substituted page put `SECTION B` and the repeated `APPENDIX 6a:` title into the section
+    (measured 2026-11-05). One rule, two renderings.
+    """
+    out: dict[str, dict[int, str]] = {}
+    body_lines = getattr(parser, "body_lines", None)
+    for mode in wanted:
+        alt = extract_pages(pdf_path, mode=mode)
+        if body_lines is None:
+            out[mode] = dict(enumerate(alt, 1))
+            continue
+        grouped: dict[int, list[str]] = {}
+        for pdf_page, _number, line in body_lines(FORMFEED.join(alt)):
+            grouped.setdefault(pdf_page, []).append(line)
+        out[mode] = {page: NEWLINE.join(lines) for page, lines in grouped.items()}
+    return out
+
+
 def pages_of(
     pdf_path: Path, doc_key: str, *, raw_fallback: bool = True
 ) -> tuple[list[str], tuple[int, ...], dict[int, int | None]]:

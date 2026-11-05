@@ -172,3 +172,43 @@ def test_the_committed_directory_holds_one_proposal_and_the_readme():
     names = {path.name for path in PROPOSAL_DIR.iterdir()}
     assert "README.md" in names
     assert "opp.structure.json" in names and "opp.reviewed.json" in names
+
+
+# --- S5: the reviewed column labels ----------------------------------------------------
+
+
+def test_a_reviewed_column_count_that_disagrees_is_refused(tmp_path):
+    """A label list is paired with the columns one-to-one. Short or long, it moves a value under
+    the wrong heading — R2 with a human's signature on it."""
+    payload = json.loads(json.dumps(STRUCTURE))
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"columns": ["Only one"]}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="reviewed column labels"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_a_reviewed_column_label_that_is_blank_is_refused(tmp_path):
+    payload = json.loads(json.dumps(STRUCTURE))
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"columns": ["A", "  "]}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="blank"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_the_saoso_proposal_carries_the_arbitrated_two_label_header():
+    """The owner's arbitration of 2026-11-05, as data: the standard prints the header once and every
+    reader merged the two labels into one. The proposal is found by the PDF's sha256 like the OPP's,
+    so a reprint finds nothing rather than a stale structure."""
+    sha = next(
+        line.split(":", 1)[1].strip()
+        for line in (REPO_ROOT / "knowledge" / "corpus" / "saoso.md")
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.startswith("sha256:")
+    )
+    table = proposals_for(sha)[0]
+    assert table.profile.columns == (
+        "Class or species",
+        "Maximum number of animals per ha equivalent to 170 kg N/ha/year",
+    )
+    assert len(table.rows) == 20 and table.extraction == "table"

@@ -89,6 +89,21 @@ def section_text(section) -> str:
     return HASH.sub("", section.text)
 
 
+def emitted_from_another_pass(document) -> dict[str, str]:
+    """`section_ref -> extraction` for every section whose block was not emitted from `-layout`.
+
+    The artefact records the pass each block's cells came from (`extraction:`), so this is read
+    rather than listed: a section that starts declaring another pass appears here by itself, and
+    the ratchet in `test_every_section_says_what_the_pdf_path_says` makes that visible.
+    """
+    found: dict[str, str] = {}
+    for section in document.sections:
+        for table in section.tables:
+            if table.extraction and table.extraction != "layout":
+                found[section.section_ref or section.heading_path] = table.extraction
+    return found
+
+
 def on_page(block: str, laid: list[str], start: int, span: int = 2) -> bool:
     needle = squash(block)
     return any(
@@ -131,9 +146,26 @@ def test_every_section_says_what_the_pdf_path_says(document, pdf_sections):
 
     A whole-document comparison would pass while two sections swapped text; this names the
     section, so the failure says where to look.
+
+    **Except a section whose block was emitted from another pass** (S5). `extraction:` on the
+    block says which rendering its cells came from, and for Appendix 6a that is `-table` — the
+    pass in which the page's two columns are aligned. Comparing it with the de-columned `-layout`
+    path would assert the interleaving the block exists to remove (the old artefact paired
+    `Equines over six months old` with `5`). Those sections are checked by the harness instead:
+    `scripts/check_tables.py --doc saoso --rows 20` judges every cell against the page the block
+    names. The exclusion is a ratchet — it must be exactly the sections that declare another
+    pass, so a section cannot quietly stop being compared.
     """
+    other_pass = emitted_from_another_pass(document)
+    assert set(other_pass) == {"Appendix 6a"}, (
+        "the set of sections checked against another pass moved: "
+        f"{sorted(other_pass)}. S5-b and S5-c add Appendix 2 and Appendix 7 here in the same "
+        "commit that emits their blocks."
+    )
     differing = []
     for theirs, ours in zip(pdf_sections, document.sections):
+        if theirs.section_ref in other_pass:
+            continue
         # **Body only.** A heading is structure in the artefact (Markdown) and text in the PDF
         # path, and an appendix's artefact heading is its canonical label rather than the
         # printed form (`APPENDIX 6a:` → `Appendix 6a`). That difference is pinned by the
@@ -156,9 +188,20 @@ def test_every_section_says_what_the_pdf_path_says(document, pdf_sections):
 
 
 def test_the_artefact_carries_every_character_the_pdf_path_produces(document, pdf_sections):
-    """Character multiset, so a moved word is not invented text (see `test_corpus_bpp`)."""
+    """Character multiset, so a moved word is not invented text (see `test_corpus_bpp`).
+
+    **A section whose block was emitted from another pass is measured on that pass**, not on
+    `-layout`: its characters are `-table`'s, and folding one rendering into the other's multiset
+    would be a comparison of two different readings of the paper. The harness is what guards it —
+    `scripts/check_tables.py --doc saoso --rows 20` locates every cell on the page the block names
+    (R3) — and the exclusion is read from the artefact's own `extraction:`, so it cannot grow
+    without the ratchet in `test_every_section_says_what_the_pdf_path_says` failing.
+    """
+    other_pass = emitted_from_another_pass(document)
     expected = collections.Counter()
     for section in pdf_sections:
+        if section.section_ref in other_pass:
+            continue
         # Body only: the artefact carries headings as Markdown, and a heading is structure
         # rather than text (`body_text` excludes them on both sides).
         expected.update(chars(section_text(section).partition(chr(10))[2]))
@@ -168,8 +211,13 @@ def test_the_artefact_carries_every_character_the_pdf_path_produces(document, pd
     expected = +expected
 
     actual = chars(body_text(document))
-    assert not expected - actual, f"the artefact dropped characters: {dict(expected - actual)}"
-    assert not actual - expected, f"the artefact invented characters: {dict(actual - expected)}"
+    for ref in other_pass:
+        section = next(s for s in document.sections if s.section_ref == ref)
+        actual.subtract(chars(section_text(section).partition(chr(10))[2]))
+    actual = +actual
+    dropped, invented = expected - actual, actual - expected
+    assert not dropped, f"the artefact dropped characters: {dict(dropped)}"
+    assert not invented, f"the artefact invented characters: {dict(invented)}"
 
 
 def test_the_artefact_yields_the_parsers_chunks(document, pdf_sections):
@@ -278,12 +326,14 @@ def test_appendix_6a_still_carries_its_twenty_classes_and_twenty_values(document
 
 
 def test_the_reader_can_answer_the_laying_hens_question(document):
-    """The end-to-end promise of §5, on the artefact's own text plus the reviewed rows."""
-    from knowledge.tables import rows_for
-
-    rows = rows_for("Appendix 6a")
-    laying = next(row for row in rows if row.substance == "Laying hens")
-    assert laying.condition == "230"
+    """The end-to-end promise of §5, on the artefact's own block (S5) — `Laying hens 230` is a
+    row the page prints, and every character of it is the page's."""
+    appendix = next(s for s in document.sections if s.section_ref == "Appendix 6a")
+    table = appendix.tables[0]
+    laying = next(
+        row for row in table.rows if flat(row.cells[0].text) == "Laying hens"
+    )
+    assert flat(laying.cells[1].text) == "230"
     assert flat(laying.text) == "Laying hens 230"
 
 

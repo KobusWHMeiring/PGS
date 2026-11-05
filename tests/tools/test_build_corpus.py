@@ -448,3 +448,27 @@ def test_a_refused_table_keeps_its_prose_and_says_so_in_one_line(capsys):
     assert lines == text, "a refused table must not touch the draft"
     err = capsys.readouterr().err.strip().splitlines()
     assert len(err) == 1 and "70°C" in err[0] and "keeps the page's prose" in err[0]
+
+
+# --- S5: the body is the pass the block declares ---------------------------------------
+
+
+def test_the_body_is_sliced_from_the_pass_the_block_declares():
+    """A block records the rendering its cells came from, and the gate judges them against *that*
+    pass. Slicing the body from the geometry stream instead meant the emitter resolved one
+    rendering and the harness judged another — the landscape's page-4 header is the measured case,
+    where `-raw` order put the five labels on lines of their own and the emitter refused `column 1`.
+
+    In: a section whose lines belong to two pages, one of them wanted from `-table`.
+    """
+    lines = [(86, "SECTION B"), (86, "   b o v i n e   2"), (87, "Appendix 6b")]
+    pass_pages = {86: "SECTION B\nbovine 2"}
+    out = corpus_pages.substitute_pass(lines, pass_pages, {86})
+
+    assert out == [(86, "SECTION B"), (86, "bovine 2"), (87, "Appendix 6b")]
+
+
+def test_a_page_the_other_pass_does_not_have_is_left_as_it_arrived():
+    """Never a silent empty body: the emitter then refuses the cell it cannot find, loudly."""
+    lines = [(86, "row")]
+    assert corpus_pages.substitute_pass(lines, {}, {86}) == lines

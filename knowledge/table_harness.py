@@ -47,6 +47,7 @@ import re
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
+from knowledge.corpus_tables import has_letter_spacing
 from knowledge.sections import ParsedSection, ParsedTable
 from knowledge.table_chunks import row_chunk
 
@@ -347,6 +348,16 @@ def _locate(value: str, printed: Sequence[str], cursor: int) -> int | None:
     requires *both* halves to be printed lines in order — which is narrow on purpose. Joining
     every line instead would weaken R3 to "the words appear somewhere on the page", which is the
     thing it exists not to be.
+
+    **A letter-spaced run is the second, and it is a declared normalisation, not a convenience.**
+    Appendix 6a prints its class column in tracking (`Other b o v i n e a n i m a l s less t h a n
+    o n e year old`). The artefact keeps the reviewed spelling (`Other bovine animals less than one
+    year old`) because `CORPUS_EDITS` says so, with a page number and a reason — so the cell is the
+    page's characters *rejoined by a review* that `test_corpus_saoso` already proves was necessary
+    and applied. The fallback is gated twice: the printed line must itself carry a spaced run
+    (`has_letter_spacing`), and the whole cell line must be a contiguous run of it once spaces are
+    set aside. A page that glues letters (`Otherbovineanimals…`) is still refused, which is the
+    test that keeps this from becoming "compare anything to anything".
     """
     for offset in range(cursor, len(printed)):
         if value in printed[offset]:
@@ -370,9 +381,27 @@ def _locate(value: str, printed: Sequence[str], cursor: int) -> int | None:
         )
         if tail is not None:
             return tail
+    return _locate_rejoined(value, printed, cursor)
+
+
+def _locate_rejoined(value: str, printed: Sequence[str], cursor: int) -> int | None:
+    """The printed line this cell line is a run of once the page's letter spacing is set aside.
+
+    Only called after the strict and hyphen readings both failed, and only useful on a line the
+    page actually letter-spaces (`has_letter_spacing`) — Appendix 6a's class column. The comparison
+    drops spaces from both sides, so `bovine` locates `b o v i n e`; a page that glues letters
+    together has no spaced run and is never reached here.
+    """
+    bare = value.replace(" ", "")
+    if len(bare) < 2:
+        return None
+    for offset in range(cursor, len(printed)):
+        line = printed[offset]
+        if not has_letter_spacing(line):
+            continue
+        if bare in line.replace(" ", ""):
+            return offset
     return None
-
-
 def _check_spans(table: ParsedTable, where: str) -> list[Violation]:
     """R6 — a divider qualifies one row, and the shape fields agree with the rows."""
     found: list[Violation] = []

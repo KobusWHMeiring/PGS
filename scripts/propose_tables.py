@@ -177,6 +177,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--extraction", help="The pass the cells will be judged against.")
     parser.add_argument("--captured", help="The date the arm ran (default: the cache file's date).")
     parser.add_argument("--json", required=True, help="Where to write the structure JSON.")
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help=(
+            "Merge this response's tables into an existing proposal instead of overwriting it. "
+            "One arm response covers the pages it was sent, and a document's appendix is not one "
+            "page, so a document's structure is assembled from several — one file, one banner."
+        ),
+    )
     args = parser.parse_args(argv)
 
     if args.shape:
@@ -238,12 +247,58 @@ def main(argv: list[str] | None = None) -> int:
     }
     out = Path(args.json)
     out.parent.mkdir(parents=True, exist_ok=True)
+    if args.append and out.exists():
+        try:
+            payload = _merged(out, payload)
+        except ProposalError as error:
+            print(error, file=sys.stderr)
+            return 2
     out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="")
     print(
-        f"{out.as_posix()}: {len(tables)} table(s) from {response_path.name} "
+        f"{out.as_posix()}: {len(payload['tables'])} table(s) from {response_path.name} "
         f"({args.structure}, {extraction} characters)"
     )
     return 0
+
+
+def _merged(out: Path, payload: dict) -> dict:
+    """In: an existing proposal and a new one. Out: the two merged, or a refusal by name.
+
+    **The banner may not describe two arms at once.** A merged file whose `structure`, `processor`,
+    `sha256` or `project` disagree would say the whole document was read by one arm when half of it
+    was read by another — and the emitter trusts the banner when it decides which characters to
+    slice. Only `tables` grows, and `reduced_from` names every response that contributed.
+    """
+    existing = json.loads(out.read_text(encoding="utf-8"))
+    for field in ("sha256", "structure", "processor", "project"):
+        if existing.get(field) != payload.get(field):
+            raise ProposalError(
+                f"{out.name}: `{field}` is {existing.get(field)!r} and this response's is "
+                f"{payload.get(field)!r}. A proposal is one document read by one arm; two banners "
+                "in one file would say the whole structure came from either."
+            )
+    existing_pages = {
+        page for table in existing.get("tables", []) for page in table.get("pdf_pages", [])
+    }
+    clashes = sorted(
+        page
+        for table in payload["tables"]
+        for page in table.get("pdf_pages", [])
+        if page in existing_pages
+    )
+    if clashes:
+        raise ProposalError(
+            f"{out.name}: pages {clashes} already have a table. Two structures for one page is two "
+            "answers to where its rows are, and the emitter would write the first one twice."
+        )
+    reduced = [existing.get("reduced_from", "")]
+    if payload.get("reduced_from"):
+        reduced.append(payload["reduced_from"])
+    merged = dict(existing)
+    merged["tables"] = list(existing.get("tables", [])) + list(payload["tables"])
+    merged["reduced_from"] = ", ".join(item for item in reduced if item)
+    merged["captured"] = payload.get("captured") or existing.get("captured", "")
+    return merged
 
 
 if __name__ == "__main__":

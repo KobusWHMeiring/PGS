@@ -1,9 +1,14 @@
 """Appendix table rows — the one place a chunk is a reconstruction, not a slice.
 
-Two storages, one shape: reviewed rows live as Python literals (`TABLE_ROWS`, Appendix 2
-and 6a) or as a `<!-- table … -->` block in the reviewed corpus artefact (D73, and every
-table curated from 2026-10-30 onward). Both end as one `DocumentChunk` per row, whose text
-is the row's cells in printed order.
+One storage now, and one table still in Python. Reviewed rows live as a `<!-- table … -->` block
+in the reviewed corpus artefact (D73, and every table curated from 2026-10-30 onward); both storages
+end as one `DocumentChunk` per row, whose text is the row's cells in printed order.
+
+**Appendix 6a left this module on 2026-11-05 (S5).** Its twenty rows were Python literals until the
+generator could emit their block from the page: `APPENDIX_6A_ROWS`, `TABLE_ROWS["Appendix 6a"]` and
+`TABLE_SECTIONS["Appendix 6a"]` are gone, and the artefact carries the pairing with column meaning.
+Appendix 2 is the last of the reviewed tables still held here, and it is waiting on the same thing —
+30 rows, three printed pages, and no arm read for two of them (`INGESTION_ENGINE_S5_PLAN.md` §4).
 
 **Why this module exists.** `pdftotext -layout` renders Appendix 2 as two columns on
 one line grid, and the condition column is vertically offset from the substance column.
@@ -47,13 +52,13 @@ something this module invents.
 6. **Sub-item headings are not rows.** `I. PLANT AND ANIMAL ORIGIN`, `II. MINERAL
    ORIGIN`, `III. MICROBIOLOGICAL` and `IV. OTHERS` organise the table; they are not
    permissions.
-7. **Two storages, one shape — and this module is where both become chunks.** Appendix 2
-   and 6a are reviewed rows held in Python (`TABLE_ROWS`); every table curated from now on
-   is a `<!-- table … -->` block in the reviewed artefact (`knowledge.corpus`, D73), parsed
-   into `ParsedSection.tables` and chunked by `chunks_for_parsed_section` here. Appendices
-   3, 4, 6b/7 are still uncurated and keep the current pipeline and its documented
-   limitations. This module must not pretend otherwise — assumption 7 said "Appendix 2
-   only" until 2026-10-30, and it had been false since 6a landed.
+7. **Two storages, one shape — and the second is the one to use.** Every table curated from
+   2026-11-05 is a `<!-- table … -->` block in the reviewed artefact (`knowledge.corpus`, D73),
+   parsed into `ParsedSection.tables` and chunked by `chunks_for_parsed_section`. Appendix 2 is the
+   only table still held here as Python rows; Appendix 6a was the second until S5 emitted its block.
+   Appendices 3, 4, 6b/7 are still uncurated and keep the current pipeline and its documented
+   limitations. This module must not pretend otherwise — assumption 7 said "Appendix 2 only" until
+   2026-10-30, and it had been false since 6a landed.
 8. **A changed standard is a changed table.** If SAOSO v2.2 reprints Appendix 2, this
    data is re-reviewed; the golden test (`test_tables.py`) fails loudly rather than
    letting the corpus drift from the paper.
@@ -89,11 +94,10 @@ TABLE_BANDS: dict[int, int] = {76: 60, 77: 64, 78: 64, 85: 88}
 class TableRow:
     """One printed table row: a substance cell and the condition printed beside it.
 
-    `section_ref` is carried here rather than hardcoded in `as_chunk`, because there is more
-    than one reviewed table now: Appendix 2 pairs a substance with a condition, Appendix 6a
-    pairs a class of animal with a stocking rate. A hardcoded "Appendix 2" would make every
-    appended row claim to be a substance — the kind of quiet mislabelling a reader cannot see
-    and a citation inherits.
+    `section_ref` is carried here rather than hardcoded in `as_chunk`, because this shape is not
+    Appendix 2's alone: Appendix 6a paired a class of animal with a stocking rate until S5 emitted
+    it as a block. A hardcoded "Appendix 2" would make every appended row claim to be a substance —
+    the kind of quiet mislabelling a reader cannot see and a citation inherits.
     """
 
     page: int
@@ -310,144 +314,10 @@ APPENDIX_2_ROWS: tuple[TableRow, ...] = (
 )
 
 
-#: Verbatim cells from SAOSO v2.1 (2026), Appendix 6a, printed p. 85 — one row per class of
-#: animal. Reviewed 2026-10-28 against the `-table` extraction of that page and against the
-#: EU regulation the appendix cites (`Source: EU 2092/91`), which agree row for row.
-#:
-#: **Why this needed a review and not a parser.** `-layout` puts the value column on the
-#: same line grid as the class column, so five values landed on a neighbour's line and the
-#: other fifteen piled up at the end of the page: no pairing survived, and "how many laying
-#: hens per hectare?" was unanswerable from the branch that answers it
-#: (`BugFixes/saoso_text_glyphs_and_boundaries.md` §5). The pairing is the table's meaning,
-#: so it is data a person read, never inferred.
-APPENDIX_6A_ROWS: tuple[TableRow, ...] = (
-    TableRow(
-        page=85,
-        substance="Equines over six months old",
-        condition="2",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Calves for fattening",
-        condition="5",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Other bovine animals less than one year old",
-        condition="5",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Male bovine animals from one to less than two years old",
-        condition="3,3",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Female bovine animals from one to less than two years old",
-        condition="3,3",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Male bovine animals two years old or over",
-        condition="2",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Breeding heifers",
-        condition="2,5",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Heifers for fattening",
-        condition="2,5",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Dairy cows",
-        condition="2",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Cull dairy cows",
-        condition="2",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Other cows",
-        condition="2,5",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Female breeding rabbits",
-        condition="100",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Ewes",
-        condition="13,3",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Goats",
-        condition="13,3",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Piglets",
-        condition="74",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Breeding sows",
-        condition="6,5",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Pigs for fattening",
-        condition="14",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Other pigs",
-        condition="14",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Table chickens",
-        condition="580",
-        section_ref="Appendix 6a",
-    ),
-    TableRow(
-        page=85,
-        substance="Laying hens",
-        condition="230",
-        section_ref="Appendix 6a",
-    ),
-)
-
 #: Section reference -> curated rows. Data, not a branch: another document with a
 #: reviewed table adds a key, and the ingestion code does not change.
 TABLE_ROWS: dict[str, tuple[TableRow, ...]] = {
     "Appendix 2": APPENDIX_2_ROWS,
-    "Appendix 6a": APPENDIX_6A_ROWS,
 }
 
 #: What the reader prints where the paper's condition cell is empty (D70.4). A fragment, not a
@@ -516,18 +386,6 @@ TABLE_SECTIONS: dict[str, TableSection] = {
             TableDivider(26, "III. MICROBIOLOGICAL", "part"),
             TableDivider(28, "IV. OTHERS", "part"),
         ),
-    ),
-    "Appendix 6a": TableSection(
-        columns=(
-            "Class or species",
-            "Maximum number of animals per ha equivalent to 170 kg N/ha/year",
-        ),
-        legend=(
-            "The standard prints this appendix as a table: each row is a class of animal and "
-            "the maximum number of animals per hectare whose manure it may contribute, at the "
-            "limit of 170 kg of nitrogen per hectare per year."
-        ),
-        dividers=(),
     ),
 }
 
@@ -678,7 +536,6 @@ def align_artefact_grid(grid: ArtefactGrid, texts: tuple[str, ...]) -> GridAlign
 
 __all__ = [
     "APPENDIX_2_ROWS",
-    "APPENDIX_6A_ROWS",
     "FIRST_PAGE",
     "NO_CONDITION_LABEL",
     "TABLE_BANDS",

@@ -83,7 +83,7 @@ from knowledge.reflow import reflow_pages  # noqa: E402
 from knowledge.sections import is_furniture, registry  # noqa: E402
 from knowledge.table_proposals import proposals_for  # noqa: E402
 from scripts import table_blocks  # noqa: E402
-from scripts.corpus_pages import flatten, offsets, pages_of  # noqa: E402
+from scripts.corpus_pages import flatten, offsets, pages_of, substitute_pass  # noqa: E402
 from scripts.corpus_review import apply_review, table_loss_refusal  # noqa: E402
 
 CORPUS_DIR = REPO_ROOT / "knowledge" / "corpus"
@@ -411,6 +411,16 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
     digest = sha256_of(pdf_path)
     proposals = proposals_for(digest)
     attempted: set[int] = set()
+    # **The body is the pass the block declares** (S5). A block's cells were read from
+    # `extraction:` and the gate judges them against that same pass, so the generator must slice
+    # those pages from it; slicing them from the geometry stream instead meant the emitter resolved
+    # one rendering while the harness judged another, and one of the two was always wrong. Only a
+    # page a *pending* table names is substituted, so a document with no proposal is untouched.
+    declared_passes: dict[str, set[int]] = {}
+    for table in proposals:
+        if table.extraction != "layout":
+            declared_passes.setdefault(table.extraction, set()).update(table.pdf_pages)
+    pass_text = corpus_pages.pass_texts(parser, pdf_path, declared_passes)
 
     for index, section in enumerate(sections):
         heading_line, _ = spans[index]
@@ -435,15 +445,39 @@ def build(pdf_path: Path, doc_key: str, *, raw_fallback: bool = True) -> str:
         depth = section.heading_path.count(" > ") + 2
         out.append(f"{'#' * depth} {title}")
 
+        section_lines = lines[body_start:body_end]
+        # **Only the section the table opens on.** Pages are not section-scoped: Appendix 5's body
+        # runs to the line before Appendix 6a's heading, so it carries page 86's top lines too, and
+        # substituting by page alone put the whole `-table` page — appendix title and all — inside
+        # Appendix 5 as well (measured 2026-11-05: the block was emitted once and the page appeared
+        # twice). A table belongs to the section whose heading is printed on its own page.
+        for mode, wanted in declared_passes.items():
+            if heading_page not in wanted:
+                continue
+            present = {page for page, _text in section_lines} & wanted
+            if present:
+                section_lines = drop_body_furniture(
+                    substitute_pass(section_lines, pass_text[mode], present, keep),
+                    BODY_FURNITURE.get(doc_key, ()),
+                )
+        body_start_page = current_page
         body, current_page = assemble_body(
-            lines[body_start:body_end],
+            section_lines,
             printed,
             keep,
             after=current_page,
             with_content=content_pages,
         )
         body = insert_sub_refs(ref_sections.get(section.section_ref), body)
-        out.extend(emit_tables(doc_key, proposals, body, attempted, current_page, printed))
+        # **The page in force when the body begins, not the page it ends on.** `assemble_body`
+        # returns the last page it emitted, and a section whose body runs onto the next page would
+        # otherwise tell the emitter that the table starts on that page — so every line of the
+        # table's own first page fell outside `allowed` and the cell was refused as "not on the
+        # page" (measured 2026-11-05 on Appendix 6a, whose body continues onto printed 86 while its
+        # 20 rows are all on printed 85).
+        out.extend(
+            emit_tables(doc_key, proposals, body, attempted, body_start_page, printed)
+        )
 
     text = "\n".join(out) + "\n"
     # A private-use codepoint is a glyph slot, not a character: drop it before the reviewed

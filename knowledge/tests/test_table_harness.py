@@ -105,6 +105,8 @@ def violations_of(report_or_list, requirement: str) -> list[str]:
 CORPUS = {
     "landscape": ("table", (3, 2, 3)),
     "opp": ("layout", (6,)),
+    # S5: Appendix 6a's twenty rows, emitted from the `-table` page and declared on the block.
+    "saoso": ("table", (20,)),
 }
 
 
@@ -136,10 +138,11 @@ def test_the_corpus_really_was_checked(doc_key, corpus_report):
     assert corpus_report.rows == sum(rows)
 
 
-def test_the_four_reviewed_tables_are_fourteen_rows():
-    _, rows = CORPUS["landscape"]
-    _, opp_rows = CORPUS["opp"]
-    assert sum(rows) + sum(opp_rows) == 14, "the register and the PRD disagree; re-measure both"
+def test_the_reviewed_tables_are_thirty_four_rows():
+    """A ratchet, not a budget: the register and the gate disagree by a row the moment a table is
+    added, removed or re-read, and that is what this file is for."""
+    total = sum(sum(rows) for _mode, rows in CORPUS.values())
+    assert total == 34, "the register and the PRD disagree; re-measure both"
 
 
 def test_the_harness_checks_the_chunk_the_chunker_emits():
@@ -403,3 +406,49 @@ def test_one_mode_for_the_whole_document_has_nothing_to_disagree_about():
 
     modes, violations = recorded_extraction(document(TABLE + "\n" + TABLE))
     assert modes == ("table",) and violations == ()
+
+
+# --- R3 and the one declared normalisation: a letter-spaced run -------------------------
+
+LETTER_SPACED = """<!-- page: 1 printed: 1 -->
+## APPENDIX 6a
+
+<!-- table
+cols: Class or species | Maximum number of animals per ha
+extraction: table
+-->
+<!-- row: Other bovine animals less than one year old -->
+<!-- cell -->
+Other bovine animals less than one year old
+<!-- cell -->
+5
+<!-- /table -->"""
+
+#: What `pdftotext -table` prints: the class column is set in tracking, one token per letter.
+SPACED_PAGE = """APPENDIX 6a
+
+Other b o v i n e a n i m a l s less t h a n o n e year old            5
+"""
+
+#: The same row on a page that *glues* its letters: the fallback must not reach it.
+GLUED_PAGE = """APPENDIX 6a
+
+Otherbovineanimalslessthanoneyearold            5
+"""
+
+
+def test_r3_accepts_the_reviewed_rejoin_of_a_letter_spaced_run():
+    """Appendix 6a prints `b o v i n e`; the artefact keeps the word whole because `CORPUS_EDITS`
+    says so with a page number and a reason. R3 must accept that review on a line the page itself
+    letter-spaces — and nowhere else."""
+    parsed = document(LETTER_SPACED)
+    report = check_document(parsed, pages=[SPACED_PAGE], expected_rows=(1,), expected_tables=1)
+    assert report.violations == (), report.lines()
+
+
+def test_r3_still_refuses_a_rejoined_cell_on_a_page_that_does_not_letter_space():
+    """The guard on the guard: set spaces aside only where the page prints a spaced run. A page
+    that glues its letters is not a page the review may reword."""
+    parsed = document(LETTER_SPACED)
+    report = check_document(parsed, pages=[GLUED_PAGE], expected_rows=(1,), expected_tables=1)
+    assert any("not a contiguous run" in line for line in report.lines()), report.lines()

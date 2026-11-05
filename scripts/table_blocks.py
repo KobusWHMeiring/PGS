@@ -36,15 +36,14 @@ import re
 from dataclasses import dataclass
 from typing import Sequence
 
+from knowledge.corpus_tables import has_letter_spacing
 from knowledge.table_proposals import ProposedTable
 
 #: `<!-- page: 12 printed: 11 -->` — the same marker `knowledge.corpus` parses, so a row's page is
 #: read from the draft exactly as the parser will read it from the artefact.
 PAGE = re.compile(r"^<!--\s*page:\s*(\d+)\s+printed:\s*(\d+|none)\s*-->\s*$")
 
-#: A letter-spaced run is at least this many single letters in a row ('b o v i n e' is 6,
-#: '( S A O S O' is 5). The same threshold `scripts/table_reads.py` uses, for the same reason.
-_SPACED_RUN = 3
+__all__ = ["Emitted", "Refusal", "block_lines", "emit", "emit_one", "flat", "has_letter_spacing"]
 
 
 @dataclass(frozen=True)
@@ -110,19 +109,6 @@ def _flat_map(text: str) -> tuple[str, list[int]]:
         out.pop()
         offsets.pop()
     return "".join(out), offsets
-
-
-def has_letter_spacing(text: str) -> bool:
-    """Whether the page prints a run of single letters ('t h a n') in this text."""
-    run = 0
-    for token in text.split(" "):
-        if len(token) == 1 and token.isalpha():
-            run += 1
-            if run >= _SPACED_RUN:
-                return True
-        else:
-            run = 0
-    return False
 
 
 def _run_in_line(line: str, wanted: str, offset: int) -> tuple[int, int] | None:
@@ -337,7 +323,9 @@ def emit_one(
     table: ProposedTable, body: Sequence[str], start_page: tuple[int, int | None] = (0, None)
 ) -> _Resolved:
     """Resolve one proposal against a body stream: the new lines, or the refusal that stopped it."""
-    if not _appears(table.columns[0], body) and not any(
+    reviewed = table.profile.columns
+    first_column = reviewed[0] if reviewed else table.columns[0]
+    if not _appears(first_column, body) and not any(
         row.cells and _appears(row.cells[0], body) for row in table.rows
     ):
         return _Resolved(list(body), None, None, absent=True)
@@ -346,20 +334,30 @@ def emit_one(
     cursor: tuple[int, int] = (0, 0)
     claimed: dict[int, bool] = {}
 
+    # **A reviewed label is not resolved against the page, and that is the whole point of the
+    # declaration.** The paper prints a table's header once, as two levels of type across several
+    # lines (`Maximum number of animals per ha` over `Class or species`, with the second column's
+    # label split beneath it). A one-line `cols:` field cannot be a slice of that, so the labels are
+    # reviewed data — the same status `TABLE_SECTIONS["Appendix 2"].columns` already has. The
+    # printed header lines then stay in the section as prose, which is where a citation of "what
+    # the numbers are per hectare" belongs; nothing is deleted to make room for the labels.
     columns: list[str] = []
-    for index, column in enumerate(table.columns):
-        found = _resolve(column, body, cursor, allowed, pages)
-        if found is None:
-            return _Resolved(
-                list(body),
-                None,
-                Refusal(table.index, f"column {index + 1}", f"the printed column {column!r} is not a "
-                        "contiguous run of one of the page's printed lines"),
-            )
-        cell, cursor = found
-        columns.append(_slice(body, cell))
-        for line_index in range(cell.first, cell.last + 1):
-            claimed[line_index] = True
+    if reviewed:
+        columns = [flat(column) for column in reviewed]
+    else:
+        for index, column in enumerate(table.columns):
+            found = _resolve(column, body, cursor, allowed, pages)
+            if found is None:
+                return _Resolved(
+                    list(body),
+                    None,
+                    Refusal(table.index, f"column {index + 1}", f"the printed column {column!r} is "
+                            "not a contiguous run of one of the page's printed lines"),
+                )
+            cell, cursor = found
+            columns.append(_slice(body, cell))
+            for line_index in range(cell.first, cell.last + 1):
+                claimed[line_index] = True
 
     rows: list[tuple[tuple[str, ...], tuple[int, int | None]]] = []
     for row_index, row in enumerate(table.rows, 1):
