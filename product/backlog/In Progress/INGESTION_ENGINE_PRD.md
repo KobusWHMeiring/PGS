@@ -626,6 +626,41 @@ two `amend` verdicts whose cause is a surface defect, to be re-judged on the cor
 was regenerated (10 cards, both pages, quoted lines, decided notes, form hint) and the settled claim is
 listed as answered rather than asked twice.
 
+### 3.14 D82 answered as a **composite** (2026-11-05, owner's call): best role from each arm, no winner
+
+The owner stopped the claim-by-claim arbitration — *"we take our best options from each"* — and that is
+the decision. It is what the numbers have been pointing at since §3.8: the arms do not compete on one
+axis, they are each best at a different role, and the roles are separable because requirement 10 keeps
+characters and structure apart.
+
+| Role | What supplies it | The evidence for that choice |
+|---|---|---|
+| **Structure** — where the tables are, how many rows, how many columns | **Document AI Layout Parser v1.6-pro** | **8 of 8 tables found**, the best of any arm; 3/8 shapes pass outright; the only arm that reads the 1,112-character cell end to end (§3.12) |
+| **Characters** — every character in a cell | **the page's own text layer**, verified per cell by R3 | Every extractive arm is imperfect: Document AI re-OCRs (`1~g/|` for `1 g/l`, 43 cells unconfirmed), Docling drops letter-spacing (`bov ine`), a VLM writes `70°C` for `70oC`. The committed pass plus R3 is the only thing that has never been wrong about a character |
+| **De-interleaving the worst page** (Appendix 7's four columns) | **Docling 2.146.0**, free and local | Its grid was right all along — `rows 7/7, cols 5/4` once the row-number gutter is declared — while it finds *no table at all* on the landscape's merged-cell pages. It earns a role, not the job |
+| **A cheap proposer** where no structure is needed | **the VLM `lines` form**, 5–12 s/page | 3/8 shapes, faster than Docling by 4–8×, and its failures are named as mismatches rather than trusted |
+| **The verdict** | **S4's harness**, on every table | 14 reviewed rows, 0 violations, one mutation per requirement |
+
+**So D82 is not "which extractor".** It is: Layout Parser proposes, the page supplies the characters,
+the harness verifies, and a human reviews only the shapes where the question is semantic — Appendix 6a's
+header association and the merged/empty cells (S5). **No credential buys the semantic half**, which is
+why the four arms' union stops at 5 of 8 whatever is spent.
+
+**What is deliberately left open.** Seven claims are unjudged (§3.13) and they no longer gate anything:
+the two that matter — 6a's header (kept, so the arms are wrong) and the merged fee box (the artefact's
+legend already answers it) — are settled for the purposes of building. S5 reviews those two shapes
+*through the harness*, with the page beside the transcription, and any claim that review contradicts
+becomes an amendment then.
+
+**The interface lesson, which cost this session its last hour.** The judgement surface that worked
+(§3.11, 68 of 68 judged without a single "can't tell") put **the page beside the grid** — one decision
+per row, both sides visible. The surface built for the arbitration **stacked** the evidence above the
+question and showed only a shape's *first* page; the owner's notes reduced to *"I can't figure out what
+you need from me"*, and four of his eleven verdicts were caused by the layout rather than by the paper.
+Judging a cell is a comparison, so **the comparison has to be on the screen at the same time** — recorded
+as a hard rule in `pgs-presenting-uat`, and the page is now side-by-side with the full-size page one
+click away.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -657,7 +692,7 @@ listed as answered rather than asked twice.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Three arms measured 2026-11-03/04: Docling 2/8 (§3.5, §3.8), the OpenRouter VLM 3/8 (§3.7), Document AI 1/8 Form Parser and 2/8 Layout Parser (§3.9). One declared normalisation — the paper's row-number gutter — makes Appendix 7 pass for Docling *and* the VLM (§3.8). The credential was bought and bought the answer: no arm beats the free ones. §3.10 outranks all of it: the eight-shape key is agent-authored, so the ranking is not established. The owner reviewed it (§3.11, 68 claims, D85 answered) and the arms were **re-scored against the signed key on 2026-11-05 (§3.12): Layout Parser 2/8 → 3/8, everything else unchanged, union 4 → 5 of 8**. What is left is three shapes with three different causes — one claim on our key, one real tool failure, one defect in our committed pass — so D82 (which extractor) waits on those three, not on another measurement.** |
+| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Closed 2026-11-05. Six measurements (§3.5–§3.9), the key reviewed and signed (§3.11, D85), all three arms re-scored against it at no cost (§3.12), and D82 answered as a composite — Layout Parser for structure, the page's text layer for characters, Docling for Appendix 7's columns, the harness for the verdict (§3.14). The credential bought its own answer: no arm beats the free ones, and the union stops at 5 of 8 because the rest is semantic. S3 and S5 are what is left.** |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |

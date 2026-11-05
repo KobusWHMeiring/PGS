@@ -1,104 +1,75 @@
-# Handover — the key was the variable: one amended claim, and an arm gains a shape
+# Handover — D82 answered as a composite, and a judgement surface taught us to put both sides on screen
 
-> ## START HERE — the re-score is done, and it moved the scoreboard, not the tools
+> ## START HERE — S2 is closed: the arms were each best at a different job
 >
-> **`INGESTION_ENGINE_PRD.md` §3.12 is the state (2026-11-05, session `1o`).** The owner's review of
-> the eight-shape key — 68 of 68 claims Yes, one claim amended — was signed in session `1n`; this
-> session spent it. All three arms were re-scored against the signed key: the two API arms replayed
-> from cache (no credential, no network, no spend), Docling re-run in its venv (**545 s**, because
-> this arm keeps no response cache).
+> **`INGESTION_ENGINE_PRD.md` §3.14 is the decision (2026-11-05, session `1o`): D82 is not "which
+> extractor".** The owner's call — *"we take our best options from each"* — is now the PRD's answer:
+> **Layout Parser v1.6-pro for structure** (8/8 tables found; the only arm that reads the 1,112-character
+> cell end to end), **the page's own text layer for characters** (every extractor misreads something: 43
+> cells the Layout Parser cannot confirm, Docling's `bov ine`, the VLM's `70°C`), **Docling for Appendix
+> 7's four columns** (its grid was right all along, and it finds no table on the landscape's merged
+> cells), **the VLM `lines` form as a cheap proposer**, and **S4's harness for the verdict**. No
+> credential buys the semantic half, which is why the union stops at **5 of 8** whatever is spent.
 >
-> **The result.** Document AI's Layout Parser **2/8 → 3/8**. Docling **identical — 0 of 8 shapes
-> changed** (it returns no table on that page, so the amended cell is never consulted). Form Parser
-> **1/8, same verdict, sharper reason** (it reads the cell as the bare label `Step 3`, so it now fails
-> `contains` where it used to fail `starts`). Both VLM `lines` arms: passes unchanged, but `long_cell`
-> goes from 1 mismatch to **0 mismatches with 4–11 cells our committed pass cannot confirm**. Evidence
-> `2026-11-05_s2_rescore_{docling,documentai}.json` and `…_s2b_rescore_openrouter.json`; **6 of 72
-> combos moved, all on `long_cell`, one line each.**
+> **What S2 measured and what it cost.** Six measurements (§3.5–§3.9) across Docling 2.146.0, two VLMs ×
+> three prompt forms, and Document AI's Form and Layout parsers; **$0.55 of model spend**, one GCP
+> credential on the owner's own project (ADC — nothing in the repo), and the two API arms' raw answers
+> cached, so the re-score after the key was corrected cost **nothing**. The Layout Parser's structure is
+> 60–85 s/page on a 135-page corpus: **one-off, ~2.5 h, never in the edit loop** (requirement 10). Time
+> was never the axis; unconfirmed cells and human correction are.
 >
-> **What it means.** `long_cell.cell.0.0` went from `starts="The group conducts…"` to
-> `starts="Step 3", contains=…` — **one claim on the key, worth a whole shape for two arms.** The
-> union of shapes any arm passes is **4 → 5 of 8**, and §3.8's closing claim ("the three it would
-> still lose are the three no general extractor returns") was wrong: the long cell was our defect.
-> **The scoreboard is a property of the key as much as of the arms**, with a measurement behind the
-> suspicion §3.10 had.
+> **The key is signed and settled, and the review changed an arm's score.** 68 of 68 claims reviewed
+> (§3.11, D85), **one amended** (`long_cell.cell.0.0` starts with the printed `Step 3`), and the re-score
+> (§3.12) moved the **Layout Parser 2/8 → 3/8** with Docling byte-identical. The arbitration of the
+> eleven remaining disputes (§3.13) then **kept** Appendix 6a's two-label header — so four readers
+> merging it is a **tool failure**, not our defect, and §3.12's guess that it was ours is withdrawn.
+> **Seven claims are unjudged and no longer gate anything**; S5 reviews those two shapes through the
+> harness, with the page beside the transcription.
 >
-> **The three shapes still passed by nobody are three different problems** (§3.12), and none of them
-> is "no extractor can do this":
-> * `headerless_values` — **asked and answered: our key is right** (§3.13). The owner kept the
->   two-label claim on 2026-11-05, so four readers merging column 0's two printed lines is **a tool
->   failure** and Appendix 6a joins the semantics pile. The union stays 5 of 8; §3.12's "correcting it
->   would take two arms to 4/8" is withdrawn.
-> * `empty_cells` — **genuinely the tools.** Checked against the landscape artefact's own legend: the
->   fee box spans Steps 1–2 and is filed under Step 1 (so `R500` belongs in cell 0,4), cell 1,3 is
->   exactly `Proud member of`, cell 1,4 is empty. Every arm splits the spanning box or duplicates the
->   two-line header.
-> * `page_break_row` — **our committed pass, and R3's verdict.** Both VLMs score **0 mismatches** and
->   are demoted by quotes "out of printed order on page 5", because page 5's `-table` pass interleaves
->   three columns on one printed line (`its farmer members in the relevant   •  Farm visit checklist`).
->   No cell's quotes can appear in read order. That is §3.8's second finding biting again.
+> **The lesson that cost this session its last hour, and it is written down twice.** A judgement surface
+> is a **comparison**: the shape-key review put the page *beside* the grid and 68 of 68 were judged with
+> no "can't tell"; the arbitration surface *stacked* evidence above the question and showed only a
+> shape's first page, and the owner's notes came back as *"I can't figure out what you need from me"* —
+> four of eleven verdicts caused by layout, not by the paper. It is **hard rule 9** in
+> `pgs-presenting-uat`, and `product/design/uat/arbitrate_shapes.html` is now side-by-side with the
+> full-size page one click away.
 >
-> **The first arbitration happened, and it indicted the surface, not the key (§3.13).** The export
-> (`product/docs/evidence/2026-11-05_shape_arbitration_first_pass.json`) keeps 6 claims, is unsure on
-> 5 and amends 2 — but **four of those verdicts were caused by the page I built**: it showed only a
-> shape's *first* page (`page_break_row`'s third row is on printed page 5, so "I can't see `Step 3`"
-> was correct), it never showed the claim's own cell (so `R500` inside the tall merged fee box was
-> unfindable), it did not state the decisions the record already made (the fee box is filed under
-> Step 1; a seal's printed name is the cell; a printed step label stays inside the cell), and its
-> amendment box accepted a pasted **arm report** as claim text. All four are fixed: 10 cards, every
-> page of the shape, the committed line that carries the claim's words, an **Already decided** note
-> per shape, and a form check on the amendment (`empty` · `text=` · `starts=` · `contains=`).
+> **What is next is S3 and S5, not more evaluation.** S3 emits `<!-- table … -->` blocks from the
+> composite and records the extraction mode on the artefact; S5 re-reviews Appendix 6a (20 rows) and
+> Appendix 7 through the harness and deletes their bespoke handling. `scripts/fast.sh --critical` is the
+> after-edit check, `scripts/verify.sh` the gate.
 >
-> **Next, in this order.** (1) Re-judge the **7 open claims** on the corrected
-> `product/design/uat/arbitrate_shapes.html` — 61 of 68 stand as signed, and nothing was amended, so
-> **no re-score is owed**. The export goes back through **`scripts/shape_review_signoff.py --amend`**,
-> which refuses unless the fixture already says the text the reviewer judged. (2) **R3's verdict
-> wording**: "our pass cannot order this page" must stop being scored as "the model's characters are
-> unverified". (3) When the key settles: re-score (free), and D82 has evidence under it. **Do not
-> record "the VLM is the way" or "the Layout Parser is the way" on these numbers.**
+> **Instruments, all committed, none a dependency.** `scripts/eval_extractors.py` (Docling),
+> `scripts/eval_openrouter.py` + `scripts/table_reads.py` (VLM), `scripts/eval_documentai.py` (REST +
+> ADC), `scripts/shape_review.py` (the signed key's surface), `scripts/shape_arbitration.py` +
+> `shape_disputes.py` (the disputes and what each arm said), `scripts/shape_review_signoff.py`
+> (`--from` for a full review, `--amend` for one claim). 44 tests across the tooling, guards broken and
+> watched red; 8 browser tests drive the two surfaces.
 >
-> **Two hazards to inherit.** *An evidence file's clip is not the read*: the arm JSONs keep four
-> sampled rows per shape and clip cells at 200 characters, so a probe that reads them as the read will
-> accuse all five arms of a defect none has (`testing_hazards.md` §3.31 — go to the cache, and read
-> claims from the `mismatches` lines). And *read the response before believing the score*: the Layout
-> Parser returns a block hierarchy and no `document.text`, and reading it like the Form Parser scored
-> it **0 of 8, "no table found" on every page** — our bug, not the tool's.
+> **Two hazards to inherit.** *An evidence file's clip is not the read* — the arm JSONs keep four sampled
+> rows and clip cells at 200 characters, so a probe reading them as the read accuses arms of defects
+> they do not have (`testing_hazards.md` §3.31). And *read the response before believing the score*: the
+> Layout Parser returns a block hierarchy with no `document.text`, and reading it like the Form Parser
+> scored it 0 of 8 on every page — our bug, not the tool's.
 >
-> **Time is not the decision axis, and here is the size of it.** The four governed documents are
-> **143 pages** (SAOSO 100, BPP 12, OPP 14, landscape 9) — one extraction each, one-off, never in the
-> 3-minute edit loop (requirement 10: the gate reads committed fixtures and imports no extractor). At
-> measured rates that is ~2.5 h for the Layout Parser, ~2 h for Docling, ~25 min and a few dollars for
-> the VLM. What *is* the axis: 43–59 cells per arm that our committed pass does not confirm, and
-> whether a human must correct them.
+> **Do not refresh the dev corpus casually.** `corpus_check` here reports `landscape` **drift** and its
+> 17 chunks carry **0** labelled renditions against live's 8, so dev is behind live. The repo `.env`
+> holds only `DJANGO_SECRET_KEY`, but **this shell holds `GEMINI_API_KEY`**, so a refresh *from an agent
+> shell* would embed for real — and a refresh without a working key writes **17 NULL vectors that then
+> report "already ingested" forever** (`deploy/README.md` §4). Live is the reference DB, not this box.
 >
-> **The instruments are committed and are not dependencies:** `scripts/eval_extractors.py` (Docling),
-> `scripts/eval_openrouter.py` + `scripts/table_reads.py` (VLM; three prompt forms, per-cell contiguity
-> checks, declared normalisations, raw-response cache), `scripts/eval_documentai.py` (REST + ADC, reads
-> both response shapes, retries, caches). 38 tests across the three, guards broken and watched red.
-> The eight-shape key is `knowledge/tests/shape_fixtures.py`; the signature and its amendment are
-> `knowledge/tests/shape_review.json`; the surface that produced them is
-> `product/design/uat/shape_key_review.html`, generated by `scripts/shape_review.py` (`--check` fails
-> when the committed file drifts from the key) and never hand-edited.
->
-> **The story for a non-developer:** `product/design/d82_table_extraction_what_we_learned.html` — four
-> investigations, the scoreboard, the options, and a §18.3 export for D85 (the key — **answered**) and
-> D82 (which extractor — still open). It carries a dated 2026-11-05 update with the re-score in it.
-> Nothing is written into the spec until the answers exist.
->
-> **Do not refresh the dev corpus casually.** `corpus_check` here reports `landscape` **drift** and
-> its 17 chunks carry **0** labelled renditions against live's 8, so dev is behind live. The repo
-> `.env` holds only `DJANGO_SECRET_KEY`, but **this shell holds `GEMINI_API_KEY`** and
-> `pgs/settings.py` reads it with `env("GEMINI_API_KEY")`, so a refresh *from an agent shell* would
-> embed for real. The trap: a refresh without a working key writes **17 NULL vectors that then report
-> "already ingested" forever** (`deploy/README.md` §4). Live is the reference DB, not this box.
->
-> **Do not run `scripts/build_corpus.py --force` on a document with a table block** — it now refuses
-> before writing, so the accident that lost `opp.md`'s §2.3 review on 2026-11-01 cannot recur. The
-> only way past is `--discard-tables`, and then the review is yours to retype.
->
+> **Do not run `scripts/build_corpus.py --force` on a document with a table block** — it refuses before
+> writing; the only way past is `--discard-tables`, and then the review is yours to retype.
 > **"Corpus is current" does not mean "rebuilt"** — drift compares the artefact's hash and the chunk
 > count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
 > `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
+>
+> **Two housekeeping notes for the next session.** This working tree carries **another session's
+> uncommitted work** (`scripts/copy_deck.py`, `product/design/COPY_DECK.md`, `COPY_VOICE.md`,
+> `REFERENCE_COPY_CORPUS.md`, `fetch_reference_copy.py`, and edits to the public templates) — commit
+> paths explicitly, never `git add -A`. And `scripts/copy_deck.py` is **31 KB**, which fails
+> `scripts/context.py --check` on this tree (not on any commit — a clean checkout of HEAD reports 0
+> breaches); splitting it is that session's job.
 
 The landscape is closed (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
 `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried into
@@ -109,34 +80,28 @@ D80 by name.
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
-vlm-arm sessions
-**Repo state:** `main` — **thirteen commits ahead of `origin/main`**: session `1h`'s five (the
-OpenRouter arm; §3.8's correction; the Docling re-run with the shared normalisation; the D82
-explanation page; and the Document AI arm with §3.9–§3.10), then session `1n`'s eight (the verification
-surface; its docs; a browser test for the JavaScript-off check; a count-correction commit; the
-unclaimed-cell wording; **the signed review** with the two drawing fixes its notes exposed; **the
-`Step 3` amendment with its re-sign**; and **the D83→D85 / `1i`→`1n` reconciliation** with the visit
-worktree). Everything before `1h` is pushed: the
-licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
-session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
-`1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
-script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `13` on this tree, and
-`0` once sessions `1h` and `1n` are pushed — and note that `main` and `feat/mvp1a-visit` are separate unpushed lines.
+landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation, vlm-arm,
+re-score, and arbitration sessions
+**Repo state:** `main` — **unpushed**, and this file will not tell you how many: sessions `1h`, `1n`,
+and `1o` are three unpushed runs (`1h`'s five commits: the OpenRouter arm, §3.8's correction, the
+Docling re-run, the D82 page, the Document AI arm; `1n`'s eight: the verification surface, its docs, the
+browser test, the count correction, the unclaimed-cell wording, the signed review, the `Step 3`
+amendment and re-sign, and the D83→D85 reconciliation; `1o`'s three: the re-score with its evidence and
+§3.12, the arbitration instrument with its browser tests, and the first pass with §3.13–§3.14).
+**Let the command answer:** `git rev-list --count origin/main..HEAD`. Everything before `1h` is pushed.
+`main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate unpushed lines** with no
+code overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand
+on those two files.
 
-**On this tree** (2026-11-05, session `1n`): `scripts/verify.sh` **green at 1727 passed /
-1 skipped / 8 xfailed in 120.44 s**, run as
+**On this tree** (2026-11-05, session `1o`, after the last commit): `python -m pytest -q --create-db`
+— the gate's own pytest step — **1756 passed / 1 skipped / 8 xfailed in 139.13 s**, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17) — the same gate measured
-283.09 s here an hour earlier on a loaded box. `scripts/fast.sh` measured **1712 passed / 1 skipped /
-15 deselected / 8 xfailed in 81.37 s**, and `--critical` **172 passed / 4 deselected in 10.36 s**.
-One gate run in between reported `1 failed, 40 errors`; that was an orphan `idle in transaction`
-backend, not the tree — §3.16 now says so.
+serves 5433, `testing_hazards.md` §3.1). The same command measured **79.37 s** a few runs earlier with
+1750 tests on an idle box — quote cold *and* warm (§3.17). `scripts/fast.sh --critical` **172 passed /
+4 deselected in 12.45 s**. **`scripts/verify.sh` cannot be quoted green from this working tree**: its
+first step fails on **another session's** `scripts/copy_deck.py` (31 KB); a clean checkout of HEAD
+reports **0 breaches**, so the commits are shippable and the tree is not.
 
-**Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **five commits to push** (session
-`1h`'s): `git rev-list --count origin/main..HEAD` prints `5` (the number was wrong twice by being
-quoted; let the command answer).
 **Live:** `https://organicguarantee.africa` on the homtini VPS, deployed 2026-11-03 at **`06bb11a`**
 (last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,
 but that body carries no commit, so **this file cannot see which commit is serving** — verify on the box
@@ -160,6 +125,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1o` 2026-11-05 (session 22) — the re-score moves an arm a shape, and a surface that stacked its evidence — [`SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md`](product/docs/handover/SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md)
 - `1n` 2026-11-05 (session 21) — the verification surface, and 68 claims the owner has not judged — [`SESSION_1n_2026-11-05_the-verification-surface.md`](product/docs/handover/SESSION_1n_2026-11-05_the-verification-surface.md)
 - `1h` 2026-11-04 (session 20) — three arms measured, and an answer key nobody checked — [`SESSION_1h_2026-11-04_three-arms-and-an-answer-key-nobody-checked.md`](product/docs/handover/SESSION_1h_2026-11-04_three-arms-and-an-answer-key-nobody-checked.md)
 - `1g` 2026-11-04 (session 19) — Docling measured, and it does not pass; a Gemini key is not a GCP key (in `SESSION_1f…` §7–§8) — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)

@@ -171,7 +171,9 @@ def _evidence_html(case, claim) -> str:
     )
     return (
         f'<p class="fine">Our committed text for this page, around the words the claim asserts '
-        f"(printed page {printed}). The bold line carries them:</p>"
+        f"(printed page {printed}). The bold line carries them. This pass prints the page's columns "
+        "side by side, so one line can hold fragments of several cells — the words are what matter, "
+        "and the page image above is the authority:</p>"
         f'<pre class="paper">{rows}</pre>'
     )
 
@@ -227,7 +229,8 @@ def _shape_section(shape: str, items: list[Disagreement]) -> str:
         f"<li><code>{escape(text)}</code></li>" for _, text in case.anchors
     )
     figures = "".join(
-        f'<figure><img src="{data_uri(case.doc_key, page)}" alt="The page as the PDF prints it">'
+        f'<figure><img class="zoomable" src="{data_uri(case.doc_key, page)}" '
+        f'alt="The page as the PDF prints it" title="Click for full size">'
         f"<figcaption>PDF page {page}"
         + (
             f" (printed page {case.printed_pages[case.pdf_pages.index(page)]})"
@@ -248,15 +251,19 @@ def _shape_section(shape: str, items: list[Disagreement]) -> str:
     return f"""
   <section class="shape" data-shape="{escape(shape)}">
     <h2>{escape(case.shape)} <span class="where">{escape(case.doc)} · pages {pages}</span></h2>
-    {note}
-    {figures}
-    <div class="printed">
-      <h3>What our own key proves is printed on this page</h3>
-      <ul>{anchors}</ul>
-      <p class="fine">These are the shape’s anchors: strings the key asserts are on the page. If a
-        claim below contradicts them, the claim is the likelier defect.</p>
+    <div class="side">
+      <div class="evidence">
+        {note}
+        {figures}
+        <div class="printed">
+          <h3>What our own key proves is printed on this page</h3>
+          <ul>{anchors}</ul>
+          <p class="fine">The shape’s anchors: strings the key asserts are on the page. If a claim
+            contradicts them, the claim is the likelier defect. Click a page to see it full size.</p>
+        </div>
+      </div>
+      <div class="cards">{card_html}</div>
     </div>
-    {card_html}
   </section>"""
 
 

@@ -58,6 +58,24 @@ to the file.
 8. **Record what it was signed against.** The header and the export carry the commit and
    the database. "Signed something" is not a signature.
 
+## Hard rule 9 — a judgement is a comparison, so both sides share the screen
+
+Added 2026-11-05, after a surface cost a session. The shape-key review puts **the page beside the grid
+the key expects**, one decision per row, and 68 of 68 claims were judged with no "can't tell". The
+arbitration surface built next **stacked** the evidence above the question and rendered only a shape's
+first page; the reviewer's notes came back as *"I can't figure out what you need from me"*, and four of
+eleven verdicts were caused by the layout rather than by the paper.
+
+- **Side by side, never stacked.** Evidence in a sticky column, the question and its controls beside it.
+  Both visible at once, at the same scroll position.
+- **Every page the item is printed on**, not the first one. A claim about a row on printed page 5 must
+  show page 5.
+- **A full-size view one click away.** A 200 dpi page scaled into a column is not readable, and a
+  reviewer who cannot read the paper cannot judge it.
+- **Quote the paper's own words for the item**, and say when the transcription is itself imperfect.
+- **State what the record already decided.** A question the reviewer settled last month is not a
+  question; showing it as one teaches them the surface does not know its own history.
+
 ## The sequence
 
 With the app running, open **`/uat/?uat=<slug>`** (staff login) and press the buttons — that

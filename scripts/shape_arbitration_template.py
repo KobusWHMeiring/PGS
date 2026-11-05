@@ -32,8 +32,15 @@ TEMPLATE = """<!doctype html>
            padding:1rem 1.15rem; margin:1rem 0 1.5rem; }}
   .lead ol {{ margin:.5rem 0 0 1.1rem; padding:0; }}
   .where, .fine, figcaption {{ font-size:.85rem; color:#5c5347; font-family:system-ui,sans-serif; }}
+  .side {{ display:grid; grid-template-columns:minmax(17rem, 42%) minmax(0, 1fr);
+           gap:1.5rem; align-items:start; }}
+  @media (max-width: 56rem) {{ .side {{ grid-template-columns:1fr; }} }}
+  .evidence {{ position:sticky; top:.5rem; }}
+  .evidence figure:first-of-type {{ margin-top:0; }}
   figure {{ margin:1rem 0; }}
-  figure img {{ width:100%; max-width:46rem; border:1px solid var(--line); background:#fff; display:block; }}
+  figure img {{ width:100%; border:1px solid var(--line); background:#fff; display:block;
+                cursor:zoom-in; }}
+  figure img:focus-visible {{ outline:3px solid var(--accent); }}
   .printed {{ background:var(--card); border:1px solid var(--line); padding:.75rem 1rem; margin:1rem 0; }}
   .printed ul {{ margin:.4rem 0; padding-left:1.1rem; }}
   .printed code {{ font-size:.85rem; }}
@@ -122,6 +129,11 @@ TEMPLATE = """<!doctype html>
       nothing else, <em>amend</em> needs the corrected text, and <em>can’t tell</em> needs a
       reason.</p>
   </footer>
+  <dialog id="zoomDlg">
+    <h2 id="zoomWhich">Page</h2>
+    <p><img id="zoomShot" alt="The page, full size" style="width:100%"></p>
+    <p><button id="zoomClose" class="secondary">Close</button></p>
+  </dialog>
   <dialog id="outDlg">
     <h2>Arbitration export</h2>
     <p id="outLead"></p>
@@ -293,6 +305,17 @@ TEMPLATE = """<!doctype html>
     try {{ localStorage.removeItem(KEY); }} catch (e) {{ /* ignore */ }}
     paint();
   }});
+
+  var zoom = document.getElementById('zoomDlg');
+  Array.prototype.forEach.call(document.querySelectorAll('img.zoomable'), function (node) {{
+    node.addEventListener('click', function () {{
+      document.getElementById('zoomShot').src = node.src;
+      document.getElementById('zoomWhich').textContent =
+        node.alt + ' — ' + (node.parentElement.querySelector('figcaption') || {{}}).textContent;
+      if (zoom.showModal) {{ zoom.showModal(); }}
+    }});
+  }});
+  document.getElementById('zoomClose').addEventListener('click', function () {{ zoom.close(); }});
 
   paint();
 }})();
