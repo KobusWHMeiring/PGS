@@ -182,6 +182,22 @@ points at them instead of pretending they are imminent (D60).
       and 37 verdicts from the FORM workbook (D28), including six sub-verdict groups. The tests assert
       the counts and the schema; *whether the wording says what the FORM says* is a domain judgement no
       test can make. Recorded only as a gate row in `HANDOVER.md` §3 until now.
+- [ ] **The two public consents have no retention answer** (found building A8, 2026-11-05). The
+      research and demographic texts are seeded as **drafts** from the D71 ledger: they name the
+      recipients, promise totals only and offer withdrawal without an account, but neither says how
+      long the answers are kept. That is the same `[DECIDE]` `SELF_CHECK_PRD` §11.6 leaves for the
+      account consent, and it matters more here because these rows are research data. The drafts
+      render with the banner until `approved_at` is set — one data edit, no migration.
+- [ ] **An `/ask/` refusal does not point at the self-check** (A8, `SELF_CHECK_PRD` §4.3, deferred).
+      The PRD asks for the link "when the question is about the visitor's own eligibility", and the
+      refusal path has no eligibility classification to hang it on. Adding one means either an
+      intent test over the question or a second refusal string — a chat change, judged on its own,
+      not a front-door one slipped in with A8.
+- [ ] **A derived control's FORM text is long on the front door** (A8, seen in the browser). The
+      eleven markers render the template's own `text` in the disclosure ("The farm visit asks this
+      as: …"); Q11.1's is a two-hundred-word FORM cell. It is honest and it is unread on a phone —
+      the group may prefer the first sentence only, which is a template edit (a new version), not a
+      code change.
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.
 - [ ] Afrikaans: decide whether to translate the full site or navigation and headings only.
 

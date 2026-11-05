@@ -2120,6 +2120,41 @@ Rule: after a mechanical file move, run the tests that exercise the moved code's
 helpers it now owns but never calls. Better still, cut the boundary by hand and read the
 diff — the script saved a minute and cost a debug cycle.
 
+### 1.40 A `ChoiceField`'s default `Select` renders **nothing** when a template iterates it
+
+A template that draws one chip per option does the natural thing:
+
+```django
+{% for choice in field %}<label class="opt">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% endfor %}
+```
+
+That works for `CheckboxSelectMultiple` and `RadioSelect`: each subwidget is one `<input>`. It
+renders **nothing at all** for a `ChoiceField` left on its default `Select`, because a `Select`
+yields a single subwidget holding the whole `<select>` — and `{{ choice.tag }}` on it is not the
+control the loop expects. The result is a page with no answer controls, and every guard stays green:
+
+```
+$ pytest core/tests/test_public.py core/tests/test_selfcheck.py -q
+197 passed
+$ python -m pytest tests/e2e/test_selfcheck_wizard.py -q      # the browser disagrees
+E   assert '0 of 0 answered' == '0 of 7 answered'              # the step has no inputs to count
+$ python _scratch/a8/probe_wizard.py                           # and the DOM listing says why
+step 1 inputs: 4   radios: 0
+step 2 inputs: 0   radios: 0
+step 3 inputs: 0   radios: 0
+```
+
+Consequence: every field was optional, so the form still validated, still submitted, still rendered
+a result — a farmer could complete a self-check without ever being able to answer a question, and no
+Django assertion could see it. A `200` plus "no unrendered template tokens" is not evidence that a
+control exists.
+
+Rule: when a template renders options itself, set the widget (`RadioSelect`/`CheckboxSelectMultiple`)
+and assert the **inputs** exist, not just the page. In a browser suite, assert a count that would be
+zero if the widgets vanished (`eval_on_selector_all` and a `min() >= 44` together do this), and keep
+a probe that prints the DOM facts you are arguing about — one `_scratch/` script answered in seconds
+what three guesses had not.
+
 ## 5. Template for a new entry
 
 ```markdown

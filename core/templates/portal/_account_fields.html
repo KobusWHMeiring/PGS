@@ -1,0 +1,59 @@
+{% comment %}
+The account fields and the Q8 consent — **one** copy for the two places an account can be created:
+A6's `/apply/` step and A8's "save my details" at the end of the public self-check. A second copy
+would be a second set of field labels, a second draft banner and, eventually, a second consent
+version posted with the wrong wording.
+
+Expects: `form` (a bound or unbound `AccountForm`) and `consent` (the current `ConsentText`, or None).
+The `[DECIDE]` markers stay in the body on purpose: the retention period and the withdrawal address
+are the group's answers, and the page shows them rather than inventing either.
+{% endcomment %}
+  <div class="field-grid">
+    {% include "portal/_field.html" with field=form.first_name %}
+    {% include "portal/_field.html" with field=form.last_name %}
+    {% include "portal/_field.html" with field=form.email %}
+    {% include "portal/_field.html" with field=form.phone %}
+    {% include "portal/_field.html" with field=form.farm_name %}
+    {% include "portal/_field.html" with field=form.nearest_town %}
+    {% include "portal/_field.html" with field=form.contact_name %}
+    {% include "portal/_field.html" with field=form.password1 %}
+    {% include "portal/_field.html" with field=form.password2 %}
+  </div>
+
+  {% if consent %}
+    <fieldset class="consent">
+      <legend class="consent__heading">{{ consent.heading }}</legend>
+      {% if consent.is_draft %}
+        <p class="consent__draft">
+          <strong>DRAFT — the group has not adopted this wording yet.</strong>
+          The two square-bracketed answers are the group's to make, and this page shows them
+          rather than deciding them. Ask the administrator before relying on either.
+        </p>
+      {% endif %}
+      <div class="consent__body">{{ consent.body|linebreaks }}</div>
+      <div class="field{% if form.consent.errors %} field--error{% endif %}">
+        <label class="consent__tick" for="{{ form.consent.id_for_label }}">
+          {{ form.consent }}
+          <span>Yes — keep these details so I can come back to this.</span>
+        </label>
+        {% for error in form.consent.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+        <p class="field__hint">Unticked by default. Without it no account is created.</p>
+      </div>
+      {{ form.consent_version }}
+    </fieldset>
+  {% else %}
+    <div class="notice notice--error" role="alert">
+      <p>
+        <strong>The wording for holding an account has not been written for this group yet.</strong>
+        No account can be created until it is — a farm name collected under the self-check's
+        research consent would be a purpose mismatch. Ask the administrator.
+      </p>
+    </div>
+  {% endif %}
+
+  <p class="notice notice--info">
+    <strong>Email verification is not available yet.</strong> Your address is accepted as
+    given and your account works straight away; nothing on this page claims it has been
+    verified.
+  </p>
+

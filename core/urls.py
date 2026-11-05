@@ -18,6 +18,7 @@ from core.views._documents import document_file, document_reader, documents
 from core.views._health import health
 from core.views._uat import console as uat_console, run as uat_run
 from core.views._public import (
+    before_you_apply,
     become_a_member,
     building,
     contact,
@@ -57,6 +58,9 @@ urlpatterns = [
     # no viewer to land in — and deliberately not under `/media/` (§VI).
     path("documents/<str:code>/read/", document_reader, name="document_reader"),
     path("become-a-member/", become_a_member, name="become_a_member"),
+    # The public self-check (A8, D71). Deliberately a public path, not `/apply/...`: it is the
+    # front door *before* an application, and its only exit is the application flow itself.
+    path("before-you-apply/", before_you_apply, name="before_you_apply"),
     # The application flow (task A6, spec §7). The routes are steps of one flow, not a
     # section of the site: the order is enforced in `_portal._step`, and `/apply/` is the
     # single entry point that resumes where the applicant got to.

@@ -399,6 +399,24 @@ threshold. UAT (judgement only): does the result read as a mirror or a verdict, 
 note comprehensible to someone who has never read the OPP, does "Rather not say" feel like a real
 answer, does the consent read as a real choice, and does it work one-handed in sunlight.
 
+**Built 2026-11-05 (`pgs-visit`, branch `feat/mvp1a-visit`).** 45 tests in
+`core/tests/test_selfcheck.py`, 7 in `tests/e2e/test_selfcheck_wizard.py`, 15 mutations in
+`_scratch/a8/mutate.py` all caught, migration `0017`, UAT in `tests/uat/self_check_uat.md`. Four things
+this task decided that the plan did not, each recorded where it belongs rather than here:
+
+1. **A derived control's question wording** stays in code and its `why` comes from the template marker;
+   the visit's own `text` is rendered beside it — `SELF_CHECK_PRD` §3.4 (amended).
+2. **The consent act is a timestamp on the report**, not a `ConsentRecord` (that model needs a `User`)
+   — §3.6 (amended).
+3. **The aggregate's threshold refusal names neither the value nor the count** — §4.5 (amended).
+4. **`report_self_check --demographics` did print the value and its count**, which is the cell the
+   threshold protects; fixed before the task closed.
+   The two consent texts are seeded as **drafts** (`research-2026-11-05`,
+   `demographics-2026-11-05`) from the D71 ledger, with no retention answer — the group's `[DECIDE]`.
+   `SELF_CHECK_PRD` §3.6's "reuse `ConsentRecord`" is the one line that did not survive contact.
+   The `/ask/` refusal link (§4.3) is **not** built: the refusal has no eligibility classification, and
+   inventing one is a chat change, not a front-door one — it is in `todo.md`.
+
 ---
 
 # Sub-plan B — Templates (the irreversible core)

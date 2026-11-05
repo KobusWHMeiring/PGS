@@ -493,6 +493,28 @@ than reads, so it gets the controls:
 - Below 900 px the same markup restacks with `data-label`, and the resizer is hidden: a phone has no
   pointer to drag with.
 
+### 7.14 The self-check wizard — `/before-you-apply/` — **added 2026-11-05**
+
+Approved as a stepped wizard on 2026-11-04 (`before_you_apply_prototype.html`); built in A8. Five
+question steps, a result screen and one optional account panel, in `selfcheck.css` + `selfcheck.js`.
+
+- **The nav is a position indicator, never a gate.** Six numbered buttons in a sticky strip under the
+  page head; a step can be left blank and `Next` still moves. The `data-done` ring is a courtesy. On a
+  phone the labels collapse to numbers and a "Step 2 of 5 · Records a visit checks" line appears
+  above them — the labels never scroll horizontally out of view on desktop, where the strip wraps and
+  centres instead.
+- **Answer chips carry the control; the input is invisible over it.** `.wiz__opt` is a 44 px pill with
+  `:has(input:checked)` for the on state and `:has(input:focus-visible)` for the ring, so keyboard,
+  touch and screen-reader behaviour is the browser's own. The records step uses four chips on one
+  line (`Yes / Partly / No / Rather not say`), which is what makes "no scrolling" a measurement.
+- **`<details>` for "Why we ask"**, per `SELF_CHECK_PRD` §3.3 — not a tooltip: a disclosure works with
+  the keyboard, without JS and prints open. One per control, and it is the page's only legitimate
+  `<details>`, which is why `test_public.py` scopes its stray-`<details>` guard to the chrome.
+- **No JavaScript, no loss.** Sections are hidden only when `js` sets `data-selfcheck-js` on `<html>`;
+  without it all five render stacked with the one submit button at the end.
+- Bands on the result are `brand-sageLight` boxes with an ochre left rule; the two fixed lines are the
+  same box, so they read as promises rather than as decoration.
+
 ---
 
 ## 8. Assets

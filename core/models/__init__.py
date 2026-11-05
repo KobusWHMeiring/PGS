@@ -14,6 +14,7 @@ Slices (see MVP0_PLAN_V2.md §2):
     _fees.py           MembershipFee, TurnoverBand, AssessmentFee
     _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _public.py         PublicDocument (the files the group publishes, D22)
+    _selfcheck.py      SelfCheckReport, SelfCheckDemographic (the public self-check, D71)
     _chat.py           ChatSession, ChatMessage, EscalatedQuery, PublicQuestion
 
 Keep each slice under the 30 KB cap (build_principles.md). When a slice
@@ -50,6 +51,7 @@ from core.models._membership import (
     Pledge,
 )
 from core.models._public import PublicDocument
+from core.models._selfcheck import SelfCheckDemographic, SelfCheckReport
 
 __all__ = [
     "ASSESSOR_CAPABILITY",
@@ -78,6 +80,8 @@ __all__ = [
     "REFUSAL_NOTES",
     "Role",
     "Seal",
+    "SelfCheckDemographic",
+    "SelfCheckReport",
     "TurnoverBand",
     "User",
     "UserRole",

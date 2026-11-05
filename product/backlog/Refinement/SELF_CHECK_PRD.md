@@ -128,6 +128,17 @@ question.
 > home — `SELF_CHECK_ITEMS` — and the front door's wording still cannot drift, because the visit's
 > aggregation question is Sheet A's and not the questionnaire's.
 
+> **Amended 2026-11-05 (task A8, while building).** "Cannot drift apart in wording" turned out to
+> need one more sentence than the marker carries. A template marker holds the `why`; it does **not**
+> hold the front-door title or the answer set (Q11.1 is a `TEXTAREA` in the FORM, and the reviewed
+> front door asks "Where do your seeds come from?" with five chips). So the eleven derived controls
+> keep their reviewed **title, help, options and source** in `DERIVED_CONTROLS`
+> (`core/services/_selfcheck.py`), take their **`why`** from the active template's marker — a derived
+> control's `why` is empty in code, and a test fails if that stops being true — and render the
+> template's own `text` in the disclosure as *"The farm visit asks this as: …"*. The farmer therefore
+> sees both sentences on one card, which is a stronger guarantee than either copy alone: the visit's
+> exact wording is on the page, not just paraphrased by it.
+
 Both are **data seeded per deployment** (§I, "code encodes the process; data encodes the standard").
 Retargeting to another standard changes JSON and a constant, not a migration.
 
@@ -158,6 +169,15 @@ The consent text **names the recipients** (PGS South Africa, SAOSA) rather than 
 purposes", states **totals only, never farm by farm**, gives a small-count rule, offers a withdrawal
 route that works without an account, and — per the review — states plainly that **funding
 applications are not covered** (§9 Q1).
+
+> **Amended 2026-11-05 (task A8).** This section first said the two consents "reuse A6's
+> `ConsentText`/`ConsentRecord`". Half of that held. The **wording** is `ConsentText` — data, versioned,
+> seeded as a draft. The **act** cannot be a `ConsentRecord`, because that model has a non-null `User`
+> FK and a self-check visitor has no account (and must never be given one by answering a
+> questionnaire). So the act is a timestamp on the report itself: `research_consent_at` plus
+> `consent_text_version`, which names the wording without copying it. A withdrawal deletes the row,
+> which is what the text promises; there is no tombstone, because a tombstone would itself be the
+> personal data.
 
 ---
 
@@ -261,7 +281,13 @@ sales records"* false about a catchment of a few dozen farms.
 
 `core/management/commands/report_self_check.py` — prints counts per band, uptake on each record
 control, the exit reasons, and the demographic cut **only** when `--demographics` is passed *and*
-the cell meets `--min-count` (default 5). No view, no template, no MVP 3 reporting surface. Internal
+the cell meets `--min-count` (default 5).
+
+> **Amended 2026-11-05 (task A8).** The first implementation printed *"Female: too few to report (1 of
+> a minimum 5)"* — which publishes the cell the threshold exists to protect, because "Female: 1" in a
+> catchment of a few dozen farms is a person. The refusal now names neither the value nor the count:
+> *"2 cell(s) not shown — fewer than 5 in the cell"*. A reader can still tell "no data" from "too
+> little to say", which was the point; they cannot read the cell. No view, no template, no MVP 3 reporting surface. Internal
 first: a report for the group and for PGS SA/SAOSA, not a published page. A published figure is a
 public claim about the group's own catchment and inherits DESIGN §1.
 

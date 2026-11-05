@@ -302,7 +302,41 @@ It is a consent to hold and to contact, never to publish. A public farm profile 
 """.strip(),
 )
 
-CONSENT_TEXTS: tuple[ConsentTextSpec, ...] = (ACCOUNT_CONSENT,)
+#: E1 and E2 — the self-check's two consents (D64's rule, `SELF_CHECK_PRD` §3.6). A6 seeded only
+#: `ACCOUNT`, so these are seeded here; the bodies are the D71 ledger's reviewed `consent` strings,
+#: pasted rather than rewritten (`product/design/d71_self_check_questions.html`, items E1/E2).
+#:
+#: Both are **drafts** (`approved_at` null). The ledger's text names the recipients, promises totals
+#: and a small-count rule, and offers a withdrawal route that works without an account — but it has
+#: **no retention period**, which is the same `[DECIDE]` §11.6 leaves the group. A build cannot
+#: answer it, so the page shows the text as a draft and says the group has not adopted it.
+RESEARCH_CONSENT = ConsentTextSpec(
+    purpose=ConsentPurpose.RESEARCH,
+    version="research-2026-11-05",
+    heading="May we count your answers?",
+    body="""
+Your answers may be added to the group's totals, without your name, farm name, address or contact details, and shared with PGS South Africa and SAOSO to show what farmers are looking for and what stands in the way. It is reported only in totals, never farm by farm, and never published for fewer than a handful of farms. You can ask us to delete it at any time.
+
+The group is asked by PGS South Africa and SAOSO what farmers are looking for and what stands in the way, and today it can only answer from the farms that already joined — which is the one group guaranteed to be positive about joining. Your answers, in totals, are what makes that answer honest.
+""".strip(),
+)
+
+DEMOGRAPHIC_CONSENT = ConsentTextSpec(
+    purpose=ConsentPurpose.DEMOGRAPHICS,
+    version="demographics-2026-11-05",
+    heading="May we include your demographic details in those totals?",
+    body="""
+Separately: may we include the census details the assessment form asks for — gender, age group, demographic group — in the same totals? The FORM states the purpose: to profile small-scale organic farmers in South Africa for advocacy and support. This is how a group can see who organic certification is reaching and who it is missing. You may share the picture of your farm without sharing this, and either can be withdrawn on its own. It is not used for funding applications.
+
+This consent is refused unless the question above is also ticked: census details cannot be counted on their own, because the totals they would join do not exist without your answers.
+""".strip(),
+)
+
+CONSENT_TEXTS: tuple[ConsentTextSpec, ...] = (
+    ACCOUNT_CONSENT,
+    RESEARCH_CONSENT,
+    DEMOGRAPHIC_CONSENT,
+)
 
 
 def _seed_consent_texts() -> tuple[int, int]:

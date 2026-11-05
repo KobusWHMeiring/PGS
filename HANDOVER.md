@@ -1,102 +1,85 @@
 # Handover — sub-plan A is five of eight and sub-plan B is complete; the Crops sheet is data
 
-> ## START HERE — **A is 5 of 8, B is 4 of 4, and A8 is unblocked**
+> ## START HERE — **A is 6 of 8, B is 4 of 4, and the public front door exists**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
-> a second agent is running D80's S2 (Docling) there. Nothing in this strand has touched `main`.
+> a second agent runs D80's S2 (Docling) there. Nothing in this strand has touched `main`.
 >
-> **Landed:** **A1** (`243cedd`) `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`,
-> migration `0010`, 19 tests. **A2** (`4e86a81`) the OPP §VII committee roster, `0011`, 12 tests.
-> **A3** (`a4b2e4b`) `Pledge`, `record_pledge`, `0012`, 30 tests. **A5** (`66977cb`) `TurnoverBand`,
-> `AssessmentFee`, the OPP §2.3 scale as data, `declare_assessment_fee` and the gate, `0013`, 32 tests.
-> **A6** (`5f64fd6`) `ConsentText`/`ConsentRecord`, `_application.py`, the four application steps and
-> the summary, `0014`, 32 tests. **B1/B2/B4** (`36eedfe`) `AssessmentTemplate`, `validate_schema`, one
-> live version per category, `load_template`, `0015`–`0016`, 49 tests. **B3** (`93a5cac`) the Crops
-> template and its review copy, 27 tests. **D83** the pledge stays in the application. **D84** 1a
-> sends no mail, and the interface says so. **Two seam cuts, both driven by the 30 KB cap:**
-> `_core.py` → `_membership.py` (`ab42443`), `_membership.py` → `_fees.py` (`66977cb`).
+> **Landed since the last block:** **A8** — the public self-check at `/before-you-apply/`
+> (`core/services/_selfcheck.py` + `_selfcheck_items.py`, `core/models/_selfcheck.py`, migration
+> `0017`, `core/forms/_selfcheck.py`, the template, `selfcheck.css`/`.js`,
+> `report_self_check --min-count 5`, 45 tests, 7 browser tests, 15 mutations, `tests/uat/
+> self_check_uat.md`). Before it: A1 `Member`/`Farm` `0010` · A2 the OPP §VII roster `0011` ·
+> A3 the pledge `0012` · A5 the fee scale `0013` · A6 the application flow `0014` · B1/B2/B4
+> templates `0015`–`0016` · B3 the Crops template · D83 · D84 · Q8's draft consent.
 >
-> **Sub-plan B in one paragraph:** a questionnaire is **data**, so `core/templates_data/crops.v1.json`
-> holds the FORM's 38 numbered questions (79 answerable sub-items), 37 verdicts, 9 printed child rows
-> and 7 Sheet I §2 records. `validate_schema` returns *every* problem with its path;
-> `load_template` validates, refuses to overwrite an existing version, and activates only on request;
-> `activate_template` moves one flag and the **partial unique index** makes "two live templates for one
-> category" impossible. Nothing starts an assessment yet — `assert_template_usable` is the guard C1/E
-> calls (A5's pattern).
+> **A8 in one paragraph, for the next reader.** Twenty controls in five groups: the eleven the frozen
+> Crops template carries as `self_check` markers (`crops.R01`–`R07`, `Q4.2`, `Q5.1`, `Q11.1`,
+> `Q11.2`) plus the nine own controls (`A1`–`A5`, **C5**, `D1`, `E1`–`E2`) whose wording comes from
+> the D71 ledger. `evaluate()` never writes — that is what makes "nothing is kept" true — and
+> `submit()` returns **`None`** when the research box is unticked, so the result renders from the
+> submitted form in the same request. The demographic consent is **refused** without the research
+> one. The account at the end is **A6's** `AccountForm`/`create_application()` (one route, two POSTs,
+> `step=account`); it writes no `FarmCategory` row. The two fixed lines read
+> `MISSING_RECORD_BLOCKS_FINALISE` — **C1's finalise gate must import it from
+> `core.services._selfcheck`**, not restate it.
 >
-> **B3 corrected the plan three times, and the printed FORM won each time** (evidence in
-> `test_crops_template.py`'s docstring, assertions that hold it, and `SELF_CHECK_PRD` §3.4/§4.6 +
-> D71 amended in place): (1) the Crops template carries **eleven** D71 self-check markers, not twelve —
-> C5's aggregation question is **FORM Sheet A**, so it is an own control in `SELF_CHECK_ITEMS`;
-> (2) the sheet prints **nine** child rows, not thirteen (rows 30–31, 42, 64, 79, 122–123, 136, 213);
-> (3) a "Question N" is a **container** whose `items` are the answerable lines, because the plan's own
-> marker example is `crops.Q4.2`.
+> **Four things A8 decided that the plan did not** (each amended in place, date 2026-11-05):
+> (1) `SELF_CHECK_PRD` §3.4 — a derived control keeps its reviewed title/options in code and takes
+> only its **`why`** from the template marker; the template's own `text` is shown beside it as "The
+> farm visit asks this as: …". A derived control's `why` is empty in code and a test fails if that
+> stops being true. (2) §3.6 — the consent **act** is `research_consent_at` +
+> `consent_text_version` on the report, **not** a `ConsentRecord` (that model needs a `User` a
+> visitor has no account to be). (3) §4.5 — the aggregate's threshold refusal names **neither the
+> value nor the count**: the first version printed "Female: 1", which publishes the cell the
+> threshold exists to protect. (4) The two consent texts are seeded as **drafts**
+> (`research-2026-11-05`, `demographics-2026-11-05`) from the ledger, and neither answers the
+> retention question — the group's `[DECIDE]`.
 >
-> **Read the template as a document, not as JSON:** `product/docs/templates/crops_v1_review.md` is
-> generated from the shipped file by `scripts/crops_template_review.py`, one row per printed line in
-> sheet order, and a test fails if the committed copy is stale. That is B3's "second pair of eyes".
+> **The browser caught a defect no Django test could** (`testing_hazards.md` §1.40): a
+> `ChoiceField` on its default `Select` renders **nothing** when a template iterates
+> `{{ choice.tag }}`, so every single-choice control was invisible while the page returned 200, the
+> form validated (all fields optional) and a result rendered. `tests/e2e/test_selfcheck_wizard.py`
+> is that guard, plus the stepped shape and the no-JavaScript fallback. Also fixed:
+> `.btn--ghost` is cream-on-transparent and invisible on a cream ground — use `.btn--outline`.
 >
-> **What is next: A8 — the public self-check** (D71, `SELF_CHECK_PRD`, prototype
-> `product/design/before_you_apply_prototype.html`, approved 2026-11-04 as a stepped wizard). It is
-> unblocked on every count it needed: eleven markers in the frozen template, C5 beside them as an own
-> control, and its only exit — the application flow — built in A6. **Then A7** (eligibility gates,
-> which still needs the payment surface named in `todo.md`) and **A4**.
-> **A8 in one paragraph, so it starts without re-reading the plan.** Read
-> `python scripts/context.py --task public`, then `SELF_CHECK_PRD` §3–§4 and §11.5–§11.7 (the wording,
-> the consent and the wizard), and `Test driven` — not the whole PRD.
-> Route `/before-you-apply/` →
-> `core:before_you_apply`, and it **joins `PAGES`** so the claim-discipline sweep covers it from the
-> first render. New `core/models/_selfcheck.py`: `SelfCheckReport` + `SelfCheckDemographic`, one
-> migration, **no FK to `Member` or `Farm`** and no derived status. `core/services/_selfcheck.py`:
-> `SELF_CHECK_ITEMS` (the own controls — A1–A5, **C5**, D1, E1–E2, wording from the D71 ledger),
-> `build_check()` resolving the **eleven** `self_check` markers out of the *active* Crops template plus
-> those items, `evaluate()` (pure, never writes), `submit()` (atomic, consent-gated), `withdraw()`.
-> **Nothing is stored without research consent**, demographic consent is refused without it, and both
-> reuse A6's `ConsentText`/`ConsentRecord` with purposes `RESEARCH` and `DEMOGRAPHICS` — **which A6 did
-> not seed** (only `ACCOUNT`), so A8 seeds the two texts from the ledger's `consent` strings or decides
-> in writing not to. The result's two fixed lines come from the finalise gate's own constant
-> (`MISSING_RECORD_BLOCKS_FINALISE`), never from page copy. The account step at the end calls A6's
-> `create_application()` and must **not** write `FarmCategory` rows. `report_self_check --min-count 5`.
-> The prototype (`product/design/before_you_apply_prototype.html`) is the design target, including its
-> stepped-wizard shape and its two "deliberately missing" notes.
+> **What is next: A7 — the eligibility gates**, which still needs the payment-recording surface named
+> in `todo.md`; then **A4**. Sub-plan A is finished when those two are. Nothing else in 1a is
+> blocked on A8; C1/E's finalise gate now has the constant to import.
 >
-> **Three things are still the product owner's, none of them blocks A8:** the three roster ambiguities
-> from `1i`; whether `APPLICANT` is the right word for an account that has not applied; and the two
-> `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6 (retention period, withdrawal address — the latter also
-> blocked on publishing the administrator's contact details). **A fourth is now queued:** whether the
-> FORM's V21 child should ask for a percentage instead of Yes/No (`todo.md`).
+> **The demo needs three data acts before it works end to end, and the dev DB has none of them:**
+> `python manage.py migrate` (the dev database is at **0014** — `0015`–`0017` are unapplied, so
+> `/before-you-apply/` 500s on `core_assessmenttemplate`), then `seed_deployment`, then
+> `load_template core/templates_data/crops.v1.json --activate`. **The page is honest without the
+> template** — it renders its nine own controls and a caveat — but the eleven derived controls only
+> exist once one is active, so a demo without it shows a third of the check. This is the first
+> consumer that needs the template live; the `1o` line "do not activate until C1/E" was written
+> before A8 existed.
 >
-> **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a period
-> that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
-> mutation-testing restore — §1.36. (3) A `CheckConstraint` containing `NULL IN (…)` **is satisfied** by
-> Postgres — §1.37. (4) `FileField(storage=callable)` resolves the callable at import — §1.38. (5) A
-> boundary test whose samples never land on the boundary cannot see the rule — §1.39. (6) A suite timed
-> once is timed wrong: the same tree measured 152.70 s and 261.21 s forty minutes apart — §3.17, with
-> both numbers on record. (7) **The commit count in this block was carried forward instead of
-> measured** — `1m` said 18 and the true count was 19, `1n` said 19 and it was 22, this block first said
-> 21 and it is 25 — so it now names the command that produces it.
+> **Five traps, all with evidence in `testing_hazards.md`**
+> - `scripts/verify.sh` cannot run here (§3.31): no `.venv` → it picks a `python3` without `celery`
+>   and dies in step 2 looking like a broken tree. Run the five steps with `python`, and drop the
+>   test DB first (§3.15, `_scratch/a5/dropdb.py`).
+> - Restore mutation files from `_scratch/` copies, never `git checkout <file>` (§1.36). The harness
+>   for this sub-plan is `_scratch/a8/mutate.py`; re-run it after touching `_selfcheck.py`, the items
+>   module, the form, the view or the command.
+> - Any test asserting something about *now* derives its dates from `timezone.localdate()` (§1.35).
+> - A `CheckConstraint` containing `NULL IN (…)` is satisfied by Postgres (§1.37) — and a boundary
+>   test whose samples never land on the boundary cannot see the rule (§1.39).
+> - A template that exists is **history**: an assessment freezes a copy of its schema. A changed
+>   questionnaire is a new version, and `load_template` refuses an edit rather than applying it.
 >
-> **D83's substance:** the pledge cannot move to account creation, because it attests to *"all the land
-> for which I/we are applying"*. The account collects identity + farm name, nearest town, contact, and
-> nothing declarative. **The land-history contradiction is three-way, not two** (SAOSO 4.2.3 and the
-> OPP pledge both say 12/12/18; OPP §V alone says 18/12/12), so A3's `land_history_conflict` is
-> `min_reading <= declared < max_reading` — the band where the documents actually disagree — and **not**
-> a comparison against OPP §V. It is **stored**, where `is_paid_up` is derived.
+> **Waiting on the product owner, none of it blocking A7:** the three roster ambiguities from `1i`;
+> whether `APPLICANT` is the right word; the two `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6
+> (retention period, withdrawal address) — **and the same retention answer for the two public
+> consents**, which is new; whether the FORM's V21 child should ask for a percentage instead of
+> Yes/No; five of the record "why" sentences that name no clause; and the `/ask/` refusal link that
+> `SELF_CHECK_PRD` §4.3 asks for and A8 did not build (no eligibility classification exists to hang
+> it on — recorded in `todo.md`, not silently dropped).
 >
-> **A5's finding worth knowing before A8:** the OPP §2.3 table as printed has a hole — *"Below
-> R 250,000"* then *"R 250,001 – R 500,000"* — so band bounds are stored half-open and the printed
-> wording is the `label`. `AssessmentFee` snapshots the band, its label and the amount; it never
-> re-reads the schedule. The guard is `assert_fees_paid_for_assessment(member, farm)` (membership first,
-> then the fee): **C1's `confirm_visit()` calls it** — A5 did not pre-build `FarmVisit`.
->
-> **A6's finding worth knowing before A8:** the self-check's account step (§11.5 screen 7) is the same
-> account `create_application()` makes, so A8 should call that service rather than write its own — and
-> it carries the three Q7 fields the check never asks. The check's ticks still must **not** become
-> `FarmCategory` rows; they wait for A6's categories step.
->
-> **The current purpose is a demo to PGS** (product owner, 2026-11-05): show the *shape* of the flow —
-> the self-check, the application, the account — before the group's go-ahead. That changes the bar
-> (make the flow real and honest, not production-complete) and does **not** change any rule below.
+> **The current purpose is still a demo to PGS** (product owner, 2026-11-05): show the *shape* of the
+> flow — the self-check, the application, the account — before the group's go-ahead. That sets the
+> bar (real and honest, not production-complete) and does **not** change any rule below.
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
