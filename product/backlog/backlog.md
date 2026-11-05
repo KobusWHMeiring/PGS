@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-04 11:21
+> Generated: 2026-11-05 14:44
 
 ## Ready (up next)
 
@@ -17,7 +17,7 @@
 - **PRD: A canonical corpus — reviewed text as data, extraction as a build step** - `In Progress\CORPUS_CANONICAL_FORMAT_PRD.md` - Status: In Progress — **all four governed documents** are built, reviewed and are the text of record (`knowledge/corpus/{saoso,bpp,landscape,opp}.md`); **P4 (the OPP) landed 2026-11-02**, so `corpus_check` reports *current* for all four and the dev corpus is 401 chunks, 0 unembedded. **2026-10-28:** the ingest fails closed on a declared review (P7.1) and a deployment can tell whether its corpus is current (P2.1–P2.4). **Remaining:** the generator's table-block rule (D75 — every table in the corpus is still a human transcription) and pdf 11's §6.5 labelling table; both now sit inside **D80**'s engine work.
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
-- **PRD: The ingestion engine — from "a person reviewed this document" to "a suite checks every document"** - `In Progress\INGESTION_ENGINE_PRD.md` - Status: In Progress — **S0 (the eight-shape fixture set) and S1 (the generator's table-block
+- **PRD: The ingestion engine — from "a person reviewed this document" to "a suite checks every document"** - `In Progress\INGESTION_ENGINE_PRD.md` - Status: In Progress — **S0 and S1 landed 2026-11-03 (session `1e`); S2 is measured for three arms
 - **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: two items left, both human gates** — the VPS restore rehearsal and the missing UAT seats. `f4e8907` deployed and the corpus was rebuilt with `--force` on 2026-10-22 (364 chunks, all embedded, `lexical_only=False`); committee confirmation of no-claims left for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 - **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plans A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19, and **D (D1–D5, chatbot)** landed with it, so every sub-plan except the deferred C3 is built. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. **Closing MVP 0 is now an enumerated list, not a judgement call** — `MVP0_PLAN_V2.md` §4.1 (audited 2026-10-22): two engineering items, three human gates, one fix in flight. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
 - **Implementation Plan — Building in the open (public board)** - `In Progress\PUBLIC_BOARD_PLAN.md` - Status: In Progress — B0–B6 landed 2026-10-29; **B7 (UAT) outstanding**, so the item stays
@@ -89,16 +89,14 @@ the generated index's "To Do" section.
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
 - [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
-      **has a PRD and three of its six slices** (2026-11-03): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
-      S0 is the **eight-shape fixture set** (`knowledge/tests/shape_fixtures.py`, 8 xfailed targets);
-      S1 is `build_corpus.py` refusing to overwrite a reviewed `<!-- table -->` block; S4 is the
-      **verification harness** (`knowledge/table_harness.py` + `scripts/check_tables.py`) — the four
-      reviewed tables, 14 rows, pass requirements 2-7 with one mutation proved per requirement.
-      Open: S2 the extractor evaluation (Docling / Document AI) against the eight — it needs an
-      install and GCP credentials, so it is a session with a preamble — S3 the generator emitting
-      table blocks (and recording the extraction mode, the harness's last per-document datum), and
-      S5 re-reviewing Appendix 6a and Appendix 7 through the harness: the two live defects the PRD
-      measures, and the two the harness **cannot see** because they are not table blocks at all.
+      **has a PRD, and S2 is closed** (2026-11-05): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      S0 is the **eight-shape fixture set**; S1 is `build_corpus.py` refusing to overwrite a reviewed
+      `<!-- table -->` block; S4 is the **verification harness** (`knowledge/table_harness.py` +
+      `scripts/check_tables.py`); S2 measured three arms against the eight shapes over six
+      investigations and **answered D82 as a composite** (PRD §3.14) — Layout Parser for structure (8/8
+      tables found), the page's own text layer for characters (R3), Docling for Appendix 7's four
+      columns, the VLM `lines` form as a cheap proposer, the harness for the verdict. Nothing new is
+      bought and no single arm wins. **What is left is three items, below.**
 - [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
       (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
       email, the role description) and three decisions they force. No PRD references it and no
@@ -174,7 +172,47 @@ the generated index's "To Do" section.
       This needs the revised artefact and `--force`, not a view change — full evidence and DoD in
       `BugFixes/saoso_text_glyphs_and_boundaries.md`.
 
+## Ingestion engine — what S2 left (2026-11-05)
+
+- [ ] **S3 — the generator emits `<!-- table … -->` blocks, and records the extraction mode on the
+      artefact.** This is the slice that makes the composite real: the Layout Parser *proposes* the
+      grid, the page's text layer supplies the characters, the harness refuses a block that breaks
+      requirements 2–7. The harness's one unfinished datum is the **extraction mode** the cells came
+      from (the landscape passes against `-table` and fails ten ways against `-layout`), which S3 must
+      write onto every block it emits. Depends on nothing external: no credential, no new install.
+      Evidence and the requirements it must satisfy: `INGESTION_ENGINE_PRD.md` §4 and §5.
+- [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 (4 chunks) through the harness**, and
+      delete their bespoke handling. These are the two live defects the PRD measures and the two the
+      harness cannot see, because they are not table blocks at all. The review must be **side by side**
+      — page beside transcription — which is now hard rule 9 in `pgs-presenting-uat`. 6a's header
+      grouping is settled (the owner kept the key's two labels, 2026-11-05), so what is left there is
+      association per row, not a decision.
+- [ ] **R3's verdict wording — "our pass cannot order this page" is not "the model is wrong".**
+      Both VLMs score **0 mismatches** on `page_break_row` and are demoted only because page 5's
+      `-table` pass interleaves three columns on one printed line, so no cell's quotes can appear in
+      read order. The instrument currently reports that as unverified characters. Found 2026-11-05
+      (PRD §3.12/§3.14); cheap, and it changes how the scoreboard reads.
+- [ ] **The arbitration page: finish its 7 open claims, or retire it.** `scripts/shape_arbitration.py`
+      and `product/design/uat/arbitrate_shapes.html` are built and tested (10 cards, side-by-side, export
+      → `shape_review_signoff.py --amend`). 61 of 68 claims stand as signed; **7 are unjudged and gate
+      nothing** — two of them (6a's header, the merged fee box) were settled by other means. Keep it for
+      the next time a claim is disputed, or delete it and regenerate if it drifts; what it must not be is
+      a stale surface that looks like work in progress.
+
 ## Human gates — on the box
+- [ ] **Deploy the corpus/D80 line to production** (owed since session `1f`; live is at `06bb11a`,
+      read back in session `1b`). Sessions `1f`–`1o` are unpushed-or-pushed-but-not-deployed and carry
+      **no migration and no runtime application change** — tests, fixtures, scripts, product docs and the
+      `deploy.sh` verified-commit fix — so the deploy is low risk and changes nothing a user sees. The
+      dev box has no SSH key: the operator runs
+      `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh` and reads the `/health/` body plus
+      `git rev-parse --short HEAD` on the box. **Do not refresh the dev corpus as part of it** — see
+      `deploy/README.md` §4 and the next item.
+- [ ] **Dev corpus refresh needs `GEMINI_API_KEY` in the dev `.env`** (it holds only `DJANGO_SECRET_KEY`).
+      `corpus_check` reports `landscape` **drift** and its 17 chunks carry 0 labelled renditions against
+      live's 8. A refresh without a working key writes **17 NULL vectors that then report "already
+      ingested" forever** (`deploy/README.md` §4). Live is the reference DB, not the dev box.
+
 
 - [ ] **Rehearse the backup restore on the VPS** (A9, R11). `docs/RUNBOOK.md` §2.1 has one row, from
       the dev box, and says of itself: *"It does **not** prove the VPS's drive, permissions, or

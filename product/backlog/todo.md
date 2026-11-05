@@ -19,16 +19,14 @@ the generated index's "To Do" section.
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
 - [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
-      **has a PRD and three of its six slices** (2026-11-03): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
-      S0 is the **eight-shape fixture set** (`knowledge/tests/shape_fixtures.py`, 8 xfailed targets);
-      S1 is `build_corpus.py` refusing to overwrite a reviewed `<!-- table -->` block; S4 is the
-      **verification harness** (`knowledge/table_harness.py` + `scripts/check_tables.py`) — the four
-      reviewed tables, 14 rows, pass requirements 2-7 with one mutation proved per requirement.
-      Open: S2 the extractor evaluation (Docling / Document AI) against the eight — it needs an
-      install and GCP credentials, so it is a session with a preamble — S3 the generator emitting
-      table blocks (and recording the extraction mode, the harness's last per-document datum), and
-      S5 re-reviewing Appendix 6a and Appendix 7 through the harness: the two live defects the PRD
-      measures, and the two the harness **cannot see** because they are not table blocks at all.
+      **has a PRD, and S2 is closed** (2026-11-05): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      S0 is the **eight-shape fixture set**; S1 is `build_corpus.py` refusing to overwrite a reviewed
+      `<!-- table -->` block; S4 is the **verification harness** (`knowledge/table_harness.py` +
+      `scripts/check_tables.py`); S2 measured three arms against the eight shapes over six
+      investigations and **answered D82 as a composite** (PRD §3.14) — Layout Parser for structure (8/8
+      tables found), the page's own text layer for characters (R3), Docling for Appendix 7's four
+      columns, the VLM `lines` form as a cheap proposer, the harness for the verdict. Nothing new is
+      bought and no single arm wins. **What is left is three items, below.**
 - [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
       (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
       email, the role description) and three decisions they force. No PRD references it and no
@@ -104,7 +102,47 @@ the generated index's "To Do" section.
       This needs the revised artefact and `--force`, not a view change — full evidence and DoD in
       `BugFixes/saoso_text_glyphs_and_boundaries.md`.
 
+## Ingestion engine — what S2 left (2026-11-05)
+
+- [ ] **S3 — the generator emits `<!-- table … -->` blocks, and records the extraction mode on the
+      artefact.** This is the slice that makes the composite real: the Layout Parser *proposes* the
+      grid, the page's text layer supplies the characters, the harness refuses a block that breaks
+      requirements 2–7. The harness's one unfinished datum is the **extraction mode** the cells came
+      from (the landscape passes against `-table` and fails ten ways against `-layout`), which S3 must
+      write onto every block it emits. Depends on nothing external: no credential, no new install.
+      Evidence and the requirements it must satisfy: `INGESTION_ENGINE_PRD.md` §4 and §5.
+- [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 (4 chunks) through the harness**, and
+      delete their bespoke handling. These are the two live defects the PRD measures and the two the
+      harness cannot see, because they are not table blocks at all. The review must be **side by side**
+      — page beside transcription — which is now hard rule 9 in `pgs-presenting-uat`. 6a's header
+      grouping is settled (the owner kept the key's two labels, 2026-11-05), so what is left there is
+      association per row, not a decision.
+- [ ] **R3's verdict wording — "our pass cannot order this page" is not "the model is wrong".**
+      Both VLMs score **0 mismatches** on `page_break_row` and are demoted only because page 5's
+      `-table` pass interleaves three columns on one printed line, so no cell's quotes can appear in
+      read order. The instrument currently reports that as unverified characters. Found 2026-11-05
+      (PRD §3.12/§3.14); cheap, and it changes how the scoreboard reads.
+- [ ] **The arbitration page: finish its 7 open claims, or retire it.** `scripts/shape_arbitration.py`
+      and `product/design/uat/arbitrate_shapes.html` are built and tested (10 cards, side-by-side, export
+      → `shape_review_signoff.py --amend`). 61 of 68 claims stand as signed; **7 are unjudged and gate
+      nothing** — two of them (6a's header, the merged fee box) were settled by other means. Keep it for
+      the next time a claim is disputed, or delete it and regenerate if it drifts; what it must not be is
+      a stale surface that looks like work in progress.
+
 ## Human gates — on the box
+- [ ] **Deploy the corpus/D80 line to production** (owed since session `1f`; live is at `06bb11a`,
+      read back in session `1b`). Sessions `1f`–`1o` are unpushed-or-pushed-but-not-deployed and carry
+      **no migration and no runtime application change** — tests, fixtures, scripts, product docs and the
+      `deploy.sh` verified-commit fix — so the deploy is low risk and changes nothing a user sees. The
+      dev box has no SSH key: the operator runs
+      `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh` and reads the `/health/` body plus
+      `git rev-parse --short HEAD` on the box. **Do not refresh the dev corpus as part of it** — see
+      `deploy/README.md` §4 and the next item.
+- [ ] **Dev corpus refresh needs `GEMINI_API_KEY` in the dev `.env`** (it holds only `DJANGO_SECRET_KEY`).
+      `corpus_check` reports `landscape` **drift** and its 17 chunks carry 0 labelled renditions against
+      live's 8. A refresh without a working key writes **17 NULL vectors that then report "already
+      ingested" forever** (`deploy/README.md` §4). Live is the reference DB, not the dev box.
+
 
 - [ ] **Rehearse the backup restore on the VPS** (A9, R11). `docs/RUNBOOK.md` §2.1 has one row, from
       the dev box, and says of itself: *"It does **not** prove the VPS's drive, permissions, or
