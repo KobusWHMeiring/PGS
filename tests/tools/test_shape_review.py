@@ -266,3 +266,65 @@ def test_a_page_note_keeps_a_shape_out_of_confirmed(export):
     assert "long_cell" not in summary["shapes_confirmed"]
     assert "numeric_row" in summary["shapes_confirmed"]
     assert record["page_notes"]["long_cell"].startswith("The first column")
+
+def test_an_amended_claim_must_name_what_the_reviewer_saw(export):
+    """`long_cell`'s first cell was corrected after the owner judged it. Both texts must be pinned.
+
+    The amendment is the only way an `expected` may differ from the key: `from` is what the reviewer
+    actually read, `to` is what the key says now, and `basis` is the finding that justifies it. A
+    record that silently pins the new text to the old signature is a lie about the signature.
+    """
+    claim_id = "long_cell.cell.0.0"
+    claim = next(c for c in shape_review.all_claims() if c.id == claim_id)
+    seen = "starts=The group conducts farm visits and"
+    assert claim.expected != seen, "the fixture no longer differs from the text the owner reviewed"
+
+    export["claims"][claim_id]["expected"] = seen
+    assert any(claim_id in p and "rebuild the surface" in p for p in shape_review_signoff.validate(export))
+
+    export["amendments"] = [
+        {"claim": claim_id, "from": seen, "to": claim.expected, "basis": "the owner's page note"}
+    ]
+    assert shape_review_signoff.validate(export) == []
+
+    record = shape_review_signoff.build_record(export)
+    entry = record["claims"][claim_id]
+    assert entry["expected"] == claim.expected
+    assert entry["reviewed_expected"] == seen
+    assert entry["amendment_basis"].startswith("the owner")
+    assert record["summary"]["claims_amended_under_review"] == [claim_id]
+    assert shape_review_signoff.drift(record) == []
+
+
+def test_a_wrongly_specified_amendment_is_refused(export):
+    claim_id = "long_cell.cell.0.0"
+    export["claims"][claim_id]["expected"] = "an older reading"
+    export["amendments"] = [
+        {"claim": claim_id, "from": "something else", "to": "x", "basis": "b"}
+    ]
+    problems = shape_review_signoff.validate(export)
+    assert any("must say from=" in problem for problem in problems), problems
+
+
+def test_an_amendment_without_a_basis_is_refused(export):
+    claim_id = "long_cell.cell.0.0"
+    claim = next(c for c in shape_review.all_claims() if c.id == claim_id)
+    export["claims"][claim_id]["expected"] = "an older reading"
+    export["amendments"] = [{"claim": claim_id, "from": "an older reading", "to": claim.expected}]
+    problems = shape_review_signoff.validate(export)
+    assert any("basis" in problem for problem in problems), problems
+
+
+def test_the_committed_record_pins_the_amended_claim(html):
+    """The real record: 68 yes, eight shapes confirmed, one claim amended under review."""
+    record = json.loads(shape_review_signoff.RECORD_PATH.read_text(encoding="utf-8"))
+    summary = record["summary"]
+    assert summary["claims"] == len(shape_review.claim_ids())
+    assert summary["shapes_confirmed"] == [case.key for case in SHAPES]
+    assert summary["claims_amended_under_review"] == ["long_cell.cell.0.0"]
+    entry = record["claims"]["long_cell.cell.0.0"]
+    assert entry["expected"].startswith("starts=Step 3")
+    assert entry["reviewed_expected"] == "starts=The group conducts farm visits and"
+    # and the page shows the corrected claim, with the prose still asserted
+    section = html.split('id="shape-long_cell"', 1)[1].split("<section", 1)[0]
+    assert "Step 3" in section and "The group conducts farm visits and" in section

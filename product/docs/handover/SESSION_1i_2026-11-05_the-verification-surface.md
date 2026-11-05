@@ -130,7 +130,7 @@ buried the only real finding.
 
 | Note | Finding | Disposition |
 |---|---|---|
-| `long_cell`: "the first column does have a bolded **Step 3** … that doesn't appear on the right" | **The key is wrong.** The page *and* our reviewed `landscape.md` block both start that cell with `Step 3`; the fixture asserts it starts with "The group conducts farm visits and" | Amendment owed: `starts="Step 3", contains="The group conducts farm visits and"`. One line; it changes `expected`, so the signature must be re-signed in the same act |
+| `long_cell`: "the first column does have a bolded **Step 3** … that doesn't appear on the right" | **The key is wrong.** The page *and* our reviewed `landscape.md` block both start that cell with `Step 3`; the fixture asserted it starts with "The group conducts farm visits and" | Applied: `starts="Step 3", contains="The group conducts farm visits and"`, and re-signed the same day through a new **amendment** path (`{claim, from, to, basis}`) so the record keeps both the text he read and the text the key now says. A bare `expected` change without a matching amendment is refused |
 | `empty_cells`: "not sure where the R500 comes from" | The claim is right — `R500` is in the same merged Fee box, under "Annual membership fee (paid by the PGS group to PGS SA)". The grid drew a `contains` claim as if it were the whole cell | Fixed: partial claims are drawn `… R500 …` |
 | `page_break_row`: "we're missing loads of text … the cells don't just say the step name" | Right about the paper, wrong about the claim: they are `starts` prefixes. The grid showed `Step 1` as a bare value | Fixed: `Step 1 …`, plus a test that no partial claim is drawn as a whole cell |
 
@@ -141,7 +141,12 @@ made the difference was not a better glyph but a sentence: "not claimed", "the k
 about that cell", "…" where the cell goes on. A judgement surface has to be read by someone who was
 not in the room, so its ambiguity is a bug with a test, not a style choice.
 
-Owed at close: the `Step 3` amendment + re-sign, then the three-arm re-score from cache (§3.10). The
-gate is green with the signature in place (`--check`: 68 judged claims, 0 problems); the amendment is
-deliberately *not* made here, because a key edit under a live signature is the owner's act, not the
-agent's.
+**The amendment path is the session's last lesson.** A key edit under a live signature is the
+owner's act, so it may not be a silent `expected` rewrite: an export now carries
+`amendments: [{claim, from, to, basis}]`, `from` must be the text the reviewer actually judged, and
+the record keeps both. `long_cell.cell.0.0` is the first (and so far only) claim amended that way —
+`claims_amended_under_review` names it, and eight of eight shapes are confirmed.
+
+Owed at close: **the three-arm re-score from cache** (§3.10), which is now unblocked and costs
+nothing. The gate is green with the amended key and the record in place (`--check`: 68 judged claims,
+0 problems).

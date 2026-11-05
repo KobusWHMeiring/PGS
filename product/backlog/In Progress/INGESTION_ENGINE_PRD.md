@@ -513,7 +513,7 @@ finding and a shape whose reviewer asked "is this expected?" is not settled.
 
 | Note | What it was | Outcome |
 |---|---|---|
-| `long_cell` — "the first column has a bolded **Step 3** that doesn't appear on the right" | **A defect in the key.** `long_cell.cell.0.0` asserts the cell *starts* with "The group conducts farm visits and"; the page and **our own reviewed landscape block** both start it with `Step 3` | **Amendment owed.** The corrected claim is `Cell(0, 0, starts="Step 3", contains="The group conducts farm visits and")` — the second predicate keeps the prose assertion the original claim was after. It changes `expected`, so the signature goes stale by design and must be re-signed in the same act |
+| `long_cell` — "the first column has a bolded **Step 3** that doesn't appear on the right" | **A defect in the key.** `long_cell.cell.0.0` asserted the cell *starts* with "The group conducts farm visits and"; the page and **our own reviewed landscape block** both start it with `Step 3` | **Applied and re-signed.** The claim is now `Cell(0, 0, starts="Step 3", contains="The group conducts farm visits and")`. Because that changes `expected`, the re-sign travels as an **amendment**: `{claim, from, to, basis}`, where `from` is the text the owner actually judged. `knowledge/tests/shape_review.json` keeps both texts and the basis, and `summary.claims_amended_under_review` names it |
 | `empty_cells` — "the pdf states 'Local PGS group determines the membership fee' … not sure where the R500 comes from" | **The surface's fault, not the claim's.** `R500` is printed in the same merged Fee box, under "Annual membership fee (paid by the PGS group to PGS SA): R500". The grid rendered a `contains` claim as if it were the whole cell | Fixed: a partial claim is drawn with `…` where the cell goes on, and the legend says so |
 | `page_break_row` — "we're missing loads of text, the cells don't just say the step name" | **The surface's fault.** The claims are prefixes (`starts=Step 1`), and the grid showed them as bare values | Fixed as above, with a test that no partial claim is ever drawn as a whole cell |
 
@@ -522,9 +522,15 @@ presentation produced a wrong reading (the first was `—` read as "the paper is
 in the session record: **a rendered claim is not the claim** — a prefix, an inner phrase or an
 unasserted cell must look like what it is.
 
-So **D83 is partly answered**: five shapes are settled, one needs a one-line amendment and a re-sign,
-and two are answered "yes, the paper prints that" once the display stopped misrepresenting them. The
-re-score in §3.10 can run now for the five; the honest order is amend → re-sign → re-score all eight.
+**D83 is answered: eight of eight shapes confirmed, one claim amended under review**
+(`claims_amended_under_review: ["long_cell.cell.0.0"]`), and the three page notes kept in the record
+as `notes_resolved`. The re-sign was applied on the owner's explicit instruction the same day, through
+the amendment path rather than by editing `expected` — so the record still says what he read.
+
+**What S2 owes next is the re-score, and it is free.** Every arm's raw answer is cached
+(`_scratch/or/responses/`, `_scratch/adc/responses/`); `scripts/table_reads.py` +
+`scripts/eval_*.py` score them again against the corrected key. Only after that is D82 (which
+extractor) a decision with evidence under it.
 
 ## 4. Requirements
 

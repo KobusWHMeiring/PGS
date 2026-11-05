@@ -25,17 +25,19 @@
 > convention was declared. **The ranking is therefore not established**, and the four shapes no arm
 > passes are exactly the judgement ones.
 >
-> **The key is signed, and its first signature found a defect** (session `1i`, 2026-11-05).
+> **The key is reviewed, amended and re-signed** (session `1i`, 2026-11-05).
 > `knowledge/tests/shape_review.json` holds Kobus's review — **68 of 68 claims Yes**, dated
-> 2026-11-05, every claim pinned to the text he judged — with **5 shapes confirmed and 3 carrying a
-> page note**. The note that matters is `long_cell`: the paper's first cell **starts with `Step 3`**
-> (and so does our own reviewed landscape block), while the key asserts it starts with "The group
-> conducts farm visits and". **The amendment is owed and is one line** —
-> `Cell(0, 0, starts="Step 3", contains="The group conducts farm visits and")` — and it makes the
-> signature stale by design, so it must be applied and re-signed in the same act. The other two
-> notes (`R500`, "cells don't just say the step name") were the **surface** misdrawing a `contains`
-> or `starts` claim as a whole cell; fixed, with a test. **Do not re-score the arms until the
-> amendment is re-signed** — the key is otherwise reviewed, and §3.11 records all three notes.
+> 2026-11-05 — with **eight of eight shapes confirmed** and **one claim amended under review**:
+> `long_cell.cell.0.0`, whose cell **starts with `Step 3`** on the paper and in our own reviewed
+> landscape block. The claim is now `starts="Step 3", contains="The group conducts farm visits and"`,
+> and the re-sign travelled as an **amendment** (`{claim, from, to, basis}`), so the record keeps both
+> the text the owner judged and the text the key now says, plus his note as the basis. His other two
+> notes (`R500`, "the cells don't just say the step name") were the **surface** drawing a `contains`
+> or `starts` claim as a whole cell; fixed, with a test that no partial claim is drawn as a whole
+> cell. **D83 is answered; §3.11 records the notes and the amendment.**
+>
+> **Next, and it is free: re-score the three arms from cache** against the corrected key, then D82
+> (which extractor) has evidence under it. Nothing else gates that.
 >
 > **What the surface is** (built this session):
 > `product/design/uat/shape_key_review.html` is each of the eight shapes' **page, rendered from the
@@ -123,28 +125,27 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
 vlm-arm sessions
-**Repo state:** `main` — **eleven commits ahead of `origin/main`**: session `1h`'s five (the
+**Repo state:** `main` — **twelve commits ahead of `origin/main`**: session `1h`'s five (the
 OpenRouter arm; §3.8's correction; the Docling re-run with the shared normalisation; the D82
-explanation page; and the Document AI arm with §3.9–§3.10), then session `1i`'s six (the verification
+explanation page; and the Document AI arm with §3.9–§3.10), then session `1i`'s seven (the verification
 surface; its docs; a browser test for the JavaScript-off check; a count-correction commit; the
-unclaimed-cell wording; and **the signed review** with the two drawing fixes its notes exposed).
-Everything before `1h` is pushed: the
+unclaimed-cell wording; **the signed review** with the two drawing fixes its notes exposed; and **the
+`Step 3` amendment with its re-sign**). Everything before `1h` is pushed: the
 licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
 session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
 `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
 script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `11` on this tree, and
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `12` on this tree, and
 `0` once sessions `1h` and `1i` are pushed.
 
-**On this tree** (2026-11-05, session `1i`): `scripts/verify.sh` **green at 1719 passed /
-2 skipped / 8 xfailed in 283.09 s** (a heavy box — the same gate measured 198.54 s here minutes
-earlier before a handover index line was added), run as
+**On this tree** (2026-11-05, session `1i`): `scripts/verify.sh` **green at 1727 passed /
+1 skipped / 8 xfailed in 120.44 s**, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17). `scripts/fast.sh` measured
-**1704 passed / 2 skipped / 15 deselected / 8 xfailed in 199.22 s**, and `--critical` **172 passed /
-4 deselected in 61.46 s** — both slow for the lane on a loaded box (the same lane measured 43.77 s and
-9.83 s in session `1h`), and neither is a budget change. One gate run in between reported `1 failed,
-40 errors`; that was an orphan `idle in transaction` backend, not the tree — §3.16 now says so.
+serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17) — the same gate measured
+283.09 s here an hour earlier on a loaded box. `scripts/fast.sh` measured **1712 passed / 1 skipped /
+15 deselected / 8 xfailed in 81.37 s**, and `--critical` **172 passed / 4 deselected in 10.36 s**.
+One gate run in between reported `1 failed, 40 errors`; that was an orphan `idle in transaction`
+backend, not the tree — §3.16 now says so.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **five commits to push** (session
 `1h`'s): `git rev-list --count origin/main..HEAD` prints `5` (the number was wrong twice by being

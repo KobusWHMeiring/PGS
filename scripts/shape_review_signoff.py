@@ -22,6 +22,14 @@ would then claim judgements nobody made.
 **It does not touch the fixtures.** A `No` is evidence; amending the key is a deliberate edit with
 its own diff, made after reading the record. This script records the finding, never acts on it.
 
+**Amending under a live review takes an amendment, or it is refused.** The first signature found that
+`long_cell`'s first cell starts with `Step 3` on the paper while the key asserted it starts after that
+label. Fixing the key changes the claim's `expected`, and a record that pins the new text to the old
+signature would be a lie about what the reviewer saw. So an export may carry
+`amendments: [{claim, from, to, basis}]`: `from` must be the text the reviewer actually judged, `to`
+must be what the key says now, and `basis` must name the finding that justifies it. The record then
+keeps both texts and the basis, and `summary.claims_amended_under_review` counts them.
+
 Re-running the same export changes nothing (idempotent) apart from the `signed_against` commit.
 """
 
@@ -95,6 +103,9 @@ def validate(export: dict) -> list[str]:
     if not DATE_RE.match(str(export.get("reviewed_at", ""))):
         problems.append("the review date is missing or not YYYY-MM-DD")
 
+    amendments, amendment_problems = _amendments(export)
+    problems.extend(amendment_problems)
+
     key = current_claims()
     judged = export.get("claims")
     if not isinstance(judged, dict):
@@ -113,10 +124,17 @@ def validate(export: dict) -> list[str]:
             problems.append(f"{claim_id}: a {verdict} needs a reason")
         expected = entry.get("expected")
         if expected != key[claim_id]["expected"]:
-            problems.append(
-                f"{claim_id}: the page was built when the key said {expected!r}, it now says "
-                f"{key[claim_id]['expected']!r} - rebuild the surface and judge it again"
-            )
+            amendment = amendments.get(claim_id)
+            if amendment is None:
+                problems.append(
+                    f"{claim_id}: the page was built when the key said {expected!r}, it now says "
+                    f"{key[claim_id]['expected']!r} - rebuild the surface and judge it again"
+                )
+            elif amendment["from"] != expected or amendment["to"] != key[claim_id]["expected"]:
+                problems.append(
+                    f"{claim_id}: the amendment must say from={expected!r} (what the reviewer saw) "
+                    f"and to={key[claim_id]['expected']!r} (what the key says now)"
+                )
 
     notes = export.get("page_notes") or {}
     if not isinstance(notes, dict):
@@ -127,9 +145,47 @@ def validate(export: dict) -> list[str]:
     return problems
 
 
+def _amendments(export: dict) -> tuple[dict[str, dict], list[str]]:
+    """The export's amendments by claim id, and everything wrong with them."""
+    raw = export.get("amendments")
+    if raw is None:
+        return {}, []
+    if not isinstance(raw, list):
+        return {}, ["amendments is not a list"]
+    known = set(current_claims())
+    found: dict[str, dict] = {}
+    problems: list[str] = []
+    for entry in raw:
+        if not isinstance(entry, dict):
+            problems.append("an amendment is not an object")
+            continue
+        claim_id = str(entry.get("claim", ""))
+        if claim_id not in known:
+            problems.append(f"amendment names an unknown claim {claim_id!r}")
+            continue
+        missing = [
+            field
+            for field in ("from", "to", "basis")
+            if not str(entry.get(field, "")).strip()
+        ]
+        if missing:
+            problems.append(f"{claim_id}: an amendment needs {', '.join(missing)}")
+            continue
+        if claim_id in found:
+            problems.append(f"{claim_id}: amended twice")
+            continue
+        found[claim_id] = {
+            "from": str(entry["from"]).strip(),
+            "to": str(entry["to"]).strip(),
+            "basis": str(entry["basis"]).strip(),
+        }
+    return found, problems
+
+
 def build_record(export: dict) -> dict:
     """The review of record: the export's judgements, pinned to the key text they judged."""
     key = current_claims()
+    amendments, _ = _amendments(export)
     claims: dict[str, dict] = {}
     amended_claims: list[str] = []
     unsure_claims: list[str] = []
@@ -142,6 +198,9 @@ def build_record(export: dict) -> dict:
             "verdict": verdict,
             "note": str(entry.get("note", "")).strip(),
         }
+        if claim.id in amendments:
+            claims[claim.id]["reviewed_expected"] = amendments[claim.id]["from"]
+            claims[claim.id]["amendment_basis"] = amendments[claim.id]["basis"]
         if verdict == "no":
             amended_claims.append(claim.id)
         elif verdict == "unsure":
@@ -196,6 +255,15 @@ def build_record(export: dict) -> dict:
             "shapes_with_open_questions": open_questions,
             "amended_claims": amended_claims,
             "unsure_claims": unsure_claims,
+            "claims_amended_under_review": sorted(amendments),
+        },
+        "amendments": [
+            {"claim": claim_id, **amendment} for claim_id, amendment in sorted(amendments.items())
+        ],
+        "notes_resolved": {
+            str(key_): str(value).strip()
+            for key_, value in (export.get("notes_resolved") or {}).items()
+            if str(value).strip()
         },
     }
 
