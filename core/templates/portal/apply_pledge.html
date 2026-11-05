@@ -1,0 +1,91 @@
+{% extends "portal/apply_base.html" %}
+
+{% comment %}
+The farmer pledge, as the OPP §I.1 prints it (D83, A3).
+
+The wording is reproduced rather than paraphrased, because it is what the member is
+signing: a friendly summary would be a different attestation. The two branches are an
+**OR** on the paper form and the form below offers them as one choice, so a member cannot
+accidentally take both — A3 refuses that row, and a refusal the farmer cannot see coming is
+a bad refusal.
+
+`land_history_conflict` is not shown. It is a record of where two governing documents
+disagree (D31), not a judgement of the farmer: telling someone their honest declaration is
+"in conflict" would misread the flag, and the visit is where the disagreement is settled.
+{% endcomment %}
+
+{% block step_title %}The farmer pledge{% endblock %}
+
+{% block fields %}
+  <div class="pledge">
+    <h2 class="pledge__title">Farmer pledge</h2>
+    <p class="pledge__line">
+      I/We, <strong>{{ farm.name }}</strong>, hereby solemnly declare and affirm that:
+    </p>
+    <ul class="pledge__list">
+      <li>
+        I/We support and actively pursue the principles of organic agriculture as described
+        by IFOAM-Organics International and the Basic Production Principles, and that these
+        principles were explained to us.
+      </li>
+      <li>
+        I/We will submit correct and accurate information about my/our production unit, and
+        will keep all information current, complete and up to date to reflect any changes.
+      </li>
+      <li>
+        I/We have read and understood the Basic Production Principles and our growing methods
+        adhere to the requirements listed therein.
+      </li>
+      <li>
+        I/We understand that our PGS group reserves the right to remove us from the programme
+        and deny us the use of the logo and marketing materials for any reason, including
+        concerns that we have violated listed growing practices, or have missing or
+        misleading information on the application.
+      </li>
+      <li>
+        I/We will only represent products as organically grown when they actually meet the
+        assessment standards and were produced on land that has been endorsed by the
+        Outeniqua PGS.
+      </li>
+    </ul>
+  </div>
+
+  {% include "portal/_form_errors.html" %}
+
+  {% include "portal/_field.html" with field=form.branch %}
+
+  <div class="field-grid">
+    {% include "portal/_field.html" with field=form.annual_months %}
+    {% include "portal/_field.html" with field=form.pasture_months %}
+    {% include "portal/_field.html" with field=form.perennial_months %}
+    {% include "portal/_field.html" with field=form.in_conversion_months %}
+  </div>
+
+  <p class="portal__note">
+    The land-history branch reads, in the group's own document: <em>“All the land for which
+    I/we are applying for PGS endorsement has been free of prohibited pesticides, herbicides
+    and fertilisers for at least 12 months before sowing or planting in the case of annual
+    production; 12 months before grazing or harvest for pastures and meadows and/or 18 months
+    before harvest for other perennials from the date of our first harvest this year.”</em>
+  </p>
+
+  <div class="field-grid">
+    {% include "portal/_field.html" with field=form.method %}
+    {% include "portal/_field.html" with field=form.place %}
+    {% include "portal/_field.html" with field=form.witness_name %}
+    {% include "portal/_field.html" with field=form.witness_designation %}
+    {% include "portal/_field.html" with field=form.evidence_document %}
+  </div>
+{% endblock %}
+
+{% block actions %}
+  <button class="btn btn--forest" type="submit">Sign and continue</button>
+{% endblock %}
+
+{% block after %}
+  <p class="portal__foot">
+    The date is recorded as today. OPP §I.2 allows a verbal pledge or a distinctive mark,
+    recorded with a witness and a photograph — a farmer who cannot read and sign is not
+    asked to.
+  </p>
+{% endblock %}

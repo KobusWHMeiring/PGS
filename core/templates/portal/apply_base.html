@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+The shell for the four application steps (task A6, spec §7).
+
+The step rail is **derived from rows, never from a session**: `steps` comes from
+`core.services._application.application_progress`, so a refreshed tab cannot disagree
+with the database about how far the applicant has got. It is a position indicator, not a
+navigation: the only way forward is the button, and the order is enforced server-side by
+`core.views._portal._step` (a step reached too early redirects to `core:apply`, which
+lands on the first open step).
+
+The summary page extends this template and overrides `{% block body %}` entirely — it is
+not a step and posts nothing.
+{% endcomment %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/portal.css' %}">{% endblock %}
+
+{% block content %}
+  <section class="section portal">
+    <div class="container portal__wrap">
+      <p class="eyebrow">{{ page.eyebrow }}</p>
+      <h1 class="serif-title portal__title">{% block step_title %}{{ page.heading }}{% endblock %}</h1>
+      {% block step_lede %}{% if page.lede %}<p class="portal__lede">{{ page.lede }}</p>{% endif %}{% endblock %}
+
+      {% if steps %}{% include "portal/_progress.html" %}{% endif %}
+
+      {% block body %}
+        <form class="portal__form" method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% include "portal/_form_errors.html" %}
+          {% block fields %}{% endblock %}
+          <div class="portal__actions">
+            {% block actions %}
+              <button class="btn btn--forest" type="submit">{{ submit_label|default:"Continue" }}</button>
+            {% endblock %}
+          </div>
+        </form>
+      {% endblock %}
+
+      {% block after %}{% endblock %}
+    </div>
+  </section>
+{% endblock %}

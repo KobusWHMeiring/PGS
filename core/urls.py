@@ -26,6 +26,15 @@ from core.views._public import (
     members,
     organics,
 )
+from core.views._portal import (
+    apply as apply_account,
+    apply_categories,
+    apply_pledge,
+    apply_summary,
+    apply_turnover,
+    login,
+    logout,
+)
 from core.views._chatbot import ask, ask_answer
 
 app_name = "core"
@@ -48,6 +57,18 @@ urlpatterns = [
     # no viewer to land in — and deliberately not under `/media/` (§VI).
     path("documents/<str:code>/read/", document_reader, name="document_reader"),
     path("become-a-member/", become_a_member, name="become_a_member"),
+    # The application flow (task A6, spec §7). The routes are steps of one flow, not a
+    # section of the site: the order is enforced in `_portal._step`, and `/apply/` is the
+    # single entry point that resumes where the applicant got to.
+    path("apply/", apply_account, name="apply"),
+    path("apply/pledge/", apply_pledge, name="apply_pledge"),
+    path("apply/categories/", apply_categories, name="apply_categories"),
+    path("apply/turnover/", apply_turnover, name="apply_turnover"),
+    path("apply/summary/", apply_summary, name="apply_summary"),
+    # The way back in. 1a has no mail provider (D84), so a password is the only route —
+    # there is deliberately no password-reset-by-email URL that cannot send an email.
+    path("account/login/", login, name="login"),
+    path("account/logout/", logout, name="logout"),
     # The grounded assistant. `/ask/` is the real surface; the home page's showcase
     # is an illustration of it, not a second implementation.
     path("ask/", ask, name="ask"),

@@ -27,8 +27,9 @@ from __future__ import annotations
 
 import pytest
 from django.core.management import call_command
+from django.utils import timezone
 
-from core.models import Category, Seal
+from core.models import Category, ConsentPurpose, ConsentText, Seal
 from core.services._certification import (
     InactiveSealError,
     UndefinedCriteriaError,
@@ -189,6 +190,27 @@ def test_seeding_is_idempotent(seeded):
     call_command("seed_deployment")
     assert Category.objects.filter(code="CROPS").count() == 1
     assert Seal.objects.filter(code="PGS_PASTURE_RAISED").count() == 1
+    assert ConsentText.objects.filter(purpose=ConsentPurpose.ACCOUNT).count() == 1
+
+
+def test_seeding_never_rewrites_a_consent_wording(seeded):
+    """A consent is versioned, not edited (`ConsentText`).
+
+    A deploy that refreshed the body in place would change the meaning of every record
+    that points at it — which is precisely what a version exists to prevent. New wording
+    is a new version row, and the group's approval is a later act on the same row.
+    """
+    text = ConsentText.objects.current(ConsentPurpose.ACCOUNT)
+    text.body = "The group's own corrected wording."
+    text.approved_at = timezone.now()
+    text.save()
+
+    call_command("seed_deployment")
+
+    stored = ConsentText.objects.get(pk=text.pk)
+    assert stored.body == "The group's own corrected wording."
+    assert stored.approved_at is not None
+    assert ConsentText.objects.filter(purpose=ConsentPurpose.ACCOUNT).count() == 1
 
 
 def test_seeding_does_not_reactivate_a_seal_a_deployment_switched_off(seeded):

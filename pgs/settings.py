@@ -290,6 +290,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # database; see the A3 gate in HANDOVER.md §5.
 AUTH_USER_MODEL = "core.User"
 
+# Where `@login_required` sends a farmer, and where the portal resumes (task A6, spec §7).
+# Names, not paths: the URLconf owns the paths, and `resolve_url` resolves a name at
+# request time — a second hardcoded `/apply/` here would be the copy that goes stale.
+LOGIN_URL = "core:login"
+LOGIN_REDIRECT_URL = "core:apply"
+LOGOUT_REDIRECT_URL = "core:home"
+
 LANGUAGE_CODE = "en-za"
 TIME_ZONE = "Africa/Johannesburg"
 USE_I18N = True

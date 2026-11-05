@@ -1,0 +1,40 @@
+{% extends "portal/apply_base.html" %}
+
+{% comment %}
+The categories step (FORM A, spec §7.4, D36).
+
+This is the screen where "a tick is not an application" stops being an abstraction: the
+public self-check stores ticks as labels in its own report and never creates
+`FarmCategory` rows. Here the tick *is* the application, and the copy says so — a farmer
+who ticks a category has asked the group to spend a day on it.
+
+Each tick becomes one row, so a re-submit edits the set rather than replacing it, and a
+category the group has already assessed is never deleted by a new tick (A6's service).
+{% endcomment %}
+
+{% block step_title %}What do you want assessed?{% endblock %}
+
+{% block fields %}
+  <fieldset class="choice-list">
+    <legend class="visually-hidden">Categories to be assessed</legend>
+    {% for choice in form.categories %}
+      <label class="choice{% if choice.data.selected %} choice--on{% endif %}" for="{{ choice.id_for_label }}">
+        {{ choice.tag }}
+        <span class="choice__body">
+          <span class="choice__title">{{ choice.choice_label }}</span>
+        </span>
+      </label>
+    {% endfor %}
+  </fieldset>
+  {% for error in form.categories.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+
+  <p class="portal__note">
+    A category the group does not have a questionnaire for yet is not offered here. If what
+    you farm is missing, ask the administrator — a tick would promise you an assessment
+    nobody can carry out.
+  </p>
+{% endblock %}
+
+{% block actions %}
+  <button class="btn btn--forest" type="submit">Continue to turnover</button>
+{% endblock %}

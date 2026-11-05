@@ -1,0 +1,88 @@
+{% extends "portal/apply_base.html" %}
+
+{% comment %}
+The account step (D83, Q8, D84). Three things on this page are decisions, not styling:
+
+  1. **The button says "Create an account", never "Apply"** (D83). `APPLICANT` is the
+     internal state; a farmer has not applied until they have signed the pledge, and a
+     page that says so would make the group's first record of them a false one.
+  2. **The Q8 consent is shown as written, with its `[DECIDE]` markers** while the group
+     has not approved it (§11.6). The retention period and the withdrawal address are the
+     group's answers; inventing either would put a promise in a consent text nobody made.
+     The banner disappears the moment `approved_at` is set — the state is data, not copy.
+  3. **Email verification says it is unavailable** (D84). 1a has no mail provider, the
+     address is accepted as given, and the page must not imply a tick it did not earn.
+
+No field here is declarative: Q7's seven fields and a password. The pledge attests to all
+the land being applied for, and it lands on the next screen, after the account exists.
+{% endcomment %}
+
+{% block step_title %}Create an account{% endblock %}
+
+{% block step_lede %}
+  <p class="portal__lede">{{ page.lede }}</p>
+{% endblock %}
+
+{% block fields %}
+  <div class="field-grid">
+    {% include "portal/_field.html" with field=form.first_name %}
+    {% include "portal/_field.html" with field=form.last_name %}
+    {% include "portal/_field.html" with field=form.email %}
+    {% include "portal/_field.html" with field=form.phone %}
+    {% include "portal/_field.html" with field=form.farm_name %}
+    {% include "portal/_field.html" with field=form.nearest_town %}
+    {% include "portal/_field.html" with field=form.contact_name %}
+    {% include "portal/_field.html" with field=form.password1 %}
+    {% include "portal/_field.html" with field=form.password2 %}
+  </div>
+
+  {% if consent %}
+    <fieldset class="consent">
+      <legend class="consent__heading">{{ consent.heading }}</legend>
+      {% if consent.is_draft %}
+        <p class="consent__draft">
+          <strong>DRAFT — the group has not approved this wording yet.</strong>
+          The two square-bracketed answers are the group's to make, and this page shows them
+          rather than deciding them. Ask the administrator before relying on either.
+        </p>
+      {% endif %}
+      <div class="consent__body">{{ consent.body|linebreaks }}</div>
+      <div class="field{% if form.consent.errors %} field--error{% endif %}">
+        <label class="consent__tick" for="{{ form.consent.id_for_label }}">
+          {{ form.consent }}
+          <span>Yes — keep these details so I can come back to this.</span>
+        </label>
+        {% for error in form.consent.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+        <p class="field__hint">Unticked by default. Without it no account is created.</p>
+      </div>
+      {{ form.consent_version }}
+    </fieldset>
+  {% else %}
+    <div class="notice notice--error" role="alert">
+      <p>
+        <strong>The wording for holding an account has not been written for this group yet.</strong>
+        No account can be created until it is — a farm name collected under the self-check's
+        research consent would be a purpose mismatch. Ask the administrator.
+      </p>
+    </div>
+  {% endif %}
+
+  <p class="notice notice--info">
+    <strong>Email verification is not available yet.</strong> Your address is accepted as
+    given and your account works straight away; nothing on this page claims it has been
+    verified.
+  </p>
+{% endblock %}
+
+{% block actions %}
+  <button class="btn btn--forest" type="submit" {% if not consent %}disabled{% endif %}>
+    Create an account
+  </button>
+  <a class="link-more" href="{% url 'core:become_a_member' %}">What it costs to join →</a>
+{% endblock %}
+
+{% block after %}
+  <p class="portal__foot">
+    Already have an account? <a href="{% url 'core:login' %}">Sign in</a>.
+  </p>
+{% endblock %}

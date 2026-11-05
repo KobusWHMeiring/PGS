@@ -7,8 +7,10 @@ not exist as far as the ORM is concerned.
 
 Slices (see MVP0_PLAN_V2.md §2):
     _core.py           User, UserRole, Role, Language
+    _consent.py        ConsentText, ConsentRecord, ConsentPurpose (POPIA consent)
     _membership.py     Member, Farm, FarmAlias, FarmCategory, FarmContact,
-                       CommitteePosition, CommitteeTerm, MembershipFee
+                       CommitteePosition, CommitteeTerm, Pledge
+    _fees.py           MembershipFee, TurnoverBand, AssessmentFee
     _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _public.py         PublicDocument (the files the group publishes, D22)
     _chat.py           ChatSession, ChatMessage, EscalatedQuery, PublicQuestion
@@ -26,6 +28,7 @@ from core.models._chat import (
     EscalationReason,
     PublicQuestion,
 )
+from core.models._consent import ConsentPurpose, ConsentRecord, ConsentText
 from core.models._core import (
     ASSESSOR_CAPABILITY,
     Language,
@@ -54,6 +57,9 @@ __all__ = [
     "ChatSession",
     "CommitteePosition",
     "CommitteeTerm",
+    "ConsentPurpose",
+    "ConsentRecord",
+    "ConsentText",
     "EscalatedQuery",
     "EscalationReason",
     "Farm",

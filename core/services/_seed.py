@@ -33,6 +33,8 @@ from core.models import (
     Category,
     CommitteePosition,
     CommitteeTerm,
+    ConsentPurpose,
+    ConsentText,
     Seal,
     TurnoverBand,
 )
@@ -268,6 +270,62 @@ def _seed_seals() -> tuple[int, int]:
     return created, updated
 
 
+@dataclass(frozen=True)
+class ConsentTextSpec:
+    """One version of one consent, exactly as the group wrote it.
+
+    `body` is plain text with blank lines between paragraphs, rendered with `linebreaks`
+    so a group can add a paragraph without a template change. The `[DECIDE: …]` markers
+    are **the point**, not leftovers: SELF_CHECK_PRD §11.6 names the retention period and
+    the address to write to as the group's answers, and a page that quietly invented
+    either would put a promise in a consent text the group has not made.
+    """
+
+    purpose: str
+    version: str
+    heading: str
+    body: str
+
+
+#: Q8's third consent (SELF_CHECK_PRD §11.6, written 2026-11-05). `approved_at` is left
+#: null by the seed: this is a **draft to correct**, and the interface must say so.
+ACCOUNT_CONSENT = ConsentTextSpec(
+    purpose=ConsentPurpose.ACCOUNT,
+    version="account-2026-11-05",
+    heading="May we keep your details so you can come back to this?",
+    body="""
+We hold your name, how to reach you, your farm's name and nearest town, and who to speak to about a visit. We use them to keep your application in one place and to contact you about it — nothing else. The committee and the administrator can see them; nobody outside the group can, and we never publish them. We keep them while your account is open and for [DECIDE: proposed 12 months] after the last time you contacted us, then we delete them. You can ask us to delete them at any time by writing to [DECIDE: the administrator's email/phone — not yet published], and we will do it within 30 days.
+
+This is not the research question and not the census question. Research consent asks whether your answers may be counted in totals for PGS South Africa and SAOSO; the demographic question asks whether census details may be counted too. This one is about the account itself — the name, contact and farm details the group needs in order to keep a conversation with you about an application.
+
+It is a consent to hold and to contact, never to publish. A public farm profile is a separate consent you would give later, and leaving this unticked refuses nothing else: only the account, because an account is the thing that needs your details to exist.
+""".strip(),
+)
+
+CONSENT_TEXTS: tuple[ConsentTextSpec, ...] = (ACCOUNT_CONSENT,)
+
+
+def _seed_consent_texts() -> tuple[int, int]:
+    """Create any consent wording the deployment does not have. Returns (created, updated).
+
+    **Create-only, and `updated` is always 0 — that is the rule, not an omission.** A
+    consent is versioned, not edited (`ConsentText`): changing a body in place would
+    change the meaning of every record that points at it, which is exactly what a version
+    exists to prevent. New wording is a new `version` row, and the group's approval is a
+    later act on the same row (`approved_at`), so neither is overwritten by a deploy.
+    """
+    created = updated = 0
+    for spec in CONSENT_TEXTS:
+        _, was_created = ConsentText.objects.get_or_create(
+            purpose=spec.purpose,
+            version=spec.version,
+            defaults={"heading": spec.heading, "body": spec.body},
+        )
+        created += int(was_created)
+        updated += int(not was_created)
+    return created, updated
+
+
 def _seed_categories() -> tuple[int, int]:
     """Create-or-update categories, preserving a deployment's own `is_active`."""
     created = updated = 0
@@ -365,9 +423,10 @@ def seed_deployment() -> dict[str, tuple[int, int]]:
 
     In: none.
     Out: `{"standard_sets": …, "seals": (created, updated), "categories": …,`
-         `"turnover_bands": …, "committee_terms": (created, updated)}`.
-    Side Effects: writes `StandardSet`, `Seal`, `Category`, `TurnoverBand` and
-         `CommitteeTerm` rows.
+         `"turnover_bands": …, "committee_terms": (created, updated),`
+         `"consent_texts": (created, updated)}`.
+    Side Effects: writes `StandardSet`, `Seal`, `Category`, `TurnoverBand`,
+         `CommitteeTerm` and `ConsentText` rows.
          Does **not** change `is_active` on seals, `is_default` on the set, or
          `vacated_on` on a committee term, once they exist.
     Fails: never deliberately; a database error propagates. The whole seed is one
@@ -381,4 +440,5 @@ def seed_deployment() -> dict[str, tuple[int, int]]:
         "categories": _seed_categories(),
         "turnover_bands": _seed_turnover_bands(),
         "committee_terms": _seed_committee_terms(),
+        "consent_texts": _seed_consent_texts(),
     }

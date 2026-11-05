@@ -43,7 +43,15 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.utils import timezone
 
-from core.models import AssessmentFee, Farm, Member, Pledge, TurnoverBand, User
+from core.models import (
+    AssessmentFee,
+    Farm,
+    Member,
+    MembershipFee,
+    Pledge,
+    TurnoverBand,
+    User,
+)
 
 
 class WitnessRequiredError(Exception):
@@ -467,3 +475,83 @@ def assert_fees_paid_for_assessment(member: Member, farm: Farm) -> None:
             "OPP §2.3: only fully paid-up members are eligible for farm assessments"
         )
     assert_assessment_fee_paid(member, farm)
+
+
+# --- The membership subscription: the group's part of the application ---------
+#
+# A6's applicant flow ends at the declaration (turnover). The subscription is not the
+# farmer's act: the group invoices it, records it, and confirms payment. These two
+# services are built here — with the rules that matter — but **no view calls them yet**,
+# the same way A5 left `assert_fees_paid_for_assessment()` waiting for C1's
+# `confirm_visit()`. The recording surface belongs with the committee's work in A7 and
+# the visit in C1, and inventing one now would put a `paid_on` in a farmer's hands.
+
+
+def record_membership_fee(
+    member: Member,
+    *,
+    period_start: date,
+    period_end: date,
+    amount_cents: int,
+    kind: str = "ANNUAL",
+    paid_on: date | None = None,
+    receipt_no: str = "",
+) -> MembershipFee:
+    """Record what a member was invoiced, for the period the group invoiced it for.
+
+    In:  `member` — who owes it. `period_start` / `period_end` — **the group's fee year,
+         passed in, never inferred**: D39 says "payable by the end of February" is group
+         policy and lives on the row, and the OPP does not state a fee year at all. A
+         service that computed one would invent policy the group has not made.
+         `amount_cents` — the AGM figure, integer cents (§III). `paid_on` is the only
+         evidence of payment; `receipt_no` is the paper trail.
+    Out: the saved `MembershipFee`.
+    Side Effects: one INSERT. Does not change `Member.status` — paying does that
+         (`record_membership_payment`), so that an invoice and a payment stay distinct.
+    Fails: `ValueError` for a period that ends before it starts, or a negative amount.
+    """
+    if period_end < period_start:
+        raise ValueError(
+            f"a fee period cannot end before it starts: {period_start}..{period_end}"
+        )
+    if amount_cents < 0:
+        raise ValueError(f"a membership fee cannot be negative: {amount_cents}")
+    with transaction.atomic():
+        return MembershipFee.objects.create(
+            member=member,
+            kind=kind,
+            period_start=period_start,
+            period_end=period_end,
+            amount_cents=amount_cents,
+            paid_on=paid_on,
+            receipt_no=receipt_no,
+        )
+
+
+def record_membership_payment(
+    fee: MembershipFee, *, paid_on: date | None = None, receipt_no: str = ""
+) -> MembershipFee:
+    """Record that a membership fee was paid, and activate an applicant.
+
+    In:  `fee` — the row the group invoiced. `paid_on` — the date on the receipt;
+         defaults to today in the local timezone. `receipt_no` — optional.
+    Out: the updated `MembershipFee`.
+    Side Effects: UPDATEs the fee, and moves `APPLICANT → ACTIVE` (spec §7.7: *"on
+         payment, Member.status → ACTIVE and is_paid_up → True"*).
+    Fails: never deliberately.
+
+    **One transition, one direction.** A receipt does not reinstate a `TERMINATED` or
+    `LAPSED` member: OPP §4.7 makes reinstatement a committee decision after a calendar
+    year, and a payment record that undid it would silently restore a member the group
+    removed.
+    """
+    with transaction.atomic():
+        fee.paid_on = paid_on or timezone.localdate()
+        if receipt_no:
+            fee.receipt_no = receipt_no
+        fee.save(update_fields=["paid_on", "receipt_no"])
+        member = fee.member
+        if member.status == Member.Status.APPLICANT:
+            member.status = Member.Status.ACTIVE
+            member.save(update_fields=["status"])
+    return fee

@@ -203,6 +203,10 @@ def test_seed_deployment_seeds_categories_seals_and_committee_terms():
         "categories",
         "turnover_bands",
         "committee_terms",
+        # A6: the Q8 consent wording is data the group owns, so it is seeded with the rest
+        # and reports itself here — a new data set that forgets to is the failure this
+        # list exists to catch.
+        "consent_texts",
     }
     created, _updated = result["committee_terms"]
     assert created == len(_terms()) == 15

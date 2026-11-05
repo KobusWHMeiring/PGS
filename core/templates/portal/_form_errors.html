@@ -1,0 +1,12 @@
+{% comment %}
+Form errors that belong to no field — a service refusal, chiefly.
+
+They are rendered at the top of the form and announced (`role="alert"`), because every one
+of them means *nothing was saved*: an account that could not be created, a pledge that
+cannot be evidenced, a category list that would apply for nothing.
+{% endcomment %}
+{% if form.non_field_errors %}
+  <div class="notice notice--error" role="alert">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+  </div>
+{% endif %}
