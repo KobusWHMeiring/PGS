@@ -54,6 +54,10 @@ form is not.
 | Severity definitions are character-identical to FORM Sheet I | `core/tests/test_findings.py` |
 | Replay of a `client_uuid` creates zero additional rows | `core/tests/test_sync.py` |
 | No certification outcome, seal or certificate is reachable in 1a | `core/tests/test_scope_fence.py` |
+| **A1** — `is_paid_up` is derived from the fee row's own period; "paid" is not "paid up" | `core/tests/test_membership.py` |
+| **A1** — `Farm` has no catchment, no `current_status`, no geometry column, and resolves every alias spelling | `core/tests/test_membership.py` |
+| **A1** — `FarmCategory.status` admits no pre-application value; `Member.status` is frozen at five | `core/tests/test_membership.py` |
+| **A2** — the 2026 roster matches OPP §VII; both vacancies exist as rows; re-seeding duplicates nothing | `core/tests/test_seed_committee.py` |
 
 ---
 
