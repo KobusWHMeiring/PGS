@@ -86,8 +86,8 @@ re-score, and arbitration sessions
 and `1o` are three unpushed runs (`1h`'s five commits: the OpenRouter arm, §3.8's correction, the
 Docling re-run, the D82 page, the Document AI arm; `1n`'s eight: the verification surface, its docs, the
 browser test, the count correction, the unclaimed-cell wording, the signed review, the `Step 3`
-amendment and re-sign, and the D83→D85 reconciliation; `1o`'s three: the re-score with its evidence and
-§3.12, the arbitration instrument with its browser tests, and the first pass with §3.13–§3.14).
+amendment and re-sign, and the D83→D85 reconciliation; `1o`'s four: the re-score with its evidence and
+§3.12, the payload fix with its browser tests, the first pass with §3.13, and the close with §3.14).
 **Let the command answer:** `git rev-list --count origin/main..HEAD`. Everything before `1h` is pushed.
 `main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate unpushed lines** with no
 code overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand

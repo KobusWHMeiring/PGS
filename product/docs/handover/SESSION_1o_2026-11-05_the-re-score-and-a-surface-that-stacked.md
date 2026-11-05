@@ -5,7 +5,7 @@ take it from there.
 
 **Outcome.** S2 is **closed**. D82 is answered — not as "which extractor", but as a **composite**:
 Layout Parser for structure, the page's own text layer for characters, Docling for Appendix 7's four
-columns, the VLM `lines` form as a cheap proposer, S4's harness for the verdict. Three commits.
+columns, the VLM `lines` form as a cheap proposer, S4's harness for the verdict. Four commits.
 
 ## 1. The re-score: one claim was worth a shape (PRD §3.12)
 
