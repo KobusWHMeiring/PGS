@@ -184,6 +184,10 @@ class ParsedTable:
     #: One heading per fee box, in printed order, or empty. Never `joining`/`certification`
     #: unless the reviewer wrote it — the paper does not print those words (D72.2).
     fee_labels: tuple[str, ...] = ()
+    #: Which rendering of the page the cells were transcribed from — `layout`, `raw` or `table`
+    #: (`EXTRACTION_MODES`). Empty for every artefact written before S3, and the harness reports
+    #: that as R1 rather than judging the cells against a pass nobody declared.
+    extraction: str = ""
 
 
 @dataclass(frozen=True)

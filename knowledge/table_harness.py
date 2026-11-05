@@ -7,6 +7,10 @@ be refused before it reaches the corpus.
 
 What it checks, one function per requirement, all named in `REQUIREMENTS`:
 
+* **R1 the extraction is recorded** — a block says which rendering of the page its cells were
+  transcribed from, or it is judged against a guess. The landscape passes against `-table` and
+  fails ten ways against `-layout`; the mode is a **declaration** like the row count, and a block
+  that does not make it is named rather than defaulted (`check_tables.py` used to default it).
 * **R2 header association** — a row's `embedding_text` names each printed column that has a value.
   Without this the row is retrievable only by the words inside its cells, so a numeric row (the
   landscape's fee bands) is reachable by nobody (`CHAT_ANSWER_COVERAGE_PRD` G10).
@@ -48,6 +52,7 @@ from knowledge.table_chunks import row_chunk
 
 #: Requirement ids, quoted so a failure message names the rule and not the line number.
 REQUIREMENTS: dict[str, str] = {
+    "R1": "the block records the extraction its cells came from",
     "R2": "a row's rendition names each printed column that has a value",
     "R3": "cell fidelity: each cell line is a contiguous run of one printed line, in printed order",
     "R4": "row count: the rows equal the rows the page prints",
@@ -133,6 +138,17 @@ def check_table(
     """
     found: list[Violation] = []
     printed_to_pdf = printed_to_pdf or {}
+
+    if not table.extraction:
+        found.append(
+            Violation(
+                "R1",
+                where,
+                "the block does not record the extraction its cells came from, so every cell was "
+                "checked against a pass nobody declared — add `extraction: layout|raw|table` to "
+                "the block's header (S3), or pass `--pages-mode` to judge a draft",
+            )
+        )
 
     if not table.columns:
         found.append(
@@ -410,6 +426,41 @@ def _check_non_text(table: ParsedTable, where: str) -> list[Violation]:
                     )
                 )
     return found
+
+
+def recorded_extraction(document) -> tuple[tuple[str, ...], tuple[Violation, ...]]:
+    """The extraction modes a document's blocks declare, and their disagreement, if any.
+
+    In:  `document` — a `CorpusDocument` (`knowledge.corpus.parse_blocks`).
+    Out: the modes in first-seen order, and one `R1` violation when there is more than one.
+    Fails: never. A block with no mode contributes nothing here — `check_table` names it, because
+         this function is about the *document's* answer and that is per block.
+
+    Why a document-level fact needs its own function: `check_tables.py` has one `pages` sequence per
+    document (a fixture set is per document and per mode), so two modes in one artefact is a gate
+    about to read one paper and report on another. Averaging them, or letting the last block win,
+    is the silent default this repository keeps writing down.
+    """
+    modes: list[str] = []
+    for section in document.sections:
+        for table in section.tables:
+            if table.extraction and table.extraction not in modes:
+                modes.append(table.extraction)
+    if len(modes) < 2:
+        return tuple(modes), ()
+    return (
+        tuple(modes),
+        (
+            Violation(
+                "R1",
+                "document",
+                "the blocks record more than one extraction "
+                f"({', '.join(modes)}). Each mode is a different rendering of the page and a "
+                "different fixture set, so one run cannot check both — split the check by mode, "
+                "or make the transcription agree.",
+            ),
+        ),
+    )
 
 
 def check_document(

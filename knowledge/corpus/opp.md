@@ -54,6 +54,7 @@ and market exposure.
 cols: Annual farm turnover (gross sales) | Initial certification fee (R) | Renewal fee (R)
 layout: grid
 legend: One row per turnover band, in the order the OPP prints them. The band is self-declared by the farmer and subject to peer review within the PGS group. Amounts are in rand, printed without a thousands separator; the administrator's transport is charged on top and is set out in the notes under the table, not in it.
+extraction: layout
 -->
 <!-- row: Below R 250,000 -->
 <!-- cell -->

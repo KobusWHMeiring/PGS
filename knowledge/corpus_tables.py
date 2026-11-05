@@ -57,16 +57,28 @@ TABLE_OPEN = re.compile(r"^<!--\s*table\s*$")
 TABLE_CLOSE = re.compile(r"^<!--\s*/table\s*-->\s*$")
 
 #: A field inside a `<!-- table` header. `cols` is required (`|`-separated); `legend` is the
-#: reviewed note the reader prints above the grid; the other four are D77's shape fields —
-#: `layout` (which shape), `branch` (where the rows fork), `title` (one per row) and `fee_label`
-#: (one per fee box). Every one is reviewed data: the renderer infers none of them.
+#: reviewed note the reader prints above the grid; four are D77's shape fields — `layout` (which
+#: shape), `branch` (where the rows fork), `title` (one per row) and `fee_label` (one per fee box);
+#: `extraction` is S3's datum (below). Every one is reviewed data: the renderer infers none of them.
 TABLE_FIELD = re.compile(
-    r"^\s*(cols|legend|layout|branch|title|fee_label):\s*(.*?)\s*$"
+    r"^\s*(cols|legend|layout|branch|title|fee_label|extraction):\s*(.*?)\s*$"
 )
 
 #: The shapes the reader can draw (D77). `grid` is the default so every table written before D77
 #: keeps the shape it had; `process` is the cards.
 TABLE_LAYOUTS = ("grid", "process")
+
+#: The extraction passes a block's cells can have been transcribed from, named as `pdftotext`'s
+#: modes are (`knowledge/tests/page_fixtures.py`, whose `MODES` a test asserts equal to this).
+#:
+#: **Why this is a format field and not a command-line flag.** The landscape's reviewed tables pass
+#: requirement 3 against `-table` and fail ten ways against `-layout`; the OPP's three-column fee
+#: page is the other way round. A gate that defaults the pass is a gate reporting on paper it did not
+#: read, so the datum travels on the artefact with the cells it describes (S3, requirement 1).
+#:
+#: The vocabulary is validated rather than free text: `extraction: tbael` must not read as "unknown
+#: pass, judge it anyway", which is the class of silence this format exists to make loud.
+EXTRACTION_MODES = ("layout", "raw", "table")
 
 
 def row_divider(value: str):
@@ -147,7 +159,8 @@ class TableBlock:
         if not field:
             raise CorpusFormatError(
                 f"line {where}: a table header line that is not one of `cols:`, `legend:`, "
-                f"`layout:`, `branch:`, `title:`, `fee_label:` or `-->`: {line!r}"
+                f"`layout:`, `branch:`, `title:`, `fee_label:`, `extraction:` or `-->`: "
+                f"{line!r}"
             )
         key = field.group(1)
         if key in self.fields:
@@ -170,6 +183,15 @@ class TableBlock:
                     f"line {where}: `layout: {value}` is not a shape the reader draws. "
                     f"Use one of: {', '.join(TABLE_LAYOUTS)}. An unknown shape would "
                     "render as whatever the template's fallback branch guessed."
+                )
+        elif key == "extraction":
+            value = field.group(2)
+            if value not in EXTRACTION_MODES:
+                raise CorpusFormatError(
+                    f"line {where}: `extraction: {value}` is not an extraction mode. Use one "
+                    f"of: {', '.join(EXTRACTION_MODES)}. The mode is which rendering of the page "
+                    "the cells were transcribed from, and the gate checks every cell against "
+                    "that rendering — an unknown mode would be judged against a guess."
                 )
         elif key in ("title", "fee_label"):
             value = tuple(part.strip() for part in field.group(2).split("|"))
@@ -339,6 +361,7 @@ def parsed_tables(
         ParsedTable(
             columns=raw["columns"],
             legend=raw["fields"].get("legend", ""),
+            extraction=raw["fields"].get("extraction", ""),
             layout=raw["fields"].get("layout", "grid"),
             branch=raw.get("branch"),
             titles=raw["fields"].get("title", ()),

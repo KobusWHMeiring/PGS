@@ -130,6 +130,7 @@ layout: process
 title: Get together | Agree and establish | Visit and certify
 fee_label: Steps 1–2 | Step 3
 legend: The Fee column is one printed box spanning the Step 1 and Step 2 rows, and it is filed under Step 1, the row it starts beside. Two cells on Step 1 are printed empty: the paper is silent, and silence is not permission. A seal is a picture; where the paper prints its name beside it that name is the cell, and the artwork itself is not stored.
+extraction: table
 -->
 <!-- row: Step 1 -->
 <!-- cell -->
@@ -299,6 +300,7 @@ renews its membership]
 cols: Key steps | Resource documents, guidelines and requirements | Use of seals and logos | Seals and logos | Fee
 layout: grid
 legend: Each row is one seal. This table's “Seals and logos” column holds the seal's picture and no text: the seal's printed name heads the “Use of seals and logos” column beside it, and the artwork itself is not stored. Both rows' Fee cell reads “As above”, and the fee it points at is not on this page: it is the one printed in ESTABLISHING A PGS GROUP — Step 3's fee cell — the recommended annual fee for the use of stickers, paid by individual farmers and divided between PGS SA and the group. That branch is in the contents.
+extraction: table
 -->
 <!-- row: PGS Organic In-Conversion -->
 <!-- cell -->
@@ -377,6 +379,7 @@ cols: Key steps | Resource documents, guidelines and requirements | Use of seals
 layout: process
 branch: For farmers wanting direct 3rd party certification
 legend: The third row has no printed step number; its first cell names the route. This table's “Seals and logos” column holds a logo picture and no text: the logo's printed name heads the “Use of seals and logos” column beside it, and the artwork itself is not stored.
+extraction: table
 -->
 <!-- row: Step 1 -->
 <!-- cell -->

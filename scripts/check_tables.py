@@ -13,10 +13,11 @@ Two things are declarations rather than inference, and both are the point:
 * **`--rows`** — a page cannot say how many rows it prints in machine-readable form, so a gate that
   infers the count asserts nothing. Omit it and nothing is asserted, so the script refuses rather
   than printing a pass.
-* **`--pages-mode`** — `layout` or `table`, the extraction the cells were transcribed from. It is
-  the last per-document datum in this path; the landscape's grid pages came from `-table` and the
-  OPP's three-column page from `-layout`. S3's generator is where it stops being a command-line
-  flag and becomes a recorded banner on the artefact.
+* **the extraction mode** — read from each block's `extraction:` field, never defaulted. The
+  landscape's reviewed cells pass against `-table` and fail ten ways against `-layout`, so a gate
+  that guessed the pass would report on paper it did not read. `--pages-mode` is the **draft-only**
+  escape: it supplies the datum for an artefact written before S3, is refused when it contradicts
+  what the artefact records, and says so in the report when it is used.
 
 One document per run, because the declaration is per document: a single `--rows` cannot describe
 four artefacts, and a gate that guessed which count belonged to which table would be the inference
@@ -43,7 +44,7 @@ django.setup()
 
 from knowledge.corpus import parse_blocks  # noqa: E402
 from knowledge.ingest import CORPUS_DOCUMENTS, corpus_artifact  # noqa: E402
-from knowledge.table_harness import check_document  # noqa: E402
+from knowledge.table_harness import check_document, recorded_extraction  # noqa: E402
 from knowledge.tests import page_fixtures  # noqa: E402
 
 
@@ -58,6 +59,50 @@ def row_counts(value: str) -> tuple[int, ...]:
     return counts
 
 
+def extraction_mode(document, override: str | None) -> tuple[str | None, str]:
+    """Which rendering to check the cells against, and where the answer came from.
+
+    In:  `document` — the parsed artefact; `override` — `--pages-mode`, or None.
+    Out: `(mode, source)` where source is `"artifact"`, `"flag"`, or None when the run must stop.
+    Side Effects: prints the refusal to stderr when the answer cannot be trusted.
+    Fails: never — a refusal is a printed message and a `None` mode, so `main` can return 2
+         rather than the shell seeing an exception.
+
+    The four refusals are the four ways this datum can be wrong, and each is a sentence an operator
+    can act on: no block records a mode and no flag was given; the blocks disagree; the flag
+    contradicts the artefact; the flag names a mode the page fixtures do not have.
+    """
+    modes, disagreements = recorded_extraction(document)
+    if disagreements:
+        print(disagreements[0], file=sys.stderr)
+        return None, ""
+    if len(modes) > 1:  # pragma: no cover - recorded_extraction names it above
+        return None, ""
+    recorded = modes[0] if modes else None
+    if override is None and recorded is None:
+        print(
+            "refusing to report a pass: no block in this artefact records the extraction its cells "
+            "came from, so every cell would be checked against a guessed rendering. Add "
+            "`extraction: <mode>` to each `<!-- table` header (S3's generator writes it), or pass "
+            "`--pages-mode` to judge a draft on the record.",
+            file=sys.stderr,
+        )
+        return None, ""
+    if override is not None and recorded is not None and override != recorded:
+        print(
+            f"refusing to report a pass: the artefact records `{recorded}` and `--pages-mode` says "
+            f"`{override}`. One of the two is wrong; the artefact is the one a reviewer signed.",
+            file=sys.stderr,
+        )
+        return None, ""
+    if override is not None:
+        if override not in page_fixtures.MODES:
+            print(f"--pages-mode {override!r} is not a committed extraction pass", file=sys.stderr)
+            return None, ""
+        return override, "flag"
+    return recorded, "artifact"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--doc", required=True)
@@ -68,9 +113,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--pages-mode",
-        default="layout",
+        default=None,
         choices=sorted(page_fixtures.MODES),
-        help="The extraction the cells were transcribed from (default: layout).",
+        help=(
+            "Only for a draft whose blocks record no `extraction:` — the mode is otherwise read "
+            "from the artefact, and a flag that contradicts it is refused."
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -88,22 +136,31 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.doc!r}: no reviewed artefact is declared (the governed keys are {declared})",
               file=sys.stderr)
         return 2
+    document = parse_blocks(artefact.read_text(encoding="utf-8"))
+    mode, source = extraction_mode(document, args.pages_mode)
+    if mode is None:
+        return 2
     try:
-        pages = page_fixtures.pages(args.doc, args.pages_mode)
+        pages = page_fixtures.pages(args.doc, mode)
     except AssertionError as error:
         print(f"{args.doc}: {error}", file=sys.stderr)
         return 2
 
     report = check_document(
-        parse_blocks(artefact.read_text(encoding="utf-8")),
+        document,
         pages=pages,
         expected_rows=args.rows,
         expected_tables=len(args.rows),
     )
+    where = (
+        "recorded on the artefact"
+        if source == "artifact"
+        else "supplied by --pages-mode; the artefact records none"
+    )
     print(
         f"{args.doc}: {'ok' if report.ok else 'FAIL'} — {report.tables} tables, "
         f"{report.rows} rows, {len(report.violations)} violations "
-        f"({args.pages_mode} pages)"
+        f"({mode} pages, {where})"
     )
     for line in report.lines():
         print(f"  {line}")

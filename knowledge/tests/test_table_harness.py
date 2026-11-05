@@ -47,6 +47,7 @@ TABLE = """<!-- page: 1 printed: 1 -->
 
 <!-- table
 cols: Key steps | Fee
+extraction: table
 -->
 <!-- row: Step 1 -->
 <!-- cell -->
@@ -319,7 +320,7 @@ def test_an_annotation_that_reached_a_cell_is_named():
 
 def test_every_requirement_has_a_way_to_fail():
     """The set of requirements is pinned: a new one needs a check *and* a mutation."""
-    assert set(REQUIREMENTS) == {"R2", "R3", "R4", "R5", "R6", "R7"}
+    assert set(REQUIREMENTS) == {"R1", "R2", "R3", "R4", "R5", "R6", "R7"}
     assert all(REQUIREMENTS.values())
 
 
@@ -355,3 +356,50 @@ def test_the_corpus_check_would_notice_the_wrong_extraction():
         expected_tables=3,
     )
     assert violations_of(report, "R3"), "R3 passed on text the cells did not come from"
+
+
+# ---------------------------------------------------------------------------------------
+# R1 — the extraction the cells came from (S3)
+# ---------------------------------------------------------------------------------------
+#
+# The mode was the last datum this path took from a command line (`check_tables.py --pages-mode`),
+# and the landscape proves why it cannot be inferred: its reviewed cells pass against `-table` and
+# fail ten ways against `-layout`. A block that does not say which pass it came from is a block the
+# gate can only judge against a guess, so it is named instead.
+
+
+def test_a_block_with_no_extraction_mode_is_an_r1_violation():
+    plain = TABLE.replace("extraction: table\n", "")
+    section, table = only_table(document(plain))
+    found = check_table(
+        section, table, where=where(), pages=PAGES, printed_to_pdf={1: 1}, expected_row_count=2
+    )
+    assert violations_of(found, "R1"), found
+
+
+def test_a_block_that_records_its_extraction_passes_r1():
+    section, table = only_table()
+    found = check_table(
+        section, table, where=where(), pages=PAGES, printed_to_pdf={1: 1}, expected_row_count=2
+    )
+    assert table.extraction == "table"
+    assert not violations_of(found, "R1"), found
+
+
+def test_a_document_whose_blocks_disagree_about_the_pass_is_named():
+    """Two passes are two fixture sets, so a document that declares both is a gate about to read
+    one paper and report on another. The pair is named, not averaged or defaulted."""
+    from knowledge.table_harness import recorded_extraction
+
+    other = TABLE.replace("extraction: table", "extraction: layout")
+    modes, violations = recorded_extraction(document(TABLE + "\n" + other))
+    assert modes == ("table", "layout")
+    assert [violation.requirement for violation in violations] == ["R1"]
+    assert "table" in violations[0].detail and "layout" in violations[0].detail
+
+
+def test_one_mode_for_the_whole_document_has_nothing_to_disagree_about():
+    from knowledge.table_harness import recorded_extraction
+
+    modes, violations = recorded_extraction(document(TABLE + "\n" + TABLE))
+    assert modes == ("table",) and violations == ()

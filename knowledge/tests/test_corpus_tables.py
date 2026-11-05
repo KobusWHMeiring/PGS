@@ -744,3 +744,41 @@ def test_a_disagreeing_corpus_has_no_split_either():
     section = parse_blocks(artefact(page(process_table(fields)))).sections[0]
     grid = artefact_grid_for(section)
     assert align_artefact_grid(grid, ("Step 1\n\nGet together.\nIFOAM PGS tool kit\nR50O",)) is None
+
+
+# --------------------------------------------------------------------------------------
+# The extraction the cells came from (S3, requirement 1)
+# --------------------------------------------------------------------------------------
+#
+# `check_tables.py --pages-mode` was the last per-document fact living on a command line, and its own
+# docstring said S3 is where it stops being a flag: **the landscape passes against `-table` and fails
+# ten ways against `-layout`**, so a gate that defaults the pass is a gate reporting on paper it did
+# not read. The block now carries it. It is validated against a fixed vocabulary because a typo
+# (`tbael`) must not read as "unknown pass, judge it anyway" — the silence this file exists for.
+
+
+def test_a_block_records_the_extraction_its_cells_came_from():
+    body = TABLE.replace("cols: Key steps | Fee", "cols: Key steps | Fee\nextraction: table")
+    table = parse_blocks(artefact(page(body))).sections[0].tables[0]
+    assert table.extraction == "table"
+
+
+def test_an_unknown_extraction_mode_is_an_error_not_a_silent_default():
+    body = TABLE.replace("cols: Key steps | Fee", "extraction: tbael\ncols: Key steps | Fee")
+    with pytest.raises(CorpusFormatError, match="is not an extraction mode"):
+        parse_blocks(artefact(page(body)))
+
+
+def test_a_block_with_no_extraction_field_parses_and_says_so():
+    """Every artefact written before S3 has none. The parser does not invent one for them; the
+    harness turns the empty string into R1, which is where the reader can act on it."""
+    assert parse_blocks(artefact(page(TABLE))).sections[0].tables[0].extraction == ""
+
+
+def test_the_format_and_the_page_fixtures_agree_about_the_modes():
+    """The library may not import a test module, so the vocabulary is declared here and the
+    fixtures are asserted equal — one list, checked, rather than two that drift."""
+    from knowledge.corpus_tables import EXTRACTION_MODES
+    from knowledge.tests import page_fixtures
+
+    assert set(EXTRACTION_MODES) == set(page_fixtures.MODES)
