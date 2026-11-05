@@ -1,35 +1,46 @@
 # Handover — two strands in flight, and the joining flow is designed before it is built
 
-> ## START HERE — **MVP 1a sub-plan A is 2 of 8 tasks in; the front door is designed and approved**
+> ## START HERE — **MVP 1a sub-plan A is 3 of 8 tasks in; the pledge is recorded, not adjudicated**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
 > a second agent is running D80's S2 (Docling) there. Nothing in this strand has touched `main`.
 >
 > **Landed:** **A1** (`243cedd`) — `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`,
 > `MembershipFee`, migration `0010`, 19 tests. **A2** (`4e86a81`) — `CommitteePosition`,
-> `CommitteeTerm`, the OPP §VII roster, migration `0011`, 12 tests. **D83** (`0cc2112` and this
-> close) — the pledge stays in the application. `scripts/fast.sh` **1687 passed / 1 skipped / 8 xfailed
-> in 82.97 s**; `lint-imports` 1 kept, 0 broken.
+> `CommitteeTerm`, the OPP §VII roster, migration `0011`, 12 tests. **A3** (`a4b2e4b`) — `Pledge`,
+> `record_pledge`, migration `0012`, 30 tests. **D83** (`0cc2112` and session `1i`'s close) — the
+> pledge stays in the application. **Refactor** (`ab42443`) — `_core.py` cut at the spec's own seam:
+> the account stays, `_membership.py` takes the membership record and `Pledge`. Gate (its four steps
+> run with `python`; see `testing_hazards.md` §3.31): **1732 passed / 1 skipped / 8 xfailed in
+> 218.71 s** `--create-db`, `makemigrations --check` clean, `lint-imports` 1 kept / 0 broken,
+> context budgets 0 breaches.
 >
 > **Approved by the product owner on 2026-11-04:** `product/design/before_you_apply_prototype.html`,
 > the `/before-you-apply/` flow as a **stepped wizard** (5 question steps + result + account), built
 > from the D71 wording ledger and driven with Playwright. It is the build target for **A8** and is
 > labelled `DESIGN SPEC … Ready for implementation` at the top of the file.
 >
-> **What is next: A3 (the pledge).** Then A5 (fees), A6 (application flow), B1 + B3 (the template's
-> `self_check` markers), and only then A8. A4 and A7 can move after A8. **Do not build A8 before A6**:
-> its only exit is the application, and the PRD rejects a page that dead-ends on the contact chips.
+> **What is next: A5 (fees).** Then A6 (application flow), B1 + B3 (the template's `self_check`
+> markers), and only then A8. A4 and A7 can move after A8. **Do not build A8 before A6**: its only
+> exit is the application, and the PRD rejects a page that dead-ends on the contact chips.
 >
-> **Two corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
+> **Corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
 > period that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
-> mutation-testing restore; it deleted this session's uncommitted model — §1.36.
+> mutation-testing restore; it deleted a session's uncommitted model — §1.36. (3) A
+> `CheckConstraint` containing `NULL IN (…)` **is satisfied** by Postgres, so A3's in-conversion rule
+> passed the row it existed to refuse — §1.37. (4) `FileField(storage=callable)` resolves the
+> callable at import, so a settings-derived storage cannot be redirected in a test and bakes a path
+> into the migration — §1.38.
 >
 > **D83's substance:** the pledge cannot move to account creation, because it attests to *"all the
 > land for which I/we are applying"*. The account collects identity + farm name, nearest town,
 > contact, and nothing declarative. **The land-history contradiction is three-way, not two**
 > (SAOSO 4.2.3 and the OPP pledge both say 12/12/18; OPP §V alone says 18/12/12), so A3's
 > `land_history_conflict` is `min_reading <= declared < max_reading` — the band where the documents
-> actually disagree — not a comparison against OPP §V.
+> actually disagree — and **not** a comparison against OPP §V. Below the lower reading the two agree,
+> and that is the visit's business, not the flag's (D31). `land_history_conflict` is **stored**, where
+> `is_paid_up` is derived: a declaration does not roll over, and the flag records what the documents
+> said the day it was signed.
 >
 > **Still open, and blocking the account step only:** the third consent text (`SELF_CHECK_PRD` Q8) and
 > SMTP for email verification (`todo.md`).
@@ -42,8 +53,9 @@ display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness **and the MVP1a sub-plan A
 sessions** (`1i` onward)
 **Repo state:** **two worktrees.** `main` is the sibling strand (D80 S2 / D82 as of `b27b9a6`).
-This strand is `feat/mvp1a-visit` on top of `781cf37`: **A1, A2, D83, the approved prototype, three
-doc commits.** Neither has been merged. **Check it, do not quote it:** `git log --oneline 781cf37..HEAD`.
+This strand is `feat/mvp1a-visit` on top of `781cf37`: **A1, A2, A3, D83, the approved prototype,
+the model-seam refactor, five doc commits.** Neither has been merged. **Check it, do not quote it:**
+`git log --oneline 781cf37..HEAD`.
 
 **On this tree** (2026-11-03, session `1f`): `scripts/verify.sh` **green at 1671 passed /
 1 skipped / 8 xfailed in 68.61 s**, run as
@@ -76,6 +88,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1j` 2026-11-05 (session 20) — the pledge lands, and two guards that were green for the wrong reason — [`SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md`](product/docs/handover/SESSION_1j_2026-11-05_the-pledge-lands-and-two-guards-that-were-green.md)
 - `1i` 2026-11-04 (session 19) — the joining flow is designed before it is built — [`SESSION_1i_2026-11-04_the-joining-flow-designed-before-it-is-built.md`](product/docs/handover/SESSION_1i_2026-11-04_the-joining-flow-designed-before-it-is-built.md)
 - `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1e` 2026-11-03 (session 17) — the eight shapes, and the two that have no test — [`SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md`](product/docs/handover/SESSION_1e_2026-11-03_the-eight-shapes-and-the-two-with-no-test.md)

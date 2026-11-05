@@ -2028,6 +2028,34 @@ class PrivateMediaStorage(FileSystemStorage):
         return None
 ```
 
+### 3.31 `verify.sh` in a second worktree picks an interpreter that has no project deps
+
+`scripts/verify.sh` chooses its interpreter as `.venv/Scripts/python.exe` → `.venv/bin/python` →
+`python3` → `python`. The dev box has **no `.venv` inside `../pgs-visit`** (the venv lives in
+`../pgs`), so `python3` wins — and on this machine `python3` is a different install with no
+`celery`, while `python` is the one the suite actually runs under. The failure lands on
+`manage.py check`, which reads as "this tree is broken" rather than "the gate ran the wrong
+toolchain":
+
+    $ bash scripts/verify.sh
+        python:        python3
+        lint-imports:  /c/…/pgs/.venv/Scripts/lint-imports
+    ==> 2/4  manage.py check
+      File "…/pgs/celery.py", line 17, in <module>
+        from celery import Celery
+    ModuleNotFoundError: No module named 'celery'
+
+Consequence: a green gate cannot be claimed from this worktree, and the traceback points at the
+app rather than the harness. Note also that `LINT_IMPORTS` was found in the **sibling** worktree's
+venv, so the two halves of the gate are using different Pythons — which is how a gate reports a
+result about a toolchain nobody chose.
+
+Rule: in a worktree with no `.venv`, run the four steps with the interpreter the suite uses and
+say so in the handover — `context.py --check`, `manage.py check`,
+`makemigrations --check --dry-run`, `lint-imports --no-cache --no-logo`, then
+`pytest --create-db` with `PDFTOTEXT_BIN=scripts/_no_extractor`. Do not read an import error in
+step 2 as a code failure until step 2 has named its interpreter.
+
 ## 5. Template for a new entry
 
 ```markdown
