@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>D82 — Where the farmer pledge sits, and what an account may carry</title>
+<title>D83 — Where the farmer pledge sits, and what an account may carry</title>
 <style>
   :root {
     --bg:              #f4f6f2;
@@ -178,7 +178,7 @@
 
 <header class="hero">
   <div class="inner">
-    <p class="eyebrow">Decision D82 · Outeniqua PGS · 2026-11-04</p>
+    <p class="eyebrow">Decision D83 · Outeniqua PGS · 2026-11-04</p>
     <h1>Where does the farmer pledge sit — and may an account carry any declaration?</h1>
     <p class="question">Now that the self-check ends with an opt-in account, is the pledge signed at
       account creation, at the application, or on the pre-visit checklist?</p>
@@ -666,15 +666,15 @@ tie is broken by the pledge's own text, which is not a principle but a quoted se
 
 <h2><span class="num">7</span>Your decision</h2>
 <div class="card">
-  <label class="choice"><input type="radio" name="d82" value="A">
+  <label class="choice"><input type="radio" name="d83" value="A">
     <span class="lbl">A — Pledge in the application, after the account.</span>
     <p class="hint">As OPP §I says. Account step carries no declaration. Recommended.</p>
   </label>
-  <label class="choice"><input type="radio" name="d82" value="B">
+  <label class="choice"><input type="radio" name="d83" value="B">
     <span class="lbl">B — Pledge at account creation.</span>
     <p class="hint">Shortest funnel; requires amending OPP §I and the pledge text first.</p>
   </label>
-  <label class="choice"><input type="radio" name="d82" value="C">
+  <label class="choice"><input type="radio" name="d83" value="C">
     <span class="lbl">C — Two-tier: light confirmation at the account, the pledge at the application.</span>
     <p class="hint">Costs a second declaration text and its own consent.</p>
   </label>
@@ -704,15 +704,15 @@ tie is broken by the pledge's own text, which is not a principle but a quoted se
 
 <div class="sticky">
   <div class="inner">
-    <span class="state">D82 · <b id="state">no decision yet</b></span>
+    <span class="state">D83 · <b id="state">no decision yet</b></span>
     <button id="jump">Go to the decision</button>
   </div>
 </div>
 
 <script>
 (function () {
-  var KEY = "pgs.d82.pledge";
-  var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="d82"]'));
+  var KEY = "pgs.d83.pledge";
+  var radios = Array.prototype.slice.call(document.querySelectorAll('input[name="d83"]'));
   var notes = document.getElementById("notes");
   var out = document.getElementById("out");
   var state = document.getElementById("state");
@@ -742,15 +742,15 @@ tie is broken by the pledge's own text, which is not a principle but a quoted se
       return;
     }
     var note = (data.notes || "").replace(/\s+/g, " ").trim();
-    var row = "| D82 | Where does the farmer pledge sit, and may an account carry a declaration? | " +
+    var row = "| D83 | Where does the farmer pledge sit, and may an account carry a declaration? | " +
       "**" + c + "** — " + LABELS[c] +
       " Rationale: the pledge's own text is about \"all the land for which I/we are applying\", so it " +
       "cannot precede the application; OPP §I puts it first in the application. The account step collects " +
       "identity and three farm fields only. Consequence: OPP §I.2's verbal/distinctive-mark path stays " +
       "with the administrator. Also recorded here: task A3's land_history_conflict rule must compare to " +
-      "the pledge and SAOSO (12/12/18), not to OPP §V (18/12/12) — see D82 artifact §4.1. " +
+      "the pledge and SAOSO (12/12/18), not to OPP §V (18/12/12) — see D83 artifact §4.1. " +
       (note ? "Notes: " + note + " " : "") +
-      "Artifact: product/design/d82_pledge_placement.html |";
+      "Artifact: product/design/d83_pledge_placement.html |";
     out.textContent = row;
   }
 
