@@ -97,4 +97,9 @@ went red on the first run. Two unconditional UPDATEs now. This is the same famil
   `product/docs/templates/crops_v1_review.md` (generated; a test fails if it goes stale).
 - **`_scratch/b1/mutate.py`** is the mutation harness for this sub-plan; re-run it after touching
   `_templates.py` or the template.
+- **Handed over A8-ready:** `HANDOVER.md` now carries *"A8 in one paragraph, so it starts without
+  re-reading the plan"* — the route, the two models, the service surface, the consent rule (including
+  the two `ConsentText` rows A6 did not seed), the fixed-line constant, the `create_application()` handoff
+  and the prototype. The plan's own B1/B3/C2a count references were corrected to eleven in the same pass,
+  so a reader of `MVP1A_PLAN.md` does not chase a twelfth marker through Sheet A.
 - A merge will still conflict in `HANDOVER.md` by design — keep both strands' state.

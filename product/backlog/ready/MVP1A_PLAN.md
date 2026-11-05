@@ -412,8 +412,9 @@ answer, does the consent read as a real choice, and does it work one-handed in s
 `^[a-z_]+\.(V\d{2}[a-z]?|Q\d+(\.\d+)?)$` is rejected; a verdict with `polarity` missing is rejected;
 `standard_ref` may be null; a schema with `schema_version != 1` is rejected; a question's optional
 `self_check` block (`{"tier": 1, "why": "..."}`) is accepted, and an unknown key inside it is not
-(**D71** — the public self-check derives twelve of its controls from this schema, so the wording has
-one home; see `../Refinement/SELF_CHECK_PRD.md` §4.6).
+(**D71** — the public self-check derives eleven of its controls from this schema, so the wording has
+one home; see `../Refinement/SELF_CHECK_PRD.md` §4.6, corrected 2026-11-05 in B3: the twelfth, C5, is
+FORM Sheet A and is an own control).
 
 **Then** implement `AssessmentTemplate(category, version, standard_version, schema, effective_from,
 is_active)` plus `validate_schema(dict) -> list[str]` returning human-readable problems rather than
@@ -465,11 +466,12 @@ def test_inverted_and_informational_verdicts_carry_the_right_polarity(key):
     assert pol[key] != "POSITIVE"
 ```
 
-**Also author the twelve `self_check` markers** (D71): Q4.2, Q5.1, Q11.1, Q11.2, and the seven
+**Also author the eleven `self_check` markers** (D71): Q4.2, Q5.1, Q11.1, Q11.2, and the seven
 Sheet I §2 records, each with a `why` sentence naming its clause. The public page renders these
 questions from the schema, not from a copy — so a wording change at the visit reaches the front door,
 and `test_selfcheck.py::test_every_derived_control_resolves` fails if a marker points at a question
-that does not exist. The count is asserted: **twelve**.
+that does not exist. The count is asserted: **eleven** — C5 is Sheet A, so it is an own control
+(SELF_CHECK_PRD §3.4, corrected 2026-11-05 in B3).
 
 **Then** author all 38 questions across PART A (general information) and PART B (crop production),
 marking `respondent` per the FORM's grey/white cells, `attachments` for the documents Sheet I §2
@@ -550,7 +552,8 @@ HTMX for autosave (already permitted, D1) — one vendored file, no build step.
 **Files:** `core/services/_selfcheck.py`, `core/views/_portal.py`, `core/tests/test_selfcheck_prefill.py`
 
 **Deliberately after A8 and C2, and A8 is not blocked on it.** The public self-check (A8, D71) asks
-twelve questions that are also questions on the frozen Crops template. A farmer who completed the
+eleven questions that are also questions on the frozen Crops template (the twelfth derived control,
+C5, is Sheet A and has no Crops-template question to prefill from). A farmer who completed the
 check should not answer them twice.
 
 **Tests first:** an applicant who completes the check and then registers sees the questionnaire's
@@ -562,7 +565,7 @@ answer's own provenance), never a submitted one; editing the questionnaire chang
 declared answers into drafts, and mark each pre-filled row with its source. Nothing is inferred: a
 `RATHER_NOT_SAY` answer arrives **unanswered**, not as a "no".
 
-**Acceptance:** the twelve matching answers arrive as drafts; a `RATHER_NOT_SAY` answer leaves its
+**Acceptance:** the eleven matching answers arrive as drafts; a `RATHER_NOT_SAY` answer leaves its
 question blank; the report is never mutated by the portal.
 
 ---

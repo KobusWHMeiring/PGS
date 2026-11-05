@@ -93,6 +93,13 @@ the generated index's "To Do" section.
       (`ConsentRecord.text.approved_at__isnull=True`). The retention period and the withdrawal
       address are still the group's answers, and the address is also blocked on publishing the
       administrator's contact details (below).
+- [ ] **A8 needs two more `ConsentText` rows before it can take a consent.** A6 seeded only the
+      `ACCOUNT` purpose (Q8's draft); the self-check's research and demographic consents (§3.6, D64's
+      rule twice) have reviewed wording in the D71 ledger (`product/design/d71_self_check_questions.html`,
+      the E1 and E2 `consent` strings) and no row. Seed them as `RESEARCH` and `DEMOGRAPHICS`, with
+      `approved_at` null and rendered as DRAFT in the same honest way as the account step, or decide in
+      writing not to — but the page must not offer a checkbox with no text behind it (`ConsentRequiredError`
+      already refuses the account without one).
 - [ ] **UAT for the application flow.** A6 has 32 automated tests and no `tests/uat/` checklist:
       the judgements left are the ones a person must make in a browser — does the four-step flow
       read as one thing on a phone, is the consent block readable before it is ticked, and does

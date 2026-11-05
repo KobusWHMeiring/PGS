@@ -41,6 +41,24 @@
 > unblocked on every count it needed: eleven markers in the frozen template, C5 beside them as an own
 > control, and its only exit — the application flow — built in A6. **Then A7** (eligibility gates,
 > which still needs the payment surface named in `todo.md`) and **A4**.
+> **A8 in one paragraph, so it starts without re-reading the plan.** Read
+> `python scripts/context.py --task public`, then `SELF_CHECK_PRD` §3–§4 and §11.5–§11.7 (the wording,
+> the consent and the wizard), and `Test driven` — not the whole PRD.
+> Route `/before-you-apply/` →
+> `core:before_you_apply`, and it **joins `PAGES`** so the claim-discipline sweep covers it from the
+> first render. New `core/models/_selfcheck.py`: `SelfCheckReport` + `SelfCheckDemographic`, one
+> migration, **no FK to `Member` or `Farm`** and no derived status. `core/services/_selfcheck.py`:
+> `SELF_CHECK_ITEMS` (the own controls — A1–A5, **C5**, D1, E1–E2, wording from the D71 ledger),
+> `build_check()` resolving the **eleven** `self_check` markers out of the *active* Crops template plus
+> those items, `evaluate()` (pure, never writes), `submit()` (atomic, consent-gated), `withdraw()`.
+> **Nothing is stored without research consent**, demographic consent is refused without it, and both
+> reuse A6's `ConsentText`/`ConsentRecord` with purposes `RESEARCH` and `DEMOGRAPHICS` — **which A6 did
+> not seed** (only `ACCOUNT`), so A8 seeds the two texts from the ledger's `consent` strings or decides
+> in writing not to. The result's two fixed lines come from the finalise gate's own constant
+> (`MISSING_RECORD_BLOCKS_FINALISE`), never from page copy. The account step at the end calls A6's
+> `create_application()` and must **not** write `FarmCategory` rows. `report_self_check --min-count 5`.
+> The prototype (`product/design/before_you_apply_prototype.html`) is the design target, including its
+> stepped-wizard shape and its two "deliberately missing" notes.
 >
 > **Three things are still the product owner's, none of them blocks A8:** the three roster ambiguities
 > from `1i`; whether `APPLICANT` is the right word for an account that has not applied; and the two
@@ -91,11 +109,14 @@ sessions** (`1i` onward)
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **25 commits**: A1, A2, A3, A5, A6, B1–B4, D83, D84, Q8's draft consent, the approved
+  of `781cf37`, **25 commits of work at the last code commit** (this session's doc closes follow it;
+measure with `git log --oneline 781cf37..HEAD | wc -l`): A1, A2, A3, A5, A6, B1–B4, D83, D84,
+Q8's draft consent, the approved
   prototype, two model-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
-prints `25` (measured, `git log --oneline 781cf37..HEAD | wc -l`) and
-`git ls-remote --heads origin feat/mvp1a-visit` prints nothing. **Both worktrees
+prints the branch's own count (25 at the last code commit; the doc closes add one each) and
+`git ls-remote --heads origin feat/mvp1a-visit` prints nothing — that command prints **nothing**, which
+is the fact that matters. **Both worktrees
 have rewritten the START HERE block, so a merge conflicts here by design: keep both strands' state,
 do not pick one.**
 
