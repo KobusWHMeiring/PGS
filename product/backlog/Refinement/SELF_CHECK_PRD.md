@@ -459,7 +459,7 @@ collects a farm name under the research consent would be a purpose mismatch, whi
 
 ---|---|---|---|
 | Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | Product owner | **Collected** — otherwise the farm profile is empty and the account only saves an email |
-| Q8 | The third consent: holding an account is a new processing purpose, separate from research and demographics. Who writes and who approves that text? | Group / product owner | Not drafted. It needs a retention answer, which the self-check deliberately does not have |
+| Q8 | The third consent: holding an account is a new processing purpose, separate from research and demographics. Who writes and who approves that text? | Group / product owner | **Drafted by the build as a DRAFT to correct** (§11.6, 2026-11-05), because a group cannot approve a blank page. Two markers remain the group's: the retention period and the withdrawal address. The group approves the wording; the build does not. |
 | Q9 | Does an account require a verified email before it can be used again? | Product owner | No — `User.email_verified_at` exists; verification is a friction decision, not a schema one |
 
 ---
@@ -489,6 +489,70 @@ no-consent path still renders the result from the submitted form in the same req
 the records step holds seven controls, so it was the only group that scrolled materially on a phone.
 It is rendered as compact rows (question + four answer chips on one line) rather than seven tall
 cards, which is what makes "no scrolling" true rather than aspirational.
+
+### 11.6 The third consent — **DRAFT**, for group approval (written 2026-11-05)
+
+> **DRAFT — not approved, not for release.** Q8 says this text *"is written by the group rather than
+> by the build"*, and the build cannot write it — but a build cannot ask a group to approve a blank
+> page either. So this is a **draft to correct**, not a text to ship. Two answers below are still the
+> group's and are marked `[DECIDE]`: the **retention period** and the **address to write to**. The
+> text must not ship while either marker remains, and A6 must refuse to create an account without
+> this consent (Q8's consequence: a farm name collected under the research consent is a purpose
+> mismatch, which is what §3.6 exists to prevent).
+
+**The checkbox and its explanation** — what a farmer reads on the account step:
+
+> **May we keep your details so you can come back to this?**
+>
+> We hold your name, how to reach you, your farm's name and nearest town, and who to speak to about
+> a visit. We use them to keep your application in one place and to contact you about it — nothing
+> else. The committee and the administrator can see them; nobody outside the group can, and we never
+> publish them. We keep them while your account is open and for **[DECIDE: proposed 12 months]** after
+> the last time you contacted us, then we delete them. You can ask us to delete them at any time by
+> writing to **[DECIDE: the administrator's email/phone — not yet published, `todo.md`]**, and we will
+> do it within 30 days.
+>
+> *Unticked by default. Without it no account is created — but your result page still shows, and
+> nothing about you is stored.*
+
+**The "why we ask" body** — the result page and the help panel, in the voice the other two consents
+use:
+
+> This is not the research question and not the census question. Research consent asks whether your
+> answers may be counted in totals for PGS South Africa and SAOSO; the demographic question asks
+> whether census details may be counted too. This one is about the **account itself** — the name,
+> contact and farm details the group needs in order to keep a conversation with you about an
+> application.
+>
+> It sits after those two rather than beside them because holding an account is a purpose of its own.
+> A consent that let "research" quietly cover it would be exactly the purpose mismatch the group's
+> own POPIA position forbids.
+>
+> And leaving it unticked refuses nothing else. The check, the result and the to-do list still work
+> and still store nothing. What it withholds is the account — because an account is the thing that
+> needs your details to exist.
+>
+> *Source: POPIA s11 (consent as an act, not a default), s13 (purpose), s14 (retention). Q7's three
+> fields are the collection this text covers.*
+
+**What this draft assumes, stated so the group can reject any of it:**
+
+- The fields are **Q7's**: name, email, farm name, nearest town, contact person. Anything else
+  collected later (turnover, land history, the pledge) is covered by the application's own step, not
+  by this consent — the pledge attests to land and sits where D83 put it.
+- **Withdrawal works without an account**, as the research consent already promises: writing in is
+  enough, and no login is required to be deleted.
+- **English only until reviewed** (D44). This text is *not* machine-translated; an Afrikaans version
+  lands when a named Afrikaans-speaking reader has reviewed it.
+- It is **versioned, not edited**: `consent_text_version` records which text a member agreed to, so a
+  later tightening of the wording is a new version and an existing member's consent keeps its meaning
+  (the same rule as the frozen `Assessment.template_schema`).
+- It is a consent to **hold and contact**, never to **publish**. A public farm profile is a separate,
+  later, purpose-specific consent (`Farm.publish_consent_at` already exists for it).
+
+**If the group prefers a shorter text**, the one sentence that cannot be dropped is the retention
+answer. "How long do you keep it" is the question a POPIA information officer asks first, and it is
+the one thing this PRD said it did not have.
 
 ## Pre-Flight Checklist
 
