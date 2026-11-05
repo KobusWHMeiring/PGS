@@ -25,7 +25,7 @@
 > convention was declared. **The ranking is therefore not established**, and the four shapes no arm
 > passes are exactly the judgement ones.
 >
-> **The key is reviewed, amended and re-signed** (session `1i`, 2026-11-05).
+> **The key is reviewed, amended and re-signed** (session `1n`, 2026-11-05).
 > `knowledge/tests/shape_review.json` holds Kobus's review — **68 of 68 claims Yes**, dated
 > 2026-11-05 — with **eight of eight shapes confirmed** and **one claim amended under review**:
 > `long_cell.cell.0.0`, whose cell **starts with `Step 3`** on the paper and in our own reviewed
@@ -34,7 +34,7 @@
 > the text the owner judged and the text the key now says, plus his note as the basis. His other two
 > notes (`R500`, "the cells don't just say the step name") were the **surface** drawing a `contains`
 > or `starts` claim as a whole cell; fixed, with a test that no partial claim is drawn as a whole
-> cell. **D83 is answered; §3.11 records the notes and the amendment.**
+> cell. **D85 is answered; §3.11 records the notes and the amendment.**
 >
 > **Next, and it is free: re-score the three arms from cache** against the corrected key, then D82
 > (which extractor) has evidence under it. Nothing else gates that.
@@ -88,14 +88,24 @@
 >
 > **The story for a non-developer is one page, and the work is the second:**
 > `product/design/d82_table_extraction_what_we_learned.html` — four investigations, the scoreboard, the
-> options, and a §18.3 export for **two** decisions: **D83** (review the answer key first — the gate)
-> and **D82** (which extractor — blocked on D83). The judgment itself happens in
+> options, and a §18.3 export for **two** decisions: **D85** (review the answer key first — the gate)
+> and **D82** (which extractor — blocked on D85). The judgment itself happens in
 > `product/design/uat/shape_key_review.html`, which is generated, never hand-edited. Nothing is written
 > into the spec until the answers exist.
 >
 > **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
 > a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
 > work and not a PRD.
+>
+> **Two strands, two worktrees — and this file speaks for one of them.** `main` (here) is the
+> corpus/D80–D85 strand. `../pgs-visit` on `feat/mvp1a-visit` holds **MVP 1a sub-plan A** (sessions
+> `1i`–`1m`: A1–A5 landed, **D83** the farmer pledge, **D84** no mail on account creation, and the
+> joining flow designed) and has not touched `main`. The lines have diverged from `781cf37`
+> (`git rev-list --left-right --count main...feat/mvp1a-visit` prints `15 19`): **no code overlap**,
+> but `HANDOVER.md` and `product/docs/context/testing_hazards.md` are edited on both sides, so a merge
+> needs one hand on those two files. **The ids no longer collide** — the answer-key review is
+> **D85** (D83 is the pledge, D84 the mail decision), and this session is **`1n`** (the joining-flow
+> session on the other branch is `1i`). A deploy owed from here does **not** carry the visit branch.
 >
 > **Do not refresh the dev corpus casually.** `corpus_check` here reports `landscape` **drift** and its
 > 17 chunks carry **0** labelled renditions against live's 8, so dev is behind live. The old blocker was
@@ -125,20 +135,21 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
 vlm-arm sessions
-**Repo state:** `main` — **twelve commits ahead of `origin/main`**: session `1h`'s five (the
+**Repo state:** `main` — **thirteen commits ahead of `origin/main`**: session `1h`'s five (the
 OpenRouter arm; §3.8's correction; the Docling re-run with the shared normalisation; the D82
-explanation page; and the Document AI arm with §3.9–§3.10), then session `1i`'s seven (the verification
+explanation page; and the Document AI arm with §3.9–§3.10), then session `1n`'s eight (the verification
 surface; its docs; a browser test for the JavaScript-off check; a count-correction commit; the
-unclaimed-cell wording; **the signed review** with the two drawing fixes its notes exposed; and **the
-`Step 3` amendment with its re-sign**). Everything before `1h` is pushed: the
+unclaimed-cell wording; **the signed review** with the two drawing fixes its notes exposed; **the
+`Step 3` amendment with its re-sign**; and **the D83→D85 / `1i`→`1n` reconciliation** with the visit
+worktree). Everything before `1h` is pushed: the
 licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
 session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
 `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
 script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `12` on this tree, and
-`0` once sessions `1h` and `1i` are pushed.
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `13` on this tree, and
+`0` once sessions `1h` and `1n` are pushed — and note that `main` and `feat/mvp1a-visit` are separate unpushed lines.
 
-**On this tree** (2026-11-05, session `1i`): `scripts/verify.sh` **green at 1727 passed /
+**On this tree** (2026-11-05, session `1n`): `scripts/verify.sh` **green at 1727 passed /
 1 skipped / 8 xfailed in 120.44 s**, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17) — the same gate measured
@@ -173,7 +184,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
-- `1i` 2026-11-05 (session 21) — the verification surface, and 68 claims the owner has not judged — [`SESSION_1i_2026-11-05_the-verification-surface.md`](product/docs/handover/SESSION_1i_2026-11-05_the-verification-surface.md)
+- `1n` 2026-11-05 (session 21) — the verification surface, and 68 claims the owner has not judged — [`SESSION_1n_2026-11-05_the-verification-surface.md`](product/docs/handover/SESSION_1n_2026-11-05_the-verification-surface.md)
 - `1h` 2026-11-04 (session 20) — three arms measured, and an answer key nobody checked — [`SESSION_1h_2026-11-04_three-arms-and-an-answer-key-nobody-checked.md`](product/docs/handover/SESSION_1h_2026-11-04_three-arms-and-an-answer-key-nobody-checked.md)
 - `1g` 2026-11-04 (session 19) — Docling measured, and it does not pass; a Gemini key is not a GCP key (in `SESSION_1f…` §7–§8) — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)
 - `1f` 2026-11-03 (session 18) — the harness reads the table, and the count stops being quoted — [`SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md`](product/docs/handover/SESSION_1f_2026-11-03_the-harness-reads-the-table-and-the-count-stops-being-quoted.md)

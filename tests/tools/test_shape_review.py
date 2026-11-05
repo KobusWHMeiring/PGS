@@ -1,4 +1,4 @@
-"""D83's verification surface: the page, its claims, and the record a signature leaves behind.
+"""D85's verification surface: the page, its claims, and the record a signature leaves behind.
 
 What is guarded here, and why each guard exists:
 
@@ -231,7 +231,7 @@ def test_the_dry_run_writes_nothing_and_the_write_is_idempotent(tmp_path, monkey
 def test_the_committed_record_describes_the_key_or_there_is_none():
     """If an owner has signed, the gate keeps that review true. No record yet is not a failure."""
     if not shape_review_signoff.RECORD_PATH.exists():
-        pytest.skip("no review of record yet - D83 is unsigned")
+        pytest.skip("no review of record yet - D85 is unsigned")
     record = json.loads(shape_review_signoff.RECORD_PATH.read_text(encoding="utf-8"))
     assert shape_review_signoff.drift(record) == []
 

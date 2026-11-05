@@ -290,7 +290,7 @@ SHAPES: tuple[ShapeCase, ...] = (
             # The row label is inside the cell. The paper prints a bold `Step 3` above the prose and
             # the reviewed landscape block keeps it, so the cell *starts* with the label and the
             # prose is asserted separately. Corrected 2026-11-05 from the owner's review of this key
-            # (D83): the first version asserted the cell started at "The group conducts…", which
+            # (D85): the first version asserted the cell started at "The group conducts…", which
             # demanded a read that dropped the label our own artefact keeps.
             Cell(
                 0,

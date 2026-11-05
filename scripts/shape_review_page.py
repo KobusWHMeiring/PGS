@@ -304,19 +304,19 @@ def build_html(artefact: str, kind: str, version: int) -> str:
 
 _HTML_HEAD = """<!DOCTYPE html>
 <!-- GENERATED FILE — do not hand-edit. `python scripts/shape_review.py` rebuilds it.
-     REVIEW SURFACE (not a production template) | Outeniqua PGS — D83, the eight-shape answer key
-     Companion to INGESTION_ENGINE_PRD.md §3.10 and PGS_PLATFORM_SPEC.md §18.3 D83.
+     REVIEW SURFACE (not a production template) | Outeniqua PGS — D85, the eight-shape answer key
+     Companion to INGESTION_ENGINE_PRD.md §3.10 and PGS_PLATFORM_SPEC.md §18.3 D85.
      Self-contained on purpose: no CDN, no font, no build, no network request. The page images are
      `data:` URIs from knowledge/tests/fixtures/shape_pages/, hash-pinned to the committed PDFs. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Outeniqua PGS — Is the eight-shape answer key right? (D83)</title>"""
+<title>Outeniqua PGS — Is the eight-shape answer key right? (D85)</title>"""
 
 _HERO = """<header class="hero">
   <div class="inner">
-    <p class="eyebrow">D83 · the gate before any extractor decision</p>
+    <p class="eyebrow">D85 · the gate before any extractor decision</p>
     <h1>Is the answer key right?</h1>
     <p class="q">Eight pages of the OPP and the SAOSO standard, each beside the grid our key says
       they print. One verdict per claim. Nothing here is scored — your call <em>is</em> the key.</p>

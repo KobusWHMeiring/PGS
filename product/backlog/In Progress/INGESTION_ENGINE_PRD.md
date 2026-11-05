@@ -4,7 +4,7 @@
 (Docling §3.5/§3.8, the OpenRouter VLM §3.7, Document AI §3.9). §3.10 is the open item that gates the
 choice: the eight-shape answer key is agent-authored and unreviewed, so the arms' ranking is not
 established until the owner judges the cells. The surface that judgement happens on is built (§3.11,
-session `1i`); it is waiting for the signature.** S3–S5 are open.
+session `1n`); it is waiting for the signature.** S3–S5 are open.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
 **Last Updated:** 2026-11-05
 **Scope:** How a table becomes reviewed data when no human has reviewed it. In: extraction, its
@@ -522,7 +522,7 @@ presentation produced a wrong reading (the first was `—` read as "the paper is
 in the session record: **a rendered claim is not the claim** — a prefix, an inner phrase or an
 unasserted cell must look like what it is.
 
-**D83 is answered: eight of eight shapes confirmed, one claim amended under review**
+**D85 is answered: eight of eight shapes confirmed, one claim amended under review**
 (`claims_amended_under_review: ["long_cell.cell.0.0"]`), and the three page notes kept in the record
 as `notes_resolved`. The re-sign was applied on the owner's explicit instruction the same day, through
 the amendment path rather than by editing `expected` — so the record still says what he read.

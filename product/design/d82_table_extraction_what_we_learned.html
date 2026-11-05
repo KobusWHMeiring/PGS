@@ -861,7 +861,7 @@
 
     <div class="callout">
       <span class="label">Recommendation — and it changed twice today</span>
-      <p><strong>Do not pick a tool yet. Check the key first (D83), then re-score.</strong> The arms
+      <p><strong>The key is checked (D85). Re-score the three arms from cache, then decide.</strong> The arms
         differ by one or two shapes and the four shapes that separate them are the judgement ones, so
         choosing now would be choosing on a ranking we know is unreliable. Once the cells are judged:
         the <strong>Layout Parser v1.6-pro</strong> is the strongest on structure (8 of 8 tables, the
@@ -890,25 +890,29 @@
     <code>PGS_PLATFORM_SPEC.md</code> §18.3.</p>
 
   <div class="card" id="card_d83">
-    <span class="tag">D83 (proposed) — the gate</span>
+    <span class="tag">D85 — the gate · <strong>ANSWERED 2026-11-05</strong></span>
     <h3>Do we review the eight-shape answer key before choosing a tool?</h3>
-    <p class="lede">The key that judges all three arms was written by an agent. The signed UAT judged
-      how tables <em>read</em>, not whether a cell's characters match the paper. Three independent tools
-      disagree with the key on the same three shapes.</p>
-    <div class="opts" id="opts_d83">
-      <label class="opt"><input type="radio" name="d83" value="Y"> Y · Review the key first (page image beside the expected grid)</label>
-      <label class="opt"><input type="radio" name="d83" value="N"> N · Accept the key as it stands</label>
-      <label class="opt"><input type="radio" name="d83" value="S"> S · Review only the four judgement shapes</label>
-    </div>
-    <textarea id="note_d83" placeholder="Anything to record about the key…"></textarea>
+    <p class="lede"><strong>Yes — and it is done.</strong> The surface is
+      <code>product/design/uat/shape_key_review.html</code>: each of the eight shapes' page image beside
+      the grid the key expects, 68 claims, judged by the product owner on 2026-11-05 (68 of 68 Yes,
+      eight of eight shapes confirmed, one claim amended under review). The record is
+      <code>knowledge/tests/shape_review.json</code>; the findings and the amendment are in
+      <code>INGESTION_ENGINE_PRD.md</code> §3.11.</p>
+    <p class="lede">What the review changed: two of the three notes were this page's presentation
+      misreading a claim (a <code>contains</code> phrase and a <code>starts</code> prefix drawn as
+      whole cells), and one was a real defect — the landscape's Step 3 cell <em>starts</em> with
+      <code>Step 3</code>, which the key now asserts.</p>
+    <p class="lede"><strong>Still open: D82 below</strong>, and it is now blocked only on the free
+      re-score from cache against the corrected key.</p>
   </div>
 
   <div class="card" id="card_d82">
-    <span class="tag warn">D82 (proposed) — blocked on D83</span>
+    <span class="tag warn">D82 (proposed) — blocked on the re-score</span>
     <h3>Which table extractor does the ingestion engine use?</h3>
     <p class="lede">Measured 2026-11-04: Docling 2 of 8, the vision model 3 of 8, Document AI Layout
-      Parser 2 of 8 with 8 of 8 tables found. Not decidable until the key is reviewed — the four shapes
-      that separate them are the judgement ones.</p>
+      Parser 2 of 8 with 8 of 8 tables found. The key has been reviewed (D85) and one claim corrected,
+      so the next act is re-scoring all three arms from cache — free, because every raw answer is
+      stored — before this is decided.</p>
     <div class="opts" id="opts_d82">
       <label class="opt"><input type="radio" name="d82" value="A"> A · Docling as extractor of record</label>
       <label class="opt"><input type="radio" name="d82" value="B"> B · VLM lines as proposer + harness</label>
@@ -963,11 +967,6 @@
 
 <script>
 const KEY = 'pgs.d82.table_extraction.v1';
-const CHOICES83 = {
-  Y: 'Y - Review the eight-shape answer key first, then re-score all three arms',
-  N: 'N - Accept the agent-authored key as it stands',
-  S: 'S - Review only the four judgement shapes (6a header, long cell, empty cell, artwork)'
-};
 const CHOICES = {
   A: 'A - Docling, with the declared normalisations, as the extractor of record',
   B: 'B - The vision model\'s `lines` form as a proposer, checked by the S4 harness',
@@ -991,24 +990,13 @@ function render() {
   const picked = state.answer || null;
   document.querySelectorAll('#opts_d82 input').forEach(i => { i.checked = (i.value === picked); });
   document.getElementById('note_d82').value = state.note || '';
-  document.querySelectorAll('#opts_d83 input').forEach(i => { i.checked = (i.value === (state.key83 || null)); });
-  document.getElementById('note_d83').value = state.note83 || '';
-  const k = state.key83 || null;
-  document.getElementById('progress').innerHTML = k && picked
-    ? `D83 <b>${k}</b> · D82 <b>${picked}</b>`
-    : k ? `D83 answered: <b>${k}</b> — D82 still open`
-    : picked ? `D82 answered: <b>${picked}</b> — but D83 is the gate`
-    : 'D83 (the gate) unanswered';
+  document.getElementById('progress').innerHTML = picked
+    ? `D85 answered (key reviewed 2026-11-05) · D82 <b>${picked}</b>`
+    : 'D85 <b>answered</b> — the key was reviewed 2026-11-05. Only D82 is open.';
 }
 
 document.querySelectorAll('#opts_d82 input').forEach(i => {
   i.addEventListener('change', () => { state.answer = i.value; save(); });
-});
-document.querySelectorAll('#opts_d83 input').forEach(i => {
-  i.addEventListener('change', () => { state.key83 = i.value; save(); });
-});
-document.getElementById('note_d83').addEventListener('input', e => {
-  state.note83 = e.target.value; save();
 });
 document.getElementById('note_d82').addEventListener('input', e => {
   state.note = e.target.value; save();
@@ -1017,14 +1005,10 @@ document.getElementById('note_d82').addEventListener('input', e => {
 function buildRow() {
   const picked = state.answer || '';
   const note = (state.note || '').trim();
-  const key = state.key83 || '';
-  const keyNote = (state.note83 || '').trim();
-  const row83 = key
-    ? `| D83 | Do we review the eight-shape answer key before choosing an extractor? | **${CHOICES83[key]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`). The key that judges every arm (\`knowledge/tests/shape_fixtures.py\`, commit \`5c45550\`) was written by an agent and no human has validated a cell; the signed landscape UAT judged rendering, not transcription. Three independent readers (Docling, a VLM, Document AI's Layout Parser) agree with each other and disagree with the key on Appendix 6a's header grouping, the \`Step 3\` prefix on the landscape's long cell, and the page-break row count. Characters are already verified (R3 against the committed page text); the groupings are what needs a human.${keyNote ? ' Note: ' + keyNote.replace(/\|/g, '/') : ''} |
-`
-    : '';
-  if (!picked) return row83 + '_(D82 unanswered — pick an option in the page first.)_';
-  return row83 + `| D82 | Which table extractor does the ingestion engine use, now that both arms are measured? | **${CHOICES[picked]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`; slice S2 of the ingestion engine PRD). Measured with one instrument, both arms, the same day: Docling 2.146.0 passes **2 of 8** shapes (numeric_row with the row-0 header convention; Appendix 7 with the row-number gutter) and finds 6 of 8 tables; the OpenRouter VLM arm passes **3 of 8** at best (\`claude-sonnet-5.5\`, \`lines\` form) and finds **8 of 8**, with header association right on 7-8 of 8. The union of what any arm passes is **4 of 8**; the four nobody passes need a human judgement (a header printed once across four lines, a 1,112-character cell, a merged fee box beside a seal, a page-break row). A different committed pass never helps (three shapes get worse), and a row-structured pass cannot be built from committed text because inter-column gaps collapse to one space when a cell overflows. Document AI is **not** adopted: it is the same class as Docling and would inherit the same four semantic failures, and the geometry argument for it was cashed by Docling passing Appendix 7. Every cell is still checked against the page per printed line (R3), and a grid that matches while quotes do not resolve is reported as "grid only", never as a pass. Evidence: \`product/docs/evidence/2026-11-03_s2_docling_scores.json\`, \`2026-11-04_s2_docling_gutter_scores.json\`, \`2026-11-04_s2b_openrouter_scores.json\`.${note ? ' Note: ' + note.replace(/\|/g, '/') : ''} |`;
+  const row85 = `| D85 | Do we review the eight-shape answer key before choosing an extractor? | **Y - Yes: the key was reviewed first, and it was right to.** Answered 2026-11-05 by the product owner (\`product/design/uat/shape_key_review.html\`, record \`knowledge/tests/shape_review.json\`, findings in \`INGESTION_ENGINE_PRD.md\` §3.11). 68 of 68 claims were answered Yes and eight of eight shapes are confirmed; one claim was **amended under review** — the landscape's Step 3 cell starts with \`Step 3\` on the paper and in our reviewed block, so the key's cell claim now says so, and the record keeps both the text the owner judged and the text the key says, with his note as the basis. Two of the three page notes were this page's presentation misreading a claim (a \`contains\` phrase and a \`starts\` prefix drawn as whole cells); both are fixed with a test. Characters were never the open question — R3 already proved every cell a contiguous run of the page — the groupings were. Originally proposed 2026-11-04. |
+`;
+  if (!picked) return row85 + '_(D82 unanswered — pick an option in the page first.)_';
+  return row85 + `| D82 | Which table extractor does the ingestion engine use, now that both arms are measured? | **${CHOICES[picked]}** — decided 2026-11-04 by the product owner (\`product/design/d82_table_extraction_what_we_learned.html\`; slice S2 of the ingestion engine PRD). Measured with one instrument, both arms, the same day: Docling 2.146.0 passes **2 of 8** shapes (numeric_row with the row-0 header convention; Appendix 7 with the row-number gutter) and finds 6 of 8 tables; the OpenRouter VLM arm passes **3 of 8** at best (\`claude-sonnet-5.5\`, \`lines\` form) and finds **8 of 8**, with header association right on 7-8 of 8. The union of what any arm passes is **4 of 8**; the four nobody passes need a human judgement (a header printed once across four lines, a 1,112-character cell, a merged fee box beside a seal, a page-break row). A different committed pass never helps (three shapes get worse), and a row-structured pass cannot be built from committed text because inter-column gaps collapse to one space when a cell overflows. Document AI is **not** adopted: it is the same class as Docling and would inherit the same four semantic failures, and the geometry argument for it was cashed by Docling passing Appendix 7. Every cell is still checked against the page per printed line (R3), and a grid that matches while quotes do not resolve is reported as "grid only", never as a pass. Evidence: \`product/docs/evidence/2026-11-03_s2_docling_scores.json\`, \`2026-11-04_s2_docling_gutter_scores.json\`, \`2026-11-04_s2b_openrouter_scores.json\`.${note ? ' Note: ' + note.replace(/\|/g, '/') : ''} |`;
 }
 
 const dlg = document.getElementById('outDlg');

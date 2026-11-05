@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""D83 — the eight-shape answer key, judged against the paper cell by cell.
+"""D85 — the eight-shape answer key, judged against the paper cell by cell.
 
     python scripts/shape_review.py                 # write product/design/uat/shape_key_review.html
     python scripts/shape_review.py --check         # is the committed artefact current?

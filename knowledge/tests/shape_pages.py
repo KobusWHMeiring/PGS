@@ -1,4 +1,4 @@
-"""The committed page images the verification surface judges the answer key against (D83).
+"""The committed page images the verification surface judges the answer key against (D85).
 
 `knowledge/tests/shape_fixtures.py` says what a correct read of eight pages must contain. That
 expectation is anchored in the page *text* (`page_fixtures.py`), and text is what R3 checks. But a

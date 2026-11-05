@@ -3,14 +3,14 @@
   "version": 1,
   "artefact": "product/design/uat/shape_key_review.html",
   "key": "knowledge/tests/shape_fixtures.py",
-  "key_sha256": "b8d7ec9a143566415573a8669e976ed230593237b8b2bc8d15514b9144746613",
+  "key_sha256": "d380767dc0f6a0d6c6316a29c6be9a9adabd745b75838b1ad339d687d5b28800",
   "reviewed_at": "2026-11-05",
   "reviewer": {
     "name": "Kobus",
     "seat": "Product"
   },
   "signed_against": {
-    "commit": "2a6b7b6"
+    "commit": "922b768"
   },
   "claims": {
     "numeric_row.header": {

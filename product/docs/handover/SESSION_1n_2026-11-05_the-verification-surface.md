@@ -1,4 +1,4 @@
-# Session `1i` — the verification surface, and 68 claims the owner has not judged yet
+# Session `1n` — the verification surface, and 68 claims the owner has not judged yet
 
 **Date:** 2026-11-05
 **PRD:** `product/backlog/In Progress/INGESTION_ENGINE_PRD.md` — §3.10's gate, now §3.11
@@ -150,3 +150,24 @@ the record keeps both. `long_cell.cell.0.0` is the first (and so far only) claim
 Owed at close: **the three-arm re-score from cache** (§3.10), which is now unblocked and costs
 nothing. The gate is green with the amended key and the record in place (`--check`: 68 judged claims,
 0 problems).
+
+## 8. Two ids reconciled after the fact, and why they matter
+
+The review work began on `main` while a second agent ran MVP 1a in `../pgs-visit`. Both lines reached
+for the same two names, and neither collision would have been visible from inside one worktree:
+
+| Collision | Resolution |
+|---|---|
+| **D83** — `main` proposed it for "review the answer key first" (`d82_…html`); the visit branch **decided** it on 2026-11-04 for *where the farmer pledge sits* (`d83_pledge_placement.html`, now in `PGS_PLATFORM_SPEC.md` §18.3) | The answer-key gate is **D85** everywhere: the surface's title and hero, the PRD, `HANDOVER.md`, the fixtures module, and the D82 page (which now names D85 as **answered** and points at the surface and the record) |
+| **Session `1i`** — the visit branch's 2026-11-04 joining-flow session | This one is **`1n`**: its file, the archive line, the PRD and the HANDOVER all say so. `1i` remains theirs |
+
+Neither line edited the other's files, so the code merges cleanly; `HANDOVER.md` and
+`testing_hazards.md` are the two shared files that will need a hand. The lesson is the ordinary one
+this repo keeps relearning: **an id is a claim about the whole repo, not about the branch you are
+standing in** — and two worktrees make it cheap to check (`git show other-branch:spec | rg "D8"`)
+before writing the next decision row.
+
+Refreshing `knowledge/tests/shape_review.json` after the renumber is the drift guard working: the
+fixtures module changed by one comment, its sha256 moved, and `--check` said so — *"changed since the
+review was signed without changing a claim's text"*. Re-applying the same export changed **only**
+`key_sha256` and `signed_against.commit`.

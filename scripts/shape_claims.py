@@ -1,4 +1,4 @@
-"""What the eight-shape answer key claims, one reviewable claim at a time (D83).
+"""What the eight-shape answer key claims, one reviewable claim at a time (D85).
 
 `knowledge/tests/shape_fixtures.py` holds the key as `ShapeCase`s — a header tuple, a row count, the
 page each row starts on, dividers, and a handful of asserted cells. That structure is right for a
