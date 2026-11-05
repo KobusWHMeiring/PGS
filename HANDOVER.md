@@ -92,8 +92,7 @@ sessions** (`1i` onward)
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **27 commits** (measure it: `git log --oneline 781cf37..HEAD | wc -l` — at the A8
-  code commit; this session's doc close adds one): A1, A2, A3, A5, A6, A8, B1–B4, D83, D84, Q8's
+  of `781cf37`, **28 commits** (measure it: `git log --oneline 781cf37..HEAD | wc -l`): A1, A2, A3, A5, A6, A8, B1–B4, D83, D84, Q8's
   draft consent, the approved prototype, three service-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
 prints the branch's own count (27 at the A8 code commit; the doc close adds one) and
@@ -114,7 +113,7 @@ the same count, one hour apart on the same box. Quote both or claim nothing (§3
 `test_selfcheck_wizard.py` was run separately: 7 passed.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
-local** (`git rev-list --count origin/main..HEAD` prints 27, and `git ls-remote --heads origin
+local** (`git rev-list --count origin/main..HEAD` printed 28 at the doc close, and `git ls-remote --heads origin
 feat/mvp1a-visit` prints nothing). That is the session-`1f` line
 rewritten for the current tree, because the old one said `0` and was true of `main`, not of this
 worktree. Nothing needs pushing for the demo; pushing is a deliberate act because it makes the
