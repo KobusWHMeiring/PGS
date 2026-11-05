@@ -2,9 +2,9 @@
 
 `build_principles.md` §I: *code encodes the PGS process; data encodes the standard
 and the group.* This module is the boundary. Everything it writes is **data** —
-seals, categories, and (in later increments) group identity and the standard set —
-so that retargeting to another standard or PGS group is a seed change, not a
-migration.
+seals, categories, the turnover scale, and (in later increments) group identity and the
+standard set — so that retargeting to another standard or PGS group is a seed change, not
+a migration.
 
 Two properties are non-negotiable, and both are asserted by
 `core/tests/test_seed_deployment.py`:
@@ -12,8 +12,10 @@ Two properties are non-negotiable, and both are asserted by
 1. **Idempotent.** Re-running on every deploy is the intended usage, so a row that
    already exists is updated in place, never duplicated.
 2. **It does not resurrect a deliberate decision.** `is_active` is applied on
-   *create* only. If the group retires a seal, a later release's `seed_deployment`
-   must not silently switch it back on and resume publishing a claim. This is the
+   *create* only, and so are `TurnoverBand.initial_fee_cents` / `renewal_fee_cents`. If
+   the group retires a seal, a later release's `seed_deployment` must not silently switch
+   it back on and resume publishing a claim; if the AGM changes a fee, a release must not
+   re-price a band that members have already been invoiced against. This is the
    one place where "idempotent" and "declarative" disagree, and correctness wins.
 
 Source of truth for every row below is the shipped OPP
@@ -27,7 +29,13 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
-from core.models import Category, CommitteePosition, CommitteeTerm, Seal
+from core.models import (
+    Category,
+    CommitteePosition,
+    CommitteeTerm,
+    Seal,
+    TurnoverBand,
+)
 from knowledge.models import StandardSet
 
 
@@ -285,14 +293,81 @@ def _seed_categories() -> tuple[int, int]:
     return created, updated
 
 
+@dataclass(frozen=True)
+class TurnoverBandSpec:
+    """One row of OPP §2.3's sliding scale.
+
+    `max_turnover_cents=None` means open-ended. Bounds are half-open — `min` inclusive,
+    `max` exclusive — because the printed table reads "Below R 250,000" and then
+    "R 250,001 – R 500,000", which leaves R250,000.50 in neither (see `TurnoverBand`).
+    `initial_fee_cents` and `renewal_fee_cents` are applied on create only: the AGM sets
+    prices, and a release must not re-price a fee a member was already invoiced for.
+    """
+
+    code: str
+    label: str
+    min_turnover_cents: int
+    max_turnover_cents: int | None
+    initial_fee_cents: int
+    renewal_fee_cents: int
+
+
+# OPP §2.3, "PGS assessment fee structure (initial certification and renewal)", printed
+# with the table's own wording in `label`. Rand in the document, cents in the schema (§III).
+TURNOVER_BANDS: tuple[TurnoverBandSpec, ...] = (
+    TurnoverBandSpec("B1", "Below R 250,000", 0, 25_000_000, 150_000, 90_000),
+    TurnoverBandSpec("B2", "R 250,001 – R 500,000", 25_000_000, 50_000_000, 250_000, 200_000),
+    TurnoverBandSpec("B3", "R 500,001 – R 1,000,000", 50_000_000, 100_000_000, 300_000, 250_000),
+    TurnoverBandSpec("B4", "R 1,000,001 – R 2,500,000", 100_000_000, 250_000_000, 370_000, 320_000),
+    TurnoverBandSpec("B5", "R 2,500,001 – R 5,000,000", 250_000_000, 500_000_000, 500_000, 500_000),
+    TurnoverBandSpec("B6", "Above R 5,000,000", 500_000_000, None, 800_000, 800_000),
+)
+
+
+def _seed_turnover_bands() -> tuple[int, int]:
+    """Create-or-update the OPP §2.3 scale. Returns (created, updated).
+
+    The band's *structure* (label, bounds, order) is the printed document, so it is
+    refreshed on every deploy — a corrected table reaches an existing deployment. The
+    *prices* are the group's AGM decision, so they are set on create only: a release that
+    silently re-priced a band would change what a member was invoiced after the invoice
+    went out.
+    """
+    created = updated = 0
+    for order, spec in enumerate(TURNOVER_BANDS, start=1):
+        band, was_created = TurnoverBand.objects.get_or_create(
+            code=spec.code,
+            defaults={
+                "label": spec.label,
+                "min_turnover_cents": spec.min_turnover_cents,
+                "max_turnover_cents": spec.max_turnover_cents,
+                "initial_fee_cents": spec.initial_fee_cents,
+                "renewal_fee_cents": spec.renewal_fee_cents,
+                "display_order": order,
+            },
+        )
+        if was_created:
+            created += 1
+            continue
+
+        band.label = spec.label
+        band.min_turnover_cents = spec.min_turnover_cents
+        band.max_turnover_cents = spec.max_turnover_cents
+        band.display_order = order
+        band.save(update_fields=["label", "min_turnover_cents", "max_turnover_cents", "display_order"])
+        updated += 1
+    return created, updated
+
+
 @transaction.atomic
 def seed_deployment() -> dict[str, tuple[int, int]]:
     """Apply the group's data. Safe to run on every deploy.
 
     In: none.
     Out: `{"standard_sets": …, "seals": (created, updated), "categories": …,`
-         `"committee_terms": (created, updated)}`.
-    Side Effects: writes `StandardSet`, `Seal`, `Category` and `CommitteeTerm` rows.
+         `"turnover_bands": …, "committee_terms": (created, updated)}`.
+    Side Effects: writes `StandardSet`, `Seal`, `Category`, `TurnoverBand` and
+         `CommitteeTerm` rows.
          Does **not** change `is_active` on seals, `is_default` on the set, or
          `vacated_on` on a committee term, once they exist.
     Fails: never deliberately; a database error propagates. The whole seed is one
@@ -304,5 +379,6 @@ def seed_deployment() -> dict[str, tuple[int, int]]:
         "standard_sets": _seed_standard_set(),
         "seals": _seed_seals(),
         "categories": _seed_categories(),
+        "turnover_bands": _seed_turnover_bands(),
         "committee_terms": _seed_committee_terms(),
     }

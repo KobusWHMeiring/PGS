@@ -195,6 +195,14 @@ def test_committee_terms_carry_no_contact_details():
 
 def test_seed_deployment_seeds_categories_seals_and_committee_terms():
     result = seed_deployment()
-    assert set(result) == {"standard_sets", "seals", "categories", "committee_terms"}
+    # The result is a contract: one key per thing a deployment seeds, so a new data set
+    # that forgets to report itself is visible here (A5 added the turnover scale).
+    assert set(result) == {
+        "standard_sets",
+        "seals",
+        "categories",
+        "turnover_bands",
+        "committee_terms",
+    }
     created, _updated = result["committee_terms"]
     assert created == len(_terms()) == 15

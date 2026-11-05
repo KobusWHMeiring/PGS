@@ -178,13 +178,32 @@ Pledge              member, kind(FARMER|CONSUMER), method(SIGNATURE|DISTINCTIVE_
                     # evidence_document writes under PRIVATE_MEDIA_ROOT (§VI); it has no
                     # public URL at all.
 MembershipFee       member, kind, period_start, period_end, amount_cents, paid_on, receipt_no
-AssessmentFee       member, farm_visit(nullable), kind(INITIAL|RENEWAL), turnover_band,
-                    band_label, amount_cents, due_on, paid_on, receipt_no,
-                    is_significant_change(bool)
-                    # D29. OPP §2.3 six-band sliding scale. Turnover is DECLARED by the
-                    # farmer and peer-reviewed — never inferred from sales records.
-                    # Payable BEFORE the visit (D32). Major changes to land, production
-                    # system or inputs => initial rate, not renewal.
+TurnoverBand        code, label, min_turnover_cents, max_turnover_cents(nullable = open top),
+                    initial_fee_cents, renewal_fee_cents, display_order, standard_ref
+                    # A5. OPP §2.3's six-band sliding scale as DATA, seeded by
+                    # `seed_deployment` (§4.8, D12): a group that changes its fees at the
+                    # AGM edits rows, and a retarget needs no migration. Bounds are
+                    # HALF-OPEN (min inclusive, max exclusive) because the printed table
+                    # reads "Below R 250,000" then "R 250,001 – R 500,000" and leaves
+                    # R250,000.50 in neither. `label` keeps the printed wording for display.
+                    # Structure (label, bounds, order) refreshes on every deploy; the two
+                    # PRICES are create-only, because a release must not re-price a fee a
+                    # member was already invoiced for.
+AssessmentFee       member, farm, kind(INITIAL|RENEWAL), turnover_band, band_label,
+                    declared_turnover_cents, amount_cents, declared_on, due_on, paid_on,
+                    receipt_no, is_significant_change(bool)
+                    # D29/A5. OPP §2.3: "Fees are per farm assessment visit" — hence the
+                    # required `farm` (spec §4.1 previously had member + visit only, which
+                    # could not represent a member with three farms owing three fees). The
+                    # visit FK arrives with `FarmVisit` (C1); the fee is declared before a
+                    # visit exists. Turnover is DECLARED by the farmer and peer-reviewed —
+                    # never inferred — and the band code, its printed label and the amount
+                    # are SNAPSHOTTED on the row: the schedule is policy and changes at an
+                    # AGM, while the row is what somebody was asked to pay.
+                    # Payable BEFORE the visit (D32); membership must be paid up first
+                    # (OPP §2.3). A significant change to land, production system or inputs
+                    # means the initial rate, and RENEWAL alongside that flag is refused
+                    # rather than re-priced — "the group may require" is the group's call.
 PriorCertification  farm, kind(PGS|THIRD_PARTY), body_name, certificate_ref,
                     outcome(GRANTED|DENIED), expires_on, denial_reason
                     # D30. FORM Sheet A: prior PGS and third-party certification, and

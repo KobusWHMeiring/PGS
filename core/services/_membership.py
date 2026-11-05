@@ -1,7 +1,13 @@
-"""The pledge: recording what a member attested, and flagging where the documents disagree.
+"""Membership rules: the pledge, and the assessment fee gate.
 
-`build_principles.md` §II puts the rule in the service, and here that is load- bearing
-rather than stylistic. Two things are true of a pledge that are not true of a row:
+The pledge half is about what a member attested; the fees half is about what must be
+settled before the group spends a day on a farm. Both live here because both are
+`_membership` concerns, and because `build_principles.md` §II puts the *rule* in the
+service layer — where it is testable before the view that reaches it exists.
+
+## The pledge
+
+Two things are true of a pledge that are not true of a row:
 
 - **It is evidentiary.** A verbal pledge or a distinctive mark is the OPP §I.2 path for
   members who cannot read and sign, and it is only worth anything if a witness and a
@@ -16,6 +22,15 @@ rather than stylistic. Two things are true of a pledge that are not true of a ro
 The readings are data in the plain sense: a table of what two documents print, named as
 they print it. Correcting OPP §V (it is the lone outlier) is a one-line change here plus
 a deliberate change to the expectations in `test_pledge.py`; it is not a migration.
+
+## The fees
+
+OPP §2.3's notes state the four rules this module enforces, and each one is cited at the
+function that applies it: fees are *per farm assessment visit*; they are *payable prior
+to the visit*; *only fully paid-up members are eligible*; and *renewal fees apply only
+where no significant changes have occurred*. The scale itself is **data** — a seeded
+`TurnoverBand` table (§4.8, D12) — so `band_for()` reads policy and `declare_assessment_fee()`
+snapshots it. Nothing here re-reads the current schedule for a fee already declared.
 """
 
 from __future__ import annotations
@@ -28,7 +43,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.utils import timezone
 
-from core.models import Member, Pledge, User
+from core.models import AssessmentFee, Farm, Member, Pledge, TurnoverBand, User
 
 
 class WitnessRequiredError(Exception):
@@ -274,3 +289,181 @@ def record_pledge(
             witness_signature=witness_signature,
             evidence_document=evidence_document or "",
         )
+
+
+# --- The assessment fee gate (OPP §2.3, D32) ----------------------------------
+
+
+class FeeScheduleNotSeededError(Exception):
+    """No turnover bands, or a scale with a hole. A fee must never be invented.
+
+    Fail closed, like `ingest_standard` refusing to guess a `StandardSet`: an unseeded
+    deployment that returned R0 would invoice a farmer nothing and record it as paid-in-full.
+    """
+
+
+class MembershipUnpaidError(Exception):
+    """OPP §2.3: *"Only fully paid-up members will be eligible for farm assessments."*"""
+
+
+class AssessmentFeeUnpaidError(Exception):
+    """OPP §2.3: *"Fees are payable prior to the farm assessment visit."*
+
+    Named for the fee, but the guard reads the row rather than a due date: `paid_on` is
+    the evidence, and a fee past its `due_on` with no receipt is not paid (D32).
+    """
+
+
+class SignificantChangeError(Exception):
+    """OPP §2.3: renewal applies *"only where no significant changes … have occurred"*.
+
+    A significant change is an **initial** assessment at the initial rate. The group *may*
+    require one — it is their discretion — so the service refuses the contradictory pair
+    rather than applying the higher rate itself, which would be an adjudication.
+    """
+
+
+def band_for(declared_turnover_cents: int) -> TurnoverBand:
+    """The band the OPP's sliding scale puts this declared turnover in.
+
+    In:  `declared_turnover_cents` — turnover as the member declared it (D29: declared,
+         never inferred). Cents, per §III's integer-money rule.
+    Out: the `TurnoverBand` row.
+    Side Effects: one query.
+    Fails: `ValueError` for a negative turnover; `FeeScheduleNotSeededError` when the
+         scale is empty, when it does not start at zero, or when no band covers the
+         figure (a hole in the seeded data is a deployment fault, not a fee of zero).
+    """
+    if declared_turnover_cents < 0:
+        raise ValueError(f"declared turnover cannot be negative: {declared_turnover_cents}")
+    bands = list(TurnoverBand.objects.order_by("min_turnover_cents"))
+    if not bands:
+        raise FeeScheduleNotSeededError(
+            "no turnover bands are seeded — run `manage.py seed_deployment` (OPP §2.3)"
+        )
+    for band in bands:
+        if band.covers(declared_turnover_cents):
+            return band
+    raise FeeScheduleNotSeededError(
+        f"no turnover band covers {declared_turnover_cents} cents; the scale ends at "
+        f"{bands[-1].code} (max {bands[-1].max_turnover_cents}) and must be open-ended "
+        "on its top band"
+    )
+
+
+def fee_cents_for(declared_turnover_cents: int, *, kind: str) -> int:
+    """The printed fee for that turnover and that kind of assessment.
+
+    In:  `declared_turnover_cents` — as `band_for`.
+         `kind` — `AssessmentFee.Kind.INITIAL` or `RENEWAL`.
+    Out: integer cents, read from the band row — never computed from a percentage.
+    Side Effects: one query.
+    Fails: as `band_for`; `ValueError` for an unknown kind.
+    """
+    band = band_for(declared_turnover_cents)
+    if AssessmentFee.Kind(kind) is AssessmentFee.Kind.INITIAL:
+        return band.initial_fee_cents
+    return band.renewal_fee_cents
+
+
+def declare_assessment_fee(
+    member: Member,
+    farm: Farm,
+    *,
+    declared_turnover_cents: int,
+    kind: str = AssessmentFee.Kind.INITIAL,
+    declared_on: date | None = None,
+    due_on: date | None = None,
+    paid_on: date | None = None,
+    receipt_no: str = "",
+    is_significant_change: bool = False,
+) -> AssessmentFee:
+    """Record the fee a member was asked for, for one farm.
+
+    In:  `member` — who owes it. `farm` — which farm it is for (OPP §2.3: *per farm*).
+         `declared_turnover_cents` — self-declared, subject to peer review (D29).
+         `kind` — INITIAL or RENEWAL.
+         `declared_on` / `due_on` / `paid_on` / `receipt_no` — the paper trail; `due_on`
+         is set when the visit is scheduled, and `paid_on` is the only evidence of payment.
+         `is_significant_change` — OPP §2.3's renewal condition.
+    Out: the saved `AssessmentFee`, with the band code, its printed label and the amount
+         **snapshotted** from the schedule as it stands now.
+    Side Effects: one INSERT. Does not touch the schedule.
+    Fails: `SignificantChangeError` for a renewal declared alongside a significant change;
+         `FeeScheduleNotSeededError` when the scale is missing or has a hole; `ValueError`
+         for a negative turnover or an unknown kind.
+    """
+    kind = AssessmentFee.Kind(kind)
+    if is_significant_change and kind is AssessmentFee.Kind.RENEWAL:
+        raise SignificantChangeError(
+            "OPP §2.3: renewal fees apply only where no significant changes have occurred. "
+            "A significant change is declared as an INITIAL fee at the initial rate."
+        )
+    if declared_turnover_cents < 0:
+        raise ValueError(f"declared turnover cannot be negative: {declared_turnover_cents}")
+
+    band = band_for(declared_turnover_cents)
+    amount_cents = (
+        band.initial_fee_cents
+        if kind is AssessmentFee.Kind.INITIAL
+        else band.renewal_fee_cents
+    )
+
+    with transaction.atomic():
+        return AssessmentFee.objects.create(
+            member=member,
+            farm=farm,
+            kind=kind,
+            turnover_band=band.code,
+            band_label=band.label,
+            declared_turnover_cents=declared_turnover_cents,
+            amount_cents=amount_cents,
+            declared_on=declared_on or timezone.localdate(),
+            due_on=due_on,
+            paid_on=paid_on,
+            receipt_no=receipt_no,
+            is_significant_change=is_significant_change,
+        )
+
+
+def assert_assessment_fee_paid(member: Member, farm: Farm) -> None:
+    """Every path that costs the group a visit day calls this first (D32).
+
+    In:  `member`, `farm` — the pair the fee is owed on.
+    Out: None. Returns quietly when a paid fee exists for that farm.
+    Side Effects: one query.
+    Fails: `AssessmentFeeUnpaidError` when the farm has no fee row, or none with a
+         `paid_on`. An unpaid declaration is named as such, because "declared but not
+         paid" and "never declared" are different conversations with the member.
+    """
+    paid = AssessmentFee.objects.filter(member=member, farm=farm, paid_on__isnull=False)
+    if paid.exists():
+        return
+    declared = AssessmentFee.objects.filter(member=member, farm=farm).count()
+    if declared:
+        raise AssessmentFeeUnpaidError(
+            f"{declared} assessment fee(s) declared for this farm, none recorded as paid "
+            "(OPP §2.3: fees are payable prior to the visit)"
+        )
+    raise AssessmentFeeUnpaidError(
+        "no assessment fee has been declared for this farm "
+        "(OPP §2.3: fees are payable prior to the visit)"
+    )
+
+
+def assert_fees_paid_for_assessment(member: Member, farm: Farm) -> None:
+    """The single entry point for "may this visit go ahead?" — D32.
+
+    In:  `member`, `farm`.
+    Out: None.
+    Side Effects: two queries.
+    Fails: `MembershipUnpaidError` first, then `AssessmentFeeUnpaidError`. The order is
+         deliberate: an unpaid membership is the more fundamental failure, and telling a
+         member they owe an assessment fee while their membership has lapsed is the wrong
+         conversation.
+    """
+    if not member.is_paid_up:
+        raise MembershipUnpaidError(
+            "OPP §2.3: only fully paid-up members are eligible for farm assessments"
+        )
+    assert_assessment_fee_paid(member, farm)

@@ -33,6 +33,7 @@ from core.models._core import (
     User,
     UserRole,
 )
+from core.models._fees import AssessmentFee, MembershipFee, TurnoverBand
 from core.models._membership import (
     CommitteePosition,
     CommitteeTerm,
@@ -41,13 +42,13 @@ from core.models._membership import (
     FarmCategory,
     FarmContact,
     Member,
-    MembershipFee,
     Pledge,
 )
 from core.models._public import PublicDocument
 
 __all__ = [
     "ASSESSOR_CAPABILITY",
+    "AssessmentFee",
     "Category",
     "ChatMessage",
     "ChatSession",
@@ -68,6 +69,7 @@ __all__ = [
     "REFUSAL_NOTES",
     "Role",
     "Seal",
+    "TurnoverBand",
     "User",
     "UserRole",
 ]

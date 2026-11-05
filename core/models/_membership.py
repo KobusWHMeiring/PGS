@@ -346,34 +346,6 @@ class CommitteeTerm(models.Model):
         return not (self.holder_name or "").strip()
 
 
-class MembershipFee(models.Model):
-    """A membership subscription payment for one explicit period.
-
-    The period lives on the **row**, never in the calendar (D39): "payable by the
-    end of February" is group policy, so a February deadline is data. `paid_on` is
-    nullable because a fee can be recorded before it is settled — `Member.is_paid_up`
-    requires a date.
-
-    `kind` is a plain `CharField` with no `choices=`: fee kinds are group data, and
-    sub-plan A5 decides the vocabulary. Inventing an enum here would put a
-    deployment's fee names into code.
-    """
-
-    member = models.ForeignKey(Member, on_delete=models.PROTECT, related_name="fees")
-    kind = models.CharField(max_length=32, blank=True)
-    period_start = models.DateField()
-    period_end = models.DateField()
-    amount_cents = models.IntegerField()  # §III: integer cents, never a float
-    paid_on = models.DateField(null=True, blank=True)
-    receipt_no = models.CharField(max_length=64, blank=True)
-
-    class Meta:
-        ordering = ["member_id", "period_start"]
-
-    def __str__(self) -> str:  # pragma: no cover - admin convenience
-        return f"{self.period_start}..{self.period_end}"
-
-
 def pledge_evidence_storage_location() -> str:
     """The private root (§VI) — evidence photos are personal data, not public assets.
 
