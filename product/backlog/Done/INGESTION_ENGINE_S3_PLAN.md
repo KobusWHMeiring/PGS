@@ -1,5 +1,10 @@
 # S3 — the generator emits the table block (INGESTION_ENGINE_PRD.md §5, S3)
 
+**Status:** Done 2026-11-05 (session `1p`) — S3 closed; `INGESTION_ENGINE_PRD.md` stays In Progress
+because **S5** is what is left (the landscape's four declarations, Appendix 6a and 7). What landed, and
+what it refused, is §3.15 of that PRD; the narrative is
+`product/docs/handover/SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md`.
+
 **Goal:** `scripts/build_corpus.py` writes `<!-- table … -->` blocks itself — structure from the
 composite §3.14 chose, characters from the page's own text layer verified per cell — and every block
 it writes records the extraction that produced it, so the gate judges the artefact without a flag.

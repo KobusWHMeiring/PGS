@@ -661,6 +661,55 @@ Judging a cell is a comparison, so **the comparison has to be on the screen at t
 as a hard rule in `pgs-presenting-uat`, and the page is now side-by-side with the full-size page one
 click away.
 
+### 3.15 What S3 landed (2026-11-05): the generator writes the block, and the page supplies the characters
+
+§3.14 decided *who proposes the structure*. §3.15 is the slice that makes the decision operative, and
+it changed three things about how a table reaches the corpus.
+
+**The block is emitted, not typed.** `scripts/table_blocks.py` takes a proposed structure — the arm's
+grid, committed under `knowledge/proposals/` — resolves every cell against the body's *printed lines*,
+and writes the `<!-- table … -->` block itself, splicing the page's own characters, line breaks and
+blank lines included. Three rules, each proved by a guard that was broken and watched red:
+
+1. **A cell's characters are the page's.** The proposal's text is a *locator*, never a source: it is
+   matched exactly, or with spaces set aside **only where the page letter-spaces a word** (6a's
+   `b o v i n e`), at a word boundary — because `1,500` occurs inside `11,5000` as a run, and that
+   slice would put a number the paper does not print into a row with R3 still green.
+2. **One forward-only cursor, on the pages the proposal names.** A cell cannot stitch a line from above
+   the table into a row, and a table whose cells print out of order is refused rather than re-ordered.
+   The page filter is load-bearing: the landscape prints the same five column labels on *every* table
+   page, so a page-blind search resolves a header to the wrong table (`testing_hazards.md` §3.33).
+3. **The region is claimed.** Every printed line between the first and last a cell claimed must belong
+   to a cell, or the block would delete it (`testing_hazards.md` §3.25). Blank lines and page markers
+   are the only things allowed to go unclaimed.
+
+What it cannot verify, it **refuses by name**, and the draft keeps the page's prose: a cell the paper
+does not print, a sub-clause marker inside the table, a printed line nobody claims. That is the
+difference between a generator and a transcriber, and it is why the landscape's two refusals are the
+right outcome rather than a failure to finish.
+
+**The structure is data, found by bytes.** `knowledge/proposals/<doc>.structure.json` is an arm's read,
+reduced by `scripts/propose_tables.py` from a cached response and carrying its banner (`structure`,
+`processor`, `project`, `captured`, `reduced_from`). `<doc>.reviewed.json` holds the fields **no
+extractor produces** — the legend, the shape, the titles, the fee labels, the fork — so regenerating a
+reviewed artefact does not drop a person's sentence. Lookup is by the PDF's **sha256**, not by
+`CORPUS_DOCUMENTS`: a renamed or reprinted document finds no proposal, which is the truth, and a new
+standard needs no registry entry, enum or migration.
+
+**The extraction is recorded on the block** (requirement 1, R1). `extraction: layout|raw|table` is a
+validated block field, `check_tables.py` judges the artefact against the pass the artefact names, and
+the command line's `--pages-mode` is demoted to the draft-only escape — refused when it contradicts
+what the artefact records. The four reviewed blocks now declare theirs (four added lines in `opp.md`
+and `landscape.md`, nothing else).
+
+**Measured.** `python scripts/build_corpus.py --doc opp --force` reproduces `opp.md` **byte for byte**
+(660 lines, no diff): the emitter's block *is* the block a reviewer signed, and the test that says so
+builds its body from the committed page fixtures, so it needs no PDF and no extractor
+(`tests/tools/test_table_blocks.py`). The landscape's committed proposal is refused at
+`proposal 1, column 1` (its page-4 table's rows are printed before the heading the de-columned page
+found) and `proposal 2, row 2, column 3` (the arm splits a merged box, and the seal artwork cell) —
+S5's four declarations, written down rather than guessed.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -693,7 +742,7 @@ click away.
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
 | **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Closed 2026-11-05. Six measurements (§3.5–§3.9), the key reviewed and signed (§3.11, D85), all three arms re-scored against it at no cost (§3.12), and D82 answered as a composite — Layout Parser for structure, the page's text layer for characters, Docling for Appendix 7's columns, the harness for the verdict (§3.14). The credential bought its own answer: no arm beats the free ones, and the union stops at 5 of 8 because the rest is semantic. S3 and S5 are what is left.** |
-| **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
+| **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | **Landed 2026-11-05 (§3.15).** `scripts/table_blocks.py` resolves a proposed structure against the body's printed lines and writes the block, splicing the page's own characters per cell; the structure is committed data found by the PDF's **sha256** (`knowledge/proposals/`, reduced from the cached arm response by `scripts/propose_tables.py`). `python scripts/build_corpus.py --doc opp --force` reproduces `opp.md` **byte for byte**, and the block carries `extraction:` so the gate judges it against the pass it came from (R1). The landscape's proposal is committed and refused on two cells — its page order and merged fee box are S5's. |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |
 
@@ -706,7 +755,13 @@ answer, with the review written down as debt.
 ## 6. Success Criteria
 
 - [ ] A document not in `CORPUS_DOCUMENTS` can be ingested and its tables chunked with column
-      meaning, with no hand-authored table block.
+      meaning, with no hand-authored table block. **Proved at the seam (S3, 2026-11-05):**
+      `tests/tools/test_new_document_ingest.py` emits the block from committed structure data, writes
+      an artefact under a `doc_key` the registry does not have, ingests it through the explicit-
+      metadata path with `embed=False`, and asserts the row chunk's `embedding_text` names each
+      printed column. **Not proved:** that a genuinely new *standard's* paper has a structure — no
+      arm response exists for any document outside the eight shape pages, and S3 may not re-run the
+      arms. The first real ingestion runs `scripts/propose_tables.py --pdf <new> --pages …` once.
 - [ ] All eight shape targets pass, and the strict-xfail markers are gone (the audit test then
       reports zero uncovered shapes).
 - [ ] Appendix 6a's 20 chunks carry their column meaning; Appendix 7's chunks are rows, not

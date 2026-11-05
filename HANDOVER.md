@@ -1,75 +1,62 @@
-# Handover — D82 answered as a composite, and a judgement surface taught us to put both sides on screen
+# Handover — S3 is closed: the generator writes the table block, and the page supplies the characters
 
-> ## START HERE — S2 is closed: the arms were each best at a different job
+> ## START HERE — S3 is closed: the block is emitted, and the extraction is on the artefact
 >
-> **`INGESTION_ENGINE_PRD.md` §3.14 is the decision (2026-11-05, session `1o`): D82 is not "which
-> extractor".** The owner's call — *"we take our best options from each"* — is now the PRD's answer:
-> **Layout Parser v1.6-pro for structure** (8/8 tables found; the only arm that reads the 1,112-character
-> cell end to end), **the page's own text layer for characters** (every extractor misreads something: 43
-> cells the Layout Parser cannot confirm, Docling's `bov ine`, the VLM's `70°C`), **Docling for Appendix
-> 7's four columns** (its grid was right all along, and it finds no table on the landscape's merged
-> cells), **the VLM `lines` form as a cheap proposer**, and **S4's harness for the verdict**. No
-> credential buys the semantic half, which is why the union stops at **5 of 8** whatever is spent.
+> **`INGESTION_ENGINE_PRD.md` §3.15 is what S3 landed, and §3.14 is still the decision it implements.**
+> D82's composite is now operative: **structure from the Layout Parser** (committed under
+> `knowledge/proposals/`, found by the PDF's **sha256**, not by a registry key), **characters from the
+> page's own text layer verified per cell** (R3's rule, applied at emission), **the harness for the
+> verdict**. `scripts/table_blocks.py` resolves a proposed cell against the body's *printed lines* and
+> splices the page's characters out; it never writes a character the page did not print.
 >
-> **What S2 measured and what it cost.** Six measurements (§3.5–§3.9) across Docling 2.146.0, two VLMs ×
-> three prompt forms, and Document AI's Form and Layout parsers; **$0.55 of model spend**, one GCP
-> credential on the owner's own project (ADC — nothing in the repo), and the two API arms' raw answers
-> cached, so the re-score after the key was corrected cost **nothing**. The Layout Parser's structure is
-> 60–85 s/page on a 135-page corpus: **one-off, ~2.5 h, never in the edit loop** (requirement 10). Time
-> was never the axis; unconfirmed cells and human correction are.
+> **The measurement that matters:** `python scripts/build_corpus.py --doc opp --force` reproduces
+> `knowledge/corpus/opp.md` **byte for byte** (660 lines, `git status` clean). The block the generator
+> writes *is* the block a reviewer signed — and a test proves it again from the committed page
+> fixtures, so the regression needs no PDF and no extractor.
 >
-> **The key is signed and settled, and the review changed an arm's score.** 68 of 68 claims reviewed
-> (§3.11, D85), **one amended** (`long_cell.cell.0.0` starts with the printed `Step 3`), and the re-score
-> (§3.12) moved the **Layout Parser 2/8 → 3/8** with Docling byte-identical. The arbitration of the
-> eleven remaining disputes (§3.13) then **kept** Appendix 6a's two-label header — so four readers
-> merging it is a **tool failure**, not our defect, and §3.12's guess that it was ours is withdrawn.
-> **Seven claims are unjudged and no longer gate anything**; S5 reviews those two shapes through the
-> harness, with the page beside the transcription.
+> **The datum that was on a command line is now on the artefact.** `extraction: layout|raw|table` is a
+> validated block field, the harness gains **R1** (a block that does not record its pass is a
+> violation), and `scripts/check_tables.py` judges the rendering the artefact names. `--pages-mode` is
+> the draft-only escape, refused when it contradicts the artefact. The four reviewed blocks declare
+> theirs — four added lines in `opp.md`/`landscape.md` and nothing else.
 >
-> **The lesson that cost this session its last hour, and it is written down twice.** A judgement surface
-> is a **comparison**: the shape-key review put the page *beside* the grid and 68 of 68 were judged with
-> no "can't tell"; the arbitration surface *stacked* evidence above the question and showed only a
-> shape's first page, and the owner's notes came back as *"I can't figure out what you need from me"* —
-> four of eleven verdicts caused by layout, not by the paper. It is **hard rule 9** in
-> `pgs-presenting-uat`, and `product/design/uat/arbitrate_shapes.html` is now side-by-side with the
-> full-size page one click away.
+> **What the landscape refuses, and why that is the right outcome.** Its proposal is committed and
+> refused on two cells: its page-4 table's rows are printed *before* the heading the de-columned page
+> found, and the arm splits the merged fee box and reads the seal artwork. Three rules produce those
+> refusals: a cell is the page's (exact, then despaced only where the page letter-spaces, word-boundary
+> checked), cells resolve in one forward-only cursor **on the pages the proposal names**, and every
+> printed line inside the region must be claimed by a cell. **S5** adds the four declarations (bullets,
+> the merged box, artwork, the page-break row) and closes Appendix 6a and 7.
 >
-> **What is next is S3 and S5, not more evaluation.** S3 emits `<!-- table … -->` blocks from the
-> composite and records the extraction mode on the artefact; S5 re-reviews Appendix 6a (20 rows) and
-> Appendix 7 through the harness and deletes their bespoke handling. `scripts/fast.sh --critical` is the
-> after-edit check, `scripts/verify.sh` the gate.
+> **Do not re-run the arms and do not re-open the key** — the two claims that mattered are settled
+> (§3.14) and the seven unjudged ones gate nothing. A genuinely new document's structure is one
+> command: `python scripts/propose_tables.py --pdf <new> --pages …` (it reads a cached response or a
+> fresh one; the gate itself never needs an extractor).
 >
-> **Instruments, all committed, none a dependency.** `scripts/eval_extractors.py` (Docling),
-> `scripts/eval_openrouter.py` + `scripts/table_reads.py` (VLM), `scripts/eval_documentai.py` (REST +
-> ADC), `scripts/shape_review.py` (the signed key's surface), `scripts/shape_arbitration.py` +
-> `shape_disputes.py` (the disputes and what each arm said), `scripts/shape_review_signoff.py`
-> (`--from` for a full review, `--amend` for one claim). 44 tests across the tooling, guards broken and
-> watched red; 8 browser tests drive the two surfaces.
+> **What the tests say, on this box, 2026-11-05.** `scripts/fast.sh --critical` **182 passed / 4
+> deselected in 45.33 s** (`tests/tools/test_check_tables.py` joined the lane in this commit and costs
+> ~1 s). The gate's own pytest step, `--create-db` against `…/5433/pgs_verify`, is **1820 passed / 1
+> skipped / 8 xfailed in 240.27 s** — and the eight strict-xfail shape targets are untouched
+> (`git status` on `test_ingestion_shapes.py`: empty). `manage.py check`, `makemigrations --check` and
+> `lint-imports` all pass by hand. **`scripts/verify.sh` still cannot be quoted green from this tree:**
+> its first step fails on **another session's** `scripts/copy_deck.py` (32 KB) — not on any commit.
 >
-> **Two hazards to inherit.** *An evidence file's clip is not the read* — the arm JSONs keep four sampled
-> rows and clip cells at 200 characters, so a probe reading them as the read accuses arms of defects
-> they do not have (`testing_hazards.md` §3.31). And *read the response before believing the score*: the
-> Layout Parser returns a block hierarchy with no `document.text`, and reading it like the Form Parser
-> scored it 0 of 8 on every page — our bug, not the tool's.
+> **Housekeeping.** This working tree still carries **another session's uncommitted work**
+> (`scripts/copy_deck.py`, `product/design/COPY_DECK.md`, `COPY_VOICE.md`, `REFERENCE_COPY_CORPUS.md`,
+> `fetch_reference_copy.py`, and edits to the public templates and `core/services/_public.py`) — commit
+> paths explicitly, never `git add -A`. Splitting `copy_deck.py` is that session's job.
 >
-> **Do not refresh the dev corpus casually.** `corpus_check` here reports `landscape` **drift** and its
-> 17 chunks carry **0** labelled renditions against live's 8, so dev is behind live. The repo `.env`
-> holds only `DJANGO_SECRET_KEY`, but **this shell holds `GEMINI_API_KEY`**, so a refresh *from an agent
-> shell* would embed for real — and a refresh without a working key writes **17 NULL vectors that then
-> report "already ingested" forever** (`deploy/README.md` §4). Live is the reference DB, not this box.
+> **Do not run `scripts/build_corpus.py --force` on a document with a table block without reading the
+> diff** — S1 refuses before writing, and `--discard-tables` means the review is yours to retype. After
+> a chunker or parser change: `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
+> "Corpus is current" compares the artefact's hash and the chunk count, not the derived text (§3.24).
 >
-> **Do not run `scripts/build_corpus.py --force` on a document with a table block** — it refuses before
-> writing; the only way past is `--discard-tables`, and then the review is yours to retype.
-> **"Corpus is current" does not mean "rebuilt"** — drift compares the artefact's hash and the chunk
-> count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
-> `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
->
-> **Two housekeeping notes for the next session.** This working tree carries **another session's
-> uncommitted work** (`scripts/copy_deck.py`, `product/design/COPY_DECK.md`, `COPY_VOICE.md`,
-> `REFERENCE_COPY_CORPUS.md`, `fetch_reference_copy.py`, and edits to the public templates) — commit
-> paths explicitly, never `git add -A`. And `scripts/copy_deck.py` is **31 KB**, which fails
-> `scripts/context.py --check` on this tree (not on any commit — a clean checkout of HEAD reports 0
-> breaches); splitting it is that session's job.
+> **Do not refresh the dev corpus.** `GEMINI_API_KEY` is in this shell but not in the repo `.env`; a
+> refresh without it writes 17 NULL vectors that report "already ingested" forever
+> (`deploy/README.md` §4).
+
+---
+
 
 The landscape is closed (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
 `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried into
@@ -82,25 +69,27 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation, vlm-arm,
 re-score, and arbitration sessions
-**Repo state:** `main` — **unpushed**, and this file will not tell you how many: sessions `1h`, `1n`,
-and `1o` are three unpushed runs (`1h`'s five commits: the OpenRouter arm, §3.8's correction, the
-Docling re-run, the D82 page, the Document AI arm; `1n`'s eight: the verification surface, its docs, the
-browser test, the count correction, the unclaimed-cell wording, the signed review, the `Step 3`
-amendment and re-sign, and the D83→D85 reconciliation; `1o`'s four: the re-score with its evidence and
-§3.12, the payload fix with its browser tests, the first pass with §3.13, and the close with §3.14).
-**Let the command answer:** `git rev-list --count origin/main..HEAD`. Everything before `1h` is pushed.
-`main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate unpushed lines** with no
-code overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand
-on those two files.
+**Repo state:** `main` — **three unpushed commits**, all this session's (`b26609a` the extraction
+field with R1, `665b1fb` the emitter with the proposals, and the close: hazards, the PRD's §3.15 and
+S3 row, the handover and this file). Everything before `1p` is **pushed** — `1h`, `1n` and `1o`
+were pushed before this session started, so the stale "three unpushed runs" note this file carried is
+itself the example of why the next line is the only one that answers it.
+**Let the command answer:** `git rev-list --count origin/main..HEAD`.
+`main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate lines** with no code
+overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand on
+those two files.
 
-**On this tree** (2026-11-05, session `1o`, after the last commit): `python -m pytest -q --create-db`
-— the gate's own pytest step — **1756 passed / 1 skipped / 8 xfailed in 139.13 s**, run as
+**On this tree** (2026-11-05, session `1p`, after the last commit): `python -m pytest -q --create-db`
+— the gate's own pytest step — **1820 passed / 1 skipped / 8 xfailed in 240.27 s**, run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
-serves 5433, `testing_hazards.md` §3.1). The same command measured **79.37 s** a few runs earlier with
-1750 tests on an idle box — quote cold *and* warm (§3.17). `scripts/fast.sh --critical` **172 passed /
-4 deselected in 12.45 s**. **`scripts/verify.sh` cannot be quoted green from this working tree**: its
-first step fails on **another session's** `scripts/copy_deck.py` (31 KB); a clean checkout of HEAD
-reports **0 breaches**, so the commits are shippable and the tree is not.
+serves 5433, `testing_hazards.md` §3.1). The same suite measured **234.99 s** with `--reuse-db` a few
+minutes earlier — quote cold *and* warm (§3.17), and this box is not idle. `scripts/fast.sh --critical`
+**182 passed / 4 deselected in 45.33 s** (the file that joined the lane, `tests/tools/test_check_tables.py`,
+costs ~1 s; the lane was 172 in ~40 s before it). **`scripts/verify.sh` cannot be quoted green from this
+working tree**: its first step fails on **another session's** `scripts/copy_deck.py` (32 KB); my own
+files are all inside the cap, and steps 2–4 pass by hand — `manage.py check` clean,
+`makemigrations --check` "No changes detected", `lint-imports` `knowledge must never import core KEPT`,
+then the suite above.
 
 **Live:** `https://organicguarantee.africa` on the homtini VPS, deployed 2026-11-03 at **`06bb11a`**
 (last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,
@@ -125,6 +114,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1p` 2026-11-05 (session 23) — S3: the generator emits the table block, and the page supplies the characters — [`SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md`](product/docs/handover/SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md)
 - `1o` 2026-11-05 (session 22) — the re-score moves an arm a shape, and a surface that stacked its evidence — [`SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md`](product/docs/handover/SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md)
 - `1n` 2026-11-05 (session 21) — the verification surface, and 68 claims the owner has not judged — [`SESSION_1n_2026-11-05_the-verification-surface.md`](product/docs/handover/SESSION_1n_2026-11-05_the-verification-surface.md)
 - `1h` 2026-11-04 (session 20) — three arms measured, and an answer key nobody checked — [`SESSION_1h_2026-11-04_three-arms-and-an-answer-key-nobody-checked.md`](product/docs/handover/SESSION_1h_2026-11-04_three-arms-and-an-answer-key-nobody-checked.md)

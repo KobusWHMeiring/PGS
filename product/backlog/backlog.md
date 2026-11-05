@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-05 14:44
+> Generated: 2026-11-05 15:56
 
 ## Ready (up next)
 
@@ -59,6 +59,7 @@ _none_
 - **PRD: The concordance — the standard on one screen, and a citation that opens a line** - `Done\CONCORDANCE_PRD.md` - Status: **Done** — built 2026-10-27 (all eleven tasks of `CONCORDANCE_PLAN.md`), and
 - **PRD: The context cuts — a sentence and a link, and a file that fits its cap** - `Done\CONTEXT_CUTS_PRD.md` - Status: **Done 2026-11-03** — steps 1-12 landed; `--check` is step 1/4 of the gate
 - **PRD: The documents page offers the concordance** - `Done\DOCUMENTS_READER_LINK_PRD.md` - Status: **Done 2026-10-28** — built, and **UAT Scenario 12 SIGNED PASS** by Kobus (Product) in
+- **S3 — the generator emits the table block (INGESTION_ENGINE_PRD.md §5, S3)** - `Done\INGESTION_ENGINE_S3_PLAN.md` - Status: Done 2026-11-05 (session `1p`) — S3 closed; `INGESTION_ENGINE_PRD.md` stays In Progress
 - **PRD: The certification landscape's tables — reviewed rows, and the rule for every other table** - `Done\LANDSCAPE_TABLES_PRD.md` - Status: **Done 2026-11-01** — built in §12a–§12g (steps 0–6 and the §12f design's steps 1–8) and **UAT SIGNED 2026-11-01** — `tests/uat/landscape_tables_uat.md` carries six **PASS** results, signed by Kobus (Product) against commit `ecd3c8d`; applied by `scripts/uat_signoff.py`. The PGS administrator and committee reviewer seats are still empty (D4). Carried forward and named rather than hidden: **`TABLE_BANDS`** (a transposition inside one printed row-line) and **the corpus-level table-page guard**, both inside D80's engine work; the generator's table-block rule (`scripts/build_corpus.py --force --doc landscape` still destroys the review). See §12h.
 - **MVP 0 Implementation Plan — Standards Foundation & Public Shop Window** - `Done\MVP0_PLAN.md` - Status: Superseded — do not execute; see `MVP0_PLAN_V2.md`
 - **Passage layout — Implementation Plan** - `Done\PASSAGE_LAYOUT_PLAN.md` - Status: **Done** — all six tasks landed 2026-10-27; **UAT Scenario 8 signed PASS 2026-10-28
@@ -89,14 +90,17 @@ the generated index's "To Do" section.
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
 - [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
-      **has a PRD, and S2 is closed** (2026-11-05): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      **has a PRD, and S2 and S3 are closed** (2026-11-05): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
       S0 is the **eight-shape fixture set**; S1 is `build_corpus.py` refusing to overwrite a reviewed
       `<!-- table -->` block; S4 is the **verification harness** (`knowledge/table_harness.py` +
       `scripts/check_tables.py`); S2 measured three arms against the eight shapes over six
       investigations and **answered D82 as a composite** (PRD §3.14) — Layout Parser for structure (8/8
       tables found), the page's own text layer for characters (R3), Docling for Appendix 7's four
       columns, the VLM `lines` form as a cheap proposer, the harness for the verdict. Nothing new is
-      bought and no single arm wins. **What is left is three items, below.**
+      bought and no single arm wins. **S3 then made the composite operative** (session `1p`): the
+      generator emits the block from committed structure, verified per cell against the page, and
+      records `extraction:` on it — `opp.md` regenerates byte for byte (PRD §3.15). **What is left is
+      S5 and the two review items below.**
 - [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
       (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
       email, the role description) and three decisions they force. No PRD references it and no
@@ -174,13 +178,14 @@ the generated index's "To Do" section.
 
 ## Ingestion engine — what S2 left (2026-11-05)
 
-- [ ] **S3 — the generator emits `<!-- table … -->` blocks, and records the extraction mode on the
-      artefact.** This is the slice that makes the composite real: the Layout Parser *proposes* the
-      grid, the page's text layer supplies the characters, the harness refuses a block that breaks
-      requirements 2–7. The harness's one unfinished datum is the **extraction mode** the cells came
-      from (the landscape passes against `-table` and fails ten ways against `-layout`), which S3 must
-      write onto every block it emits. Depends on nothing external: no credential, no new install.
-      Evidence and the requirements it must satisfy: `INGESTION_ENGINE_PRD.md` §4 and §5.
+- [x] **S3 — the generator emits `<!-- table … -->` blocks, and records the extraction mode on the
+      artefact.** **Done 2026-11-05 (session `1p`).** `scripts/table_blocks.py` resolves the proposed
+      structure against the body's printed lines and splices the page's own characters, per cell;
+      `knowledge/proposals/` holds the arm's structure, found by the PDF's sha256; `extraction:` is a
+      validated block field and the harness gains **R1**. `build_corpus.py --doc opp --force`
+      reproduces `opp.md` byte for byte. The landscape's proposal is committed and **refused on two
+      cells** — its page order and merged fee box are S5's. `INGESTION_ENGINE_PRD.md` §3.15 records
+      what landed and what was refused.
 - [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 (4 chunks) through the harness**, and
       delete their bespoke handling. These are the two live defects the PRD measures and the two the
       harness cannot see, because they are not table blocks at all. The review must be **side by side**

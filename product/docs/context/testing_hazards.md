@@ -1949,6 +1949,56 @@ Rule: score from the cache, never from the evidence file. When a dispute is at c
 `mismatches` lines (computed on the full read) or re-parse the cached response; treat `rows` in an
 evidence JSON as a sample and say so wherever the file is read.
 
+### 3.32 A section's body does not carry its own page marker
+
+`build_corpus.assemble_body` is called with `after=current_page` — the marker for the page a section's
+heading sits on was already emitted *before the heading*, so the section's body begins with no marker
+a page read. An emitter run once per section and asking "which page is in force here?" answers "none"
+for every section, and refuses a row with `no page marker is in force`.
+
+Evidence (S3, 2026-11-05, `python scripts/build_corpus.py --doc opp --stdout`):
+    opp: proposal 1, row 1: no page marker is in force, so the row cannot say which page it starts on
+
+Consequence: a correct table is refused for a reason that has nothing to do with the table, and the
+message blames the paper.
+
+Rule: a per-section consumer takes the page as an argument (`table_blocks.emit(..., start_page=…)`),
+not from the body. `build()` knows it; `assemble_body`'s `after=` is why.
+
+### 3.33 The landscape prints the same five column labels on every table page
+
+A proposal whose cells are resolved by searching the whole document finds the *first* page that prints
+the header — page 6's `Key steps | Resource documents…`, in this document — and then reports the rows
+of the page-4 table as "out of printed order", a true sentence about the wrong page.
+
+Evidence (2026-11-05): resolving `page_break_row` page-blind put `Key steps` on page 6's table and
+refused `Step 1 …` at row 1; with `allowed={4}` (the proposal's `pdf_pages`) the refusal moved to the
+page-4 section where the cell really is, and named the cell.
+
+Consequence: a page-blind search is not "more permissive", it is wrong in the direction that looks
+like a defect in the transcription.
+
+Rule: a structure proposal declares the PDF pages its table is on, and the resolver refuses to look
+outside them. Repeated headers are the norm in this corpus, not the exception.
+
+### 3.34 A guard proved red on an input that never reached the guard
+
+The first version of `test_a_proposal_is_attempted_once_across_a_documents_sections` fed the second
+section a body with **none of the table's words**. Removing the `attempted` filter left the test green,
+because the emitter's `absent` outcome ("this table is not in this text") fired first — the guard under
+test was never consulted, so the proof proved nothing.
+
+Evidence:
+    pending = list(proposals)      # attempted-guard removed
+    1 passed, 29 deselected        # <- the test's own input had made it vacuous
+    (second body changed to hold the table's words: 1 failed, 29 deselected)
+
+Consequence: the same family as §1.5 and §3.30 — a green test that never exercises the line it
+names — reached through the *input* rather than through the mutation.
+
+Rule: when proving a guard red, the mutated run must fail the named test **and** the input must be able
+to reach the guard. If a second, cheaper rule can short-circuit first, the test is about that rule.
+
 ## 5. Template for a new entry
 
 ```markdown

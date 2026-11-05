@@ -19,14 +19,17 @@ the generated index's "To Do" section.
       `AGENTS.md` context-discipline block are done; `--check` reports 25 breaches today (11
       source files, 14 decision rows).
 - [ ] **Ingestion engine generalisation** (**D80**: X2 now, X3 when a document demands it) —
-      **has a PRD, and S2 is closed** (2026-11-05): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
+      **has a PRD, and S2 and S3 are closed** (2026-11-05): `product/backlog/In Progress/INGESTION_ENGINE_PRD.md`.
       S0 is the **eight-shape fixture set**; S1 is `build_corpus.py` refusing to overwrite a reviewed
       `<!-- table -->` block; S4 is the **verification harness** (`knowledge/table_harness.py` +
       `scripts/check_tables.py`); S2 measured three arms against the eight shapes over six
       investigations and **answered D82 as a composite** (PRD §3.14) — Layout Parser for structure (8/8
       tables found), the page's own text layer for characters (R3), Docling for Appendix 7's four
       columns, the VLM `lines` form as a cheap proposer, the harness for the verdict. Nothing new is
-      bought and no single arm wins. **What is left is three items, below.**
+      bought and no single arm wins. **S3 then made the composite operative** (session `1p`): the
+      generator emits the block from committed structure, verified per cell against the page, and
+      records `extraction:` on it — `opp.md` regenerates byte for byte (PRD §3.15). **What is left is
+      S5 and the two review items below.**
 - [ ] **F3 — SAOSO outreach and the digital systems role** — `product/design/f3_saoso_outreach_and_role.html`
       (committed 2026-11-03, session `1e`): a review surface with two documents to approve (the SAOSO
       email, the role description) and three decisions they force. No PRD references it and no
@@ -104,13 +107,14 @@ the generated index's "To Do" section.
 
 ## Ingestion engine — what S2 left (2026-11-05)
 
-- [ ] **S3 — the generator emits `<!-- table … -->` blocks, and records the extraction mode on the
-      artefact.** This is the slice that makes the composite real: the Layout Parser *proposes* the
-      grid, the page's text layer supplies the characters, the harness refuses a block that breaks
-      requirements 2–7. The harness's one unfinished datum is the **extraction mode** the cells came
-      from (the landscape passes against `-table` and fails ten ways against `-layout`), which S3 must
-      write onto every block it emits. Depends on nothing external: no credential, no new install.
-      Evidence and the requirements it must satisfy: `INGESTION_ENGINE_PRD.md` §4 and §5.
+- [x] **S3 — the generator emits `<!-- table … -->` blocks, and records the extraction mode on the
+      artefact.** **Done 2026-11-05 (session `1p`).** `scripts/table_blocks.py` resolves the proposed
+      structure against the body's printed lines and splices the page's own characters, per cell;
+      `knowledge/proposals/` holds the arm's structure, found by the PDF's sha256; `extraction:` is a
+      validated block field and the harness gains **R1**. `build_corpus.py --doc opp --force`
+      reproduces `opp.md` byte for byte. The landscape's proposal is committed and **refused on two
+      cells** — its page order and merged fee box are S5's. `INGESTION_ENGINE_PRD.md` §3.15 records
+      what landed and what was refused.
 - [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 (4 chunks) through the harness**, and
       delete their bespoke handling. These are the two live defects the PRD measures and the two the
       harness cannot see, because they are not table blocks at all. The review must be **side by side**
