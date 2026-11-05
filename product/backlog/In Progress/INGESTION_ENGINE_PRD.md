@@ -3,9 +3,10 @@
 **Status:** In Progress — **S0 and S1 landed 2026-11-03 (session `1e`); S2 is measured for three arms
 (Docling §3.5/§3.8, the OpenRouter VLM §3.7, Document AI §3.9). §3.10 is the open item that gates the
 choice: the eight-shape answer key is agent-authored and unreviewed, so the arms' ranking is not
-established until the owner judges the cells.** S3–S5 are open.
+established until the owner judges the cells. The surface that judgement happens on is built (§3.11,
+session `1i`); it is waiting for the signature.** S3–S5 are open.
 **Owner:** Corpus ingestion (sub-plan B), grounded chat (sub-plan D)
-**Last Updated:** 2026-11-04
+**Last Updated:** 2026-11-05
 **Scope:** How a table becomes reviewed data when no human has reviewed it. In: extraction, its
 verification, and the generator. Out: the reader's rendering (D70.1–D72), retrieval ranking (D79),
 and the chatbot's answer shape (G11).
@@ -456,8 +457,8 @@ mean **"no arm guessed the reviewer's call"**.
 Form 1/8) is **not established**, because the thing they are ranked against is unreviewed. Requirement 1 of this PRD says
 *no unreviewed table reaches the corpus*; the same standard has to apply to the key that judges them.
 The order of work is therefore: **build the verification surface** (page image beside the expected grid,
-cell by cell, judged by the owner), **then re-score all three arms from cache** — which costs nothing,
-because every arm's raw answer is now stored.
+cell by cell, judged by the owner — **built 2026-11-05, §3.11**), **then re-score all three arms from
+cache** — which costs nothing, because every arm's raw answer is now stored.
 
 **Where a non-developer should start:** `product/design/d82_table_extraction_what_we_learned.html` —
 the same three investigations, the scoreboard, the four options and a §18.3 export, written for the
@@ -474,6 +475,35 @@ shapes are cheaper to buy than to review. The cheaper interim is the `lines` for
 (the model says which printed lines are a cell; the page supplies the characters; the S4 harness
 checks the result) — which needs no credential, and whose remaining failures are visible as named
 mismatches rather than as trust.
+
+### 3.11 The verification surface is built (2026-11-05): 68 claims, 41 cells, and a signature that cannot outlive the key
+
+§3.10 set the order — review the key, then re-score. **The surface is built and no cell has been judged
+yet.** `scripts/shape_review.py` regenerates `product/design/uat/shape_key_review.html`: one
+self-contained file (no CDN, no font, no network — the page images are `data:` URIs) in which each of
+the eight shapes is **the page, rendered from the committed PDF, beside the grid the key expects**,
+with one verdict per claim — *yes*, *no*, *can't tell*, and a reason for the last two. Nothing is
+pre-filled and nothing is scored; the owner's call is the key (`pgs-presenting-uat`, hard rule 1).
+
+**The instrument counts what the key claims, not what the page prints.** 8 shapes, **68 claims**, of
+which **41 are cells** — while those eight pages print ~60 cells in the shapes' own columns. Every
+cell the key does not assert is drawn as `—` and labelled *the key does not assert this cell*, so the
+reviewer can see the key's thinness as well as its errors. The claims are: per shape a header
+grouping, a row count and the page each row starts on; 3 divider claims on Appendix 2; and the 41 cell
+claims, each carrying the paper's text, its emptiness, its prefix/suffix, or its length.
+
+| Piece | What it is |
+|---|---|
+| `scripts/render_shape_pages.py` | renders the seven pages the shapes name from the committed PDFs and pins both hashes (the PDF and the JPEG) in `knowledge/tests/fixtures/shape_pages/MANIFEST.json`. `pypdfium2` is imported **there and nowhere else** — requirement 10 stays true |
+| `knowledge/tests/shape_pages.py` | the read side: proves the PDF and the image still hash to the pin, then returns the bytes. A hand-cropped screenshot fails |
+| `scripts/shape_review.py` | the CLI and the contract (`KIND`/`ARTEFACT_NAME`); `--check` fails when the committed file drifts from the key |
+| `scripts/shape_claims.py`, `shape_review_page.py`, `shape_review_template.py` | the same generator split by what fails differently — a claim in a review, the markup, the stylesheet and script — each under the 30 KB cap (`build_principles.md` §II) |
+| `scripts/shape_review_signoff.py` | validates an export, writes `knowledge/tests/shape_review.json` with **every claim pinned to the text it judged**, and `--check` names every claim that has changed since — a signature cannot outlive what it signed |
+| 16 tests + 5 browser tests | claim coverage and uniqueness, no network, claimed-vs-unclaimed honesty, **the drift guard broken and watched red by changing one expected value**, and the page's script executed in Chromium (the §1.30 hazard) |
+
+**A `No` does not edit the key.** This verb is *verify*: the record is evidence, and amending
+`shape_fixtures.py` is a deliberate edit with its own diff, made after reading the record. The
+re-score in §3.10 waits for the signature, but it no longer waits on a missing instrument.
 
 ## 4. Requirements
 
@@ -506,7 +536,7 @@ mismatches rather than as trust.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Three arms measured 2026-11-03/04: Docling 2/8 (§3.5, §3.8), the OpenRouter VLM 3/8 (§3.7), Document AI 1/8 Form Parser and 2/8 Layout Parser (§3.9). One declared normalisation — the paper's row-number gutter — makes Appendix 7 pass for Docling *and* the VLM (§3.8). The credential was bought and bought the answer: no arm beats the free ones. §3.10 outranks all of it: the eight-shape key is agent-authored and no human has validated a cell, so the ranking is not established. Next is the verification surface, then a free re-score.** |
+| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Three arms measured 2026-11-03/04: Docling 2/8 (§3.5, §3.8), the OpenRouter VLM 3/8 (§3.7), Document AI 1/8 Form Parser and 2/8 Layout Parser (§3.9). One declared normalisation — the paper's row-number gutter — makes Appendix 7 pass for Docling *and* the VLM (§3.8). The credential was bought and bought the answer: no arm beats the free ones. §3.10 outranks all of it: the eight-shape key is agent-authored and no human has validated a cell, so the ranking is not established. The verification surface is built (§3.11, 68 claims, 41 cells) and is waiting for the owner's signature; then a free re-score from cache.** |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |

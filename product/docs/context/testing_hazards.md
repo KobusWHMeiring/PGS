@@ -1502,6 +1502,23 @@ asking for — and the drop is run with `autocommit = True` on a plain connectio
 inside one (`ActiveSqlTransaction`). When a gate run errors en masse, check
 `select datname from pg_database` **before** reading a single traceback. Added 2026-10-28.
 
+**The drop can still be blocked by a backend, and then it reads as a code failure.** 2026-11-05, same
+tree, two gate runs 4 minutes apart: the first green at 1718 passed, the second `1 failed, 1679
+passed, 40 errors` with every error in `django_db_setup` and one real-looking failure in
+`test_ingest_transforms.py`. The cause was one orphan:
+
+    select pid, datname, state from pg_stat_activity where datname like 'test_pgs%';
+     760186 | test_pgs_verify | idle in transaction | 06:23:53
+
+`DROP DATABASE` cannot proceed past it, so `--create-db` fails the same way §3.16 describes. Fix, then
+re-run — do not read the failures first:
+
+    select pg_terminate_backend(pid) from pg_stat_activity
+     where datname like 'test_pgs%' and pid <> pg_backend_pid();
+
+A model-run `pytest` killed mid-test leaves this connection as easily as a SIGPIPE does, so the
+symptom is not limited to a piped gate.
+
 ### 3.17 A rule for a centred label catches every hanging indent, and the sentence splits in two
 
 `passage_blocks` gave a line its own block when its indent differed from the open paragraph's by
