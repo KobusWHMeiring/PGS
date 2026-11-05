@@ -43,12 +43,32 @@ def asserted(case: ShapeCase) -> dict[tuple[int, int], Cell]:
 
 
 def cell_display(cell: Cell) -> str:
-    """How a claimed cell reads inside the grid — its value, or what kind of claim it is."""
+    """How a claimed cell reads inside the grid — and, when the claim is partial, says so.
+
+    A `starts` claim is a prefix, a `contains` claim is an inner phrase, an `ends` claim is a
+    suffix. Rendering any of them as a bare value would tell the reviewer the whole cell is that
+    short string — the first reviewer read "Step 1" in this grid and answered "we're missing loads
+    of text; the cells don't just say the step name". They were right about the paper and the grid
+    was lying about the claim, so a partial claim is drawn with an ellipsis where the cell goes on.
+    """
     if cell.empty:
         return "(prints nothing)"
-    text = cell.text or cell.starts or cell.contains or cell.ends or ""
-    if len(text) > 96:
-        return text[:93] + "…"
+    if cell.text is not None:
+        text = cell.text
+    elif cell.starts and cell.ends:
+        text = f"{cell.starts} … {cell.ends}"
+    elif cell.starts:
+        text = f"{cell.starts} …"
+    elif cell.ends:
+        text = f"… {cell.ends}"
+    elif cell.contains:
+        text = f"… {cell.contains} …"
+    else:
+        text = ""
+    if cell.at_least:
+        text += f" (at least {cell.at_least:,} characters)"
+    if len(text) > 140:
+        return text[:137] + "…"
     return text
 
 
@@ -194,7 +214,9 @@ def shape(index: int, case: ShapeCase) -> str:
           <span class="claimed-key">filled</span> a cell the key asserts ·
           <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
           that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
-          give · <span class="kind">qualifier</span> a divider between rows
+          give · <span class="kind">qualifier</span> a divider between rows ·
+          <strong>…</strong> the key asserts only part of that cell: what you see is its start, an
+          inner phrase, or its end
         </p>
         {claim_cards(case)}
       </div>

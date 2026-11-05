@@ -234,3 +234,35 @@ def test_the_committed_record_describes_the_key_or_there_is_none():
         pytest.skip("no review of record yet - D83 is unsigned")
     record = json.loads(shape_review_signoff.RECORD_PATH.read_text(encoding="utf-8"))
     assert shape_review_signoff.drift(record) == []
+
+def test_a_partial_cell_claim_is_drawn_as_partial(html):
+    """`starts`/`contains`/`ends` are fragments. The grid must not show one as a whole cell.
+
+    The first reviewer read "Step 1" in this grid and said "we're missing loads of text — the cells
+    in the pdf don't just say the step name". The paper is right and the claim is a prefix, but the
+    grid said otherwise. Every partial claim now carries an ellipsis where the cell goes on.
+    """
+    for case in SHAPES:
+        section = html.split(f'id="shape-{case.key}"', 1)[1].split("<section", 1)[0]
+        cells = section.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
+        for cell in case.cells:
+            if cell.text is not None or cell.empty:
+                continue
+            fragment = cell.starts or cell.contains or cell.ends
+            assert fragment, case.key
+            assert f"{shape_review.escape(fragment)} …" in cells or (
+                f"… {shape_review.escape(fragment)}" in cells
+            ), f"{case.key}: the grid draws {fragment!r} as if it were the whole cell"
+
+
+def test_a_page_note_keeps_a_shape_out_of_confirmed(export):
+    """Every claim Yes, but the reviewer wrote "is this expected?" — that shape is not settled."""
+    export["page_notes"] = {"long_cell": "The first column has a bolded Step 3 that is missing here."}
+    record = shape_review_signoff.build_record(export)
+
+    summary = record["summary"]
+    assert summary["yes"] == summary["claims"]
+    assert "long_cell" in summary["shapes_with_open_questions"]
+    assert "long_cell" not in summary["shapes_confirmed"]
+    assert "numeric_row" in summary["shapes_confirmed"]
+    assert record["page_notes"]["long_cell"].startswith("The first column")

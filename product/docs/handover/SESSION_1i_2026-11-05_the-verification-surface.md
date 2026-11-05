@@ -118,3 +118,30 @@ Nothing was overturned. Two things were sharper than the plan:
 
 **Owed, unchanged:** the deploy from `HANDOVER.md` (five commits from session `1h`, plus this one),
 and the arms' re-score after the signature.
+
+## 7. The first signature, and the three notes it left
+
+Kobus judged the page the same day (seat *Product*): **68 of 68 claims Yes**, three page notes.
+`scripts/shape_review_signoff.py` wrote `knowledge/tests/shape_review.json` — every claim pinned to
+the text he judged — and the summary reports **5 shapes confirmed, 3 with an open question**, because
+"every claim Yes but the reviewer asked *is this expected?*" is not a settled shape. That rule was
+added after the fact: the first draft of `build_record()` would have printed "8 shapes confirmed" and
+buried the only real finding.
+
+| Note | Finding | Disposition |
+|---|---|---|
+| `long_cell`: "the first column does have a bolded **Step 3** … that doesn't appear on the right" | **The key is wrong.** The page *and* our reviewed `landscape.md` block both start that cell with `Step 3`; the fixture asserts it starts with "The group conducts farm visits and" | Amendment owed: `starts="Step 3", contains="The group conducts farm visits and"`. One line; it changes `expected`, so the signature must be re-signed in the same act |
+| `empty_cells`: "not sure where the R500 comes from" | The claim is right — `R500` is in the same merged Fee box, under "Annual membership fee (paid by the PGS group to PGS SA)". The grid drew a `contains` claim as if it were the whole cell | Fixed: partial claims are drawn `… R500 …` |
+| `page_break_row`: "we're missing loads of text … the cells don't just say the step name" | Right about the paper, wrong about the claim: they are `starts` prefixes. The grid showed `Step 1` as a bare value | Fixed: `Step 1 …`, plus a test that no partial claim is drawn as a whole cell |
+
+**The lesson, stated once and worth carrying:** *a rendered claim is not the claim.* Three of this
+page's first four defects were presentation — `—` read as "blank", a `contains` fragment read as the
+cell, a prefix read as the cell — and each one produced a wrong judgement about correct data. What
+made the difference was not a better glyph but a sentence: "not claimed", "the key makes no assertion
+about that cell", "…" where the cell goes on. A judgement surface has to be read by someone who was
+not in the room, so its ambiguity is a bug with a test, not a style choice.
+
+Owed at close: the `Step 3` amendment + re-sign, then the three-arm re-score from cache (§3.10). The
+gate is green with the signature in place (`--check`: 68 judged claims, 0 problems); the amendment is
+deliberately *not* made here, because a key edit under a live signature is the owner's act, not the
+agent's.

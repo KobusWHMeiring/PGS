@@ -131,8 +131,8 @@ def build_record(export: dict) -> dict:
     """The review of record: the export's judgements, pinned to the key text they judged."""
     key = current_claims()
     claims: dict[str, dict] = {}
-    amended: list[str] = []
-    unsure: list[str] = []
+    amended_claims: list[str] = []
+    unsure_claims: list[str] = []
     for claim in all_claims():
         entry = export["claims"][claim.id]
         verdict = entry["verdict"]
@@ -143,15 +143,33 @@ def build_record(export: dict) -> dict:
             "note": str(entry.get("note", "")).strip(),
         }
         if verdict == "no":
-            amended.append(claim.id)
+            amended_claims.append(claim.id)
         elif verdict == "unsure":
-            unsure.append(claim.id)
+            unsure_claims.append(claim.id)
 
+    page_notes = {
+        key_: str(value).strip()
+        for key_, value in (export.get("page_notes") or {}).items()
+        if str(value).strip()
+    }
+
+    # A page note is a finding. A shape whose reviewer wrote "is this expected?" is not
+    # "confirmed" even when every claim was answered Yes — the first signature proved why: one
+    # note said the paper prints "Step 3" where the key's claim starts after it.
     confirmed: list[str] = []
-    changed: list[str] = []
+    amended: list[str] = []
+    unsure: list[str] = []
+    open_questions: list[str] = []
     for case in SHAPES:
         verdicts = {claims[claim.id]["verdict"] for claim in case_claims(case)}
-        (confirmed if verdicts == {"yes"} else changed).append(case.key)
+        if "no" in verdicts:
+            amended.append(case.key)
+        elif "unsure" in verdicts:
+            unsure.append(case.key)
+        elif case.key in page_notes:
+            open_questions.append(case.key)
+        else:
+            confirmed.append(case.key)
 
     return {
         "kind": KIND,
@@ -166,20 +184,18 @@ def build_record(export: dict) -> dict:
         },
         "signed_against": {"commit": head_commit()},
         "claims": claims,
-        "page_notes": {
-            key_: str(value).strip()
-            for key_, value in (export.get("page_notes") or {}).items()
-            if str(value).strip()
-        },
+        "page_notes": page_notes,
         "summary": {
             "claims": len(claims),
             "yes": sum(1 for c in claims.values() if c["verdict"] == "yes"),
-            "no": len(amended),
-            "unsure": len(unsure),
+            "no": len(amended_claims),
+            "unsure": len(unsure_claims),
             "shapes_confirmed": confirmed,
-            "shapes_amended": changed,
-            "amended_claims": amended,
-            "unsure_claims": unsure,
+            "shapes_amended": amended,
+            "shapes_unsure": unsure,
+            "shapes_with_open_questions": open_questions,
+            "amended_claims": amended_claims,
+            "unsure_claims": unsure_claims,
         },
     }
 

@@ -25,7 +25,19 @@
 > convention was declared. **The ranking is therefore not established**, and the four shapes no arm
 > passes are exactly the judgement ones.
 >
-> **The gate is built; the signature is owed** (session `1i`, 2026-11-05).
+> **The key is signed, and its first signature found a defect** (session `1i`, 2026-11-05).
+> `knowledge/tests/shape_review.json` holds Kobus's review — **68 of 68 claims Yes**, dated
+> 2026-11-05, every claim pinned to the text he judged — with **5 shapes confirmed and 3 carrying a
+> page note**. The note that matters is `long_cell`: the paper's first cell **starts with `Step 3`**
+> (and so does our own reviewed landscape block), while the key asserts it starts with "The group
+> conducts farm visits and". **The amendment is owed and is one line** —
+> `Cell(0, 0, starts="Step 3", contains="The group conducts farm visits and")` — and it makes the
+> signature stale by design, so it must be applied and re-signed in the same act. The other two
+> notes (`R500`, "cells don't just say the step name") were the **surface** misdrawing a `contains`
+> or `starts` claim as a whole cell; fixed, with a test. **Do not re-score the arms until the
+> amendment is re-signed** — the key is otherwise reviewed, and §3.11 records all three notes.
+>
+> **What the surface is** (built this session):
 > `product/design/uat/shape_key_review.html` is each of the eight shapes' **page, rendered from the
 > committed PDF, beside the grid the key expects** — one verdict per claim, **68 claims and 41 of them
 > cells** (those eight pages print about 60). Every cell the key does not assert is drawn as `—` and
@@ -111,16 +123,17 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
 vlm-arm sessions
-**Repo state:** `main` — **ten commits ahead of `origin/main`**: session `1h`'s five (the OpenRouter
-arm; §3.8's correction; the Docling re-run with the shared normalisation; the D82 explanation page; and
-the Document AI arm with §3.9–§3.10), then session `1i`'s five (the verification surface; its docs; a
-browser test for the JavaScript-off check; a count-correction commit; and the unclaimed-cell wording
-the surface's first reader exposed). Everything before `1h` is pushed: the
+**Repo state:** `main` — **eleven commits ahead of `origin/main`**: session `1h`'s five (the
+OpenRouter arm; §3.8's correction; the Docling re-run with the shared normalisation; the D82
+explanation page; and the Document AI arm with §3.9–§3.10), then session `1i`'s six (the verification
+surface; its docs; a browser test for the JavaScript-off check; a count-correction commit; the
+unclaimed-cell wording; and **the signed review** with the two drawing fixes its notes exposed).
+Everything before `1h` is pushed: the
 licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
 session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
 `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
 script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `10` on this tree, and
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `11` on this tree, and
 `0` once sessions `1h` and `1i` are pushed.
 
 **On this tree** (2026-11-05, session `1i`): `scripts/verify.sh` **green at 1719 passed /
