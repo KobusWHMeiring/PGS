@@ -1955,6 +1955,79 @@ before the mutation, `cp` it back after), which is also what makes N mutations r
 one shell script. If a file is already committed, `git checkout -- <file>` is fine; if it is
 not, it is a delete. Either commit first, or use `cp`.
 
+### 1.37 A `CheckConstraint` that evaluates to NULL is *satisfied*, not violated
+
+`NULL` in SQL is not `False`. A check whose expression yields `NULL` **passes**, so an
+`IN` list against a nullable column constrains nothing at the moment you most need it.
+
+A3's rule was "in-conversion is recorded with the 12 or the 18 months the form offers":
+
+```python
+models.CheckConstraint(
+    condition=~Q(in_conversion_declared=True) | Q(in_conversion_months__in=(12, 18)),
+    name="pledge_in_conversion_period_is_offered_by_the_form",
+)
+```
+
+Evidence — the row the constraint exists to refuse went in:
+
+    $ pytest core/tests/test_pledge.py -k in_conversion_without_its_period
+    E   Failed: DID NOT RAISE IntegrityError
+
+`in_conversion_declared = True, in_conversion_months = NULL` → `FALSE OR (NULL IN (12,18))`
+→ `FALSE OR NULL` → `NULL` → the constraint is satisfied. The `NOT declared` arm is `FALSE`,
+so the whole expression hinged on a comparison with a NULL.
+
+Rule: any nullable column inside a `CheckConstraint` needs its own `__isnull` arm — write
+`Q(col__isnull=False) & Q(col__in=(…))`, never `Q(col__in=(…))` alone — and then prove the
+constraint can fail by inserting the bad row through the ORM with the service bypassed. A
+constraint no test has watched reject anything is decoration: this one was green until the
+test above was written, and the test only failed because it asserted the exception.
+
+### 1.38 `FileField(storage=callable)` resolves the callable once, at field definition
+
+A storage built from settings looks like it follows the settings:
+
+```python
+def private_storage():
+    return FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT, base_url=None)
+
+evidence_document = models.FileField(storage=private_storage, upload_to=...)
+```
+
+It does not. `FileField.__init__` keeps the callable for `deconstruct()` and immediately
+calls it: `self._storage_callable = self.storage; self.storage = self.storage()`. So the
+root is resolved at **import of the models module**, once, for the life of the process.
+
+Evidence — a test that pointed `PRIVATE_MEDIA_ROOT` at `tmp_path` and then asserted the file:
+
+    $ pytest core/tests/test_pledge.py -k uploaded_under_the_private_root
+    E   assert False  # …pytest-1897/…/private_media/pledge_evidence/2026/11/pledge-scan.jpg
+    $ ls private_media/pledge_evidence/2026/11/     # …while the repo root grew a directory
+    pledge-scan_J7TpP5A.jpg
+
+Two consequences. A test cannot redirect the root (`override_settings` arrives too late), so
+an assertion about *where* evidence is written is untestable and the file quietly lands in
+whatever the import-time setting was. And the migration serialises the storage — Django was
+about to write the resolved path into `0012`, which would have pinned this machine's
+`private_media/` into the schema every deployment replays.
+
+Rule: a storage that depends on settings is a `@deconstructible` `Storage` subclass whose
+`location` is a **property read per access**, so the migration names the class and each
+process resolves its own root:
+
+```python
+@deconstructible
+class PrivateMediaStorage(FileSystemStorage):
+    @property
+    def location(self) -> str:
+        return os.path.abspath(settings.PRIVATE_MEDIA_ROOT)
+
+    @property
+    def base_url(self) -> None:   # no public URL; served only via X-Accel-Redirect
+        return None
+```
+
 ## 5. Template for a new entry
 
 ```markdown

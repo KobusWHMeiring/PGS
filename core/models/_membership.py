@@ -27,11 +27,15 @@ Three rules keep these models honest, each with the decision that produced it:
 
 from __future__ import annotations
 
+import os
 import re
 import uuid
 
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.utils import timezone
+from django.utils.deconstruct import deconstructible
 from django.utils.text import slugify
 
 from core.models._core import User
@@ -368,3 +372,182 @@ class MembershipFee(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - admin convenience
         return f"{self.period_start}..{self.period_end}"
+
+
+def pledge_evidence_storage_location() -> str:
+    """The private root (§VI) — evidence photos are personal data, not public assets.
+
+    A function rather than an inlined `settings.PRIVATE_MEDIA_ROOT` so the path is read
+    from whichever settings module is loaded (test, dev, production) instead of at import.
+    """
+    return os.path.abspath(settings.PRIVATE_MEDIA_ROOT)
+
+
+@deconstructible
+class PrivateMediaStorage(FileSystemStorage):
+    """`FileSystemStorage` rooted at `PRIVATE_MEDIA_ROOT`, with no public URL at all.
+
+    Not `FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)`: Django resolves the
+    `storage=` callable **once, at field definition time**, so an instance built from
+    settings at import bakes the path in — a test cannot point it at a temporary
+    directory, and the migration serialises the machine that generated it. Hence a
+    deconstructible subclass (migrations name the class, not a path) whose `location` is
+    read per access.
+
+    `base_url` is None, so `FieldFile.url` raises rather than handing back a `/media/`
+    URL that would 404 at best. Private media is served only after Django authorises the
+    request and hands off to nginx via `X-Accel-Redirect` against an `internal` location.
+    """
+
+    @property
+    def location(self) -> str:
+        return pledge_evidence_storage_location()
+
+    @property
+    def base_url(self) -> None:  # type: ignore[override]
+        return None
+
+
+class Pledge(models.Model):
+    """What a member attested, and in what form the group can evidence it.
+
+    **Two pledges, not one with optional parts.** The OPP prints a farmer pledge and
+    a consumer pledge on facing pages; only the farmer's attests to land. `kind` is
+    therefore required, and a consumer row carrying a land history, a witness or an
+    in-conversion declaration is refused by the service *and* by a constraint — the
+    form never offered those fields, so a row that has them describes a signing that
+    did not happen.
+
+    **The farmer pledge is an OR.** Either the land-history attestation ("free of
+    prohibited pesticides, herbicides and fertilisers for at least 12 months … 12 …
+    18 …") or "I/We have applied for In-Conversion status" with a 12-or-18-month
+    selection. Exactly one branch is representable, because that is what is printed,
+    and both are recorded because they are the basis of the In-Conversion decision.
+
+    **`land_history_conflict` is stored, where `Member.is_paid_up` is derived.** A
+    fee period rolls over, so a stored paid-up boolean goes stale; a signed
+    declaration does not change, and the flag is the record of what the two
+    governing documents said *on the day it was signed* (build_principles §I,
+    Immutable History). It is set by `core.services._membership.record_pledge` — the rule that
+    computes it belongs in the service layer (§II) — and `None` means "not
+    applicable": no land-history branch was taken, so there is nothing to judge.
+
+    `evidence_document` is the OPP §I.2 record for a pledge given verbally or by
+    distinctive mark: *"recorded by the PGS through photographic or other documented
+    record"*.
+    """
+
+    class Kind(models.TextChoices):
+        FARMER = "FARMER", "Farmer"
+        CONSUMER = "CONSUMER", "Consumer"
+
+    class Method(models.TextChoices):
+        SIGNATURE = "SIGNATURE", "Signed"
+        # OPP §I.2: "Signature(s)/distinctive marks" — the path for members who
+        # cannot read and sign. Not a lesser pledge; a different way of making one.
+        DISTINCTIVE_MARK = "DISTINCTIVE_MARK", "Signed with a distinctive mark"
+        VERBAL_WITNESSED = "VERBAL_WITNESSED", "Given verbally, witnessed and recorded"
+
+    member = models.ForeignKey(Member, on_delete=models.PROTECT, related_name="pledges")
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    method = models.CharField(
+        max_length=32, choices=Method.choices, default=Method.SIGNATURE
+    )
+    signed_on = models.DateField(default=timezone.localdate)
+    place = models.CharField(max_length=120, blank=True)
+
+    # --- The farmer pledge's OR --------------------------------------------
+    declared_land_history_ok = models.BooleanField(default=False)
+    in_conversion_declared = models.BooleanField(default=False)
+    in_conversion_months = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="The 12-or-18-month period the form offers."
+    )
+    # The months declared clear of prohibited inputs, per crop group. Decimal months
+    # are not representable and are not asked for: the form says "at least 12".
+    declared_annual_clear_months = models.PositiveSmallIntegerField(null=True, blank=True)
+    declared_pasture_clear_months = models.PositiveSmallIntegerField(null=True, blank=True)
+    declared_perennial_clear_months = models.PositiveSmallIntegerField(null=True, blank=True)
+    land_history_conflict = models.BooleanField(
+        null=True,
+        blank=True,
+        help_text=(
+            "D31/D83 — True when a declared period falls in the band where SAOSO "
+            "4.2.3 and OPP §V disagree. None when no land history was declared."
+        ),
+    )
+
+    # --- Who recorded it, and on what evidence ------------------------------
+    recorded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recorded_pledges",
+        help_text="OPP §I.2: the administrator completes the documentation on the member's behalf.",
+    )
+    witness_name = models.CharField(max_length=200, blank=True)
+    witness_designation = models.CharField(max_length=120, blank=True)
+    witness_signature = models.CharField(max_length=200, blank=True)
+    evidence_document = models.FileField(
+        upload_to="pledge_evidence/%Y/%m/",
+        storage=PrivateMediaStorage(),
+        blank=True,
+        help_text="The photograph or other documented record of a verbal pledge (OPP §I.2).",
+    )
+
+    class Meta:
+        ordering = ["member_id", "signed_on"]
+        constraints = [
+            # The consumer pledge has no witness block and no land history. Blanking
+            # the fields instead of refusing them would store a claim the member never
+            # made; the service refuses it with a message, and this is the backstop.
+            models.CheckConstraint(
+                condition=~models.Q(kind="CONSUMER")
+                | models.Q(
+                    witness_name="",
+                    witness_designation="",
+                    witness_signature="",
+                    evidence_document="",
+                    declared_land_history_ok=False,
+                    in_conversion_declared=False,
+                    in_conversion_months__isnull=True,
+                    declared_annual_clear_months__isnull=True,
+                    declared_pasture_clear_months__isnull=True,
+                    declared_perennial_clear_months__isnull=True,
+                    land_history_conflict__isnull=True,
+                ),
+                name="pledge_consumer_carries_no_farmer_declarations",
+            ),
+            # "□ 12 months or □ 18 months (select)" — the form offers two, so a row
+            # can hold neither, one, or the other, and nothing else.
+            #
+            # The `isnull=False` is load-bearing, not decoration: `NULL IN (12, 18)` is
+            # NULL in SQL, and a CHECK that evaluates to NULL is *satisfied* by Postgres.
+            # Without it, "in-conversion, no period selected" — the exact row this is
+            # meant to refuse — passed the constraint and the test caught it.
+            models.CheckConstraint(
+                condition=~models.Q(in_conversion_declared=True)
+                | (
+                    models.Q(in_conversion_months__isnull=False)
+                    & models.Q(in_conversion_months__in=(12, 18))
+                ),
+                name="pledge_in_conversion_period_is_offered_by_the_form",
+            ),
+            # "… for at least 12 months … OR I/We have applied for In-Conversion" —
+            # exactly one branch, because the printed form is an OR.
+            models.CheckConstraint(
+                condition=~models.Q(kind="FARMER")
+                | (
+                    models.Q(declared_land_history_ok=True)
+                    & models.Q(in_conversion_declared=False)
+                )
+                | (
+                    models.Q(declared_land_history_ok=False)
+                    & models.Q(in_conversion_declared=True)
+                ),
+                name="pledge_farmer_takes_exactly_one_branch",
+            ),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.get_kind_display()} pledge ({self.signed_on})"

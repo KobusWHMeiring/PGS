@@ -159,9 +159,24 @@ Member              user(1:1), membership_no, joined_on, status, probation_until
                     # and printed on certificates, so it is PUBLIC: "OUT-<year>-<seq:04d>",
                     # never a bare autoincrement (D39).
 CommitteeTerm       user, position, agm_year, elected_on, vacated_on    # OPP §3.1, §VII
-Pledge              member, kind, method, signed_on, place, declared_land_history_ok,
-                    in_conversion_declared, in_conversion_months, recorded_by,
-                    witness_name, witness_designation, witness_signature, evidence_photo
+Pledge              member, kind(FARMER|CONSUMER), method(SIGNATURE|DISTINCTIVE_MARK|
+                    VERBAL_WITNESSED), signed_on, place, declared_land_history_ok,
+                    in_conversion_declared, in_conversion_months(12|18),
+                    declared_annual_clear_months, declared_pasture_clear_months,
+                    declared_perennial_clear_months, land_history_conflict(D31/D83),
+                    recorded_by, witness_name, witness_designation, witness_signature,
+                    evidence_document
+                    # A3. `kind` is required: the OPP prints two pledges on facing pages
+                    # and only the farmer's attests to land, so a consumer row carrying a
+                    # land history or a witness is refused (a tick is not an application,
+                    # and a witness block the form never printed is a claim nobody made).
+                    # Exactly one of the land-history branch and the in-conversion branch,
+                    # because the form is an OR; the service says so and a constraint backs
+                    # it. land_history_conflict is STORED, not derived: a signed declaration
+                    # never changes, and the flag records what the two documents said that
+                    # day. None = not applicable (consumer, or in-conversion).
+                    # evidence_document writes under PRIVATE_MEDIA_ROOT (§VI); it has no
+                    # public URL at all.
 MembershipFee       member, kind, period_start, period_end, amount_cents, paid_on, receipt_no
 AssessmentFee       member, farm_visit(nullable), kind(INITIAL|RENEWAL), turnover_band,
                     band_label, amount_cents, due_on, paid_on, receipt_no,
@@ -657,7 +672,7 @@ def compile_outcome_pdf(visit_id: int, kind: PdfKind) -> Path:
 
 1. Prospective farmer self-registers (`FARMER`), creating `User` + `Member{status: APPLICANT}`.
 2. POPIA consent captured explicitly at registration (`popia_consent_at`), with purpose-specific consent recorded separately for: assessment processing, public farm profile, and photographic publication.
-3. Applicant signs the **farmer member pledge** — `WRITTEN`, or `VERBAL_RECORDED` with witness + evidence photo for members unable to read/sign (OPP §I.2).
+3. Applicant signs the **farmer member pledge** — `method` is `SIGNATURE`, `DISTINCTIVE_MARK` (the form's *"Signature(s)/distinctive marks"* line) or `VERBAL_WITNESSED` with a witness and an evidence document for members unable to read/sign (OPP §I.2).
 4. Applicant ticks the categories sought (FORM A) → creates one `FarmCategory` per tick.
 5. Applicant declares annual turnover → determines `AssessmentFee.turnover_band` on the OPP §2.3 scale.
 6. Applicant completes the **Basic Production Principles** and **SAOSO** familiarisation attestation (FORM 7.a header: *"I am aware of/have read the Basic Production Principles YES/NO"*).

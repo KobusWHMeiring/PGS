@@ -42,6 +42,7 @@ from core.models._membership import (
     FarmContact,
     Member,
     MembershipFee,
+    Pledge,
 )
 from core.models._public import PublicDocument
 
@@ -61,6 +62,7 @@ __all__ = [
     "Language",
     "Member",
     "MembershipFee",
+    "Pledge",
     "PublicDocument",
     "PublicQuestion",
     "REFUSAL_NOTES",
