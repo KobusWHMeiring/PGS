@@ -613,21 +613,35 @@ tie is broken by the pledge's own text, which is not a principle but a quoted se
 
 <h3>4.1 The constraint this page found in Task A3</h3>
 <div class="warnbox">
-  <p><strong>A3's conflict rule is written against the wrong reference.</strong> The plan says
-  <code>land_history_conflict</code> is set "when a declared period disagrees with OPP §V (annuals 18,
-  pasture 12, other perennials 12)". But the pledge a farmer signs, and SAOSO 4.2.3, both say
-  <strong>12 / 12 / 18</strong>. So a farmer who declares exactly what the pledge prints would be flagged
-  as conflicted, every time.</p>
-  <p>Two ways to fix it, and this page recommends the second:</p>
-  <ul class="tight">
-    <li><strong>Compare against both and flag a three-way disagreement</strong> — more code, and it still
-      treats a document-level contradiction as a per-farmer fault.</li>
-    <li><strong>Make the conflict a constant, not a computation.</strong> The contradiction is between two
-      paragraphs of the OPP; no farmer's answer creates it. <code>D31</code> is recorded as a module-level
-      fact naming both readings, and the pledge row stores only what was declared. A per-row boolean that
-      is <em>always</em> true or <em>always</em> false is not information (the same reasoning S4 applied to
-      the extraction mode in D80).</li>
-  </ul>
+  <p><strong>A3's conflict rule names the wrong reference — but the fix is not the one this page
+  first proposed, and the correction is recorded here rather than quietly edited.</strong></p>
+  <p>The plan said <code>land_history_conflict</code> is set "when a declared period disagrees with
+  OPP §V (annuals 18, pasture 12, other perennials 12)". OPP §V is the lone outlier, so a farmer who
+  declared exactly what the pledge prints would be flagged as conflicted every time.</p>
+  <p><strong>What was right:</strong> the three-way table above, and that the reference is wrong.
+  <strong>What was wrong:</strong> the fix proposed here was "make it a constant, not a computation",
+  on the reasoning that a boolean which is always true carries no information. That reasoning is
+  sound and the premise was false — the flag is not always true.</p>
+  <p>The correct rule came out of asking the per-farmer question properly. A declaration only creates
+  ambiguity when the answer <em>depends on which document you read</em>:</p>
+  <table style="margin-top:10px">
+    <thead><tr><th></th><th>SAOSO 4.2.3</th><th>OPP pledge</th><th>OPP §V</th><th>conflict band</th></tr></thead>
+    <tbody>
+      <tr><td>Annuals</td><td>12</td><td>12</td><td>18</td><td><code>12 &le; m &lt; 18</code></td></tr>
+      <tr><td>Pasture &amp; meadows</td><td>12</td><td>12</td><td>12</td><td>none — both agree</td></tr>
+      <tr><td>Other perennials</td><td>18</td><td>18</td><td>12</td><td><code>12 &le; m &lt; 18</code></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:10px">So <code>land_history_conflict = min_reading &le; declared &lt;
+  max_reading</code> — a real per-farmer computation, and the one the public check's A4 bands already
+  draw ("18 months or more" is the first band where the disagreement stops mattering). The plan's
+  test asserting <code>conflict is True</code> at 12 months for annuals was always correct; only its
+  comment was misleading. Two tests were added for the cases it had no opinion on: a declaration past
+  both readings, and pasture, where no declaration can be ambiguous.</p>
+  <p><strong>The general lesson, since this page is a decision document:</strong> "the reference is
+  wrong" and "the computation is wrong" are different findings, and collapsing them produced a
+  recommendation that would have deleted a working flag. The table was the finding; the constant was
+  an inference on top of it.</p>
 </div>
 
 <h2><span class="num">5</span>Comparison</h2>

@@ -1,87 +1,49 @@
-# Handover — D80 has a PRD, three slices are in, and the harness now reads the tables
+# Handover — two strands in flight, and the joining flow is designed before it is built
 
-> ## START HERE — S0, S1 and S4 are in; **S2 (an extractor) is next**, and it needs an install
+> ## START HERE — **MVP 1a sub-plan A is 2 of 8 tasks in; the front door is designed and approved**
 >
-> **`INGESTION_ENGINE_PRD.md` is `In Progress` (session `1e`/`1f`, 2026-11-03)** and carries D80's
-> decision as prose (X2 now, X3 when a document demands it) plus six slices. **S0, S1 and S4 landed.**
-> `scripts/verify.sh` **green: 1671 passed / 1 skipped / 8 xfailed in 68.61 s** (a warm box; the
-> 1e run on the same tree measured 219.16 s cold — quote cold *and* warm, §3.17).
-> `scripts/fast.sh` **1656 passed / 1 skipped / 15 deselected / 8 xfailed in 46.66 s**;
-> `scripts/fast.sh --critical` **172 passed / 4 deselected in 10.64 s**.
+> **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
+> a second agent is running D80's S2 (Docling) there. Nothing in this strand has touched `main`.
 >
-> **The audit was established, not inherited** (`SESSION_1e…` §1). Measured: **44** reviewed rows
-> carrying column meaning across **three** documents (OPP §2.3 6, landscape 8, Appendix 2 30), plus
-> **20** Appendix 6a rows that carry none, **ten** table-shape test modules (not four), Appendix 7's
-> **4** interleaved chunks, and the landscape's longest cell at **1,112** characters. And the answer
-> that matters: **six of the eight shapes have a test, and none of the eight has a test whose input
-> is the shape** — every existing assertion reads a human's fix. The two with no test are exactly the
-> two live defects, and that is now `test_the_two_live_defects_are_the_two_shapes_with_no_test`.
+> **Landed:** **A1** (`243cedd`) — `Member`, `Farm`, `FarmAlias`, `FarmCategory`, `FarmContact`,
+> `MembershipFee`, migration `0010`, 19 tests. **A2** (`4e86a81`) — `CommitteePosition`,
+> `CommitteeTerm`, the OPP §VII roster, migration `0011`, 12 tests. **D83** (`0cc2112` and this
+> close) — the pledge stays in the application. `scripts/fast.sh` **1687 passed / 1 skipped / 8 xfailed
+> in 82.97 s**; `lint-imports` 1 kept, 0 broken.
 >
-> **S0** = `knowledge/tests/shape_fixtures.py` (eight `ShapeCase`s: page provenance, expectation,
-> IR verdict, gap, `covered_by`; the page is **read** from the committed fixtures, never copied) and
-> `test_ingestion_shapes.py` (28 green, **8 strict-xfail targets** calling a `read_table()` that does
-> not exist yet, so the gap is counted every run and an `XPASS` fails the suite). **S1** =
-> `build_corpus.py --force` **refuses** to drop a reviewed `<!-- table -->` block and names
-> `--discard-tables` as the override (hazard §3.25; two proofs watched red).
+> **Approved by the product owner on 2026-11-04:** `product/design/before_you_apply_prototype.html`,
+> the `/before-you-apply/` flow as a **stepped wizard** (5 question steps + result + account), built
+> from the D71 wording ledger and driven with Playwright. It is the build target for **A8** and is
+> labelled `DESIGN SPEC … Ready for implementation` at the top of the file.
 >
-> **S4** = `knowledge/table_harness.py` (requirements 2–7 as `check_table`/`check_document`, named
-> `R2`–`R7` violations, no extractor, no PDF), `scripts/check_tables.py` (the gate: one document and
-> its declared row counts per run) and 27 tests. **The four reviewed tables — 14 rows — pass**, there
-> is **one mutation per requirement** the harness names, and two guards were broken and watched red.
-> **Two things it refuses to guess:** the row count (`--rows`; undeclared is a violation, and
-> `expected_tables` makes a missing block fail rather than pass with nothing to check) and **the
-> extraction mode the cells came from** — the landscape passes against `-table` and fails 10 ways
-> against `-layout`, so the mode is information. **That mode is now the last per-document datum in
-> the path; S3 is where the generator records it.** R3 was generalised by measurement: a cell line is
-> matched inside one printed line, else split at its own hyphen with both halves printed lines in
-> order (the strict rule reported 3 cells, all wraps). A shared cursor across a row's cells was
-> measured and dropped (171 false violations: the fee box is filed under the row it starts beside).
+> **What is next: A3 (the pledge).** Then A5 (fees), A6 (application flow), B1 + B3 (the template's
+> `self_check` markers), and only then A8. A4 and A7 can move after A8. **Do not build A8 before A6**:
+> its only exit is the application, and the PRD rejects a page that dead-ends on the contact chips.
 >
-> **What is next:** **S2 — Docling first (D81, decided 2026-11-03)**, on the eight pages, graded by S0's
-> expectations and S4's checker; **Document AI only if Docling loses spans, qualifiers or header
-> association on three or more of the eight.** Why, and what a GCP key would cost: the explainer
-> `product/design/d80_s2_extractor_evaluation.html` (Addendum A answers "why not a vision model" —
-> Document AI is *extractive* vision; what D80 rejected was X4, answering from page images, because a
-> quote must stay characters we verified). **Two frictions, measured:** `docling` and `torch` are not
-> installed here, and Document AI needs a project, billing, a processor and a service-account key the
-> dev `.env` does not hold (it has `DJANGO_SECRET_KEY` only). Then S3 (generator emits blocks, and
-> records the extraction mode), S5 (re-review Appendices 6a and 7 *through* the harness — no extractor
-> can see a table that is not a block, which is why `expected_tables` exists). **`read_table()` is the
-> seam.**
+> **Two corrections recorded rather than fixed quietly.** (1) The plan's own A1 fee test hardcoded a
+> period that expired on 2026-03-01 — `testing_hazards.md` §1.35. (2) `git checkout <file>` is not a
+> mutation-testing restore; it deleted this session's uncommitted model — §1.36.
 >
-> **The F3 loose end is closed:** `product/design/f3_saoso_outreach_and_role.html` is committed with
-> a `todo.md` line. It is a review surface (two documents to approve, three decisions), not D80's
-> work and not a PRD.
+> **D83's substance:** the pledge cannot move to account creation, because it attests to *"all the
+> land for which I/we are applying"*. The account collects identity + farm name, nearest town,
+> contact, and nothing declarative. **The land-history contradiction is three-way, not two**
+> (SAOSO 4.2.3 and the OPP pledge both say 12/12/18; OPP §V alone says 18/12/12), so A3's
+> `land_history_conflict` is `min_reading <= declared < max_reading` — the band where the documents
+> actually disagree — not a comparison against OPP §V.
 >
-> **Do not refresh the dev corpus.** `corpus_check` here reports `landscape` **drift** and its
-> 17 chunks carry **0** labelled renditions against live's 8; a refresh without
-> `GEMINI_API_KEY` in the dev `.env` writes 17 NULL vectors that then read "already ingested"
-> forever (`deploy/README.md` §4). **Live is the reference DB.**
->
-> **Do not run `scripts/build_corpus.py --force` on a document with a table block** — it now refuses
-> before writing, so the accident that lost `opp.md`'s §2.3 review on 2026-11-01 cannot recur. Read
-> the refusal: the only way past it is `--discard-tables`, and then the review is yours to retype.
->
-> **"corpus is current" does not mean "rebuilt"** — drift compares the artefact's hash and the
-> chunk count, not the derived text (`testing_hazards.md` §3.24). After a chunker or parser change,
-> `ingest_standard --doc <x> --force` then `relink_evidence --apply`.
-
-The landscape is closed (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
-`LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried into
-D80 by name.
+> **Still open, and blocking the account step only:** the third consent text (`SELF_CHECK_PRD` Q8) and
+> SMTP for email verification (`todo.md`).
 
 **For:** the next agent.
 **From:** the corpus-and-retrieval, public-site, documents, chatbot, column, embedding,
 answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-artefact,
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
-landscape-sign-off, chat-split, handover-truth-up and shapes-harness sessions
-**Repo state:** `main` — **`origin/main` == `HEAD`** (session `1f` pushed everything, then committed
-S4 on top of it): the licence commit, the chat-split follow-ups, the six test/generator cuts, the
-flake fix, `1c`'s close, session `1d`'s (the truth-up, five row batches, the link guard, the gate
-wiring, the PRD close), session `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3) and
-session `1f`'s (the S4 harness, the gate script, and a corrected unpushed count). **Check it, do not
-quote it:** `git rev-list --count origin/main..HEAD` must print `0`.
+landscape-sign-off, chat-split, handover-truth-up, shapes-harness **and the MVP1a sub-plan A
+sessions** (`1i` onward)
+**Repo state:** **two worktrees.** `main` is the sibling strand (D80 S2 / D82 as of `b27b9a6`).
+This strand is `feat/mvp1a-visit` on top of `781cf37`: **A1, A2, D83, the approved prototype, three
+doc commits.** Neither has been merged. **Check it, do not quote it:** `git log --oneline 781cf37..HEAD`.
 
 **On this tree** (2026-11-03, session `1f`): `scripts/verify.sh` **green at 1671 passed /
 1 skipped / 8 xfailed in 68.61 s**, run as

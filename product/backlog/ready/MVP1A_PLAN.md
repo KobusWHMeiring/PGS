@@ -190,12 +190,26 @@ def test_distinctive_mark_is_a_valid_pledge_method(member):
                       evidence_document=doc)
     assert p.method == "DISTINCTIVE_MARK"
 
-def test_land_history_conflict_is_flagged_not_resolved(member):
-    # D31: pledge says 12 months for annuals, OPP §V says 18. Record, don't adjudicate.
+def test_land_history_conflict_is_the_band_where_the_documents_disagree(member):
+    # D31 + D83. SAOSO 4.2.3 and the pledge say 12/12/18; OPP §V says 18/12/12.
+    # The flag is NOT "differs from OPP §V" -- at 12 months for annuals the answer
+    # genuinely depends on which document you read, and a farmer who signed the
+    # pledge as printed is in that band. Flag the ambiguity, not the farmer.
     p = record_pledge(member, kind="FARMER", method="SIGNATURE",
                       declared_annual_clear_months=12)
-    assert p.land_history_conflict is True
-    assert p.resolved_in_conversion_months is None
+    assert p.land_history_conflict is True          # 12 is inside [12, 18)
+    assert p.resolved_in_conversion_months is None  # D31: record, never adjudicate
+
+def test_a_declaration_past_both_readings_is_not_a_conflict(member):
+    p = record_pledge(member, kind="FARMER", method="SIGNATURE",
+                      declared_annual_clear_months=24)
+    assert p.land_history_conflict is False
+
+def test_pasture_has_no_conflict_band_because_both_documents_agree(member):
+    # Both say 12 for pasture and meadows, so no declaration can be ambiguous.
+    p = record_pledge(member, kind="FARMER", method="SIGNATURE",
+                      declared_pasture_clear_months=12)
+    assert p.land_history_conflict is False
 ```
 
 **Then** `Pledge(member, kind, method, signed_on, place, declared_land_history_ok,
@@ -203,8 +217,21 @@ in_conversion_declared, in_conversion_months, declared_annual_clear_months,
 declared_perennial_clear_months, land_history_conflict, recorded_by, witness_name,
 witness_designation, witness_signature, evidence_document)`.
 
-`land_history_conflict` is set by the service when a declared period disagrees with OPP §V
-(annuals 18, pasture 12, other perennials 12). Nothing is reconciled (D31).
+`land_history_conflict` is set by the service when a declared period falls **inside the band where
+the two governing documents disagree** — not when it differs from either one. Verified against the
+corpus (`knowledge/corpus/opp.md`, `saoso.md`), the readings are:
+
+| | SAOSO 4.2.3 | OPP pledge | OPP §V | conflict band |
+|---|---|---|---|---|
+| Annuals | 12 | 12 | 18 | `12 <= m < 18` |
+| Pasture & meadows | 12 | 12 | 12 | none — both agree |
+| Other perennials | 18 | 18 | 12 | `12 <= m < 18` |
+
+So `land_history_conflict = min_reading <= declared < max_reading`. Nothing is reconciled (D31), and
+no seal is inferred. **D83** records why the reference is the pair and not OPP §V alone: OPP §V is the
+lone outlier, and a rule written against it would report every farmer who signed the pledge as
+printed as having a conflict — which is the *answer*, not a fault. The bands in the public self-check
+(A4) are drawn on exactly these two thresholds for the same reason.
 
 **Acceptance:** all three tests pass; the consumer pledge has no witness requirement and no land history.
 
