@@ -133,3 +133,24 @@ def test_an_amendment_that_the_fixture_does_not_say_yet_is_refused_on_the_way_in
     )
     assert export_doc is None
     assert any("is not what the key says now" in problem for problem in problems)
+
+
+def test_an_arms_report_pasted_into_the_amendment_box_is_refused(page):
+    """The first real export put a mismatch line in `to`, which is not a claim in any form."""
+    fill_identity(page)
+    answer_every_card(page)
+    claim_id = claim_ids(page)[0]
+    card = page.locator(f'[data-claim="{claim_id}"]')
+    card.locator("input[value=amend]").check()
+    card.locator(".newtext").fill(
+        f"{claim_id.split('.')[0]}: row 1 cell 4 must be empty, the read says 'R500'"
+    )
+    card.locator("textarea").fill("the paper prints the amount in this cell")
+    assert export(page) == ""
+    assert "report, not a claim" in page.inner_text("#outProblems")
+
+
+def test_a_page_prints_every_page_of_a_two_page_shape(page):
+    section = page.locator('section.shape[data-shape="page_break_row"]')
+    assert section.locator("figure img").count() == 2
+    assert "printed page 5" in section.inner_text()

@@ -36,9 +36,10 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from knowledge.tests.shape_fixtures import BY_KEY, SHAPES, flat  # noqa: E402
+from knowledge.tests.shape_fixtures import BY_KEY, SHAPES, flat, page_text  # noqa: E402
 from knowledge.tests.shape_pages import data_uri  # noqa: E402
 from scripts.shape_claims import claims as case_claims  # noqa: E402
+from scripts.shape_arbitration_template import TEMPLATE  # noqa: E402
 from scripts.shape_disputes import Arm, Disagreement, disagreements, load_arms  # noqa: E402
 from scripts.shape_review_page import escape  # noqa: E402
 
@@ -56,11 +57,123 @@ PASSED_ELSEWHERE = {
     "qualifier": "gemini-3.1-flash-lite, `anchors` form — §3.8. Satisfiable, so not a key question.",
 }
 
+#: Claims the owner has already arbitrated, so they are not asked again. Kept here rather than in a
+#: record because an arbitration that changes nothing has nothing to write: `keep` agrees with the
+#: signed review, and the export is committed beside this as evidence
+#: (`product/docs/evidence/2026-11-05_shape_arbitration_first_pass.json`).
+SETTLED = {
+    "headerless_values.header": "kept — the paper does print the two labels as two columns, so the "
+    "arms' merged read is a tool failure, not a key defect",
+}
+
+#: What the record already decided about a shape, shown above its claims. Every line here is a
+#: decision a human made and signed elsewhere — the landscape artefact's own legend, and the
+#: `Step 3` amendment — because three of the first pass's four "unsure" notes were asking a question
+#: the record already answers, and the page never said so.
+ALREADY_DECIDED = {
+    "empty_cells": "The landscape artefact's legend: “The Fee column is one printed box spanning the "
+    "Step 1 and Step 2 rows, and it is filed under Step 1, the row it starts beside. Two cells on "
+    "Step 1 are printed empty: the paper is silent, and silence is not permission. A seal is a "
+    "picture; where the paper prints its name beside it that name is the cell, and the artwork "
+    "itself is not stored.”",
+    "page_break_row": "The landscape artefact keeps each printed step label inside its row's first "
+    "cell — that is the same convention the `long_cell` amendment settled on 2026-11-05 — and a row "
+    "whose later half is printed on the next page is still one row (requirement 4).",
+    "headerless_values": "The owner confirmed on 2026-11-05 that the paper's four printed header "
+    "lines group into these two column labels; four arms merging them is the finding, not a defect.",
+    "long_cell": "Amended 2026-11-05: the cell starts with the printed label `Step 3`.",
+}
+
+#: What a corrected claim looks like. The first export put an arm's report in here, which is not a
+#: claim at all — so the form is stated on the card and checked before the export is written.
+AMEND_HINT = "empty · text=… · starts=… · ends=… · contains=… · at_least=N"
+
+
+def arbitrable(arms: tuple[Arm, ...]) -> tuple[Disagreement, ...]:
+    """The claims this page presents: contradicted by two arms, on a shape nobody passes, unsettled."""
+    return tuple(
+        item
+        for item in disagreements(arms)
+        if item.claim_id.split(".")[0] not in PASSED_ELSEWHERE
+        and item.claim_id not in SETTLED
+    )
+
 
 def shapes_in_play(items: tuple[Disagreement, ...]) -> list[str]:
     """The shape keys the disputes touch, in registry order."""
     keys = {item.claim_id.split(".")[0] for item in items}
     return [case.key for case in SHAPES if case.key in keys]
+
+
+def _token(expected: str) -> str:
+    """The words a claim asserts, for finding the paper's own line. `empty` asserts nothing."""
+    for prefix in ("text=", "starts=", "ends=", "contains="):
+        if expected.startswith(prefix):
+            return expected[len(prefix) :].strip()
+    return ""
+
+
+def _printed_page(case, claim) -> tuple[int, int]:
+    """The PDF page and the printed page a claim's row is on. `row_pages` are printed pages."""
+    printed = claim.row if claim.row >= 0 and claim.row < len(case.row_pages) else None
+    page = case.row_pages[printed] if printed is not None else case.printed_pages[0]
+    try:
+        pdf = case.pdf_pages[case.printed_pages.index(page)]
+    except ValueError:
+        pdf = case.pdf_pages[0]
+    return pdf, page
+
+
+def _paper_lines(case, claim, span: int = 2) -> tuple[int, list[tuple[int, str, bool]]]:
+    """The committed page's own lines around the claim, on the page the claim is printed on.
+
+    This is deliberately the *committed extraction*, not a re-reading: a reviewer deciding whether a
+    cell holds `R500` needs the line that carries it, and the first pass could not find it because
+    the page image was too small to read. A hit line is marked so it is not mistaken for context.
+    """
+    pdf, printed = _printed_page(case, claim)
+    token = flat(_token(claim.expected))
+    if not token:
+        return printed, []
+    lines = page_text(case, pdf).splitlines()
+    hits = [index for index, line in enumerate(lines) if token in flat(line)]
+    if not hits:
+        # The claim normalises something the page does not print as one run — letter-spaced words
+        # are the usual case (Appendix 6a prints "Other b o v i n e"). Fall back to the first word,
+        # so the reviewer sees the line that made us write the claim that way.
+        first = token.split(" ")[0]
+        hits = [index for index, line in enumerate(lines) if first and first in flat(line)]
+        if not hits:
+            return printed, []
+    first = hits[0]
+    start = max(first - span, 0)
+    end = min(first + span + 1, len(lines))
+    return printed, [(index, lines[index], index in hits) for index in range(start, end)]
+
+
+def _evidence_html(case, claim) -> str:
+    if claim.kind != "cell":
+        return ""
+    printed, window = _paper_lines(case, claim)
+    if not _token(claim.expected):
+        return (
+            '<p class="fine">The key asserts this cell prints nothing; a blank is not something a '
+            "line of text can show. Judge it against the page image and the note above.</p>"
+        )
+    if not window:
+        return (
+            '<p class="fine">Our committed text does not carry these words at all on this page, so '
+            "the claim is doing normalisation the page does not show. Judge it against the image.</p>"
+        )
+    rows = "".join(
+        f'<span class="{"hit" if hit else "ctx"}">{escape(line.rstrip() or "·")}</span>'
+        for _, line, hit in window
+    )
+    return (
+        f'<p class="fine">Our committed text for this page, around the words the claim asserts '
+        f"(printed page {printed}). The bold line carries them:</p>"
+        f'<pre class="paper">{rows}</pre>'
+    )
 
 
 def _arm_rows(item: Disagreement) -> str:
@@ -74,13 +187,20 @@ def _arm_rows(item: Disagreement) -> str:
     return "".join(rows)
 
 
-def _card(item: Disagreement, claim) -> str:
+def _card(item: Disagreement, claim, case=None) -> str:
+    page_line = ""
+    evidence = ""
+    if case is not None:
+        _, printed = _printed_page(case, claim)
+        page_line = f'<span class="page">printed page {printed}</span>'
+        evidence = _evidence_html(case, claim)
     return f"""
     <article class="card" data-claim="{escape(item.claim_id)}">
       <h3 id="{escape(item.claim_id)}"><code>{escape(item.claim_id)}</code>
-        <span class="count">{item.count} of 5 arms</span></h3>
+        <span class="count">{item.count} of 5 arms</span>{page_line}</h3>
       <p class="question">{escape(claim.question)}</p>
       <p class="key">The key says: <strong>{escape(claim.expected)}</strong></p>
+      {evidence}
       <table class="arms"><caption>What each measured arm said, in its own words</caption>
         <tbody>{_arm_rows(item)}</tbody></table>
       <div class="verdict">
@@ -89,7 +209,9 @@ def _card(item: Disagreement, claim) -> str:
         <label><input type="radio" name="{escape(item.claim_id)}" value="amend"> Amend it — the paper
           says</label>
         <input class="newtext" type="text" value="{escape(claim.expected)}"
-               aria-label="The corrected claim text">
+               aria-label="The corrected claim text" data-shape="{escape(item.claim_id.split('.')[0])}">
+        <span class="fine">Write the claim in the key's own form: {escape(AMEND_HINT)}. An arm's
+          report is not a claim.</span>
         <label><input type="radio" name="{escape(item.claim_id)}" value="unsure"> Can’t tell</label>
       </div>
       <label class="note">Note <em>(required unless you keep it)</em>
@@ -100,20 +222,34 @@ def _card(item: Disagreement, claim) -> str:
 def _shape_section(shape: str, items: list[Disagreement]) -> str:
     case = BY_KEY[shape]
     by_id = {claim.id: claim for claim in case_claims(case)}
-    page = case.pdf_pages[0]
+    pages = ", ".join(str(page) for page in case.pdf_pages)
     anchors = "".join(
         f"<li><code>{escape(text)}</code></li>" for _, text in case.anchors
     )
-    card_html = "".join(_card(item, by_id[item.claim_id]) for item in items if item.claim_id in by_id)
+    figures = "".join(
+        f'<figure><img src="{data_uri(case.doc_key, page)}" alt="The page as the PDF prints it">'
+        f"<figcaption>PDF page {page}"
+        + (
+            f" (printed page {case.printed_pages[case.pdf_pages.index(page)]})"
+            if page in case.pdf_pages
+            else ""
+        )
+        + "</figcaption></figure>"
+        for page in case.pdf_pages
+    )
+    card_html = "".join(
+        _card(item, by_id[item.claim_id], case) for item in items if item.claim_id in by_id
+    )
     elsewhere = PASSED_ELSEWHERE.get(shape)
     note = f'<p class="elsewhere">{escape(elsewhere)}</p>' if elsewhere else ""
+    decided = ALREADY_DECIDED.get(shape)
+    if decided:
+        note += f'<p class="decided"><strong>Already decided.</strong> {escape(decided)}</p>'
     return f"""
   <section class="shape" data-shape="{escape(shape)}">
-    <h2>{escape(case.shape)} <span class="where">{escape(case.doc)} · PDF page {page}</span></h2>
+    <h2>{escape(case.shape)} <span class="where">{escape(case.doc)} · pages {pages}</span></h2>
     {note}
-    <figure><img src="{data_uri(case.doc_key, page)}" alt="The page as the PDF prints it">
-      <figcaption>The page, rendered from the committed PDF. Zoom your browser if it is small.</figcaption>
-    </figure>
+    {figures}
     <div class="printed">
       <h3>What our own key proves is printed on this page</h3>
       <ul>{anchors}</ul>
@@ -122,6 +258,17 @@ def _shape_section(shape: str, items: list[Disagreement]) -> str:
     </div>
     {card_html}
   </section>"""
+
+
+def _settled_html() -> str:
+    """Claims already arbitrated, listed so the reviewer can see what is not being asked again."""
+    if not SETTLED:
+        return ""
+    items = "".join(
+        f"<li><code>{escape(claim_id)}</code> — {escape(note)}</li>"
+        for claim_id, note in sorted(SETTLED.items())
+    )
+    return f'<div class="settled"><h2>Already answered</h2><ul>{items}</ul></div>'
 
 
 def _arm_table(arms: tuple[Arm, ...]) -> str:
@@ -171,6 +318,7 @@ def build_html(arms: tuple[Arm, ...], items: tuple[Disagreement, ...]) -> str:
     return TEMPLATE.format(
         artefact=escape(ARTEFACT_NAME),
         data=data,
+        settled=_settled_html(),
         arms=_arm_table(arms),
         body=body,
         count=len(items),
@@ -178,276 +326,6 @@ def build_html(arms: tuple[Arm, ...], items: tuple[Disagreement, ...]) -> str:
     )
 
 
-TEMPLATE = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Arbitrate the claims our arms contradict</title>
-<style>
-  :root {{ --ink:#221f1a; --paper:#faf6ec; --card:#fffdf7; --line:#d9cfba; --accent:#6b4f2a;
-          --warn:#8a2f12; --ok:#2f5d33; }}
-  * {{ box-sizing:border-box; }}
-  body {{ margin:0; background:var(--paper); color:var(--ink);
-         font-family:Georgia,'Times New Roman',serif; line-height:1.5; }}
-  main {{ max-width:60rem; margin:0 auto; padding:1.5rem 1.25rem 4rem; }}
-  h1 {{ font-size:1.75rem; line-height:1.2; margin:.5rem 0 .25rem; }}
-  h2 {{ font-size:1.3rem; margin:2.5rem 0 .5rem; border-bottom:2px solid var(--line); padding-bottom:.35rem; }}
-  h3 {{ font-size:1rem; margin:1.25rem 0 .35rem; }}
-  p, li {{ font-size:1rem; }}
-  .lead {{ background:var(--card); border:1px solid var(--line); border-left:6px solid var(--accent);
-           padding:1rem 1.15rem; margin:1rem 0 1.5rem; }}
-  .lead ol {{ margin:.5rem 0 0 1.1rem; padding:0; }}
-  .where, .fine, figcaption {{ font-size:.85rem; color:#5c5347; font-family:system-ui,sans-serif; }}
-  figure {{ margin:1rem 0; }}
-  figure img {{ width:100%; max-width:46rem; border:1px solid var(--line); background:#fff; display:block; }}
-  .printed {{ background:var(--card); border:1px solid var(--line); padding:.75rem 1rem; margin:1rem 0; }}
-  .printed ul {{ margin:.4rem 0; padding-left:1.1rem; }}
-  .printed code {{ font-size:.85rem; }}
-  .card {{ background:var(--card); border:1px solid var(--line); border-radius:6px;
-           padding:.9rem 1.1rem 1.1rem; margin:1rem 0; }}
-  .card h3 {{ display:flex; gap:.6rem; align-items:baseline; flex-wrap:wrap; }}
-  .count {{ font-family:system-ui,sans-serif; font-size:.75rem; text-transform:uppercase;
-            letter-spacing:.04em; background:#efe6d2; border-radius:99px; padding:.15rem .5rem; }}
-  .question {{ font-weight:bold; margin:.35rem 0; }}
-  .key strong {{ background:#f3ead6; padding:.1rem .3rem; }}
-  table {{ border-collapse:collapse; width:100%; margin:.6rem 0; font-family:system-ui,sans-serif;
-           font-size:.85rem; }}
-  table caption {{ text-align:left; font-size:.8rem; color:#5c5347; padding-bottom:.3rem; }}
-  th, td {{ border-top:1px solid var(--line); padding:.35rem .45rem; text-align:left; vertical-align:top; }}
-  tbody th {{ width:12rem; font-weight:600; }}
-  code {{ font-family:ui-monospace,Consolas,monospace; font-size:.82rem; word-break:break-word; }}
-  .verdict {{ display:flex; flex-direction:column; gap:.4rem; margin-top:.7rem;
-              font-family:system-ui,sans-serif; font-size:.9rem; }}
-  .verdict label {{ display:flex; gap:.5rem; align-items:center; }}
-  .verdict input[type=radio] {{ width:1.1rem; height:1.1rem; }}
-  .newtext {{ width:100%; padding:.4rem; border:1px solid var(--line); border-radius:4px;
-              font-family:ui-monospace,Consolas,monospace; font-size:.85rem; }}
-  .note {{ display:block; margin-top:.6rem; font-family:system-ui,sans-serif; font-size:.85rem; }}
-  .note textarea {{ width:100%; padding:.4rem; border:1px solid var(--line); border-radius:4px;
-                    font-family:inherit; font-size:.9rem; }}
-  .chosen {{ border-color:var(--accent); box-shadow:0 0 0 2px #e6dcc6 inset; }}
-  footer {{ margin-top:3rem; border-top:2px solid var(--line); padding-top:1rem; }}
-  footer label {{ display:block; font-family:system-ui,sans-serif; font-size:.9rem; margin:.5rem 0; }}
-  footer input {{ padding:.4rem; border:1px solid var(--line); border-radius:4px; min-width:16rem; }}
-  button {{ font-family:system-ui,sans-serif; font-size:1rem; padding:.7rem 1.2rem; min-height:44px;
-            border-radius:6px; border:1px solid var(--accent); background:var(--accent); color:#fff;
-            cursor:pointer; }}
-  button.secondary {{ background:transparent; color:var(--accent); }}
-  dialog {{ border:1px solid var(--line); border-radius:8px; max-width:46rem; width:92%; }}
-  dialog::backdrop {{ background:rgba(34,31,26,.45); }}
-  #outProblems {{ color:var(--warn); }}
-  #outText {{ width:100%; height:14rem; font-family:ui-monospace,Consolas,monospace; font-size:.8rem; }}
-  .elsewhere {{ background:#eef3ea; border-left:4px solid var(--ok); padding:.5rem .75rem;
-                font-family:system-ui,sans-serif; font-size:.9rem; }}
-</style>
-</head>
-<body>
-<main>
-  <h1>Arbitrate the claims our own arms contradict</h1>
-  {arms}
-  <div class="lead">
-    <p><strong>{count} claims need you.</strong> Each is a claim the eight-shape key makes that
-    <em>at least two measured arms</em> contradict, on a shape <strong>no arm passes at all</strong>.
-    The rest of the key is set aside: {set_aside} are passed under a declared convention, so their
-    remaining failures are tool findings, not questions about the paper.</p>
-    <ol>
-      <li>Read the page and the words our own key proves are printed on it.</li>
-      <li>For each claim: <strong>keep</strong> it, <strong>amend</strong> it (type what the paper
-        says), or say <strong>can’t tell</strong>.</li>
-      <li>Fill in your name, seat and date, export, and hand the file back. Nothing you do here
-        leaves this machine.</li>
-    </ol>
-    <p class="fine">An <em>amend</em> is not applied by this page. Your answer is recorded, the key
-    is edited in its own commit, and <code>scripts/shape_review_signoff.py --amend</code> pins the
-    record to both texts.</p>
-  </div>
-  {body}
-  <footer>
-    <h2>Your call</h2>
-    <label>Name <input id="name" autocomplete="name"></label>
-    <label>Seat <input id="seat" placeholder="Product / Technical / Member"></label>
-    <label>Date <input id="date" type="date"></label>
-    <p><button id="export">Export the arbitration</button>
-       <button id="clear" class="secondary">Clear everything</button></p>
-    <p class="fine">Every card needs an answer before the export is written: <em>keep</em> needs
-      nothing else, <em>amend</em> needs the corrected text, and <em>can’t tell</em> needs a
-      reason.</p>
-  </footer>
-  <dialog id="outDlg">
-    <h2>Arbitration export</h2>
-    <p id="outLead"></p>
-    <ul id="outProblems"></ul>
-    <textarea id="outText" readonly hidden></textarea>
-    <p><button id="dlgDl" hidden>Download JSON</button>
-       <button id="dlgCopy" class="secondary" hidden>Copy JSON</button>
-       <button id="dlgClose" class="secondary">Close</button></p>
-  </dialog>
-</main>
-<script type="application/json" id="arb-data">{data}</script>
-<script>
-(function () {{
-  var DATA = JSON.parse(document.getElementById('arb-data').textContent);
-  var KEY = 'pgs-shape-arbitration-v1';
-  var claims = DATA.claims;
-  var state = {{ verdicts: {{}}, notes: {{}}, newtext: {{}}, name: '', seat: '', date: '' }};
-
-  try {{
-    var saved = localStorage.getItem(KEY);
-    if (saved) {{ state = JSON.parse(saved); }}
-  }} catch (e) {{ /* private mode: judge again */ }}
-
-  function save() {{
-    try {{ localStorage.setItem(KEY, JSON.stringify(state)); }} catch (e) {{ /* ignore */ }}
-  }}
-
-  function card(id) {{ return document.querySelector('[data-claim="' + id + '"]'); }}
-
-  function paint() {{
-    claims.forEach(function (claim) {{
-      var node = card(claim.id);
-      if (!node) {{ return; }}
-      node.classList.toggle('chosen', Boolean(state.verdicts[claim.id]));
-      var radios = node.querySelectorAll('input[type=radio]');
-      Array.prototype.forEach.call(radios, function (radio) {{
-        radio.checked = state.verdicts[claim.id] === radio.value;
-      }});
-      var text = node.querySelector('.newtext');
-      if (state.newtext[claim.id] !== undefined) {{ text.value = state.newtext[claim.id]; }}
-      var note = node.querySelector('.note textarea');
-      if (state.notes[claim.id] !== undefined) {{ note.value = state.notes[claim.id]; }}
-    }});
-    document.getElementById('name').value = state.name || '';
-    document.getElementById('seat').value = state.seat || '';
-    document.getElementById('date').value = state.date || '';
-  }}
-
-  document.addEventListener('change', function (event) {{
-    var node = event.target;
-    var parent = node.closest ? node.closest('[data-claim]') : null;
-    if (parent && node.type === 'radio') {{
-      state.verdicts[parent.getAttribute('data-claim')] = node.value;
-    }}
-    if (parent && node.type === 'text') {{
-      state.newtext[parent.getAttribute('data-claim')] = node.value;
-    }}
-    if (parent && node.tagName === 'TEXTAREA') {{
-      state.notes[parent.getAttribute('data-claim')] = node.value;
-    }}
-    if (node.id === 'name') {{ state.name = node.value; }}
-    if (node.id === 'seat') {{ state.seat = node.value; }}
-    if (node.id === 'date') {{ state.date = node.value; }}
-    save(); paint();
-  }});
-
-  document.addEventListener('input', function (event) {{
-    var node = event.target;
-    var parent = node.closest ? node.closest('[data-claim]') : null;
-    if (parent && node.tagName === 'TEXTAREA') {{
-      state.notes[parent.getAttribute('data-claim')] = node.value;
-    }}
-    if (parent && node.type === 'text') {{
-      state.newtext[parent.getAttribute('data-claim')] = node.value;
-    }}
-    if (node.id === 'name') {{ state.name = node.value; }}
-    if (node.id === 'seat') {{ state.seat = node.value; }}
-    if (node.id === 'date') {{ state.date = node.value; }}
-    save();
-  }});
-
-  function problems() {{
-    var found = [];
-    claims.forEach(function (claim) {{
-      var verdict = state.verdicts[claim.id];
-      var note = (state.notes[claim.id] || '').trim();
-      if (!verdict) {{ found.push('“' + claim.id + '” is not answered yet.'); return; }}
-      if (verdict === 'amend') {{
-        var text = (state.newtext[claim.id] || claim.expected).trim();
-        if (!text) {{ found.push('“' + claim.id + '” is amended to nothing — say what the paper prints.'); }}
-        else if (text === claim.expected) {{ found.push('“' + claim.id + '” is amended to the text it already has.'); }}
-        if (!note) {{ found.push('“' + claim.id + '” is amended without a reason.'); }}
-      }}
-      if (verdict === 'unsure' && !note) {{ found.push('“' + claim.id + '” reads can’t tell without a reason.'); }}
-    }});
-    if (!state.name.trim()) {{ found.push('Your name is missing.'); }}
-    if (!state.seat.trim()) {{ found.push('Your seat is missing.'); }}
-    if (!/^\\d{{4}}-\\d{{2}}-\\d{{2}}$/.test(state.date || '')) {{ found.push('The date is missing.'); }}
-    return found;
-  }}
-
-  function payload() {{
-    var out = {{ kind: DATA.kind, version: DATA.version, artefact: DATA.artefact,
-                 reviewer: {{ name: state.name.trim(), seat: state.seat.trim() }},
-                 reviewed_at: state.date, claims: {{}}, amendments: [], page_notes: {{}} }};
-    claims.forEach(function (claim) {{
-      var verdict = state.verdicts[claim.id];
-      var note = (state.notes[claim.id] || '').trim();
-      out.claims[claim.id] = {{ verdict: verdict, expected: claim.expected, note: note }};
-      if (verdict === 'amend') {{
-        out.amendments.push({{ claim: claim.id, from: claim.expected,
-                             to: (state.newtext[claim.id] || '').trim(), basis: note }});
-      }}
-    }});
-    return out;
-  }}
-
-  var dlg = document.getElementById('outDlg');
-  document.getElementById('export').addEventListener('click', function () {{
-    var found = problems();
-    var list = document.getElementById('outProblems');
-    list.innerHTML = '';
-    found.forEach(function (problem) {{
-      var li = document.createElement('li');
-      li.textContent = problem;
-      list.appendChild(li);
-    }});
-    var text = document.getElementById('outText');
-    var lead = document.getElementById('outLead');
-    if (found.length) {{
-      lead.textContent = 'These are not answers yet. Finish them and export again.';
-      text.hidden = true; text.value = '';
-      document.getElementById('dlgDl').hidden = true;
-      document.getElementById('dlgCopy').hidden = true;
-    }} else {{
-      lead.textContent = 'Every claim is answered. Download this file and hand it over.';
-      text.hidden = false;
-      text.value = JSON.stringify(payload(), null, 2);
-      document.getElementById('dlgDl').hidden = false;
-      document.getElementById('dlgCopy').hidden = false;
-    }}
-    if (dlg.showModal) {{ dlg.showModal(); }}
-  }});
-
-  document.getElementById('dlgClose').addEventListener('click', function () {{ dlg.close(); }});
-  document.getElementById('dlgCopy').addEventListener('click', function () {{
-    var text = document.getElementById('outText');
-    text.select();
-    try {{ navigator.clipboard.writeText(text.value); }} catch (e) {{ document.execCommand('copy'); }}
-    this.textContent = 'Copied';
-    var self = this;
-    setTimeout(function () {{ self.textContent = 'Copy JSON'; }}, 1400);
-  }});
-  document.getElementById('dlgDl').addEventListener('click', function () {{
-    var blob = new Blob([document.getElementById('outText').value], {{ type: 'application/json' }});
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'shape-arbitration.json';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  }});
-  document.getElementById('clear').addEventListener('click', function () {{
-    if (!confirm('Clear every answer, note and name? This cannot be undone.')) {{ return; }}
-    state = {{ verdicts: {{}}, notes: {{}}, newtext: {{}}, name: '', seat: '', date: '' }};
-    try {{ localStorage.removeItem(KEY); }} catch (e) {{ /* ignore */ }}
-    paint();
-  }});
-
-  paint();
-}})();
-</script>
-</body>
-</html>
-"""
 
 
 def _display(path: Path) -> str:
@@ -466,11 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     arms = load_arms()
-    items = tuple(
-        item
-        for item in disagreements(arms)
-        if item.claim_id.split(".")[0] not in PASSED_ELSEWHERE
-    )
+    items = arbitrable(arms)
     html = build_html(arms, items)
     out = args.out if args.out.is_absolute() else REPO_ROOT / args.out
     if args.check:

@@ -577,7 +577,7 @@ artefact) and the committed page passes:
 
 | Shape | Diagnosis | What settles it |
 |---|---|---|
-| `headerless_values` (Appendix 6a) | **Our key is probably wrong, in the same way `Step 3` was.** The paper prints four header lines: `Maximum number of animals per ha` / `Class or species` in column 0, and `Maximum number of animals per ha equivalent` / `to 170 kg N/ha/year` in column 1. Our `columns` claim keeps both of column 1's lines and **only the second of column 0's** — and our own anchor (`'Class or species to 170 kg N/ha/year'`) acknowledges the geometry the claim flattens. All four arms read column 0 with both lines | the owner, on the review surface — this is **one claim**. Correcting it would take the Layout Parser and sonnet `lines` to **4/8 each** and the union to 6 of 8 |
+| `headerless_values` (Appendix 6a) | **Our key looked wrong and is not** — corrected 2026-11-05, §3.13. The paper prints four header lines (`Maximum number of animals per ha` / `Class or species`, then `Maximum number of animals per ha equivalent` / `to 170 kg N/ha/year`); our `columns` claim keeps both of column 1's lines and only the second of column 0's, and our own anchor admits that geometry, so all four arms read column 0 with both lines. **The owner kept the claim**: the paper does print two column labels, so the arms' merge is a tool failure | settled — it is more evidence that no general extractor associates a two-line header, and the union stays 5 of 8 |
 | `empty_cells` (landscape p4) | **The key is right; the arms genuinely fail.** The artefact's legend says the fee box spans Steps 1–2 and is filed under Step 1, so `R500` is in cell 0,4, cell 1,3 is exactly `Proud member of` and cell 1,4 is genuinely empty. Every arm splits the spanning box or duplicates the two-line header | nothing — this shape earns its place |
 | `page_break_row` (landscape p4→p5) | **The key is right and the *instrument* is what fails.** Both VLMs score **0 mismatches** and are demoted by quotes that are "out of printed order on page 5". Page 5's committed `-table` pass is interleaved: line 10 reads `its farmer members in the relevant   •  Farm visit checklist` and line 14 carries three columns' fragments, so **no cell's quotes can appear in read order**. §3.8's second finding, biting again | a wording and verdict fix in R3 — "our pass cannot order this page" is not "the model's characters are unverified" |
 
@@ -591,6 +591,40 @@ re-OCR'ing 43 cells our pass does not confirm and costing 60–85 s/page against
 **A hazard this produced:** the evidence JSON stores four sampled rows and clips cells at 200
 characters, so a probe that reads *it* as the read will conclude things that are false of the arms
 (`testing_hazards.md` §3.31). Score from the cache; read claims from the `mismatches` lines.
+
+### 3.13 The first arbitration (2026-11-05): it settled the key and found four defects in the surface
+
+The owner judged all eleven cards on `product/design/uat/arbitrate_shapes.html`; the export is
+committed verbatim as `product/docs/evidence/2026-11-05_shape_arbitration_first_pass.json` (4 keeps,
+5 unsure, 2 amend).
+
+**What it settled, and it contradicts §3.12's guess.** `headerless_values.header` is **kept**: the
+paper does print `Class or species` and `Maximum number of animals per ha equivalent to 170 kg N/ha/year`
+as two column labels, and the fact that four independent readers merge column 0's two printed lines is
+**a tool failure, not a key defect**. So the union stays **5 of 8**, §3.12's "correcting it would take
+two arms to 4/8" is withdrawn, and Appendix 6a joins the "semantics no general extractor returns" pile
+with `empty_cells`. Three keeps (`page_break_row.header`, `.rows`, `.pages`) confirm the row model and
+the page split. **Nothing was amended, so nothing changed in the key and no re-score is owed.**
+
+**What it found in the surface: four defects, all mine, all of them changing a verdict.**
+
+| Defect | Evidence in the export | Why it mattered |
+|---|---|---|
+| **Only the first page of a shape was shown** | `page_break_row.cell.2.0`: “I can't see `Step 3` on the displayed pdf above”; `cell.2.4`: “can't see row 3” | `page_break_row` prints its third row on page 5, and the page rendered page 4. Two `unsure` verdicts are artefacts of the missing page |
+| **The claim's cell was never shown, only the whole page image** | `empty_cells.cell.0.4`: “Column 4 is empty, column 5, under `fee` says `Local PGS group determines…`” | `R500` is printed further down inside the same merged box and is unreadable at page scale. The card now quotes the committed line that carries the claim's words |
+| **Decisions the record already made were not stated on the card** | `empty_cells.cell.1.3` (“it's part of the seal, not standalone text”), `empty_cells.cell.1.4` (“the amount is 500 not 50”), `page_break_row.cell.1.0` (“step 2's cell starts with `The PGS group agrees on`”) | All three are answered by the landscape artefact's own legend (the fee box spans Steps 1–2 and is filed under Step 1; a seal's printed name is the cell) and by the `Step 3` amendment (a printed step label stays inside the cell). The page now carries an **Already decided** note per shape |
+| **The amendment box accepted an arm's report as claim text** | both `amendments[].to` values are mismatch lines (`empty_cells: row 1 cell 4 must be empty, the read says …`) | Neither is applicable: `to` must be claim text (`empty`, `text=…`, `starts=…`). The card now states the form and the export refuses a pasted report |
+
+**Two more lessons for the instrument.** A claim id is not a question: the card must say *printed row
+N, page P, column “Fee”* and quote the line, because a reviewer reading a 200-dpi page cannot count
+columns from a screenshot. And **a keep needs no record change** — the 68-claim signature from session
+`1n` already says `yes` for these, so an arbitration that amends nothing writes nothing; only an
+amendment travels through `shape_review_signoff.py --amend`.
+
+**State after this pass:** 61 of 68 claims stand as signed; **7 are open** — the five `unsure` and the
+two `amend` verdicts whose cause is a surface defect, to be re-judged on the corrected page. The page
+was regenerated (10 cards, both pages, quoted lines, decided notes, form hint) and the settled claim is
+listed as answered rather than asked twice.
 
 ## 4. Requirements
 

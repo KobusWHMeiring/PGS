@@ -25,12 +25,10 @@
 >
 > **The three shapes still passed by nobody are three different problems** (§3.12), and none of them
 > is "no extractor can do this":
-> * `headerless_values` — **probably our key.** The paper prints four header lines
->   (`Maximum number of animals per ha` / `Class or species`, then `Maximum number of animals per ha
->   equivalent` / `to 170 kg N/ha/year`). Our `columns` claim keeps both of column 1's lines and only
->   the second of column 0's, while our own anchor (`'Class or species to 170 kg N/ha/year'`) admits
->   the geometry. All four arms read column 0 with both lines. **Correcting it would take the Layout
->   Parser and sonnet `lines` to 4/8 each, and the union to 6 of 8.**
+> * `headerless_values` — **asked and answered: our key is right** (§3.13). The owner kept the
+>   two-label claim on 2026-11-05, so four readers merging column 0's two printed lines is **a tool
+>   failure** and Appendix 6a joins the semantics pile. The union stays 5 of 8; §3.12's "correcting it
+>   would take two arms to 4/8" is withdrawn.
 > * `empty_cells` — **genuinely the tools.** Checked against the landscape artefact's own legend: the
 >   fee box spans Steps 1–2 and is filed under Step 1 (so `R500` belongs in cell 0,4), cell 1,3 is
 >   exactly `Proud member of`, cell 1,4 is empty. Every arm splits the spanning box or duplicates the
@@ -40,15 +38,24 @@
 >   three columns on one printed line (`its farmer members in the relevant   •  Farm visit checklist`).
 >   No cell's quotes can appear in read order. That is §3.8's second finding biting again.
 >
-> **Next, in this order.** (1) The owner arbitrates the Appendix 6a header claim — the surface is
-> built and committed: `product/design/uat/arbitrate_shapes.html` (`scripts/shape_arbitration.py`,
-> `--check` guards it) presents **the 11 claims at least two arms contradict on shapes nobody passes**,
-> each with the page, our own anchors, and every arm's own mismatch line. One verdict per claim; the
-> export goes back through **`scripts/shape_review_signoff.py --amend`**, which refuses unless the
-> fixture already says the text the reviewer judged. (2) **R3's verdict wording**: "our pass cannot
-> order this page" must stop being scored as "the model's characters are unverified". (3) Re-score
-> again (free), and then D82 has evidence under it. **Do not record "the VLM is the way" or "the
-> Layout Parser is the way" on these numbers.**
+> **The first arbitration happened, and it indicted the surface, not the key (§3.13).** The export
+> (`product/docs/evidence/2026-11-05_shape_arbitration_first_pass.json`) keeps 6 claims, is unsure on
+> 5 and amends 2 — but **four of those verdicts were caused by the page I built**: it showed only a
+> shape's *first* page (`page_break_row`'s third row is on printed page 5, so "I can't see `Step 3`"
+> was correct), it never showed the claim's own cell (so `R500` inside the tall merged fee box was
+> unfindable), it did not state the decisions the record already made (the fee box is filed under
+> Step 1; a seal's printed name is the cell; a printed step label stays inside the cell), and its
+> amendment box accepted a pasted **arm report** as claim text. All four are fixed: 10 cards, every
+> page of the shape, the committed line that carries the claim's words, an **Already decided** note
+> per shape, and a form check on the amendment (`empty` · `text=` · `starts=` · `contains=`).
+>
+> **Next, in this order.** (1) Re-judge the **7 open claims** on the corrected
+> `product/design/uat/arbitrate_shapes.html` — 61 of 68 stand as signed, and nothing was amended, so
+> **no re-score is owed**. The export goes back through **`scripts/shape_review_signoff.py --amend`**,
+> which refuses unless the fixture already says the text the reviewer judged. (2) **R3's verdict
+> wording**: "our pass cannot order this page" must stop being scored as "the model's characters are
+> unverified". (3) When the key settles: re-score (free), and D82 has evidence under it. **Do not
+> record "the VLM is the way" or "the Layout Parser is the way" on these numbers.**
 >
 > **Two hazards to inherit.** *An evidence file's clip is not the read*: the arm JSONs keep four
 > sampled rows per shape and clip cells at 200 characters, so a probe that reads them as the read will

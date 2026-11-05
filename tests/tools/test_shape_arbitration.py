@@ -32,11 +32,7 @@ COMMITTED = REPO_ROOT / shape_arbitration.ARTEFACT_NAME
 
 def build() -> tuple[str, tuple]:
     arms = shape_disputes.load_arms()
-    items = tuple(
-        item
-        for item in shape_disputes.disagreements(arms)
-        if item.claim_id.split(".")[0] not in shape_arbitration.PASSED_ELSEWHERE
-    )
+    items = shape_arbitration.arbitrable(arms)
     return shape_arbitration.build_html(arms, items), items
 
 
@@ -87,14 +83,57 @@ def test_a_shape_some_arm_passes_is_not_put_in_front_of_the_owner():
     assert "qualifier" not in keys, "qualifier is passed by flash-lite `anchors` - not a key question"
 
 
-def test_the_six_a_header_is_present_and_names_the_grouping():
+def test_the_six_a_header_is_settled_and_not_asked_twice():
+    """The owner kept the two-label grouping on 2026-11-05, so the arms' merge is a tool failure."""
     text, items = build()
     ids = {item.claim_id for item in items}
-    assert "headerless_values.header" in ids
-    claim = next(c for c in payload(text)["claims"] if c["id"] == "headerless_values.header")
-    assert claim["expected"] == " | ".join(BY_KEY["headerless_values"].columns)
-    assert len(claim["arms"]) >= 2, "a claim presented for arbitration must show why"
-    assert all(arm["line"] for arm in claim["arms"])
+    assert "headerless_values.header" not in ids
+    strip = text.split('class="settled"')[1].split("</div>")[0]
+    assert "headerless_values.header" in strip
+    assert "tool failure" in strip
+
+
+def test_a_presented_claim_carries_the_evidence_that_makes_it_judgeable():
+    text, items = build()
+    for claim in payload(text)["claims"]:
+        assert len(claim["arms"]) >= 2, "a claim presented for arbitration must show why"
+        assert all(arm["line"] for arm in claim["arms"])
+
+
+def test_the_page_shows_every_page_a_shape_is_printed_on():
+    """`page_break_row` has a row on printed page 5; showing only the first page hid it."""
+    text, _ = build()
+    section = text.split('data-shape="page_break_row"')[1].split("</section>")[0]
+    assert section.count("data:image/jpeg") == len(BY_KEY["page_break_row"].pdf_pages)
+    assert "printed page 5" in section
+
+
+def test_a_card_names_the_page_its_row_is_printed_on():
+    text, _ = build()
+    card = text.split('data-claim="page_break_row.cell.2.0"')[1].split("</article>")[0]
+    assert "printed page 5" in card
+
+
+def test_the_paper_own_line_is_shown_for_a_cell_claim():
+    """The first pass's reviewer could not find `R500` on the image; the committed line carries it."""
+    text, _ = build()
+    card = text.split('data-claim="empty_cells.cell.0.4"')[1].split("</article>")[0]
+    assert 'class="paper"' in card
+    assert "R500" in card
+
+
+def test_an_amendment_states_the_form_the_key_uses():
+    text, _ = build()
+    assert shape_arbitration.AMEND_HINT in text
+    assert "report, not a claim" in text
+
+
+def test_a_shape_the_record_already_decided_says_so():
+    text, _ = build()
+    for shape, note in shape_arbitration.ALREADY_DECIDED.items():
+        if f'data-shape="{shape}"' in text:
+            assert "Already decided" in text.split(f'data-shape="{shape}"')[1].split("</section>")[0]
+            assert shape_arbitration.ALREADY_DECIDED[shape][:40] in text.replace("&amp;", "&")
 
 
 def test_the_page_shows_the_keys_own_anchors_as_evidence():
