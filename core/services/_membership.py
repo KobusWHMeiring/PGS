@@ -31,6 +31,11 @@ to the visit*; *only fully paid-up members are eligible*; and *renewal fees appl
 where no significant changes have occurred*. The scale itself is **data** — a seeded
 `TurnoverBand` table (§4.8, D12) — so `band_for()` reads policy and `declare_assessment_fee()`
 snapshots it. Nothing here re-reads the current schedule for a fee already declared.
+
+What those records **add up to** is A7's standing gate, `assert_eligible_for_assessment()`
+in `_eligibility.py`: this module records the pledge and the money, that one decides whether
+the member may be assessed on them. The slice is the 30 KB cap (`build_principles.md` §II),
+and the seam is the domain's own.
 """
 
 from __future__ import annotations
@@ -52,6 +57,13 @@ from core.models import (
     TurnoverBand,
     User,
 )
+
+# A7's family lives in `_eligibility` (sliced out when this module passed the 30 KB cap,
+# `build_principles.md` §II). Both names are re-exported here so an existing
+# `from core.services._membership import MembershipUnpaidError` keeps working, and so the
+# fee gate below raises the *same* class the eligibility gate does — a second copy of it
+# would make `except MembershipUnpaidError` miss the gate's refusal.
+from core.services._eligibility import MembershipUnpaidError, NotEligibleError  # noqa: F401
 
 
 class WitnessRequiredError(Exception):
@@ -300,6 +312,11 @@ def record_pledge(
 
 
 # --- The assessment fee gate (OPP §2.3, D32) ----------------------------------
+#
+# `MembershipUnpaidError` — the refusal this gate raises first — is defined in
+# `_eligibility.py` with the rest of A7's family and imported above. Two modules needed
+# it, and one class with two definitions would make `except MembershipUnpaidError` miss
+# whichever copy it did not name.
 
 
 class FeeScheduleNotSeededError(Exception):
@@ -308,10 +325,6 @@ class FeeScheduleNotSeededError(Exception):
     Fail closed, like `ingest_standard` refusing to guess a `StandardSet`: an unseeded
     deployment that returned R0 would invoice a farmer nothing and record it as paid-in-full.
     """
-
-
-class MembershipUnpaidError(Exception):
-    """OPP §2.3: *"Only fully paid-up members will be eligible for farm assessments."*"""
 
 
 class AssessmentFeeUnpaidError(Exception):
