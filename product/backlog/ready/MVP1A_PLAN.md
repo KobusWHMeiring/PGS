@@ -318,6 +318,35 @@ warning flag (OPP §4.6: probation does not forfeit the logo).
 
 **Acceptance:** four rejection cases and one pass, each a named exception.
 
+#### Landed 2026-11-05 (session `1q`) — three corrections, amended in place
+
+1. **The code lives in `core/services/_eligibility.py`, not `_membership.py`.** Adding the gate took
+   `_membership.py` to **33.3 KB**, past the 30 KB cap (`build_principles.md` §II), so the seam the
+   PRD already draws was cut: `_membership` records what a member attested and invoiced,
+   `_eligibility` decides what standing those records add up to. `_membership` imports and
+   re-exports `MembershipUnpaidError`/`NotEligibleError`, so the old import path still works and
+   both gates refuse with the **same class** (a test asserts the identity: a second definition would
+   make `except MembershipUnpaidError` miss the gate's refusal, and this session shipped exactly
+   that for a few minutes).
+2. **"PROBATION passes with a warning" is a shape, and the shape is a frozen verdict.** The
+   function returns `EligibilityVerdict(warnings=(EligibilityWarning(code=PROBATION_WARNING,
+   message=…),))` instead of `None`. It carries **no `allowed` field** — a field that can only ever
+   be `True` invites `if verdict.allowed:` and a refusal nobody acts on — and **no `status` field**,
+   because `Member.status` is where the status lives (the objection D39 raises to a stored
+   `is_paid_up`). The alternative, letting each caller read `member.status`, would put OPP §4.6's
+   exception in every caller instead of one place where the clause is cited. Pinned by
+   `test_probation_passes_with_a_warning` and `test_probation_does_not_excuse_an_unpaid_subscription`
+   (probation softens the *standing* rule, never the money rule).
+3. **`MembershipUnpaidError` is reused, not replaced**, and probation-style flags live on the
+   verdict. No `is_eligible` field was added to `Member`.
+
+The plan's own acceptance is met by 16 tests: four named rejections, the pass, and the edges that
+keep the gate honest — an unrecognised `Member.status` fails closed, the status is checked before
+payment, and `status=ACTIVE` written by hand is not evidence of payment. 12 mutations, all caught
+(`_scratch/a7/mutate.py`). **The surface that records a fee and its payment still does not exist**
+(`todo.md`: `MISSING_FEE_SURFACE`), so in a running instance the gate correctly refuses every
+self-registered member — that gap is a test, not a comment.
+
 ---
 
 ### Task A8: The public self-check
