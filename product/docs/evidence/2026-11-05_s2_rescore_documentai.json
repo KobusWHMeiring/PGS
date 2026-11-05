@@ -1,0 +1,2136 @@
+{
+  "instrument": "scripts/eval_documentai.py",
+  "arm": "Document AI (extractive) \u2014 cells from the service's own text, checked against our pass",
+  "project": "803140233794",
+  "location": "us",
+  "checked": "16 calls: 2 processor(s) x 8 shape(s)",
+  "processors": {
+    "documentai form21": {
+      "shapes": 8,
+      "pass": 1,
+      "tables_found": 7,
+      "seconds": 72.1,
+      "unverified_in_our_pass": 59
+    },
+    "documentai layout16pro": {
+      "shapes": 8,
+      "pass": 3,
+      "tables_found": 8,
+      "seconds": 494.6,
+      "unverified_in_our_pass": 43
+    }
+  },
+  "results": [
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "seconds": 7.6,
+      "tables_on_pages": [
+        {
+          "page": 2,
+          "rows": 6,
+          "cols": 3
+        }
+      ],
+      "text_chars": 1944,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "seconds": 6.8,
+      "tables_on_pages": [
+        {
+          "page": 85,
+          "rows": 21,
+          "cols": 2
+        }
+      ],
+      "text_chars": 953,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 21,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha', 'Maximum number of animals per ha equivalent') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: 21 rows, the page prints 20",
+          "headerless_values: row pages (85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85) != (85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85, 85)",
+          "headerless_values: row 0 cell 0 is 'Class or species', expected 'Equines over six months old'",
+          "headerless_values: row 0 cell 1 is 'to 170 kg N/ha/year', expected '2'",
+          "headerless_values: row 2 cell 0 is 'Calves for fattening', expected 'Other bovine animals less than one year old'",
+          "headerless_values: row 19 cell 0 is 'Table chickens', expected 'Laying hens'",
+          "headerless_values: row 19 cell 1 is '580', expected '230'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha",
+          "Maximum number of animals per ha equivalent"
+        ],
+        "rows": [
+          [
+            "Class or species",
+            "to 170 kg N/ha/year"
+          ],
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other bov i ne anim als less t han o ne year old",
+            "5"
+          ]
+        ],
+        "rows_total": 21
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "seconds": 7.7,
+      "tables_on_pages": [
+        {
+          "page": 88,
+          "rows": 5,
+          "cols": 17
+        }
+      ],
+      "text_chars": 2297,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 5,
+      "rows_expected": 7,
+      "columns_found": 17,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications', '', '', '', '', '', '', '', '', '', '', '', '') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: 5 rows, the page prints 7",
+          "column_major: row pages (88, 88, 88, 88, 88) != (88, 88, 88, 88, 88, 88, 88)",
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is 'Aeration or oxygenation using gaseous oxygen', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 is missing from the read",
+          "column_major: row 6 cell 3 is missing from the read"
+        ],
+        "columns": [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "rows": [
+          [
+            "1",
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature 70oC",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite,",
+            "Cellulose,",
+            "Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "4",
+            "5",
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air Use of yeasts for wine production, whether dr",
+            "order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen,",
+            "Carbon dioxide, Argon",
+            "Yeasts (if available,",
+            "derived from organic raw material)",
+            "Only with fresh grapes, grape must, partially",
+            "fermented grape must,",
+            "partially fermented grape",
+            "must be obtained from",
+            "raisined grapes,",
+            "concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+            "Use in order to create an inert atmosphere and to",
+            "handle the product",
+            "shielded from the air."
+          ]
+        ],
+        "rows_total": 5
+      },
+      "with_row_number_gutter": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications', '', '', '', '', '', '', '', '', '', '', '', '') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: 5 rows, the page prints 7",
+          "column_major: row pages (88, 88, 88, 88, 88) != (88, 88, 88, 88, 88, 88, 88)",
+          "column_major: row 6 cell 0 is missing from the read",
+          "column_major: row 6 cell 3 is missing from the read"
+        ],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "rows": [
+          [
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Heat treatments",
+            "Maximum temperature 70oC",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite,",
+            "Cellulose,",
+            "Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "5",
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air Use of yeasts for wine production, whether dr",
+            "order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen,",
+            "Carbon dioxide, Argon",
+            "Yeasts (if available,",
+            "derived from organic raw material)",
+            "Only with fresh grapes, grape must, partially",
+            "fermented grape must,",
+            "partially fermented grape",
+            "must be obtained from",
+            "raisined grapes,",
+            "concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+            "Use in order to create an inert atmosphere and to",
+            "handle the product",
+            "shielded from the air."
+          ]
+        ],
+        "rows_total": 5
+      },
+      "row_number_gutter_rows": 5,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 0,
+          "column": 1,
+          "cell": "Aeration or oxygenation using gaseous oxygen"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "cell": "Air, Gaseous oxygen"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "cell": "Centrifuging and filtration with or without an inert filtering agent"
+        },
+        {
+          "row": 2,
+          "column": 6,
+          "cell": "Use of an agent must not leave undesirable residues in the treated product"
+        },
+        {
+          "row": 3,
+          "column": 2,
+          "cell": "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle"
+        },
+        {
+          "row": 3,
+          "column": 3,
+          "cell": "order to create an inert atmosphere and to handle the product shielded from the air"
+        },
+        {
+          "row": 3,
+          "column": 5,
+          "cell": "Carbon dioxide, Argon"
+        },
+        {
+          "row": 3,
+          "column": 7,
+          "cell": "derived from organic raw material)"
+        },
+        {
+          "row": 3,
+          "column": 8,
+          "cell": "Only with fresh grapes, grape must, partially"
+        },
+        {
+          "row": 3,
+          "column": 14,
+          "cell": "Use in order to create an inert atmosphere and to"
+        },
+        {
+          "row": 4,
+          "column": 2,
+          "cell": "Use to encourage yeast development, with the possible addition of microcrystalline cellulose"
+        },
+        {
+          "row": 4,
+          "column": 3,
+          "cell": "as an excipient: - addition of diammonium phosphate"
+        },
+        {
+          "row": 4,
+          "column": 4,
+          "cell": "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient:- addition "
+        },
+        {
+          "row": 4,
+          "column": 7,
+          "cell": "Only with fresh grapes, grape must, partially"
+        },
+        {
+          "row": 4,
+          "column": 8,
+          "cell": "fermented grape must, partially fermented grape must be obtained from"
+        },
+        {
+          "row": 4,
+          "column": 9,
+          "cell": "raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of"
+        },
+        {
+          "row": 4,
+          "column": 10,
+          "cell": "Only with fresh grapes, grape must, partially fermented grape must,"
+        },
+        {
+          "row": 4,
+          "column": 11,
+          "cell": "No more than 1 g/l (expressed in salts) or 0,3 g/l for the second"
+        },
+        {
+          "row": 4,
+          "column": 12,
+          "cell": "fermentation of sparkling wines."
+        },
+        {
+          "row": 4,
+          "column": 13,
+          "cell": "No more than 0,6 mg/l (expressed in thiamine) for each treatment"
+        }
+      ]
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "seconds": 11.6,
+      "tables_on_pages": [
+        {
+          "page": 5,
+          "rows": 3,
+          "cols": 29
+        }
+      ],
+      "text_chars": 2134,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 3,
+      "rows_expected": 1,
+      "columns_found": 29,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: columns ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "long_cell: 3 rows, the page prints 1",
+          "long_cell: row pages (5, 5, 5) != (5,)",
+          "long_cell: row 0 cell 0 does not hold 'The group conducts farm visits and'",
+          "long_cell: row 0 cell 2 does not start 'These two seals were developed by PGS SA': ''",
+          "long_cell: row 0 cell 2 does not end 'the use of these seals.': ''",
+          "long_cell: row 0 cell 2 is 0 characters, expected at least 1000",
+          "long_cell: row 0 cell 4 does not start 'A newly established PGS group': ''"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "rows": [
+          [
+            "Step 3",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "The group conducts farm visits and",
+            "on approval grants certificates to",
+            "its farmer members in the relevant",
+            "category. Farmers may label their",
+            "products accordingly.",
+            "The use of the two seals is detailed",
+            "alongside.",
+            "Farm visit",
+            "assessment form",
+            "Farm visit checklist",
+            "farms, which lists all the products and displays",
+            "the relevant seal",
+            "These two seals were developed by PGS SA in consultation with PGS groups.",
+            "",
+            "Farm visit certificate granted to approved Description of seals and their use is detailed below. Groups may also create",
+            "their own seals.",
+            "PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submi",
+            "Where farmers are transitioning to organic agriculture and additional deviations to the standards are required that cannot be accommodated within the \u201corganic in conversion\u201d category, PGS groups can d",
+            "",
+            "ORGANIC",
+            "IN-CONV TM PGS NAME ON",
+            "TM PGS NAME PGS PGS ORGANIC ON PGS CODE TM PGS NAME",
+            "PGS CODE",
+            "PGS ORGANIC TM PGS NAME PGS CODE",
+            "A newly established PGS group will have the following seals customised in the name of its PGS:",
+            "PGS Organic In-Conversion PGS Organic",
+            "Printing of seals is at own cost.",
+            "Recommended annual fee for the use of stickers (paid by individual farmers):",
+            "R350 [to be divided between PGS SA (30%) and PGS groups (70%) \u2013 the portion of the fee accruing to PGS SA should be paid when the PGS group renews its membership]"
+          ],
+          [
+            "",
+            "",
+            "PGS SA is not responsible for monitoring the use of these seals.",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "rows_total": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 1,
+          "column": 10,
+          "cell": "farms, which lists all the products and displays"
+        },
+        {
+          "row": 1,
+          "column": 12,
+          "cell": "These two seals were developed by PGS SA in consultation with PGS groups."
+        },
+        {
+          "row": 1,
+          "column": 14,
+          "cell": "Farm visit certificate granted to approved Description of seals and their use is detailed below. Groups may also create"
+        },
+        {
+          "row": 1,
+          "column": 16,
+          "cell": "PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic"
+        },
+        {
+          "row": 1,
+          "column": 20,
+          "cell": "IN-CONV TM PGS NAME ON"
+        },
+        {
+          "row": 1,
+          "column": 21,
+          "cell": "TM PGS NAME PGS PGS ORGANIC ON PGS CODE TM PGS NAME"
+        },
+        {
+          "row": 1,
+          "column": 22,
+          "cell": "PGS CODE"
+        },
+        {
+          "row": 1,
+          "column": 23,
+          "cell": "PGS ORGANIC TM PGS NAME PGS CODE"
+        },
+        {
+          "row": 1,
+          "column": 24,
+          "cell": "A newly established PGS group will have the following seals customised in the name of its PGS:"
+        },
+        {
+          "row": 1,
+          "column": 25,
+          "cell": "PGS Organic In-Conversion PGS Organic"
+        },
+        {
+          "row": 1,
+          "column": 27,
+          "cell": "Recommended annual fee for the use of stickers (paid by individual farmers):"
+        },
+        {
+          "row": 1,
+          "column": 28,
+          "cell": "R350 [to be divided between PGS SA (30%) and PGS groups (70%) \u2013 the portion of the fee accruing to PGS SA should be paid"
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "seconds": 8.8,
+      "tables_on_pages": [],
+      "text_chars": 1944,
+      "found": false,
+      "verdict": "no table found on the page",
+      "rows_found": 0,
+      "rows_expected": 2,
+      "columns_found": 0,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: the processor returned no table on pages [4]"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "joined_pages": false
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "seconds": 12.0,
+      "tables_on_pages": [
+        {
+          "page": 5,
+          "rows": 3,
+          "cols": 29
+        }
+      ],
+      "text_chars": 4078,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 29,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: columns ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "page_break_row: row pages (5, 5, 5) != (4, 4, 5)",
+          "page_break_row: row 0 cell 0 does not start 'Step 1': 'Step 3'",
+          "page_break_row: row 1 cell 0 does not start 'Step 2': 'The group conducts farm visits and'",
+          "page_break_row: row 2 cell 0 does not start 'Step 3': ''",
+          "page_break_row: row 2 cell 4 does not hold 'R350'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "rows": [
+          [
+            "Step 3",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "The group conducts farm visits and",
+            "on approval grants certificates to",
+            "its farmer members in the relevant",
+            "category. Farmers may label their",
+            "products accordingly.",
+            "The use of the two seals is detailed",
+            "alongside.",
+            "Farm visit",
+            "assessment form",
+            "Farm visit checklist",
+            "farms, which lists all the products and displays",
+            "the relevant seal",
+            "These two seals were developed by PGS SA in consultation with PGS groups.",
+            "",
+            "Farm visit certificate granted to approved Description of seals and their use is detailed below. Groups may also create",
+            "their own seals.",
+            "PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submi",
+            "Where farmers are transitioning to organic agriculture and additional deviations to the standards are required that cannot be accommodated within the \u201corganic in conversion\u201d category, PGS groups can d",
+            "",
+            "ORGANIC",
+            "IN-CONV TM PGS NAME ON",
+            "TM PGS NAME PGS PGS ORGANIC ON PGS CODE TM PGS NAME",
+            "PGS CODE",
+            "PGS ORGANIC TM PGS NAME PGS CODE",
+            "A newly established PGS group will have the following seals customised in the name of its PGS:",
+            "PGS Organic In-Conversion PGS Organic",
+            "Printing of seals is at own cost.",
+            "Recommended annual fee for the use of stickers (paid by individual farmers):",
+            "R350 [to be divided between PGS SA (30%) and PGS groups (70%) \u2013 the portion of the fee accruing to PGS SA should be paid when the PGS group renews its membership]"
+          ],
+          [
+            "",
+            "",
+            "PGS SA is not responsible for monitoring the use of these seals.",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "rows_total": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 1,
+          "column": 10,
+          "cell": "farms, which lists all the products and displays"
+        },
+        {
+          "row": 1,
+          "column": 12,
+          "cell": "These two seals were developed by PGS SA in consultation with PGS groups."
+        },
+        {
+          "row": 1,
+          "column": 14,
+          "cell": "Farm visit certificate granted to approved Description of seals and their use is detailed below. Groups may also create"
+        },
+        {
+          "row": 1,
+          "column": 16,
+          "cell": "PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic"
+        },
+        {
+          "row": 1,
+          "column": 20,
+          "cell": "IN-CONV TM PGS NAME ON"
+        },
+        {
+          "row": 1,
+          "column": 21,
+          "cell": "TM PGS NAME PGS PGS ORGANIC ON PGS CODE TM PGS NAME"
+        },
+        {
+          "row": 1,
+          "column": 22,
+          "cell": "PGS CODE"
+        },
+        {
+          "row": 1,
+          "column": 23,
+          "cell": "PGS ORGANIC TM PGS NAME PGS CODE"
+        },
+        {
+          "row": 1,
+          "column": 24,
+          "cell": "A newly established PGS group will have the following seals customised in the name of its PGS:"
+        },
+        {
+          "row": 1,
+          "column": 25,
+          "cell": "PGS Organic In-Conversion PGS Organic"
+        },
+        {
+          "row": 1,
+          "column": 27,
+          "cell": "Recommended annual fee for the use of stickers (paid by individual farmers):"
+        },
+        {
+          "row": 1,
+          "column": 28,
+          "cell": "R350 [to be divided between PGS SA (30%) and PGS groups (70%) \u2013 the portion of the fee accruing to PGS SA should be paid"
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "seconds": 8.0,
+      "tables_on_pages": [
+        {
+          "page": 76,
+          "rows": 21,
+          "cols": 2
+        }
+      ],
+      "text_chars": 2217,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 21,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: columns ('SUBSTANCES DESCRIPTION, COMPOSITIONAL', 'CONDITIONS FOR USE') != ('SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS', 'CONDITIONS FOR USE')",
+          "qualifier: 21 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers () != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'REQUIREMENTS I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'Coming from extensive livestock farming.', expected 'Guano'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "REQUIREMENTS I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production "
+          ],
+          [
+            "Coming from extensive livestock farming.",
+            ""
+          ],
+          [
+            "If sourced from intensive livestock farming or not",
+            ""
+          ]
+        ],
+        "rows_total": 21
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 17,
+          "column": 0,
+          "cell": "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distill"
+        },
+        {
+          "row": 17,
+          "column": 1,
+          "cell": "Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant conta"
+        },
+        {
+          "row": 19,
+          "column": 0,
+          "cell": "Wood, bark, sawdust, wood shavings, wood ash, wood charcoal"
+        }
+      ]
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "documentai form21",
+      "processor": "3da842fc37f31e08",
+      "processor_version": "pretrained-form-parser-v2.1-2023-06-26",
+      "location": "us",
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "seconds": 9.6,
+      "tables_on_pages": [
+        {
+          "page": 6,
+          "rows": 9,
+          "cols": 16
+        }
+      ],
+      "text_chars": 2261,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 9,
+      "rows_expected": 2,
+      "columns_found": 16,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: columns ('Use of seals and logos', 'Resource documents, guidelines and requirements', 'Key steps', 'Seals and logos', 'Fee', '', '', '', '', '', '', '', '', '', '', '') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "artwork_cell: 9 rows, the page prints 2",
+          "artwork_cell: row pages (6, 6, 6, 6, 6, 6, 6, 6, 6) != (6, 6)",
+          "artwork_cell: row 0 cell 2 does not start 'PGS Organic In-Conversion': ''",
+          "artwork_cell: row 0 cell 4 is '', expected 'As above'",
+          "artwork_cell: row 1 cell 0 does not start 'PGS Organic': 'before sowing or planting in the case of annual'",
+          "artwork_cell: row 1 cell 3 must be empty, the read says '18 months'"
+        ],
+        "columns": [
+          "Use of seals and logos",
+          "Resource documents, guidelines and requirements",
+          "Key steps",
+          "Seals and logos",
+          "Fee",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion",
+            "PGS Organic In-Conversion",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "before sowing or planting in the case of annual",
+            "If the production is in accordance with organic principles, but the land has been under organic management for less than:",
+            "attest to the organic history of",
+            "18 months",
+            "Farmers who cannot support/",
+            "the land or who are converting",
+            "As above",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "production",
+            ".",
+            "from chemical to organic",
+            "12 months before grazing or harvest for pastures and",
+            "agriculture may be granted",
+            "this seal by their group.",
+            "meadows. 12 months before harvest for other perennials.",
+            "ORGANIC PGS IN-COM TM PGS NAME",
+            "PGS TM ON",
+            "TM",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "PGS Organic",
+            "PGS Organic",
+            "",
+            "Labelling regulations state that use of the word \u201corganic\u201d for animal products must be linked to specific protocols registered with The Department of Agriculture, Land Reform and Rural Development (DA",
+            "Farmers who are fully compliant with their group\u2019s",
+            "choice of an internationally accepted organic standard",
+            "may be granted this seal.",
+            "The IFOAM recognised SAOSO standard covers these protocols. In the absence of SA legislation governing the use of the word \u201corganic\u201d for crops, groups are guided by the intended purpose of the Consume",
+            "PGS CODE",
+            "",
+            "PGS ORGANIC",
+            "TM PGS NAME",
+            "PGS CODE",
+            "",
+            "",
+            "As above"
+          ]
+        ],
+        "rows_total": 9
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 1,
+          "column": 1,
+          "cell": "If the production is in accordance with organic principles, but the land has been under organic management for less than"
+        },
+        {
+          "row": 2,
+          "column": 6,
+          "cell": "meadows. 12 months before harvest for other perennials."
+        },
+        {
+          "row": 2,
+          "column": 7,
+          "cell": "ORGANIC PGS IN-COM TM PGS NAME"
+        },
+        {
+          "row": 2,
+          "column": 8,
+          "cell": "PGS TM ON"
+        },
+        {
+          "row": 2,
+          "column": 9,
+          "cell": "TM"
+        },
+        {
+          "row": 3,
+          "column": 3,
+          "cell": "Labelling regulations state that use of the word \u201corganic\u201d for animal products must be linked to specific protocols regi"
+        },
+        {
+          "row": 3,
+          "column": 4,
+          "cell": "Farmers who are fully compliant with their group\u2019s"
+        },
+        {
+          "row": 3,
+          "column": 5,
+          "cell": "choice of an internationally accepted organic standard"
+        },
+        {
+          "row": 3,
+          "column": 8,
+          "cell": "PGS CODE"
+        },
+        {
+          "row": 3,
+          "column": 10,
+          "cell": "PGS ORGANIC"
+        },
+        {
+          "row": 3,
+          "column": 11,
+          "cell": "TM PGS NAME"
+        },
+        {
+          "row": 3,
+          "column": 12,
+          "cell": "PGS CODE"
+        }
+      ]
+    },
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "seconds": 34.5,
+      "tables_on_pages": [
+        {
+          "page": 2,
+          "rows": 6,
+          "cols": 3
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "seconds": 40.7,
+      "tables_on_pages": [
+        {
+          "page": 85,
+          "rows": 20,
+          "cols": 2
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other bovine animals less than one year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "seconds": 62.0,
+      "tables_on_pages": [
+        {
+          "page": 88,
+          "rows": 7,
+          "cols": 5
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 5,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice', 'Authorised products', 'Conditions of use \\\\(^{(1)}\\\\)', 'Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is 'Aeration or oxygenation using gaseous oxygen', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b'",
+          "column_major: row 6 cell 3 does not hold 'No more than 0,6 mg/l'"
+        ],
+        "columns": [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use \\(^{(1)}\\)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1",
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature \\(70^{\\circ}C\\)",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite, Cellulose, Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product"
+          ],
+          [
+            "4",
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen, Carbon dioxide, Argon",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for ",
+            "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+          ]
+        ],
+        "rows_total": 7
+      },
+      "with_row_number_gutter": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('Oenological practice', 'Authorised products', 'Conditions of use \\\\(^{(1)}\\\\)', 'Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')"
+        ],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use \\(^{(1)}\\)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "Heat treatments",
+            "Maximum temperature \\(70^{\\circ}C\\)",
+            "",
+            ""
+          ],
+          [
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite, Cellulose, Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product"
+          ],
+          [
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen, Carbon dioxide, Argon",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for ",
+            "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+          ]
+        ],
+        "rows_total": 7
+      },
+      "row_number_gutter_rows": 7,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 0,
+          "column": 1,
+          "cell": "Aeration or oxygenation using gaseous oxygen"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "cell": "Air, Gaseous oxygen"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "cell": "Maximum temperature \\(70^{\\circ}C\\)"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "cell": "Centrifuging and filtration with or without an inert filtering agent"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "cell": "Perlite, Cellulose, Diatomaceous earths"
+        },
+        {
+          "row": 2,
+          "column": 4,
+          "cell": "Use of an agent must not leave undesirable residues in the treated product"
+        },
+        {
+          "row": 3,
+          "column": 1,
+          "cell": "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle"
+        },
+        {
+          "row": 3,
+          "column": 2,
+          "cell": "Nitrogen, Carbon dioxide, Argon"
+        },
+        {
+          "row": 3,
+          "column": 3,
+          "cell": "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from rais"
+        },
+        {
+          "row": 3,
+          "column": 4,
+          "cell": "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+        },
+        {
+          "row": 4,
+          "column": 1,
+          "cell": "Use of yeasts for wine production, whether dry or in wine suspension"
+        },
+        {
+          "row": 4,
+          "column": 2,
+          "cell": "Yeasts (if available, derived from organic raw material)"
+        },
+        {
+          "row": 5,
+          "column": 1,
+          "cell": "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient: - addition"
+        },
+        {
+          "row": 5,
+          "column": 3,
+          "cell": "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from rais"
+        },
+        {
+          "row": 5,
+          "column": 4,
+          "cell": "No more than 1 g/l (expressed in salts) or 0,3 g/l for the second fermentation of sparkling wines."
+        },
+        {
+          "row": 6,
+          "column": 1,
+          "cell": "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient: - addition"
+        },
+        {
+          "row": 6,
+          "column": 3,
+          "cell": "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must obtained from raisine"
+        },
+        {
+          "row": 6,
+          "column": 4,
+          "cell": "No more than 0,6 mg/l (expressed in thiamine) for each treatment"
+        }
+      ]
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "seconds": 75.2,
+      "tables_on_pages": [
+        {
+          "page": 5,
+          "rows": 1,
+          "cols": 5
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 3 The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is deta",
+            "",
+            "These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed below. Groups may also create their own seals. PGS groups are custodians of the",
+            "",
+            "A newly established PGS group will have the following seals customised in the name of its PGS: Printing of seals is at own cost. Recommended annual fee for the use of stickers (paid by individual farm"
+          ]
+        ],
+        "rows_total": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 0,
+          "column": 0,
+          "cell": "Step 3 The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "cell": "These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "cell": "A newly established PGS group will have the following seals customised in the name of its PGS: Printing of seals is at o"
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "seconds": 61.8,
+      "tables_on_pages": [
+        {
+          "page": 4,
+          "rows": 2,
+          "cols": 5
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is 'Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PG', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'Annual membership fee (paid by the PGS group to PGS SA): R50'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1 Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where ther",
+            "",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ],
+          [
+            "Step 2 The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign ple",
+            "",
+            "Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the \u201cmember of PGS SA\u201d logo. Groups may also create their own local logo identifying their group and use",
+            "Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PGS",
+            "Annual membership fee (paid by the PGS group to PGS SA): R500 Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1 000"
+          ]
+        ],
+        "rows_total": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 0,
+          "column": 0,
+          "cell": "Step 1 Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OF"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "cell": "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "cell": "Step 2 The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "cell": "Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the \u201cmember of PGS SA\u201d l"
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "cell": "Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PGS"
+        },
+        {
+          "row": 1,
+          "column": 4,
+          "cell": "Annual membership fee (paid by the PGS group to PGS SA): R500 Once-off customisation of logo, seals and certificates (pa"
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "seconds": 76.5,
+      "tables_on_pages": [
+        {
+          "page": 4,
+          "rows": 2,
+          "cols": 5
+        },
+        {
+          "page": 5,
+          "rows": 2,
+          "cols": 5
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 4,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: 4 rows, the page prints 3",
+          "page_break_row: row pages (4, 4, 5, 5) != (4, 4, 5)",
+          "page_break_row: row 2 cell 4 does not hold 'R350'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1 Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OFO), and wanting to aggregate and sell their produce to a local market where ther",
+            "",
+            "",
+            "",
+            "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+          ],
+          [
+            "Step 2 The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally accepted standard, against which farmers will be assessed. The members sign ple",
+            "",
+            "Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the \u201cmember of PGS SA\u201d logo. Groups may also create their own local logo identifying their group and use",
+            "Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PGS",
+            "Annual membership fee (paid by the PGS group to PGS SA): R500 Once-off customisation of logo, seals and certificates (paid by the PGS group to PGS SA): R1 000"
+          ],
+          [
+            "Step 3",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly. The use of the two seals is detailed al",
+            "",
+            "These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed below. Groups may also create their own seals. PGS groups are custodians of the",
+            "",
+            "A newly established PGS group will have the following seals customised in the name of its PGS: Printing of seals is at own cost. Recommended annual fee for the use of stickers (paid by individual farm"
+          ]
+        ],
+        "rows_total": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": true,
+      "unverified_in_our_pass": [
+        {
+          "row": 0,
+          "column": 0,
+          "cell": "Step 1 Farmers who are already producing a surplus of organic produce and organized as an Organic farmer Association (OF"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "cell": "Local PGS group determines the membership fee for farmers/ consumers/traders that are part of the PGS group."
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "cell": "Step 2 The PGS group agrees on operational procedures and their Basic Production Principles, based on an internationally"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "cell": "Once formally established and paid-up members of PGS SA, groups will be entitled to make use of the \u201cmember of PGS SA\u201d l"
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "cell": "Proud member of PGS SOUTH AFRICA PGS SOUTH AFRICA Name of PGS"
+        },
+        {
+          "row": 1,
+          "column": 4,
+          "cell": "Annual membership fee (paid by the PGS group to PGS SA): R500 Once-off customisation of logo, seals and certificates (pa"
+        },
+        {
+          "row": 3,
+          "column": 0,
+          "cell": "The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farme"
+        },
+        {
+          "row": 3,
+          "column": 2,
+          "cell": "These two seals were developed by PGS SA in consultation with PGS groups. Description of seals and their use is detailed"
+        },
+        {
+          "row": 3,
+          "column": 4,
+          "cell": "A newly established PGS group will have the following seals customised in the name of its PGS: Printing of seals is at o"
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "seconds": 83.9,
+      "tables_on_pages": [
+        {
+          "page": 76,
+          "rows": 13,
+          "cols": 2
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 13,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: columns ('I. PLANT AND ANIMAL ORIGIN', '') != ('SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS', 'CONDITIONS FOR USE')",
+          "qualifier: 13 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers () != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 2 cell 0 is 'Farmyard manure, slurry and urine', expected 'Guano'",
+          "qualifier: row 2 cell 1 must be empty, the read says 'Manure applications should not be the primary source of nitr'"
+        ],
+        "columns": [
+          "I. PLANT AND ANIMAL ORIGIN",
+          ""
+        ],
+        "rows": [
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production "
+          ],
+          [
+            "South African specific",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Manure applications should not be the primary source of nitrogen. See Section B \u2013 Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species an"
+          ],
+          [
+            "Guano",
+            ""
+          ]
+        ],
+        "rows_total": 13
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 9,
+          "column": 0,
+          "cell": "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distill"
+        },
+        {
+          "row": 9,
+          "column": 1,
+          "cell": "Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant conta"
+        },
+        {
+          "row": 11,
+          "column": 0,
+          "cell": "Wood, bark, sawdust, wood shavings, wood ash, wood charcoal"
+        }
+      ]
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "documentai layout16pro",
+      "processor": "68e47c3bc90cc6ab",
+      "processor_version": "pretrained-layout-parser-v1.6-pro-2025-12-01",
+      "location": "us",
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "seconds": 60.0,
+      "tables_on_pages": [
+        {
+          "page": 6,
+          "rows": 2,
+          "cols": 5
+        }
+      ],
+      "text_chars": 0,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion Farmers who cannot support/attest to the organic history of the land or who are converting from chemical to organic agriculture may be granted this seal by their group.",
+            "",
+            "PGS Organic In-Conversion If the production is in accordance with organic principles, but the land has been under organic management for less than:",
+            "",
+            "As above"
+          ],
+          [
+            "PGS Organic Farmers who are fully compliant with their group's choice of an internationally accepted organic standard may be granted this seal.",
+            "",
+            "PGS Organic Labelling regulations state that use of the word \"organic\" for animal products must be linked to specific protocols registered with The Department of Agriculture, Land Reform and Rural Dev",
+            "",
+            "As above"
+          ]
+        ],
+        "rows_total": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "row_number_gutter_rows": 0,
+      "joined_pages": false,
+      "unverified_in_our_pass": [
+        {
+          "row": 0,
+          "column": 0,
+          "cell": "PGS Organic In-Conversion Farmers who cannot support/attest to the organic history of the land or who are converting fro"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "cell": "PGS Organic In-Conversion If the production is in accordance with organic principles, but the land has been under organi"
+        },
+        {
+          "row": 1,
+          "column": 0,
+          "cell": "PGS Organic Farmers who are fully compliant with their group's choice of an internationally accepted organic standard ma"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "cell": "PGS Organic Labelling regulations state that use of the word \"organic\" for animal products must be linked to specific pr"
+        }
+      ]
+    }
+  ]
+}

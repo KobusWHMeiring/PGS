@@ -358,6 +358,8 @@ the only defect was our counting the paper's row-number furniture as data.
 | VLM sonnet `anchors` | 1/8 | numeric_row |
 
 Union of everything any arm passes: **numeric_row, column_major, qualifier, artwork_cell — 4 of 8.**
+**(Corrected 2026-11-05, §3.12: the re-score against the signed key makes it **5 of 8** — the Layout
+Parser reads the long cell end to end, and that shape was our key's defect, not the tools'.)**
 Never passed by any arm, under any convention: **headerless_values** (the header is printed once,
 split across four lines, with the second column's continuation printed beneath it), **long_cell** (a
 1,112-character cell whose boundary no reader agrees on), **empty_cells** (a merged fee box plus a
@@ -368,6 +370,8 @@ not structural**: which printed lines are one header, where a paragraph-sized ce
 label belongs to the artwork beside it. Those are judgements a human reviewer made in the fixtures.
 So the extractor choice is now clearly *not* the load-bearing decision: **a credential would have to
 beat a union of four, and the three it would still lose are the three no general extractor returns.**
+**(Corrected 2026-11-05, §3.12: it is a union of five, and only three are left — one of which is our
+key and one our pass. The credential argument itself stands unchanged.)**
 The order of work is S3 (emit the blocks, record the extraction mode) and S5 (re-review 6a and 7
 through the harness), with the arm's `lines` form as a **proposer** whose output the harness checks —
 not as an authority.
@@ -451,7 +455,9 @@ cleanly:
 **And we have already seen it change an answer.** Appendix 7 was a failure for *both* arms until the
 row-number convention was declared — after which both passed. That was the key being a convention, not
 a fact. The four shapes no arm passes are exactly the judgement ones, so "never passed by any arm" may
-mean **"no arm guessed the reviewer's call"**.
+mean **"no arm guessed the reviewer's call"**. **(Confirmed 2026-11-05, §3.12: the reviewer's one
+amended claim moved a shape for two arms, so "never passed" now covers three — one a real tool failure,
+one our key, one our committed pass.)**
 
 **What this changes.** The ranking between the arms (VLM 3/8, Docling 2/8, Document AI Layout 2/8 with 8/8 tables found,
 Form 1/8) is **not established**, because the thing they are ranked against is unreviewed. Requirement 1 of this PRD says
@@ -532,6 +538,60 @@ the amendment path rather than by editing `expected` — so the record still say
 `scripts/eval_*.py` score them again against the corrected key. Only after that is D82 (which
 extractor) a decision with evidence under it.
 
+### 3.12 The re-score (2026-11-05): one claim on the key was worth a whole shape
+
+Run against the **signed** key (`knowledge/tests/shape_review.json`, 68 of 68 Yes, `long_cell.cell.0.0`
+amended to `starts="Step 3"`). Two arms replayed from cache — no network call, no credential, no spend.
+Docling has no response cache, so that arm was re-run in its venv (**545 s**; `long_cell` is 85.8 s of
+it). Evidence: `2026-11-05_s2_rescore_docling.json`, `2026-11-05_s2_rescore_documentai.json`,
+`2026-11-05_s2b_rescore_openrouter.json`.
+
+| Arm | Before | After | What moved |
+|---|---|---|---|
+| Docling 2.146.0 | 0/8 extracted, 2/8 with conventions | **identical — 0 of 8 shapes changed** | nothing: it returns *no table* on that page, so the amended cell is never consulted |
+| Document AI Form Parser v2.1 | 1/8 | **1/8** | same verdict, sharper reason — it reads the cell as the bare label `Step 3`, so it now fails `contains` where it used to fail `starts` |
+| Document AI Layout Parser v1.6-pro | 2/8 | **3/8** | **`long_cell` passes outright** — grid right *and* every character confirmed against our pass |
+| VLM `claude-sonnet-5.5`, `lines` | 2 pass + 1 gutter + 1 grid-only (=3/8) | 2 pass + 1 gutter + **2 grid-only** | `long_cell` 1 mismatch → **0**, with 11 cells whose characters our committed pass does not confirm |
+| VLM `gemini-3.1-flash-lite`, `lines` | 1 pass + 3 grid-only | 1 pass + **4** grid-only | the same shift, 4 unconfirmed cells |
+
+The diff is confined to `long_cell`: **6 of the 72 combos** (8 Docling + 16 Document AI + 48 VLM)
+changed, one line each, and no other shape moved at all — the rest is byte-identical to 2026-11-04.
+
+**One claim, one shape, two arms.** `Cell(0,0, starts="The group conducts farm visits and")` became
+`starts="Step 3", contains="The group conducts…"`, and that alone moved the Layout Parser a shape and
+the two `lines` arms off "structurally wrong" onto "grid right, characters unverified". So:
+
+* **The union of shapes any arm passes is 4 → 5 of 8.** Never passed by any arm is now
+  `headerless_values`, `empty_cells`, `page_break_row` — **three**, and §3.8's "union of four" is
+  superseded.
+* **§3.8's closing claim is now partly false.** It said the shapes the arms "would still lose are the
+  three no general extractor returns". The long cell was not a tool failure; it was ours. **The
+  scoreboard is a property of the key as much as of the arms**, and §3.10's suspicion now has a
+  measurement: 1 of 8 reviewed-claim defects cost an arm a shape.
+* **The arms now disagree usefully on one shape** — Docling finds no table, the VLMs get the grid and
+  lose characters, the Layout Parser reads it end to end. A flat 3/8 hid a tiered answer.
+
+**Then the thread: the three remaining "no arm passes" shapes are three different problems**, which is
+why they cannot be read as one number. Arbitrated against `knowledge/corpus/landscape.md` (our reviewed
+artefact) and the committed page passes:
+
+| Shape | Diagnosis | What settles it |
+|---|---|---|
+| `headerless_values` (Appendix 6a) | **Our key is probably wrong, in the same way `Step 3` was.** The paper prints four header lines: `Maximum number of animals per ha` / `Class or species` in column 0, and `Maximum number of animals per ha equivalent` / `to 170 kg N/ha/year` in column 1. Our `columns` claim keeps both of column 1's lines and **only the second of column 0's** — and our own anchor (`'Class or species to 170 kg N/ha/year'`) acknowledges the geometry the claim flattens. All four arms read column 0 with both lines | the owner, on the review surface — this is **one claim**. Correcting it would take the Layout Parser and sonnet `lines` to **4/8 each** and the union to 6 of 8 |
+| `empty_cells` (landscape p4) | **The key is right; the arms genuinely fail.** The artefact's legend says the fee box spans Steps 1–2 and is filed under Step 1, so `R500` is in cell 0,4, cell 1,3 is exactly `Proud member of` and cell 1,4 is genuinely empty. Every arm splits the spanning box or duplicates the two-line header | nothing — this shape earns its place |
+| `page_break_row` (landscape p4→p5) | **The key is right and the *instrument* is what fails.** Both VLMs score **0 mismatches** and are demoted by quotes that are "out of printed order on page 5". Page 5's committed `-table` pass is interleaved: line 10 reads `its farmer members in the relevant   •  Farm visit checklist` and line 14 carries three columns' fragments, so **no cell's quotes can appear in read order**. §3.8's second finding, biting again | a wording and verdict fix in R3 — "our pass cannot order this page" is not "the model's characters are unverified" |
+
+**What this changes for D82.** Still not answerable, and now for a better-understood reason: of the
+three shapes no arm passes, one is our key, one is the tools, and one is our pass. **Not one is "no
+extractor can do this."** The order stays: arbitrate the 6a header claim (one verdict, on the surface),
+fix R3's order verdict, re-score, then decide. The credential argument is unchanged by all of this —
+the Layout Parser is now level with the best VLM on passes and owns the one shape nobody had, while
+re-OCR'ing 43 cells our pass does not confirm and costing 60–85 s/page against the VLM's 5–12 s.
+
+**A hazard this produced:** the evidence JSON stores four sampled rows and clips cells at 200
+characters, so a probe that reads *it* as the read will conclude things that are false of the arms
+(`testing_hazards.md` §3.31). Score from the cache; read claims from the `mismatches` lines.
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -563,7 +623,7 @@ extractor) a decision with evidence under it.
 |---|---|---|
 | **S0** | The eight-shape fixture set — registry, provenance guards, the audit test, eight strict-xfail targets | **landed 2026-11-03** |
 | **S1** | `build_corpus.py` refuses to overwrite a table block; `--discard-tables` is the named override | **landed 2026-11-03** |
-| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Three arms measured 2026-11-03/04: Docling 2/8 (§3.5, §3.8), the OpenRouter VLM 3/8 (§3.7), Document AI 1/8 Form Parser and 2/8 Layout Parser (§3.9). One declared normalisation — the paper's row-number gutter — makes Appendix 7 pass for Docling *and* the VLM (§3.8). The credential was bought and bought the answer: no arm beats the free ones. §3.10 outranks all of it: the eight-shape key is agent-authored and no human has validated a cell, so the ranking is not established. The verification surface is built (§3.11, 68 claims, 41 cells) and is waiting for the owner's signature; then a free re-score from cache.** |
+| **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Three arms measured 2026-11-03/04: Docling 2/8 (§3.5, §3.8), the OpenRouter VLM 3/8 (§3.7), Document AI 1/8 Form Parser and 2/8 Layout Parser (§3.9). One declared normalisation — the paper's row-number gutter — makes Appendix 7 pass for Docling *and* the VLM (§3.8). The credential was bought and bought the answer: no arm beats the free ones. §3.10 outranks all of it: the eight-shape key is agent-authored, so the ranking is not established. The owner reviewed it (§3.11, 68 claims, D85 answered) and the arms were **re-scored against the signed key on 2026-11-05 (§3.12): Layout Parser 2/8 → 3/8, everything else unchanged, union 4 → 5 of 8**. What is left is three shapes with three different causes — one claim on our key, one real tool failure, one defect in our committed pass — so D82 (which extractor) waits on those three, not on another measurement.** |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | open |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
 | **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | open |

@@ -233,7 +233,7 @@
       different: <strong>should any tool be judged against an answer key nobody has checked?</strong></p>
     <div class="meta">
       <span>PRD <code>INGESTION_ENGINE_PRD.md</code> §3.5 · §3.7 · §3.8</span>
-      <span>Evidence <code>product/docs/evidence/</code> (3 files)</span>
+      <span>Evidence <code>product/docs/evidence/</code> (7 files)</span>
       <span>Spent <code>$0.55</code> on models · <code>$0.00</code> so far on Document AI</span>
     </div>
   </div>
@@ -242,6 +242,25 @@
 <div class="wrap">
 
   <section class="intro">
+    <div class="callout">
+      <span class="label">Update — 2026-11-05 · the key was reviewed, one claim was wrong, and an arm gained a shape</span>
+      <p><strong>Every claim on this page was put in front of the product owner</strong>, beside the real
+        page: 68 of 68 confirmed, and <strong>one was wrong</strong> — the long cell starts with a bold
+        <code>Step 3</code>, which our claim said it did not. All three arms were then
+        <strong>re-scored against the corrected key</strong> at no cost (both API arms replayed from a
+        cached response; nothing was bought).</p>
+      <p style="margin-top:8px"><strong>What moved:</strong> Document AI's Layout Parser goes
+        <strong>2 / 8 → 3 / 8</strong>, because it was reading the long cell correctly all along.
+        Docling's score is byte-identical — it finds no table on that page, so the amended claim is never
+        consulted. So <strong>one claim on our side was worth a whole shape</strong>, and the union of
+        shapes any arm passes is <strong>5 of 8, not 4</strong>.</p>
+      <p style="margin-top:8px"><strong>What is left is three shapes with three causes</strong>, and none
+        of them is “no extractor can do this”. One more claim needs a person: Appendix 6a's four printed
+        header lines, where every arm groups the two columns one way and our key another — and our own
+        anchor admits the geometry. That page is
+        <code>product/design/uat/arbitrate_shapes.html</code>. Everything below is the measurement as it
+        stood <em>before</em> the re-score, kept because the reasoning still holds.</p>
+    </div>
     <h2>How to read this</h2>
     <p>This is a <strong>record of what was measured</strong>, in order, with the correction that came
       after it. It is not a proposal and not a status report. Every number here comes from a committed
@@ -572,8 +591,8 @@
       <tbody>
         <tr><td>Form Parser v2.1</td><td><strong>1 / 8</strong></td><td>7 of 8</td><td>72 s</td>
             <td>Appendix 7 comes back as <strong>17 ragged cells in one row</strong> — it does not de-interleave. Landscape p4 returns <em>no table at all</em>.</td></tr>
-        <tr><td>Layout Parser v1.6-pro</td><td><strong>2 / 8</strong></td><td><strong>8 of 8</strong></td><td>495 s</td>
-            <td>The best <em>structure</em> of any arm: the long cell as 1 row × 5 columns, Appendix 7 at 5 columns, Appendix 6a 20 rows × 2 columns with <strong>one</strong> cell wrong.</td></tr>
+        <tr><td>Layout Parser v1.6-pro</td><td><strong>3 / 8</strong><br><small>2 / 8 before the key was corrected</small></td><td><strong>8 of 8</strong></td><td>495 s</td>
+            <td>The best <em>structure</em> of any arm: <strong>it reads the long cell end to end</strong>, Appendix 7 at 5 columns, Appendix 6a 20 rows × 2 columns with <strong>one</strong> cell wrong.</td></tr>
       </tbody>
     </table>
     </div>
@@ -624,8 +643,8 @@
       </div>
       <div class="bar-row">
         <div class="who">Document AI · Layout v1.6-pro</div>
-        <div class="track"><div class="seg pass" style="width:25%"></div></div>
-        <div class="n">2 / 8</div>
+        <div class="track"><div class="seg pass" style="width:37.5%"></div></div>
+        <div class="n">3 / 8</div>
       </div>
       <div class="bar-row">
         <div class="who">Document AI · Form v2.1</div>
@@ -651,7 +670,7 @@
         <tr><td>Numeric row (OPP)</td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td><td><span class="dot pass">●</span></td></tr>
         <tr><td>Header lost entirely (6a)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
         <tr><td>Column-major (App 7)</td><td><span class="dot pass">●</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot pass">●</span></td><td><span class="dot no">○</span></td></tr>
-        <tr><td>Very long cell (p5)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
+        <tr><td>Very long cell (p5)</td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td></tr>
         <tr><td>Empty cell (p4)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
         <tr><td>Row across a page break</td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td><td><span class="dot grid">◐</span></td><td><span class="dot no">○</span></td></tr>
         <tr><td>Two-level qualifiers (App 2)</td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td><td><span class="dot pass">●</span></td><td><span class="dot no">○</span></td><td><span class="dot no">○</span></td></tr>
@@ -677,7 +696,7 @@
       <thead><tr><th>Shape</th><th>Docling</th><th>Vision model</th><th>Layout Parser</th><th>Our key says</th></tr></thead>
       <tbody>
         <tr><td>Appendix 6a header</td><td>merged the two labels</td><td>merged them the same way</td><td><strong>merged them the same way</strong></td><td>two separate labels</td></tr>
-        <tr><td>Long cell, p5</td><td>not detected</td><td><code>Step 3 The group conducts…</code></td><td><strong>the same <code>Step 3</code></strong></td><td>starts <code>The group conducts…</code></td></tr>
+        <tr><td>Long cell, p5</td><td>not detected</td><td><code>Step 3 The group conducts…</code></td><td><strong>the same <code>Step 3</code> — and it was right</strong></td><td>starts <code>The group conducts…</code><br><strong>corrected 2026-11-05</strong></td></tr>
         <tr><td>Page-break row</td><td>one page only</td><td>3 rows, characters unverified</td><td><strong>4 rows</strong> — the repeated header counted</td><td>3 rows</td></tr>
       </tbody>
     </table>
@@ -685,17 +704,22 @@
     <div class="callout warn">
       <span class="label">Which means</span>
       <p>When three independent tools agree with each other and disagree with the key, the likeliest
-        explanation is the key. <strong>No human has ever checked a cell in it.</strong> So every
-        "pass" on this page means <em>"agrees with our grouping"</em>, not <em>"matches the paper"</em> —
-        and the ranking below is <strong>not established</strong>.</p>
+        explanation is the key. <strong>No human had ever checked a cell in it</strong> — so it was
+        reviewed on 2026-11-05, and the review found the long cell wrong and the rest right. A “pass”
+        below therefore means <em>“agrees with a grouping a person confirmed”</em> for seven of the eight
+        shapes; the ranking between the arms still rests on the three shapes nobody reads.</p>
     </div>
 
     <div class="callout">
       <span class="label">Read this row</span>
-      <p><strong>The two arms pass different shapes, and the union of everything any arm passes is
-        4 of 8.</strong> The four nobody passes are the four that need a <em>judgement</em>, not an
-        extraction: a header printed once across four lines, a 1,112-character cell boundary, a merged
-        fee box with a label beside a seal, and a page-break row whose characters were never verified.</p>
+      <p><strong>The arms pass different shapes, and the union of everything any arm passes is
+        5 of 8.</strong> The three nobody passes are three different problems, not one: Appendix 6a's
+        four printed header lines are <em>probably our key again</em> (every arm groups them the same
+        way, and our own anchor admits the geometry); the merged fee box on p4 is <em>genuinely the
+        tools</em> (the reviewed artefact's own legend says the box spans two rows, and every arm
+        splits it); and the page-break row is <em>our committed pass</em> (both vision arms have the
+        right grid and are demoted only because one printed line carries three columns' fragments, so
+        no cell's quotes can appear in read order).</p>
     </div>
   </div>
 

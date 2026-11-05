@@ -1925,6 +1925,30 @@ Rule: when proving a guard can fail, break it in a way whose failure set is know
 check the *named* tests changed. A pattern that cannot match is `(?!)`; `$^` matches the empty
 string, and `[]` is an error rather than an empty class.
 
+### 3.31 An evidence file's clip is not the read
+
+The arm scores are computed by `mismatches()` on the **full** read, but the evidence JSON stores only
+four sampled rows per shape and clips each cell at 200 characters (`scripts/eval_openrouter.py`
+`CELL_CLIP`, and the same shape in the other two instruments). A probe written against the evidence
+file therefore sees four rows and concludes things about the read that are not true of it.
+
+Measured 2026-11-05, arbitrating `headerless_values`: all five arm reads reported `cell 19,0` as
+`<missing>` — a shape the key asserts `Laying hens` / `230` at row 19 — which reads as "every arm drops
+the last row". The arms do not: `rows_found: 20` on every one. `len(rows)` in the JSON was **4**.
+
+```
+rescore_docling.json        rows_found 20   len(rows) 4
+rescore_openrouter.json     rows_found 20   len(rows) 4      <- the evidence file, not the read
+```
+
+Consequence: a review agenda built from the evidence JSON would have accused all five arms of a
+defect none of them has — the same failure mode as §3.20's truncated dump, from the other direction: the
+clip is a *sample*, and reading it as the whole is a silent substitution.
+
+Rule: score from the cache, never from the evidence file. When a dispute is at claim level, read the
+`mismatches` lines (computed on the full read) or re-parse the cached response; treat `rows` in an
+evidence JSON as a sample and say so wherever the file is read.
+
 ## 5. Template for a new entry
 
 ```markdown

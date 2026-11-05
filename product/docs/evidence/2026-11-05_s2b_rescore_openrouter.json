@@ -1,0 +1,5508 @@
+{
+  "instrument": "scripts/eval_openrouter.py",
+  "arm": "VLM via OpenRouter \u2014 the model proposes the grid, the page supplies the characters",
+  "prompts": {
+    "lines": "You are reading page images of a printed certification standard and returning the printed table as JSON. Copy characters exactly as the page prints them.\n\nReturn ONE JSON object with these keys:\n\n- \"columns\": the printed column headings, left to right, one string each. Use [] when the page\n  prints no heading row.\n- \"rows\": the printed body rows, top to bottom. Each row is an object\n  {\"page\": <1-based image number the row starts on>, \"cells\": [<cell>, ...]}.\n  A cell is the printed text of that cell, with each printed line separated by \"\\n\".\n  Copy the page's own spelling, punctuation, commas and dashes. Never translate, correct, expand,\n  reorder, rejoin or summarise. If a cell is empty on the page, use \"\" \u2014 never omit a cell, never\n  fill it from a neighbouring cell or the row above.\n- \"dividers\": text printed between two body rows that labels the rows beneath it (a part heading or\n  a qualifier), as {\"before_row\": <index into rows>, \"text\": \"...\", \"kind\": \"part\" | \"qualifier\"}.\n  Use [] when there are none. A divider is not a row and not a column heading.\n- \"spans\": merged cells, as {\"row\": <index>, \"column\": <index>, \"rowspan\": <n>, \"colspan\": <m>}.\n  The merged text stays in the first cell it covers; the cells it covers are \"\".\n- \"non_text\": artwork inside a cell, as {\"row\": <index>, \"column\": <index>, \"label\": \"<the caption\n  printed beside it, or \\\"\\\">\"}.\n\nIf the page prints no table, return {\"columns\": [], \"rows\": [], \"dividers\": [], \"spans\": [],\n\"non_text\": []}. Output the JSON object only: no prose, no code fence, no commentary.",
+    "anchors": "You are reading page images of a printed certification standard and returning the printed table as JSON. You are locating cells, not transcribing them.\n\nReturn ONE JSON object with these keys:\n\n- \"columns\": the printed column headings, left to right, copied character for character. Use [] when\n  the page prints no heading row.\n- \"rows\": the printed body rows, top to bottom. Each row is an object\n  {\"page\": <1-based image number the row starts on>, \"cells\": [<cell>, ...]} where a cell is\n  {\"first\": \"<the first three to six words printed in that cell>\",\n   \"last\": \"<the last three to six words printed in that cell>\"}.\n  Copy those words exactly as printed \u2014 do not correct, translate or reorder them. For a cell whose\n  whole text is shorter than six words, use the whole text in both fields. For a cell that prints\n  nothing, use {\"first\": \"\", \"last\": \"\"}: never omit a cell, never fill it from a neighbour.\n- \"dividers\": text printed between two body rows that labels the rows beneath it, as\n  {\"before_row\": <index into rows>, \"text\": \"...\", \"kind\": \"part\" | \"qualifier\"}. Use [] when\n  there are none. A divider is not a row and not a column heading.\n- \"spans\": merged cells, as {\"row\": <index>, \"column\": <index>, \"rowspan\": <n>, \"colspan\": <m>}.\n  The merged text stays in the first cell it covers; the cells it covers print nothing.\n- \"non_text\": artwork inside a cell, as {\"row\": <index>, \"column\": <index>, \"label\": \"<the caption\n  printed beside it, or \"\">\"}.\n\nIf the page prints no table, return {\"columns\": [], \"rows\": [], \"dividers\": [], \"spans\": [],\n\"non_text\": []}. Output the JSON object only: no prose, no code fence, no commentary.",
+    "indices": "You are given a printed certification standard: the page image, and the page's extracted text as numbered lines. Return the printed table's structure as JSON. Refer to text ONLY by\nline number \u2014 never retype, correct or summarise any text.\n\nReturn ONE JSON object with these keys:\n\n- \"columns\": one entry per printed column, left to right, each entry the list of line numbers that\n  make up that column's heading. Use [] when the page prints no heading row.\n- \"rows\": the printed body rows, top to bottom. Each row is {\"page\": <1-based image number the row\n  starts on>, \"cells\": [<cell>, ...]} where a cell is the list of line numbers holding that cell's\n  text, in printed order. A cell that prints nothing is []. Never omit a cell, never put a neighbour's\n  line in it.\n- \"dividers\": printed lines that label the rows beneath them rather than being a row of their own, as\n  {\"before_row\": <index into rows>, \"line\": <line number>, \"kind\": \"part\" | \"qualifier\"}. Use []\n  when there are none.\n- \"spans\": merged cells, as {\"row\": <index>, \"column\": <index>, \"rowspan\": <n>, \"colspan\": <m>}.\n- \"non_text\": artwork inside a cell, as {\"row\": <index>, \"column\": <index>, \"label_line\": <line\n  number of the caption printed beside it, or null>}.\n\nIf the page prints no table, return {\"columns\": [], \"rows\": [], \"dividers\": [], \"spans\": [],\n\"non_text\": []}. Output the JSON object only: no prose, no code fence, no commentary."
+  },
+  "dpi": 200,
+  "cells_clipped_at": 200,
+  "checked": "48 calls: 2 model(s) x 3 mode(s) x 8 shape(s)",
+  "models": {
+    "google/gemini-3.1-flash-lite [lines]": {
+      "shapes": 8,
+      "pass": 1,
+      "grid_only": 4,
+      "gutter_only": 0,
+      "as_extracted": 4,
+      "first_row_as_header": 4,
+      "prompt_tokens": 13418,
+      "completion_tokens": 5996,
+      "cost_usd": 0.0123,
+      "seconds": 38.9,
+      "quote_violations": 21
+    },
+    "google/gemini-3.1-flash-lite [anchors]": {
+      "shapes": 8,
+      "pass": 2,
+      "grid_only": 0,
+      "gutter_only": 0,
+      "as_extracted": 2,
+      "first_row_as_header": 2,
+      "prompt_tokens": 13602,
+      "completion_tokens": 5962,
+      "cost_usd": 0.0123,
+      "seconds": 40.1,
+      "quote_violations": 20
+    },
+    "google/gemini-3.1-flash-lite [indices]": {
+      "shapes": 8,
+      "pass": 0,
+      "grid_only": 0,
+      "gutter_only": 0,
+      "as_extracted": 0,
+      "first_row_as_header": 0,
+      "prompt_tokens": 19852,
+      "completion_tokens": 4296,
+      "cost_usd": 0.0114,
+      "seconds": 38.0,
+      "quote_violations": 0
+    },
+    "anthropic/claude-sonnet-5.5 [lines]": {
+      "shapes": 8,
+      "pass": 2,
+      "grid_only": 2,
+      "gutter_only": 1,
+      "as_extracted": 4,
+      "first_row_as_header": 4,
+      "prompt_tokens": 47701,
+      "completion_tokens": 6830,
+      "cost_usd": 0.1637,
+      "seconds": 63.7,
+      "quote_violations": 20
+    },
+    "anthropic/claude-sonnet-5.5 [anchors]": {
+      "shapes": 8,
+      "pass": 1,
+      "grid_only": 0,
+      "gutter_only": 0,
+      "as_extracted": 1,
+      "first_row_as_header": 1,
+      "prompt_tokens": 47861,
+      "completion_tokens": 5250,
+      "cost_usd": 0.1482,
+      "seconds": 55.2,
+      "quote_violations": 27
+    },
+    "anthropic/claude-sonnet-5.5 [indices]": {
+      "shapes": 8,
+      "pass": 0,
+      "grid_only": 0,
+      "gutter_only": 0,
+      "as_extracted": 0,
+      "first_row_as_header": 0,
+      "prompt_tokens": 55672,
+      "completion_tokens": 8748,
+      "cost_usd": 0.1988,
+      "seconds": 83.8,
+      "quote_violations": 0
+    }
+  },
+  "results": [
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "layout",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "dpi": 200,
+      "seconds": 3.2,
+      "usage": {
+        "prompt_tokens": 1537,
+        "completion_tokens": 446,
+        "total_tokens": 1983,
+        "cost": 0.00105325,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00105325,
+          "upstream_inference_prompt_cost": 0.00038425,
+          "upstream_inference_completions_cost": 0.000669
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "dpi": 200,
+      "seconds": 4.1,
+      "usage": {
+        "prompt_tokens": 1547,
+        "completion_tokens": 837,
+        "total_tokens": 2384,
+        "cost": 0.00164225,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00164225,
+          "upstream_inference_prompt_cost": 0.00038675,
+          "upstream_inference_completions_cost": 0.0012555
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other bovine animals less than one year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "dpi": 200,
+      "seconds": 4.6,
+      "usage": {
+        "prompt_tokens": 1547,
+        "completion_tokens": 878,
+        "total_tokens": 2425,
+        "cost": 0.00170375,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00170375,
+          "upstream_inference_prompt_cost": 0.00038675,
+          "upstream_inference_completions_cost": 0.001317
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (grid only, quotes unresolved)",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 4,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is 'Aeration or oxygenation using gaseous oxygen', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b'",
+          "column_major: row 6 cell 3 does not hold 'No more than 0,6 mg/l'"
+        ],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1",
+            "Aeration or oxygenation\nusing gaseous oxygen",
+            "Air,\nGaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature\n70\u00b0C",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "Centrifuging and\nfiltration with or without\nan inert filtering agent",
+            "Perlite,\nCellulose,\nDiatomaceous earths",
+            "",
+            "Use of an agent must not\nleave undesirable\nresidues in the treated\nproduct"
+          ],
+          [
+            "4",
+            "Use of carbon dioxide,\nargon or nitrogen, either\nalone or combined, in\norder to create an inert\natmosphere and to\nhandle the product\nshielded from the air",
+            "Nitrogen,\nCarbon dioxide,\nArgon",
+            "Only with fresh grapes,\ngrape must, partially\nfermented grape must,\npartially fermented grape\nmust be obtained from\nraisined grapes,\nconcentrated grape must\nand new wine still in\nfermentation and for ",
+            "Use in order to create an\ninert atmosphere and to\nhandle the product\nshielded from the air."
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "Aeration or oxygenation\nusing gaseous oxygen",
+            "Air,\nGaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "Heat treatments",
+            "Maximum temperature\n70\u00b0C",
+            "",
+            ""
+          ],
+          [
+            "Centrifuging and\nfiltration with or without\nan inert filtering agent",
+            "Perlite,\nCellulose,\nDiatomaceous earths",
+            "",
+            "Use of an agent must not\nleave undesirable\nresidues in the treated\nproduct"
+          ],
+          [
+            "Use of carbon dioxide,\nargon or nitrogen, either\nalone or combined, in\norder to create an inert\natmosphere and to\nhandle the product\nshielded from the air",
+            "Nitrogen,\nCarbon dioxide,\nArgon",
+            "Only with fresh grapes,\ngrape must, partially\nfermented grape must,\npartially fermented grape\nmust be obtained from\nraisined grapes,\nconcentrated grape must\nand new wine still in\nfermentation and for ",
+            "Use in order to create an\ninert atmosphere and to\nhandle the product\nshielded from the air."
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "70\u00b0C",
+          "reason": "not a contiguous run of any page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "dpi": 200,
+      "seconds": 5.1,
+      "usage": {
+        "prompt_tokens": 1537,
+        "completion_tokens": 678,
+        "total_tokens": 2215,
+        "cost": 0.00140125,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00140125,
+          "upstream_inference_prompt_cost": 0.00038425,
+          "upstream_inference_completions_cost": 0.001017
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (grid only, quotes unresolved)",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 3\n\nThe group conducts farm visits and\non approval grants certificates to\nits farmer members in the relevant\ncategory. Farmers may label their\nproducts accordingly.\n\nThe use of the two seals is de",
+            "\u2022 Farm visit\nassessment form\n\u2022 Farm visit checklist\n\u2022 Farm visit certificate\ngranted to approved\nfarms, which lists all the\nproducts and displays\nthe relevant seal",
+            "These two seals were developed by PGS SA\nin consultation with PGS groups.\n\nDescription of seals and their use is\ndetailed below. Groups may also create\ntheir own seals.\n\nPGS groups are custodians of t",
+            "",
+            "A newly established PGS group\nwill have the following seals\ncustomised in the name of its\nPGS:\n\n\u2022 PGS Organic In-Conversion\n\u2022 PGS Organic\n\nPrinting of seals is at own cost.\n\nRecommended annual fee for"
+          ]
+        ],
+        "rows_total": 1,
+        "rows_sampled": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "practises follow the group's organic",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "farmers' commitment to PGS and organic",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "be accommodated within the \"organic",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "in conversion\" category, PGS groups can",
+          "reason": "not a contiguous run of any page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "dpi": 200,
+      "seconds": 4.5,
+      "usage": {
+        "prompt_tokens": 1537,
+        "completion_tokens": 550,
+        "total_tokens": 2087,
+        "cost": 0.00120925,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00120925,
+          "upstream_inference_prompt_cost": 0.00038425,
+          "upstream_inference_completions_cost": 0.000825
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'Annual membership fee (paid by the PGS group to PGS SA): R50'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "\u2022 IFOAM PGS tool kit\n\u2022 PGS SA: How to set up a\nPGS group",
+            "",
+            "",
+            "Local PGS group determines the\nmembership fee for farmers/\nconsumers/traders that are\npart of the PGS group."
+          ],
+          [
+            "Step 2",
+            "\u2022 PGS operational\nprocedure guidelines\n\u2022 Farmer/consumer pledge\nexample\n\u2022 PGS SA self-assessment\nform\n\u2022 Basic Production\nprinciples based on\norganic standards \u2013\n(SAOSO standard or\nequivalent)",
+            "Once formally established and paid-up\nmembers of PGS SA, groups will be entitled\nto make use of the \u201cmember of PGS SA\u201d\nlogo.\n\nGroups may also create their own local\nlogo identifying their group and us",
+            "",
+            "Annual membership fee (paid\nby the PGS group to PGS SA):\nR500\n\nOnce-off customisation of\nlogo, seals and certificates\n(paid by the PGS group to PGS\nSA): R1 000"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 2,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "dpi": 200,
+      "seconds": 7.2,
+      "usage": {
+        "prompt_tokens": 2629,
+        "completion_tokens": 962,
+        "total_tokens": 3591,
+        "cost": 0.00210025,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00210025,
+          "upstream_inference_prompt_cost": 0.00065725,
+          "upstream_inference_completions_cost": 0.001443
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (grid only, quotes unresolved)",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "\u2022 IFOAM PGS tool kit\n\u2022 PGS SA: How to set up a\nPGS group",
+            "",
+            "",
+            "Local PGS group determines the\nmembership fee for farmers/\nconsumers/traders that are\npart of the PGS group."
+          ],
+          [
+            "Step 2",
+            "\u2022 PGS operational\nprocedure guidelines\n\u2022 Farmer/consumer pledge\nexample\n\u2022 PGS SA self-assessment\nform\n\u2022 Basic Production\nprinciples based on\norganic standards \u2013\n(SAOSO standard or\nequivalent)",
+            "Once formally established and paid-up\nmembers of PGS SA, groups will be entitled\nto make use of the \"member of PGS SA\"\nlogo.\n\nGroups may also create their own local\nlogo identifying their group and us",
+            "",
+            "Annual membership fee (paid\nby the PGS group to PGS SA):\nR500\n\nOnce-off customisation of\nlogo, seals and certificates\n(paid by the PGS group to PGS\nSA): R1 000"
+          ],
+          [
+            "Step 3",
+            "\u2022 Farm visit\nassessment form\n\u2022 Farm visit checklist\n\u2022 Farm visit certificate\ngranted to approved\nfarms, which lists all the\nproducts and displays\nthe relevant seal",
+            "These two seals were developed by PGS SA\nin consultation with PGS groups.\n\nDescription of seals and their use is\ndetailed below. Groups may also create\ntheir own seals.\n\nPGS groups are custodians of t",
+            "",
+            "A newly established PGS group\nwill have the following seals\ncustomised in the name of its\nPGS:\n\u2022 PGS Organic In-Conversion\n\u2022 PGS Organic\n\nPrinting of seals is at own cost.\n\nRecommended annual fee for\n"
+          ]
+        ],
+        "rows_total": 3,
+        "rows_sampled": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "to make use of the \"member of PGS SA\"",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "the \"member of PGS SA\" logo on their",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "\u2022 Farm visit checklist",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "\u2022 Farm visit certificate",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "granted to approved",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "farms, which lists all the",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "products and displays",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "the relevant seal",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "quote": "practises follow the group's organic",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "quote": "farmers' commitment to PGS and organic",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "quote": "be accommodated within the \"organic",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "quote": "in conversion\" category, PGS groups can",
+          "reason": "not a contiguous run of any page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "dpi": 200,
+      "seconds": 5.0,
+      "usage": {
+        "prompt_tokens": 1547,
+        "completion_tokens": 950,
+        "total_tokens": 2497,
+        "cost": 0.00181175,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00181175,
+          "upstream_inference_prompt_cost": 0.00038675,
+          "upstream_inference_completions_cost": 0.001425
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 12,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: 12 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers ((2, 'South African specific', 'qualifier'), (4, 'South African specific', 'qualifier')) != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'Farmyard manure, slurry and urine', expected 'Guano'",
+          "qualifier: row 2 cell 1 must be empty, the read says 'Manure applications should not be the primary source of nitr'",
+          "qualifier: row 4 cell 1 must be empty, the read says 'Specifically prohibited.'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the\nabsence of complimentary and additional nitrogen\ngenerating practices on farm and shall not be from\nconventional intensive livestock production "
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Manure applications should not be the primary\nsource of nitrogen. See Section B \u2013 Appendix 6\nMinimum Surface Areas Indoors and Outdoors and\nother Characteristics of Housing in the Different\nSpecies an"
+          ],
+          [
+            "Guano",
+            ""
+          ]
+        ],
+        "rows_total": 12,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ],
+      "non_text": []
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "dpi": 200,
+      "seconds": 5.2,
+      "usage": {
+        "prompt_tokens": 1537,
+        "completion_tokens": 695,
+        "total_tokens": 2232,
+        "cost": 0.00142675,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00142675,
+          "upstream_inference_prompt_cost": 0.00038425,
+          "upstream_inference_completions_cost": 0.0010425
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (grid only, quotes unresolved)",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion",
+            "Farmers who cannot support/\nattest to the organic history of\nthe land or who are converting\nfrom chemical to organic\nagriculture may be granted\nthis seal by their group.",
+            "PGS Organic In-Conversion\n\nIf the production is in accordance with organic principles, but the\nland has been under organic management for less than:\n\u2022 18 months before sowing or planting in the case o",
+            "",
+            "As above"
+          ],
+          [
+            "PGS Organic",
+            "Farmers who are fully\ncompliant with their group's\nchoice of an internationally\naccepted organic standard\nmay be granted this seal.",
+            "PGS Organic\n\nLabelling regulations state that use of the word \"organic\" for\nanimal products must be linked to specific protocols registered\nwith The Department of Agriculture, Land Reform and Rural\nDe",
+            "",
+            "As above"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 1,
+          "column": 1,
+          "quote": "compliant with their group's",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "Labelling regulations state that use of the word \"organic\" for",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "\"organic\" for crops, groups are guided by the intended purpose",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "visits and compliance with the group's chosen organic standard.",
+          "reason": "not a contiguous run of any page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 1
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "layout",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "dpi": 200,
+      "seconds": 5.0,
+      "usage": {
+        "prompt_tokens": 1560,
+        "completion_tokens": 792,
+        "total_tokens": 2352,
+        "cost": 0.001578,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.001578,
+          "upstream_inference_prompt_cost": 0.00039,
+          "upstream_inference_completions_cost": 0.001188
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "dpi": 200,
+      "seconds": 4.4,
+      "usage": {
+        "prompt_tokens": 1570,
+        "completion_tokens": 1337,
+        "total_tokens": 2907,
+        "cost": 0.002398,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.002398,
+          "upstream_inference_prompt_cost": 0.0003925,
+          "upstream_inference_completions_cost": 0.0020055
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: row 2 cell 0 is 'Other b o v i n e a n i m a l s less t h a n o n e year old', expected 'Other bovine animals less than one year old'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other b o v i n e a n i m a l s less t h a n o n e year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [
+        {
+          "row": 2,
+          "column": 0
+        }
+      ],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "dpi": 200,
+      "seconds": 5.1,
+      "usage": {
+        "prompt_tokens": 1570,
+        "completion_tokens": 768,
+        "total_tokens": 2338,
+        "cost": 0.0015445,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0015445,
+          "upstream_inference_prompt_cost": 0.0003925,
+          "upstream_inference_completions_cost": 0.001152
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 4,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: row 0 cell 0 is '', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is '', expected 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': ''"
+        ],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Heat treatments",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "Use of an agent must not filtration with or without Cellulose, leave undesirable an inert filtering agent Diatomaceous earths residues in the treated product"
+          ],
+          [
+            "Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an argon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to alone or combined, in Argon f",
+            "",
+            "Only with fresh grapes, Use in order to create an argon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to alone or combined, in Argon fermented grape must, handle the p",
+            "Use in order to create an argon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to alone or combined, in Argon fermented grape must, handle the product order to create a"
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 0,
+          "quote": "Aeration or oxygenation using",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "Air, Gaseous oxygen",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "quote": "Maximum temperature 70\u00b0C",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 0,
+          "quote": "Centrifuging and filtration with",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "Perlite, Cellulose, Diatomaceous earths",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 3,
+          "column": 1,
+          "quote": "Nitrogen, Carbon dioxide, Argon",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 4,
+          "column": 1,
+          "quote": "Yeasts (if available, derived",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 5,
+          "column": 0,
+          "quote": "addition of diammonium phosphate",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 5,
+          "column": 3,
+          "quote": "fermentation of sparkling wines.",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 6,
+          "column": 0,
+          "quote": "addition of thiamine hydrochloride",
+          "reason": "its last words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "dpi": 200,
+      "seconds": 4.2,
+      "usage": {
+        "prompt_tokens": 1560,
+        "completion_tokens": 266,
+        "total_tokens": 1826,
+        "cost": 0.000789,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.000789,
+          "upstream_inference_prompt_cost": 0.00039,
+          "upstream_inference_completions_cost": 0.000399
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: row 0 cell 0 does not start 'Step 3': ''",
+          "long_cell: row 0 cell 0 does not hold 'The group conducts farm visits and'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "",
+            "",
+            "These two seals were developed by PGS SA A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer memb",
+            "",
+            "A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer members in the relevant \u2022 Farm visit checklis"
+          ]
+        ],
+        "rows_total": 1,
+        "rows_sampled": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 0,
+          "quote": "products accordingly. The use",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "Farm visit assessment form",
+          "reason": "its first words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "dpi": 200,
+      "seconds": 4.0,
+      "usage": {
+        "prompt_tokens": 1560,
+        "completion_tokens": 497,
+        "total_tokens": 2057,
+        "cost": 0.0011355,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0011355,
+          "upstream_inference_prompt_cost": 0.00039,
+          "upstream_inference_completions_cost": 0.0007455
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: dividers ((0, 'Step 1', 'part'), (1, 'Step 2', 'part')) != ()",
+          "empty_cells: row 0 cell 0 does not start 'Step 1': 'Farmers who are already producing \u2022 IFOAM PGS tool kit Local'",
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'Annual membership fee (paid operational procedures and their'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Organic far",
+            "",
+            "",
+            "",
+            "Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Organic farmer PGS group consumers/traders that are Association (O"
+          ],
+          [
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, gro",
+            "",
+            "Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, groups will be entitled by the PGS group to P",
+            "",
+            "Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, groups will be entitled by the PGS group to PGS SA): Basic Production Principles, based \u2022 Farmer/co"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "PGS SA: How to set up a PGS group",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "quote": "PGS operational procedure guidelines",
+          "reason": "its first words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "dpi": 200,
+      "seconds": 6.7,
+      "usage": {
+        "prompt_tokens": 2652,
+        "completion_tokens": 773,
+        "total_tokens": 3425,
+        "cost": 0.0018225,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0018225,
+          "upstream_inference_prompt_cost": 0.000663,
+          "upstream_inference_completions_cost": 0.0011595
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: row 2 cell 4 does not hold 'R350'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Organic far",
+            "",
+            "",
+            "",
+            "Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Organic farmer PGS group consumers/traders that are Association (O"
+          ],
+          [
+            "Step 2",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, gro",
+            "",
+            "Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, groups will be entitled by the PGS group to P",
+            "",
+            ""
+          ],
+          [
+            "Step 3",
+            "",
+            "",
+            "These two seals were developed by PGS SA A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer memb",
+            "",
+            ""
+          ]
+        ],
+        "rows_total": 3,
+        "rows_sampled": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "set up a PGS group",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "PGS operational procedure guidelines",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 5,
+          "quote": "and certificates (paid by the PGS group to PGS SA): R1 000",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "is detailed alongside.",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "quote": "Farm visit assessment form",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 5,
+          "quote": "when the PGS group renews its membership]",
+          "reason": "its last words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "row": 1,
+          "column": 4,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "dpi": 200,
+      "seconds": 5.7,
+      "usage": {
+        "prompt_tokens": 1570,
+        "completion_tokens": 1041,
+        "total_tokens": 2611,
+        "cost": 0.001954,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.001954,
+          "upstream_inference_prompt_cost": 0.0003925,
+          "upstream_inference_completions_cost": 0.0015615
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 11,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production "
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Manure applications should not be the primary source of nitrogen. See Section B \u2013 Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species an"
+          ],
+          [
+            "Guano",
+            ""
+          ],
+          [
+            "Source separated human excrement",
+            "Specifically prohibited."
+          ]
+        ],
+        "rows_total": 11,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "dpi": 200,
+      "seconds": 5.0,
+      "usage": {
+        "prompt_tokens": 1560,
+        "completion_tokens": 488,
+        "total_tokens": 2048,
+        "cost": 0.001122,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.001122,
+          "upstream_inference_prompt_cost": 0.00039,
+          "upstream_inference_completions_cost": 0.000732
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: row 0 cell 2 does not start 'PGS Organic In-Conversion': 'If the production is in accordance with organic principles, '"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion",
+            "Farmers who cannot support/ If the production is in accordance with organic principles, but the As above attest to the organic history of land has been under organic management for less than: the land",
+            "If the production is in accordance with organic principles, but the As above attest to the organic history of land has been under organic management for less than: the land or who are converting \u2022 18 ",
+            "",
+            "As above"
+          ],
+          [
+            "PGS Organic",
+            "Farmers who are fully Labelling regulations state that use of the word \u201corganic\u201d for As above compliant with their group\u2019s animal products must be linked to specific protocols registered choice of an ",
+            "Labelling regulations state that use of the word \u201corganic\u201d for As above compliant with their group\u2019s animal products must be linked to specific protocols registered choice of an internationally with T",
+            "",
+            "As above"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "layout",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "dpi": 200,
+      "seconds": 4.0,
+      "usage": {
+        "prompt_tokens": 2178,
+        "completion_tokens": 307,
+        "total_tokens": 2485,
+        "cost": 0.001005,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.001005,
+          "upstream_inference_prompt_cost": 0.0005445,
+          "upstream_inference_completions_cost": 0.0004605
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "numeric_row: columns ('Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)', 'Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)', 'Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)') != ('Annual farm turnover (gross sales)', 'Initial certification fee (R)', 'Renewal fee (R)')",
+          "numeric_row: row 0 cell 0 is 'Below R 250,000 1,500 900', expected 'Below R 250,000'",
+          "numeric_row: row 0 cell 1 is 'Below R 250,000 1,500 900', expected '1,500'",
+          "numeric_row: row 0 cell 2 is 'Below R 250,000 1,500 900', expected '900'",
+          "numeric_row: row 5 cell 0 is 'Above R 5,000,000 8,000 8,000', expected 'Above R 5,000,000'",
+          "numeric_row: row 5 cell 2 is 'Above R 5,000,000 8,000 8,000', expected '8,000'"
+        ],
+        "columns": [
+          "Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)",
+          "Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)",
+          "Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000 1,500 900",
+            "Below R 250,000 1,500 900",
+            "Below R 250,000 1,500 900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000 2,500 2,000",
+            "R 250,001 \u2013 R 500,000 2,500 2,000",
+            "R 250,001 \u2013 R 500,000 2,500 2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000 3,000 2,500",
+            "R 500,001 \u2013 R 1,000,000 3,000 2,500",
+            "R 500,001 \u2013 R 1,000,000 3,000 2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000 3,700 3,200",
+            "R 1,000,001 \u2013 R 2,500,000 3,700 3,200",
+            "R 1,000,001 \u2013 R 2,500,000 3,700 3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "dpi": 200,
+      "seconds": 5.0,
+      "usage": {
+        "prompt_tokens": 2108,
+        "completion_tokens": 493,
+        "total_tokens": 2601,
+        "cost": 0.0012665,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0012665,
+          "upstream_inference_prompt_cost": 0.000527,
+          "upstream_inference_completions_cost": 0.0007395
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year', 'Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: row 0 cell 0 is 'Equines over six months old 2', expected 'Equines over six months old'",
+          "headerless_values: row 0 cell 1 is 'Equines over six months old 2', expected '2'",
+          "headerless_values: row 2 cell 0 is 'Other b o v i n e a n i m a l s less t h a n o n e year old ', expected 'Other bovine animals less than one year old'",
+          "headerless_values: row 19 cell 0 is 'Laying hens 230', expected 'Laying hens'",
+          "headerless_values: row 19 cell 1 is 'Laying hens 230', expected '230'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year",
+          "Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old 2",
+            "Equines over six months old 2"
+          ],
+          [
+            "Calves for fattening 5",
+            "Calves for fattening 5"
+          ],
+          [
+            "Other b o v i n e a n i m a l s less t h a n o n e year old 5",
+            "Other b o v i n e a n i m a l s less t h a n o n e year old 5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old 3,3",
+            "Male bovine animals from one to less than two years old 3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [
+        {
+          "row": 2,
+          "column": 0
+        },
+        {
+          "row": 2,
+          "column": 1
+        }
+      ],
+      "spans": [
+        {
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ],
+      "non_text": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "dpi": 200,
+      "seconds": 4.5,
+      "usage": {
+        "prompt_tokens": 2493,
+        "completion_tokens": 714,
+        "total_tokens": 3207,
+        "cost": 0.00169425,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00169425,
+          "upstream_inference_prompt_cost": 0.00062325,
+          "upstream_inference_completions_cost": 0.001071
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 4,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('Oenological practice Authorised products Conditions of use (1) Limits on use and', 'Oenological practice Authorised products Conditions of use (1) Limits on use and', 'Oenological practice Authorised products Conditions of use (1) Limits on use and', 'Oenological practice Authorised products Conditions of use (1) Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1 Aeration or oxygenation Air, using gaseous oxygen Gaseous ', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is '1 Aeration or oxygenation Air, using gaseous oxygen Gaseous ', expected 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b Use to encourage yeast Thiamine hydrochloride Only with f'"
+        ],
+        "columns": [
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1 Aeration or oxygenation Air,\nusing gaseous oxygen Gaseous oxygen",
+            "1 Aeration or oxygenation Air,\nusing gaseous oxygen Gaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2 Heat treatments Maximum temperature",
+            "2 Heat treatments Maximum temperature\n70oC",
+            "",
+            ""
+          ],
+          [
+            "3 Centrifuging and Perlite, Use of an agent must not\nfiltration with or without Cellulose, leave undesirable\nan inert filtering agent Diatomaceous earths residues in the treated",
+            "3 Centrifuging and Perlite, Use of an agent must not\nfiltration with or without Cellulose, leave undesirable\nan inert filtering agent Diatomaceous earths residues in the treated",
+            "",
+            "3 Centrifuging and Perlite, Use of an agent must not\nfiltration with or without Cellulose, leave undesirable\nan inert filtering agent Diatomaceous earths residues in the treated\nproduct"
+          ],
+          [
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon"
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "dpi": 200,
+      "seconds": 4.2,
+      "usage": {
+        "prompt_tokens": 2230,
+        "completion_tokens": 411,
+        "total_tokens": 2641,
+        "cost": 0.001174,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.001174,
+          "upstream_inference_prompt_cost": 0.0005575,
+          "upstream_inference_completions_cost": 0.0006165
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "long_cell: row 0 cell 2 does not start 'These two seals were developed by PGS SA': 'The group conducts farm visits and \u2022 Farm visit These two se'",
+          "long_cell: row 0 cell 4 does not start 'A newly established PGS group': 'The group conducts farm visits and \u2022 Farm visit These two se'"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee"
+        ],
+        "rows": [
+          [
+            "Step 3\nThe group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\n\non approval grants certificates to assessment form in consultation with P",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\n\non approval grants certificates to assessment form in consultation with PGS grou",
+            "",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\n\non approval grants certificates to assessment form in consultation with PGS grou"
+          ]
+        ],
+        "rows_total": 1,
+        "rows_sampled": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label_line": null
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "dpi": 200,
+      "seconds": 4.1,
+      "usage": {
+        "prompt_tokens": 2187,
+        "completion_tokens": 430,
+        "total_tokens": 2617,
+        "cost": 0.00119175,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00119175,
+          "upstream_inference_prompt_cost": 0.00054675,
+          "upstream_inference_completions_cost": 0.000645
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee guidelines and requirements', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "empty_cells: row 0 cell 2 must be empty, the read says 'Farmers who are already producing \u2022 IFOAM PGS tool kit Local'",
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is 'The PGS group agrees on \u2022 PGS operational Once formally esta', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'The PGS group agrees on \u2022 PGS operational Once formally esta'"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee guidelines and requirements",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far",
+            "",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far"
+          ],
+          [
+            "Step 2",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label_line": null
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "dpi": 200,
+      "seconds": 7.0,
+      "usage": {
+        "prompt_tokens": 4002,
+        "completion_tokens": 937,
+        "total_tokens": 4939,
+        "cost": 0.002406,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.002406,
+          "upstream_inference_prompt_cost": 0.0010005,
+          "upstream_inference_completions_cost": 0.0014055
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "page_break_row: row 2 cell 4 does not hold 'R350'"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee"
+        ],
+        "rows": [
+          [
+            "Step 1",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far",
+            "",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far"
+          ],
+          [
+            "Step 2",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro"
+          ],
+          [
+            "Step 3",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group",
+            "",
+            "Step 3\nThe group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PG"
+          ]
+        ],
+        "rows_total": 3,
+        "rows_sampled": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 1,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label_line": null
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "label_line": null
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "dpi": 200,
+      "seconds": 4.8,
+      "usage": {
+        "prompt_tokens": 2408,
+        "completion_tokens": 677,
+        "total_tokens": 3085,
+        "cost": 0.0016175,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0016175,
+          "upstream_inference_prompt_cost": 0.000602,
+          "upstream_inference_completions_cost": 0.0010155
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 12,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: columns ('SUBSTANCES DESCRIPTION, COMPOSITIONAL CONDITIONS FOR USE', 'SUBSTANCES DESCRIPTION, COMPOSITIONAL CONDITIONS FOR USE') != ('SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS', 'CONDITIONS FOR USE')",
+          "qualifier: 12 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers ((2, 'South African specific', 'part'), (4, 'South African specific', 'part')) != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'Farmyard manure, slurry and urine Manure applications should', expected 'Guano'",
+          "qualifier: row 2 cell 1 must be empty, the read says 'Farmyard manure, slurry and urine Manure applications should'",
+          "qualifier: row 4 cell 1 must be empty, the read says 'Source separated human excrement Specifically prohibited.'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL CONDITIONS FOR USE",
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine Shall not constitute the main source of nitrogen in the",
+            "Farmyard manure, slurry and urine Shall not constitute the main source of nitrogen in the\nabsence of complimentary and additional nitrogen\ngenerating practices on farm and shall not be from\nconvention"
+          ],
+          [
+            "Farmyard manure, slurry and urine Manure applications should not be the primary",
+            "Farmyard manure, slurry and urine Manure applications should not be the primary\nsource of nitrogen. See Section B \u2013 Appendix 6\nMinimum Surface Areas Indoors and Outdoors and\nother Characteristics of H"
+          ],
+          [
+            "Guano",
+            ""
+          ]
+        ],
+        "rows_total": 12,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ],
+      "non_text": []
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "google/gemini-3.1-flash-lite",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "dpi": 200,
+      "seconds": 4.4,
+      "usage": {
+        "prompt_tokens": 2246,
+        "completion_tokens": 327,
+        "total_tokens": 2573,
+        "cost": 0.001052,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.001052,
+          "upstream_inference_prompt_cost": 0.0005615,
+          "upstream_inference_completions_cost": 0.0004905
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "artwork_cell: row 0 cell 4 is 'Farmers who cannot support/ If the production is in accordan', expected 'As above'"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee"
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion PGS Organic In-Conversion",
+            "Farmers who cannot support/ If the production is in accordance with organic principles, but the As above\nattest to the organic history of land has been under organic management for less than:\nthe land",
+            "PGS Organic In-Conversion PGS Organic In-Conversion",
+            "",
+            "Farmers who cannot support/ If the production is in accordance with organic principles, but the As above"
+          ],
+          [
+            "PGS Organic PGS Organic",
+            "Farmers who are fully Labelling regulations state that use of the word \u201corganic\u201d for As above\ncompliant with their group\u2019s animal products must be linked to specific protocols registered\nchoice of an ",
+            "PGS Organic PGS Organic",
+            "",
+            "Farmers who are fully Labelling regulations state that use of the word \u201corganic\u201d for As above"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label_line": null
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "label_line": null
+        }
+      ]
+    },
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "layout",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "dpi": 200,
+      "seconds": 4.8,
+      "usage": {
+        "prompt_tokens": 5367,
+        "completion_tokens": 276,
+        "total_tokens": 5643,
+        "cost": 0.013494,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.013494,
+          "upstream_inference_prompt_cost": 0.010734,
+          "upstream_inference_completions_cost": 0.00276
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "dpi": 200,
+      "seconds": 5.2,
+      "usage": {
+        "prompt_tokens": 5369,
+        "completion_tokens": 570,
+        "total_tokens": 5939,
+        "cost": 0.016438,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.016438,
+          "upstream_inference_prompt_cost": 0.010738,
+          "upstream_inference_completions_cost": 0.0057
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other bovine animals less than one year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "dpi": 200,
+      "seconds": 9.4,
+      "usage": {
+        "prompt_tokens": 5369,
+        "completion_tokens": 1034,
+        "total_tokens": 6403,
+        "cost": 0.021078,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.021078,
+          "upstream_inference_prompt_cost": 0.010738,
+          "upstream_inference_completions_cost": 0.01034
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (needs row-number gutter)",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 5,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is 'Aeration or oxygenation using gaseous oxygen', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b'",
+          "column_major: row 6 cell 3 does not hold 'No more than 0,6 mg/l'"
+        ],
+        "columns": [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1",
+            "Aeration or oxygenation\nusing gaseous oxygen",
+            "Air,\nGaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature\n70oC",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "Centrifuging and\nfiltration with or without\nan inert filtering agent",
+            "Perlite,\nCellulose,\nDiatomaceous earths",
+            "",
+            "Use of an agent must not\nleave undesirable\nresidues in the treated\nproduct"
+          ],
+          [
+            "4",
+            "Use of carbon dioxide,\nargon or nitrogen, either\nalone or combined, in\norder to create an inert\natmosphere and to\nhandle the product\nshielded from the air",
+            "Nitrogen,\nCarbon dioxide,\nArgon",
+            "Only with fresh grapes,\ngrape must, partially\nfermented grape must,\npartially fermented grape\nmust be obtained from\nraisined grapes,\nconcentrated grape must\nand new wine still in\nfermentation and for ",
+            "Use in order to create an\ninert atmosphere and to\nhandle the product\nshielded from the air."
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "Aeration or oxygenation\nusing gaseous oxygen",
+            "Air,\nGaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "Heat treatments",
+            "Maximum temperature\n70oC",
+            "",
+            ""
+          ],
+          [
+            "Centrifuging and\nfiltration with or without\nan inert filtering agent",
+            "Perlite,\nCellulose,\nDiatomaceous earths",
+            "",
+            "Use of an agent must not\nleave undesirable\nresidues in the treated\nproduct"
+          ],
+          [
+            "Use of carbon dioxide,\nargon or nitrogen, either\nalone or combined, in\norder to create an inert\natmosphere and to\nhandle the product\nshielded from the air",
+            "Nitrogen,\nCarbon dioxide,\nArgon",
+            "Only with fresh grapes,\ngrape must, partially\nfermented grape must,\npartially fermented grape\nmust be obtained from\nraisined grapes,\nconcentrated grape must\nand new wine still in\nfermentation and for ",
+            "Use in order to create an\ninert atmosphere and to\nhandle the product\nshielded from the air."
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "dpi": 200,
+      "seconds": 8.9,
+      "usage": {
+        "prompt_tokens": 5367,
+        "completion_tokens": 766,
+        "total_tokens": 6133,
+        "cost": 0.018394,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.018394,
+          "upstream_inference_prompt_cost": 0.010734,
+          "upstream_inference_completions_cost": 0.00766
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (grid only, quotes unresolved)",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 3\n\nThe group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.\n\nThe use of the two seals is de",
+            "\u2022 Farm visit assessment form\n\u2022 Farm visit checklist\n\u2022 Farm visit certificate granted to approved farms, which lists all the products and displays the relevant seal",
+            "These two seals were developed by PGS SA in consultation with PGS groups.\n\nDescription of seals and their use is detailed below. Groups may also create their own seals.\n\nPGS groups are custodians of t",
+            "",
+            "A newly established PGS group will have the following seals customised in the name of its PGS:\n\n\u2022 PGS Organic In-Conversion\n\u2022 PGS Organic\n\nPrinting of seals is at own cost.\n\nRecommended annual fee for"
+          ]
+        ],
+        "rows_total": 1,
+        "rows_sampled": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 0,
+          "quote": "The group conducts farm visits and on approval grants certificates to its farmer members in the relevant category. Farmers may label their products accordingly.",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 0,
+          "quote": "The use of the two seals is detailed alongside.",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "\u2022 Farm visit assessment form",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "\u2022 Farm visit certificate granted to approved farms, which lists all the products and displays the relevant seal",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "These two seals were developed by PGS SA in consultation with PGS groups.",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "Description of seals and their use is detailed below. Groups may also create their own seals.",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "PGS groups are custodians of the manner in which the seals are used in their PGS groups. Where exceptions to the organic standards are granted, a copy of the farm visit assessment report must be submi",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "Note: A PGS group may issue membership certificates to farmers whose production practises follow the group\u2019s organic standard but where there are exceptions that are more significant than what the sta",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "quote": "A newly established PGS group will have the following seals customised in the name of its PGS:",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "quote": "Recommended annual fee for the use of stickers (paid by individual farmers):",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 0,
+          "column": 4,
+          "quote": "R350 [to be divided between PGS SA (30%) and PGS groups (70%) \u2013 the portion of the fee accruing to PGS SA should be paid when the PGS group renews its membership]",
+          "reason": "not a contiguous run of any page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "dpi": 200,
+      "seconds": 7.2,
+      "usage": {
+        "prompt_tokens": 5367,
+        "completion_tokens": 799,
+        "total_tokens": 6166,
+        "cost": 0.018724,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.018724,
+          "upstream_inference_prompt_cost": 0.010734,
+          "upstream_inference_completions_cost": 0.00799
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'Annual membership fee (paid by the PGS group to PGS SA): R50'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1\n\nFarmers who are already producing\na surplus of organic produce and\norganized as an Organic farmer\nAssociation (OFO), and wanting to\naggregate and sell their produce\nto a local market where the",
+            "\u2022 IFOAM PGS tool kit\n\u2022 PGS SA: How to set up a\nPGS group",
+            "",
+            "",
+            "Local PGS group determines the\nmembership fee for farmers/\nconsumers/traders that are\npart of the PGS group."
+          ],
+          [
+            "Step 2\n\nThe PGS group agrees on\noperational procedures and their\nBasic Production Principles, based\non an internationally accepted\nstandard, against which farmers\nwill be assessed.\n\nThe members sign p",
+            "\u2022 PGS operational\nprocedure guidelines\n\u2022 Farmer/consumer pledge\nexample\n\u2022 PGS SA self-assessment\nform\n\u2022 Basic Production\nprinciples based on\norganic standards \u2013\n(SAOSO standard or\nequivalent)",
+            "Once formally established and paid-up\nmembers of PGS SA, groups will be entitled\nto make use of the \u201cmember of PGS SA\u201d\nlogo.\n\nGroups may also create their own local\nlogo identifying their group and us",
+            "",
+            "Annual membership fee (paid\nby the PGS group to PGS SA):\nR500\n\nOnce-off customisation of\nlogo, seals and certificates\n(paid by the PGS group to PGS\nSA): R1 000"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "dpi": 200,
+      "seconds": 12.8,
+      "usage": {
+        "prompt_tokens": 10126,
+        "completion_tokens": 1609,
+        "total_tokens": 11735,
+        "cost": 0.036342,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.036342,
+          "upstream_inference_prompt_cost": 0.020252,
+          "upstream_inference_completions_cost": 0.01609
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass (grid only, quotes unresolved)",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1\n\nFarmers who are already producing\na surplus of organic produce and\norganized as an Organic farmer\nAssociation (OFO), and wanting to\naggregate and sell their produce\nto a local market where the",
+            "\u2022 IFOAM PGS tool kit\n\u2022 PGS SA: How to set up a\nPGS group",
+            "",
+            "",
+            "Local PGS group determines the\nmembership fee for farmers/\nconsumers/traders that are\npart of the PGS group."
+          ],
+          [
+            "Step 2\n\nThe PGS group agrees on\noperational procedures and their\nBasic Production Principles, based\non an internationally accepted\nstandard, against which farmers\nwill be assessed.\n\nThe members sign p",
+            "\u2022 PGS operational\nprocedure guidelines\n\u2022 Farmer/consumer pledge\nexample\n\u2022 PGS SA self-assessment\nform\n\u2022 Basic Production\nprinciples based on\norganic standards \u2013\n(SAOSO standard or\nequivalent)",
+            "Once formally established and paid-up\nmembers of PGS SA, groups will be entitled\nto make use of the \u201cmember of PGS SA\u201d\nlogo.\n\nGroups may also create their own local\nlogo identifying their group and us",
+            "",
+            "Annual membership fee (paid\nby the PGS group to PGS SA):\nR500\n\nOnce-off customisation of\nlogo, seals and certificates\n(paid by the PGS group to PGS\nSA): R1 000"
+          ],
+          [
+            "Step 3\n\nThe group conducts farm visits and\non approval grants certificates to\nits farmer members in the relevant\ncategory. Farmers may label their\nproducts accordingly.\n\nThe use of the two seals is de",
+            "\u2022 Farm visit\nassessment form\n\u2022 Farm visit checklist\n\u2022 Farm visit certificate\ngranted to approved\nfarms, which lists all the\nproducts and displays\nthe relevant seal",
+            "These two seals were developed by PGS SA\nin consultation with PGS groups.\n\nDescription of seals and their use is\ndetailed below. Groups may also create\ntheir own seals.\n\nPGS groups are custodians of t",
+            "",
+            "A newly established PGS group\nwill have the following seals\ncustomised in the name of its\nPGS:\n\n\u2022 PGS Organic In-Conversion\n\u2022 PGS Organic\n\nPrinting of seals is at own cost.\n\nRecommended annual fee for"
+          ]
+        ],
+        "rows_total": 3,
+        "rows_sampled": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "\u2022 Farm visit checklist",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "\u2022 Farm visit certificate",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "granted to approved",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "farms, which lists all the",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "products and displays",
+          "reason": "out of printed order on page 5"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "the relevant seal",
+          "reason": "out of printed order on page 5"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "dpi": 200,
+      "seconds": 8.0,
+      "usage": {
+        "prompt_tokens": 5369,
+        "completion_tokens": 1005,
+        "total_tokens": 6374,
+        "cost": 0.020788,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.020788,
+          "upstream_inference_prompt_cost": 0.010738,
+          "upstream_inference_completions_cost": 0.01005
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 14,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: 14 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers () != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'South African specific', expected 'Guano'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production "
+          ],
+          [
+            "South African specific",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Manure applications should not be the primary source of nitrogen. See Section B \u2013 Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species an"
+          ]
+        ],
+        "rows_total": 14,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 10,
+          "column": 0,
+          "quote": "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 10,
+          "column": 1,
+          "quote": "Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants",
+          "reason": "not a contiguous run of any page"
+        },
+        {
+          "row": 12,
+          "column": 0,
+          "quote": "Wood, bark, sawdust, wood shavings, wood ash, wood charcoal",
+          "reason": "not a contiguous run of any page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 1
+        },
+        {
+          "row": 2,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "row": 5,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ],
+      "non_text": []
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "lines",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "dpi": 200,
+      "seconds": 7.4,
+      "usage": {
+        "prompt_tokens": 5367,
+        "completion_tokens": 771,
+        "total_tokens": 6138,
+        "cost": 0.018444,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.018444,
+          "upstream_inference_prompt_cost": 0.010734,
+          "upstream_inference_completions_cost": 0.00771
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion\n\nFarmers who cannot support/\nattest to the organic history of\nthe land or who are converting\nfrom chemical to organic\nagriculture may be granted\nthis seal by their group.",
+            "",
+            "PGS Organic In-Conversion\n\nIf the production is in accordance with organic principles, but the\nland has been under organic management for less than:\n\u2022 18 months before sowing or planting in the case o",
+            "",
+            "As above"
+          ],
+          [
+            "PGS Organic\n\nFarmers who are fully\ncompliant with their group\u2019s\nchoice of an internationally\naccepted organic standard\nmay be granted this seal.",
+            "",
+            "PGS Organic\n\nLabelling regulations state that use of the word \u201corganic\u201d for\nanimal products must be linked to specific protocols registered\nwith The Department of Agriculture, Land Reform and Rural\nDe",
+            "",
+            "As above"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "layout",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "dpi": 200,
+      "seconds": 5.3,
+      "usage": {
+        "prompt_tokens": 5387,
+        "completion_tokens": 564,
+        "total_tokens": 5951,
+        "cost": 0.016414,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.016414,
+          "upstream_inference_prompt_cost": 0.010774,
+          "upstream_inference_completions_cost": 0.00564
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "pass",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 3,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "pass",
+        "mismatches": [],
+        "columns": [
+          "Annual farm turnover (gross sales)",
+          "Initial certification fee (R)",
+          "Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000",
+            "1,500",
+            "900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000",
+            "2,500",
+            "2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000",
+            "3,000",
+            "2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000",
+            "3,700",
+            "3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "dpi": 200,
+      "seconds": 8.0,
+      "usage": {
+        "prompt_tokens": 5389,
+        "completion_tokens": 1152,
+        "total_tokens": 6541,
+        "cost": 0.022298,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.022298,
+          "upstream_inference_prompt_cost": 0.010778,
+          "upstream_inference_completions_cost": 0.01152
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: row 2 cell 0 is 'Other b o v i n e a n i m a l s less t h a n o n e year old', expected 'Other bovine animals less than one year old'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Class or species",
+          "Maximum number of animals per ha equivalent to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old",
+            "2"
+          ],
+          [
+            "Calves for fattening",
+            "5"
+          ],
+          [
+            "Other b o v i n e a n i m a l s less t h a n o n e year old",
+            "5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old",
+            "3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [
+        {
+          "row": 2,
+          "column": 0
+        }
+      ],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "dpi": 200,
+      "seconds": 8.2,
+      "usage": {
+        "prompt_tokens": 5389,
+        "completion_tokens": 1025,
+        "total_tokens": 6414,
+        "cost": 0.021028,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.021028,
+          "upstream_inference_prompt_cost": 0.010778,
+          "upstream_inference_completions_cost": 0.01025
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 5,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is '', expected 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b'",
+          "column_major: row 6 cell 3 does not hold 'No more than 0,6 mg/l'"
+        ],
+        "columns": [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "2",
+            "Heat treatments",
+            "Maximum temperature 70oC",
+            "",
+            ""
+          ],
+          [
+            "3",
+            "",
+            "",
+            "",
+            "Use of an agent must not filtration with or without Cellulose, leave undesirable an inert filtering agent Diatomaceous earths residues in the treated product"
+          ],
+          [
+            "4",
+            "",
+            "",
+            "",
+            "Use in order to create an argon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to alone or combined, in Argon fermented grape must, handle the product order to create a"
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: row 0 cell 0 is '', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is '', expected 'Air, Gaseous oxygen'",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': ''"
+        ],
+        "columns": [
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use (1)",
+          "Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "Heat treatments",
+            "Maximum temperature 70oC",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "Use of an agent must not filtration with or without Cellulose, leave undesirable an inert filtering agent Diatomaceous earths residues in the treated product"
+          ],
+          [
+            "",
+            "",
+            "",
+            "Use in order to create an argon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to alone or combined, in Argon fermented grape must, handle the product order to create a"
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "Aeration or oxygenation using gaseous oxygen",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "Air, Gaseous oxygen",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "Centrifuging and filtration with",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 2,
+          "quote": "Perlite, Cellulose, Diatomaceous earths",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 3,
+          "column": 1,
+          "quote": "Use of carbon dioxide, argon or",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 3,
+          "column": 2,
+          "quote": "Nitrogen, Carbon dioxide, Argon",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 3,
+          "column": 3,
+          "quote": "Only with fresh grapes, grape must,",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 4,
+          "column": 2,
+          "quote": "Yeasts (if available, derived from",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 5,
+          "column": 1,
+          "quote": "Use to encourage yeast development,",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 5,
+          "column": 3,
+          "quote": "Only with fresh grapes, grape must,",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 5,
+          "column": 4,
+          "quote": "fermentation of sparkling wines.",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 6,
+          "column": 1,
+          "quote": "Use to encourage yeast development,",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 6,
+          "column": 3,
+          "quote": "Only with fresh grapes, grape must,",
+          "reason": "its first words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "dpi": 200,
+      "seconds": 4.5,
+      "usage": {
+        "prompt_tokens": 5387,
+        "completion_tokens": 222,
+        "total_tokens": 5609,
+        "cost": 0.012994,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.012994,
+          "upstream_inference_prompt_cost": 0.010774,
+          "upstream_inference_completions_cost": 0.00222
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: row 0 cell 0 does not start 'Step 3': ''",
+          "long_cell: row 0 cell 0 does not hold 'The group conducts farm visits and'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "",
+            "",
+            "These two seals were developed by PGS SA A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer memb",
+            "",
+            "A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer members in the relevant \u2022 Farm visit checklis"
+          ]
+        ],
+        "rows_total": 1,
+        "rows_sampled": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 0,
+          "quote": "is detailed alongside.",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "Farm visit assessment form",
+          "reason": "its first words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "dpi": 200,
+      "seconds": 5.0,
+      "usage": {
+        "prompt_tokens": 5387,
+        "completion_tokens": 410,
+        "total_tokens": 5797,
+        "cost": 0.014874,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.014874,
+          "upstream_inference_prompt_cost": 0.010774,
+          "upstream_inference_completions_cost": 0.0041
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'Annual membership fee (paid operational procedures and their'"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1 Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Orga",
+            "",
+            "",
+            "",
+            "Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Organic farmer PGS group consumers/traders that are Association (O"
+          ],
+          [
+            "Step 2 The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS ",
+            "",
+            "Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, groups will be entitled by the PGS group to P",
+            "",
+            "Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, groups will be entitled by the PGS group to PGS SA): Basic Production Principles, based \u2022 Farmer/co"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "PGS SA: How to set up a PGS group",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "quote": "PGS operational procedure guidelines",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "quote": "Name of PGS",
+          "reason": "its last words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": "Proud member of"
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "label": "Name of PGS"
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "dpi": 200,
+      "seconds": 8.3,
+      "usage": {
+        "prompt_tokens": 10146,
+        "completion_tokens": 525,
+        "total_tokens": 10671,
+        "cost": 0.025542,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.025542,
+          "upstream_inference_prompt_cost": 0.020292,
+          "upstream_inference_completions_cost": 0.00525
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: row 2 cell 0 does not start 'Step 3': ''"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "Step 1 Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Orga",
+            "",
+            "",
+            "",
+            "Local PGS group determines the a surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/ organized as an Organic farmer PGS group consumers/traders that are Association (O"
+          ],
+          [
+            "Step 2 The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid operational procedures and their procedure guidelines members of PGS ",
+            "",
+            "",
+            "",
+            "Annual membership fee (paid operational procedures and their procedure guidelines members of PGS SA, groups will be entitled by the PGS group to PGS SA): Basic Production Principles, based \u2022 Farmer/co"
+          ],
+          [
+            "",
+            "",
+            "These two seals were developed by PGS SA A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer memb",
+            "",
+            "A newly established PGS group on approval grants certificates to assessment form in consultation with PGS groups. will have the following seals its farmer members in the relevant \u2022 Farm visit checklis"
+          ]
+        ],
+        "rows_total": 3,
+        "rows_sampled": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 1,
+          "quote": "How to set up a PGS group",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 1,
+          "quote": "PGS operational procedure guidelines",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "make use of a PGS SA logo customized to the name of their PGS group.",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 0,
+          "quote": "detailed alongside.",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 2,
+          "column": 1,
+          "quote": "Farm visit assessment form",
+          "reason": "its first words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label": "Proud member of"
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "dpi": 200,
+      "seconds": 8.2,
+      "usage": {
+        "prompt_tokens": 5389,
+        "completion_tokens": 1022,
+        "total_tokens": 6411,
+        "cost": 0.020998,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.020998,
+          "upstream_inference_prompt_cost": 0.010778,
+          "upstream_inference_completions_cost": 0.01022
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 14,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: 14 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers () != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'South African specific', expected 'Guano'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS",
+          "CONDITIONS FOR USE"
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production "
+          ],
+          [
+            "South African specific",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine",
+            "Manure applications should not be the primary source of nitrogen. See Section B \u2013 Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species an"
+          ]
+        ],
+        "rows_total": 14,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 10,
+          "column": 1,
+          "quote": "free of significant contaminants",
+          "reason": "its last words are not on the page"
+        },
+        {
+          "row": 12,
+          "column": 0,
+          "quote": "wood ash, wood charcoal",
+          "reason": "its last words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [
+        {
+          "row": 2,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "row": 5,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ],
+      "non_text": []
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "anchors",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "dpi": 200,
+      "seconds": 7.7,
+      "usage": {
+        "prompt_tokens": 5387,
+        "completion_tokens": 330,
+        "total_tokens": 5717,
+        "cost": 0.014074,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.014074,
+          "upstream_inference_prompt_cost": 0.010774,
+          "upstream_inference_completions_cost": 0.0033
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: row 0 cell 2 does not start 'PGS Organic In-Conversion': ''"
+        ],
+        "columns": [
+          "Key steps",
+          "Resource documents, guidelines and requirements",
+          "Use of seals and logos",
+          "Seals and logos",
+          "Fee"
+        ],
+        "rows": [
+          [
+            "PGS Organic In-Conversion Farmers who cannot support/ If the production is in accordance with organic principles, but the As above attest to the organic history of land has been under organic manageme",
+            "",
+            "",
+            "",
+            "As above"
+          ],
+          [
+            "PGS Organic Farmers who are fully Labelling regulations state that use of the word \u201corganic\u201d for As above compliant with their group\u2019s animal products must be linked to specific protocols registered c",
+            "",
+            "",
+            "",
+            "As above"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [
+        {
+          "row": 0,
+          "column": 2,
+          "quote": "PGS Organic In-Conversion If the",
+          "reason": "its first words are not on the page"
+        },
+        {
+          "row": 1,
+          "column": 2,
+          "quote": "PGS Organic Labelling regulations state",
+          "reason": "its first words are not on the page"
+        }
+      ],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 0,
+          "column": 3,
+          "label": ""
+        },
+        {
+          "row": 1,
+          "column": 3,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "shape": "numeric_row",
+      "label": "Numeric row, no labels",
+      "doc": "opp",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "layout",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        2
+      ],
+      "printed_pages": [
+        2
+      ],
+      "dpi": 200,
+      "seconds": 3.8,
+      "usage": {
+        "prompt_tokens": 6117,
+        "completion_tokens": 135,
+        "total_tokens": 6252,
+        "cost": 0.013584,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.013584,
+          "upstream_inference_prompt_cost": 0.012234,
+          "upstream_inference_completions_cost": 0.00135
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 6,
+      "rows_expected": 6,
+      "columns_found": 1,
+      "columns_expected": 3,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "numeric_row: columns ('Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)',) != ('Annual farm turnover (gross sales)', 'Initial certification fee (R)', 'Renewal fee (R)')",
+          "numeric_row: row 0 cell 0 is 'Below R 250,000 1,500 900', expected 'Below R 250,000'",
+          "numeric_row: row 0 cell 1 is missing from the read",
+          "numeric_row: row 0 cell 2 is missing from the read",
+          "numeric_row: row 5 cell 0 is 'Above R 5,000,000 8,000 8,000', expected 'Above R 5,000,000'",
+          "numeric_row: row 5 cell 2 is missing from the read"
+        ],
+        "columns": [
+          "Annual farm turnover (gross sales) Initial certification fee (R) Renewal fee (R)"
+        ],
+        "rows": [
+          [
+            "Below R 250,000 1,500 900"
+          ],
+          [
+            "R 250,001 \u2013 R 500,000 2,500 2,000"
+          ],
+          [
+            "R 500,001 \u2013 R 1,000,000 3,000 2,500"
+          ],
+          [
+            "R 1,000,001 \u2013 R 2,500,000 3,700 3,200"
+          ]
+        ],
+        "rows_total": 6,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "headerless_values",
+      "label": "Header lost entirely",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        86
+      ],
+      "printed_pages": [
+        85
+      ],
+      "dpi": 200,
+      "seconds": 4.8,
+      "usage": {
+        "prompt_tokens": 5970,
+        "completion_tokens": 426,
+        "total_tokens": 6396,
+        "cost": 0.0162,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0162,
+          "upstream_inference_prompt_cost": 0.01194,
+          "upstream_inference_completions_cost": 0.00426
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 20,
+      "rows_expected": 20,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "headerless_values: columns ('Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year', 'Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year') != ('Class or species', 'Maximum number of animals per ha equivalent to 170 kg N/ha/year')",
+          "headerless_values: row 0 cell 0 is 'Equines over six months old 2', expected 'Equines over six months old'",
+          "headerless_values: row 0 cell 1 is 'Equines over six months old 2', expected '2'",
+          "headerless_values: row 2 cell 0 is 'Other b o v i n e a n i m a l s less t h a n o n e year old ', expected 'Other bovine animals less than one year old'",
+          "headerless_values: row 19 cell 0 is 'Laying hens 230', expected 'Laying hens'",
+          "headerless_values: row 19 cell 1 is 'Laying hens 230', expected '230'"
+        ],
+        "columns": [
+          "Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year",
+          "Maximum number of animals per ha Maximum number of animals per ha equivalent Class or species to 170 kg N/ha/year"
+        ],
+        "rows": [
+          [
+            "Equines over six months old 2",
+            "Equines over six months old 2"
+          ],
+          [
+            "Calves for fattening 5",
+            "Calves for fattening 5"
+          ],
+          [
+            "Other b o v i n e a n i m a l s less t h a n o n e year old 5",
+            "Other b o v i n e a n i m a l s less t h a n o n e year old 5"
+          ],
+          [
+            "Male bovine animals from one to less than two years old 3,3",
+            "Male bovine animals from one to less than two years old 3,3"
+          ]
+        ],
+        "rows_total": 20,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [
+        {
+          "row": 2,
+          "column": 0
+        },
+        {
+          "row": 2,
+          "column": 1
+        }
+      ],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "column_major",
+      "label": "Column-major interleaving",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        89
+      ],
+      "printed_pages": [
+        88
+      ],
+      "dpi": 200,
+      "seconds": 16.4,
+      "usage": {
+        "prompt_tokens": 6541,
+        "completion_tokens": 2038,
+        "total_tokens": 8579,
+        "cost": 0.033462,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.033462,
+          "upstream_inference_prompt_cost": 0.013082,
+          "upstream_inference_completions_cost": 0.02038
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1651,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 7,
+      "rows_expected": 7,
+      "columns_found": 5,
+      "columns_expected": 4,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "column_major: columns ('', 'Oenological practice Authorised products Conditions of use (1) Limits on use and', 'Oenological practice Authorised products Conditions of use (1) Limits on use and', 'Oenological practice Authorised products Conditions of use (1) Limits on use and', 'Oenological practice Authorised products Conditions of use (1) Limits on use and Applications') != ('Oenological practice', 'Authorised products', 'Conditions of use (1)', 'Limits on use and Applications')",
+          "column_major: row 0 cell 0 is '1 Aeration or oxygenation Air,', expected 'Aeration or oxygenation using gaseous oxygen'",
+          "column_major: row 0 cell 1 is '1 Aeration or oxygenation Air, using gaseous oxygen Gaseous ', expected 'Air, Gaseous oxygen'",
+          "column_major: row 0 cell 2 must be empty, the read says '1 Aeration or oxygenation Air, using gaseous oxygen Gaseous '",
+          "column_major: row 6 cell 0 does not start 'Use to encourage yeast development': '6b Use to encourage yeast Thiamine hydrochloride Only with f'"
+        ],
+        "columns": [
+          "",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and",
+          "Oenological practice Authorised products Conditions of use (1) Limits on use and Applications"
+        ],
+        "rows": [
+          [
+            "1 Aeration or oxygenation Air,",
+            "1 Aeration or oxygenation Air,\nusing gaseous oxygen Gaseous oxygen",
+            "1 Aeration or oxygenation Air,\nusing gaseous oxygen Gaseous oxygen",
+            "",
+            ""
+          ],
+          [
+            "2 Heat treatments Maximum temperature",
+            "2 Heat treatments Maximum temperature",
+            "2 Heat treatments Maximum temperature\n70oC",
+            "",
+            ""
+          ],
+          [
+            "3 Centrifuging and Perlite, Use of an agent must not",
+            "3 Centrifuging and Perlite, Use of an agent must not\nfiltration with or without Cellulose, leave undesirable\nan inert filtering agent Diatomaceous earths residues in the treated",
+            "3 Centrifuging and Perlite, Use of an agent must not\nfiltration with or without Cellulose, leave undesirable\nan inert filtering agent Diatomaceous earths residues in the treated",
+            "",
+            "3 Centrifuging and Perlite, Use of an agent must not\nfiltration with or without Cellulose, leave undesirable\nan inert filtering agent Diatomaceous earths residues in the treated\nproduct"
+          ],
+          [
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon",
+            "4 Use of carbon dioxide, Nitrogen, Only with fresh grapes, Use in order to create an\nargon or nitrogen, either Carbon dioxide, grape must, partially inert atmosphere and to\nalone or combined, in Argon"
+          ]
+        ],
+        "rows_total": 7,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "long_cell",
+      "label": "Very long cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        5
+      ],
+      "printed_pages": [
+        5
+      ],
+      "dpi": 200,
+      "seconds": 5.1,
+      "usage": {
+        "prompt_tokens": 6248,
+        "completion_tokens": 141,
+        "total_tokens": 6389,
+        "cost": 0.013906,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.013906,
+          "upstream_inference_prompt_cost": 0.012496,
+          "upstream_inference_completions_cost": 0.00141
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 1,
+      "rows_expected": 1,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "long_cell: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'guidelines and requirements', '', '', '') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "long_cell: row 0 cell 2 does not start 'These two seals were developed by PGS SA': ''",
+          "long_cell: row 0 cell 2 does not end 'the use of these seals.': ''",
+          "long_cell: row 0 cell 2 is 0 characters, expected at least 1000",
+          "long_cell: row 0 cell 4 does not start 'A newly established PGS group': ''"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "guidelines and requirements",
+          "",
+          "",
+          ""
+        ],
+        "rows": [
+          [
+            "Step 3\nThe group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PG",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "rows_total": 1,
+        "rows_sampled": 1
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "empty_cells",
+      "label": "Deliberate empty cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4
+      ],
+      "printed_pages": [
+        4
+      ],
+      "dpi": 200,
+      "seconds": 14.9,
+      "usage": {
+        "prompt_tokens": 6184,
+        "completion_tokens": 1728,
+        "total_tokens": 7912,
+        "cost": 0.029648,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.029648,
+          "upstream_inference_prompt_cost": 0.012368,
+          "upstream_inference_completions_cost": 0.01728
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1496,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 2,
+      "rows_expected": 2,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "empty_cells: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee guidelines and requirements', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')",
+          "empty_cells: row 0 cell 4 does not hold 'R500'",
+          "empty_cells: row 1 cell 3 is '', expected 'Proud member of'",
+          "empty_cells: row 1 cell 4 must be empty, the read says 'The PGS group agrees on \u2022 PGS operational Once formally esta'"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee guidelines and requirements",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee"
+        ],
+        "rows": [
+          [
+            "Step 1\nFarmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Orga",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far",
+            "",
+            "",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far"
+          ],
+          [
+            "Step 2\nThe PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS ",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro"
+          ]
+        ],
+        "rows_total": 2,
+        "rows_sampled": 2
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label_line": null
+        }
+      ]
+    },
+    {
+      "shape": "page_break_row",
+      "label": "Row spanning a page break",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        4,
+        5
+      ],
+      "printed_pages": [
+        4,
+        5
+      ],
+      "dpi": 200,
+      "seconds": 28.7,
+      "usage": {
+        "prompt_tokens": 11886,
+        "completion_tokens": 3778,
+        "total_tokens": 15664,
+        "cost": 0.061552,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.061552,
+          "upstream_inference_prompt_cost": 0.023772,
+          "upstream_inference_completions_cost": 0.03778
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 3383,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 3,
+      "rows_expected": 3,
+      "columns_found": 5,
+      "columns_expected": 5,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "page_break_row: columns ('Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee guidelines and requirements', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee', 'Key steps Resource documents, Use of seals and logos Seals and logos Fee') != ('Key steps', 'Resource documents, guidelines and requirements', 'Use of seals and logos', 'Seals and logos', 'Fee')"
+        ],
+        "columns": [
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee guidelines and requirements",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee",
+          "Key steps Resource documents, Use of seals and logos Seals and logos Fee"
+        ],
+        "rows": [
+          [
+            "Step 1\nFarmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Orga",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far",
+            "",
+            "",
+            "Farmers who are already producing \u2022 IFOAM PGS tool kit Local PGS group determines the\na surplus of organic produce and \u2022 PGS SA: How to set up a membership fee for farmers/\norganized as an Organic far"
+          ],
+          [
+            "Step 2\nThe PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS ",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro",
+            "",
+            "The PGS group agrees on \u2022 PGS operational Once formally established and paid-up Proud member of Annual membership fee (paid\noperational procedures and their procedure guidelines members of PGS SA, gro"
+          ],
+          [
+            "Step 3\nThe group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PG",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group",
+            "",
+            "The group conducts farm visits and \u2022 Farm visit These two seals were developed by PGS SA A newly established PGS group\non approval grants certificates to assessment form in consultation with PGS group"
+          ]
+        ],
+        "rows_total": 3,
+        "rows_sampled": 3
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": [
+        {
+          "row": 1,
+          "column": 3,
+          "label_line": null
+        },
+        {
+          "row": 2,
+          "column": 3,
+          "label_line": null
+        }
+      ]
+    },
+    {
+      "shape": "qualifier",
+      "label": "Two-level qualifier structure",
+      "doc": "saoso",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        77
+      ],
+      "printed_pages": [
+        76
+      ],
+      "dpi": 200,
+      "seconds": 4.8,
+      "usage": {
+        "prompt_tokens": 6456,
+        "completion_tokens": 369,
+        "total_tokens": 6825,
+        "cost": 0.016602,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.016602,
+          "upstream_inference_prompt_cost": 0.012912,
+          "upstream_inference_completions_cost": 0.00369
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "found": true,
+      "verdict": "fail",
+      "rows_found": 12,
+      "rows_expected": 11,
+      "columns_found": 2,
+      "columns_expected": 2,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "qualifier: columns ('SUBSTANCES DESCRIPTION, COMPOSITIONAL CONDITIONS FOR USE REQUIREMENTS', '') != ('SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS', 'CONDITIONS FOR USE')",
+          "qualifier: 12 rows, the page prints 11",
+          "qualifier: row pages (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76) != (76, 76, 76, 76, 76, 76, 76, 76, 76, 76, 76)",
+          "qualifier: dividers ((2, 'South African specific', 'qualifier'), (4, 'South African specific', 'qualifier')) != ((0, 'I. PLANT AND ANIMAL ORIGIN', 'part'), (1, 'South African specific', 'qualifier'), (3, 'South African specific', 'qualifier'))",
+          "qualifier: row 0 cell 0 is 'I. PLANT AND ANIMAL ORIGIN', expected 'Farmyard manure, slurry and urine'",
+          "qualifier: row 0 cell 1 does not start 'Shall not constitute the main source of nitrogen': ''",
+          "qualifier: row 2 cell 0 is 'Farmyard manure, slurry and urine Manure applications should', expected 'Guano'",
+          "qualifier: row 2 cell 1 must be empty, the read says 'Farmyard manure, slurry and urine Manure applications should'",
+          "qualifier: row 4 cell 1 must be empty, the read says 'Source separated human excrement Specifically prohibited.'"
+        ],
+        "columns": [
+          "SUBSTANCES DESCRIPTION, COMPOSITIONAL CONDITIONS FOR USE REQUIREMENTS",
+          ""
+        ],
+        "rows": [
+          [
+            "I. PLANT AND ANIMAL ORIGIN",
+            ""
+          ],
+          [
+            "Farmyard manure, slurry and urine Shall not constitute the main source of nitrogen in the",
+            "Farmyard manure, slurry and urine Shall not constitute the main source of nitrogen in the\nabsence of complimentary and additional nitrogen\ngenerating practices on farm and shall not be from\nconvention"
+          ],
+          [
+            "Farmyard manure, slurry and urine Manure applications should not be the primary",
+            "Farmyard manure, slurry and urine Manure applications should not be the primary\nsource of nitrogen. See Section B \u2013 Appendix 6\nMinimum Surface Areas Indoors and Outdoors and\nother Characteristics of H"
+          ],
+          [
+            "Guano",
+            ""
+          ]
+        ],
+        "rows_total": 12,
+        "rows_sampled": 4
+      },
+      "with_row_number_gutter": {
+        "identical_to_as_extracted": true
+      },
+      "first_row_as_header": {
+        "identical_to_as_extracted": true
+      },
+      "violations": [],
+      "letter_spaced_cells": [],
+      "spans": [],
+      "non_text": []
+    },
+    {
+      "shape": "artwork_cell",
+      "label": "A picture in a cell",
+      "doc": "landscape",
+      "model": "anthropic/claude-sonnet-5.5",
+      "mode": "indices",
+      "text_mode": "table",
+      "row_number_gutter": 0,
+      "pdf_pages": [
+        6
+      ],
+      "printed_pages": [
+        6
+      ],
+      "dpi": 200,
+      "seconds": 5.3,
+      "usage": {
+        "prompt_tokens": 6270,
+        "completion_tokens": 133,
+        "total_tokens": 6403,
+        "cost": 0.01387,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.01387,
+          "upstream_inference_prompt_cost": 0.01254,
+          "upstream_inference_completions_cost": 0.00133
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "finish_reason": "stop",
+      "replayed": true,
+      "verdict": "fail",
+      "found": false,
+      "as_extracted": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: the model returned no JSON object"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      },
+      "first_row_as_header": {
+        "verdict": "fail",
+        "mismatches": [
+          "artwork_cell: the model returned no JSON object"
+        ],
+        "columns": [],
+        "rows": [],
+        "rows_total": 0
+      },
+      "violations": [],
+      "raw_head": "{\"columns\":[[3],[3,5],[3],[3],[3]],\"rows\":[],\"dividers\":[],\"spans\":[],\"non_text\":[]}\n\nWait, I must produce correct JSON with proper line numbers. Corrected output:\n\n{\"columns\":[[3],[3,5],[3],[3],[3]],\"rows\":[],\"dividers\":[],\"spans\":[],\"non_text\":[]}"
+    }
+  ]
+}

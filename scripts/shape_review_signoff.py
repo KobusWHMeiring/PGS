@@ -5,6 +5,8 @@
     python scripts/shape_review_signoff.py --from ~/Downloads/shape-key-review.json --dry-run
     python scripts/shape_review_signoff.py --from ~/Downloads/shape-key-review.json
     python scripts/shape_review_signoff.py --check        # is the recorded review still true?
+    # one claim, judged after the key was signed (the arbitration surface at uat/arbitrate_shapes):
+    python scripts/shape_review_signoff.py --amend ~/Downloads/shape-arbitration.json --dry-run
 
 **Why a record and not a sentence in a PRD.** `INGESTION_ENGINE_PRD.md` §3.10: the key that scores
 every extractor arm is agent-authored and no human has ever validated a cell, so the arms are
@@ -268,6 +270,113 @@ def build_record(export: dict) -> dict:
     }
 
 
+#: The arbitration surface's export format (`scripts/shape_arbitration.py`).
+ARBITRATION_KIND = "pgs-shape-arbitration"
+ARBITRATION_ARTEFACT = "product/design/uat/arbitrate_shapes.html"
+
+
+def arbitration_export(record: dict, arbitration: dict) -> tuple[dict | None, list[str]]:
+    """The full export an arbitration implies, or every reason it cannot be applied.
+
+    An arbitration judges **one claim**, so it cannot go through `validate()` — which requires every
+    claim in the key to be judged. Instead the existing record supplies the other judgements and the
+    arbitration supplies an amendment, so the result is the same export a full re-judge would have
+    produced. `to` must already be what the key says: the fixture is edited first, deliberately, in
+    its own commit; this only records that the edit answers what the reviewer judged.
+    """
+    problems: list[str] = []
+    if not isinstance(arbitration, dict):
+        return None, ["the arbitration is not a JSON object"]
+    if arbitration.get("kind") != ARBITRATION_KIND:
+        problems.append(
+            f"this is not an arbitration export (kind {arbitration.get('kind')!r}, expected "
+            f"{ARBITRATION_KIND!r})"
+        )
+    if arbitration.get("artefact") != ARBITRATION_ARTEFACT:
+        problems.append(
+            f"the export names {arbitration.get('artefact')!r}, not {ARBITRATION_ARTEFACT!r}"
+        )
+    reviewer = arbitration.get("reviewer") or {}
+    for field in ("name", "seat"):
+        if not str(reviewer.get(field, "")).strip():
+            problems.append(f"the reviewer's {field} is missing")
+    if not DATE_RE.match(str(arbitration.get("reviewed_at", ""))):
+        problems.append("the review date is missing or not YYYY-MM-DD")
+    if not record or not record.get("claims"):
+        return None, problems + [
+            "there is no review of record yet — run --from with the full surface first"
+        ]
+
+    judged = arbitration.get("claims") or {}
+    amendments, amendment_problems = _amendments(arbitration)
+    problems.extend(amendment_problems)
+    recorded = record["claims"]
+    key = current_claims()
+
+    for claim_id in sorted(judged):
+        if claim_id not in recorded:
+            problems.append(f"{claim_id}: the record does not judge this claim")
+            continue
+        if (recorded[claim_id] or {}).get("reviewed_expected"):
+            problems.append(
+                f"{claim_id}: already amended under review — it is settled until the key is "
+                "rebuilt and judged again"
+            )
+        expected = (judged[claim_id] or {}).get("expected")
+        if expected != recorded[claim_id]["expected"]:
+            problems.append(
+                f"{claim_id}: the arbitration was judged against {expected!r}, the record holds "
+                f"{recorded[claim_id]['expected']!r} — rebuild the surface"
+            )
+        if (judged[claim_id] or {}).get("verdict") != "amend":
+            problems.append(
+                f"{claim_id}: verdict {(judged[claim_id] or {}).get('verdict')!r} changes nothing "
+                "— only an amendment is applied"
+            )
+
+    for claim_id, amendment in sorted(amendments.items()):
+        if claim_id not in judged:
+            problems.append(f"{claim_id}: amended but not judged")
+            continue
+        if amendment["from"] != recorded[claim_id]["expected"]:
+            problems.append(
+                f"{claim_id}: from={amendment['from']!r} is not the text the record judged "
+                f"({recorded[claim_id]['expected']!r})"
+            )
+        if amendment["to"] != key[claim_id]["expected"]:
+            problems.append(
+                f"{claim_id}: to={amendment['to']!r} is not what the key says now "
+                f"({key[claim_id]['expected']!r}) — edit knowledge/tests/shape_fixtures.py to the "
+                "text the reviewer judged, then apply"
+            )
+    if problems:
+        return None, problems
+
+    existing = {entry["claim"]: entry for entry in (record.get("amendments") or [])}
+    existing.update({claim_id: {"claim": claim_id, **item} for claim_id, item in amendments.items()})
+    export = {
+        "kind": EXPORT_KIND,
+        "version": EXPORT_VERSION,
+        "artefact": ARTEFACT_NAME,
+        "reviewer": record["reviewer"],
+        "reviewed_at": record["reviewed_at"],
+        "claims": {
+            claim_id: {
+                "verdict": entry["verdict"],
+                "note": entry.get("note", ""),
+                "expected": entry.get("reviewed_expected", entry["expected"]),
+            }
+            for claim_id, entry in recorded.items()
+        },
+        "amendments": list(existing.values()),
+        "page_notes": record.get("page_notes") or {},
+        "notes_resolved": record.get("notes_resolved") or {},
+    }
+    for claim_id, item in amendments.items():
+        export["claims"][claim_id]["note"] = item["basis"]
+    return export, []
+
+
 def head_commit() -> str:
     """The commit the review was signed on, or '' outside a checkout (a clone of an export)."""
     try:
@@ -337,6 +446,13 @@ def main(argv: list[str] | None = None) -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--from", dest="source", type=Path, help="the exported review JSON")
+    parser.add_argument(
+        "--amend",
+        dest="arbitration",
+        type=Path,
+        help="an arbitration export (one claim) to apply to the existing record; the fixture must "
+        "already say the text the reviewer judged",
+    )
     parser.add_argument("--dry-run", action="store_true", help="print the diff; write nothing")
     parser.add_argument("--check", action="store_true", help="verify the recorded review")
     args = parser.parse_args(argv)
@@ -352,19 +468,31 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{len(record.get('claims') or {})} judged claims, {len(problems)} problem(s)")
         return 1 if problems else 0
 
-    if not args.source:
-        parser.error("--from <export.json> is required unless --check is given")
-    if not args.source.exists():
-        print(f"{args.source} does not exist", file=sys.stderr)
+    if not args.source and not args.arbitration:
+        parser.error("--from <export.json> or --amend <arbitration.json> is required")
+    if args.source and args.arbitration:
+        parser.error("--from and --amend do different things; pass one")
+    source = args.source or args.arbitration
+    if not source.exists():
+        print(f"{source} does not exist", file=sys.stderr)
         return 2
-    export = json.loads(args.source.read_text(encoding="utf-8"))
+    export = json.loads(source.read_text(encoding="utf-8"))
 
-    problems = validate(export)
-    if problems:
-        print(f"refused: {len(problems)} problem(s) with this export", file=sys.stderr)
-        for problem in problems:
-            print(f"  - {problem}", file=sys.stderr)
-        return 1
+    if args.arbitration:
+        record_file = json.loads(RECORD_PATH.read_text(encoding="utf-8")) if RECORD_PATH.exists() else {}
+        export, problems = arbitration_export(record_file, export)
+        if problems:
+            print(f"refused: {len(problems)} problem(s) with this arbitration", file=sys.stderr)
+            for problem in problems:
+                print(f"  - {problem}", file=sys.stderr)
+            return 1
+    else:
+        problems = validate(export)
+        if problems:
+            print(f"refused: {len(problems)} problem(s) with this export", file=sys.stderr)
+            for problem in problems:
+                print(f"  - {problem}", file=sys.stderr)
+            return 1
 
     record = build_record(export)
     after = json.dumps(record, indent=2) + "\n"
