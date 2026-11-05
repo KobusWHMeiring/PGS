@@ -464,6 +464,32 @@ collects a farm name under the research consent would be a purpose mismatch, whi
 
 ---
 
+
+### 11.5 Shape changed to a stepped wizard (2026-11-04)
+
+The product owner judged the prototype and asked for **steps, not a long scroll**: a numbered nav at
+the top and next/back paging. The five groups A–E become steps 1–5, the result is screen 6, and the
+account is screen 7 (reached only from the result).
+
+**What this does not change.** §4.3's contract holds exactly: one route, one view, parse → call a
+service → render. The steps are client-side; no answer leaves the page until `submit`, and the
+no-consent path still renders the result from the submitted form in the same request.
+
+**What it does change, and the two traps it creates:**
+
+- **Step boundaries are not validation.** A step can be left unanswered — the check is not a demand,
+  and §3.5's "rather not say" logic already assumes silence is acceptable. No step may gate the next
+  on completeness; only the *result* degrades, and it says so.
+- **The dependency in §3.6 crosses a step boundary.** Demographic consent (E2) is refused without
+  research consent (E1), and both sit on step 5 — so the disabled state is intra-step. If E2 is ever
+  moved to its own screen, the refusal must survive a re-render or a reload, not just a checkbox
+  toggle. A server-side test is required either way; the prototype only proves the UI.
+
+**Contrast against the scrolling version, measured on the prototype** (`playwright`, 390/768/1280):
+the records step holds seven controls, so it was the only group that scrolled materially on a phone.
+It is rendered as compact rows (question + four answer chips on one line) rather than seven tall
+cards, which is what makes "no scrolling" true rather than aspirational.
+
 ## Pre-Flight Checklist
 
 - [x] Models in a domain module — `core/models/_selfcheck.py`, re-exported from `core/models/__init__.py`
