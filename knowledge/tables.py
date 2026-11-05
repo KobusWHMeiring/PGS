@@ -44,8 +44,10 @@ something this module invents.
    finding the row, not a sentence. This is the deliberate exception to
    `chunking.py`'s "a chunk is always `section.text[start:end]`".
 4. **Cross-page continuations are merged by hand and recorded**, not inferred. The
-   seaweed row's `iii) fermentation.` is printed at the top of the next page and belongs
-   to it.
+   seaweed row's `(iii) fermentation.` is printed at the top of the next page and belongs
+   to it. The parenthesis is the page's: **printed 79** carries `iii) fermentation.` beside
+   `Coffee grounds` in Appendix 3, which is where the review's spelling came from until
+   2026-11-05 (see `test_the_seaweed_condition_crosses_the_page_break`).
 5. **Centred sub-headings are not rows.** "South African specific" qualifies the row
    beneath it; it is page furniture for pairing purposes, so it is not repeated into a
    cell and cannot be quoted as one.
@@ -205,7 +207,7 @@ APPENDIX_2_ROWS: tuple[TableRow, ...] = (
             "As far as obtained by: i) physical processes including dehydration, "
             "freezing and grinding; ii) extraction with water or potassium hydroxide "
             "solutions, provided that the minimum amount of solvent necessary is used "
-            "for extraction; iii) fermentation."
+            "for extraction; (iii) fermentation."
         ),
     ),
     TableRow(

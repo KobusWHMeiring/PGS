@@ -103,6 +103,15 @@ Neither can be finished inside this session's safe budget, and both reasons are 
   act**, not a quiet default: `--continue` with the reviewed file named in the banner, and a test
   that every continued locator is a whitespace-normalised substring of the page's own `-table` line.
   That is a slice of its own.
+
+  **The owner read the rendered pages on 2026-11-05 and found one character of (b) already wrong.**
+  The seaweed row's tail is printed `(iii) fermentation.` (first line of printed 77); the reviewed
+  cell had lost the bracket, and it is printed that way — `iii)` — beside `Coffee grounds` on
+  **printed 79**, Appendix 3. No test could see it: `"iii) fermentation." in "(iii) fermentation."`
+  is true because the shorter string is a substring of the longer one (PRD §3.16,
+  `testing_hazards.md` §3.39). Corrected, and the guard is character-level now. The lesson for the
+  continuation act: **the reviewed rows are a good source and not an oracle** — every one of them
+  enters as a locator the emitter must find on the page, or it is a cell somebody typed.
 * **Appendix 7** needs the column-bounded continuation rule of §2.9. The declaration is Docling's
   grid, recorded in the proposal banner; the rule must be refused first (a test that proves the
   current emitter refuses, then a test that proves the new one cuts at the column boundary).

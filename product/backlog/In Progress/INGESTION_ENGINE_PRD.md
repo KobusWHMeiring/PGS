@@ -761,6 +761,18 @@ spaced run, and refuses a page that glues its letters — the guard on the guard
 * Three guards were broken and watched red before being trusted: the reviewed label, the pass
   substitution, and R3's letter-spacing fallback (`3 failed` mutated, `3 passed` restored).
 
+**A human read the page, and caught what no guard could (2026-11-05).** The owner reviewed the
+rendered Appendix 2 pages (`product/design/s5b_appendix_2_pages.html`) and found that the seaweed
+row's tail is printed as **`(iii) fermentation.`** — with a bracket the reviewed cell had dropped.
+The cell had been transcribed from **printed 79**, where Appendix 3 prints `iii) fermentation.`
+beside `Coffee grounds`, and the test guarding that row could not tell the two apart:
+`"iii) fermentation." in "(iii) fermentation."` is true because the shorter string is a substring of
+the longer one (`testing_hazards.md` §3.39). One character corrected in `knowledge/tables.py`; the
+assertion is now character-level and fails on the old data (verified). He also confirmed rows
+27–29 on printed 78 as printed. **This is the argument for S5 in miniature:** the review was a
+person's reading, no machine check could contradict it, and the only thing that did was the page
+beside the claim.
+
 **What is left, with the reason each is a review rather than a chore.** Appendix 2 needs 30 rows and
 no arm read exists for printed 77–78 (the cached `qualifier` response is the shape page), so its
 locators have to come from the owner's 2026-10-21 review, declared and recorded — or the block is 11

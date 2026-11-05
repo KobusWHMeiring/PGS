@@ -2068,6 +2068,31 @@ re-implements it.
 Rule: accumulate with `setdefault(...).update(...)`. A dict comprehension over a key that can repeat
 is a silent "last one wins".
 
+### 3.39 A substring assertion cannot tell a dropped bracket from the page's own text
+
+`test_the_seaweed_condition_crosses_the_page_break` guarded Appendix 2's one cross-page cell with
+`row.condition.endswith("iii) fermentation.")` and `"iii) fermentation." in <printed 77>`. The page
+prints **`(iii) fermentation.`**; the reviewed cell had lost the opening bracket. Both assertions
+were true of the wrong text — the shorter string is a *substring* of the longer one — and the second
+was true for the same reason on the page.
+
+The owner found it by reading the rendered page, not by reading the test. The spelling is printed,
+with the bracket missing, on **printed 79** beside `Coffee grounds` in Appendix 3 — a different table
+two pages later, which is where the review's version came from.
+
+Evidence:
+    (guard as written: 114 passed, and the review's cell ends `iii) fermentation.`)
+    (assertion changed to endswith("(iii) fermentation."): 1 failed — the old data)
+    (data corrected by one character: 114 passed)
+
+Consequence: two spellings of one phrase in one document, and a guard that is satisfied by both.
+`_words()` strips brackets on purpose (it exists so a hyphen split or a stray list comma does not
+look like a wrong word), so every word-level guard in `test_tables.py` is blind to this class.
+
+Rule: where the claim is *characters* — a quotable cell, a locator the emitter must find — assert
+characters, and prefer `in`/`startswith` on the page's own string over a substring that a shorter
+form would also satisfy. A word-level helper is for words.
+
 ## 5. Template for a new entry
 
 ```markdown

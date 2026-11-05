@@ -211,12 +211,34 @@ def test_urban_compost_carries_the_heavy_metal_limits():
 
 
 def test_the_seaweed_condition_crosses_the_page_break(table_pages):
+    """The tail is the first line of printed 77, and it prints `(iii)` — with a bracket.
+
+    **This test could not tell, until 2026-11-05.** It asserted `endswith("iii) fermentation.")`
+    and `"iii) fermentation." in <printed 77>`, and both were true of the artefact's spelling
+    *and* of the page's, because the shorter string is a substring of the longer one: the review
+    had dropped the opening bracket and nothing failed. The owner found it by reading the page.
+    The page it came from is **printed 79**, where Appendix 3 prints `iii) fermentation.` beside
+    `Coffee grounds` — a different table, two pages later.
+
+    So the assertion is character-level here, and it is the same rule the emitter applies: a
+    cell's characters are the page's.
+    """
     row = _by_substance("Seaweed and seaweed products")
-    assert row.condition.endswith("iii) fermentation.")
-    assert "iii) fermentation." not in _normalise(table_pages[76]), (
+    assert row.condition.endswith("(iii) fermentation."), (
+        "the seaweed row's tail is printed as `(iii) fermentation.` — with the opening bracket"
+    )
+    assert "(iii) fermentation." not in _normalise(table_pages[76]), (
         "the cross-page continuation was pasted from the wrong page"
     )
-    assert "iii) fermentation." in _normalise(table_pages[77])
+    printed_77 = _normalise(table_pages[77])
+    assert printed_77.lstrip().startswith("(iii) fermentation."), (
+        "the continuation is the first line of printed 77, not merely somewhere on it"
+    )
+    assert "Coffee grounds" in _normalise(table_pages[79]), (
+        "the other spelling of this phrase (`iii)` without the bracket) is printed beside "
+        "`Coffee grounds` on printed 79; this test exists because that is where the review's "
+        "spelling came from"
+    )
 
 
 def test_rows_are_in_printed_order():
