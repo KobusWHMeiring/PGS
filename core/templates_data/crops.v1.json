@@ -1,0 +1,1308 @@
+{
+  "schema_version": 1,
+  "category": "CROPS",
+  "version": "v1",
+  "standard_version": "SAOSO v2.1 (2026)",
+  "source": "pgs_docs/6. PGS Farm visit assessment form - Crops, Animals, Seeds, agro-processing, summary_2026.xlsx, sheet 6.B.1.Crops (D28: hand-authored, not extracted)",
+  "allowed_ref_gaps": ["V15", "V31"],
+  "sections": [
+    {
+      "key": "part_a",
+      "title": "PART A — General information",
+      "questions": [
+        {
+          "key": "crops.Q1",
+          "ref": "1",
+          "items": [
+            {
+              "key": "crops.Q1.1",
+              "ref": "1.1",
+              "text": "List the crops you are currently producing, as well as any others you are planning to produce in the forthcoming season:",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q2",
+          "ref": "2",
+          "items": [
+            {
+              "key": "crops.Q2.1",
+              "ref": "2.1",
+              "text": "Total hectares cultivated",
+              "respondent": "FARMER",
+              "type": "NUMBER"
+            },
+            {
+              "key": "crops.Q2.2",
+              "ref": "2.2",
+              "text": "Total hectares pasture",
+              "respondent": "FARMER",
+              "type": "NUMBER"
+            },
+            {
+              "key": "crops.Q2.3",
+              "ref": "2.3",
+              "text": "Total hectares of farm (total surface area (hectares) of farm)",
+              "respondent": "FARMER",
+              "type": "NUMBER"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q3",
+          "ref": "3",
+          "items": [
+            {
+              "key": "crops.Q3.1",
+              "ref": "3.1",
+              "text": "How long has the land been farmed organically?",
+              "respondent": "FARMER",
+              "type": "TEXT"
+            },
+            {
+              "key": "crops.Q3.2",
+              "ref": "3.2",
+              "text": "Describe the history of land use, any activities that took place previously and over what period.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_b_1",
+      "title": "PART B — Crop production · Section 1: Fertility management",
+      "questions": [
+        {
+          "key": "crops.Q4",
+          "ref": "4",
+          "items": [
+            {
+              "key": "crops.Q4.1",
+              "ref": "4.1",
+              "text": "Describe your soil fertility plan. How do you maintain and increase the health of your soil, manage fertility, recycle nutrients and build microbial life and living soils? Please list all products you add to your soil or foliage.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q4.2",
+              "ref": "4.2",
+              "text": "Do you make your own compost?",
+              "respondent": "FARMER",
+              "type": "YES_NO",
+              "self_check": {
+                "tier": 1,
+                "why": "The FORM’s verdict V4 describes adequate on-farm composting as \"a key requirement of organic principles\", so it is one of the first practices a visit looks at."
+              }
+            },
+            {
+              "key": "crops.Q4.3",
+              "ref": "4.3",
+              "text": "List your compost ingredients, their sources, as well as supplier details. (use 6.B.2 List input suppliers)",
+              "respondent": "FARMER",
+              "type": "TEXTAREA",
+              "links_to": "INPUT_REGISTER"
+            },
+            {
+              "key": "crops.Q4.4",
+              "ref": "4.4",
+              "text": "If you use animal manure, please describe the source.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q4.5",
+              "ref": "4.5",
+              "text": "Describe your composting process, routine and quantities produced.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q5",
+          "ref": "5",
+          "items": [
+            {
+              "key": "crops.Q5.1",
+              "ref": "5.1",
+              "text": "Do you purchase compost?",
+              "respondent": "FARMER",
+              "type": "YES_NO",
+              "self_check": {
+                "tier": 1,
+                "why": "Purchased compost is allowed, but its source and quality are checked (FORM V5) — the risk is what came in with it. The supplier list belongs in the application, not here."
+              }
+            },
+            {
+              "key": "crops.Q5.2",
+              "ref": "5.2",
+              "text": "List your supplier/s",
+              "respondent": "FARMER",
+              "type": "TEXTAREA",
+              "attachments": ["Compost supplier letter listing ingredients, sources, additives and process"]
+            }
+          ]
+        },
+        {
+          "key": "crops.Q6",
+          "ref": "6",
+          "items": [
+            {
+              "key": "crops.Q6.1",
+              "ref": "6.1",
+              "text": "Do you use mulching?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q6.2",
+              "ref": "6.2",
+              "text": "If yes, what materials are you using and where are they sourced?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q7",
+          "ref": "7",
+          "items": [
+            {
+              "key": "crops.Q7.1",
+              "ref": "7.1",
+              "text": "Do you practice crop rotation?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q7.2",
+              "ref": "7.2",
+              "text": "Please explain your process.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q8",
+          "ref": "8",
+          "items": [
+            {
+              "key": "crops.Q8.1",
+              "ref": "8.1",
+              "text": "Do you plant cover crops and \"green manure\"?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q8.2",
+              "ref": "8.2",
+              "text": "Please describe routines for green manure and types of cover crops grown.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q9",
+          "ref": "9",
+          "items": [
+            {
+              "key": "crops.Q9.1",
+              "ref": "9.1",
+              "text": "Do you cover your crops with netting, sheeting or frost covers?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q9.2",
+              "ref": "9.2",
+              "text": "If yes, how do you dispose of old/used netting or sheets?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q10",
+          "ref": "10",
+          "items": [
+            {
+              "key": "crops.Q10.1",
+              "ref": "10.1",
+              "text": "What type of soil do you have?",
+              "respondent": "FARMER",
+              "type": "TEXT"
+            },
+            {
+              "key": "crops.Q10.2",
+              "ref": "10.2",
+              "text": "Have you ever had your soil tested? If yes list the service provider.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q10.3",
+              "ref": "10.3",
+              "text": "Describe and attach a copy of the results (if applicable)",
+              "respondent": "FARMER",
+              "type": "TEXTAREA",
+              "attachments": ["Soil test results (including Soil Organic Matter and Cation Exchange Capacity where the lab reports them)"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_b_2",
+      "title": "PART B — Crop production · Section 2: Plant management",
+      "questions": [
+        {
+          "key": "crops.Q11",
+          "ref": "11",
+          "items": [
+            {
+              "key": "crops.Q11.1",
+              "ref": "11.1",
+              "text": "Do you purchase seeds? If so, are they organic, conventional untreated or conventional treated? (please list suppliers) Important: the status of each seed needs to be recorded — this is baseline information against which future improvements in the proportion of organic seeds used by the farmer can be assessed",
+              "respondent": "FARMER",
+              "type": "TEXTAREA",
+              "self_check": {
+                "tier": 1,
+                "why": "The standard prefers organically produced seed, allows in-conversion material, and then permits conventional seed provided it has not been treated with prohibited post-harvest pesticides (SAOSO 4.1.1). So \"a mix\" or \"conventional untreated\" does not disqualify you. What the visit needs later is the status of <em>each</em> seed lot, because the FORM uses that as the baseline for improvement — which is why one word is enough here and not enough then."
+              }
+            },
+            {
+              "key": "crops.Q11.2",
+              "ref": "11.2",
+              "text": "Are all your seeds non-GMO? (If from conventional sources, please request a letter from the seed suppliers stating that the seeds are not treated, and not GMO and attach to the assessment)",
+              "respondent": "FARMER",
+              "type": "YES_NO",
+              "attachments": ["Seed supplier letter stating the seed is not treated and not GMO"],
+              "self_check": {
+                "tier": 1,
+                "why": "The standard does not permit ingredients, additives or processing aids derived from GMOs (SAOSO 2.3.2), and the group can take samples for laboratory analysis (SAOSO 1.4.1). \"Some are, some aren’t\" is a common and answerable answer — it becomes a list of what to replace, not a refusal."
+              }
+            },
+            {
+              "key": "crops.Q11.3",
+              "ref": "11.3",
+              "text": "If conventional seeds are used, please explain why organic seeds are not used. Please describe your plan for securing a supply of organically grown seeds in the future. This plan must include a time line.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q11.4",
+              "ref": "11.4",
+              "text": "Do you grow your own seedlings? Please list all ingredients in your soil mix and sources.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q11.5",
+              "ref": "11.5",
+              "text": "Do you purchase seedlings? If yes, please list suppliers. (If from conventional sources, request letter from supplier stating source of seed, non-GMO status, ingredients in soil mix and any liquid feeds and attach to the assessment)",
+              "respondent": "FARMER",
+              "type": "TEXTAREA",
+              "attachments": ["Seedling supplier letter: seed source, non-GMO status, soil-mix ingredients and liquid feeds"]
+            }
+          ]
+        },
+        {
+          "key": "crops.Q12",
+          "ref": "12",
+          "items": [
+            {
+              "key": "crops.Q12.1",
+              "ref": "12.1",
+              "text": "Do you harvest your own seeds?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q12.2",
+              "ref": "12.2",
+              "text": "Describe your process.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q13",
+          "ref": "13",
+          "items": [
+            {
+              "key": "crops.Q13.1",
+              "ref": "13.1",
+              "text": "Do you plant different varieties of the same crop?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q13.2",
+              "ref": "13.2",
+              "text": "Provide details on the varieties of the same crops that you grow.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q13.3",
+              "ref": "13.3",
+              "text": "Have you noticed specific varieties that are well suited to your environment?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q14",
+          "ref": "14",
+          "items": [
+            {
+              "key": "crops.Q14.1",
+              "ref": "14.1",
+              "text": "Are you part of a seed bank/exchange initiative?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q14.2",
+              "ref": "14.2",
+              "text": "Describe how often you meet, your role in the seed exchange, the portion of your seeds you get from the exchange",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_b_3",
+      "title": "PART B — Crop production · Section 3: Water management",
+      "questions": [
+        {
+          "key": "crops.Q15",
+          "ref": "15",
+          "items": [
+            {
+              "key": "crops.Q15.1",
+              "ref": "15.1",
+              "text": "What is your water source?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q16",
+          "ref": "16",
+          "items": [
+            {
+              "key": "crops.Q16.1",
+              "ref": "16.1",
+              "text": "Has your water been tested?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q16.2",
+              "ref": "16.2",
+              "text": "Please give details and attach results of most recent water test. (if applicable)",
+              "respondent": "FARMER",
+              "type": "TEXTAREA",
+              "attachments": ["Most recent water test results"]
+            },
+            {
+              "key": "crops.Q16.3",
+              "ref": "16.3",
+              "text": "How are water sources protected from possible contamination?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q17",
+          "ref": "17",
+          "items": [
+            {
+              "key": "crops.Q17.1",
+              "ref": "17.1",
+              "text": "Describe your irrigation system/methods.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q18",
+          "ref": "18",
+          "items": [
+            {
+              "key": "crops.Q18.1",
+              "ref": "18.1",
+              "text": "Do you have an irrigation schedule?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q18.2",
+              "ref": "18.2",
+              "text": "Explain your schedule",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q19",
+          "ref": "19",
+          "items": [
+            {
+              "key": "crops.Q19.1",
+              "ref": "19.1",
+              "text": "Do you harvest rainwater/runoff?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q19.2",
+              "ref": "19.2",
+              "text": "Explain your schedule",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q19.3",
+              "ref": "19.3",
+              "text": "What measures are in place or planned for preventing/minimising erosion and loss of topsoil?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_b_4",
+      "title": "PART B — Crop production · Section 4: Environmental management",
+      "questions": [
+        {
+          "key": "crops.Q20",
+          "ref": "20",
+          "items": [
+            {
+              "key": "crops.Q20.1",
+              "ref": "20.1",
+              "text": "How do you make more land available for cultivation?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q20.2",
+              "ref": "20.2",
+              "text": "Are there plans for expansion of production areas? Please indicate on the farm map noting existing vegetation or land use.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q21",
+          "ref": "21",
+          "items": [
+            {
+              "key": "crops.Q21.1",
+              "ref": "21.1",
+              "text": "Are there any wetlands or indigenous wildlife areas on your property?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q21.2",
+              "ref": "21.2",
+              "text": "If yes, describe how you manage/monitor them.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q21.3",
+              "ref": "21.3",
+              "text": "What part of your farm is committed to farm biodiversity and do you have plans to expand?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q22",
+          "ref": "22",
+          "items": [
+            {
+              "key": "crops.Q22.1",
+              "ref": "22.1",
+              "text": "Are you aware of any endangered species on your property and/or vicinity? Give a short description, and explain your strategies in dealing with these species.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_b_5",
+      "title": "PART B — Crop production · Section 5: Pest and disease management",
+      "questions": [
+        {
+          "key": "crops.Q23",
+          "ref": "23",
+          "items": [
+            {
+              "key": "crops.Q23.1",
+              "ref": "23.1",
+              "text": "Do you have problems with pests?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q24",
+          "ref": "24",
+          "items": [
+            {
+              "key": "crops.Q24.1",
+              "ref": "24.1",
+              "text": "Please describe your plan to prevent and manage pests and disease on your farm. Explain also any methods/self-made preparations used to control pests on your crops.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q25",
+          "ref": "25",
+          "items": [
+            {
+              "key": "crops.Q25.1",
+              "ref": "25.1",
+              "text": "List any preparations you purchase and the suppliers.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q26",
+          "ref": "26",
+          "items": [
+            {
+              "key": "crops.Q26.1",
+              "ref": "26.1",
+              "text": "Do you have any problems with crop diseases?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q26.2",
+              "ref": "26.2",
+              "text": "Explain any methods used to control such diseases.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q27",
+          "ref": "27",
+          "items": [
+            {
+              "key": "crops.Q27.1",
+              "ref": "27.1",
+              "text": "List any preparations and suppliers of disease control products.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q27.2",
+              "ref": "27.2",
+              "text": "Describe application methods, quantity and frequency.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q27.3",
+              "ref": "27.3",
+              "text": "Do you have challenges with weeds? What is your approach in reducing population and control of weeds.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_b_6",
+      "title": "PART B — Crop production · Section 6: Pollution and contaminants",
+      "questions": [
+        {
+          "key": "crops.Q28",
+          "ref": "28",
+          "items": [
+            {
+              "key": "crops.Q28.1",
+              "ref": "28.1",
+              "text": "Are there any conventional farms bordering your property?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q28.2",
+              "ref": "28.2",
+              "text": "If so, explain how you deal with the risk of spray drift, ground water run-off or chemical contamination.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q29",
+          "ref": "29",
+          "items": [
+            {
+              "key": "crops.Q29.1",
+              "ref": "29.1",
+              "text": "Are there any non-farming (e.g. industrial/manufacturing) activities or major roads on or near your farm?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q29.2",
+              "ref": "29.2",
+              "text": "If so, explain how you deal with any pollutants.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q29.3",
+              "ref": "29.3",
+              "text": "Please describe the activities of adjoining land to your property.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q30",
+          "ref": "30",
+          "items": [
+            {
+              "key": "crops.Q30.1",
+              "ref": "30.1",
+              "text": "Where and how do you store solvents, paints, fuel and domestic chemicals?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q30.2",
+              "ref": "30.2",
+              "text": "Is farm equipment checked and maintained regularly to prevent oil and fuel leaks?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q31",
+          "ref": "31",
+          "items": [
+            {
+              "key": "crops.Q31.1",
+              "ref": "31.1",
+              "text": "Is your farming equipment used for any non-organic agriculture or non-farming activity?",
+              "respondent": "FARMER",
+              "type": "YES_NO"
+            },
+            {
+              "key": "crops.Q31.2",
+              "ref": "31.2",
+              "text": "If so, explain your cleaning/decontamination routine.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_c_7",
+      "title": "PART C — Harvesting, collecting, handling, packing and transport · Section 7: Harvesting, packing and transport",
+      "questions": [
+        {
+          "key": "crops.Q32",
+          "ref": "32",
+          "items": [
+            {
+              "key": "crops.Q32.1",
+              "ref": "32.1",
+              "text": "Describe your harvesting/collection and bulk packing process.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q33",
+          "ref": "33",
+          "items": [
+            {
+              "key": "crops.Q33.1",
+              "ref": "33.1",
+              "text": "What do you use to pack and package your crops/products for sale/retail?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q33.2",
+              "ref": "33.2",
+              "text": "List sources and suppliers.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q33.3",
+              "ref": "33.3",
+              "text": "What information is provided on the packaging? (if applicable)",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q34",
+          "ref": "34",
+          "items": [
+            {
+              "key": "crops.Q34.1",
+              "ref": "34.1",
+              "text": "How are your products transported to market?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "part_c_8",
+      "title": "PART C — Harvesting, collecting, handling, packing and transport · Section 8: Cleaning, disinfecting and sanitation",
+      "questions": [
+        {
+          "key": "crops.Q35",
+          "ref": "35",
+          "items": [
+            {
+              "key": "crops.Q35.1",
+              "ref": "35.1",
+              "text": "List the cleaning and disinfecting products you are currently using.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            },
+            {
+              "key": "crops.Q35.2",
+              "ref": "35.2",
+              "text": "What are your separation measures?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q36",
+          "ref": "36",
+          "items": [
+            {
+              "key": "crops.Q36.1",
+              "ref": "36.1",
+              "text": "Where do you sort, wash, and pack your products?",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q37",
+          "ref": "37",
+          "items": [
+            {
+              "key": "crops.Q37.1",
+              "ref": "37.1",
+              "text": "Describe the cleaning and sanitation procedures on your farm.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        },
+        {
+          "key": "crops.Q38",
+          "ref": "38",
+          "items": [
+            {
+              "key": "crops.Q38.1",
+              "ref": "38.1",
+              "text": "Give a short description of your washing up/toilet facilities for workers/food handlers.",
+              "respondent": "FARMER",
+              "type": "TEXTAREA"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "key": "crops.R01",
+      "ref": "a",
+      "text": "Farm sketch of layout of farm, buildings, production areas, wildlife habitats, access, neighbouring properties and activities",
+      "self_check": {
+        "tier": 1,
+        "why": "The visit needs to see the farm’s shape on one page — production areas, water, natural vegetation, and what is next door, because what neighbours do can affect what reaches your land (SAOSO 4.6, Avoiding contamination). A sketch is usually the fastest way to show it."
+      }
+    },
+    {
+      "key": "crops.R02",
+      "ref": "b",
+      "text": "Sketches or diagrams of fields, indicating acreage and cultivation, pasture/range, stock densities",
+      "self_check": {
+        "tier": 1,
+        "why": "Field diagrams are how the visit checks that what you describe on paper matches what is planted — the record is compared against the land, not only read."
+      }
+    },
+    {
+      "key": "crops.R03",
+      "ref": "c",
+      "text": "Farm diary recording main activities; planting, harvest quantities, applications, etc.",
+      "self_check": {
+        "tier": 1,
+        "why": "A diary is the evidence trail behind everything else you tell us: what was planted, what was harvested, what was applied. It is also what makes an input/output reconciliation possible at all."
+      }
+    },
+    {
+      "key": "crops.R04",
+      "ref": "d",
+      "text": "Records of purchases/donations of all inputs, including seeds/seedlings",
+      "self_check": {
+        "tier": 1,
+        "why": "Inputs are where a visit starts, because that is where an organic claim is easiest to lose: one treated seedling or one bag of conventional compost changes what the land has received. The evidence needed is <em>what</em> was bought and from where. <strong>The group does not ask what you paid</strong>, and it does not ask for your supplier contracts."
+      }
+    },
+    {
+      "key": "crops.R05",
+      "ref": "e",
+      "text": "Sales records",
+      "self_check": {
+        "tier": 1,
+        "why": "Sales records are how the visit shows that produce sold as yours was grown by you — the same traceability requirement that applies to bought-in produce (OPP §VI.3). The group does not ask what you earned, and the figure it looks for is the quantity, not the price."
+      }
+    },
+    {
+      "key": "crops.R06",
+      "ref": "f",
+      "text": "Input/output reconciliation report (this report compares two sets of data, like sales records and production records, to ensure accuracy and identify discrepancies)",
+      "self_check": {
+        "tier": 1,
+        "why": "This is the one comparison that proves the two halves agree: what you produced against what you sold. Where it does not exist, the group can help set one up — it is a record you build forward, and there is no requirement that you have been keeping it."
+      }
+    },
+    {
+      "key": "crops.R07",
+      "ref": "soil_water",
+      "text": "Soil test and water test results, including Soil Organic Matter and Cation Exchange Capacity",
+      "self_check": {
+        "tier": 1,
+        "why": "A soil test is a snapshot of soil health, not a pass mark, and neither the standard nor the assessment form sets a maximum age. A test from a few years ago is still a starting point — tell the visit when it was taken. A missing test is recorded, not held against you."
+      }
+    }
+  ],
+  "verdicts": [
+    {
+      "key": "crops.V01",
+      "ref": "V01",
+      "question_ref": "1",
+      "text": "Are you satisfied that the farmer is/can produce the listed crops?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V02",
+      "ref": "V02",
+      "question_ref": "2",
+      "text": "Is the information correct?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V03",
+      "ref": "V03",
+      "question_ref": "3",
+      "text": "Is there need for a transition period?",
+      "polarity": "INFORMATIONAL",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V04",
+      "ref": "V04",
+      "question_ref": "4",
+      "text": "Is there adequate on-farm composting (on-farm composting is a key requirement of organic principles)?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V04.a",
+          "text": "Is the compost of a good quality? (decomposed, friable, organisms/biological life visible, etc.)",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        },
+        {
+          "key": "crops.V04.b",
+          "text": "Is the source of all ingredients, including manure, acceptable?",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V05",
+      "ref": "V05",
+      "question_ref": "5",
+      "text": "Is the purchased compost acceptable? (source, materials, quality)",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "guidance": "Recommendation: a letter from the compost supplier, listing all ingredients and their sources, any additives and the process by which the compost is made."
+    },
+    {
+      "key": "crops.V06",
+      "ref": "V06",
+      "question_ref": "6",
+      "text": "Are the mulching materials acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V06.a",
+          "text": "If raw materials are brought in/purchased, did the farmer describe a plan to work towards producing what is needed on site to support the fertility plan on the farm?",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V07",
+      "ref": "V07",
+      "question_ref": "7",
+      "text": "Did the farmer describe what crops were planted before the visit and what plants are planned after the crop?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V08",
+      "ref": "V08",
+      "question_ref": "8",
+      "text": "Did the farmer describe the type of crops used for green manuring/cover crops?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V09",
+      "ref": "V09",
+      "question_ref": "9",
+      "text": "Are they reused or recycled?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V10",
+      "ref": "V10",
+      "question_ref": "10",
+      "text": "Are you satisfied with the soil or soil test?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V10.a",
+          "text": "Is there a need for any/further tests?",
+          "polarity": "INFORMATIONAL",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V11",
+      "ref": "V11",
+      "question_ref": "11",
+      "text": "Has the farmer described a plan for securing a supply of organically grown seeds and seedlings? (if applicable)",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V11.a",
+          "text": "Is supplier information available?",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V12",
+      "ref": "V12",
+      "question_ref": "12",
+      "text": "Does the farmer have an understanding of seed propagation?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V13",
+      "ref": "V13",
+      "question_ref": "13",
+      "text": "Is there evidence of varieties?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V14",
+      "ref": "V14",
+      "question_ref": "14",
+      "text": "Is the exchange initiative organised/effective and is the farmer getting an adequate proportion of seeds from it?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V16",
+      "ref": "V16",
+      "question_ref": "16",
+      "text": "Are there any risks of contamination of the water source? (septic tanks, effluent, etc.)",
+      "polarity": "NEGATIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V17",
+      "ref": "V17",
+      "question_ref": "17",
+      "text": "Is the system applicable to the crop/soil/environment? (flood, micro jet, drip irrigation)",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V18",
+      "ref": "V18",
+      "question_ref": "18",
+      "text": "Is the schedule mindful of conservation and evaporation?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V19",
+      "ref": "V19",
+      "question_ref": "19",
+      "text": "Any indication of swale use, contouring, minimal tillage, mulch/plant cover etc.?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V19.a",
+          "text": "Is there any evidence of erosion on property?",
+          "polarity": "NEGATIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        },
+        {
+          "key": "crops.V19.b",
+          "text": "Are there practices/plans in place to conserve and manage water on property and in crop production?",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V20",
+      "ref": "V20",
+      "question_ref": "20",
+      "text": "Is the process in line with organic/environmental principles? (Burning, virgin forest, etc.)",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V21",
+      "ref": "V21",
+      "question_ref": "21",
+      "text": "If there are indigenous/protected forests/wetlands does the farmer have a management strategy?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V21.a",
+          "text": "What percentage of the farm is dedicated to biodiversity?",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V22",
+      "ref": "V22",
+      "question_ref": "22",
+      "text": "Do you see evidence of faunal and floral diversity?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V23",
+      "ref": "V23",
+      "question_ref": "23",
+      "text": "Do you see evidence of pests or pest damage? (no evidence might be a signal of pesticide use)",
+      "polarity": "NEGATIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V24",
+      "ref": "V24",
+      "question_ref": "24",
+      "text": "Are the methods and preparations compliant with the standard?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V25",
+      "ref": "V25",
+      "question_ref": "25",
+      "text": "Are the purchased preparations acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V26",
+      "ref": "V26",
+      "question_ref": "26",
+      "text": "Are the methods of dealing with crop diseases acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V27",
+      "ref": "V27",
+      "question_ref": "27",
+      "text": "Are the methods and preparations acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V28",
+      "ref": "V28",
+      "question_ref": "28",
+      "text": "Are the methods sufficient and is the farm protected?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V29",
+      "ref": "V29",
+      "question_ref": "29",
+      "text": "Are containment methods acceptable? (if applicable)",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V30",
+      "ref": "V30",
+      "question_ref": "30",
+      "text": "Are the processes and storage areas acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V32a",
+      "ref": "V32",
+      "question_ref": "31",
+      "text": "Are the separation methods acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V32b",
+      "ref": "V32",
+      "question_ref": "32",
+      "text": "Is the harvesting and post harvesting process efficient, hygienic and offer protection from pests?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V33",
+      "ref": "V33",
+      "question_ref": "33",
+      "text": "Does the packaging have minimal adverse impact on the product and on the environment?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V34",
+      "ref": "V34",
+      "question_ref": "34",
+      "text": "Is the transport described acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V35",
+      "ref": "V35",
+      "question_ref": "35",
+      "text": "Are the products acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"],
+      "sub_questions": [
+        {
+          "key": "crops.V35.a",
+          "text": "Are you satisfied that the farmer is compliant?",
+          "polarity": "POSITIVE",
+          "options": ["YES", "NO", "NA"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "crops.V36",
+      "ref": "V36",
+      "question_ref": "36",
+      "text": "Is the area clean and organised?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V37",
+      "ref": "V37",
+      "question_ref": "37",
+      "text": "Are the procedures acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    },
+    {
+      "key": "crops.V38",
+      "ref": "V38",
+      "question_ref": "38",
+      "text": "Are the facilities acceptable?",
+      "polarity": "POSITIVE",
+      "options": ["YES", "NO", "NA"]
+    }
+  ]
+}

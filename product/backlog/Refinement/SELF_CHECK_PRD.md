@@ -112,12 +112,21 @@ question.
 
 ### 3.4 The wording is data, in two places, and neither is a migration
 
-- **Derived controls** (B1–B7, C1–C5) are questions or `RecordCheck` items that already exist in the
+- **Derived controls** (B1–B7, C1–C4) are questions or `RecordCheck` items that already exist in the
   frozen Crops template. They gain `"self_check": {"tier": 1, "why": "…"}` in the schema, so the
   front door and the visit **cannot drift apart in wording** — the thing the wording review was most
   worried about.
-- **Own controls** (A1–A5, D1, E1–E2) have no template question. They live in a single
+- **Own controls** (A1–A5, **C5**, D1, E1–E2) have no template question. They live in a single
   `SELF_CHECK_ITEMS` structure in `core/services/_selfcheck.py`, beside the fee bands.
+
+> **Corrected 2026-11-05 (task B3, against the sheet).** This section first read "B1–B7, C1–C5", which
+> counted twelve derived controls. Four of the five practices are Crops-sheet questions (Q4.2, Q5.1,
+> Q11.1, Q11.2), but **C5 — *"Do you buy in produce from other farmers to sell on?"* — is FORM Sheet
+> A, Aggregation**, not Sheet B.1, so it is not in the Crops template and cannot carry a marker there.
+> The Crops template therefore carries **eleven**: the seven records and those four practices
+> (`test_crops_template.py::test_the_template_carries_eleven_derived_controls`). C5 keeps exactly one
+> home — `SELF_CHECK_ITEMS` — and the front door's wording still cannot drift, because the visit's
+> aggregation question is Sheet A's and not the questionnaire's.
 
 Both are **data seeded per deployment** (§I, "code encodes the process; data encodes the standard").
 Retargeting to another standard changes JSON and a constant, not a migration.
@@ -267,8 +276,16 @@ public claim about the group's own catchment and inherits DESIGN §1.
 ```
 
 Unknown keys still fail. `tier` is 1 only, for now — a second tier is a decision, not a default.
-Task B3 marks the twelve derived controls; `test_crops_template.py` asserts the count and that every
-control the self-check claims to derive **resolves to a question that exists**.
+Task B3 marks the **eleven** derived controls this sheet holds — `Q4.2`, `Q5.1`, `Q11.1`, `Q11.2` and
+`R01`–`R07`, the seven Sheet I §2 records — and `test_crops_template.py` asserts the count and that
+every marker **resolves to a question, item or record that exists**. (C5 is an own control: it is
+Sheet A's, not this sheet's — see §3.4's correction.)
+
+Two shapes the FORM forces, both validated by `validate_schema`: a numbered question (`crops.Q4`) is a
+**container** whose `items` (`crops.Q4.1`, `crops.Q4.2`, …) are the answerable lines, because the
+plan's own marker example is a sub-item; and the records live in a `records` array with `R`-prefixed
+keys (`crops.R01`), because `RecordCheck.kind` is what the visit verifies and the self-check must quote
+the same wording.
 
 ---
 

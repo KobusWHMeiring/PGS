@@ -97,6 +97,16 @@ the generated index's "To Do" section.
       the judgements left are the ones a person must make in a browser — does the four-step flow
       read as one thing on a phone, is the consent block readable before it is ticked, and does
       "Your part is done" leave a farmer with the right expectation about paying.
+- [ ] **Five of the seven record "why" sentences name no source** (task B3, 2026-11-05). R02–R04, R06
+      and R07 explain what the record is *for* without citing a clause or the FORM, and
+      `SELF_CHECK_PRD` §3.3 asks every control's why to name its source. The wording is D71's reviewed
+      copy, so it was transcribed rather than rewritten and pinned in
+      `test_crops_template.py::NO_CITED_CLAUSE`. A8 is where a clause is added or the group says the
+      explanation is enough.
+- [ ] **The FORM prints "(Yes/No)" on a question that asks for a percentage** — V21's child, *"What
+      percentage of the farm is dedicated to biodiversity? (Yes/No)"*. B3 transcribed it as printed
+      with YES/NO/NA options so the visit can still record an answer; the group should decide whether
+      the child wants a number instead. Found while authoring the template, 2026-11-05.
 
 ## Corpus and chat — found while building
 

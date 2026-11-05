@@ -36,9 +36,13 @@ from core.models import AssessmentTemplate, Category
 #: deliberately: silently accepting an unknown version is how a renderer meets a key it cannot draw.
 SCHEMA_VERSION = 1
 
-#: `<prefix>.(V..|Q..)`, the grammar B1 fixes. The prefix is the category (or template) code.
-KEY_PATTERN = re.compile(r"^(?P<prefix>[a-z_]+)\.(?P<body>V\d{2}[a-z]?|Q\d+(?:\.\d+)?)$")
+#: `<prefix>.(V..|Q..|R..)`, the grammar B1 fixes, plus `R` for a Sheet I §2 record check.
+#: The `R` branch is not in B1's regex because B1 predates the records' home: D71 and `SELF_CHECK_PRD`
+#: §3.4 make the seven record checks template data (they are what a `RecordCheck` is verified
+#: against), so they need keys, and `R01`.. is the only shape that cannot collide with a question.
+KEY_PATTERN = re.compile(r"^(?P<prefix>[a-z_]+)\.(?P<body>V\d{2}[a-z]?|Q\d+(?:\.\d+)?|R\d{2})$")
 QUESTION_BODY = re.compile(r"^Q(?P<ref>\d+(?:\.\d+)?)$")
+RECORD_BODY = re.compile(r"^R(?P<index>\d{2})$")
 VERDICT_REF = re.compile(r"^V\d{2}$")
 CHILD_KEY_PATTERN = re.compile(
     r"^(?P<parent>[a-z_]+\.V\d{2}[a-z]?)\.(?P<letter>[a-z])$"
@@ -115,7 +119,8 @@ def _validate_options(value: Any, path: str, problems: list[str], *, required: b
 
 
 def _validate_question(
-    question: Any, path: str, prefix: str, problems: list[str], seen: dict[str, str]
+    question: Any, path: str, prefix: str, problems: list[str], seen: dict[str, str],
+    *, nested: bool = False,
 ) -> None:
     if not isinstance(question, dict):
         problems.append(f"{path}: a question must be an object")
@@ -154,20 +159,42 @@ def _validate_question(
 
     if not _text(question.get("ref")):
         problems.append(f"{path}.ref: missing")
-    if not _text(question.get("text")):
-        problems.append(f"{path}.text: missing — a question with no wording cannot be asked")
-    if question.get("respondent") not in RESPONDENTS:
+
+    # A numbered question is a **container** for the printed sub-items (4.1, 4.2, …): the FORM's
+    # "Question 4" is a heading, and the answerable things are its items. A container therefore
+    # need not carry `text`/`respondent`/`type` itself, but everything it holds must; an item may
+    # not hold items, because the FORM has exactly one level of numbering.
+    items = question.get("items")
+    if items is not None:
+        if not isinstance(items, list) or not items:
+            problems.append(f"{path}.items: must be a non-empty list or omitted")
+        elif nested:
+            problems.append(f"{path}.items: an item may not itself hold items (one level of numbering)")
+        else:
+            for index, item in enumerate(items):
+                _validate_question(
+                    item, f"{path}.items[{index}]", prefix, problems, seen, nested=True
+                )
+    elif nested or _text(question.get("text")):
+        if not _text(question.get("text")):
+            problems.append(f"{path}.text: missing — an item with no wording cannot be asked")
+        if question.get("respondent") not in RESPONDENTS:
+            problems.append(
+                f"{path}.respondent: must be one of {list(RESPONDENTS)}, "
+                f"got {question.get('respondent')!r}"
+            )
+        qtype = question.get("type")
+        if qtype not in QUESTION_TYPES:
+            problems.append(
+                f"{path}.type: must be one of {list(QUESTION_TYPES)}, got {qtype!r}"
+            )
+        if qtype == "CHOICE":
+            _validate_options(question.get("options"), f"{path}.options", problems, required=True)
+    else:
         problems.append(
-            f"{path}.respondent: must be one of {list(RESPONDENTS)}, "
-            f"got {question.get('respondent')!r}"
+            f"{path}: a question needs `text`, `respondent` and `type`, or an `items` list"
         )
-    qtype = question.get("type")
-    if qtype not in QUESTION_TYPES:
-        problems.append(
-            f"{path}.type: must be one of {list(QUESTION_TYPES)}, got {qtype!r}"
-        )
-    if qtype == "CHOICE":
-        _validate_options(question.get("options"), f"{path}.options", problems, required=True)
+
     if "attachments" in question:
         attachments = question.get("attachments")
         if not isinstance(attachments, list) or not all(_text(item) for item in attachments):
@@ -269,6 +296,16 @@ def _validate_verdict(
     if "standard_ref" in verdict and verdict["standard_ref"] is not None:
         if not _text(verdict["standard_ref"]):
             problems.append(f"{path}.standard_ref: must be a clause or null, not an empty string")
+    question_ref = verdict.get("question_ref")
+    if question_ref is not None and not (
+        isinstance(question_ref, str) and question_ref.isdigit()
+    ):
+        problems.append(
+            f"{path}.question_ref: must be the numbered question's ref as a string, "
+            f"e.g. \"4\", got {question_ref!r}"
+        )
+    if "guidance" in verdict and not _text(verdict.get("guidance")):
+        problems.append(f"{path}.guidance: must be the FORM's own note, not an empty string")
     if "self_check" in verdict:
         _validate_self_check(verdict["self_check"], path, problems)
     if "sub_questions" in verdict:
@@ -319,9 +356,14 @@ def validate_schema(schema: Any) -> list[str]:
 
     # One template is one category. A second prefix in a file is a copy-paste defect, and it would
     # let two categories' answers collide in one `question_key` column.
+    records = schema.get("records", [])
+    if not isinstance(records, list):
+        problems.append("records must be a list when present")
+        records = []
+
     prefixes = {
         match.group("prefix")
-        for item in [*sections, *verdicts]
+        for item in [*sections, *records, *verdicts]
         if isinstance(item, dict)
         for candidate in _keys_of(item)
         for match in [KEY_PATTERN.match(candidate)]
@@ -349,6 +391,9 @@ def validate_schema(schema: Any) -> list[str]:
             continue
         for q_index, question in enumerate(questions):
             _validate_question(question, f"{path}.questions[{q_index}]", prefix, problems, seen)
+
+    for index, record in enumerate(records):
+        _validate_record(record, f"records[{index}]", prefix, problems, seen)
 
     verdict_keys = {
         verdict["key"] for verdict in verdicts if isinstance(verdict, dict) and _text(verdict.get("key"))
@@ -477,3 +522,43 @@ def assert_template_usable(template: AssessmentTemplate) -> None:
             f"{template.category_id}:{template.version} is not active — a visit may only be "
             "started against the category's current template (spec §4.2)"
         )
+
+
+def _validate_record(record: Any, path: str, prefix: str, problems: list[str], seen: dict[str, str]) -> None:
+    """One Sheet I §2 record check — the documents a visit asks to see (spec §4.2 `RecordCheck`).
+
+    It is template data, not a constant, for the reason `SELF_CHECK_PRD` §3.4 gives: the public
+    self-check's seven record controls must carry the same wording as the visit's checklist, and two
+    copies are two copies that drift. `ref` is the FORM's own letter (a–f) or a short slug for the one
+    line the FORM prints without a letter.
+    """
+    if not isinstance(record, dict):
+        problems.append(f"{path}: a record must be an object")
+        return
+    key = record.get("key")
+    if not isinstance(key, str):
+        problems.append(f"{path}.key: missing")
+    else:
+        match = KEY_PATTERN.match(key)
+        if not match:
+            problems.append(
+                f"{path}.key: {key!r} does not match <prefix>.R<nn> (e.g. crops.R01)"
+            )
+        else:
+            if key in seen:
+                problems.append(f"{path}.key: duplicate key {key!r} (already used at {seen[key]})")
+            else:
+                seen[key] = path
+            if prefix and match.group("prefix") != prefix:
+                problems.append(
+                    f"{path}.key: prefix {match.group('prefix')!r} differs from the template's "
+                    f"{prefix!r} — one template is one category"
+                )
+            if RECORD_BODY.match(match.group("body")) is None:
+                problems.append(f"{path}.key: {key!r} is not a record key")
+    if not _text(record.get("ref")):
+        problems.append(f"{path}.ref: missing — the FORM's own letter, or a slug where it prints none")
+    if not _text(record.get("text")):
+        problems.append(f"{path}.text: missing — the record has to be named")
+    if "self_check" in record:
+        _validate_self_check(record["self_check"], path, problems)

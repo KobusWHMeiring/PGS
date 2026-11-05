@@ -301,3 +301,137 @@ def test_a_template_is_inactive_until_it_is_activated():
         category=category, version="v1", standard_version="SAOSO v2.1 (2026)", schema=MINIMAL
     )
     assert template.is_active is False
+
+
+# --- The two shapes the FORM itself needs -----------------------------------
+#
+# The plan's 38-question count counts **numbered questions** ("Question 4"), and its own example of a
+# derived control is `crops.Q4.2` — a printed sub-item. Both hold only if a numbered question is a
+# container for its items, so the validator accepts a container without wording of its own and
+# validates the items exactly as it validates a standalone question.
+
+
+def _with_items(items):
+    schema = copy.deepcopy(MINIMAL)
+    schema["sections"][0]["questions"] = [{"key": "crops.Q4", "ref": "4", "items": items}]
+    schema["verdicts"] = [_verdict("crops.V04", "V04")]
+    return schema
+
+
+def test_a_numbered_question_may_hold_its_printed_items():
+    schema = _with_items(
+        [
+            {"key": "crops.Q4.1", "ref": "4.1", "text": "Describe your soil fertility plan.",
+             "respondent": "FARMER", "type": "TEXTAREA"},
+            {"key": "crops.Q4.2", "ref": "4.2", "text": "Do you make your own compost?",
+             "respondent": "FARMER", "type": "YES_NO"},
+        ]
+    )
+    assert validate_schema(schema) == []
+
+
+def test_an_item_must_carry_its_own_wording_and_respondent():
+    schema = _with_items([{"key": "crops.Q4.1", "ref": "4.1"}])
+    found = validate_schema(schema)
+    assert any("text" in p for p in found) and any("respondent" in p for p in found), found
+
+
+def test_an_item_key_must_match_its_ref():
+    schema = _with_items(
+        [{"key": "crops.Q4.2", "ref": "4.3", "text": "…", "respondent": "FARMER", "type": "TEXT"}]
+    )
+    found = validate_schema(schema)
+    assert any("disagrees with its ref" in p for p in found), found
+
+
+def test_an_item_may_not_hold_items():
+    """The FORM has one level of numbering; a second would be an invented nesting."""
+    schema = _with_items(
+        [
+            {"key": "crops.Q4.1", "ref": "4.1", "items": [
+                {"key": "crops.Q4.1.1", "ref": "4.1.1", "text": "…", "respondent": "FARMER", "type": "TEXT"}
+            ]}
+        ]
+    )
+    found = validate_schema(schema)
+    assert any("items" in p for p in found), found
+
+
+def test_a_question_with_neither_wording_nor_items_is_rejected():
+    schema = copy.deepcopy(MINIMAL)
+    schema["sections"][0]["questions"][0] = {"key": "crops.Q1.1", "ref": "1.1"}
+    found = validate_schema(schema)
+    assert any("items" in p for p in found), found
+
+
+# --- The Sheet I §2 records (D71's seven) -----------------------------------
+
+
+def _with_records(records):
+    schema = copy.deepcopy(MINIMAL)
+    schema["records"] = records
+    return schema
+
+
+def test_records_are_template_data_with_their_own_key_namespace():
+    """`RecordCheck.kind` is verified against these; the self-check's seven markers live on them."""
+    schema = _with_records(
+        [
+            {"key": "crops.R01", "ref": "a", "text": "Farm sketch of layout of farm and production areas."},
+            {"key": "crops.R02", "ref": "b", "text": "Sketches or diagrams of fields."},
+        ]
+    )
+    assert validate_schema(schema) == []
+
+
+def test_a_record_key_must_be_record_shaped():
+    schema = _with_records([{"key": "crops.Q1.1", "ref": "a", "text": "…"}])
+    found = validate_schema(schema)
+    assert any("record key" in p or "disagrees" in p for p in found), found
+
+
+def test_a_record_may_carry_a_self_check_marker():
+    schema = _with_records(
+        [
+            {"key": "crops.R01", "ref": "a", "text": "Farm sketch.",
+             "self_check": {"tier": 1, "why": "The visit needs to see the farm's shape on one page."}},
+        ]
+    )
+    assert validate_schema(schema) == []
+
+
+def test_a_record_carrying_a_bad_self_check_is_rejected():
+    schema = _with_records(
+        [{"key": "crops.R01", "ref": "a", "text": "Farm sketch.", "self_check": {"tier": 1}}]
+    )
+    assert any("why" in p for p in validate_schema(schema))
+
+
+def test_a_record_key_may_not_collide_with_a_question_key():
+    schema = _with_records([{"key": "crops.Q1.1", "ref": "a", "text": "…"}])
+    schema["verdicts"] = [_verdict("crops.V01", "V01")]
+    found = validate_schema(schema)
+    assert any("duplicate" in p.lower() for p in found), found
+
+
+# --- What a verdict names ---------------------------------------------------
+
+
+def test_a_verdict_names_the_numbered_question_it_judges():
+    schema = copy.deepcopy(MINIMAL)
+    schema["verdicts"][0]["question_ref"] = "1"
+    assert validate_schema(schema) == []
+
+
+def test_a_verdict_question_ref_must_be_a_numbered_question():
+    schema = copy.deepcopy(MINIMAL)
+    schema["verdicts"][0]["question_ref"] = "Q4"
+    found = validate_schema(schema)
+    assert any("question_ref" in p for p in found), found
+
+
+def test_a_verdict_may_carry_the_forms_own_guidance():
+    """The FORM prints recommendations in the verdict cell; they are data, not template copy."""
+    schema = copy.deepcopy(MINIMAL)
+    schema["verdicts"][0]["guidance"] = "Recommendation: a letter from the compost supplier."
+    assert validate_schema(schema) == []
