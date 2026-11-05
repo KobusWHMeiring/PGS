@@ -101,6 +101,13 @@ Nothing was overturned. Two things were sharper than the plan:
   empty table and implied the key was wrong everywhere. Drawing the unclaimed cells as unclaimed is
   the honest form, and it is the same distinction requirement 5 makes about empty cells: silence is
   data, not absence.
+- **And "unclaimed" had to be said in words.** The first version drew it as `—`, and the owner's
+  first reading of the page was *"am I expecting the cells below 'Below R 250,000' to be empty?"* —
+  the paper prints 2,500 / 3,000 / 3,700 / 5,000 there; the key asserts none of it. A glyph that can
+  be read as "blank" on a page whose whole job is teaching the difference between blank and unasserted
+  is a defect, not a style choice. The cells now say `not claimed`, hatched, with the legend spelling
+  it out, and a test pins the wording (broken by hand-editing the artefact back to a dash, watched
+  red).
 - **`pgs-presenting-uat` is the right discipline but not the right file format.** Its console,
   runner and sign-off all assume one scenario per judgement, with a `Judgement:` clause; this page
   needs 68 cell-level verdicts against images, and the runner cannot carry an image without an

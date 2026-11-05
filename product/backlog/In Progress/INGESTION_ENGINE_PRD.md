@@ -487,8 +487,9 @@ pre-filled and nothing is scored; the owner's call is the key (`pgs-presenting-u
 
 **The instrument counts what the key claims, not what the page prints.** 8 shapes, **68 claims**, of
 which **41 are cells** — while those eight pages print ~60 cells in the shapes' own columns. Every
-cell the key does not assert is drawn as `—` and labelled *the key does not assert this cell*, so the
-reviewer can see the key's thinness as well as its errors. The claims are: per shape a header
+cell the key does not assert says **`not claimed`** in words — not a dash, whose first reader took it
+for "the paper is blank" — and the legend says that is not a claim of blankness, so the reviewer can
+see the key's thinness as well as its errors. The claims are: per shape a header
 grouping, a row count and the page each row starts on; 3 divider claims on Appendix 2; and the 41 cell
 claims, each carrying the paper's text, its emptiness, its prefix/suffix, or its length.
 

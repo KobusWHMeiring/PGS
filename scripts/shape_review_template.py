@@ -88,7 +88,7 @@ CSS = """  :root {
   table.expect .pg { display: block; font-size: 10px; color: var(--muted); font-weight: 500; }
   table.expect td.claimed { background: #fff; }
   table.expect td.empty { color: var(--muted); font-style: italic; }
-  table.expect td.unclaimed { color: #b3bdb5; text-align: center; }
+  table.expect td.unclaimed { color: #8f9c94; font-size: 11px; font-style: italic; text-align: left; background: repeating-linear-gradient(135deg, #fdfefd, #fdfefd 6px, #f1f4ef 6px, #f1f4ef 12px); }
   table.expect tr.divider td { background: var(--warn-soft); font-size: 12px; }
   table.expect tr.divider .kind { display: inline-block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--warn); font-weight: 700; margin-right: 6px; }
   .legend { font-size: 11.5px; color: var(--muted); margin: 8px 0 18px; }

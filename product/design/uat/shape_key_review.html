@@ -79,7 +79,7 @@
   table.expect .pg { display: block; font-size: 10px; color: var(--muted); font-weight: 500; }
   table.expect td.claimed { background: #fff; }
   table.expect td.empty { color: var(--muted); font-style: italic; }
-  table.expect td.unclaimed { color: #b3bdb5; text-align: center; }
+  table.expect td.unclaimed { color: #8f9c94; font-size: 11px; font-style: italic; text-align: left; background: repeating-linear-gradient(135deg, #fdfefd, #fdfefd 6px, #f1f4ef 6px, #f1f4ef 12px); }
   table.expect tr.divider td { background: var(--warn-soft); font-size: 12px; }
   table.expect tr.divider .kind { display: inline-block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--warn); font-weight: 700; margin-right: 6px; }
   .legend { font-size: 11.5px; color: var(--muted); margin: 8px 0 18px; }
@@ -212,8 +212,9 @@
     <p class="thin">
       The key asserts <strong>5 of the 18</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -231,13 +232,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Annual farm turnover (gross sales)</th><th>Initial certification fee (R)</th><th>Renewal fee (R)</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p2</span></th><td class="claimed">Below R 250,000</td><td class="claimed">1,500</td><td class="claimed">900</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p2</span></th><td class="claimed">Above R 5,000,000</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed">8,000</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p2</span></th><td class="claimed">Below R 250,000</td><td class="claimed">1,500</td><td class="claimed">900</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p2</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p2</span></th><td class="claimed">Above R 5,000,000</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed">8,000</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -352,8 +354,9 @@
     <p class="thin">
       The key asserts <strong>5 of the 40</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -371,13 +374,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Class or species</th><th>Maximum number of animals per ha equivalent to 170 kg N/ha/year</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p85</span></th><td class="claimed">Equines over six months old</td><td class="claimed">2</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p85</span></th><td class="claimed">Other bovine animals less than one year old</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">7</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">8</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">9</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">10</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">11</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">12</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">13</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">14</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">15</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">16</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">17</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">18</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">19</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">20</span><span class="pg">p85</span></th><td class="claimed">Laying hens</td><td class="claimed">230</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p85</span></th><td class="claimed">Equines over six months old</td><td class="claimed">2</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p85</span></th><td class="claimed">Other bovine animals less than one year old</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">7</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">8</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">9</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">10</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">11</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">12</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">13</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">14</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">15</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">16</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">17</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">18</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">19</span><span class="pg">p85</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">20</span><span class="pg">p85</span></th><td class="claimed">Laying hens</td><td class="claimed">230</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -492,8 +496,9 @@
     <p class="thin">
       The key asserts <strong>6 of the 28</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -511,13 +516,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Oenological practice</th><th>Authorised products</th><th>Conditions of use (1)</th><th>Limits on use and Applications</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p88</span></th><td class="claimed">Aeration or oxygenation using gaseous oxygen</td><td class="claimed">Air, Gaseous oxygen</td><td class="claimed empty">(prints nothing)</td><td class="claimed empty">(prints nothing)</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">7</span><span class="pg">p88</span></th><td class="claimed">Use to encourage yeast development</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed">No more than 0,6 mg/l</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p88</span></th><td class="claimed">Aeration or oxygenation using gaseous oxygen</td><td class="claimed">Air, Gaseous oxygen</td><td class="claimed empty">(prints nothing)</td><td class="claimed empty">(prints nothing)</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p88</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">7</span><span class="pg">p88</span></th><td class="claimed">Use to encourage yeast development</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed">No more than 0,6 mg/l</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -643,8 +649,9 @@
     <p class="thin">
       The key asserts <strong>4 of the 5</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -662,13 +669,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Key steps</th><th>Resource documents, guidelines and requirements</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p5</span></th><td class="claimed">The group conducts farm visits and</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed">These two seals were developed by PGS SA</td><td class="claimed empty">(prints nothing)</td><td class="claimed">A newly established PGS group</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p5</span></th><td class="claimed">The group conducts farm visits and</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed">These two seals were developed by PGS SA</td><td class="claimed empty">(prints nothing)</td><td class="claimed">A newly established PGS group</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -772,8 +780,9 @@
     <p class="thin">
       The key asserts <strong>6 of the 10</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -791,13 +800,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Key steps</th><th>Resource documents, guidelines and requirements</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p4</span></th><td class="claimed">Step 1</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed empty">(prints nothing)</td><td class="claimed empty">(prints nothing)</td><td class="claimed">R500</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p4</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed">Proud member of</td><td class="claimed empty">(prints nothing)</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p4</span></th><td class="claimed">Step 1</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed empty">(prints nothing)</td><td class="claimed empty">(prints nothing)</td><td class="claimed">R500</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p4</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed">Proud member of</td><td class="claimed empty">(prints nothing)</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -923,8 +933,9 @@
     <p class="thin">
       The key asserts <strong>4 of the 15</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -949,13 +960,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Key steps</th><th>Resource documents, guidelines and requirements</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p4</span></th><td class="claimed">Step 1</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p4</span></th><td class="claimed">Step 2</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p5</span></th><td class="claimed">Step 3</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed">R350</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p4</span></th><td class="claimed">Step 1</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p4</span></th><td class="claimed">Step 2</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p5</span></th><td class="claimed">Step 3</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed">R350</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -1059,8 +1071,9 @@
     <p class="thin">
       The key asserts <strong>5 of the 22</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -1078,13 +1091,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>SUBSTANCES DESCRIPTION, COMPOSITIONAL REQUIREMENTS</th><th>CONDITIONS FOR USE</th></tr></thead>
-        <tbody><tr class="divider"><th class="gutter"></th><td colspan="2"><span class="kind">part</span> I. PLANT AND ANIMAL ORIGIN</td></tr><tr><th class="gutter"><span class="rn">1</span><span class="pg">p76</span></th><td class="claimed">Farmyard manure, slurry and urine</td><td class="claimed">Shall not constitute the main source of nitrogen</td></tr><tr class="divider"><th class="gutter"></th><td colspan="2"><span class="kind">qualifier</span> South African specific</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p76</span></th><td class="claimed">Guano</td><td class="claimed empty">(prints nothing)</td></tr><tr class="divider"><th class="gutter"></th><td colspan="2"><span class="kind">qualifier</span> South African specific</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed empty">(prints nothing)</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">7</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">8</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">9</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">10</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr><tr><th class="gutter"><span class="rn">11</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr></tbody>
+        <tbody><tr class="divider"><th class="gutter"></th><td colspan="2"><span class="kind">part</span> I. PLANT AND ANIMAL ORIGIN</td></tr><tr><th class="gutter"><span class="rn">1</span><span class="pg">p76</span></th><td class="claimed">Farmyard manure, slurry and urine</td><td class="claimed">Shall not constitute the main source of nitrogen</td></tr><tr class="divider"><th class="gutter"></th><td colspan="2"><span class="kind">qualifier</span> South African specific</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">3</span><span class="pg">p76</span></th><td class="claimed">Guano</td><td class="claimed empty">(prints nothing)</td></tr><tr class="divider"><th class="gutter"></th><td colspan="2"><span class="kind">qualifier</span> South African specific</td></tr><tr><th class="gutter"><span class="rn">4</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">5</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed empty">(prints nothing)</td></tr><tr><th class="gutter"><span class="rn">6</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">7</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">8</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">9</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">10</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr><tr><th class="gutter"><span class="rn">11</span><span class="pg">p76</span></th><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">
@@ -1232,8 +1246,9 @@
     <p class="thin">
       The key asserts <strong>6 of the 10</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>
     <div class="panes">
@@ -1251,13 +1266,14 @@
     <div class="grid-wrap">
       <table class="expect">
         <thead><tr><th class="gutter"><span class="rn">row</span><span class="pg">page</span></th><th>Key steps</th><th>Resource documents, guidelines and requirements</th><th>Use of seals and logos</th><th>Seals and logos</th><th>Fee</th></tr></thead>
-        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p6</span></th><td class="claimed">PGS Organic In-Conversion</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed">PGS Organic In-Conversion</td><td class="claimed empty">(prints nothing)</td><td class="claimed">As above</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p6</span></th><td class="claimed">PGS Organic</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="unclaimed" title="the key asserts nothing here">—</td><td class="claimed empty">(prints nothing)</td><td class="unclaimed" title="the key asserts nothing here">—</td></tr></tbody>
+        <tbody><tr><th class="gutter"><span class="rn">1</span><span class="pg">p6</span></th><td class="claimed">PGS Organic In-Conversion</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed">PGS Organic In-Conversion</td><td class="claimed empty">(prints nothing)</td><td class="claimed">As above</td></tr><tr><th class="gutter"><span class="rn">2</span><span class="pg">p6</span></th><td class="claimed">PGS Organic</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td><td class="claimed empty">(prints nothing)</td><td class="unclaimed" title="the key asserts nothing here — not that the paper is blank">not claimed</td></tr></tbody>
       </table>
     </div>
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         
     <div class="claims">

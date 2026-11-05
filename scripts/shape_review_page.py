@@ -78,8 +78,9 @@ def shape_header(index: int, case: ShapeCase) -> str:
     <p class="thin">
       The key asserts <strong>{len(case.cells)} of the {printed}</strong> cells on this page, plus the
       header, the row count and which page each row starts on. Cells it does not assert are marked
-      <span class="unclaimed-key">—</span> in the grid: they are not claimed to be wrong, they are
-      simply not claimed.
+      <span class="unclaimed-key">not claimed</span> in the grid. That is not a claim that the paper
+      is blank: the page prints values there, the key simply does not assert them, so there is
+      nothing for you to judge in those cells.
     </p>
   </header>"""
 
@@ -102,7 +103,10 @@ def grid(case: ShapeCase) -> str:
         for column in range(len(case.columns)):
             cell = claimed.get((row, column))
             if cell is None:
-                cells.append('<td class="unclaimed" title="the key asserts nothing here">—</td>')
+                cells.append(
+                    '<td class="unclaimed" title="the key asserts nothing here — '
+                    'not that the paper is blank">not claimed</td>'
+                )
             elif cell.empty:
                 cells.append('<td class="claimed empty">(prints nothing)</td>')
             else:
@@ -188,8 +192,9 @@ def shape(index: int, case: ShapeCase) -> str:
         {grid(case)}
         <p class="legend">
           <span class="claimed-key">filled</span> a cell the key asserts ·
-          <span class="unclaimed-key">—</span> a cell the key does not assert ·
-          <span class="kind">qualifier</span> a divider between rows
+          <span class="unclaimed-key">not claimed</span> <strong>the key makes no assertion about
+          that cell — it is not a claim that the paper is blank</strong>, so there is no verdict to
+          give · <span class="kind">qualifier</span> a divider between rows
         </p>
         {claim_cards(case)}
       </div>

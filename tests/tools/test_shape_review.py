@@ -126,6 +126,22 @@ def test_every_asserted_cell_is_filled_and_every_other_cell_says_it_is_unclaimed
         assert cells.count('class="unclaimed"') == printed - len(case.cells), case.key
 
 
+def test_an_unclaimed_cell_says_so_in_words(html):
+    """A dash reads as "the paper is blank" — which is the opposite of what it means.
+
+    The first reader of this page asked whether rows 2-5 of the fee table were *expected* to be
+    empty. They are not: the paper prints 2,500 / 3,000 / 3,700 / 5,000 there and the key simply
+    asserts none of it. So the word is "not claimed", the legend says it is not a claim of
+    blankness, and no cell may be drawn as a bare dash again.
+    """
+    unclaimed = sum(
+        case.row_count * len(case.columns) - len(case.cells) for case in SHAPES
+    )
+    assert html.count(">not claimed</td>") == unclaimed
+    assert "it is not a claim that the paper is blank" in html
+    assert "—</td>" not in html, "an unclaimed cell is still drawn as a dash"
+
+
 def test_a_claimed_cell_shows_the_text_the_paper_must_print(html):
     """A cell claim without its text would ask the reviewer to judge a memory."""
     for case in SHAPES:
