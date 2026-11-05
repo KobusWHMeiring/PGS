@@ -111,15 +111,16 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation and
 vlm-arm sessions
-**Repo state:** `main` — **seven commits ahead of `origin/main`**: session `1h`'s five (the OpenRouter
+**Repo state:** `main` — **nine commits ahead of `origin/main`**: session `1h`'s five (the OpenRouter
 arm; §3.8's correction; the Docling re-run with the shared normalisation; the D82 explanation page; and
-the Document AI arm with §3.9–§3.10), then session `1i`'s two (the verification surface, and its
-docs). Everything before `1h` is pushed: the
+the Document AI arm with §3.9–§3.10), then session `1i`'s four (the verification surface; its docs; a
+browser test for the JavaScript-off checklist item; and the count this line carried before). Everything
+before `1h` is pushed: the
 licence commit, the chat-split follow-ups, the six test/generator cuts, the flake fix, `1c`'s close,
 session `1d`'s (the truth-up, five row batches, the link guard, the gate wiring, the PRD close),
 `1e`'s (the D80 PRD, S0's fixtures, S1's generator guard, F3), `1f`'s (the S4 harness, the gate
 script, a corrected unpushed count), `1g`'s (D81, the explainer page, and Docling's measurement).
-**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `7` on this tree, and
+**Check it, do not quote it:** `git rev-list --count origin/main..HEAD` prints `9` on this tree, and
 `0` once sessions `1h` and `1i` are pushed.
 
 **On this tree** (2026-11-05, session `1i`): `scripts/verify.sh` **green at 1719 passed /

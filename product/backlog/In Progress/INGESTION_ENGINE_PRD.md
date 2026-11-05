@@ -499,7 +499,7 @@ claims, each carrying the paper's text, its emptiness, its prefix/suffix, or its
 | `scripts/shape_review.py` | the CLI and the contract (`KIND`/`ARTEFACT_NAME`); `--check` fails when the committed file drifts from the key |
 | `scripts/shape_claims.py`, `shape_review_page.py`, `shape_review_template.py` | the same generator split by what fails differently — a claim in a review, the markup, the stylesheet and script — each under the 30 KB cap (`build_principles.md` §II) |
 | `scripts/shape_review_signoff.py` | validates an export, writes `knowledge/tests/shape_review.json` with **every claim pinned to the text it judged**, and `--check` names every claim that has changed since — a signature cannot outlive what it signed |
-| 16 tests + 5 browser tests | claim coverage and uniqueness, no network, claimed-vs-unclaimed honesty, **the drift guard broken and watched red by changing one expected value**, and the page's script executed in Chromium (the §1.30 hazard) |
+| 16 tooling tests + 6 browser tests | claim coverage and uniqueness, no network, claimed-vs-unclaimed honesty, **the drift guard broken and watched red by changing one expected value**, and the page's script executed in Chromium (the §1.30 hazard) |
 
 **A `No` does not edit the key.** This verb is *verify*: the record is evidence, and amending
 `shape_fixtures.py` is a deliberate edit with its own diff, made after reading the record. The

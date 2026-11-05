@@ -6,7 +6,7 @@
 **Instruments:** `scripts/shape_review.py` (CLI), `scripts/shape_claims.py` (the model),
 `scripts/shape_review_page.py` (markup), `scripts/shape_review_template.py` (CSS + script),
 `scripts/shape_review_signoff.py`, `scripts/render_shape_pages.py`, `knowledge/tests/shape_pages.py`
-**Tests:** `tests/tools/test_shape_review.py` (16), `tests/e2e/test_shape_review_artefact.py` (5)
+**Tests:** `tests/tools/test_shape_review.py` (16), `tests/e2e/test_shape_review_artefact.py` (6)
 
 ## 1. The question this session was handed
 
@@ -77,9 +77,10 @@ Every guard was broken and watched red before it was trusted:
 | An export cannot carry a bare `No` | validator's reason check disabled | red — the refusal test |
 | Images are the pinned paper | one byte flipped inside `opp_p2.jpg` | red — provenance assertion |
 | The page's script parses and runs | the IIFE's closing brace removed | red — the browser test, `errors != []` |
+| The page is complete without JavaScript | counted with `java_script_enabled=False` | green — 68 claims, 9 figures |
 
 Timings on this box: `tests/tools` **233 passed / 1 skipped in 16.8 s** (the skip is the "no record
-yet" guard), the five browser tests **24.2 s**, `render_shape_pages.py --check` **0 problems**.
+yet" guard), the six browser tests **16.4 s**, `render_shape_pages.py --check` **0 problems**.
 
 ## 5. What the next session does
 
