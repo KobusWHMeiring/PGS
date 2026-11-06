@@ -67,6 +67,38 @@
           "text": "(iii) fermentation."
         }
       ]
+    },
+    {
+      "columns": [
+        "Oenological practice",
+        "Authorised products",
+        "Conditions of use (1)",
+        "Limits on use and Applications"
+      ],
+      "layout": "grid",
+      "legend": "The standard prints this appendix as a table of authorised oenological practices: each row is one practice it permits, with the products it may use, the conditions of that use and the limits on it. The page numbers the rows in a gutter of its own, so the arm's first column is the printed row number and not a column the reader draws. The five columns share every printed line — `Air,` is printed beside `using gaseous oxygen` — so the review declares where each column starts on printed 88, and the cells are the page's own characters, sliced between those edges. Two cells are found by a reviewed locator because the arm transcribed them rather than read them: its Layout Parser writes the degree sign as LaTeX, and closes up `excipient:-` where the page prints it that way.",
+      "gutter": 1,
+      "band": {
+        "88": [
+          0,
+          4,
+          32,
+          60,
+          89
+        ]
+      },
+      "locators": [
+        {
+          "row": 1,
+          "column": 3,
+          "text": "Maximum temperature 70oC"
+        },
+        {
+          "row": 6,
+          "column": 2,
+          "text": "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient:- addition of thiamine hydrochloride"
+        }
+      ]
     }
   ]
 }

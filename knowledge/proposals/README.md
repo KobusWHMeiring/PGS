@@ -7,7 +7,7 @@ finds no proposal — which is the truthful outcome: nobody has read its tables 
 | File | Who writes it | What it holds |
 |---|---|---|
 | `<doc>.structure.json` | `scripts/propose_tables.py`, from a cached extractor response | the arm's grid: columns, rows, the pages, and the banner (`structure`, `processor`, `project`, `captured`, `reduced_from`) |
-| `<doc>.reviewed.json` | a person, once per table | the block fields **no extractor produces**: `legend`, `layout`, `titles`, `fee_labels`, `branch`, `silence`, `band`, `dividers`, `tails`, and **`columns`** — the labels the reader prints, when the paper's header is multi-line and two-level so a one-line `cols:` cannot be a slice of it (Appendix 6a, S5) |
+| `<doc>.reviewed.json` | a person, once per table | the block fields **no extractor produces**: `legend`, `layout`, `titles`, `fee_labels`, `branch`, `silence`, `band`, `gutter`, `locators`, `dividers`, `tails`, and **`columns`** — the labels the reader prints, when the paper's header is multi-line and two-level so a one-line `cols:` cannot be a slice of it (Appendix 6a, S5) |
 
 **What must never be edited by hand** is `.structure.json`. It is a transcription of what the arm
 returned, and hand-editing it would make the one thing in this path that is *not* a guess into one.
@@ -23,7 +23,9 @@ rule**: the cells stay slices of the page, verified one by one.
 | Field | What it says | Why it is not a widened matcher |
 |---|---|---|
 | `columns` | the labels the reader prints, flat | the paper's header is multi-line and two-level; a one-line `cols:` cannot be a page slice. The cells beneath it are still verified |
-| `band: {"76": 60}` | where the second column starts on each **printed** page, for a table whose cells share every printed line | a cell may then only claim its own side of the boundary, and a column's cells are resolved in their own forward cursor — the alternative is a left cell that reads `Biodegradable Free of contaminants` with its neighbour's words in the middle |
+| `band: {"76": 60}` / `{"88": [0, 4, 32, 60, 89]}` | where the columns start on each **printed** page: one boundary for a two-column table, every column's left edge once there are more | a cell may then only claim its own column, and each column's cells are resolved in their own forward cursor — the alternative is a left cell that reads `Biodegradable Free of contaminants` with its neighbour's words in the middle (`Air,` printed beside `using gaseous oxygen`) |
+| `gutter: 1` | the arm's first column is the **printed row number**, not a column the reader draws | it is resolved and claimed like every other cell, and written as the row's label — the block cites the page's number instead of putting a column of digits beside every row |
+| `locators: [{row, column, text}]` | the reviewed spelling of a cell the arm **transcribed** rather than read (`\(70^{\circ}C\)` for the page's `70oC`) | it is a locator like any other: the emitter resolves it against the page and writes the page's characters, so the review cannot author a value — and a locator the page does not print is refused |
 | `dividers: [{before, text, kind}]` | a heading printed *between* rows (`I. PLANT AND ANIMAL ORIGIN`, `South African specific`) | each is located on a line of its own and written as `<!-- row-divider: … -->`, so the block carries the label and R6 can claim it |
 | `tails: [{row, column, page, text}]` | a cell whose last words are printed at the top of the next page | the words must be the **first** line printed on the declared page; an inferred continuation is how `(iii) fermentation.` was once transcribed from two pages later |
 | `silence` | what the reader prints where a cell is empty (`no condition printed`) | one reviewed sentence per table, not nineteen in a template |

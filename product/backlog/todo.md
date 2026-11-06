@@ -115,12 +115,15 @@ the generated index's "To Do" section.
       reproduces `opp.md` byte for byte. The landscape's proposal is committed and **refused on two
       cells** — its page order and merged fee box are S5's. `INGESTION_ENGINE_PRD.md` §3.15 records
       what landed and what was refused.
-- [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 (4 chunks) through the harness**, and
-      delete their bespoke handling. These are the two live defects the PRD measures and the two the
-      harness cannot see, because they are not table blocks at all. The review must be **side by side**
-      — page beside transcription — which is now hard rule 9 in `pgs-presenting-uat`. 6a's header
-      grouping is settled (the owner kept the key's two labels, 2026-11-05), so what is left there is
-      association per row, not a decision.
+- [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 through the harness**, and delete their
+      bespoke handling. **Three of the four landed:** 6a (S5-a) and Appendix 2 (S5-b) are blocks, and
+      Appendix 7's **printed-88 page** is a 7-row, 4-column grid with `gutter: 1`, the wide `band:`
+      and reviewed `locators:` (S5-c, PRD §3.18). **What is left is a reading, not a capability:**
+      Appendix 7's table is **25 rows across printed 88–92** and no arm was sent 89–92, so rows 7–25
+      still need the continuation act Appendix 2 had (`propose_tables.py --continue`, a person's read)
+      before the whole appendix's chunks are rows. Then the landscape (S5-d) and the marker ratchet
+      (S5-e/f). A review is **side by side** — page beside transcription — hard rule 9 in
+      `pgs-presenting-uat`.
 - [ ] **R3's verdict wording — "our pass cannot order this page" is not "the model is wrong".**
       Both VLMs score **0 mismatches** on `page_break_row` and are demoted only because page 5's
       `-table` pass interleaves three columns on one printed line, so no cell's quotes can appear in

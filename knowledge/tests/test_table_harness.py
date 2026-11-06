@@ -105,9 +105,9 @@ def violations_of(report_or_list, requirement: str) -> list[str]:
 CORPUS = {
     "landscape": ("table", (3, 2, 3)),
     "opp": ("layout", (6,)),
-    # S5: Appendix 2's thirty rows and Appendix 6a's twenty, both emitted from `-table` pages and
-    # declared on the block, in document order.
-    "saoso": ("table", (30, 20)),
+    # S5: Appendix 2's thirty rows, Appendix 6a's twenty and Appendix 7's seven, all emitted from
+    # `-table` pages and declared on the block, in document order.
+    "saoso": ("table", (30, 20, 7)),
 }
 
 
@@ -139,12 +139,14 @@ def test_the_corpus_really_was_checked(doc_key, corpus_report):
     assert corpus_report.rows == sum(rows)
 
 
-def test_the_reviewed_tables_are_sixty_four_rows():
+def test_the_reviewed_tables_are_seventy_one_rows():
     """A ratchet, not a budget: the register and the gate disagree by a row the moment a table is
     added, removed or re-read, and that is what this file is for."""
     total = sum(sum(rows) for _mode, rows in CORPUS.values())
-    # 64 since S5-b: Appendix 2's 30 rows joined the landscape's 8, the OPP's 6 and 6a's 20.
-    assert total == 64, "the register and the PRD disagree; re-measure both"
+    # 71 since S5-c: Appendix 7's 7 rows joined Appendix 2's 30, the landscape's 8, the OPP's 6
+    # and 6a's 20. Appendix 7's printed table continues on printed 89, which no arm read and this
+    # slice does not emit (PRD §3.18) — when it does, this number moves again.
+    assert total == 71, "the register and the PRD disagree; re-measure both"
 
 
 def test_the_harness_checks_the_chunk_the_chunker_emits():

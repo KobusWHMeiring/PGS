@@ -317,7 +317,11 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     # that the 20 Python rows replaced the section's chunks and those two were never chunks).
     # + Appendix 2's 31 since S5-b: 30 row chunks and the header prose printed above the grid
     # (the block's own `chunks_for_parsed_section` output, not a second copy of the count).
-    assert len(chunks) == 341
+    # + Appendix 7 since S5-c: 11 chunks where the interleaved section was 4 — seven row chunks,
+    # the header prose printed above the grid, and the three chunks of the rows this slice did not
+    # emit (the arm read printed 88 only; the table continues on printed 89, §3.18). Measured,
+    # not derived: `chunks_for_sections` over the two artefacts is 341 -> 348.
+    assert len(chunks) == 348
 
     for chunk in chunks:
         source = normalise(HASH_HEADING.sub("", chunk.text))
@@ -416,7 +420,7 @@ def test_no_clause_is_split_off_its_own_sentence(standard_set):
     """
     ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
     chunks = list(DocumentChunk.objects.order_by("id"))
-    assert len(chunks) == 341
+    assert len(chunks) == 348
 
     split = []
     for chunk in chunks:

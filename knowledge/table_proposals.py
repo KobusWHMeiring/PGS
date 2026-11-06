@@ -58,6 +58,23 @@ class ProposedDivider:
 
 
 @dataclass(frozen=True)
+class ProposedLocator:
+    """The reviewed spelling one cell is *found* by, where the arm's transcription is not the page's.
+
+    `row` is 0-based and `column` 1-based, matching `ProposedTail` and the refusal messages an
+    operator reads. It is a locator and not a cell, in exactly the sense Appendix 2's continued rows
+    are: the emitter still resolves it against the page and slices the page's own characters, so a
+    reviewed locator cannot put a character the paper did not print into the corpus. It exists
+    because an arm may transcribe rather than read — Appendix 7's Layout Parser read returns the
+    degree sign as `\\(70^{\\circ}C\\)` where the page prints `70oC` (S5-c).
+    """
+
+    row: int
+    column: int
+    text: str
+
+
+@dataclass(frozen=True)
 class ProposedTail:
     """A cell's last words, printed at the top of the next page (requirement 4's own case).
 
@@ -90,10 +107,18 @@ class ProposedProfile:
     #: The labels the reader prints, when the paper's header is not one line the emitter can slice
     #: (Appendix 6a prints two levels of type across four lines). Reviewed wording, flat.
     columns: tuple[str, ...] = ()
-    #: Printed page -> the column the second cell starts at, for a two-column table printed on one
-    #: line grid. `TABLE_BANDS` measured these numbers; declaring them here is what turns "used to
-    #: verify" into "used to slice", and the emitter refuses a cell whose words cross the boundary.
-    band: dict[int, int] = field(default_factory=dict)
+    #: Printed page -> where each printed column starts on that page's line grid. A table whose
+    #: cells share every printed line cannot be read without it: `TABLE_BANDS` measured Appendix
+    #: 2's one boundary (declared as the two-column shorthand, `{76: 60}`), and Appendix 7's four
+    #: columns need every left edge (`{88: [0, 4, 32, 60, 89]}`, the gutter first). The emitter
+    #: refuses a cell whose words cross a boundary, and refuses a row on a page nobody measured.
+    band: dict[int, tuple[int, ...]] = field(default_factory=dict)
+    #: How many of the arm's leading columns are the printed **row number** rather than a column the
+    #: reader prints. Appendix 7's gutter is one column, and it becomes the row's label (a citation's
+    #: `heading_path`) instead of a column of numbers beside every cell (S5-c).
+    gutter: int = 0
+    #: The cells the arm transcribed rather than read, and the reviewed spelling they are found by.
+    locators: tuple[ProposedLocator, ...] = ()
     #: The headings printed inside the table, in printed order.
     dividers: tuple[ProposedDivider, ...] = ()
     #: A cell that continues onto the next page, declared rather than inferred.
@@ -102,6 +127,22 @@ class ProposedProfile:
     #: (Appendix 2: `no condition printed`). Empty means an empty cell renders as nothing, which is
     #: what every other table wants.
     silence: str = ""
+
+    def __post_init__(self) -> None:
+        """Normalise the two-column band shorthand to the internal invariant.
+
+        `reviewed.json` declares a two-column table's boundary as one number (`{76: 60}`), which
+        `_band` widens to `(0, 60)`; a caller that builds a profile directly gets the same
+        treatment here, so every reader of `profile.band` sees one shape — the left edge of every
+        printed column.
+        """
+        if any(isinstance(cut, int) for cut in self.band.values()):
+            object.__setattr__(
+                self,
+                "band",
+                {page: (0, cut) if isinstance(cut, int) else cut for page, cut in self.band.items()},
+            )
+
 
 
 @dataclass(frozen=True)
@@ -128,9 +169,16 @@ class ProposedTable:
         """How a refusal names it: the arm (or the review), and which of its tables."""
         return f"{self.continued_from or self.structure} table {self.index + 1}"
 
-    def band_for(self, printed: int | None) -> int | None:
-        """The declared column boundary on one printed page, or None."""
+    def band_for(self, printed: int | None) -> tuple[int, ...] | None:
+        """Where each printed column starts on one printed page, or None."""
         return None if printed is None else self.profile.band.get(printed)
+
+    def locator_for(self, row: int, column: int) -> str | None:
+        """The reviewed locator for one cell, or None when the arm's own text is used."""
+        for locator in self.profile.locators:
+            if locator.row == row and locator.column == column:
+                return locator.text
+        return None
 
     def divider_cells(self) -> dict[int, tuple[ProposedDivider, ...]]:
         """Row index -> the dividers printed immediately above it, in printed order."""
@@ -154,38 +202,159 @@ def _load(path: Path) -> dict:
         raise ProposalError(f"{path.name}: not JSON ({error})") from None
 
 
-def _band(raw: object, path: Path, index: int, width: int) -> dict[int, int]:
-    """`{"76": 60}` -> `{76: 60}`, refused unless it can describe this table's columns.
+def _band(raw: object, path: Path, index: int, width: int) -> dict[int, tuple[int, ...]]:
+    """`{"76": 60}` or `{"88": [0, 4, 32, 60, 89]}` -> the left edge of every printed column.
 
-    A band says where the *second* column starts on a printed page, so it needs exactly two
-    columns and a positive column number. A band declared for a page the table does not print is
-    refused by the emitter, which is the only place that knows the pages the rows land on.
+    A band says where a line's columns start, and a table whose cells share every printed line
+    cannot be sliced without it. Two spellings, because the tables have two shapes:
+
+    * a **two-column** table declares one boundary (`{76: 60}`) — where the second column starts,
+      which is the number `TABLE_BANDS` measured and S5-b declared;
+    * a **wider** table declares every column's left edge, in printed order, and the first is 0 —
+      Appendix 7 needs all four (`{88: [0, 4, 32, 60, 89]}`) because `Air,` is printed beside
+      `using gaseous oxygen` and only a boundary can say which column it belongs to (S5-c).
+
+    A list on a two-column table is refused rather than silently accepted: two spellings for one
+    number is a declaration a reviewer cannot diff against the measurement.
     """
     if not raw:
         return {}
-    if width != 2:
-        raise ProposalError(
-            f"{path.name} table {index + 1}: a `band` is the boundary between a table's two "
-            f"columns, and this table has {width}. A band on a wider table would silently cut "
-            "the third column into the second."
-        )
-    out: dict[int, int] = {}
+    out: dict[int, tuple[int, ...]] = {}
     for page, cut in dict(raw).items():
         try:
-            printed, at = int(page), int(cut)
+            printed = int(page)
+        except (TypeError, ValueError):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: `band` wants printed page -> the column's left "
+                f"edge (or one edge per column), and {page!r} is not a whole number."
+            ) from None
+        if isinstance(cut, (list, tuple)):
+            if width == 2:
+                raise ProposalError(
+                    f"{path.name} table {index + 1}: a two-column table declares one boundary "
+                    f"(`band: {{'{printed}': 60}}`), not a list. Two spellings for one number is "
+                    "a declaration nobody can diff against the measurement."
+                )
+            try:
+                starts = tuple(int(value) for value in cut)
+            except (TypeError, ValueError):
+                raise ProposalError(
+                    f"{path.name} table {index + 1}: the band on printed page {printed} is not a "
+                    "list of whole numbers."
+                ) from None
+            if len(starts) != width:
+                raise ProposalError(
+                    f"{path.name} table {index + 1}: the band on printed page {printed} names "
+                    f"{len(starts)} column(s) and the arm read {width}. Every cell is sliced "
+                    "between its column's left edge and the next, so a short list leaves the last "
+                    "column no boundary and a long one cuts a column in two."
+                )
+            if starts[0] != 0:
+                raise ProposalError(
+                    f"{path.name} table {index + 1}: the band on printed page {printed} starts at "
+                    f"column {starts[0]}. The first column is the leftmost characters of the "
+                    "printed line, so a list that does not start at 0 is missing one."
+                )
+            for before, after in zip(starts, starts[1:]):
+                if after <= before:
+                    raise ProposalError(
+                        f"{path.name} table {index + 1}: the band on printed page {printed} "
+                        f"names column edges {list(starts)}, which do not move rightwards. A "
+                        "column with no characters is a cell nobody can read."
+                    )
+            out[printed] = starts
+            continue
+        try:
+            at = int(cut)
         except (TypeError, ValueError):
             raise ProposalError(
                 f"{path.name} table {index + 1}: `band` wants printed page -> column, and "
-                f"{page!r}: {cut!r} is not two whole numbers."
+                f"{page!r}: {cut!r} is not a whole number (or one per column)."
             ) from None
+        if width != 2:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a single `band` is the boundary between a "
+                f"table's two columns, and this table has {width}. A boundary on a wider table "
+                "would silently cut the third column into the second; name every column's left "
+                "edge instead."
+            )
         if at <= 0:
             raise ProposalError(
                 f"{path.name} table {index + 1}: the band on printed page {printed} starts at "
                 f"column {at}. A boundary at or before column 0 would leave the first cell no "
                 "characters at all."
             )
-        out[printed] = at
+        out[printed] = (0, at)
     return out
+
+
+def _gutter(raw: object, path: Path, index: int, width: int) -> int:
+    """How many of the arm's leading columns are the printed row number — 0 or 1.
+
+    A gutter is not a column the reader prints: it is where the paper puts the row's number, and a
+    citation files the row under it. More than one is refused because the block has one row label,
+    and a table that needed two of the arm's columns for it is a table nobody has read yet.
+    """
+    try:
+        gutter = int(raw or 0)
+    except (TypeError, ValueError):
+        raise ProposalError(
+            f"{path.name} table {index + 1}: `gutter: {raw!r}` is not a whole number of columns."
+        ) from None
+    if gutter not in (0, 1):
+        raise ProposalError(
+            f"{path.name} table {index + 1}: `gutter: {gutter}` of {width} columns. A row has one "
+            "label, so the printed row number is at most one of the arm's columns."
+        )
+    if gutter and width - gutter < 2:
+        raise ProposalError(
+            f"{path.name} table {index + 1}: `gutter: {gutter}` leaves {width - gutter} column "
+            "for the arm's {width}. A table that is only a row number is a list, not a table."
+        )
+    return gutter
+
+
+def _locators(
+    raw: object, path: Path, index: int, rows: int, width: int
+) -> tuple[ProposedLocator, ...]:
+    """The reviewed spellings for cells the arm transcribed rather than read.
+
+    Each names a cell that exists and carries words the emitter must find on the page — the same
+    refusal a cell with no locator gets, applied to a locator a person wrote. It replaces the arm's
+    text; it never supplies characters, which is why a locator naming nothing is refused here.
+    """
+    out: list[ProposedLocator] = []
+    seen: set[tuple[int, int]] = set()
+    for entry in raw or ():
+        entry = dict(entry)
+        text = " ".join(str(entry.get("text", "")).split())
+        try:
+            row, column = int(entry["row"]), int(entry["column"])
+        except (KeyError, TypeError, ValueError):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a `locator` needs `row`, `column` and `text`."
+            ) from None
+        if not 0 <= row < rows:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a locator names row {row} of {rows}."
+            )
+        if not 1 <= column <= width:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a locator names column {column} of {width}."
+            )
+        if not text:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: the locator on row {row} column {column} has no "
+                "words. A locator that names nothing cannot be found on the page."
+            )
+        if (row, column) in seen:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: two locators for row {row}, column {column}. "
+                "One cell is found one way."
+            )
+        seen.add((row, column))
+        out.append(ProposedLocator(row=row, column=column, text=text))
+    return tuple(out)
 
 
 def _dividers(raw: object, path: Path, index: int, rows: int) -> tuple[ProposedDivider, ...]:
@@ -278,19 +447,31 @@ def _profile(raw: dict, path: Path, index: int, rows: int, width: int) -> Propos
                 "onto the row above."
             )
     columns = tuple(raw.get("columns", ()) or ())
+    gutter = _gutter(raw.get("gutter"), path, index, width)
     if columns:
-        if len(columns) != width:
+        # **The gutter is not a column the reader prints.** It is the paper's row number, written as
+        # the row's label, so the reviewed labels are one per *printed* column — `width - gutter`.
+        printed_columns = width - gutter
+        if len(columns) != printed_columns:
             raise ProposalError(
                 f"{path.name} table {index + 1}: {len(columns)} reviewed column labels for "
-                f"{width} columns. R2 attaches every cell to its printed column, so a label list "
-                "that is short or long attaches a value to the wrong heading — the defect the "
-                "declaration exists to prevent."
+                f"{printed_columns} printed columns"
+                + (f" ({width} read by the arm, {gutter} of them the row number)" if gutter else "")
+                + ". R2 attaches every cell to its printed column, so a label list that is short "
+                "or long attaches a value to the wrong heading — the defect the declaration "
+                "exists to prevent."
             )
         if any(not str(label).strip() for label in columns):
             raise ProposalError(
                 f"{path.name} table {index + 1}: a reviewed column label is blank. A blank label "
                 "is the Appendix 6a defect with a human's signature on it."
             )
+    elif gutter:
+        raise ProposalError(
+            f"{path.name} table {index + 1}: `gutter: {gutter}` means the arm's first column is "
+            "the printed row number, so the columns the reader prints are reviewed labels — a "
+            "blank arm header cannot supply them."
+        )
     branch = raw.get("branch")
     if branch is not None and not 0 <= int(branch) < rows:
         raise ProposalError(
@@ -313,6 +494,8 @@ def _profile(raw: dict, path: Path, index: int, rows: int, width: int) -> Propos
         branch=None if branch is None else int(branch),
         columns=tuple(str(label) for label in columns),
         band=_band(raw.get("band"), path, index, width),
+        gutter=gutter,
+        locators=_locators(raw.get("locators"), path, index, rows, width),
         dividers=_dividers(raw.get("dividers"), path, index, rows),
         tails=_tails(raw.get("tails"), path, index, rows, width),
         silence=" ".join(str(raw.get("silence", "")).split()),

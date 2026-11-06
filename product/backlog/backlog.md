@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-05 21:23
+> Generated: 2026-11-06 09:32
 
 ## Ready (up next)
 
@@ -18,7 +18,7 @@
 - **Corpus Column-Aware Extraction — Implementation Plan** - `In Progress\CORPUS_COLUMN_EXTRACTION_PLAN.md` - Status: In Progress — C0–C9 landed 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner.
 - **PRD: Corpus column-aware extraction (all four governed documents)** - `In Progress\CORPUS_COLUMN_EXTRACTION_PRD.md` - Status: In Progress — built 2026-10-20; **UAT Scenario 9 signed 2026-10-21** by the product owner (the BPP-citation sub-check is recorded in the scenario's own text).
 - **PRD: The ingestion engine — from "a person reviewed this document" to "a suite checks every document"** - `In Progress\INGESTION_ENGINE_PRD.md` - Status: In Progress — **S0 and S1 landed 2026-11-03 (session `1e`); S2 is measured for three arms
-- **Plan — S5 of the ingestion engine: the last four tables stop being Python** - `In Progress\INGESTION_ENGINE_S5_PLAN.md` - Status: In Progress — **S5-a landed 2026-11-05** (§6, PRD §3.16); S5-b…S5-f open
+- **Plan — S5 of the ingestion engine: the last four tables stop being Python** - `In Progress\INGESTION_ENGINE_S5_PLAN.md` - Status: In Progress — **S5-a landed 2026-11-05** (§6, PRD §3.16); **S5-b landed 2026-11-05
 - **MVP 0 Implementation Plan (v2) — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PLAN_V2.md` - Status: In Progress — sub-plans **A (A1–A10)**, **B (B1–B7)**, **C1 (C1a–C1e, public pages)**, **C2 (`/documents/`)**, **C4 (claim discipline)** and **D (D1–D5, grounded chatbot)** landed 2026-10-19; **C3 (bilingual shell)** deferred to a later slice (D44, no Afrikaans translator). **§4 audited 2026-10-22:** four of the seven DoD criteria are proved with evidence — `verify.sh` green at **804 tests** with `lint-imports` kept, four documents ingesting **340/340 embedded** and **0 duplicate `section_ref`s** — and the chatbot UAT is signed by the product owner (9 PASS · 1 N/A). **§4.1 is the close-out: two items left, both human gates** — the VPS restore rehearsal and the missing UAT seats. `f4e8907` deployed and the corpus was rebuilt with `--force` on 2026-10-22 (364 chunks, all embedded, `lexical_only=False`); committee confirmation of no-claims left for a project-level gate (**D60**). Nothing outside §4.1 is in scope for closing MVP 0. The §9 group-A gate closed as D27 (verdict polarity is template data) and D14–D15; D41–D44 were added while building B and C. C1's implementation notes and its open content decisions live in `product/design/C1_BUILD_PLAN.md` — #7 (the February fee deadline) was **withheld** while building C2.
 - **PRD: MVP 0 — Standards Foundation & Public Shop Window** - `In Progress\MVP0_PRD.md` - Status: In Progress — sub-plans A (A1–A10), B (B1–B7), C1 (public site), C2 (`/documents/`) and C4 (claim discipline) landed 2026-10-19, and **D (D1–D5, chatbot)** landed with it, so every sub-plan except the deferred C3 is built. C3 (bilingual shell) is **deferred out of MVP 0** (spec D44 — no Afrikaans translator). §9 group A closed as D27 and D14–D15. Groups B and C stay open: they are MVP 1 and MVP 2 scope decisions, not MVP 0 blockers. **Closing MVP 0 is now an enumerated list, not a judgement call** — `MVP0_PLAN_V2.md` §4.1 (audited 2026-10-22): two engineering items, three human gates, one fix in flight. C1's open content decisions are listed in `product/design/C1_BUILD_PLAN.md` §6.
 - **Implementation Plan — Building in the open (public board)** - `In Progress\PUBLIC_BOARD_PLAN.md` - Status: In Progress — B0–B6 landed 2026-10-29; **B7 (UAT) outstanding**, so the item stays
@@ -187,12 +187,15 @@ the generated index's "To Do" section.
       reproduces `opp.md` byte for byte. The landscape's proposal is committed and **refused on two
       cells** — its page order and merged fee box are S5's. `INGESTION_ENGINE_PRD.md` §3.15 records
       what landed and what was refused.
-- [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 (4 chunks) through the harness**, and
-      delete their bespoke handling. These are the two live defects the PRD measures and the two the
-      harness cannot see, because they are not table blocks at all. The review must be **side by side**
-      — page beside transcription — which is now hard rule 9 in `pgs-presenting-uat`. 6a's header
-      grouping is settled (the owner kept the key's two labels, 2026-11-05), so what is left there is
-      association per row, not a decision.
+- [ ] **S5 — re-review Appendix 6a (20 rows) and Appendix 7 through the harness**, and delete their
+      bespoke handling. **Three of the four landed:** 6a (S5-a) and Appendix 2 (S5-b) are blocks, and
+      Appendix 7's **printed-88 page** is a 7-row, 4-column grid with `gutter: 1`, the wide `band:`
+      and reviewed `locators:` (S5-c, PRD §3.18). **What is left is a reading, not a capability:**
+      Appendix 7's table is **25 rows across printed 88–92** and no arm was sent 89–92, so rows 7–25
+      still need the continuation act Appendix 2 had (`propose_tables.py --continue`, a person's read)
+      before the whole appendix's chunks are rows. Then the landscape (S5-d) and the marker ratchet
+      (S5-e/f). A review is **side by side** — page beside transcription — hard rule 9 in
+      `pgs-presenting-uat`.
 - [ ] **R3's verdict wording — "our pass cannot order this page" is not "the model is wrong".**
       Both VLMs score **0 mismatches** on `page_break_row` and are demoted only because page 5's
       `-table` pass interleaves three columns on one printed line, so no cell's quotes can appear in

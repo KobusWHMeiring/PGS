@@ -2,8 +2,8 @@
 
 Split out of `scripts/table_blocks.py` (`build_principles.md` §II, and the S5-b slice pushed that file
 past 30 KB). These are the primitives the emitter's rules are made of — a run found in a line, a line
-cut into its two columns, a cell's characters and the page each of its lines was printed on — and they
-are pure: text in, a `(line, offset)` or a `_Cell` out. The block writer, the region rule and the
+cut into its declared columns, a cell's characters and the page each of its lines was printed on — and
+they are pure: text in, a `(line, offset)` or a `_Cell` out. The block writer, the region rule and the
 refusals stay in `table_blocks.py`.
 
 Kept together because they share one contract: **a cell's characters are the page's**. `_resolve`
@@ -43,26 +43,29 @@ class _Cell:
     side: int | None = None
 
 
-def _column_view(line: str, band: int | None, side: int | None) -> tuple[str, int]:
+def _column_view(line: str, starts: tuple[int, ...] | None, side: int | None) -> tuple[str, int]:
     """`(the characters of this line that belong to one column, where they start in the raw line)`.
 
-    A two-column table printed on one line grid puts both cells on the same printed line, so a cell
-    is only a run of the page once the line is cut at the boundary the review declared. Without a
-    band the whole line is the run, which is every table that prints one cell per line.
+    A table printed on one line grid puts several cells on the same printed line, so a cell is only
+    a run of the page once the line is cut at the left edge of the columns the review declared. A
+    two-column table declares one boundary (`(0, 60)`, Appendix 2); a wider one declares every
+    column's left edge (`(0, 4, 32, 60, 89)`, Appendix 7), which is what lets `Air,` belong to the
+    column beside `using gaseous oxygen` instead of ending up inside it. Without a band the whole
+    line is the run, which is every table that prints one cell per line.
     """
-    if band is None or side is None:
+    if not starts or side is None:
         return line, 0
-    if side == 0:
-        return line[:band], 0
-    return line[band:], band
+    start = starts[side] if 0 <= side < len(starts) else 0
+    end = starts[side + 1] if 0 <= side + 1 < len(starts) else len(line)
+    return line[start:end], start
 
 
 def _band_at(
-    bands: Mapping[int, int] | None,
+    bands: Mapping[int, tuple[int, ...]] | None,
     pages: Sequence[tuple[int, int | None]] | None,
     index: int,
-) -> int | None:
-    """The boundary declared for the printed page this body line is printed on, or None."""
+) -> tuple[int, ...] | None:
+    """The columns declared for the printed page this body line is printed on, or None."""
     if not bands or pages is None:
         return None
     printed = pages[index][1]
@@ -118,7 +121,7 @@ def _resolve(
     cursor: tuple[int, int],
     allowed: set[int] | None = None,
     pages: Sequence[tuple[int, int | None]] | None = None,
-    bands: Mapping[int, int] | None = None,
+    bands: Mapping[int, tuple[int, ...]] | None = None,
     side: int | None = None,
 ) -> tuple[_Cell, tuple[int, int]] | None:
     """The cell's place in the body, and the cursor after it. One pass, forwards only.
@@ -235,7 +238,7 @@ def _cell_lines(
     lines: Sequence[str],
     cell: _Cell,
     pages: Sequence[tuple[int, int | None]] | None = None,
-    bands: Mapping[int, int] | None = None,
+    bands: Mapping[int, tuple[int, ...]] | None = None,
 ) -> tuple[tuple[str, tuple[int, int | None]], ...]:
     """The cell's characters and the page each line was printed on.
 
@@ -287,7 +290,7 @@ def _slice(
     lines: Sequence[str],
     cell: _Cell,
     pages: Sequence[tuple[int, int | None]] | None = None,
-    bands: Mapping[int, int] | None = None,
+    bands: Mapping[int, tuple[int, ...]] | None = None,
 ) -> str:
     """The cell's characters: the body's own lines, from `first` to `last`, trimmed at the edges."""
     return "\n".join(text for text, _page in _cell_lines(lines, cell, pages, bands))

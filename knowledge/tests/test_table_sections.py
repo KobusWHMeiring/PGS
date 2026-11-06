@@ -220,3 +220,44 @@ def test_an_unreviewed_section_has_no_grid():
     document = load_document(REPO_ROOT / "knowledge" / "corpus" / "saoso.md")
     section = next(s for s in document.sections if s.section_ref == "Appendix 3")
     assert artefact_grid_for(section) is None
+
+
+# --- S5-c: Appendix 7, the row number's gutter and four printed columns ---------------
+#
+# Appendix 7 prints five columns on one line grid and numbers its rows in the first of them:
+# `Air,` sits on the same printed line as `using gaseous oxygen`, and `70oC` on the line below
+# `Maximum temperature`. The block holds the four columns the reader draws, and the printed row
+# number is the row's label — what a citation says it came from.
+
+APPENDIX_7_COLUMNS = (
+    "Oenological practice",
+    "Authorised products",
+    "Conditions of use (1)",
+    "Limits on use and Applications",
+)
+
+
+def _appendix_7():
+    """The artefact's Appendix 7 section and its table, parsed from the committed corpus."""
+    document = load_document(REPO_ROOT / "knowledge" / "corpus" / "saoso.md")
+    section = next(s for s in document.sections if s.section_ref == "Appendix 7")
+    return section, section.tables[0]
+
+
+def test_appendix_7_is_a_four_column_grid_labelled_by_its_printed_row_numbers():
+    """The gutter is not a column: seven rows, four columns, and each row's label is the number
+    the page prints beside it (`6a` and `6b` as printed, not as a reviewer might number them)."""
+    _section, table = _appendix_7()
+    assert table.columns == APPENDIX_7_COLUMNS
+    assert [len(row.cells) for row in table.rows] == [4] * 7
+    assert [row.label for row in table.rows] == ["1", "2", "3", "4", "5", "6a", "6b"]
+
+
+def test_the_column_beside_a_wrapped_cell_is_its_own_column():
+    """The reason the grid is declared rather than inferred: `Air,` and `Gaseous oxygen` are
+    printed on the same two lines as `Aeration or oxygenation` / `using gaseous oxygen`, and each
+    is its own cell. A reader that took "the rest of the line" would put one inside the other."""
+    _section, table = _appendix_7()
+    assert table.rows[0].cells[0].text == "Aeration or oxygenation\n\nusing gaseous oxygen"
+    assert table.rows[0].cells[1].text == "Air,\n\nGaseous oxygen"
+    assert table.rows[1].cells[1].text == "Maximum temperature\n\n70oC"

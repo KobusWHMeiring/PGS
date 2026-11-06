@@ -156,10 +156,10 @@ def test_every_section_says_what_the_pdf_path_says(document, pdf_sections):
     pass, so a section cannot quietly stop being compared.
     """
     other_pass = emitted_from_another_pass(document)
-    assert set(other_pass) == {"Appendix 2", "Appendix 6a"}, (
+    assert set(other_pass) == {"Appendix 2", "Appendix 6a", "Appendix 7"}, (
         "the set of sections checked against another pass moved: "
-        f"{sorted(other_pass)}. S5-c adds Appendix 7 here in the same commit that emits its "
-        "block."
+        f"{sorted(other_pass)}. S5-c added Appendix 7 in the commit that emitted its block; "
+        "a fourth section here needs its own pass declared, not a wider word."
     )
     differing = []
     for theirs, ours in zip(pdf_sections, document.sections):

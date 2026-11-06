@@ -4156,29 +4156,69 @@ of N / ha / year is not exceeded
 <!-- ref: Appendix 7 -->
 ## Appendix 7
 
-AUTHORISED OENOLOGICAL PRACTICES AND PROCESSES IN ORGANIC WINEMAKING
+                                            APPENDIX 7:
 
-Oenological practice        Authorised products     Conditions of use (1)      Limits on use and
+    AUTHORISED OENOLOGICAL PRACTICES AND PROCESSES IN ORGANIC WINEMAKING
 
-1 Aeration or oxygenation Air,
+    Oenological practice        Authorised products         Conditions of use (1)        Limits on use and
 
-using gaseous oxygen        Gaseous oxygen
+                                                                                         Applications
 
-2 Heat treatments           Maximum temperature
+<!-- table
+cols: Oenological practice | Authorised products | Conditions of use (1) | Limits on use and Applications
+layout: grid
+legend: The standard prints this appendix as a table of authorised oenological practices: each row is one practice it permits, with the products it may use, the conditions of that use and the limits on it. The page numbers the rows in a gutter of its own, so the arm's first column is the printed row number and not a column the reader draws. The five columns share every printed line — `Air,` is printed beside `using gaseous oxygen` — so the review declares where each column starts on printed 88, and the cells are the page's own characters, sliced between those edges. Two cells are found by a reviewed locator because the arm transcribed them rather than read them: its Layout Parser writes the degree sign as LaTeX, and closes up `excipient:-` where the page prints it that way.
+extraction: table
+-->
+<!-- row: 1 -->
+<!-- cell -->
+Aeration or oxygenation
 
-                            70oC
+using gaseous oxygen
+<!-- cell -->
+Air,
 
-3 Centrifuging and          Perlite,
+Gaseous oxygen
+<!-- cell -->
+<!-- cell -->
+<!-- row: 2 -->
+<!-- cell -->
+Heat treatments
+<!-- cell -->
+Maximum temperature
 
-filtration with or without Cellulose,
+70oC
+<!-- cell -->
+<!-- cell -->
+<!-- row: 3 -->
+<!-- cell -->
+Centrifuging and
 
-an inert filtering agent Diatomaceous earths
+filtration with or without
 
-4 Use of carbon dioxide, Nitrogen,
+an inert filtering agent
+<!-- cell -->
+Perlite,
 
-argon or nitrogen, either Carbon dioxide,
+Cellulose,
 
-alone or combined, in Argon
+Diatomaceous earths
+<!-- cell -->
+<!-- cell -->
+Use of an agent must not
+
+leave undesirable
+
+residues in the treated
+
+product
+<!-- row: 4 -->
+<!-- cell -->
+Use of carbon dioxide,
+
+argon or nitrogen, either
+
+alone or combined, in
 
 order to create an inert
 
@@ -4187,58 +4227,20 @@ atmosphere and to
 handle the product
 
 shielded from the air
+<!-- cell -->
+Nitrogen,
 
-5 Use of yeasts for wine Yeasts (if available,
+Carbon dioxide,
 
-production, whether dry derived from organic raw
+Argon
+<!-- cell -->
+Only with fresh grapes,
 
-or in wine suspension       material)
+grape must, partially
 
-6a Use to encourage yeast Diammonium phosphate Only with fresh grapes, No more than 1 g/l
+fermented grape must,
 
-development, with the
-
-possible addition of
-
-microcrystalline cellulose
-
-as an excipient:
-
-- addition of
-
-diammonium phosphate
-
-6b Use to encourage yeast Thiamine hydrochloride Only with fresh grapes, No more than 0,6 mg/l
-
-development, with the
-
-possible addition of
-
-microcrystalline cellulose
-
-as an excipient:- addition
-
-of thiamine
-
-hydrochloride
-
-                           Applications
-
-                           Use of an agent must not
-
-                           leave undesirable
-
-                           residues in the treated
-
-                           product
-
-Only with fresh grapes, Use in order to create an
-
-grape must, partially      inert atmosphere and to
-
-fermented grape must, handle the product
-
-partially fermented grape shielded from the air.
+partially fermented grape
 
 must be obtained from
 
@@ -4257,14 +4259,56 @@ fermentation of all
 categories of sparkling
 
 wine.
+<!-- cell -->
+Use in order to create an
 
-grape must, partially      (expressed in salts) or 0,3
+inert atmosphere and to
 
-fermented grape must, g/l for the second
+handle the product
 
-partially fermented grape fermentation of sparkling
+shielded from the air.
+<!-- row: 5 -->
+<!-- cell -->
+Use of yeasts for wine
 
-must be obtained from wines.
+production, whether dry
+
+or in wine suspension
+<!-- cell -->
+Yeasts (if available,
+
+derived from organic raw
+
+material)
+<!-- cell -->
+<!-- cell -->
+<!-- row: 6a -->
+<!-- cell -->
+Use to encourage yeast
+
+development, with the
+
+possible addition of
+
+microcrystalline cellulose
+
+as an excipient:
+
+- addition of
+
+diammonium phosphate
+<!-- cell -->
+Diammonium phosphate
+<!-- cell -->
+Only with fresh grapes,
+
+grape must, partially
+
+fermented grape must,
+
+partially fermented grape
+
+must be obtained from
 
 raisined grapes,
 
@@ -4281,10 +4325,39 @@ fermentation of all
 categories of sparkling
 
 wine.
+<!-- cell -->
+No more than 1 g/l
 
-grape must, partially      (expressed in thiamine)
+(expressed in salts) or 0,3
 
-fermented grape must, for each treatment
+g/l for the second
+
+fermentation of sparkling
+
+wines.
+<!-- row: 6b -->
+<!-- cell -->
+Use to encourage yeast
+
+development, with the
+
+possible addition of
+
+microcrystalline cellulose
+
+as an excipient:- addition
+
+of thiamine
+
+hydrochloride
+<!-- cell -->
+Thiamine hydrochloride
+<!-- cell -->
+Only with fresh grapes,
+
+grape must, partially
+
+fermented grape must,
 
 partially fermented grape
 
@@ -4293,6 +4366,13 @@ must obtained from
 raisined grapes,
 
 concentrated grape must
+<!-- cell -->
+No more than 0,6 mg/l
+
+(expressed in thiamine)
+
+for each treatment
+<!-- /table -->
 
 <!-- page: 90 printed: 89 -->
                                                       and new wine still in

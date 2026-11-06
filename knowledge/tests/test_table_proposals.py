@@ -212,3 +212,102 @@ def test_the_saoso_proposal_carries_the_arbitrated_two_label_header():
         "Maximum number of animals per ha equivalent to 170 kg N/ha/year",
     )
     assert len(table.rows) == 20 and table.extraction == "table"
+
+
+# --- S5-c: a grid wider than two columns, and the row number's gutter -----------------
+#
+# Appendix 7 prints five columns on one line grid, and `Air,` is printed beside `using gaseous
+# oxygen`. Appendix 2's one boundary cannot say where the third column starts, so a wider table
+# declares every column's left edge. The gutter is the printed row number: it is the row's label,
+# not a column the reader draws, so the reviewed labels are one per *printed* column.
+
+
+def three_columns(rows=(("1", "2", "3"),)) -> dict:
+    payload = json.loads(json.dumps(STRUCTURE))
+    payload["tables"][0]["columns"] = ["A", "B", "C"]
+    payload["tables"][0]["rows"] = [{"cells": list(row)} for row in rows]
+    return payload
+
+
+def test_a_band_on_a_wide_table_names_every_columns_left_edge(tmp_path):
+    """`{88: 60}` is the two-column shorthand; a wider table needs each column's edge, and the
+    first is the line's own left margin. Both refusals are here because both would otherwise cut
+    a column into its neighbour."""
+    payload = three_columns()
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"band": {"2": 20}}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="single `band` is the boundary"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+    write(tmp_path, {"tables": [{"band": {"2": [20, 40, 60]}}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="starts at column 20"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+    write(tmp_path, {"tables": [{"band": {"2": [0, 20]}}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="names 2 column"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_a_list_band_on_a_two_column_table_is_refused(tmp_path):
+    """Two spellings for one number is a declaration nobody can diff against the measurement."""
+    write(tmp_path, json.loads(json.dumps(STRUCTURE)), "a.structure.json")
+    write(tmp_path, {"tables": [{"band": {"2": [0, 20]}}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="one boundary"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_a_gutter_needs_the_reviewed_labels_because_the_arm_has_none(tmp_path):
+    """`gutter: 1` says the arm's first column is the printed row number, so the labels the reader
+    prints cannot come from the arm — its first header cell is blank, which is exactly the state
+    that forced Appendix 7's four labels into the review."""
+    payload = three_columns()
+    payload["tables"][0]["columns"] = ["", "A", "B"]
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"gutter": 1}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="row number, so the columns"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_a_gutter_makes_the_reviewed_labels_one_per_printed_column(tmp_path):
+    """Three arm columns with one of them the gutter is two printed columns. A list of three
+    labels would attach the row number's blank heading to the first column of values."""
+    payload = three_columns()
+    payload["tables"][0]["columns"] = ["", "A", "B"]
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"gutter": 1, "columns": ["A", "B", "C"]}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="2 printed columns"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+    write(tmp_path, {"tables": [{"gutter": 1, "columns": ["A", "B"]}]}, "a.reviewed.json")
+    table = proposals_for("a" * 64, directory=tmp_path)[0]
+    assert table.profile.gutter == 1 and table.profile.columns == ("A", "B")
+
+
+def test_a_locator_that_names_no_cell_is_refused(tmp_path):
+    """A locator replaces one cell's spelling; one that names a row or column the arm did not read
+    would be silently dropped, and the cell it was written for would refuse with no explanation."""
+    write(tmp_path, json.loads(json.dumps(STRUCTURE)), "a.structure.json")
+    write(tmp_path, {"tables": [{"locators": [{"row": 0, "column": 3, "text": "x"}]}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="column 3 of 2"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_more_than_one_gutter_is_refused(tmp_path):
+    """A row has one label. Two of the arm's columns cannot both be the printed row number, and
+    the block has one `<!-- row: … -->` annotation."""
+    payload = three_columns()
+    payload["tables"][0]["columns"] = ["", "", "C"]
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"gutter": 2, "columns": ["C"]}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="one label"):
+        proposals_for("a" * 64, directory=tmp_path)
+
+
+def test_band_edges_that_do_not_move_rightwards_are_refused(tmp_path):
+    """Three column starts are three columns only if each is to the right of the last. A repeated
+    edge is a column with no characters — a cell nobody can read."""
+    payload = three_columns()
+    write(tmp_path, payload, "a.structure.json")
+    write(tmp_path, {"tables": [{"band": {"2": [0, 20, 20]}}]}, "a.reviewed.json")
+    with pytest.raises(ProposalError, match="move rightwards"):
+        proposals_for("a" * 64, directory=tmp_path)

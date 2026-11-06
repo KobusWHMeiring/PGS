@@ -1,7 +1,8 @@
 # Plan — S5 of the ingestion engine: the last four tables stop being Python
 
 **Status:** In Progress — **S5-a landed 2026-11-05** (§6, PRD §3.16); **S5-b landed 2026-11-05**
-(§7, PRD §3.17); S5-c…S5-f open
+(§7, PRD §3.17); **S5-c landed 2026-11-06 for the page the arm read — rows 7–25 still need a
+continuation review** (§8, PRD §3.18); S5-d…S5-f open
 **Parent:** `INGESTION_ENGINE_PRD.md` §5's S5 row, §3.14 (the composite), §3.15 (what S3 landed)
 **Written:** 2026-11-05, session `1q`, at `1aa152c` (clean apart from another session's `copy_deck` work)
 **Scope:** the last slice of the PRD. When every §6 criterion holds, the PRD moves to `Done/`.
@@ -126,7 +127,7 @@ Neither can be finished inside this session's safe budget, and both reasons are 
 |---|---|---|---|
 | **S5-a** | The reviewed `columns` + `spacing` declarations, the body-pass rule, and **Appendix 6a emitted**; `APPENDIX_6A_ROWS` deleted | `test_a_reviewed_column_label_is_used_instead_of_the_arms` (red: the arm's merged label), `test_the_body_is_sliced_from_the_pass_the_block_declares` (red: `-raw` order), `test_appendix_6a_is_emitted_from_its_page` (red: no block) | `check_tables --doc saoso --rows 20` → ok; `build --doc saoso --force` diff is only the block; ingest/chunking/retrieval green |
 | **S5-b** | Appendix 2: `qualifier` dividers as `row-divider:`, the 30-row continuation act, `APPENDIX_2_ROWS`/`TABLE_ROWS`/`rows_for` deleted | `test_appendix_2_divider_is_a_block_annotation`, `test_a_continued_locator_is_a_run_of_the_pages_table_line` | **Landed 2026-11-05 (§7, PRD §3.17).** `check_tables --doc saoso --rows 30,20` → ok (2 tables, 50 rows); the reader's dividers render from the block; `test_the_dividers_are_written_where_the_paper_prints_them` and `test_a_continued_locator_is_a_run_of_the_pages_table_line` are the guards, and the divider test's name changed with the format it writes |
-| **S5-c** | Appendix 7: `gutter:` + the column-bounded continuation, Docling's grid in the banner | `test_a_cell_that_wraps_inside_a_column_is_bounded_by_the_next_column` (red: "out of printed order") | `check_tables --doc saoso --rows 30,20,7` → ok incl. `--pages-mode` absent |
+| **S5-c** | Appendix 7: `gutter:` + the column-bounded continuation, Docling's grid in the banner | `test_a_cell_that_wraps_inside_a_column_is_bounded_by_the_next_column` (red: "out of printed order") | **Landed 2026-11-06 (§8, PRD §3.18) for printed 88.** `check_tables --doc saoso --rows 30,20,7` → ok (3 tables, 57 rows, 0 violations, no `--pages-mode`). **Not the whole table:** the paper prints 25 rows across printed 88–92, the cached arm read only printed 88, and rows 7–25 need the same continuation act Appendix 2 had |
 | **S5-d** | The landscape: bullets, the merged fee box, the seal artwork, the page-break row; blocks spliced, front matter untouched | one test per declaration, each proved red first | `check_tables --doc landscape --rows 3,2,3` → ok from *emitted* blocks; `landscape.md` diff is only the blocks |
 | **S5-e** | `read_table()` reads the artefact block for a shape's pages; markers come off as each shape passes; `UNCOVERED` empties | `test_the_shape_is_read_from_its_page[<key>]` stops `xfail` | 8 targets pass, audit reports zero uncovered shapes |
 | **S5-f** | Delete the last of the bespoke path, close the loop: PRD §3.16/§5/§6, handover, `backlog.py --apply` → `Done/` | — | `verify.sh` green with `PDFTOTEXT_BIN` poisoned |
@@ -203,3 +204,48 @@ the plan:** measuring first moved S5-d (the landscape) earlier in importance —
 refusal move from `column 1` to `column 2`, which is the same reviewed-`columns` declaration S5-a
 built, so S5-d is now cheaper than §5 implies. S5-b is now the expensive one, and §4's continuation act
 is the reason.
+
+## 8. S5-c, as landed (2026-11-06)
+
+**What the slice needed was smaller than the plan thought, and the table is bigger.** The plan's §1
+row said Appendix 7 is "printed 88, 7 × 4"; the cached Layout Parser response does read seven body
+rows there, and Docling's grid (`rows 7/7, cols 5/4` with the gutter declared) is the same shape. The
+paper, though, prints **25 rows and a `NOTE` across printed 88–92**. So S5-c is two things: the two
+capabilities the plan named, and a recorded remainder.
+
+**The declarations, each refused before it was declared.**
+
+1. **`gutter: 1`** — the arm's first column is the printed row number. It is resolved and claimed
+   against the page (so the label cannot be a number somebody typed) and written as the row's label;
+   the block keeps the four columns the paper prints. More than one gutter is refused: a row has one
+   label. A gutter without reviewed `columns` is refused: the arm's gutter header is blank.
+2. **The wide `band`** — `{88: [0, 4, 32, 60, 89]}`, one left edge per printed column. `_column_view`
+   slices between edges, so the continuation branch reads "the rest of the column" instead of "the
+   rest of the line" and `Air,` stops landing inside `using gaseous oxygen`. A single number on a
+   wider table is refused, and so is a list that does not start at 0 or does not move rightwards.
+3. **`locators: [{row, column, text}]`** — two cells the arm transcribed rather than read: the degree
+   sign as `\(70^{\circ}C\)` for the page's `70oC`, and `excipient:-` closed up where the page prints
+   it that way. The reviewed locator is the page's spelling of the same cell; the emitter still
+   resolves it and slices the page's characters, and a locator the page does not print is refused.
+
+**What it cost.** One extra declaration the plan did not foresee (`locators`), because "the arm's
+cells are locators" stops being true where the arm wrote LaTeX. One correction to §1 (the table's
+extent). One measurement trap: `chunks_for_parsed_section` returns `[chunk_section(section)]` for a
+section with no table — a list holding a list — so a probe that counted chunks that way read 322
+where the ingest wrote 341 (`testing_hazards.md` §3.43).
+
+**Measured.** `check_tables --doc saoso --rows 30,20,7` → `ok — 3 tables, 57 rows, 0 violations`;
+`build_corpus --doc saoso --force` → one section, `134 insertions(+), 54 deletions(-)`;
+`--doc opp --force` byte for byte unchanged; chunks **341 → 348**; full suite **1790 passed / 1
+skipped / 8 xfailed in 122–187 s**; `fast.sh --critical` **182 passed / 4 deselected in 19–33 s**;
+the band, the gutter, the locator and each refusal broken and watched red.
+
+**What S5-c still owes, and it is a review, not a capability.** Rows 7–25 (printed 89–92) have no arm
+read. The honest route is the one Appendix 2 took: a person reads those rows from the paper, and
+`propose_tables.py --continue` promotes them as locators the emitter must find. The mechanism exists
+and the emitter refuses anything it cannot find, so the act is the review itself. Until then the
+block is printed 88's slice and the rest of the section is the paper's `-layout` prose.
+
+**S5-d…S5-f are unchanged.** The landscape's four declarations, the shape markers coming off
+(S5-e, a ratchet — `column_major`'s target reads printed 88's slice, which is now a block, but
+`read_table()` does not read the artefact yet), and the last of the bespoke path.

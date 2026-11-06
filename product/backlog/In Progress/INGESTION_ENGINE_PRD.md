@@ -855,6 +855,72 @@ follows the stream, and a row's floor keeps a column from resuming above where t
 declarations and a splice that does not rewrite the reviewer's front matter (S5-d). Then the shape
 markers come off (S5-e) and the last of the bespoke path goes (S5-f).
 
+### 3.18 What S5-c landed (2026-11-06): Appendix 7 is a grid, and the row number is a label
+
+The third of S5's four tables. Appendix 7 is the page the composite was decided on: the one whose
+four columns a single forward cursor interleaves, and the one Docling read correctly (`rows 7/7,
+cols 5/4` once the row-number gutter is a gutter) while no arm could be re-run to read it again. It
+is now a `<!-- table … -->` block of **seven rows and four columns** emitted from printed 88.
+
+**Three declarations, each refused before it was declared.**
+
+* **`gutter: 1`** — the arm's first column is the printed row number, not a column the reader draws.
+  It is still resolved and claimed against the page like every other cell, and it is written as the
+  row's **label** (`<!-- row: 6a -->`), which is where a citation wants it: the block's four columns
+  are the four the paper prints, and the number that identifies the row is its heading, not a column
+  of digits beside every value. `ProposedProfile.gutter` refuses more than one (a row has one label)
+  and refuses a gutter with no reviewed `columns` (the arm's gutter header is blank; the labels
+  cannot come from it).
+* **`band: {"88": [0, 4, 32, 60, 89]}`** — S5-b's `band` is one boundary between two columns; this
+  table needs every column's left edge, because `Air,` is printed on the same line as `using gaseous
+  oxygen` and only a boundary can say which column it belongs to. `reviewed.json` may now give one
+  edge per column (`{page: [starts…]}`, first 0, strictly rightwards), and a single number on a
+  wider table is refused rather than silently cutting the third column into the second.
+  `_column_view` slices `[starts[i], starts[i+1])`, so the continuation rule that took "the rest of
+  the line" as the cell's head now takes "the rest of the **column**". The measured edges are the
+  page's own: the header line prints its labels at 4, 32, 60 and 89, and every row on printed 88
+  agrees with them.
+* **`locators: [{row, column, text}]`** — the arm **transcribed** two cells rather than reading them:
+  its Layout Parser writes the degree sign as `\(70^{\circ}C\)` where the page prints `70oC`, and
+  closes up `excipient:-` where the page's own characters do. Neither could be resolved, so the rows
+  refused. A reviewed locator is the page's spelling of *the same cell*, and it is the smallest
+  declaration that names one cell instead of widening a matcher: the emitter still resolves it
+  against the page and writes the page's slice, and a locator the page does not print is refused.
+
+**The measurement that corrects the plan.** The plan's §1 said Appendix 7 is 7 rows on printed 88.
+The paper's table is **25 rows and a `NOTE` across five printed pages (88–92)**: printed 89 opens
+with the rest of 6b's condition and carries rows 7–9, printed 90 rows 9–15, printed 91 rows 15–20
+and printed 92 rows 20–25. No arm was ever sent those pages, so this slice emits only the page the
+cached read covers — the block is the arm's page, and **rows 7–25 remain the `-layout` prose they
+were** until a review promotes their locators the way Appendix 2's 2026-10-21 review was promoted
+(`propose_tables.py --continue`). That is what is left of S5-c, and it is a continuation act, not a
+capability: nothing in the emitter refuses it today. The section's 11 chunks are therefore seven
+rows, the header prose, and three chunks of the rows nobody has read.
+
+**Measured.**
+
+* `python scripts/check_tables.py --doc saoso --rows 30,20,7` → `ok — 3 tables, 57 rows, 0
+  violations (table pages, recorded on the artefact)`; `--doc opp --rows 6` and `--doc landscape
+  --rows 3,2,3` unchanged.
+* `python scripts/build_corpus.py --doc saoso --force` → **one section**, `134 insertions(+), 54
+  deletions(-)`; `--doc opp --force` leaves `opp.md` **byte for byte** unchanged.
+* Chunk count **341 → 348**: Appendix 7's section was 4 interleaved chunks and is 11 — seven row
+  chunks, the header prose above the grid, and the three chunks the rows this slice did not emit
+  still produce. Measured with `chunks_for_sections` over the two artefacts, not derived.
+* Full suite **1790 passed / 1 skipped / 8 xfailed in 122–187 s** (`--reuse-db`, this box,
+  three runs: 187.27 s, 131.06 s and 121.87 s);
+  `scripts/fast.sh --critical` **182 passed / 4 deselected in 19–33 s** (19.07 s, 32.74 s). Four guards broken and
+  watched red: the band (ignored → 7 failed), the gutter (ignored → 4 failed), the locator (ignored
+  → 2 failed), and each `_band`/`_gutter` refusal (one test each).
+
+**Two hazards the measurements cost.** Counting chunks with `chunks_for_parsed_section` over every
+section **undercounts**: for a section with no table it returns `[chunk_section(section)]`, a list
+holding a list, so a probe that summed the section counts read 322 where the ingest wrote 341
+(`testing_hazards.md` §3.43). And `build_corpus --stdout` on this box dies with a
+`UnicodeEncodeError` on `≥` under cp1252, before writing anything — `PYTHONIOENCODING=utf-8` or
+`--force` (§3.44).
+
+
 ## 4. Requirements
 
 1. **No unreviewed table reaches the corpus.** Every table row in `DocumentChunk` is either reviewed
@@ -889,7 +955,7 @@ markers come off (S5-e) and the last of the bespoke path goes (S5-f).
 | **S2** | Evaluate extractors against S0's eight pages: cells, headers, spans, speed. The output is a table in this PRD's §6, not a preference | **Closed 2026-11-05. Six measurements (§3.5–§3.9), the key reviewed and signed (§3.11, D85), all three arms re-scored against it at no cost (§3.12), and D82 answered as a composite — Layout Parser for structure, the page's text layer for characters, Docling for Appendix 7's columns, the harness for the verdict (§3.14). The credential bought its own answer: no arm beats the free ones, and the union stops at 5 of 8 because the rest is semantic. S3 and S5 are what is left.** |
 | **S3** | The generator emits `<!-- table … -->` blocks from the winner of S2, guarded by rule 5's parser | **Landed 2026-11-05 (§3.15).** `scripts/table_blocks.py` resolves a proposed structure against the body's printed lines and writes the block, splicing the page's own characters per cell; the structure is committed data found by the PDF's **sha256** (`knowledge/proposals/`, reduced from the cached arm response by `scripts/propose_tables.py`). `python scripts/build_corpus.py --doc opp --force` reproduces `opp.md` **byte for byte**, and the block carries `extraction:` so the gate judges it against the pass it came from (R1). The landscape's proposal is committed and refused on two cells — its page order and merged fee box are S5's. |
 | **S4** | The verification harness (requirements 2–7) as the gate for any new document | **landed 2026-11-03** — `knowledge/table_harness.py`, `scripts/check_tables.py`, 27 tests; the four reviewed tables pass |
-| **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | **Partly landed 2026-11-05 (§3.16, §3.17).** Appendix 2's thirty rows are a block too (`check_tables --doc saoso --rows 30,20` → ok) and `APPENDIX_2_ROWS` is deleted; the declarations it needed are `band`, `dividers` and `tails`. The earlier note:  Appendix 6a is a `<!-- table -->` block of 20 rows emitted from its page (`check_tables --doc saoso --rows 20` → ok) and `APPENDIX_6A_ROWS` is deleted. The two capabilities all four tables need are in: **the body is the pass the block declares** (`corpus_pages.substitute_pass`) and **the reviewed column labels** (`reviewed.json`'s `columns`). Appendix 2 (30 rows, no arm read for printed 77–78), Appendix 7 (a cell that wraps inside a column) and the landscape's four declarations carry a plan each — `INGESTION_ENGINE_S5_PLAN.md` §5. |
+| **S5** | Re-review Appendix 6a (20 rows) and Appendix 7 through the harness; delete their bespoke handling | **Three of four landed (§3.16, §3.17, §3.18), 2026-11-05/06.** Appendix 7's printed-88 page is a 7-row, 4-column grid emitted from the arm's read (`check_tables --doc saoso --rows 30,20,7` → ok, 3 tables, 57 rows), with `gutter:`, the wide `band:` and reviewed `locators:` as its declarations; **its rows 7–25 are still `-layout` prose** because no arm was sent printed 89–92, so the whole-table criterion is open. The earlier note: **Partly landed 2026-11-05 (§3.16, §3.17).** Appendix 2's thirty rows are a block too (`check_tables --doc saoso --rows 30,20` → ok) and `APPENDIX_2_ROWS` is deleted; the declarations it needed are `band`, `dividers` and `tails`. The earlier note:  Appendix 6a is a `<!-- table -->` block of 20 rows emitted from its page (`check_tables --doc saoso --rows 20` → ok) and `APPENDIX_6A_ROWS` is deleted. The two capabilities all four tables need are in: **the body is the pass the block declares** (`corpus_pages.substitute_pass`) and **the reviewed column labels** (`reviewed.json`'s `columns`). Appendix 2 (30 rows, no arm read for printed 77–78), Appendix 7 (a cell that wraps inside a column) and the landscape's four declarations carry a plan each — `INGESTION_ENGINE_S5_PLAN.md` §5. |
 
 **What would change this order** (from the exploration, kept here because it is the decision's own
 falsifier): if S2 shows extractors lose spans or qualifiers on more than two of the eight shapes,
@@ -915,13 +981,18 @@ answer, with the review written down as debt.
       `Class or species: … · Maximum number of animals per ha equivalent to 170 kg N/ha/year: …`
       (`knowledge/tests/test_tables.py::test_one_chunk_per_six_a_row_and_none_of_them_invented`), and
       the pairing in the block is the paper's — the diff corrected `Equines over six months old 5` to
-      `2`. **Appendix 7: not yet** — its cells wrap inside a column, which the emitter cannot bound.
+      `2`. **Appendix 7: its first page only (S5-c, 2026-11-06).** The seven rows printed on
+      printed 88 are row chunks with four columns and the printed row number as the label
+      (§3.18); rows 7–25, printed on 89–92, are still three interleaved `-layout` prose chunks
+      because no arm read those pages and no review has promoted their locators. The tick waits
+      for that continuation act.
 - [ ] Cell fidelity, row count, header association and empty-cell preservation are asserted for every
       table in the corpus, not for the reviewed ones only. **Partly (S5-b, 2026-11-05):** asserted for
       every table that *is* a block — **6 tables, 64 rows, 0 violations** (`landscape` 3+2+3, `opp` 6,
       `saoso` Appendix 2 30 + Appendix 6a 20; `tests/tools/test_check_tables.py` pins the counts and
-      `knowledge/tests/test_table_harness.py` the checker). **Still outside any block:** Appendix 7's
-      4 interleaved chunks — S5-c.
+      `knowledge/tests/test_table_harness.py` the checker). **Moved again (S5-c, 2026-11-06): 7
+      tables, 71 rows** — Appendix 7's first page joined the register. **Still outside any block:**
+      Appendix 7's rows 7–25 (printed 89–92), which no arm read.
 - [ ] Appendix 2's dividers survive as block data, and the reader still draws them. **Proved (S5-b,
       2026-11-05):** the seven printed headings are `row-divider` annotations in the block, R6 claims
       each one as often as the page prints it, and `test_the_dividers_render_above_the_rows_they_name`

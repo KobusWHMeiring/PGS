@@ -6,7 +6,7 @@
   "project": "803140233794",
   "captured": "2026-11-06",
   "shape": "headerless_values",
-  "reduced_from": "_scratch/adc/responses/layout16pro__headerless_values.json",
+  "reduced_from": "_scratch/adc/responses/layout16pro__headerless_values.json, _scratch/adc/responses/layout16pro__column_major.json",
   "tables": [
     {
       "pdf_pages": [
@@ -416,6 +416,142 @@
       ],
       "extraction": "table",
       "continued_from": "knowledge/tables.py::APPENDIX_2_ROWS (the owner's review, 2026-10-21)"
+    },
+    {
+      "pdf_pages": [
+        89
+      ],
+      "columns": [
+        "",
+        "Oenological practice",
+        "Authorised products",
+        "Conditions of use \\(^{(1)}\\)",
+        "Limits on use and Applications"
+      ],
+      "rows": [
+        {
+          "cells": [
+            "1",
+            "Aeration or oxygenation using gaseous oxygen",
+            "Air, Gaseous oxygen",
+            "",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "2",
+            "Heat treatments",
+            "Maximum temperature \\(70^{\\circ}C\\)",
+            "",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "3",
+            "Centrifuging and filtration with or without an inert filtering agent",
+            "Perlite, Cellulose, Diatomaceous earths",
+            "",
+            "Use of an agent must not leave undesirable residues in the treated product"
+          ]
+        },
+        {
+          "cells": [
+            "4",
+            "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air",
+            "Nitrogen, Carbon dioxide, Argon",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+            "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+          ]
+        },
+        {
+          "cells": [
+            "5",
+            "Use of yeasts for wine production, whether dry or in wine suspension",
+            "Yeasts (if available, derived from organic raw material)",
+            "",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "6a",
+            "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient: - addition of diammonium phosphate",
+            "Diammonium phosphate",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+            "No more than 1 g/l (expressed in salts) or 0,3 g/l for the second fermentation of sparkling wines."
+          ]
+        },
+        {
+          "cells": [
+            "6b",
+            "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient: - addition of thiamine hydrochloride",
+            "Thiamine hydrochloride",
+            "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must obtained from raisined grapes, concentrated grape must",
+            "No more than 0,6 mg/l (expressed in thiamine) for each treatment"
+          ]
+        }
+      ],
+      "arm_text": [
+        [
+          "",
+          "Oenological practice",
+          "Authorised products",
+          "Conditions of use \\(^{(1)}\\)",
+          "Limits on use and Applications"
+        ],
+        [
+          "1",
+          "Aeration or oxygenation using gaseous oxygen",
+          "Air, Gaseous oxygen",
+          "",
+          ""
+        ],
+        [
+          "2",
+          "Heat treatments",
+          "Maximum temperature \\(70^{\\circ}C\\)",
+          "",
+          ""
+        ],
+        [
+          "3",
+          "Centrifuging and filtration with or without an inert filtering agent",
+          "Perlite, Cellulose, Diatomaceous earths",
+          "",
+          "Use of an agent must not leave undesirable residues in the treated product"
+        ],
+        [
+          "4",
+          "Use of carbon dioxide, argon or nitrogen, either alone or combined, in order to create an inert atmosphere and to handle the product shielded from the air",
+          "Nitrogen, Carbon dioxide, Argon",
+          "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+          "Use in order to create an inert atmosphere and to handle the product shielded from the air."
+        ],
+        [
+          "5",
+          "Use of yeasts for wine production, whether dry or in wine suspension",
+          "Yeasts (if available, derived from organic raw material)",
+          "",
+          ""
+        ],
+        [
+          "6a",
+          "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient: - addition of diammonium phosphate",
+          "Diammonium phosphate",
+          "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must be obtained from raisined grapes, concentrated grape must and new wine still in fermentation and for the second alcoholic fermentation of all categories of sparkling wine.",
+          "No more than 1 g/l (expressed in salts) or 0,3 g/l for the second fermentation of sparkling wines."
+        ],
+        [
+          "6b",
+          "Use to encourage yeast development, with the possible addition of microcrystalline cellulose as an excipient: - addition of thiamine hydrochloride",
+          "Thiamine hydrochloride",
+          "Only with fresh grapes, grape must, partially fermented grape must, partially fermented grape must obtained from raisined grapes, concentrated grape must",
+          "No more than 0,6 mg/l (expressed in thiamine) for each treatment"
+        ]
+      ],
+      "extraction": "table"
     }
   ]
 }

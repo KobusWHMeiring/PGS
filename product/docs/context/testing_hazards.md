@@ -2152,6 +2152,47 @@ Rule: a guard about a repeated label counts *claims against occurrences on the p
 against uniqueness. R6 now compares per printed page and says "claimed N times, the page prints it
 M time(s)".
 
+### 3.43 `chunks_for_parsed_section` returns a list holding a list, so counting chunks with it undercounts
+
+The function is the one place a table's rows become chunks, and for a section with **no** table it
+returns `[chunk_section(section)]` — a list containing the chunker's list, not the chunker's list.
+`chunks_for_sections` (`knowledge/ingest.py`) does not use it for table-less sections, so the ingest
+is right and only a probe that calls it directly is wrong.
+
+Evidence (S5-c, 2026-11-06), summing `len(chunks_for_parsed_section(section))` over every section:
+
+    322   # the probe's total for saoso.md
+    341   # chunks_for_sections(sections) on the same artefact, and the number the ingest wrote
+
+Two hours went into reconciling those before the nested list was spotted; the section under test was
+the only one that had moved, and it looked like three chunks had vanished elsewhere.
+
+Consequence: a chunk-count measurement that is wrong by a dozen gives a *plausible* delta, so it
+agrees with whatever the change was supposed to do and the number goes into a handover.
+
+Rule: measure a chunk count with `chunks_for_sections(sections)` — the function the ingest calls —
+or with `len(document.chunk_count)`. Never sum `chunks_for_parsed_section`; for a table-less section
+it answers "one", whatever the chunker did.
+
+### 3.44 `build_corpus --stdout` dies on this box's cp1252 console before writing a byte
+
+`sys.stdout` is wrapped by colorama, which encodes with the terminal's codepage. The SAOSO artefact
+contains `≥` and `°`, so `--stdout` raises before the artefact is printed and the redirect leaves an
+empty file — the build itself succeeded, and its three `emitted` lines are on stderr.
+
+Evidence (S5-c, 2026-11-06, `python scripts/build_corpus.py --doc saoso --stdout > out.md`):
+
+    saoso: 30 row(s) emitted from proposal 2, verified per cell against the page's own lines
+    saoso: 20 row(s) emitted from proposal 1, ...
+    saoso: 7 row(s) emitted from proposal 3, ...
+    UnicodeEncodeError: 'charmap' codec can't encode character '≥' in position 175299
+
+Consequence: an empty file that reads as "the build produced nothing" when it produced everything;
+the next run is spent re-reading the generator.
+
+Rule: `PYTHONIOENCODING=utf-8 python scripts/build_corpus.py ... --stdout`, or write with `--force`
+and read the file. The same applies to any probe that prints the corpus.
+
 ## 5. Template for a new entry
 
 ```markdown
