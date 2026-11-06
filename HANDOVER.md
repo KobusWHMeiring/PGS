@@ -65,33 +65,26 @@
 > `celery_worker` is `error` while `db`, `redis` and `celery_broker` are `ok`; **nothing in a request
 > path enqueues work** (only `core.tasks.heartbeat` does), so it does not affect a clickthrough.
 >
-> **Measured on this tree** (2026-11-06, merge session): `python -m pytest -q --reuse-db` —
-> **2090 passed / 1 skipped / 8 xfailed in 76.57 s**, run as
-> `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify`. That is a **warm** run and it is
-> quoted as one (§3.17); the two sides measured **1790** and **1971** before the merge, and no cold
-> run was made here because the gate below cannot run on this tree. `scripts/fast.sh --critical`
-> **187 passed / 4 deselected in 11.34 s** — **five more than `main`'s 182**, because the strand
-> brought its own critical-lane tests with it, so that count *changing* is the merge working.
-> `scripts/verify.sh`: step 1 **red on another session's `scripts/copy_deck.py`**
-> (32 KB, untracked, cap 30 KB), steps 2–4 green —
-> `manage.py check` clean, `makemigrations --check` "No changes detected", `lint-imports`
-> `knowledge must never import core KEPT`.
+> **Measured on this tree** (2026-11-06): `scripts/verify.sh` is **green** — context budgets
+> **0 breaches**, `manage.py check` clean, `makemigrations --check` "No changes detected",
+> `lint-imports` KEPT, and **2090 passed / 1 skipped / 8 xfailed in 321.27 s** — a *cold* run
+> (`--create-db`, `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify`). The warm number for
+> the same tree is **76.57 s** (`python -m pytest -q --reuse-db`); quote cold and warm together and
+> never one alone (§3.17). `scripts/fast.sh --critical` **187 passed / 4 deselected in 11.34 s** —
+> five more than `main`'s 182, because the strand brought its own critical-lane tests with it.
 >
-> **Housekeeping, and it is not this merge's defect.** This working tree again carries **another
-> session's uncommitted copy-deck work** (`scripts/copy_deck.py`, `copy_deck_selftest.py`,
-> `fetch_reference_copy.py`, `product/design/COPY_DECK.md`, `COPY_VOICE.md`,
-> `REFERENCE_COPY_CORPUS.md`, and edits to the public templates and `core/services/_public.py`). It
-> was **stashed** (`git stash list` — *OTHER SESSION (copy deck)*) so the merge could not clobber
-> `_public.py`, which the strand also changes, and **restored afterwards**; a byte-for-byte backup
-> sits outside the repo at `../pgs-dirty-backup-2026-11-06/` (`tracked.patch` + the six untracked
-> files + the base commit), and it earned its keep: **`git stash pop` returns untracked files
-> normalized to LF**, so the six came back from that copy rather than the stash (§3.47). Stage
-> explicit paths, never `git add -A`. **A dev server is running on `127.0.0.1:8000`** started by the
-> merge session (`_scratch/runserver.log`, `--noreload`) — it holds the merged Python in memory, so
-> **restart it after editing a `.py` file** or you will be judging the previous code (§3.23);
-> templates are read per request and need no restart. Splitting `copy_deck.py` under
-> the cap is that session's act; until then `scripts/context.py --check` is red on it and
-> `verify.sh` cannot be quoted green from this tree.
+> **The copy deck landed, and with it a latent gate break was found and fixed** (both pushed to
+> `origin/main`). `1cb2667` — **527 strings** in `product/design/COPY_DECK.md`, **0 drift**, 0
+> templates outside it, `copy_deck_selftest.py` **PASS**, and the first rewrite applied to
+> `home.html` / `_key_facts.html` / `_why_join.html` / `_public.py`'s `home` `Page`. `copy_deck.py`
+> was **split** (23 KB + `copy_deck_extract.py` 11 KB) to get under §II's 30 KB cap, which is what
+> step 1 had been failing on. It also exposed a break that is **not** the deck's: `abb5a9a` —
+> `tests/tools/test_new_document_ingest.py` genuinely needs a PDF reader (the ingest re-reads the
+> printed TOC, D68 §7.5) and `verify.sh` poisons `PDFTOTEXT_BIN`, so those two tests were red **in
+> the gate** from `665b1fb`; nobody saw it because step 1 stopped the run before pytest. **A gate
+> that fails at step 1 is not evidence about steps 2–4** (§3.48). **A dev server is running on
+> `127.0.0.1:8000`** (`_scratch/runserver.log`, `--noreload`) — it holds Python in memory, so
+> **restart it after editing a `.py`**; templates are read per request (§3.23).
 >
 > **What is left of the application strand.** **C1 is designed and deliberately not built**, because
 > two of its questions are about what the OPP *means*: **may submit refuse unanswered farmer

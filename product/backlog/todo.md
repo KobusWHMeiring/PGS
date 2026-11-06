@@ -248,6 +248,17 @@ points at them instead of pretending they are imminent (D60).
 
 ## Content
 
+- [ ] **The public site's writing pass, over the 477 strings the deck has not rewritten.** The
+      instrument is done and committed (`Done/PUBLIC_COPY_DECK_PRD.md`, `1cb2667`):
+      `product/design/COPY_DECK.md` holds all **527** strings in reading order with 0 drift,
+      `COPY_VOICE.md` is the brief that goes above it, and `REFERENCE_COPY_CORPUS.md` is a register
+      sample to search. **50** strings carry a rewrite; the rest are the original copy. Hand the two
+      design files to a writer, fill `new:`, then `python scripts/copy_deck.py --apply --dry-run` and
+      `--apply`, then regenerate the deck. The one rule outranks every other: **rewrite, never add a
+      fact** — only the four FORM outcomes and the active seals may be claimed, and
+      `core/tests/test_claim_discipline.py` still fails the build. This is product-owner judgement in
+      a browser, not a test: the pass is unsigned until the owner has read the eight pages.
+
 - [ ] **Second reader for the Crops template.** `ready/MVP1A_PLAN.md` Task B3 hand-authors 38 questions
       and 37 verdicts from the FORM workbook (D28), including six sub-verdict groups. The tests assert
       the counts and the schema; *whether the wording says what the FORM says* is a domain judgement no

@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-06 09:54
+> Generated: 2026-11-06 12:10
 
 ## Ready (up next)
 
@@ -65,6 +65,7 @@ _none_
 - **MVP 0 Implementation Plan — Standards Foundation & Public Shop Window** - `Done\MVP0_PLAN.md` - Status: Superseded — do not execute; see `MVP0_PLAN_V2.md`
 - **Passage layout — Implementation Plan** - `Done\PASSAGE_LAYOUT_PLAN.md` - Status: **Done** — all six tasks landed 2026-10-27; **UAT Scenario 8 signed PASS 2026-10-28
 - **PRD: Passage layout — the document's lists, rendered as lists** - `Done\PASSAGE_LAYOUT_PRD.md` - Status: **Done** — built 2026-10-27 (the display-only option A, chosen by the product owner
+- **The public copy deck — every string a visitor reads, in one artefact** - `Done\PUBLIC_COPY_DECK_PRD.md` - Status: **Done** — the instrument landed 2026-11-06 (`1cb2667`, pushed) and the first rewrite
 - **The reader's structure — Implementation Plan** - `Done\READER_STRUCTURE_PLAN.md` - Status: **Done** — all ten tasks built 2026-10-27 (gate 1139 passed / 1 skipped, Playwright 58). **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4). What differs from the plan — one corrected
 - **PRD: The reader's structure — a table reads as a table, and a reference goes somewhere** - `Done\READER_STRUCTURE_PRD.md` - Status: **Done** — built 2026-10-27 and **UAT SIGNED 2026-10-28** — `tests/uat/concordance_uat.md` carries eleven **PASS** results, signed by Kobus (Product) against commit `4e02d71`; applied by `scripts/uat_signoff.py`. The PGS administrator, committee reviewer and consumer-member seats are still empty (D4).
 
@@ -319,6 +320,17 @@ points at them instead of pretending they are imminent (D60).
       which D23 explicitly permits. Leaving it unstated is the one option D23 closes off.
 
 ## Content
+
+- [ ] **The public site's writing pass, over the 477 strings the deck has not rewritten.** The
+      instrument is done and committed (`Done/PUBLIC_COPY_DECK_PRD.md`, `1cb2667`):
+      `product/design/COPY_DECK.md` holds all **527** strings in reading order with 0 drift,
+      `COPY_VOICE.md` is the brief that goes above it, and `REFERENCE_COPY_CORPUS.md` is a register
+      sample to search. **50** strings carry a rewrite; the rest are the original copy. Hand the two
+      design files to a writer, fill `new:`, then `python scripts/copy_deck.py --apply --dry-run` and
+      `--apply`, then regenerate the deck. The one rule outranks every other: **rewrite, never add a
+      fact** — only the four FORM outcomes and the active seals may be claimed, and
+      `core/tests/test_claim_discipline.py` still fails the build. This is product-owner judgement in
+      a browser, not a test: the pass is unsigned until the owner has read the eight pages.
 
 - [ ] **Second reader for the Crops template.** `ready/MVP1A_PLAN.md` Task B3 hand-authors 38 questions
       and 37 verdicts from the FORM workbook (D28), including six sub-verdict groups. The tests assert
