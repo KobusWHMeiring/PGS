@@ -97,3 +97,47 @@ not share files: **the demo to PGS/SAOSO and then C1** (held for the group on tw
 
 Do not commit the copy-deck session's files under anything but its own name. Do not merge the
 backlog index by hand. Do not renumber an archived session doc.
+
+## 7. The data acts, so the flow could be judged in a browser
+
+The owner asked for a full frontend clickthrough, which the merge alone could not give: the merge
+commit still had `0009` as the last applied migration. Dumped the dev DB first
+(`../pgs-db-backup-2026-11-06.dump`, 1.7 MB, `-Fc`; rollback is `pg_restore -c`), then ran the three
+acts from the previous handover's list, and they were exactly three:
+
+    $ python manage.py migrate
+      Applying core.0010_mvp1a_a1_farms_and_members ... core.0018_mvp1a_a4_prior_certification  OK
+    $ python manage.py seed_deployment
+      standard_sets: 0 created, 1 updated   seals: 0 created, 3 updated
+      categories: 0 created, 7 updated      turnover_bands: 6 created, 0 updated
+      committee_terms: 15 created, 0 updated  consent_texts: 3 created, 0 updated
+    $ python manage.py load_template core/templates_data/crops.v1.json --activate
+      created CROPS:v1 / activated CROPS:v1
+
+`showmigrations` then reports **0 pending**. The seed is idempotent and leaves `is_active` alone on
+existing rows, which is why the two live seals stayed live and the third stayed retired.
+
+**What the clickthrough can and cannot show, measured rather than assumed.** All 8 public documents
+reach `/documents/<code>/read/` with 200 (`saoso-standard-v2.1` is the one to judge for S5's tables).
+The application flow is `/before-you-apply/` → `/apply/` → `/apply/pledge/` → `/apply/categories/` →
+`/apply/turnover/` → `/apply/summary/`, gated server-side by `_step`, and the pledge's default
+`SIGNATURE` path needs **no upload** — witness name, designation and a photo are only required for a
+*verbal* or *mark* pledge, which is the trap that would have stalled a clickthrough.
+
+**There is no gate screen, and that is not a defect.** `grep` over `core/views/` finds no reader of
+`is_paid_up` or eligibility: A5's unpaid refusal and A7's standing refusal are service rules with
+tests behind them, and the flow ends at the summary. Say that to the owner before they look for it,
+because the screen they expect is the one `MISSING_FEE_SURFACE` is about.
+
+**Two environment facts that would otherwise read as breakage.** `/health/` answers **503** because
+`celery_worker` is `error` while `db`, `redis` and `celery_broker` are `ok` — no worker is running,
+and no request path enqueues work (`core.tasks.heartbeat` is the only task), so a clickthrough is
+unaffected. And `corpus_check` reports `bpp` current but `landscape`/`opp` drift, `saoso` at
+**338/348** chunks: the dev corpus is one build behind, so the reader and `/ask/` serve pre-S5-c text
+until a refresh. **The refresh was deliberately not run** — `GEMINI_API_KEY` is in the shell but not
+in the repo `.env`, and the documented failure is 17 NULL vectors that report "already ingested"
+forever (`deploy/README.md` §4).
+
+**Left running, deliberately, and named here so the next session can kill or reuse it:**
+`python manage.py runserver 8000 --noreload`, log at `_scratch/runserver.log`. It holds the merged
+Python in memory, so a `.py` edit needs a restart before it can be judged (§3.23).

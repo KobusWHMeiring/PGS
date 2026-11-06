@@ -1,6 +1,14 @@
-# Handover — the two strands are merged: A is 8 of 8, B is 4 of 4, and the tables are code
+# Handover — merged, migrated, seeded: the flow runs, and refining it is the next act
 
-> ## START HERE — **the merge landed; show the group, and only then decide C1**
+> ## START HERE — **the two strands are one tree and the flow runs; now refine it**
+>
+> **The next act is refinement of the application flow** (product owner, 2026-11-06), on a dev
+> database that is migrated and seeded, so every screen can be judged in a browser instead of read
+> in a test. The demo to PGS/SAOSO is still the purpose and C1 still waits for the group (below).
+> **Read `product/design/DESIGN.md` before changing a view** — cream grounds, Lora + Mulish, the
+> `brand-*` tokens, ≥44 px targets — and check `product/backlog/` with the local
+> `pgs-reading-the-backlog` skill before planning, so a refinement that is already queued is not
+> invented again.
 >
 > **What landed.** `feat/mvp1a-visit` (`22b2aab`, **36 commits**: MVP 1a A1–A8, B1–B4, D83, D84, Q8's
 > draft consent) is merged into `main` (`06cb013`, D80/D82 and S5-a/b/c) at the merge commit above it.
@@ -34,12 +42,28 @@
 >   reports **0 drift**, 46 To Do items preserved, and `todo.md` (auto-merged) still holds both
 >   strands' items — `MISSING_FEE_SURFACE` and `C1_HELD_FOR_GROUP`.
 >
-> **The tree after the merge still shows nothing end to end, and that is three data acts, not code.**
-> `python manage.py showmigrations core` — the last **applied** migration is **`0009`**, so
-> **`0010`–`0018` are unapplied** and every A and B table is absent. Run `migrate`, then
-> `seed_deployment`, then `load_template core/templates_data/crops.v1.json --activate`. A template
-> that exists is **history**: an assessment freezes a copy of its schema, and `load_template` refuses
-> an edit rather than applying it — a changed questionnaire is a new version.
+> **The dev database is migrated and seeded, so the flow runs end to end and is ready to refine.**
+> The three data acts landed on 2026-11-06: `migrate` (**0010–0018 applied**, 0 pending anywhere),
+> `seed_deployment` (6 turnover bands · 15 committee terms · 3 consents created; 3 seals and 7
+> categories updated in place, `is_active` untouched), `load_template
+> core/templates_data/crops.v1.json --activate` → `created CROPS:v1` / **activated**. Counts now:
+> **CROPS v1 active**, 2 active seals (*PGS Organic Certified*, *PGS Organic In-Conversion*), 7
+> categories, 6 turnover bands, 15 committee terms, 3 consents, and **0 members / 0 farms / 0 prior
+> certifications** — the next applicant is the first. A template that exists is **history**: an
+> assessment freezes a copy of its schema, and `load_template` refuses an edit rather than applying
+> it — a changed questionnaire is a new version. Before the migrations ran, the dev DB was dumped to
+> `../pgs-db-backup-2026-11-06.dump` (1.7 MB; rollback is `pg_restore -c`).
+>
+> **Applying them exposed three things worth knowing before touching the flow.** *(a)* **There is no
+> gate screen**: no view reads `is_paid_up` or eligibility, so the A5 unpaid refusal and the A7
+> standing refusal are service rules with tests behind them and the flow ends at the summary's
+> "Your part is done" — correct, and the surface `MISSING_FEE_SURFACE` is about. *(b)* **The dev
+> corpus is one build behind** — `corpus_check` reports `bpp` current but `landscape`/`opp` drift and
+> `saoso` **338 / 348** chunks, so the reader and `/ask/` show pre-S5-c text. Do **not** refresh it
+> from a shell that is missing `GEMINI_API_KEY` in `.env`: 17 NULL vectors then report "already
+> ingested" forever (`deploy/README.md` §4). *(c)* `/health/` answers **503** on a dev box because
+> `celery_worker` is `error` while `db`, `redis` and `celery_broker` are `ok`; **nothing in a request
+> path enqueues work** (only `core.tasks.heartbeat` does), so it does not affect a clickthrough.
 >
 > **Measured on this tree** (2026-11-06, merge session): `python -m pytest -q --reuse-db` —
 > **2090 passed / 1 skipped / 8 xfailed in 76.57 s**, run as
@@ -62,7 +86,10 @@
 > sits outside the repo at `../pgs-dirty-backup-2026-11-06/` (`tracked.patch` + the six untracked
 > files + the base commit), and it earned its keep: **`git stash pop` returns untracked files
 > normalized to LF**, so the six came back from that copy rather than the stash (§3.47). Stage
-> explicit paths, never `git add -A`. Splitting `copy_deck.py` under
+> explicit paths, never `git add -A`. **A dev server is running on `127.0.0.1:8000`** started by the
+> merge session (`_scratch/runserver.log`, `--noreload`) — it holds the merged Python in memory, so
+> **restart it after editing a `.py` file** or you will be judging the previous code (§3.23);
+> templates are read per request and need no restart. Splitting `copy_deck.py` under
 > the cap is that session's act; until then `scripts/context.py --check` is red on it and
 > `verify.sh` cannot be quoted green from this tree.
 >
@@ -91,13 +118,10 @@
 > front matter (pages 2–3 and 9, commit `8674d7a`). *Then S5-e/f* — the shape markers come off as each
 > target passes (`column_major`'s page is now a block, but `read_table()` does not read the artefact
 > yet), then the last of the bespoke path. `INGESTION_ENGINE_S5_PLAN.md` §5 has the slices and gates.
-> **Do not re-run the arms and do not re-open the key.** **Do not delete a test** to make a count
-> match: the ratchets (`test_table_harness.py` 71 rows, `test_check_tables.py` `30,20,7`,
-> `test_corpus_saoso.py`'s "another pass" set) were *moved*, with the measurement in the commit.
-> Chunk count is **348** for SAOSO, measured with `chunks_for_sections` — **not** by summing
-> `chunks_for_parsed_section`, which returns a list holding a list and undercounts every table-less
-> section (**§3.43**). `build_corpus --stdout` dies on this box's cp1252 console on `≥`, leaving an
-> empty redirect after a successful build — `PYTHONIOENCODING=utf-8` or `--force` (**§3.44**).
+> **Do not re-run the arms and do not re-open the key**, and **do not delete a test** to make a count
+> match — the ratchets were *moved*, with the measurement in the commit. SAOSO's chunk count is
+> **348**, measured with `chunks_for_sections` and **not** by summing `chunks_for_parsed_section`,
+> which undercounts every table-less section (**§3.43**).
 >
 > **The traps that still cost time, all with evidence in `testing_hazards.md`.**
 > - **Line endings, measured in binary.** The model files in this checkout are **CRLF** while the test
@@ -119,9 +143,8 @@
 >   iterates it (**§1.40**).
 > - **`verify.sh | tail` reports success whatever the gate did** (**§3.15**), and a killed run leaves
 >   the test database behind so every later run fails ~700 tests (**§3.16**, `_scratch/a5/dropdb.py`).
->   `scripts/verify.sh` picks its interpreter `.venv` → `python3` → `python`; the venv lives in
->   `../pgs`, so run the five steps with `python` and the gate's own `DATABASE_URL` (**§3.1**; the
->   gate defaults to 5432 and this box serves 5433: `postgres://pgs:pgs@localhost:5433/pgs_verify`).
+>   Run the gate's own `DATABASE_URL` (**§3.1**; it defaults to 5432 and this box serves 5433:
+>   `postgres://pgs:pgs@localhost:5433/pgs_verify`).
 >
 > **Waiting on the product owner, none of it blocking the merge:** `todo.md::MISSING_FEE_SURFACE`
 > (three options, session `1q`); **the two C1 questions above** (`todo.md::C1_HELD_FOR_GROUP`); the
