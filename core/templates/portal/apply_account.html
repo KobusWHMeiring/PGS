@@ -1,0 +1,41 @@
+{% extends "portal/apply_base.html" %}
+
+{% comment %}
+The account step (D83, Q8, D84). Three things on this page are decisions, not styling:
+
+  1. **The button says "Create an account", never "Apply"** (D83). `APPLICANT` is the
+     internal state; a farmer has not applied until they have signed the pledge, and a
+     page that says so would make the group's first record of them a false one.
+  2. **The Q8 consent is shown as written, with its `[DECIDE]` markers** while the group
+     has not approved it (§11.6). The retention period and the withdrawal address are the
+     group's answers; inventing either would put a promise in a consent text nobody made.
+     The banner disappears the moment `approved_at` is set — the state is data, not copy.
+  3. **Email verification says it is unavailable** (D84). 1a has no mail provider, the
+     address is accepted as given, and the page must not imply a tick it did not earn.
+
+No field here is declarative: Q7's seven fields and a password. The pledge attests to all
+the land being applied for, and it lands on the next screen, after the account exists.
+{% endcomment %}
+
+{% block step_title %}Create an account{% endblock %}
+
+{% block step_lede %}
+  <p class="portal__lede">{{ page.lede }}</p>
+{% endblock %}
+
+{% block fields %}
+  {% include "portal/_account_fields.html" with form=form consent=consent %}
+{% endblock %}
+
+{% block actions %}
+  <button class="btn btn--forest" type="submit" {% if not consent %}disabled{% endif %}>
+    Create an account
+  </button>
+  <a class="link-more" href="{% url 'core:become_a_member' %}">What it costs to join →</a>
+{% endblock %}
+
+{% block after %}
+  <p class="portal__foot">
+    Already have an account? <a href="{% url 'core:login' %}">Sign in</a>.
+  </p>
+{% endblock %}

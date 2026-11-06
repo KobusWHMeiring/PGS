@@ -1,0 +1,36 @@
+{% extends "portal/apply_base.html" %}
+
+{% comment %}
+The turnover step (spec §7.5, OPP §2.3, D29).
+
+**Declared, not computed** (§III): the farmer gives a figure and the seeded scale decides
+the band. Nothing here offers a band to pick, because a band picker is a way to choose a
+cheaper fee than your own turnover justifies, and because the OPP's scale is applied by
+the group — not selected by the member.
+
+The band and the amount appear on the next screen, so the farmer sees what their figure
+produced before they leave the flow.
+{% endcomment %}
+
+{% block step_title %}Your annual turnover{% endblock %}
+
+{% block fields %}
+  {% include "portal/_field.html" with field=form.turnover_rands %}
+
+  <p class="portal__note">
+    Why the group asks: the farm assessment fee is set on a sliding scale, and the scale is
+    the members' own decision at the annual general meeting. Your figure is
+    <strong>self-declared and subject to peer review</strong> — nobody audits it here, and
+    the group may ask about it at the visit.
+  </p>
+
+  <p class="portal__note">
+    Not sure which figure to use? The one on a normal year's sales, before costs. If the
+    farm is new, your best estimate is the honest answer, and you can say so at the visit.
+    <a class="link-more" href="{% url 'core:become_a_member' %}">See the full scale →</a>
+  </p>
+{% endblock %}
+
+{% block actions %}
+  <button class="btn btn--forest" type="submit">Declare and continue</button>
+{% endblock %}

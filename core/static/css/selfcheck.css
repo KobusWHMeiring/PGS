@@ -1,0 +1,430 @@
+/* The public self-check — `/before-you-apply/` (A8, D71).
+ *
+ * One page, two shapes (§11.5): a stepped wizard when JavaScript is on, the same five sections
+ * stacked when it is off. Nothing here gates a step: progress is a position indicator, never a
+ * validation. Every colour is a `--brand-*` token (DESIGN.md §2), every target is ≥44 px (§6.5),
+ * and Lora stays at weight 400 for display.
+ *
+ * Class names are `wiz__*` rather than `steps` because `components.css` already owns `.steps` for
+ * the "how it works" strip, and two components sharing a name is how one of them quietly changes.
+ */
+
+.wiz__narrow {
+  max-width: var(--container-prose);
+}
+
+.wiz__narrow--last {
+  padding-block: 1rem var(--section-block);
+}
+
+/* --- The step nav ------------------------------------------------------- */
+
+.wiz__nav {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border-top: 1px solid var(--brand-sand);
+  border-bottom: 1px solid var(--brand-sand);
+  background-color: var(--brand-cream);
+}
+
+.wiz__nav ol {
+  max-width: var(--container-prose);
+  margin: 0 auto;
+  padding: 0.375rem 1rem;
+  list-style: none;
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wiz__nav ol::-webkit-scrollbar {
+  display: none;
+}
+
+.wiz__nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 0.8125rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms, color 150ms;
+}
+
+.wiz__nav button:hover:not([disabled]) {
+  background-color: var(--brand-sageLight);
+  color: var(--brand-charcoal);
+}
+
+.wiz__nav button[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wiz__nav button .wiz__n {
+  width: 21px;
+  height: 21px;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-sand);
+  color: var(--brand-forestDark);
+  font-size: var(--text-micro);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wiz__nav button[data-done="true"] .wiz__n {
+  background-color: var(--brand-ochre);
+  color: #fff;
+}
+
+.wiz__nav button[aria-current="step"] {
+  background-color: var(--brand-forest);
+  color: var(--brand-cream);
+}
+
+.wiz__nav button[aria-current="step"] .wiz__n {
+  background-color: var(--brand-ochreLight);
+  color: var(--brand-forest);
+}
+
+.wiz__count {
+  display: none;
+  max-width: var(--container-prose);
+  margin: 0 auto;
+  padding: 0.375rem 1rem 0;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-muted);
+}
+
+/* --- Steps: hidden only when JS is running ------------------------------ */
+
+/* The `data-js` flag is set by `selfcheck.js` on <html>. Without it every section is visible and
+ * scrollable — the no-JavaScript shape — and the "next/back" buttons are inert decoration rather
+ * than the only way through the page. */
+html[data-selfcheck-js] .wiz__step:not([data-current]) {
+  display: none;
+}
+
+.wiz__step {
+  padding-block: 2.5rem 3rem;
+}
+
+html[data-selfcheck-js] .wiz__narrow--last {
+  display: none;
+}
+
+.wiz__h2 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  color: var(--brand-forestDark);
+}
+
+.wiz__h3 {
+  margin: 0 0 0.375rem;
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--brand-ochreInk);
+}
+
+.wiz__mirror {
+  margin: 0.25rem 0 1.25rem;
+  font-size: var(--text-xl);
+  line-height: var(--leading-body);
+  color: var(--brand-charcoal);
+}
+
+.wiz__note {
+  margin: 0 0 1.5rem;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--brand-muted);
+  max-width: 46rem;
+}
+
+.wiz__small {
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+  color: var(--brand-muted);
+}
+
+/* --- Questions --------------------------------------------------------- */
+
+.wiz__qs {
+  display: grid;
+  gap: 1rem;
+}
+
+.wiz__q {
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-cream);
+}
+
+.wiz__head {
+  display: flex;
+  gap: 0.625rem;
+  align-items: baseline;
+}
+
+.wiz__id {
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--brand-ochreInk);
+}
+
+.wiz__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  color: var(--brand-forestDark);
+}
+
+.wiz__help {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+  color: var(--brand-muted);
+}
+
+/* --- Answer chips ------------------------------------------------------ */
+
+.wiz__opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.wiz__opt {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.875rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-cream);
+  font-size: var(--text-sm);
+  color: var(--brand-charcoal);
+  cursor: pointer;
+  transition: background-color 150ms, border-color 150ms;
+}
+
+.wiz__opt:hover {
+  background-color: var(--brand-sageLight);
+}
+
+/* The input is the target; the chip is its label. Visually hidden but focusable so the browser's
+ * own keyboard, touch and screen-reader behaviour is what a visitor gets. */
+.wiz__opt input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.wiz__opt:has(input:checked) {
+  border-color: var(--brand-forest);
+  background-color: var(--brand-forest);
+  color: var(--brand-cream);
+}
+
+.wiz__opt:has(input:focus-visible) {
+  outline: 2px solid var(--brand-ochre);
+  outline-offset: 2px;
+}
+
+.wiz__notelabel {
+  display: block;
+  margin: 0.75rem 0 0.25rem;
+  font-size: var(--text-xs);
+  color: var(--brand-muted);
+}
+
+.wiz__q textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+/* --- "Why we ask" ------------------------------------------------------ */
+
+.wiz__why {
+  margin-top: 0.625rem;
+  border-top: 1px solid var(--brand-sand);
+  padding-top: 0.5rem;
+}
+
+.wiz__why summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--brand-ochreInk);
+  cursor: pointer;
+}
+
+.wiz__whybody p {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+  color: var(--brand-charcoal);
+}
+
+.wiz__whyref {
+  color: var(--brand-muted);
+}
+
+/* --- Step bar --------------------------------------------------------- */
+
+.wiz__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--brand-sand);
+}
+
+.wiz__bar-note {
+  margin-left: auto;
+}
+
+/* --- The result ------------------------------------------------------- */
+
+.wiz__fixed {
+  margin: 0 0 0.75rem;
+  padding: 0.875rem 1.125rem;
+  border-left: 3px solid var(--brand-ochre);
+  background-color: var(--brand-sageLight);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--brand-charcoal);
+}
+
+.wiz__todo {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.wiz__todo li {
+  display: flex;
+  gap: 0.625rem;
+  align-items: baseline;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.wiz__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background-color: var(--brand-ochre);
+  flex: none;
+  transform: translateY(-2px);
+}
+
+.wiz__cite {
+  font-style: normal;
+  font-size: var(--text-micro);
+  letter-spacing: 0.04em;
+  color: var(--brand-muted);
+  margin-left: 0.375rem;
+}
+
+.wiz__box {
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--brand-sand);
+  border-radius: var(--radius-md);
+  background-color: var(--brand-creamWarm);
+}
+
+.wiz__box p {
+  margin: 0 0 0.375rem;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--brand-charcoal);
+}
+
+.wiz__box p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Honeypot --------------------------------------------------------- */
+
+/* Off-screen rather than `display: none`: a field a bot's form-filler skips is not a trap, and a
+ * field a person cannot reach is. */
+.wiz__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* --- Small screens ---------------------------------------------------- */
+
+/* Desktop: the six labels fit, so centre them and let them wrap rather than scroll. A horizontal
+ * scroller that clips "Two consents" mid-word reads as a broken layout, not as a nav. */
+@media (min-width: 640px) {
+  .wiz__nav ol {
+    max-width: var(--container-max);
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: visible;
+  }
+}
+
+@media (max-width: 639px) {
+  .wiz__nav .wiz__t {
+    display: none;
+  }
+
+  .wiz__count {
+    display: block;
+  }
+
+  .wiz__nav ol {
+    padding-inline: 0.75rem;
+  }
+
+  .wiz__bar .wiz__bar-note {
+    margin-left: 0;
+    width: 100%;
+  }
+}

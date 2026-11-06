@@ -51,6 +51,9 @@ PAGES: list[tuple[str, str, str]] = [
     ("members", "/members/", "Who is in the group"),
     ("documents", "/documents/", "What we publish"),
     ("become-a-member", "/become-a-member/", "What membership and assessment cost"),
+    # A8. The front door, and the page most likely to grow an eligibility claim — a farmer reads it
+    # *instead of* applying, so "you are ready" would be the one claim this group must never make.
+    ("before-you-apply", "/before-you-apply/", "Find out what a visit checks"),
     ("ask", "/ask/", "Ask the standard"),
     # D74. The only public route whose words arrive from `product/backlog/` — via a
     # generated artefact, never at request time. It is in `PAGES` on purpose: this list
@@ -116,7 +119,14 @@ def test_no_unrendered_template_syntax_reaches_the_browser(
         assert token not in html, f"unrendered {token!r} on {url}"
 
     assert html.count("<main") == 1, f"{url} has {html.count('<main')} <main> elements"
-    assert html.count("<details") == 1, f"{url} has a stray <details>"
+    # The 2026-10-30 defect put a stray `<details>` around the header's navigation. The check is
+    # scoped to the chrome on purpose: `/before-you-apply/` legitimately renders one `<details>` per
+    # "why we ask" disclosure (`SELF_CHECK_PRD` §3.3 asks for exactly that, and a tooltip would be
+    # unreachable on a phone), so a whole-page count would forbid the reviewed pattern. The `{#`
+    # token check above is still the direct guard against a leaked template comment.
+    assert html.split("</header>")[0].count("<details") == 1, (
+        f"{url} has a stray <details> in the chrome"
+    )
 
 
 # --- Nothing is loaded from a third-party origin ---------------------------

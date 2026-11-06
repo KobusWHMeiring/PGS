@@ -7,14 +7,21 @@ not exist as far as the ORM is concerned.
 
 Slices (see MVP0_PLAN_V2.md §2):
     _core.py           User, UserRole, Role, Language
+    _assessment.py     AssessmentTemplate (the questionnaire, as versioned JSON)
+    _consent.py        ConsentText, ConsentRecord, ConsentPurpose (POPIA consent)
+    _membership.py     Member, Farm, FarmAlias, FarmCategory, FarmContact,
+                       PriorCertification, CommitteePosition, CommitteeTerm, Pledge
+    _fees.py           MembershipFee, TurnoverBand, AssessmentFee
     _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _public.py         PublicDocument (the files the group publishes, D22)
+    _selfcheck.py      SelfCheckReport, SelfCheckDemographic (the public self-check, D71)
     _chat.py           ChatSession, ChatMessage, EscalatedQuery, PublicQuestion
 
 Keep each slice under the 30 KB cap (build_principles.md). When a slice
 approaches it, cut a new slice along a domain seam — do not grow the file.
 """
 
+from core.models._assessment import AssessmentTemplate
 from core.models._certification import Category, Seal
 from core.models._chat import (
     REFUSAL_NOTES,
@@ -24,6 +31,7 @@ from core.models._chat import (
     EscalationReason,
     PublicQuestion,
 )
+from core.models._consent import ConsentPurpose, ConsentRecord, ConsentText
 from core.models._core import (
     ASSESSOR_CAPABILITY,
     Language,
@@ -31,21 +39,52 @@ from core.models._core import (
     User,
     UserRole,
 )
+from core.models._fees import AssessmentFee, MembershipFee, TurnoverBand
+from core.models._membership import (
+    CommitteePosition,
+    CommitteeTerm,
+    Farm,
+    FarmAlias,
+    FarmCategory,
+    FarmContact,
+    Member,
+    Pledge,
+    PriorCertification,
+)
 from core.models._public import PublicDocument
+from core.models._selfcheck import SelfCheckDemographic, SelfCheckReport
 
 __all__ = [
     "ASSESSOR_CAPABILITY",
+    "AssessmentFee",
+    "AssessmentTemplate",
     "Category",
     "ChatMessage",
     "ChatSession",
+    "CommitteePosition",
+    "CommitteeTerm",
+    "ConsentPurpose",
+    "ConsentRecord",
+    "ConsentText",
     "EscalatedQuery",
     "EscalationReason",
-    "REFUSAL_NOTES",
+    "Farm",
+    "FarmAlias",
+    "FarmCategory",
+    "FarmContact",
     "Language",
+    "Member",
+    "MembershipFee",
+    "Pledge",
+    "PriorCertification",
     "PublicDocument",
     "PublicQuestion",
+    "REFUSAL_NOTES",
     "Role",
     "Seal",
+    "SelfCheckDemographic",
+    "SelfCheckReport",
+    "TurnoverBand",
     "User",
     "UserRole",
 ]

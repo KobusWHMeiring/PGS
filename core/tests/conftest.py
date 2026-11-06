@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.tests.factories import UserFactory
+from core.tests.factories import CategoryFactory, FarmFactory, MemberFactory, UserFactory
 
 
 @pytest.fixture
@@ -29,6 +29,38 @@ def user_factory(db):
 def user(user_factory):
     """A single role-less public visitor, for tests that need only one."""
     return user_factory()
+
+
+# --- Membership (Task A1) -------------------------------------------------
+#
+# `member`, `farm` and `category` are what the plan's A1 tests are written
+# against, so they are fixtures rather than factories the test has to remember
+# to import. A test that needs a *second* farm calls `farm_factory()`.
+
+
+@pytest.fixture
+def category(db):
+    return CategoryFactory(code="CROPS", label="Crops", standard_ref="FORM Sheet B.1")
+
+
+@pytest.fixture
+def member(db):
+    return MemberFactory()
+
+
+@pytest.fixture
+def farm(member):
+    return FarmFactory(member=member, name="Chillin Out Farm", slug="chillin-out-farm")
+
+
+@pytest.fixture
+def farm_factory(db):
+    """Callable: `farm_factory(name="Other Farm")`."""
+
+    def _make(**kwargs):
+        return FarmFactory(**kwargs)
+
+    return _make
 
 
 # --- Chat corpus fixtures (sub-plan D) -------------------------------------

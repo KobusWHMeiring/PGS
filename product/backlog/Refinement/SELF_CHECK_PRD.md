@@ -112,12 +112,32 @@ question.
 
 ### 3.4 The wording is data, in two places, and neither is a migration
 
-- **Derived controls** (B1–B7, C1–C5) are questions or `RecordCheck` items that already exist in the
+- **Derived controls** (B1–B7, C1–C4) are questions or `RecordCheck` items that already exist in the
   frozen Crops template. They gain `"self_check": {"tier": 1, "why": "…"}` in the schema, so the
   front door and the visit **cannot drift apart in wording** — the thing the wording review was most
   worried about.
-- **Own controls** (A1–A5, D1, E1–E2) have no template question. They live in a single
+- **Own controls** (A1–A5, **C5**, D1, E1–E2) have no template question. They live in a single
   `SELF_CHECK_ITEMS` structure in `core/services/_selfcheck.py`, beside the fee bands.
+
+> **Corrected 2026-11-05 (task B3, against the sheet).** This section first read "B1–B7, C1–C5", which
+> counted twelve derived controls. Four of the five practices are Crops-sheet questions (Q4.2, Q5.1,
+> Q11.1, Q11.2), but **C5 — *"Do you buy in produce from other farmers to sell on?"* — is FORM Sheet
+> A, Aggregation**, not Sheet B.1, so it is not in the Crops template and cannot carry a marker there.
+> The Crops template therefore carries **eleven**: the seven records and those four practices
+> (`test_crops_template.py::test_the_template_carries_eleven_derived_controls`). C5 keeps exactly one
+> home — `SELF_CHECK_ITEMS` — and the front door's wording still cannot drift, because the visit's
+> aggregation question is Sheet A's and not the questionnaire's.
+
+> **Amended 2026-11-05 (task A8, while building).** "Cannot drift apart in wording" turned out to
+> need one more sentence than the marker carries. A template marker holds the `why`; it does **not**
+> hold the front-door title or the answer set (Q11.1 is a `TEXTAREA` in the FORM, and the reviewed
+> front door asks "Where do your seeds come from?" with five chips). So the eleven derived controls
+> keep their reviewed **title, help, options and source** in `DERIVED_CONTROLS`
+> (`core/services/_selfcheck.py`), take their **`why`** from the active template's marker — a derived
+> control's `why` is empty in code, and a test fails if that stops being true — and render the
+> template's own `text` in the disclosure as *"The farm visit asks this as: …"*. The farmer therefore
+> sees both sentences on one card, which is a stronger guarantee than either copy alone: the visit's
+> exact wording is on the page, not just paraphrased by it.
 
 Both are **data seeded per deployment** (§I, "code encodes the process; data encodes the standard").
 Retargeting to another standard changes JSON and a constant, not a migration.
@@ -149,6 +169,15 @@ The consent text **names the recipients** (PGS South Africa, SAOSA) rather than 
 purposes", states **totals only, never farm by farm**, gives a small-count rule, offers a withdrawal
 route that works without an account, and — per the review — states plainly that **funding
 applications are not covered** (§9 Q1).
+
+> **Amended 2026-11-05 (task A8).** This section first said the two consents "reuse A6's
+> `ConsentText`/`ConsentRecord`". Half of that held. The **wording** is `ConsentText` — data, versioned,
+> seeded as a draft. The **act** cannot be a `ConsentRecord`, because that model has a non-null `User`
+> FK and a self-check visitor has no account (and must never be given one by answering a
+> questionnaire). So the act is a timestamp on the report itself: `research_consent_at` plus
+> `consent_text_version`, which names the wording without copying it. A withdrawal deletes the row,
+> which is what the text promises; there is no tombstone, because a tombstone would itself be the
+> personal data.
 
 ---
 
@@ -252,7 +281,13 @@ sales records"* false about a catchment of a few dozen farms.
 
 `core/management/commands/report_self_check.py` — prints counts per band, uptake on each record
 control, the exit reasons, and the demographic cut **only** when `--demographics` is passed *and*
-the cell meets `--min-count` (default 5). No view, no template, no MVP 3 reporting surface. Internal
+the cell meets `--min-count` (default 5).
+
+> **Amended 2026-11-05 (task A8).** The first implementation printed *"Female: too few to report (1 of
+> a minimum 5)"* — which publishes the cell the threshold exists to protect, because "Female: 1" in a
+> catchment of a few dozen farms is a person. The refusal now names neither the value nor the count:
+> *"2 cell(s) not shown — fewer than 5 in the cell"*. A reader can still tell "no data" from "too
+> little to say", which was the point; they cannot read the cell. No view, no template, no MVP 3 reporting surface. Internal
 first: a report for the group and for PGS SA/SAOSA, not a published page. A published figure is a
 public claim about the group's own catchment and inherits DESIGN §1.
 
@@ -267,8 +302,16 @@ public claim about the group's own catchment and inherits DESIGN §1.
 ```
 
 Unknown keys still fail. `tier` is 1 only, for now — a second tier is a decision, not a default.
-Task B3 marks the twelve derived controls; `test_crops_template.py` asserts the count and that every
-control the self-check claims to derive **resolves to a question that exists**.
+Task B3 marks the **eleven** derived controls this sheet holds — `Q4.2`, `Q5.1`, `Q11.1`, `Q11.2` and
+`R01`–`R07`, the seven Sheet I §2 records — and `test_crops_template.py` asserts the count and that
+every marker **resolves to a question, item or record that exists**. (C5 is an own control: it is
+Sheet A's, not this sheet's — see §3.4's correction.)
+
+Two shapes the FORM forces, both validated by `validate_schema`: a numbered question (`crops.Q4`) is a
+**container** whose `items` (`crops.Q4.1`, `crops.Q4.2`, …) are the answerable lines, because the
+plan's own marker example is a sub-item; and the records live in a `records` array with `R`-prefixed
+keys (`crops.R01`), because `RecordCheck.kind` is what the visit verifies and the self-check must quote
+the same wording.
 
 ---
 
@@ -388,6 +431,198 @@ ledger: A4 (land history — the bands sit on the threshold D31 has not settled)
 consent — a committee decision about the group's own data, not a design one).
 
 ---
+
+## 11. 2026-11-04 — the account at the end of the flow
+
+**Decision (product owner, this session):** the result page offers an **opt-in** *"Save my details and
+create an account"*, so a farmer who has decided they are serious can keep what they just entered and
+use it when they start an official visit. It does not change §3.6: with the box unticked, nothing is
+written and the result renders from the submitted form.
+
+The seam already exists. `PGS_PLATFORM_SPEC` §3.1: *"an account is created when they engage further,
+and `User.graduated_from_public_at` records when a public user became a member."* This addendum says
+what "further" is here, and what the account can honestly hold.
+
+### 11.1 What the check can and cannot carry forward
+
+The check was designed to collect **no identity data**. So "save my details" saves less than the
+words suggest, and the difference is worth stating before it is built:
+
+| Carries forward | How |
+|---|---|
+| Category ticks | → `FarmCategory` rows **at application**, status `APPLIED` — never at the check |
+| Turnover band | → `AssessmentFee.turnover_band` / `band_label` — label to label, no inference |
+| Records held, practices | → prefill the questionnaire (already **C2a**, plan line 521) |
+| **Farm name, nearest town, address, contact** | **the check never asks for any of them** |
+| **Total hectares** | **cannot:** the check stores a *band*; `Farm.total_hectares` is a number. §III's "declared, not computed" cuts both ways |
+
+So an account created purely from the check's answers holds an email address and some bands. To have a
+farm profile at that point the account step must **ask three new questions** — farm name, nearest
+town, contact person — which is new collection and a third consent, not a save button.
+
+### 11.2 What the account is, in schema terms
+
+Three candidate shapes were tested against the models Task A1 landed (`core/models/_core.py`,
+commit `243cedd`):
+
+| Shape | Verdict |
+|---|---|
+| `User` only | Cheapest, and honest — but "save my details" then saves nothing a farmer would miss, and the whole point is not retyping |
+| **`User` + `Member{APPLICANT}` + `Farm`** | **Recommended.** Flow A step 1 already creates exactly this at self-registration, *before* the pledge, categories, turnover and fee — so it is structurally the same row, not a new state. A7 already makes `assert_eligible_for_assessment` raise for `APPLICANT`, so **no gate changes** |
+| A sixth `Member.status` (`PROSPECT`) | Rejected. `Member.status` is frozen at five values by a guard test in A1, because `status` gates `assert_eligible_for_assessment` and feeds `FarmCategory` downstream |
+| `Farm` with no `Member` | Not possible: `Farm.member` is a non-null FK (A1) |
+
+**Wording consequence.** `APPLICANT` is the internal state; the public page must not say "application"
+until they apply. The account CTA reads *"Create an account"*, and the step after it is still the
+application flow (A6).
+
+### 11.3 Two things this must not do
+
+1. **It must not link `SelfCheckReport` to `Member` or `Farm`.** §4.1's "no FK to `Member` or `Farm`"
+   stands, and §8's "writes nothing that could be mistaken for an assessment record" depends on it. The
+   account captures its own fields by **prefill from the submitted form**, not by joining to a
+   consented research row.
+2. **It must not create `FarmCategory` rows.** "A tick is not an application" (A1 guard test
+   `test_a_tick_is_not_an_application`): `FarmCategory.status` has no pre-application value, so the
+   ticks wait for A6.
+
+### 11.4 Decided 2026-11-04
+
+| # | Question | Decision |
+|---|---|---|
+| Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | **Collected at account creation.** Otherwise the farm profile is empty and the account saves nothing a farmer would miss. The three fields are new collection and need the consent in Q8. |
+| Q8 | The third consent: holding an account is a processing purpose separate from research and demographics. | **Yes, a third consent is required and does not exist yet.** It is not research consent (that one is about aggregate reporting) and not demographic consent (that one is about the census). It needs a retention answer, which this PRD deliberately does not have, and it is written by the group rather than by the build. |
+| Q9 | Does an account require a verified email before it can be used again? | **Yes — but not in 1a: there is no mail provider (D84, 2026-11-05).** `User.email_verified_at` already exists for exactly this and stays null; the account step must say verification is unavailable rather than imply it happened. Until a provider exists an address is accepted as given, and the account is usable immediately. |
+
+**Consequence for the build order, stated so it is not discovered late:** Q8 means the account
+step cannot ship before its consent text exists. The self-check result page can therefore ship with
+the account CTA **visible but the consent copy absent** only if the CTA is absent too — a form that
+collects a farm name under the research consent would be a purpose mismatch, which is the one thing
+§3.6 was written to prevent.
+
+---|---|---|---|
+| Q7 | Are the three new fields (farm name, nearest town, contact) collected at account creation, or deferred to A6? | Product owner | **Collected** — otherwise the farm profile is empty and the account only saves an email |
+| Q8 | The third consent: holding an account is a new processing purpose, separate from research and demographics. Who writes and who approves that text? | Group / product owner | **Drafted by the build as a DRAFT to correct** (§11.6, 2026-11-05), because a group cannot approve a blank page. Two markers remain the group's: the retention period and the withdrawal address. The group approves the wording; the build does not. |
+| Q9 | Does an account require a verified email before it can be used again? | Product owner | No — `User.email_verified_at` exists; verification is a friction decision, not a schema one |
+
+---
+
+
+### 11.5 Shape changed to a stepped wizard (2026-11-04)
+
+The product owner judged the prototype and asked for **steps, not a long scroll**: a numbered nav at
+the top and next/back paging. The five groups A–E become steps 1–5, the result is screen 6, and the
+account is screen 7 (reached only from the result).
+
+**What this does not change.** §4.3's contract holds exactly: one route, one view, parse → call a
+service → render. The steps are client-side; no answer leaves the page until `submit`, and the
+no-consent path still renders the result from the submitted form in the same request.
+
+**What it does change, and the two traps it creates:**
+
+- **Step boundaries are not validation.** A step can be left unanswered — the check is not a demand,
+  and §3.5's "rather not say" logic already assumes silence is acceptable. No step may gate the next
+  on completeness; only the *result* degrades, and it says so.
+- **The dependency in §3.6 crosses a step boundary.** Demographic consent (E2) is refused without
+  research consent (E1), and both sit on step 5 — so the disabled state is intra-step. If E2 is ever
+  moved to its own screen, the refusal must survive a re-render or a reload, not just a checkbox
+  toggle. A server-side test is required either way; the prototype only proves the UI.
+
+**Contrast against the scrolling version, measured on the prototype** (`playwright`, 390/768/1280):
+the records step holds seven controls, so it was the only group that scrolled materially on a phone.
+It is rendered as compact rows (question + four answer chips on one line) rather than seven tall
+cards, which is what makes "no scrolling" true rather than aspirational.
+
+### 11.6 The third consent — **DRAFT**, for group approval (written 2026-11-05)
+
+> **DRAFT — not approved, not for release.** Q8 says this text *"is written by the group rather than
+> by the build"*, and the build cannot write it — but a build cannot ask a group to approve a blank
+> page either. So this is a **draft to correct**, not a text to ship. Two answers below are still the
+> group's and are marked `[DECIDE]`: the **retention period** and the **address to write to**. The
+> text must not ship while either marker remains, and A6 must refuse to create an account without
+> this consent (Q8's consequence: a farm name collected under the research consent is a purpose
+> mismatch, which is what §3.6 exists to prevent).
+
+**The checkbox and its explanation** — what a farmer reads on the account step:
+
+> **May we keep your details so you can come back to this?**
+>
+> We hold your name, how to reach you, your farm's name and nearest town, and who to speak to about
+> a visit. We use them to keep your application in one place and to contact you about it — nothing
+> else. The committee and the administrator can see them; nobody outside the group can, and we never
+> publish them. We keep them while your account is open and for **[DECIDE: proposed 12 months]** after
+> the last time you contacted us, then we delete them. You can ask us to delete them at any time by
+> writing to **[DECIDE: the administrator's email/phone — not yet published, `todo.md`]**, and we will
+> do it within 30 days.
+>
+> *Unticked by default. Without it no account is created — but your result page still shows, and
+> nothing about you is stored.*
+
+**The "why we ask" body** — the result page and the help panel, in the voice the other two consents
+use:
+
+> This is not the research question and not the census question. Research consent asks whether your
+> answers may be counted in totals for PGS South Africa and SAOSO; the demographic question asks
+> whether census details may be counted too. This one is about the **account itself** — the name,
+> contact and farm details the group needs in order to keep a conversation with you about an
+> application.
+>
+> It sits after those two rather than beside them because holding an account is a purpose of its own.
+> A consent that let "research" quietly cover it would be exactly the purpose mismatch the group's
+> own POPIA position forbids.
+>
+> And leaving it unticked refuses nothing else. The check, the result and the to-do list still work
+> and still store nothing. What it withholds is the account — because an account is the thing that
+> needs your details to exist.
+>
+> *Source: POPIA s11 (consent as an act, not a default), s13 (purpose), s14 (retention). Q7's three
+> fields are the collection this text covers.*
+
+**What this draft assumes, stated so the group can reject any of it:**
+
+- The fields are **Q7's**: name, email, farm name, nearest town, contact person. Anything else
+  collected later (turnover, land history, the pledge) is covered by the application's own step, not
+  by this consent — the pledge attests to land and sits where D83 put it.
+- **Withdrawal works without an account**, as the research consent already promises: writing in is
+  enough, and no login is required to be deleted.
+- **English only until reviewed** (D44). This text is *not* machine-translated; an Afrikaans version
+  lands when a named Afrikaans-speaking reader has reviewed it.
+- It is **versioned, not edited**: `consent_text_version` records which text a member agreed to, so a
+  later tightening of the wording is a new version and an existing member's consent keeps its meaning
+  (the same rule as the frozen `Assessment.template_schema`).
+- It is a consent to **hold and contact**, never to **publish**. A public farm profile is a separate,
+  later, purpose-specific consent (`Farm.publish_consent_at` already exists for it).
+
+**If the group prefers a shorter text**, the one sentence that cannot be dropped is the retention
+answer. "How long do you keep it" is the question a POPIA information officer asks first, and it is
+the one thing this PRD said it did not have.
+
+### 11.7 What A6 did with this draft (built 2026-11-05)
+
+A6 asked the question this section leaves open — *does an unapproved text block the account?* — and
+answered it in a way that keeps the demo walkable **and** the promise visible. Recorded here because
+the answer is the product owner's to overrule, and it is one data edit:
+
+- **The text is seeded data, not copy.** `core.services._seed.ACCOUNT_CONSENT`, version
+  `account-2026-11-05`, written into `ConsentText` with `approved_at` **null**. The `[DECIDE]` markers
+  are kept in the body and therefore rendered, so the two answers the group owes are on the page a
+  farmer reads, not only in this PRD.
+- **A draft is shown as a draft, and the account is allowed.** The account step renders a DRAFT
+  banner naming both markers and says the group has not approved the wording. The alternative —
+  refusing every account until approval — dead-ends the flow the demo exists to show, and §11.6's
+  "must not ship while either marker remains" is a release rule, not a walkthrough rule. **Approval
+  is one data edit** — `ConsentText.approved_at = now`; the banner disappears, nothing else changes,
+  and no migration is involved (spec §4.8).
+- **Consent is taken against the version on screen.** The step posts `consent_version` in a hidden
+  field and the service refuses a stale one (`ConsentTextChangedError`), so publishing new wording
+  while a form is open cannot record agreement to text that person did not read. A consent given
+  under a draft stays queryable — `ConsentRecord.objects.filter(text__approved_at__isnull=True)` is
+  the list to re-confirm or delete if the group rejects this wording.
+- **No consent text at all fails closed.** With no `ACCOUNT` row the page says the wording has not
+  been written and creates nothing; there is no checkbox without a text behind it.
+
+Still open, and unchanged by the build: the retention period, the withdrawal address, and whether
+`APPLICANT` is the right internal word for an account that has not applied.
 
 ## Pre-Flight Checklist
 

@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+`/before-you-apply/` — the public self-check (A8, D71, `SELF_CHECK_PRD`).
+
+The page is a **stepped wizard with a no-JavaScript fallback**, and both shapes are deliberate:
+
+  * With JS (`selfcheck.js`), the five groups are steps 1–5 with a numbered nav at the top, which is
+    the shape the product owner approved on 2026-11-04 (§11.5).
+  * Without JS, the same five sections render stacked with one submit button, because a farm
+    connection is not a reason for an unreachable form. **No step gates the next on completeness**:
+    the check is not a demand, and §3.5's "rather not say" already assumes silence is acceptable.
+
+The result is a **separate render** of the same route (§11.5's "one route, one view"): `result` and
+`stored` arrive from `evaluate()` and `submit()`, and every sentence in them comes from
+`core.services._selfcheck` — including the two fixed lines, which read the visit's own
+`MISSING_RECORD_BLOCKS_FINALISE` constant rather than being retyped here.
+
+The optional account at the end is A6's: `portal/_account_fields.html` and `AccountForm`, posting
+`step=account` to this same route. It creates no `FarmCategory` row.
+{% endcomment %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/portal.css' %}">
+  <link rel="stylesheet" href="{% static 'css/selfcheck.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="wiz" data-start="{{ form.start_step|default:1 }}">
+    {% include "public/_page_head.html" %}
+
+    {% if result %}
+      <section class="section" id="result">
+        <div class="container wiz__narrow">
+          <p class="eyebrow">What your answers show</p>
+          <p class="wiz__mirror">{{ result.mirror|safe }}</p>
+
+          <div class="wiz__fixed">{{ result.fixed_lines.visit_decides }}</div>
+          <div class="wiz__fixed">{{ result.fixed_lines.missing_record }}</div>
+
+          <h2 class="serif-title wiz__h2">What to gather</h2>
+          {% if result.todo %}
+            <ul class="wiz__todo">
+              {% for item in result.todo %}
+                <li>
+                  <span class="wiz__dot" aria-hidden="true"></span>
+                  <span>{{ item.framing }}: <strong>{{ item.title }}</strong>
+                    <cite class="wiz__cite">{{ item.citation.label }}</cite></span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="wiz__note">Nothing on this list. Every record the visit checks is one you say
+              you already hold.</p>
+          {% endif %}
+
+          {% if result.land_history_note %}
+            <div class="wiz__box">
+              <h3 class="wiz__h3">When your land could be assessable</h3>
+              <p>{{ result.land_history_note }}</p>
+              <p class="wiz__small">{{ result.land_history_disagreement }}</p>
+            </div>
+          {% endif %}
+
+          {% if result.fee_band %}
+            <div class="wiz__box">
+              <h3 class="wiz__h3">What the assessment fee would be</h3>
+              <p>{{ result.fee_band.note|safe }}</p>
+              <p class="wiz__small">Turnover is declared by you and peer-reviewed. The platform
+                stores the band you chose; it never calculates one from sales figures.</p>
+            </div>
+          {% endif %}
+
+          {% if result.caveat %}
+            <div class="wiz__box">
+              <h3 class="wiz__h3">About the check you just did</h3>
+              <p>{{ result.caveat|safe }}</p>
+            </div>
+          {% endif %}
+
+          <div class="wiz__bar">
+            <a class="btn btn--outline" href="{% url 'core:before_you_apply' %}">Back to my answers</a>
+            <a class="btn btn--ochre" href="#save-details">Save my details</a>
+            <span class="wiz__small wiz__bar-note">
+              {% if stored %}Your answers were added to the group's totals, because you ticked that
+                box.{% else %}Nothing above has been stored.{% endif %}
+            </span>
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if result or account_open %}
+      <section class="section section--warm" id="save-details">
+        <div class="container wiz__narrow">
+          <p class="eyebrow">Optional</p>
+          <h2 class="serif-title wiz__h2">Save my details</h2>
+          <p class="wiz__note">An account means you do not retype this when you start your
+            application. It is <strong>not</strong> an application, and it carries no declaration.</p>
+
+          <form method="post" class="portal__form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="step" value="account">
+            {% include "portal/_form_errors.html" with form=account_form %}
+            {% include "portal/_account_fields.html" with form=account_form consent=account_consent %}
+            <div class="portal__actions">
+              <button class="btn btn--forest" type="submit" {% if not account_consent %}disabled{% endif %}>
+                Create my account
+              </button>
+              <span class="wiz__small">Then the farmer pledge, which attests to all the land you
+                apply for and therefore cannot be signed before the account exists.</span>
+            </div>
+          </form>
+        </div>
+      </section>
+    {% endif %}
+
+    {% if not result %}
+      <form method="post" class="wiz__form" novalidate>
+        {% csrf_token %}
+        <div class="wiz__hp" aria-hidden="true">{{ form.website }}</div>
+        {{ form.consent_version }}
+
+        {% if retry_after %}
+          <div class="container wiz__narrow">
+            <div class="notice notice--error" role="alert">
+              <p><strong>That is a lot of checks from one connection.</strong> Try again in
+                {{ retry_after }} seconds. Nothing was stored.</p>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="container wiz__narrow">
+            <div class="notice notice--error" role="alert">
+              {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <nav class="wiz__nav" aria-label="Progress through the check">
+          <p class="wiz__count" id="wiz-count">Step 1 of 5 · About your farm</p>
+          <ol>
+            {% for group in check.groups %}
+              <li>
+                <button type="button" data-goto="{{ forloop.counter }}">
+                  <span class="wiz__n">{{ forloop.counter }}</span>
+                  <span class="wiz__t">{{ group.title }}</span>
+                </button>
+              </li>
+            {% endfor %}
+            <li>
+              <button type="button" data-goto="6" data-result disabled>
+                <span class="wiz__n">6</span><span class="wiz__t">What it means</span>
+              </button>
+            </li>
+          </ol>
+        </nav>
+
+        {% for group, rows in form.groups %}
+          <section class="section wiz__step" data-step="{{ forloop.counter }}"
+                   aria-labelledby="wiz-{{ group.key }}-title">
+            <div class="container wiz__narrow">
+              <p class="eyebrow">Step {{ forloop.counter }} of 5</p>
+              <h2 class="serif-title wiz__h2" id="wiz-{{ group.key }}-title">{{ group.title }}</h2>
+              <p class="wiz__note">{{ group.lede }}</p>
+
+              <div class="wiz__qs">
+                {% for control, field in rows %}
+                  <div class="wiz__q{% if control.kind == 'RECORD' %} wiz__q--row{% endif %}"
+                       id="q-{{ control.key }}">
+                    <div class="wiz__head">
+                      <span class="wiz__id">{{ control.key }}</span>
+                      <h3 class="wiz__title">{{ control.title }}</h3>
+                    </div>
+                    {% if control.help %}<p class="wiz__help">{{ control.help }}</p>{% endif %}
+
+                    <div class="wiz__opts{% if control.kind == 'MULTI' or control.kind == 'RECORD' %} wiz__opts--wrap{% endif %}"
+                         role="group" aria-label="{{ control.title }}">
+                      {% for choice in field %}
+                        <label class="wiz__opt">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+                      {% endfor %}
+                    </div>
+                    {% for error in field.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+
+                    {% if control.key == 'D1' %}
+                      <label class="wiz__notelabel" for="{{ form.exit_note.id_for_label }}">If you
+                        chose “something else”, tell us in a line — 280 characters, optional</label>
+                      {{ form.exit_note }}
+                      {% for error in form.exit_note.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+                    {% endif %}
+
+                    <details class="wiz__why">
+                      <summary>Why we ask</summary>
+                      <div class="wiz__whybody">
+                        <p>{{ control.why|safe }}</p>
+                        {% if control.template_text %}
+                          <p class="wiz__whyref">The farm visit asks this as: <q>{{ control.template_text }}</q></p>
+                        {% endif %}
+                        <p class="wiz__whyref">Source: {{ control.source }}</p>
+                      </div>
+                    </details>
+                  </div>
+                {% endfor %}
+
+                {% if group.key == 'E' %}
+                  {% for control, text, field in form.consent_rows %}
+                    <div class="consent" data-consent="{{ control.key }}">
+                      <h3 class="wiz__title">{{ control.title }}</h3>
+                      <p class="wiz__help">{{ control.help }}</p>
+                      {% if text %}
+                        {% if text.is_draft %}
+                          <p class="consent__draft">
+                            <strong>DRAFT — the group has not adopted this wording yet.</strong>
+                            It is shown as written rather than paraphrased, and the administrator
+                            can tell you what still needs the group's answer.
+                          </p>
+                        {% endif %}
+                        <div class="consent__body">{{ text.body|linebreaks }}</div>
+                      {% else %}
+                        <div class="notice notice--error" role="alert">
+                          <p><strong>The wording for this consent has not been written for this
+                            group yet.</strong> Nothing is stored until it is — a checkbox with no
+                            text behind it records agreement to nothing.</p>
+                        </div>
+                      {% endif %}
+                      <div class="field{% if field.errors %} field--error{% endif %}">
+                        <label class="consent__tick" for="{{ field.id_for_label }}">
+                          {{ field }}<span>Yes — I agree to the wording above.</span>
+                        </label>
+                        {% for error in field.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+                      </div>
+                      {% if control.key == 'E2' %}
+                        <p class="wiz__help" id="e2-note">Separately from the question above, and
+                          only counted if that one is also ticked.</p>
+                        <div class="field-grid">
+                          {% include "portal/_field.html" with field=form.census_gender %}
+                          {% include "portal/_field.html" with field=form.census_age_band %}
+                          {% include "portal/_field.html" with field=form.census_demographic_group %}
+                        </div>
+                      {% endif %}
+                      <details class="wiz__why">
+                        <summary>Why we ask</summary>
+                        <div class="wiz__whybody">
+                          <p>{{ control.why|safe }}</p>
+                          <p class="wiz__whyref">Source: {{ control.source }}</p>
+                        </div>
+                      </details>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+
+              <div class="wiz__bar">
+                <button class="btn btn--outline" type="button" data-back>Back</button>
+                {% if forloop.last %}
+                  <button class="btn btn--ochre" type="submit">Show me what this means</button>
+                {% else %}
+                  <button class="btn" type="button" data-next>Next</button>
+                {% endif %}
+                <span class="wiz__small wiz__bar-note" data-counter></span>
+              </div>
+            </div>
+          </section>
+        {% endfor %}
+
+        <div class="container wiz__narrow wiz__narrow--last">
+          <button class="btn btn--ochre" type="submit">Show me what this means</button>
+          <p class="wiz__small">Nothing is stored unless you tick the first consent box on step 5.
+            You can skip any step.</p>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/selfcheck.js' %}" defer></script>
+{% endblock %}

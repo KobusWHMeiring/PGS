@@ -323,3 +323,23 @@ def test_every_real_mvp1a_scenario_carries_a_judgement():
     assert len(uat.scenarios) == 12
     assert all(s.judgement for s in uat.scenarios)
     assert scan_applicability(uat, {}) == []
+
+
+def test_the_self_check_uat_is_six_judged_scenarios_and_no_less():
+    """A8's UAT is pinned for the same reason the others are: a scenario that vanishes is a
+    promise that shrank.
+
+    Six is what the front door asks a reviewer to judge — a mirror not a verdict, a to-do list that
+    helps, the land-history note comprehensible to someone who has not read the OPP, "rather not say"
+    as a real answer, the consents read aloud, and the account that is not an application. Each one
+    is a judgement a test cannot make, which is why none of them may become an automated check.
+    """
+    from .conftest import REPO_ROOT
+
+    uat = parse_uat(REPO_ROOT / "tests/uat/self_check_uat.md")
+
+    assert uat.slug == "self_check"
+    assert [s.number for s in uat.scenarios] == [1, 2, 3, 4, 5, 6]
+    assert all(s.judgement for s in uat.scenarios)
+    assert all(s.steps for s in uat.scenarios), "each scene must say what to do"
+    assert scan_applicability(uat, {}) == []

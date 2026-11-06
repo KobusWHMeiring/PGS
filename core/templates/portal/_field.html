@@ -1,0 +1,14 @@
+{% comment %}
+One field: label, hint, control, errors. Rendered from the Django field so the control,
+its `id`, the label's `for` and the autocomplete hints are never hand-written twice.
+
+`aria-describedby` is not wired here because Django's own help-text rendering is not
+attached to the control; the hint sits directly above it instead, which is where a screen
+reader lands next anyway. `field.errors` is non-empty only after a POST.
+{% endcomment %}
+<div class="field{% if field.errors %} field--error{% endif %}">
+  <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {% if field.help_text %}<p class="field__hint">{{ field.help_text }}</p>{% endif %}
+  {{ field }}
+  {% for error in field.errors %}<p class="field__error" role="alert">{{ error }}</p>{% endfor %}
+</div>

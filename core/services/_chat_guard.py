@@ -13,12 +13,14 @@ into retrieval is the failure with a price.
 
 from __future__ import annotations
 
+import hashlib
 import time
 import uuid
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from ipware import get_client_ip
 
 from core.models import ChatSession, User
 from core.services._chat_prompt import significant_terms
@@ -177,25 +179,39 @@ def _rate_window() -> int:
     return int(getattr(settings, "CHAT_RATE_LIMIT_WINDOW_SECONDS", RATE_LIMIT_WINDOW_SECONDS))
 
 
-def check_rate_limit(ip_hash: str, *, now: float | None = None) -> None:
-    """Count one question against the client's fixed window.
+def check_rate_limit(
+    ip_hash: str,
+    *,
+    now: float | None = None,
+    namespace: str = "chat",
+    limit: int | None = None,
+    window: int | None = None,
+) -> None:
+    """Count one action against the client's fixed window.
 
-    In:  `ip_hash` â€” sha256 of the IP; `now` â€” injectable clock.
+    In:  `ip_hash` â€” sha256 of the IP; `now` â€” injectable clock; `namespace` â€” which
+         budget (`"chat"` by default, so every existing caller keeps its own key); `limit`
+         and `window` â€” a caller's own budget, defaulting to the chat settings.
     Out: None.
     Side Effects: one cache increment.
-    Fails: `RateLimitedError` when the count exceeds `CHAT_RATE_LIMIT`.
+    Fails: `RateLimitedError` when the count exceeds the limit.
 
     A blank `ip_hash` is not rate-limited: it means the caller is not a public
     request (a test, a management command). The public view always supplies one.
+
+    The namespace exists because the self-check writes to a research table and `/ask/`
+    writes a conversation: they share the *mechanism* (`SELF_CHECK_PRD` Â§4.4: "using the
+    mechanism `/ask/` already has") and must not share a budget â€” a farmer who used the
+    front door would otherwise find the assistant refusing them.
     """
     if not ip_hash:
         return
 
-    limit = _rate_limit()
-    window = _rate_window()
+    limit = _rate_limit() if limit is None else int(limit)
+    window = _rate_window() if window is None else int(window)
     timestamp = _now() if now is None else now
     bucket = int(timestamp // window)
-    key = f"chat:rate:{ip_hash}:{bucket}"
+    key = f"{namespace}:rate:{ip_hash}:{bucket}"
 
     # `add` is atomic and gives us the first count; `incr` is atomic thereafter. A
     # key that expires between the two raises ValueError, which is a new window, not
@@ -212,6 +228,23 @@ def check_rate_limit(ip_hash: str, *, now: float | None = None) -> None:
     if count > limit:
         retry_after = int(window - (timestamp % window)) or window
         raise RateLimitedError(retry_after)
+
+
+def client_ip_hash(request) -> str:
+    """In: a request. Out: sha256 of the client IP, or "" when it cannot be read.
+
+    The raw address is never stored. The hash exists only to scope a rate limit, so a
+    missing IP degrades to "not limited" rather than to a shared global bucket that would
+    let one visitor exhaust everyone's budget.
+
+    It lives here rather than in a view because two views need it (`/ask/` and the public
+    self-check) and a view that imports another view to get a hash is a seam in the wrong
+    place.
+    """
+    ip, _routable = get_client_ip(request)
+    if not ip:
+        return ""
+    return hashlib.sha256(ip.encode("utf-8")).hexdigest()
 
 
 def validate_question(question: str) -> str:

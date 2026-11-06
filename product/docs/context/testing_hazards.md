@@ -2193,6 +2193,270 @@ the next run is spent re-reading the generator.
 Rule: `PYTHONIOENCODING=utf-8 python scripts/build_corpus.py ... --stdout`, or write with `--force`
 and read the file. The same applies to any probe that prints the corpus.
 
+### 1.35 A test that hardcodes a fee period has an expiry date of its own
+
+`MVP1A_PLAN.md` Task A1 was written on 2026-10-20 and its `is_paid_up` test says a payment
+made on `2025-03-01` with period `2025-03-01..2026-02-28` counts as paid up. That was true
+for 131 days. `Member.is_paid_up` reads `period_end >= today`, so from 2026-03-01 the test
+asserts `False is True` and the suite goes red for a reason that has nothing to do with the
+code being wrong.
+
+Evidence:
+    $ python -m pytest core/tests/test_membership.py -q
+    assert Member.objects.get(pk=member.pk).is_paid_up is True
+    E   assert False is True
+    E    +  where False = <Member: OUT-2026-0001>.is_paid_up
+
+Consequence: a plan written in the past ships a test that fails in the future, and the failure
+arrives as an apparent regression in code nobody touched. The first instinct is to "fix" the
+model. The model was right.
+
+Rule: any assertion about *now* computes its dates from `timezone.localdate()` — offsets like
+`today - timedelta(days=400)` — and never from a literal. Where the literal *is* the point
+(a period that expired), derive it from today too. A test may name a date only when the date is
+the input under test, and then it must also pin the clock (`freezegun`) so the test says what
+it means. Same trap applies to `joined_on`, `first_certified_on`, probation end dates and the
+three notice windows (5/3/5 days) in D3.
+
+### 1.36 `git checkout <file>` restores HEAD, not the state before your mutation
+
+Mutation testing needs a restore step, and `git checkout core/models/_core.py` reads like
+one. It is not: it discards **every** uncommitted change in that file, including the feature
+whose guard you are in the middle of proving. A2's `CommitteePosition` and `CommitteeTerm`
+were uncommitted when a mutation pass reverted the model file, and the next test run failed on
+an import that looked like a typo.
+
+Evidence:
+    $ git checkout core/models/_core.py          # "restoring" the mutation
+    $ python -m pytest core/tests/test_seed_committee.py
+    ImportError: cannot import name 'CommitteePosition' from 'core.models._core'
+
+Consequence: a mutation pass silently deletes the work under test. The failure that follows
+points at the import, not at the mistake, so the first hypothesis is "did I mistype the class
+name" — and the actual loss is an hour of writing.
+
+Rule: restore from a copy taken **outside the tree** (`cp core/models/_core.py /tmp/x.bak`
+before the mutation, `cp` it back after), which is also what makes N mutations repeatable in
+one shell script. If a file is already committed, `git checkout -- <file>` is fine; if it is
+not, it is a delete. Either commit first, or use `cp`.
+
+### 1.37 A `CheckConstraint` that evaluates to NULL is *satisfied*, not violated
+
+`NULL` in SQL is not `False`. A check whose expression yields `NULL` **passes**, so an
+`IN` list against a nullable column constrains nothing at the moment you most need it.
+
+A3's rule was "in-conversion is recorded with the 12 or the 18 months the form offers":
+
+```python
+models.CheckConstraint(
+    condition=~Q(in_conversion_declared=True) | Q(in_conversion_months__in=(12, 18)),
+    name="pledge_in_conversion_period_is_offered_by_the_form",
+)
+```
+
+Evidence — the row the constraint exists to refuse went in:
+
+    $ pytest core/tests/test_pledge.py -k in_conversion_without_its_period
+    E   Failed: DID NOT RAISE IntegrityError
+
+`in_conversion_declared = True, in_conversion_months = NULL` → `FALSE OR (NULL IN (12,18))`
+→ `FALSE OR NULL` → `NULL` → the constraint is satisfied. The `NOT declared` arm is `FALSE`,
+so the whole expression hinged on a comparison with a NULL.
+
+Rule: any nullable column inside a `CheckConstraint` needs its own `__isnull` arm — write
+`Q(col__isnull=False) & Q(col__in=(…))`, never `Q(col__in=(…))` alone — and then prove the
+constraint can fail by inserting the bad row through the ORM with the service bypassed. A
+constraint no test has watched reject anything is decoration: this one was green until the
+test above was written, and the test only failed because it asserted the exception.
+
+### 1.38 `FileField(storage=callable)` resolves the callable once, at field definition
+
+A storage built from settings looks like it follows the settings:
+
+```python
+def private_storage():
+    return FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT, base_url=None)
+
+evidence_document = models.FileField(storage=private_storage, upload_to=...)
+```
+
+It does not. `FileField.__init__` keeps the callable for `deconstruct()` and immediately
+calls it: `self._storage_callable = self.storage; self.storage = self.storage()`. So the
+root is resolved at **import of the models module**, once, for the life of the process.
+
+Evidence — a test that pointed `PRIVATE_MEDIA_ROOT` at `tmp_path` and then asserted the file:
+
+    $ pytest core/tests/test_pledge.py -k uploaded_under_the_private_root
+    E   assert False  # …pytest-1897/…/private_media/pledge_evidence/2026/11/pledge-scan.jpg
+    $ ls private_media/pledge_evidence/2026/11/     # …while the repo root grew a directory
+    pledge-scan_J7TpP5A.jpg
+
+Two consequences. A test cannot redirect the root (`override_settings` arrives too late), so
+an assertion about *where* evidence is written is untestable and the file quietly lands in
+whatever the import-time setting was. And the migration serialises the storage — Django was
+about to write the resolved path into `0012`, which would have pinned this machine's
+`private_media/` into the schema every deployment replays.
+
+Rule: a storage that depends on settings is a `@deconstructible` `Storage` subclass whose
+`location` is a **property read per access**, so the migration names the class and each
+process resolves its own root:
+
+```python
+@deconstructible
+class PrivateMediaStorage(FileSystemStorage):
+    @property
+    def location(self) -> str:
+        return os.path.abspath(settings.PRIVATE_MEDIA_ROOT)
+
+    @property
+    def base_url(self) -> None:   # no public URL; served only via X-Accel-Redirect
+        return None
+```
+
+### 1.39 A boundary test whose samples never land on the boundary cannot see the rule
+
+A5's "the printed scale has no hole" test swept turnover in steps of 3 333 333 cents and
+compared each band's `max` against the next band's `min`. Both checks are true of
+**closed** bounds as well: with `min <= x <= max`, band B1 ends at 25 000 000 and B2
+starts at 25 000 000, so the "no gap" assertion still holds — the defect is an *overlap*
+of one cent, and no sampled value ever hit it.
+
+Evidence — the mutation that closed the bounds, run before the test was rewritten:
+
+    $ # covers(): `x < max` mutated to `x <= max`
+    $ pytest core/tests/test_fees.py -k test_the_printed_scale_has_no_hole
+    .  [100%]        # 1 passed — the test could not see it
+    $ # after probing band.min, band.min+1, band.max-1, band.max, band.max+1:
+    E  AssertionError: 25000000 cents matched ['B1', 'B2']
+
+Consequence: the test looked like it proved the property and proved only that the sweep
+skipped the boundaries. A gap-and-overlap property is decided entirely at the seams.
+
+Rule: probe every bound explicitly — `min`, `min + 1`, `max - 1`, `max`, `max + 1`, and
+assert that a band does **not** cover its own `max` — and keep the coarse sweep as a
+second, weaker net. Then run the mutation: if closing the bounds does not turn the test
+red, the test is about the sweep, not the scale.
+
+### 1.40 A `ChoiceField`'s default `Select` renders **nothing** when a template iterates it
+
+A template that draws one chip per option does the natural thing:
+
+```django
+{% for choice in field %}<label class="opt">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>{% endfor %}
+```
+
+That works for `CheckboxSelectMultiple` and `RadioSelect`: each subwidget is one `<input>`. It
+renders **nothing at all** for a `ChoiceField` left on its default `Select`, because a `Select`
+yields a single subwidget holding the whole `<select>` — and `{{ choice.tag }}` on it is not the
+control the loop expects. The result is a page with no answer controls, and every guard stays green:
+
+```
+$ pytest core/tests/test_public.py core/tests/test_selfcheck.py -q
+197 passed
+$ python -m pytest tests/e2e/test_selfcheck_wizard.py -q      # the browser disagrees
+E   assert '0 of 0 answered' == '0 of 7 answered'              # the step has no inputs to count
+$ python _scratch/a8/probe_wizard.py                           # and the DOM listing says why
+step 1 inputs: 4   radios: 0
+step 2 inputs: 0   radios: 0
+step 3 inputs: 0   radios: 0
+```
+
+Consequence: every field was optional, so the form still validated, still submitted, still rendered
+a result — a farmer could complete a self-check without ever being able to answer a question, and no
+Django assertion could see it. A `200` plus "no unrendered template tokens" is not evidence that a
+control exists.
+
+Rule: when a template renders options itself, set the widget (`RadioSelect`/`CheckboxSelectMultiple`)
+and assert the **inputs** exist, not just the page. In a browser suite, assert a count that would be
+zero if the widgets vanished (`eval_on_selector_all` and a `min() >= 44` together do this), and keep
+a probe that prints the DOM facts you are arguing about — one `_scratch/` script answered in seconds
+what three guesses had not.
+
+### 1.41 `Path.read_text()` hides the CRLF it is meant to reveal
+
+This box checks the model files out as **CRLF** — `core/models/_core.py` as well as the file being
+edited — while the test files written by a tool are LF, and `core.autocrlf=true` sits under a
+`.gitattributes` that says `eol=lf`. So a mutation anchor spanning lines has to match the file's own
+ending style, and the probe that is supposed to tell you which style you have is the trap:
+
+```
+$ python -c "t = pathlib.Path('core/models/_membership.py').read_text(); print(t.count('\r\n'))"
+0                       # the file is 632 lines of CRLF
+$ python -c "d = open('core/models/_membership.py','rb').read(); print(d.count(b'\r'))"
+632
+```
+
+`read_text()` opens in text mode with universal newlines, so every `\r\n` is already `\n` by the
+time you count it. The same call is what a mutation harness reads with if it forgets `newline=""`,
+and the symptom is a mutation reported as `SKIP … anchor not found` while `grep` shows the text on
+the screen. Session `1q` found the write-side variant: a Python script that *writes* a repo file
+with `Path.write_text()` flips every ending and leaves a whole-file diff that is not a change.
+
+Rule: measure line endings in **binary** (`open(path, "rb").read().count(b"\r")`), read and write
+mutation targets with `newline=""`, and let the harness adapt a multi-line anchor to the file it is
+editing — the mutation is a content change, and the ending style is not part of what is being proved.
+Confirm the restore with `git diff --numstat` (an added/deleted line count that matches the change)
+rather than `git status`, which cannot see a file that was rewritten with its own bytes.
+
+### 3.45 `verify.sh` in a second worktree picks an interpreter that has no project deps
+
+*Renumbered in the 2026-11-06 merge: was §3.31 on `feat/mvp1a-visit`; §3.31-§3.44 are `main`'s.*
+
+`scripts/verify.sh` chooses its interpreter as `.venv/Scripts/python.exe` → `.venv/bin/python` →
+`python3` → `python`. The dev box has **no `.venv` inside `../pgs-visit`** (the venv lives in
+`../pgs`), so `python3` wins — and on this machine `python3` is a different install with no
+`celery`, while `python` is the one the suite actually runs under. The failure lands on
+`manage.py check`, which reads as "this tree is broken" rather than "the gate ran the wrong
+toolchain":
+
+    $ bash scripts/verify.sh
+        python:        python3
+        lint-imports:  /c/…/pgs/.venv/Scripts/lint-imports
+    ==> 2/4  manage.py check
+      File "…/pgs/celery.py", line 17, in <module>
+        from celery import Celery
+    ModuleNotFoundError: No module named 'celery'
+
+Consequence: a green gate cannot be claimed from this worktree, and the traceback points at the
+app rather than the harness. Note also that `LINT_IMPORTS` was found in the **sibling** worktree's
+venv, so the two halves of the gate are using different Pythons — which is how a gate reports a
+result about a toolchain nobody chose.
+
+Rule: in a worktree with no `.venv`, run the four steps with the interpreter the suite uses and
+say so in the handover — `context.py --check`, `manage.py check`,
+`makemigrations --check --dry-run`, `lint-imports --no-cache --no-logo`, then
+`pytest --create-db` with `PDFTOTEXT_BIN=scripts/_no_extractor`. Do not read an import error in
+step 2 as a code failure until step 2 has named its interpreter.
+
+### 3.46 A scripted slice move still imports, and still loses what sat between the classes
+
+*Renumbered in the 2026-11-06 merge: was §3.32 on `feat/mvp1a-visit`; §3.31-§3.44 are `main`'s.*
+
+Cutting `MembershipFee`, `TurnoverBand` and `AssessmentFee` out of `_membership.py` was
+scripted: split the file at top-level `class` lines, move three blocks, write two files.
+`python -c "import core.models"` passed after the move. The suite did not.
+
+Evidence:
+
+    $ pytest core/tests/test_pledge.py -k uploaded_under_the_private_root
+      core/models/_membership.py:367: in location
+        return pledge_evidence_storage_location()
+    E   NameError: name 'pledge_evidence_storage_location' is not defined
+
+A `def` and a `@deconstructible` decorator sat **between** two `class` statements, so the
+block boundary swallowed them: the function travelled into `_fees.py` (which imported
+`os` and used it nowhere else, so nothing complained) and the decorator was stripped from
+the file that needed it. Both files imported; only a test that *writes a file* noticed.
+
+Consequence: an import check is not a move check. Anything that is not a `class` — a
+module-level function, a decorator, a constant between classes — is exactly what a
+class-boundary split loses, and it loses it silently.
+
+Rule: after a mechanical file move, run the tests that exercise the moved code's
+*behaviour* (a file write, a query, a save), not just `import`; and grep the new file for
+helpers it now owns but never calls. Better still, cut the boundary by hand and read the
+diff — the script saved a minute and cost a debug cycle.
+
 ## 5. Template for a new entry
 
 ```markdown

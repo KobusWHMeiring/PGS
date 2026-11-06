@@ -8,6 +8,16 @@ the generated index's "To Do" section.
 - [ ] Set up `summarise.py` to generate `product/docs/state/` once there is code to summarise.
 - [ ] `docker-compose.yml` + `Dockerfile` (MVP 0, sub-plan A).
 - [ ] Decide the production host for the platform (the group currently has no server).
+- [ ] **SMTP for the platform.** Deferred past the PGS demo by **D84** (2026-11-05): 1a ships with
+      no mail and says so in the interface, so the account step shows "verification is not available
+      yet" rather than a fake checkmark. Nothing in dev sends mail: there is no transactional
+      provider, no sender domain and no `.env` key for one (measured 2026-11-05: the dev `.env`
+      holds `DJANGO_SECRET_KEY` only). It gates three things at once — **email verification** at
+      account creation (`User.email_verified_at` exists and nothing sets it), **password reset**, and
+      the administrator's escalation path (`Refinement/ESCALATION_ANSWER_PATH_PRD.md`, which is
+      still waiting on a published contact). When it is picked up: choose the provider, publish the
+      administrator's address (it is also the `Reply-To`, because a `no-reply` sender silently
+      loses every escalation reply), and set SPF/DKIM/DMARC on the group's domain.
 - [ ] Add a second physical backup copy — currently a single local external drive (R11, accepted gap).
 
 ## Decided, not yet queued (2026-11-02)
@@ -70,6 +80,66 @@ the generated index's "To Do" section.
 - [ ] Aquaculture, Wine and Input Supplier Attestation — forms and workflow (§17.1).
 - [ ] Complaints, hearings and discipline workflow (OPP §4.5–4.7).
 - [ ] Membership fee *collection* (fees are tracked only; no gateway).
+- [ ] **A surface that records a membership fee and its payment.** <!-- MISSING_FEE_SURFACE -->
+      A6 (2026-11-05) built and tested `record_membership_fee()` and
+      `record_membership_payment()` (the APPLICANT → ACTIVE transition, which OPP §2.3 and spec
+      §7.7 tie to payment) and **no view calls them**: the fee year is the group's (D39) and a
+      self-registration must not write a `paid_on` it never received. **A7 (2026-11-05) landed the
+      eligibility gate that makes this load-bearing**
+      (`core.services._eligibility.assert_eligible_for_assessment`): an applicant is refused by
+      name, so in a running instance the gate now refuses every self-registered member — correct,
+      and a demo that ends every visit path in a refusal. A test names the gap rather than a
+      comment (`core/tests/test_eligibility.py::
+      test_nothing_in_a_running_instance_records_a_membership_fee`); it fails the day a surface
+      appears, and that failure is the instruction to delete it and close this item.
+
+      **Awaiting the product owner's choice of surface** — three options, and the third is what
+      A7 shipped because the choice is not the build's to make:
+      1. a **one-screen administrator page** (record a fee, record a payment, flip to ACTIVE). The
+         cheapest honest form is two Django-admin actions on a new `MembershipFee` registration
+         that call the two services — not an editable `paid_on` field, which would leave the member
+         `APPLICANT` while looking paid;
+      2. **the committee's surface**, which belongs to C1 and does not exist yet;
+      3. **the gate now, the surface named here** — A7's choice. Nothing was invented: no `paid_on`
+         the group never received, and no test that reaches ACTIVE by writing the status.
+      Which one to build before the pilot demo is the group's call.
+- [ ] **Approve the Q8 consent wording** (SELF_CHECK_PRD §11.6). A6 ships it as a **seeded draft**
+      with its two `[DECIDE]` markers, renders it as a DRAFT on the account step, and takes
+      consent against the exact version shown. Setting `ConsentText.approved_at` removes the
+      banner and changes nothing else; consents taken under a draft stay queryable
+      (`ConsentRecord.text.approved_at__isnull=True`). The retention period and the withdrawal
+      address are still the group's answers, and the address is also blocked on publishing the
+      administrator's contact details (below).
+- [ ] **C1 (the pre-visit questionnaire) waits for the group's answers.** <!-- C1_HELD_FOR_GROUP -->
+      Designed 2026-11-05 (session `1r`) and **deliberately not built**. It is the first task after
+      sub-plan B, and two of its rules are about what the OPP means rather than about Django, so they
+      go to PGS/SAOSO with the demo of what 1a does today. The design, and the three things designing
+      it found, are written into `MVP1A_PLAN.md`'s C1 section; **nothing of it is in the tree**. The
+      questions, none of which the build should answer on its own:
+      1. **May submit refuse a questionnaire with unanswered farmer questions**, or is a blank
+         something the visit records? OPP §4.1(2) says the *completed* questionnaire must be
+         available to the team three days before the visit, and "completed" is the group's word.
+      2. **If a farmer unticks a category after answering it, are those answers kept as history or
+         withdrawn?** A6 currently deletes the `FarmCategory` row of an `APPLIED` category on
+         re-submit, so a questionnaire hung off that row would be deleted with it.
+      3. **What is a farmer told if the questionnaire changes version while they are filling it
+         in** — finish on the sheet they started, or begin again?
+
+      Show them the demo first, and do not build C1 in the same session as the demo.
+- [ ] **UAT for the application flow.** A6 has 32 automated tests and no `tests/uat/` checklist:
+      the judgements left are the ones a person must make in a browser — does the four-step flow
+      read as one thing on a phone, is the consent block readable before it is ticked, and does
+      "Your part is done" leave a farmer with the right expectation about paying.
+- [ ] **Five of the seven record "why" sentences name no source** (task B3, 2026-11-05). R02–R04, R06
+      and R07 explain what the record is *for* without citing a clause or the FORM, and
+      `SELF_CHECK_PRD` §3.3 asks every control's why to name its source. The wording is D71's reviewed
+      copy, so it was transcribed rather than rewritten and pinned in
+      `test_crops_template.py::NO_CITED_CLAUSE`. A8 is where a clause is added or the group says the
+      explanation is enough.
+- [ ] **The FORM prints "(Yes/No)" on a question that asks for a percentage** — V21's child, *"What
+      percentage of the farm is dedicated to biodiversity? (Yes/No)"*. B3 transcribed it as printed
+      with YES/NO/NA options so the visit can still record an answer; the group should decide whether
+      the child wants a number instead. Found while authoring the template, 2026-11-05.
 
 ## Corpus and chat — found while building
 
@@ -182,6 +252,23 @@ points at them instead of pretending they are imminent (D60).
       and 37 verdicts from the FORM workbook (D28), including six sub-verdict groups. The tests assert
       the counts and the schema; *whether the wording says what the FORM says* is a domain judgement no
       test can make. Recorded only as a gate row in `HANDOVER.md` §3 until now.
+- [ ] **The two public consents have no retention answer** (found building A8, 2026-11-05; A8 seeded
+      the rows this line used to ask for). The
+      research and demographic texts are seeded as **drafts** from the D71 ledger: they name the
+      recipients, promise totals only and offer withdrawal without an account, but neither says how
+      long the answers are kept. That is the same `[DECIDE]` `SELF_CHECK_PRD` §11.6 leaves for the
+      account consent, and it matters more here because these rows are research data. The drafts
+      render with the banner until `approved_at` is set — one data edit, no migration.
+- [ ] **An `/ask/` refusal does not point at the self-check** (A8, `SELF_CHECK_PRD` §4.3, deferred).
+      The PRD asks for the link "when the question is about the visitor's own eligibility", and the
+      refusal path has no eligibility classification to hang it on. Adding one means either an
+      intent test over the question or a second refusal string — a chat change, judged on its own,
+      not a front-door one slipped in with A8.
+- [ ] **A derived control's FORM text is long on the front door** (A8, seen in the browser). The
+      eleven markers render the template's own `text` in the disclosure ("The farm visit asks this
+      as: …"); Q11.1's is a two-hundred-word FORM cell. It is honest and it is unread on a phone —
+      the group may prefer the first sentence only, which is a template edit (a new version), not a
+      code change.
 - [ ] Confirm plain-language wording for the membership-is-not-certification disclaimer.
 - [ ] Afrikaans: decide whether to translate the full site or navigation and headings only.
 

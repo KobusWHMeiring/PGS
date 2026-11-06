@@ -233,6 +233,13 @@ CHAT_MODEL = env("CHAT_MODEL", "gemini-2.5-flash")
 CHAT_TIMEOUT_MS = int(env("CHAT_TIMEOUT_MS", "30000"))
 CHAT_RATE_LIMIT = int(env("CHAT_RATE_LIMIT", "20"))
 CHAT_RATE_LIMIT_WINDOW_SECONDS = int(env("CHAT_RATE_LIMIT_WINDOW_SECONDS", "3600"))
+# The public self-check's budget (A8, `SELF_CHECK_PRD` §4.4). Deliberately its own number and its
+# own cache namespace: a form that writes to a research table is worth spamming, and a farmer who
+# used the front door must not find the assistant refusing them. Five an hour is enough for a farm
+# with one browser and a shared connection, and too few for a bot to make "70% of prospective
+# farmers lack sales records" true about a catchment of a few dozen farms.
+SELF_CHECK_RATE_LIMIT = int(env("SELF_CHECK_RATE_LIMIT", "5"))
+SELF_CHECK_RATE_WINDOW_SECONDS = int(env("SELF_CHECK_RATE_WINDOW_SECONDS", "3600"))
 CHAT_MAX_QUESTION_CHARS = int(env("CHAT_MAX_QUESTION_CHARS", "500"))
 CHAT_HISTORY_MESSAGES = int(env("CHAT_HISTORY_MESSAGES", "8"))
 # How many passages the model is given. Eight, not five: at five the cardboard question
@@ -289,6 +296,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # does not exist yet. This must remain the **first** migration applied to a new
 # database; see the A3 gate in HANDOVER.md §5.
 AUTH_USER_MODEL = "core.User"
+
+# Where `@login_required` sends a farmer, and where the portal resumes (task A6, spec §7).
+# Names, not paths: the URLconf owns the paths, and `resolve_url` resolves a name at
+# request time — a second hardcoded `/apply/` here would be the copy that goes stale.
+LOGIN_URL = "core:login"
+LOGIN_REDIRECT_URL = "core:apply"
+LOGOUT_REDIRECT_URL = "core:home"
 
 LANGUAGE_CODE = "en-za"
 TIME_ZONE = "Africa/Johannesburg"

@@ -96,6 +96,9 @@ migrated now so deferring costs nothing structural.
 
 # Sub-plan A — Membership & application (Flow A)
 
+**A is 8 of 8 — complete 2026-11-05 (session `1r`).** A1–A8 landed. The "Definition of done"
+checklist in §3 is for the whole of 1a and stays open until C–F land.
+
 ### Task A1: Farms and members
 
 **Files:** `core/models/_core.py`, `core/models/__init__.py`, `core/tests/test_membership.py`,
@@ -190,12 +193,26 @@ def test_distinctive_mark_is_a_valid_pledge_method(member):
                       evidence_document=doc)
     assert p.method == "DISTINCTIVE_MARK"
 
-def test_land_history_conflict_is_flagged_not_resolved(member):
-    # D31: pledge says 12 months for annuals, OPP §V says 18. Record, don't adjudicate.
+def test_land_history_conflict_is_the_band_where_the_documents_disagree(member):
+    # D31 + D83. SAOSO 4.2.3 and the pledge say 12/12/18; OPP §V says 18/12/12.
+    # The flag is NOT "differs from OPP §V" -- at 12 months for annuals the answer
+    # genuinely depends on which document you read, and a farmer who signed the
+    # pledge as printed is in that band. Flag the ambiguity, not the farmer.
     p = record_pledge(member, kind="FARMER", method="SIGNATURE",
                       declared_annual_clear_months=12)
-    assert p.land_history_conflict is True
-    assert p.resolved_in_conversion_months is None
+    assert p.land_history_conflict is True          # 12 is inside [12, 18)
+    assert p.resolved_in_conversion_months is None  # D31: record, never adjudicate
+
+def test_a_declaration_past_both_readings_is_not_a_conflict(member):
+    p = record_pledge(member, kind="FARMER", method="SIGNATURE",
+                      declared_annual_clear_months=24)
+    assert p.land_history_conflict is False
+
+def test_pasture_has_no_conflict_band_because_both_documents_agree(member):
+    # Both say 12 for pasture and meadows, so no declaration can be ambiguous.
+    p = record_pledge(member, kind="FARMER", method="SIGNATURE",
+                      declared_pasture_clear_months=12)
+    assert p.land_history_conflict is False
 ```
 
 **Then** `Pledge(member, kind, method, signed_on, place, declared_land_history_ok,
@@ -203,8 +220,21 @@ in_conversion_declared, in_conversion_months, declared_annual_clear_months,
 declared_perennial_clear_months, land_history_conflict, recorded_by, witness_name,
 witness_designation, witness_signature, evidence_document)`.
 
-`land_history_conflict` is set by the service when a declared period disagrees with OPP §V
-(annuals 18, pasture 12, other perennials 12). Nothing is reconciled (D31).
+`land_history_conflict` is set by the service when a declared period falls **inside the band where
+the two governing documents disagree** — not when it differs from either one. Verified against the
+corpus (`knowledge/corpus/opp.md`, `saoso.md`), the readings are:
+
+| | SAOSO 4.2.3 | OPP pledge | OPP §V | conflict band |
+|---|---|---|---|---|
+| Annuals | 12 | 12 | 18 | `12 <= m < 18` |
+| Pasture & meadows | 12 | 12 | 12 | none — both agree |
+| Other perennials | 18 | 18 | 12 | `12 <= m < 18` |
+
+So `land_history_conflict = min_reading <= declared < max_reading`. Nothing is reconciled (D31), and
+no seal is inferred. **D83** records why the reference is the pair and not OPP §V alone: OPP §V is the
+lone outlier, and a rule written against it would report every farmer who signed the pledge as
+printed as having a conflict — which is the *answer*, not a fault. The bands in the public self-check
+(A4) are drawn on exactly these two thresholds for the same reason.
 
 **Acceptance:** all three tests pass; the consumer pledge has no witness requirement and no land history.
 
@@ -221,6 +251,35 @@ may hold several rows (prior PGS group *and* a third-party certifier *and* a pri
 outcome ∈ GRANTED|DENIED, expires_on, denial_reason)` — FORM Sheet A (D30).
 
 **Acceptance:** a denial without `denial_reason` raises on save.
+
+#### Landed 2026-11-05 (session `1r`) — the file stays, and the denial rule is written twice
+
+1. **The model lives in `core/models/_membership.py`, beside `Farm`** — not in `_core.py`, which is
+   `User`/`UserRole`/`Role`/`Language` now. Adding it took the slice from 24.0 KB to **28.7 KB**,
+   inside the 30 KB cap (`build_principles.md` §II), so no `_prior.py` seam was cut. That is
+   **1.3 KB of headroom**: the next Farm-side model cuts the slice rather than growing the file.
+2. **The denial rule is a `CheckConstraint` *and* a `save()` guard, and both are tested.**
+   `objects.create()` calls `save()` but never `full_clean()`, so a rule in `clean()` alone would
+   be green in a form and absent from every test. The constraint is what a writer that bypasses
+   `save()` (`bulk_create`, a data migration) cannot avoid; the guard is what a caller sees, and it
+   is slightly stricter — whitespace-only counts as blank to a person, and a check constraint
+   cannot express `strip()` portably. Neither is a copy of the other.
+3. **`denial_reason` is `NOT NULL, default=""` and the check reads `~Q(denial_reason="")`** —
+   the nullable-and-natural version of this column is satisfied by Postgres at the row the rule
+   exists to refuse (`NULL IN (…)` / `NOT (NULL = '')` → `NULL` → satisfied, §1.37), so the column
+   is deliberately not nullable and the test omits the reason rather than passing `""`, which is
+   how a caller with nothing to say writes the row. `_scratch/a4/mutate.py` reverts the column to
+   nullable to prove the test can fail.
+4. **A `DENIED` row may not carry `expires_on`.** A denial issued no certificate, so an expiry on
+   it describes an instrument that never existed — D38's trap, a field that can be entered and
+   means nothing. On a `GRANTED` row the date is optional, because "we do not know when it lapsed"
+   is a real answer and a required date would be invented.
+5. **Nothing was added to §4.1's field list**, and a test pins the set: no `declared_on`, no source
+   document, no "verified" flag. The form asks none of them.
+6. **No writer in 1a, and no gap test either.** C2's questionnaire renders Sheet A, and the visit
+   and its report read the rows. Unlike A7's fee surface, nothing is refused on a missing
+   prior-certification row, so the gap is one sentence in the model docstring — a test asserting a
+   gap nobody depends on is the first thing deleted.
 
 ---
 
@@ -290,6 +349,35 @@ familiarisation → record membership fee.
 warning flag (OPP §4.6: probation does not forfeit the logo).
 
 **Acceptance:** four rejection cases and one pass, each a named exception.
+
+#### Landed 2026-11-05 (session `1q`) — three corrections, amended in place
+
+1. **The code lives in `core/services/_eligibility.py`, not `_membership.py`.** Adding the gate took
+   `_membership.py` to **33.3 KB**, past the 30 KB cap (`build_principles.md` §II), so the seam the
+   PRD already draws was cut: `_membership` records what a member attested and invoiced,
+   `_eligibility` decides what standing those records add up to. `_membership` imports and
+   re-exports `MembershipUnpaidError`/`NotEligibleError`, so the old import path still works and
+   both gates refuse with the **same class** (a test asserts the identity: a second definition would
+   make `except MembershipUnpaidError` miss the gate's refusal, and this session shipped exactly
+   that for a few minutes).
+2. **"PROBATION passes with a warning" is a shape, and the shape is a frozen verdict.** The
+   function returns `EligibilityVerdict(warnings=(EligibilityWarning(code=PROBATION_WARNING,
+   message=…),))` instead of `None`. It carries **no `allowed` field** — a field that can only ever
+   be `True` invites `if verdict.allowed:` and a refusal nobody acts on — and **no `status` field**,
+   because `Member.status` is where the status lives (the objection D39 raises to a stored
+   `is_paid_up`). The alternative, letting each caller read `member.status`, would put OPP §4.6's
+   exception in every caller instead of one place where the clause is cited. Pinned by
+   `test_probation_passes_with_a_warning` and `test_probation_does_not_excuse_an_unpaid_subscription`
+   (probation softens the *standing* rule, never the money rule).
+3. **`MembershipUnpaidError` is reused, not replaced**, and probation-style flags live on the
+   verdict. No `is_eligible` field was added to `Member`.
+
+The plan's own acceptance is met by 16 tests: four named rejections, the pass, and the edges that
+keep the gate honest — an unrecognised `Member.status` fails closed, the status is checked before
+payment, and `status=ACTIVE` written by hand is not evidence of payment. 12 mutations, all caught
+(`_scratch/a7/mutate.py`). **The surface that records a fee and its payment still does not exist**
+(`todo.md`: `MISSING_FEE_SURFACE`), so in a running instance the gate correctly refuses every
+self-registered member — that gap is a test, not a comment.
 
 ---
 
@@ -372,6 +460,24 @@ threshold. UAT (judgement only): does the result read as a mirror or a verdict, 
 note comprehensible to someone who has never read the OPP, does "Rather not say" feel like a real
 answer, does the consent read as a real choice, and does it work one-handed in sunlight.
 
+**Built 2026-11-05 (`pgs-visit`, branch `feat/mvp1a-visit`).** 45 tests in
+`core/tests/test_selfcheck.py`, 7 in `tests/e2e/test_selfcheck_wizard.py`, 15 mutations in
+`_scratch/a8/mutate.py` all caught, migration `0017`, UAT in `tests/uat/self_check_uat.md`. Four things
+this task decided that the plan did not, each recorded where it belongs rather than here:
+
+1. **A derived control's question wording** stays in code and its `why` comes from the template marker;
+   the visit's own `text` is rendered beside it — `SELF_CHECK_PRD` §3.4 (amended).
+2. **The consent act is a timestamp on the report**, not a `ConsentRecord` (that model needs a `User`)
+   — §3.6 (amended).
+3. **The aggregate's threshold refusal names neither the value nor the count** — §4.5 (amended).
+4. **`report_self_check --demographics` did print the value and its count**, which is the cell the
+   threshold protects; fixed before the task closed.
+   The two consent texts are seeded as **drafts** (`research-2026-11-05`,
+   `demographics-2026-11-05`) from the D71 ledger, with no retention answer — the group's `[DECIDE]`.
+   `SELF_CHECK_PRD` §3.6's "reuse `ConsentRecord`" is the one line that did not survive contact.
+   The `/ask/` refusal link (§4.3) is **not** built: the refusal has no eligibility classification, and
+   inventing one is a chat change, not a front-door one — it is in `todo.md`.
+
 ---
 
 # Sub-plan B — Templates (the irreversible core)
@@ -385,8 +491,9 @@ answer, does the consent read as a real choice, and does it work one-handed in s
 `^[a-z_]+\.(V\d{2}[a-z]?|Q\d+(\.\d+)?)$` is rejected; a verdict with `polarity` missing is rejected;
 `standard_ref` may be null; a schema with `schema_version != 1` is rejected; a question's optional
 `self_check` block (`{"tier": 1, "why": "..."}`) is accepted, and an unknown key inside it is not
-(**D71** — the public self-check derives twelve of its controls from this schema, so the wording has
-one home; see `../Refinement/SELF_CHECK_PRD.md` §4.6).
+(**D71** — the public self-check derives eleven of its controls from this schema, so the wording has
+one home; see `../Refinement/SELF_CHECK_PRD.md` §4.6, corrected 2026-11-05 in B3: the twelfth, C5, is
+FORM Sheet A and is an own control).
 
 **Then** implement `AssessmentTemplate(category, version, standard_version, schema, effective_from,
 is_active)` plus `validate_schema(dict) -> list[str]` returning human-readable problems rather than
@@ -438,11 +545,12 @@ def test_inverted_and_informational_verdicts_carry_the_right_polarity(key):
     assert pol[key] != "POSITIVE"
 ```
 
-**Also author the twelve `self_check` markers** (D71): Q4.2, Q5.1, Q11.1, Q11.2, and the seven
+**Also author the eleven `self_check` markers** (D71): Q4.2, Q5.1, Q11.1, Q11.2, and the seven
 Sheet I §2 records, each with a `why` sentence naming its clause. The public page renders these
 questions from the schema, not from a copy — so a wording change at the visit reaches the front door,
 and `test_selfcheck.py::test_every_derived_control_resolves` fails if a marker points at a question
-that does not exist. The count is asserted: **twelve**.
+that does not exist. The count is asserted: **eleven** — C5 is Sheet A, so it is an own control
+(SELF_CHECK_PRD §3.4, corrected 2026-11-05 in B3).
 
 **Then** author all 38 questions across PART A (general information) and PART B (crop production),
 marking `respondent` per the FORM's grey/white cells, `attachments` for the documents Sheet I §2
@@ -501,6 +609,43 @@ writing.
 `AssessmentTemplate` afterwards must not change it (`copy.deepcopy`); `AssessmentAnswer` is unique on
 `(assessment, question_key)`; saving an answer twice updates rather than duplicates.
 
+#### Design recorded 2026-11-05 (session `1r`) — **and deliberately not built**
+
+C1 was designed and then stopped: two of its questions are about what the OPP means, not about Django,
+so they go to PGS/SAOSO with the 1a demo. Parked in `todo.md::C1_HELD_FOR_GROUP`. **Nothing below is
+in the tree** — this is a proposal for whoever builds it after that conversation.
+
+**Three things the task line above does not say, found by designing it:**
+
+1. **`farm_visit` cannot exist in C1.** `FarmVisit` is D1, after C, and the questionnaire is answered
+   *before* a visit is scheduled (Flow B §8 steps 1–4 vs 8). Anchor the assessment on
+   **`FarmCategory`** — what Flow B step 1 says a farmer opens the questionnaire for — and let D1 add
+   the nullable `farm_visit` FK with the constraint that closes it (`PENDING`/
+   `QUESTIONNAIRE_SUBMITTED` may have none, `IN_FIELD` onwards must have one). `category` is **not**
+   stored: it derives through `farm_category`, and D39 is the rule against a second source of truth.
+   A5's `AssessmentFee` set exactly this precedent — do not invent a stub visit.
+2. **The freeze moment.** This line says deep copy; PRD §5.3 and Flow B step 4 say the copy is taken at
+   **submit** (C4), while C2 autosaves before that. Freezing at submit means answers validated against
+   the live template end up under a snapshot of a different version. Recommendation: **freeze at
+   creation**, and have submit **refuse** when the category's active template is no longer the one the
+   assessment froze (`SupersededTemplateError`) — a questionnaire in flight must not span two versions.
+3. **A6's re-submit deletes a `FarmCategory` row** whose status is still `APPLIED`
+   (`record_application_categories`). The moment a questionnaire hangs off that row, an untick deletes
+   a farmer's answers. Recommendation: `on_delete=PROTECT`, **plus** one condition in A6's delete loop
+   (`not row.assessments.exists()`), tested from C1's file with the reason written down.
+
+**Four build decisions, recommended but open:** the answer key is the **item** (`crops.Q4.2` — 79 of
+them) and never the grouping (`crops.Q4` — 38); `value` is a JSON **string** (`YES`/`NO`/`NA` for the
+FORM's tri-state, numbers as typed), never a boolean, because `NA` has no boolean; uniqueness is a
+constraint **and** `update_or_create` (the A4 shape); `coverage()` is **one** walker over the frozen
+snapshot that C2's checklist, C4's submit and any renderer all read, so two of them cannot disagree.
+
+**The questions for PGS/SAOSO:** (a) may submit refuse unanswered farmer questions, or is a blank
+something the visit records — OPP §4.1(2) says the *completed* questionnaire reaches the team three
+days ahead, and what "completed" means is the group's answer, not the build's; (b) if a farmer unticks
+a category after answering, are those answers kept as history or withdrawn; (c) what a farmer should be
+told if the questionnaire changes version while they are filling it in.
+
 ---
 
 ### Task C2: Questionnaire render and autosave
@@ -523,7 +668,8 @@ HTMX for autosave (already permitted, D1) — one vendored file, no build step.
 **Files:** `core/services/_selfcheck.py`, `core/views/_portal.py`, `core/tests/test_selfcheck_prefill.py`
 
 **Deliberately after A8 and C2, and A8 is not blocked on it.** The public self-check (A8, D71) asks
-twelve questions that are also questions on the frozen Crops template. A farmer who completed the
+eleven questions that are also questions on the frozen Crops template (the twelfth derived control,
+C5, is Sheet A and has no Crops-template question to prefill from). A farmer who completed the
 check should not answer them twice.
 
 **Tests first:** an applicant who completes the check and then registers sees the questionnaire's
@@ -535,7 +681,7 @@ answer's own provenance), never a submitted one; editing the questionnaire chang
 declared answers into drafts, and mark each pre-filled row with its source. Nothing is inferred: a
 `RATHER_NOT_SAY` answer arrives **unanswered**, not as a "no".
 
-**Acceptance:** the twelve matching answers arrive as drafts; a `RATHER_NOT_SAY` answer leaves its
+**Acceptance:** the eleven matching answers arrive as drafts; a `RATHER_NOT_SAY` answer leaves its
 question blank; the report is never mutated by the portal.
 
 ---

@@ -16,7 +16,7 @@ from core.services._seed import seed_deployment
 
 
 class Command(BaseCommand):
-    help = "Seed the deployment's seals and assessment categories (idempotent)."
+    help = "Seed the deployment's seals, categories and committee terms (idempotent)."
 
     def handle(self, *args, **options):
         result = seed_deployment()

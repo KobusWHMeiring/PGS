@@ -199,8 +199,7 @@ PAGES: dict[str, Page] = {
             "— the IFOAM–Organics International definition, which SAOSO adopts in full."
         ),
     ),
-    "how_it_works": Page(
-        key="how_it_works",
+    "how_it_works": Page(        key="how_it_works",
         title="How membership and assessment work — Outeniqua PGS",
         description=(
             "Six steps from applying to a recorded decision, the composition of a farm visit "
@@ -258,6 +257,26 @@ PAGES: dict[str, Page] = {
             "Fees are set on a cost-recovery basis and approved by the members at the annual "
             "general meeting. The assessment fee reflects the scale and commercial intensity "
             "of the farm."
+        ),
+    ),
+    # `/before-you-apply/` (A8, D71). Its `Page` entry is not decoration: `PAGES` is what the
+    # claim-discipline sweep walks, so the route is covered from the first render — the page most
+    # likely to grow an eligibility claim is the one a farmer reads *instead of* applying.
+    "before_you_apply": Page(
+        key="before_you_apply",
+        title="Before you apply — Outeniqua PGS",
+        description=(
+            "Twenty questions in five short steps, no account needed: the records a farm visit "
+            "checks, the records you already hold, the land-history note and the fee band."
+        ),
+        eyebrow="Before you apply",
+        heading="Find out what a visit checks",
+        heading_accent="before you spend a day on a form.",
+        lede=(
+            "Twenty questions in five short steps, about five minutes, no account needed. You get "
+            "back a list of what to gather, a count of the records you already hold, and the two "
+            "facts nobody publishes: when your land could be assessable, and which fee band you "
+            "are in."
         ),
     ),
     "ask": Page(

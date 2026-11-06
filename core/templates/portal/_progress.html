@@ -1,0 +1,17 @@
+{% comment %}
+The step rail. `done` is read from the database at render time (there is no session flag
+to go stale), and the current step is marked by the view, which is the only layer that
+knows which page this is.
+
+"Done" is written as text, not only as colour: on a phone in sunlight, a tint is not a
+label, and the applicant has to be able to tell what the group already has.
+{% endcomment %}
+<ol class="rail" aria-label="Your application so far">
+  {% for step in steps %}
+    <li class="rail__item{% if step.done %} rail__item--done{% endif %}{% if step.key == current %} rail__item--current{% endif %}">
+      <span class="rail__num" aria-hidden="true">{{ forloop.counter }}</span>
+      <span class="rail__label">{{ step.title }}</span>
+      <span class="rail__state">{% if step.done %}Done{% elif step.key == current %}Here{% else %}Still to do{% endif %}</span>
+    </li>
+  {% endfor %}
+</ol>

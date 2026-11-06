@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+The way back in. 1a has no mail provider (D84), so a password is the only route: there is
+no "email me a link", and the page does not offer one it cannot send.
+
+`next` is rendered as a hidden field by Django's `LoginView`, so a farmer who was sent here
+by `@login_required` lands on the step they asked for.
+{% endcomment %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/portal.css' %}">{% endblock %}
+
+{% block content %}
+  <section class="section portal">
+    <div class="container portal__wrap">
+      <p class="eyebrow">Your account</p>
+      <h1 class="serif-title portal__title">Sign in</h1>
+      <p class="portal__lede">
+        Your email address is your username. There is no password reset by email yet —
+        if you are stuck, ask the administrator.
+      </p>
+
+      <form class="portal__form" method="post">
+        {% csrf_token %}
+        {% include "portal/_form_errors.html" %}
+        {% include "portal/_field.html" with field=form.username %}
+        {% include "portal/_field.html" with field=form.password %}
+        <div class="portal__actions">
+          <button class="btn btn--forest" type="submit">Sign in</button>
+          <a class="link-more" href="{% url 'core:apply' %}">Create an account →</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

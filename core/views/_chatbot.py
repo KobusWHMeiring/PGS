@@ -16,13 +16,11 @@ the page and leaves should not leave a row (or consume an IP budget) behind.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 
 from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
-from ipware import get_client_ip
 
 from core.forms._chatbot import QuestionForm
 from core.models import ChatSession
@@ -44,6 +42,7 @@ from core.services._chatbot import (
     start_session,
 )
 from core.services._ask import answer_page, board_context, record_public_question
+from core.services._chat_guard import client_ip_hash
 from core.services._public import Page, chrome_context, public_context
 
 logger = logging.getLogger(__name__)
@@ -51,19 +50,6 @@ logger = logging.getLogger(__name__)
 #: The Django session key holding the conversation's public UUID. The UUID is what a
 #: browser sees; the integer PK never leaves the database.
 CHAT_SESSION_KEY = "chat_session_uuid"
-
-
-def client_ip_hash(request) -> str:
-    """In: a request. Out: sha256 of the client IP, or "" when it cannot be read.
-
-    The raw address is never stored. The hash exists only to scope the rate limit, so
-    a missing IP degrades to "not limited" rather than to a shared global bucket that
-    would let one visitor exhaust everyone's budget.
-    """
-    ip, _routable = get_client_ip(request)
-    if not ip:
-        return ""
-    return hashlib.sha256(ip.encode("utf-8")).hexdigest()
 
 
 def _session_from_request(request) -> ChatSession | None:

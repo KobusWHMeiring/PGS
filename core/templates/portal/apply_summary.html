@@ -1,0 +1,90 @@
+{% extends "portal/apply_base.html" %}
+{% load pgs_extras %}
+
+{% comment %}
+The end of the applicant's part (A6). It is not a fifth step and it posts nothing.
+
+Four things it must say, and each is a refusal of a friendlier lie:
+
+  * **The membership fee has not been recorded yet.** The group invoices it for the fee
+    year it has decided; a self-registration that wrote a period would invent a policy and
+    a `paid_on` the group never saw. So this page states the figure, says who records it,
+    and says plainly that nothing is paid up.
+  * **The band is the printed label**, snapshotted by A5 when the fee was declared, so the
+    farmer can recognise the row of the table they read.
+  * **What happens next** is the OPP §4.1 notice, not a promise: the group will be in
+    touch, and a visit is scheduled with at least five days' notice.
+  * **The address is unverified** (D84): there is no mail provider in 1a, so this page
+    cannot pretend a confirmation went out.
+{% endcomment %}
+
+{% block step_title %}Your part is done{% endblock %}
+
+{% block step_lede %}
+  <p class="portal__lede">{{ page.lede }}</p>
+  <p class="portal__ref">Application reference <strong>{{ member.membership_no }}</strong></p>
+{% endblock %}
+
+{% block body %}
+  <dl class="summary">
+    <div class="summary__row">
+      <dt>Farm</dt>
+      <dd>{{ farm.name }}{% if farm.nearest_town %}, near {{ farm.nearest_town }}{% endif %}</dd>
+    </div>
+    <div class="summary__row">
+      <dt>What you want assessed</dt>
+      <dd>
+        {% for row in farm.categories.all %}
+          {{ row.category.label }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </dd>
+    </div>
+    {% if fee %}
+      <div class="summary__row">
+        <dt>Turnover you declared</dt>
+        <dd>{{ fee.declared_turnover_cents|zar }}</dd>
+      </div>
+      <div class="summary__row">
+        <dt>Band (the printed scale)</dt>
+        <dd>{{ fee.band_label }}</dd>
+      </div>
+      <div class="summary__row summary__row--figure">
+        <dt>Assessment fee</dt>
+        <dd>{{ fee.amount_cents|zar }}</dd>
+      </div>
+    {% endif %}
+    <div class="summary__row summary__row--figure">
+      <dt>Membership fee <span class="summary__tag">not yet recorded</span></dt>
+      <dd>{{ membership_farmer_cents|zar }} a year</dd>
+    </div>
+  </dl>
+
+  <p class="portal__note">
+    <strong>Nothing has been paid.</strong> The group records the membership fee against the
+    fee year it has decided, and confirms your payment — until then your membership is not
+    paid up, and only fully paid-up members are eligible for a farm assessment (OPP §2.3).
+    Ask the administrator for the banking details and the reference to use.
+  </p>
+
+  <h2 class="portal__subtitle">What happens next</h2>
+  <ol class="next-steps">
+    <li>The group reads what you have declared and comes back to you with any questions.</li>
+    <li>Once the membership fee and the assessment fee are settled, a visit is scheduled —
+      with at least five days' notice (OPP §4.1).</li>
+    <li>The farmer questionnaire arrives before the visit. It is the work of the visit, not
+      an exam: the assessors read it with you.</li>
+  </ol>
+
+  <p class="portal__note">
+    <strong>Your email address is not verified.</strong> Email verification is not available
+    yet, so nothing was sent to confirm it — and nothing on this page says otherwise.
+  </p>
+
+  <div class="portal__actions">
+    <a class="btn btn--ghost" href="{% url 'core:home' %}">Back to the site</a>
+    <form method="post" action="{% url 'core:logout' %}">
+      {% csrf_token %}
+      <button class="btn btn--outline" type="submit">Sign out</button>
+    </form>
+  </div>
+{% endblock %}

@@ -19,4 +19,6 @@ Slices:
     _documents.py    the public document library: what is published, and how it gets there
     _document_reader.py  the reader page: section, branch, passages, search, citation
     _document_shapes.py  what that page is made of: cards, the printed grid, the fee box
+    _membership.py   the pledge: what a member attested, and where two documents disagree
+    _eligibility.py  A7's standing gate: applicant, lapsed, terminated, unpaid — and probation's warning
 """

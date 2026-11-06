@@ -9,9 +9,11 @@ they *hold* the Farmer role, and one person is routinely several at once — the
 spec's own example is a farmer who is also a peer assessor and a consumer. So
 roles are rows in `UserRole`, never boolean fields on `User`.
 
-`Member` — the membership record that governs *eligibility*, independent of login
-— is a different concept and arrives with sub-plan B/§4.1, not here. A `User` can
-exist with no membership at all: that is a plain public visitor.
+This module holds the **account only**. The membership record that governs
+*eligibility*, independent of login, is `_membership.py` (the other half of spec
+§4.1 "Core & Membership"); it was cut out when this slice reached 21 KB against the
+30 KB cap. Split, not duplicated: `_membership` imports `User` from here, and this
+module imports nothing from it, so there is no cycle and one direction.
 """
 
 from __future__ import annotations
@@ -157,3 +159,4 @@ class UserRole(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - admin convenience
         return f"{self.user_id}:{self.role}"
+
