@@ -19,11 +19,12 @@ then the generator and the ingest as usual.
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
 
-from knowledge.extraction import sha256_of
+from knowledge.extraction import PDFTOTEXT, PDFTOTEXT_ENV, sha256_of
 from knowledge.ingest import CORPUS_DOCUMENTS, ingest_standard
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.table_proposals import proposals_for
@@ -32,6 +33,31 @@ from tests.tools.draft_fixtures import fixture_body
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OPP_PDF = REPO_ROOT / "pgs_docs" / "Outeniqua pgs principles, policies and procedures 2026.pdf"
+
+
+@pytest.fixture(autouse=True)
+def a_real_reader(monkeypatch):
+    """Point the ingest at an extractor that exists, or skip - and never inherit the poison.
+
+    `ingest_standard` reads the PDF's printed table of contents even when a reviewed artefact
+    supplies the text (D68 §7.5: the TOC is a property of the *printed* document, and it is the
+    only source of a branch's name), so these two tests need a reader. `scripts/verify.sh`
+    poisons `PDFTOTEXT_BIN` on purpose and `tests/tools/test_verify_gate.py` asserts the poison
+    stays - which is how this file sat red in the gate, unseen, from the commit that added it
+    (`testing_hazards.md` §3.48).
+
+    Naming the reader here rather than inheriting one keeps both properties: the gate stays
+    green on a box with no poppler, and the tests still run wherever a reader exists. Skip,
+    never silently narrow: the reason is printed in the gate's output.
+    """
+    binary = shutil.which(PDFTOTEXT)
+    if binary is None:
+        pytest.skip(
+            f"no `{PDFTOTEXT}` on PATH: the ingest reads the printed TOC (D68 §7.5), and "
+            f"{PDFTOTEXT_ENV} is deliberately poisoned by scripts/verify.sh"
+        )
+    monkeypatch.setenv(PDFTOTEXT_ENV, binary)
+
 
 HEADER = """<!-- corpus
 doc_key: {doc_key}

@@ -2477,7 +2477,8 @@ Evidence:
 
 Consequence: the instinct on seeing a size or hash mismatch is "the merge ate their edits", and the
 next act is a restore from the wrong side. The real change is invisible in an editor and in
-`git status` (both say nothing happened), and only a binary read of `` shows it — which is
+`git status` (both say nothing happened), and only a binary read of `
+` shows it — which is
 §1.41's lesson arriving from a new direction: `Path.read_text()` cannot see the difference either.
 
 Rule: **back the bytes up before the stash, not just the diff** — a `git diff --binary` for the
@@ -2487,6 +2488,40 @@ not with `git status`; if only the endings differ, copy the originals back rathe
 patch. And when reporting the restoration, say what was compared and what the comparison excluded —
 "identical" after dropping a line from the diff is a claim with a qualifier, and the qualifier is the
 evidence.
+
+### 3.48 A test that needs a PDF reader is red under `verify.sh`'s poison, and a gate that stops at step 1 hides it
+
+`scripts/verify.sh` exports `PDFTOTEXT_BIN="$REPO_ROOT/scripts/_no_extractor"` on purpose (D57,
+§2.9) and `tests/tools/test_verify_gate.py` asserts both that export and that the named path cannot
+exist. `tests/tools/test_new_document_ingest.py` (added 2026-11-05, `665b1fb`) then calls
+`ingest_standard()`, which re-reads the PDF for the **printed table of contents** even when a
+reviewed artefact supplies the text — deliberately (D68 §7.5: the TOC is a property of the printed
+document and the only source of a branch's name). Both sides are right, and together the gate is red
+on two tests.
+
+Evidence (2026-11-06, this tree):
+
+    $ PDFTOTEXT_BIN="$PWD/scripts/_no_extractor" pytest -q --reuse-db tests/tools/test_new_document_ingest.py
+    knowledge\ingest.py:368: in ingest_standard
+        toc_pages = extract_pages(path)
+    E   knowledge.extraction.ExtractionError: `.../scripts/_no_extractor` not found.
+    2 failed
+    $ pytest -q --reuse-db tests/tools/test_new_document_ingest.py      # real Xpdf on PATH
+    2 passed in 7.37s
+
+Consequence: nobody saw it. Step 1 of the gate was red on this tree (a 32 KB `copy_deck.py` against
+the 30 KB cap, §II), so `verify.sh` stopped before pytest and every suite number quoted for the tree
+came from a `--reuse-db` run that had a real reader on PATH. **A gate that fails at step 1 is not
+evidence about steps 2-4**: run the later steps by hand, or the first failure is the only one you
+will ever hear about. The same shape recurs whenever a `set -euo pipefail` gate is quoted as green
+from a tree where only its early steps were observed.
+
+Rule: a test that genuinely needs an external binary **names it itself and skips with a printed
+reason** when it is absent — never inherit whatever the environment happens to hold. That file's
+`a_real_reader` fixture does exactly this (`shutil.which("pdftotext")` → `monkeypatch.setenv`), so
+the gate stays green on a box without poppler and the two tests still run wherever one exists.
+Neither deleting them nor xfailing them is acceptable: they are the only proof of
+`INGESTION_ENGINE_PRD.md` §6's first criterion.
 
 ## 5. Template for a new entry
 
