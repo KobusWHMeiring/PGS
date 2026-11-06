@@ -1,14 +1,18 @@
-# Handover — merged, migrated, seeded: the flow runs, and refining it is the next act
+# Handover — merged, migrated, seeded, copy deck landed: UI refinement is the next act
 
-> ## START HERE — **the two strands are one tree and the flow runs; now refine it**
+> ## START HERE — **the tree is shippable at `66bc6c1`; the next act is UI refinement**
 >
-> **The next act is refinement of the application flow** (product owner, 2026-11-06), on a dev
-> database that is migrated and seeded, so every screen can be judged in a browser instead of read
-> in a test. The demo to PGS/SAOSO is still the purpose and C1 still waits for the group (below).
-> **Read `product/design/DESIGN.md` before changing a view** — cream grounds, Lora + Mulish, the
-> `brand-*` tokens, ≥44 px targets — and check `product/backlog/` with the local
-> `pgs-reading-the-backlog` skill before planning, so a refinement that is already queued is not
-> invented again.
+> **The next act is UI refinement** (product owner, 2026-11-06, at `66bc6c1`): **page headers read
+> too big, back buttons are missing where a flow needs them, and there is a list of basic UI
+> improvements.** `Refinement/UI_REFINEMENT_PRD.md` stages it and holds **no design decision**: §3 is
+> four questions only the owner can answer, §4 is the screenshot pass (375 / 768 / 1440) whose
+> findings table must exist *before* any CSS, and §5 is the smaller act the owner asked for — **a
+> short investigation into UI-refinement practice before a local `pgs-refining-ui` skill is written**
+> (four `pgs-*` skills exist and none is about the browser). The demo to PGS/SAOSO is still the
+> purpose and C1 still waits for the group. **Read `product/design/DESIGN.md` before changing a
+> view** — §4 is where "too big" is decided, and Lora is deliberately *not* bold — and check
+> `product/backlog/` with the local `pgs-reading-the-backlog` skill first, so a queued refinement is
+> not invented again. The dev database is migrated and seeded, so every screen is judged in a browser.
 >
 > **What landed.** `feat/mvp1a-visit` (`22b2aab`, **36 commits**: MVP 1a A1–A8, B1–B4, D83, D84, Q8's
 > draft consent) is merged into `main` (`06cb013`, D80/D82 and S5-a/b/c) at the merge commit above it.
@@ -189,6 +193,8 @@ and adds one line here; this file stays state. **Tags `1n`–`1r` were used by b
 ran in parallel, so a repeated tag is two different sessions (the file name, not the tag, identifies
 one). Where a tag repeats, the `main` line comes first.
 
+- `1u` 2026-11-06 (session 29) — the copy deck lands, and the gate it was hiding: step 1 red stops
+  every step after it — [`SESSION_1u_2026-11-06_the-copy-deck-lands-and-the-gate-it-uncovered.md`](product/docs/handover/SESSION_1u_2026-11-06_the-copy-deck-lands-and-the-gate-it-uncovered.md)
 - `1t` 2026-11-06 (session 28, merge session) — the two strands become one tree: three conflicts, and each resolved by a rule rather than a taste — [`SESSION_1t_2026-11-06_the-merge-three-conflicts-and-two-strands.md`](product/docs/handover/SESSION_1t_2026-11-06_the-merge-three-conflicts-and-two-strands.md)
 - `1s` 2026-11-06 (session 26) — S5-c: Appendix 7 becomes a grid, and the paper is five pages longer than the plan — [`SESSION_1s_2026-11-06_appendix-7-is-a-grid.md`](product/docs/handover/SESSION_1s_2026-11-06_appendix-7-is-a-grid.md)
 - `1r` 2026-11-05 (session 25) — S5-b: Appendix 2 becomes a block, and the curated table path is gone — [`SESSION_1r_2026-11-05_appendix-2-becomes-a-block.md`](product/docs/handover/SESSION_1r_2026-11-05_appendix-2-becomes-a-block.md)

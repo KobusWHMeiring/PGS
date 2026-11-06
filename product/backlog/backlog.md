@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-06 12:10
+> Generated: 2026-11-06 12:34
 
 ## Ready (up next)
 
@@ -37,6 +37,7 @@
 - **Refinement: SAOSA multi-branch readiness — is this blueprint only for Outeniqua?** - `Refinement\SAOSA_MULTI_BRANCH_READINESS.md` - Status: Refinement — findings recorded 2026-10-19; no build approved. Awaits a product decision on deployment shape (§8) and the four leaks in §5.
 - **PRD: The public self-check — "Before you apply"** - `Refinement\SELF_CHECK_PRD.md` - Status: Refinement — shape decided (**D71**, 2026-10-29). Every control and its wording judged by
 - **PRD: Tables as reviewed data — so the reader can display any table without new code** - `Refinement\TABLES_AS_DATA_PRD.md` - Status: **Refinement** — **§3a's format is BUILT (2026-10-30):** `<!-- table … -->` parses as
+- **UI refinement — the headers are too big, and the back buttons are missing** - `Refinement\UI_REFINEMENT_PRD.md` - Status: **Refinement** — the owner named three things on 2026-11-06 (`66bc6c1`) and this record
 
 ## On Hold
 
