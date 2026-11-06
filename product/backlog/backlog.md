@@ -1,7 +1,7 @@
 # Outeniqua PGS Product Backlog
 
 > **Generated index** - do not edit by hand. Regenerate with `python product/backlog.py --write`.
-> Generated: 2026-11-05 18:48
+> Generated: 2026-11-06 06:47
 
 ## Ready (up next)
 
@@ -149,13 +149,29 @@ the generated index's "To Do" section.
 - [ ] Aquaculture, Wine and Input Supplier Attestation — forms and workflow (§17.1).
 - [ ] Complaints, hearings and discipline workflow (OPP §4.5–4.7).
 - [ ] Membership fee *collection* (fees are tracked only; no gateway).
-- [ ] **A surface that records a membership fee and its payment.** A6 (2026-11-05) built and
-      tested `record_membership_fee()` and `record_membership_payment()` (the APPLICANT → ACTIVE
-      transition, which OPP §2.3 and spec §7.7 tie to payment) and **no view calls them**: the
-      fee year is the group's (D39) and a self-registration must not write a `paid_on` it never
-      received. Until this exists, every applicant stays `APPLICANT` and unpaid, so A7's
-      eligibility gate passes for nobody in a running instance. It belongs with the committee's
-      work (A7 / C1) or a one-screen administrator page — decide which before the pilot.
+- [ ] **A surface that records a membership fee and its payment.** <!-- MISSING_FEE_SURFACE -->
+      A6 (2026-11-05) built and tested `record_membership_fee()` and
+      `record_membership_payment()` (the APPLICANT → ACTIVE transition, which OPP §2.3 and spec
+      §7.7 tie to payment) and **no view calls them**: the fee year is the group's (D39) and a
+      self-registration must not write a `paid_on` it never received. **A7 (2026-11-05) landed the
+      eligibility gate that makes this load-bearing**
+      (`core.services._eligibility.assert_eligible_for_assessment`): an applicant is refused by
+      name, so in a running instance the gate now refuses every self-registered member — correct,
+      and a demo that ends every visit path in a refusal. A test names the gap rather than a
+      comment (`core/tests/test_eligibility.py::
+      test_nothing_in_a_running_instance_records_a_membership_fee`); it fails the day a surface
+      appears, and that failure is the instruction to delete it and close this item.
+
+      **Awaiting the product owner's choice of surface** — three options, and the third is what
+      A7 shipped because the choice is not the build's to make:
+      1. a **one-screen administrator page** (record a fee, record a payment, flip to ACTIVE). The
+         cheapest honest form is two Django-admin actions on a new `MembershipFee` registration
+         that call the two services — not an editable `paid_on` field, which would leave the member
+         `APPLICANT` while looking paid;
+      2. **the committee's surface**, which belongs to C1 and does not exist yet;
+      3. **the gate now, the surface named here** — A7's choice. Nothing was invented: no `paid_on`
+         the group never received, and no test that reaches ACTIVE by writing the status.
+      Which one to build before the pilot demo is the group's call.
 - [ ] **Approve the Q8 consent wording** (SELF_CHECK_PRD §11.6). A6 ships it as a **seeded draft**
       with its two `[DECIDE]` markers, renders it as a DRAFT on the account step, and takes
       consent against the exact version shown. Setting `ConsentText.approved_at` removes the
@@ -163,6 +179,22 @@ the generated index's "To Do" section.
       (`ConsentRecord.text.approved_at__isnull=True`). The retention period and the withdrawal
       address are still the group's answers, and the address is also blocked on publishing the
       administrator's contact details (below).
+- [ ] **C1 (the pre-visit questionnaire) waits for the group's answers.** <!-- C1_HELD_FOR_GROUP -->
+      Designed 2026-11-05 (session `1r`) and **deliberately not built**. It is the first task after
+      sub-plan B, and two of its rules are about what the OPP means rather than about Django, so they
+      go to PGS/SAOSO with the demo of what 1a does today. The design, and the three things designing
+      it found, are written into `MVP1A_PLAN.md`'s C1 section; **nothing of it is in the tree**. The
+      questions, none of which the build should answer on its own:
+      1. **May submit refuse a questionnaire with unanswered farmer questions**, or is a blank
+         something the visit records? OPP §4.1(2) says the *completed* questionnaire must be
+         available to the team three days before the visit, and "completed" is the group's word.
+      2. **If a farmer unticks a category after answering it, are those answers kept as history or
+         withdrawn?** A6 currently deletes the `FarmCategory` row of an `APPLIED` category on
+         re-submit, so a questionnaire hung off that row would be deleted with it.
+      3. **What is a farmer told if the questionnaire changes version while they are filling it
+         in** — finish on the sheet they started, or begin again?
+
+      Show them the demo first, and do not build C1 in the same session as the demo.
 - [ ] **UAT for the application flow.** A6 has 32 automated tests and no `tests/uat/` checklist:
       the judgements left are the ones a person must make in a browser — does the four-step flow
       read as one thing on a phone, is the consent block readable before it is ticked, and does

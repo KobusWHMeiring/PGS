@@ -109,6 +109,22 @@ the generated index's "To Do" section.
       (`ConsentRecord.text.approved_at__isnull=True`). The retention period and the withdrawal
       address are still the group's answers, and the address is also blocked on publishing the
       administrator's contact details (below).
+- [ ] **C1 (the pre-visit questionnaire) waits for the group's answers.** <!-- C1_HELD_FOR_GROUP -->
+      Designed 2026-11-05 (session `1r`) and **deliberately not built**. It is the first task after
+      sub-plan B, and two of its rules are about what the OPP means rather than about Django, so they
+      go to PGS/SAOSO with the demo of what 1a does today. The design, and the three things designing
+      it found, are written into `MVP1A_PLAN.md`'s C1 section; **nothing of it is in the tree**. The
+      questions, none of which the build should answer on its own:
+      1. **May submit refuse a questionnaire with unanswered farmer questions**, or is a blank
+         something the visit records? OPP §4.1(2) says the *completed* questionnaire must be
+         available to the team three days before the visit, and "completed" is the group's word.
+      2. **If a farmer unticks a category after answering it, are those answers kept as history or
+         withdrawn?** A6 currently deletes the `FarmCategory` row of an `APPLIED` category on
+         re-submit, so a questionnaire hung off that row would be deleted with it.
+      3. **What is a farmer told if the questionnaire changes version while they are filling it
+         in** — finish on the sheet they started, or begin again?
+
+      Show them the demo first, and do not build C1 in the same session as the demo.
 - [ ] **UAT for the application flow.** A6 has 32 automated tests and no `tests/uat/` checklist:
       the judgements left are the ones a person must make in a browser — does the four-step flow
       read as one thing on a phone, is the consent block readable before it is ticked, and does

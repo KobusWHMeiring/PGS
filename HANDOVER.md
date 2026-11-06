@@ -1,6 +1,6 @@
 # Handover — sub-plan A is complete (8 of 8) and sub-plan B is complete (4 of 4)
 
-> ## START HERE — **A is 8 of 8, B is 4 of 4, and the next move is a decision, not a task**
+> ## START HERE — **A is 8 of 8, B is 4 of 4 — merge this branch, show the group, and only then decide C1**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
 > a second agent runs D80's S2 (Docling) there. Nothing in this strand has touched `main`.
@@ -29,23 +29,54 @@
 > visit and its report read the rows — and, unlike A7's fee surface, nothing is refused on a missing
 > row, so the gap is one sentence and not a test.
 >
-> **What is next is a decision, not a task: merge `feat/mvp1a-visit` to `main`, or start C1.** Sub-plan
-> A is 8 of 8 and B is 4 of 4, and none of it is merged or pushed. Both worktrees have rewritten this
-> block, so the merge conflicts here by design — keep both strands' state, do not pick one. C1 is
-> `confirm_visit()`, where A5's fee gate and A7's standing gate finally meet (**they are not chained
-> yet**), and the likeliest place for `MISSING_FEE_SURFACE` to be answered.
+> **The next act is the merge — and it is the only act.** Sub-plan A is 8 of 8, B is 4 of 4, and none
+> of it is merged or pushed. Merge `feat/mvp1a-visit` into `main` **before** any C task starts; after
+> the merge, the demo to PGS/SAOSO comes before C1 (below). The measured conflict surface is **four
+> files, all prose**:
+> - `HANDOVER.md` — both strands rewrote this block by design. **Keep both strands' state**; neither
+>   side's copy is right on its own.
+> - `product/backlog/backlog.md` — generated. Never merge it by hand: take either side, then run
+>   `python product/backlog.py --write`.
+> - `product/backlog/todo.md` — both appended items. Keep both.
+> - `product/docs/context/testing_hazards.md` — **the numbering collides**: `main` added §3.31–§3.39
+>   (ingestion/Docling entries) and this branch added its own §3.31 (`verify.sh` in a second worktree)
+>   and §3.32 (a scripted slice move). Keep main's numbers, append this branch's two as **§3.40** and
+>   **§3.41** with one line each saying "was §3.31/§3.32 before the merge", fix this file's live
+>   references (the traps below), and **leave the archived session docs alone** — they are history and
+>   say what they said.
 >
-> **The demo needs three data acts, and the dev database has fewer migrations than the last handover
-> said:** `python manage.py showmigrations core` shows the last **applied** migration is **`0009`**,
-> so **`0010`–`0018` are unapplied** and every A and B table is absent (this block read "at 0014"
-> before; 0014 was never applied either). `migrate`, then `seed_deployment`, then
-> `load_template core/templates_data/crops.v1.json --activate`. A4 did not move it: a model task does
-> not migrate the dev database.
+> **No migration collision:** `main`'s `core/migrations/` still stops at `0009` and this branch's is
+> `0010`–`0018`, so the graph stays linear. Merge in `main`'s worktree (`../pgs`), whose **working tree
+> is dirty with another session's Docling files — do not commit them**; and know that its
+> `context.py --check` is **red today** on an **untracked** 33 KB `scripts/copy_deck.py`. That file
+> does not merge, but it will still fail a gate run made in that directory, and it is not your defect.
+>
+> **C1 is designed and deliberately not built.** Two of its questions are about what the OPP means,
+> not about Django, so they wait for the group: **may submit refuse unanswered farmer questions, or
+> is a blank something the visit records** (OPP §4.1(2) says the *completed* questionnaire reaches
+> the team — what "completed" means is theirs), and **if a farmer unticks a category after answering,
+> are those answers kept as history or withdrawn**. The design is written down in `MVP1A_PLAN.md`'s
+> C1 section ("Design recorded … and deliberately not built") and parked in
+> `todo.md::C1_HELD_FOR_GROUP`; nothing of it is in the tree.
+>
+> **What the demo can honestly show, in this order:** the public self-check (`/before-you-apply/`),
+> then register → consent → pledge → categories → turnover (A6), the fee scale (A5), and the two gates
+> (A5's unpaid refusal, A7's standing refusal). **What it will do at the gate is refuse**: no surface
+> records a membership fee or its payment, so every self-registration stays `APPLICANT` and unpaid
+> and A7 refuses it by name — correct, and the first thing the group will ask about
+> (`MISSING_FEE_SURFACE`, session `1q`). A4's prior-certification table is **empty**, because nothing
+> writes it until C2. And 1a issues **no outcome, seal or certificate** (D33) — say so before the
+> group assumes otherwise.
+>
+> **After the merge the tree still shows nothing end to end, and that is three data acts, not code:**
+> `python manage.py showmigrations core` shows the last **applied** migration is **`0009`**, so
+> **`0010`–`0018` are unapplied** and every A and B table is absent. `migrate`, then
+> `seed_deployment`, then `load_template core/templates_data/crops.v1.json --activate`.
 >
 > **Seven traps, all with evidence in `testing_hazards.md`**
-> - `scripts/verify.sh` cannot run here (§3.31): no `.venv` → it picks a `python3` without `celery`
->   and dies in step 2 looking like a broken tree. Run the five steps with `python`, and drop the
->   test DB first (§3.15, `_scratch/a5/dropdb.py`).
+> - `scripts/verify.sh` cannot run here (§3.31 in this branch, §3.40 after the merge): no `.venv` →
+>   it picks a `python3` without `celery` and dies in step 2 looking like a broken tree. Run the five
+>   steps with `python`, and drop the test DB first (§3.15, `_scratch/a5/dropdb.py`).
 > - **Line endings, measured in binary.** The model files in this checkout are **CRLF** while the test
 >   files are LF, and `Path.read_text()` reports *zero* CRLF because it has already converted them —
 >   so a multi-line mutation anchor is "not found" with the text visible in `grep` (§1.41). Read and
@@ -64,13 +95,13 @@
 > - A template that exists is **history**: an assessment freezes a copy of its schema. A changed
 >   questionnaire is a new version, and `load_template` refuses an edit rather than applying it.
 >
-> **Waiting on the product owner, none of it blocking the merge or C1:** `todo.md::MISSING_FEE_SURFACE`
-> (three options, described in session `1q`); the three roster ambiguities from `1i`; whether
-> `APPLICANT` is the right word; the two `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6 (retention
-> period, withdrawal address) — **and the same retention answer for the two public consents**; whether
-> the FORM's V21 child should ask for a percentage instead of Yes/No; five of the record "why"
-> sentences that name no clause; and the `/ask/` refusal link that `SELF_CHECK_PRD` §4.3 asks for and
-> A8 did not build.
+> **Waiting on the product owner, none of it blocking the merge:** `todo.md::MISSING_FEE_SURFACE`
+> (three options, described in session `1q`); **the two C1 questions above**
+> (`todo.md::C1_HELD_FOR_GROUP`); the three roster ambiguities from `1i`; whether `APPLICANT` is the
+> right word; the two `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6 (retention period, withdrawal
+> address) — **and the same retention answer for the two public consents**; whether the FORM's V21
+> child should ask for a percentage instead of Yes/No; five of the record "why" sentences that name
+> no clause; and the `/ask/` refusal link that `SELF_CHECK_PRD` §4.3 asks for and A8 did not build.
 >
 > **The current purpose is still a demo to PGS** (product owner, 2026-11-05): show the *shape* of the
 > flow — the self-check, the application, the account, the gate — before the group's go-ahead. That
@@ -87,12 +118,12 @@ sessions** (`1i` onward)
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **33 commits before this session and 35 at this doc close** — a number in this
+  of `781cf37`, **33 commits before this session and 36 at this doc close** — a number in this
   file is always one commit behind, so measure it: `git log --oneline 781cf37..HEAD | wc -l`.
   Those are: A1, A2, A3, A4, A5, A6, A7, A8, B1–B4, D83, D84, Q8's
   draft consent, the approved prototype, four service-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
-prints the branch's own count (35 at this doc close — the number moves with every doc commit,
+prints the branch's own count (36 at this doc close — the number moves with every doc commit,
 which is why the command is quoted beside it) and
 `git ls-remote --heads origin feat/mvp1a-visit` prints nothing — that command prints **nothing**, which
 is the fact that matters. **Both worktrees
@@ -141,7 +172,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
-- `1r` 2026-11-05 (session 27, **`feat/mvp1a-visit` strand** — the tag namespace has diverged: `main` also uses `1n`–`1q` for other sessions, so a tag here is strand-local and nothing was renamed) — A4 lands, sub-plan A is 8 of 8, and the denial rule is written twice — [`SESSION_1r_2026-11-05_the-last-brick-and-the-denial-rule-written-twice.md`](product/docs/handover/SESSION_1r_2026-11-05_the-last-brick-and-the-denial-rule-written-twice.md)
+- `1r` 2026-11-05 (session 27, **`feat/mvp1a-visit` strand** — the tag namespace has diverged: `main` also uses `1n`–`1q` for other sessions, so a tag here is strand-local and nothing was renamed) — A4 lands, sub-plan A is 8 of 8, C1 is designed and held for PGS/SAOSO, and the denial rule is written twice — [`SESSION_1r_2026-11-05_the-last-brick-and-the-denial-rule-written-twice.md`](product/docs/handover/SESSION_1r_2026-11-05_the-last-brick-and-the-denial-rule-written-twice.md)
 - `1q` 2026-11-05 (session 26) — the gate that passes for nobody, and the warning that had to be a verdict — [`SESSION_1q_2026-11-05_the-gate-that-passes-for-nobody-and-the-warning-that-was-a-verdict.md`](product/docs/handover/SESSION_1q_2026-11-05_the-gate-that-passes-for-nobody-and-the-warning-that-was-a-verdict.md)
 - `1p` 2026-11-05 (session 25) — the self-check lands, and the browser finds the form that was not there — [`SESSION_1p_2026-11-05_the-self-check-lands-and-the-browser-finds-the-form-that-was-not-there.md`](product/docs/handover/SESSION_1p_2026-11-05_the-self-check-lands-and-the-browser-finds-the-form-that-was-not-there.md)
 - `1o` 2026-11-05 (session 24) — sub-plan B lands, and the printed FORM corrects the plan three times — [`SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md`](product/docs/handover/SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md)

@@ -609,6 +609,43 @@ writing.
 `AssessmentTemplate` afterwards must not change it (`copy.deepcopy`); `AssessmentAnswer` is unique on
 `(assessment, question_key)`; saving an answer twice updates rather than duplicates.
 
+#### Design recorded 2026-11-05 (session `1r`) — **and deliberately not built**
+
+C1 was designed and then stopped: two of its questions are about what the OPP means, not about Django,
+so they go to PGS/SAOSO with the 1a demo. Parked in `todo.md::C1_HELD_FOR_GROUP`. **Nothing below is
+in the tree** — this is a proposal for whoever builds it after that conversation.
+
+**Three things the task line above does not say, found by designing it:**
+
+1. **`farm_visit` cannot exist in C1.** `FarmVisit` is D1, after C, and the questionnaire is answered
+   *before* a visit is scheduled (Flow B §8 steps 1–4 vs 8). Anchor the assessment on
+   **`FarmCategory`** — what Flow B step 1 says a farmer opens the questionnaire for — and let D1 add
+   the nullable `farm_visit` FK with the constraint that closes it (`PENDING`/
+   `QUESTIONNAIRE_SUBMITTED` may have none, `IN_FIELD` onwards must have one). `category` is **not**
+   stored: it derives through `farm_category`, and D39 is the rule against a second source of truth.
+   A5's `AssessmentFee` set exactly this precedent — do not invent a stub visit.
+2. **The freeze moment.** This line says deep copy; PRD §5.3 and Flow B step 4 say the copy is taken at
+   **submit** (C4), while C2 autosaves before that. Freezing at submit means answers validated against
+   the live template end up under a snapshot of a different version. Recommendation: **freeze at
+   creation**, and have submit **refuse** when the category's active template is no longer the one the
+   assessment froze (`SupersededTemplateError`) — a questionnaire in flight must not span two versions.
+3. **A6's re-submit deletes a `FarmCategory` row** whose status is still `APPLIED`
+   (`record_application_categories`). The moment a questionnaire hangs off that row, an untick deletes
+   a farmer's answers. Recommendation: `on_delete=PROTECT`, **plus** one condition in A6's delete loop
+   (`not row.assessments.exists()`), tested from C1's file with the reason written down.
+
+**Four build decisions, recommended but open:** the answer key is the **item** (`crops.Q4.2` — 79 of
+them) and never the grouping (`crops.Q4` — 38); `value` is a JSON **string** (`YES`/`NO`/`NA` for the
+FORM's tri-state, numbers as typed), never a boolean, because `NA` has no boolean; uniqueness is a
+constraint **and** `update_or_create` (the A4 shape); `coverage()` is **one** walker over the frozen
+snapshot that C2's checklist, C4's submit and any renderer all read, so two of them cannot disagree.
+
+**The questions for PGS/SAOSO:** (a) may submit refuse unanswered farmer questions, or is a blank
+something the visit records — OPP §4.1(2) says the *completed* questionnaire reaches the team three
+days ahead, and what "completed" means is the group's answer, not the build's; (b) if a farmer unticks
+a category after answering, are those answers kept as history or withdrawn; (c) what a farmer should be
+told if the questionnaire changes version while they are filling it in.
+
 ---
 
 ### Task C2: Questionnaire render and autosave

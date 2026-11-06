@@ -126,10 +126,10 @@ never got is a constraint nobody has seen refuse anything).
 
 ## 7. What the next agent gets
 
-- **Sub-plan A is finished: A is 8 of 8, B is 4 of 4.** The next decision is not a task — it is
-  **merge `feat/mvp1a-visit` to `main` (both strands have rewritten HANDOVER's START HERE, so that
-  merge conflicts by design) or start C1** (`confirm_visit()`, where A5's fee gate and A7's standing
-  gate finally meet, and the answer to `MISSING_FEE_SURFACE` is most likely to land).
+- **Sub-plan A is finished: A is 8 of 8, B is 4 of 4.** The next act is **the merge to `main`, and
+  then the demo to PGS/SAOSO** — see §8. C1, which this file's earlier draft named as the alternative,
+  is **designed and deliberately not built** until the group has seen the platform and answered two
+  questions about what the OPP means.
 - **The demo still needs three data acts, and the dev database has fewer migrations than the last
   handover claimed.** `python manage.py showmigrations core` on this box shows the last applied
   migration is **`0009`**; **`0010`–`0018` are unapplied** (not "at 0012"). So: `migrate`,
@@ -145,3 +145,69 @@ never got is a constraint nobody has seen refuse anything).
   for and A8 did not build. **Nothing new was parked**: A4 raised no question that is the owner's
   rather than the build's — a prior certification with no `certificate_ref` is a real answer, so the
   field is optional rather than a decision anyone has to take.
+
+## 8. The wrap-up: C1 is designed and held, and the next act is the merge
+
+After A4 closed, the product owner asked for C1 to be **designed before it is built**, and then stopped
+the build: the next portion of the work needs PGS/SAOSO's own answers, and showing them the platform
+comes first. So this session ends with three things — a merge-ready branch, a written design, and a
+parked decision — and **no C1 code**.
+
+### The design (recorded in `MVP1A_PLAN.md`'s C1 section, not in the tree)
+
+Designing the fourteen lines found three things the task line does not say:
+
+1. **`farm_visit` cannot exist in C1.** `FarmVisit` is D1 (after C) and the questionnaire is answered
+   before a visit is scheduled, so an `Assessment` anchors on **`FarmCategory`** and D1 adds the
+   nullable visit FK. `category` is not stored — it derives through that row (D39). A5's
+   `AssessmentFee` set the precedent rather than inventing a stub model.
+2. **The freeze moment is ambiguous.** The plan says deep copy; PRD §5.3 and Flow B step 4 say *at
+   submit*, which is C4 — while C2 autosaves before that. Recommendation: freeze at creation and have
+   submit refuse a superseded template, because a questionnaire in flight must not span two versions.
+3. **A6's category re-submit deletes a `FarmCategory` row** that is still `APPLIED`. Hung off that row,
+   a questionnaire would be deleted by an untick. Recommendation: `PROTECT` plus one condition in A6's
+   delete loop, tested from C1's file.
+
+Four further recommendations (item keys not grouping keys, a string `value` because `NA` has no
+boolean, constraint *and* `update_or_create`, one `coverage()` walker) are recorded beside them.
+
+### Why it stopped
+
+Two of the open questions are about **what the OPP means**, so they are the group's:
+
+- may submit refuse a questionnaire with unanswered farmer questions, or is a blank something the visit
+  records? (OPP §4.1(2) says the *completed* questionnaire reaches the team three days ahead.)
+- if a farmer unticks a category after answering it, are the answers kept as history or withdrawn?
+- and the wording question that follows from the version rule: what is a farmer told if the sheet
+  changes while they are filling it in?
+
+They live in `todo.md::C1_HELD_FOR_GROUP`, with the instruction to show the demo first and not to build
+C1 in the same session as the demo.
+
+### Merge readiness, measured rather than assumed
+
+- **Four files conflict, all prose:** `HANDOVER.md` (both strands rewrote the block by design — keep
+  both states), `product/backlog/backlog.md` (generated: take either side, then
+  `python product/backlog.py --write`), `product/backlog/todo.md` (keep both), and
+  `product/docs/context/testing_hazards.md` — **the one real collision**, because `main` added
+  §3.31–§3.39 while this branch added its own §3.31 and §3.32. Keep main's numbering, append this
+  branch's as §3.40/§3.41 with "was §3.31/§3.32" on each, fix this file's live references, and leave
+  the archived session docs as written.
+- **No migration collision:** `main`'s `core/migrations/` still ends at `0009`; this branch's is
+  `0010`–`0018`, so the graph stays linear after the merge.
+- **`main`'s worktree is dirty** with another session's Docling files (uncommitted), and its
+  `context.py --check` is **red today** on an **untracked** 33 KB `scripts/copy_deck.py`. That file does
+  not merge; a gate run inside `../pgs` will still see it, and it is not this branch's defect.
+- **The merged suite number is not 1971.** `main` measures 1831 tests of its own; the merge's count is
+  the union and has to be measured and quoted afresh (§3.17), not carried from either strand.
+
+### What changed for the wrap-up
+
+`MVP1A_PLAN.md` C1 (the design block), `todo.md` (`C1_HELD_FOR_GROUP`),
+`product/backlog/backlog.md` (regenerated — it had drifted: its "To Do" section still held the short
+pre-A7 `MISSING_FEE_SURFACE` text), `HANDOVER.md` (the merge checklist, the hazard renumbering, what
+the demo can honestly show, the C1 hold), and this section.
+No code, no migration, no test changed. `scripts/context.py --check` reports every budget holds, and
+the full suite was **re-run on the wrap-up tree**: **1971 passed / 1 skipped / 8 xfailed in 312 s**
+(`--reuse-db`, same count as §6, and the slowest of the four runs — the box stayed loaded, §3.17).
+`tests/tools/test_handover.py` green (4 passed). Nothing was pushed and `main` was never touched.
