@@ -168,18 +168,18 @@ class Page:
 PAGES: dict[str, Page] = {
     "home": Page(
         key="home",
-        title="Outeniqua PGS — organic assurance built by farmers, for farmers",
+        title="Outeniqua PGS — a farmer-led organic guarantee",
         description=(
             "A Participatory Guarantee System of farmer and consumer members along the "
             "Outeniqua mountain range, assessing organic practice against SAOSO v2.1."
         ),
         eyebrow="Participatory Guarantee System · Western Cape",
         heading="Organic assurance built by",
-        heading_accent="farmers, for farmers.",
+        heading_accent="farmers, on each other's farms.",
         lede=(
-            "We are a locally focused quality assurance group. Members assess one another "
-            "against the SAOSO organic standard, on each other's farms, in the open — built "
-            "on trust, social networks and knowledge exchange, not a distant inspector."
+            "We are a locally focused quality assurance group. Members assess one "
+            "another's farms against the SAOSO organic standard, and the person whose "
+            "farm is being visited sees who is coming."
         ),
     ),
     "organics": Page(
