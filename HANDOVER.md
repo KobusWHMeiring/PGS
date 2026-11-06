@@ -1,74 +1,76 @@
-# Handover — sub-plan A is five of eight and sub-plan B is complete; the Crops sheet is data
+# Handover — sub-plan A is complete (8 of 8) and sub-plan B is complete (4 of 4)
 
-> ## START HERE — **A is 7 of 8, B is 4 of 4, and the eligibility gate is a pass for nobody**
+> ## START HERE — **A is 8 of 8, B is 4 of 4, and the next move is a decision, not a task**
 >
 > **Worktree `../pgs-visit`, branch `feat/mvp1a-visit`** — deliberately separate from `main`, because
 > a second agent runs D80's S2 (Docling) there. Nothing in this strand has touched `main`.
 >
-> **Landed since the last block:** **A7 — the eligibility gates** (`core/services/_eligibility.py`,
-> `core/tests/test_eligibility.py`, 16 tests, 12 mutations all caught,
-> `_scratch/a7/mutate.py`). Before it: A1 `Member`/`Farm` `0010` · A2 the OPP §VII roster `0011` ·
-> A3 the pledge `0012` · A5 the fee scale `0013` · A6 the application flow `0014` · B1/B2/B4
-> templates `0015`–`0016` · B3 the Crops template · A8 the public self-check `0017` · D83 · D84 ·
-> Q8's draft consent.
+> **Landed since the last block:** **A4 — prior certification history** (`PriorCertification` in
+> `core/models/_membership.py`, migration `0018`, `core/tests/test_prior_certification.py`, 11 tests,
+> 4 mutations all caught in `_scratch/a4/mutate.py`). **That is the last task in sub-plan A.** Before
+> it: A1 `Member`/`Farm` `0010` · A2 the OPP §VII roster `0011` · A3 the pledge `0012` · A5 the fee
+> scale `0013` · A6 the application flow `0014` · B1/B2/B4 templates `0015`–`0016` · B3 the Crops
+> template · A8 the public self-check `0017` · A7 the eligibility gates · D83 · D84 · Q8's draft
+> consent.
 >
-> **A7 in one paragraph, for the next reader.** `assert_eligible_for_assessment(member)` raises
-> `ApplicantNotEligibleError`, `MembershipLapsedError`, `MembershipTerminatedError`, or A5's
-> `MembershipUnpaidError` — all subclasses of `NotEligibleError`, so a caller can catch the family or
-> the reason. It **returns a frozen `EligibilityVerdict(warnings=(…,))`** instead of `None`, because
-> `PROBATION` passes with a warning (OPP §4.6 keeps the membership and the logo) and a function that
-> raises has no value to carry a flag: the verdict has no `allowed` field (a refusal is an exception)
-> and no `status` field (`Member.status` is where the status lives — D39's objection to a stored
-> `is_paid_up`). Probation softens the *standing* rule and never the money rule. Standing is checked
-> **before** payment, and an unrecognised `Member.status` fails closed. **The code is in
-> `_eligibility.py`, not `_membership.py`**: adding it took that file to 33.3 KB, past the 30 KB cap,
-> so the seam was cut — `_membership` records what a member attested and invoiced, `_eligibility`
-> decides what standing those records add up to. `MembershipUnpaidError` is imported and re-exported
-> so both gates refuse with **one class** (`test_the_two_modules_refuse_with_one_class` asserts the
-> identity; this session briefly shipped two copies, and nothing went red).
+> **A4 in one paragraph, for the next reader.** `PriorCertification(farm, kind ∈ PGS|THIRD_PARTY,
+> body_name, certificate_ref, outcome ∈ GRANTED|DENIED, expires_on, denial_reason)` is FORM Sheet A
+> (D30) and nothing more: §4.1's field list exactly, pinned by a test — no `declared_on`, no source
+> document, no "verified" flag. The denial rule is written **twice on purpose** — a `save()` guard
+> the caller sees and a `CheckConstraint` the database enforces — because `objects.create()` calls
+> `save()` but never `full_clean()`, so a rule in `clean()` alone is green in a form and absent from
+> every test. `denial_reason` is `NOT NULL, default=""` and the check reads `~Q(denial_reason="")`,
+> because a nullable column makes the check read `NULL`, which Postgres *satisfies* (§1.37);
+> `_scratch/a4/mutate.py` reverts the column to nullable to prove the test can fail. A `DENIED` row
+> may not carry `expires_on` (a denial issued no certificate — D38's enterable-and-meaningless
+> field), while a `GRANTED` row may omit it. The model sits beside `Farm` in `_membership.py`:
+> **28.7 KB, 1.3 KB under the 30 KB cap**, so the next Farm-side model cuts a slice rather than
+> growing the file. **Nothing writes the table in 1a**: C2's questionnaire renders Sheet A, and the
+> visit and its report read the rows — and, unlike A7's fee surface, nothing is refused on a missing
+> row, so the gap is one sentence and not a test.
 >
-> **The gate passes for nobody in a running instance, and that is now a test.** No view records a
-> membership fee or its payment, so every self-registration stays `APPLICANT` and unpaid.
-> `test_nothing_in_a_running_instance_records_a_membership_fee` parses every module under `core/`
-> (AST, so a docstring naming the service is not a surface) and fails the day one calls them — its
-> message says to delete it and close `todo.md::MISSING_FEE_SURFACE`. **The surface is the product
-> owner's choice of three**, written out there: a one-screen admin page (two admin actions calling
-> the services — *not* an editable `paid_on`, which leaves the member `APPLICANT` looking paid), C1's
-> committee surface, or the gate now with the surface named as the pilot blocker. A7 took the third,
-> because the choice is not the build's. No `paid_on` the group never received was invented, and no
-> test reaches `ACTIVE` by writing the status.
+> **What is next is a decision, not a task: merge `feat/mvp1a-visit` to `main`, or start C1.** Sub-plan
+> A is 8 of 8 and B is 4 of 4, and none of it is merged or pushed. Both worktrees have rewritten this
+> block, so the merge conflicts here by design — keep both strands' state, do not pick one. C1 is
+> `confirm_visit()`, where A5's fee gate and A7's standing gate finally meet (**they are not chained
+> yet**), and the likeliest place for `MISSING_FEE_SURFACE` to be answered.
 >
-> **What is next: A4 — and A4 only.** Sub-plan A is finished when it lands. A5's fee gate and A7's
-> standing gate are **not yet chained**: C1's `confirm_visit()` is where the member half and the farm
-> half meet.
+> **The demo needs three data acts, and the dev database has fewer migrations than the last handover
+> said:** `python manage.py showmigrations core` shows the last **applied** migration is **`0009`**,
+> so **`0010`–`0018` are unapplied** and every A and B table is absent (this block read "at 0014"
+> before; 0014 was never applied either). `migrate`, then `seed_deployment`, then
+> `load_template core/templates_data/crops.v1.json --activate`. A4 did not move it: a model task does
+> not migrate the dev database.
 >
-> **The demo needs three data acts before it works end to end, and the dev DB has none of them:**
-> `python manage.py migrate` (the dev database is at **0014** — `0015`–`0017` are unapplied, so
-> `/before-you-apply/` 500s on `core_assessmenttemplate`), then `seed_deployment`, then
-> `load_template core/templates_data/crops.v1.json --activate`.
->
-> **Six traps, all with evidence in `testing_hazards.md`**
+> **Seven traps, all with evidence in `testing_hazards.md`**
 > - `scripts/verify.sh` cannot run here (§3.31): no `.venv` → it picks a `python3` without `celery`
 >   and dies in step 2 looking like a broken tree. Run the five steps with `python`, and drop the
 >   test DB first (§3.15, `_scratch/a5/dropdb.py`).
-> - **Writing a repo file from a Python script on this box turns every line ending into CRLF** —
->   `Path.write_text()` is not newline-safe. The tree then shows a whole-file diff that is not a
->   change. Read and write with `newline=""` (as `_scratch/a7/mutate.py` now does), and check with
->   `git status` before believing a diff.
-> - Restore mutation files from `_scratch/` copies, never `git checkout <file>` (§1.36). Two harnesses
->   now: `_scratch/a8/mutate.py` (the self-check) and `_scratch/a7/mutate.py` (eligibility).
+> - **Line endings, measured in binary.** The model files in this checkout are **CRLF** while the test
+>   files are LF, and `Path.read_text()` reports *zero* CRLF because it has already converted them —
+>   so a multi-line mutation anchor is "not found" with the text visible in `grep` (§1.41). Read and
+>   write with `newline=""`, count `\r` on binary reads, and check `git diff --numstat` before
+>   believing a restore. Session `1q`'s variant: `Path.write_text()` flips every ending in the file.
+> - Restore mutation files from `_scratch/` copies, never `git checkout <file>` (§1.36). Three
+>   harnesses now: `_scratch/a8/mutate.py` (the self-check), `a7` (eligibility) and `a4` (the denial
+>   rule, which rebuilds the test database for the constraint mutation).
+> - **A7's gate passes for nobody in a running instance**, and that is a test: no view records a
+>   membership fee or its payment, so every self-registration stays `APPLICANT` and unpaid
+>   (`_scratch/a7/mutate.py`, `MISSING_FEE_SURFACE`, session `1q`).
 > - Any test asserting something about *now* derives its dates from `timezone.localdate()` (§1.35).
-> - A `CheckConstraint` containing `NULL IN (…)` is satisfied by Postgres (§1.37) — and a boundary
->   test whose samples never land on the boundary cannot see the rule (§1.39).
+> - A `CheckConstraint` that evaluates to `NULL` is satisfied by Postgres (§1.37) — the nullable
+>   column, not an `isnull` in the predicate, is what makes it vanish — and a boundary test whose
+>   samples never land on the boundary cannot see the rule (§1.39).
 > - A template that exists is **history**: an assessment freezes a copy of its schema. A changed
 >   questionnaire is a new version, and `load_template` refuses an edit rather than applying it.
 >
-> **Waiting on the product owner, none of it blocking A4:** `todo.md::MISSING_FEE_SURFACE` (three
-> options, above); the three roster ambiguities from `1i`; whether `APPLICANT` is the right word; the
-> two `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6 (retention period, withdrawal address) — **and the
-> same retention answer for the two public consents**; whether the FORM's V21 child should ask for a
-> percentage instead of Yes/No; five of the record "why" sentences that name no clause; and the
-> `/ask/` refusal link that `SELF_CHECK_PRD` §4.3 asks for and A8 did not build.
+> **Waiting on the product owner, none of it blocking the merge or C1:** `todo.md::MISSING_FEE_SURFACE`
+> (three options, described in session `1q`); the three roster ambiguities from `1i`; whether
+> `APPLICANT` is the right word; the two `[DECIDE]` markers in `SELF_CHECK_PRD` §11.6 (retention
+> period, withdrawal address) — **and the same retention answer for the two public consents**; whether
+> the FORM's V21 child should ask for a percentage instead of Yes/No; five of the record "why"
+> sentences that name no clause; and the `/ask/` refusal link that `SELF_CHECK_PRD` §4.3 asks for and
+> A8 did not build.
 >
 > **The current purpose is still a demo to PGS** (product owner, 2026-11-05): show the *shape* of the
 > flow — the self-check, the application, the account, the gate — before the group's go-ahead. That
@@ -85,12 +87,12 @@ sessions** (`1i` onward)
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs` — `main`, the sibling strand (D80 S2 / D82 as of
   `b27b9a6`). Still moving.
 - `C:/Users/Kobus Meiring/Documents/Dev/pgs-visit` — **this one**: branch `feat/mvp1a-visit` on top
-  of `781cf37`, **31 commits before this session and 33 at this doc close** — a number in this
+  of `781cf37`, **33 commits before this session and 35 at this doc close** — a number in this
   file is always one commit behind, so measure it: `git log --oneline 781cf37..HEAD | wc -l`.
-  Those are: A1, A2, A3, A5, A6, A7, A8, B1–B4, D83, D84, Q8's
+  Those are: A1, A2, A3, A4, A5, A6, A7, A8, B1–B4, D83, D84, Q8's
   draft consent, the approved prototype, four service-seam cuts, the doc closes.
 Neither is merged and **nothing on this branch is pushed** — `git rev-list --count origin/main..HEAD`
-prints the branch's own count (33 at this doc close — the number moves with every doc commit,
+prints the branch's own count (35 at this doc close — the number moves with every doc commit,
 which is why the command is quoted beside it) and
 `git ls-remote --heads origin feat/mvp1a-visit` prints nothing — that command prints **nothing**, which
 is the fact that matters. **Both worktrees
@@ -102,13 +104,14 @@ everything from that worktree, note that it has no `.venv` (`testing_hazards.md`
 script picks `python3`, which has no `celery`; use `python` and the five steps in §5), and drop the
 leftover test database before a `--create-db` run (`_scratch/a5/dropdb.py`, §3.15).
 
-**On this tree** (2026-11-05, session `1q`): the gate's five steps — not `scripts/verify.sh` itself,
-which cannot start here (§3.31) — **1960 passed / 1 skipped / 8 xfailed**, run with the test database
-dropped first, at **117 s cold** and **118 s warm**. The cold run reported one failure, and it was the
-file this note lives in: `tests/tools/test_handover.py` wants an index line for the new session, which
-did not exist yet. Do not read that as "117 s and green" — the cold run is quoted with its failure
-and the warm run is the green one. Quote both or claim nothing (§3.17). `tests/e2e` is outside the gate
-(it needs a browser) and was not re-run this session: A7 changes no template and no view.
+**On this tree** (2026-11-05, session `1r`): the gate's five steps — not `scripts/verify.sh` itself,
+which cannot start here (§3.31) — **1971 passed / 1 skipped / 8 xfailed**: **220 s cold** with the test
+database dropped first, and **197 s warm** (`--reuse-db`), both on the final tree. The count is A7's
+1960 plus A4's 11 tests. Every run is green, and the times are **not** last session's 117/118 s —
+warm measured slower than cold on two of three attempts (197–311 s for one tree), because the sibling
+worktree was active throughout. Quote both and name the contention, or claim nothing (§3.17); what
+the numbers are evidence for is the count. `tests/e2e` is outside the gate (it needs a browser) and
+was not run: A4 adds no template and no view.
 
 **Remote:** `origin` = `https://github.com/KobusWHMeiring/PGS.git` — **this branch is entirely
 local** (`git rev-list --count origin/main..HEAD` prints the same count (29 at this doc close — the number
@@ -138,6 +141,7 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1r` 2026-11-05 (session 27, **`feat/mvp1a-visit` strand** — the tag namespace has diverged: `main` also uses `1n`–`1q` for other sessions, so a tag here is strand-local and nothing was renamed) — A4 lands, sub-plan A is 8 of 8, and the denial rule is written twice — [`SESSION_1r_2026-11-05_the-last-brick-and-the-denial-rule-written-twice.md`](product/docs/handover/SESSION_1r_2026-11-05_the-last-brick-and-the-denial-rule-written-twice.md)
 - `1q` 2026-11-05 (session 26) — the gate that passes for nobody, and the warning that had to be a verdict — [`SESSION_1q_2026-11-05_the-gate-that-passes-for-nobody-and-the-warning-that-was-a-verdict.md`](product/docs/handover/SESSION_1q_2026-11-05_the-gate-that-passes-for-nobody-and-the-warning-that-was-a-verdict.md)
 - `1p` 2026-11-05 (session 25) — the self-check lands, and the browser finds the form that was not there — [`SESSION_1p_2026-11-05_the-self-check-lands-and-the-browser-finds-the-form-that-was-not-there.md`](product/docs/handover/SESSION_1p_2026-11-05_the-self-check-lands-and-the-browser-finds-the-form-that-was-not-there.md)
 - `1o` 2026-11-05 (session 24) — sub-plan B lands, and the printed FORM corrects the plan three times — [`SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md`](product/docs/handover/SESSION_1o_2026-11-05_sub-plan-b-lands-and-the-printed-form-corrects-the-plan-three-times.md)

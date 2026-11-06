@@ -96,6 +96,9 @@ migrated now so deferring costs nothing structural.
 
 # Sub-plan A — Membership & application (Flow A)
 
+**A is 8 of 8 — complete 2026-11-05 (session `1r`).** A1–A8 landed. The "Definition of done"
+checklist in §3 is for the whole of 1a and stays open until C–F land.
+
 ### Task A1: Farms and members
 
 **Files:** `core/models/_core.py`, `core/models/__init__.py`, `core/tests/test_membership.py`,
@@ -248,6 +251,35 @@ may hold several rows (prior PGS group *and* a third-party certifier *and* a pri
 outcome ∈ GRANTED|DENIED, expires_on, denial_reason)` — FORM Sheet A (D30).
 
 **Acceptance:** a denial without `denial_reason` raises on save.
+
+#### Landed 2026-11-05 (session `1r`) — the file stays, and the denial rule is written twice
+
+1. **The model lives in `core/models/_membership.py`, beside `Farm`** — not in `_core.py`, which is
+   `User`/`UserRole`/`Role`/`Language` now. Adding it took the slice from 24.0 KB to **28.7 KB**,
+   inside the 30 KB cap (`build_principles.md` §II), so no `_prior.py` seam was cut. That is
+   **1.3 KB of headroom**: the next Farm-side model cuts the slice rather than growing the file.
+2. **The denial rule is a `CheckConstraint` *and* a `save()` guard, and both are tested.**
+   `objects.create()` calls `save()` but never `full_clean()`, so a rule in `clean()` alone would
+   be green in a form and absent from every test. The constraint is what a writer that bypasses
+   `save()` (`bulk_create`, a data migration) cannot avoid; the guard is what a caller sees, and it
+   is slightly stricter — whitespace-only counts as blank to a person, and a check constraint
+   cannot express `strip()` portably. Neither is a copy of the other.
+3. **`denial_reason` is `NOT NULL, default=""` and the check reads `~Q(denial_reason="")`** —
+   the nullable-and-natural version of this column is satisfied by Postgres at the row the rule
+   exists to refuse (`NULL IN (…)` / `NOT (NULL = '')` → `NULL` → satisfied, §1.37), so the column
+   is deliberately not nullable and the test omits the reason rather than passing `""`, which is
+   how a caller with nothing to say writes the row. `_scratch/a4/mutate.py` reverts the column to
+   nullable to prove the test can fail.
+4. **A `DENIED` row may not carry `expires_on`.** A denial issued no certificate, so an expiry on
+   it describes an instrument that never existed — D38's trap, a field that can be entered and
+   means nothing. On a `GRANTED` row the date is optional, because "we do not know when it lapsed"
+   is a real answer and a required date would be invented.
+5. **Nothing was added to §4.1's field list**, and a test pins the set: no `declared_on`, no source
+   document, no "verified" flag. The form asks none of them.
+6. **No writer in 1a, and no gap test either.** C2's questionnaire renders Sheet A, and the visit
+   and its report read the rows. Unlike A7's fee surface, nothing is refused on a missing
+   prior-certification row, so the gap is one sentence in the model docstring — a test asserting a
+   gap nobody depends on is the first thing deleted.
 
 ---
 

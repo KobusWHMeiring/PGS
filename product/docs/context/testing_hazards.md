@@ -2155,6 +2155,32 @@ zero if the widgets vanished (`eval_on_selector_all` and a `min() >= 44` togethe
 a probe that prints the DOM facts you are arguing about — one `_scratch/` script answered in seconds
 what three guesses had not.
 
+### 1.41 `Path.read_text()` hides the CRLF it is meant to reveal
+
+This box checks the model files out as **CRLF** — `core/models/_core.py` as well as the file being
+edited — while the test files written by a tool are LF, and `core.autocrlf=true` sits under a
+`.gitattributes` that says `eol=lf`. So a mutation anchor spanning lines has to match the file's own
+ending style, and the probe that is supposed to tell you which style you have is the trap:
+
+```
+$ python -c "t = pathlib.Path('core/models/_membership.py').read_text(); print(t.count('\r\n'))"
+0                       # the file is 632 lines of CRLF
+$ python -c "d = open('core/models/_membership.py','rb').read(); print(d.count(b'\r'))"
+632
+```
+
+`read_text()` opens in text mode with universal newlines, so every `\r\n` is already `\n` by the
+time you count it. The same call is what a mutation harness reads with if it forgets `newline=""`,
+and the symptom is a mutation reported as `SKIP … anchor not found` while `grep` shows the text on
+the screen. Session `1q` found the write-side variant: a Python script that *writes* a repo file
+with `Path.write_text()` flips every ending and leaves a whole-file diff that is not a change.
+
+Rule: measure line endings in **binary** (`open(path, "rb").read().count(b"\r")`), read and write
+mutation targets with `newline=""`, and let the harness adapt a multi-line anchor to the file it is
+editing — the mutation is a content change, and the ending style is not part of what is being proved.
+Confirm the restore with `git diff --numstat` (an added/deleted line count that matches the change)
+rather than `git status`, which cannot see a file that was rewritten with its own bytes.
+
 ## 5. Template for a new entry
 
 ```markdown
