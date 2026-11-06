@@ -10,7 +10,7 @@ Slices (see MVP0_PLAN_V2.md §2):
     _assessment.py     AssessmentTemplate (the questionnaire, as versioned JSON)
     _consent.py        ConsentText, ConsentRecord, ConsentPurpose (POPIA consent)
     _membership.py     Member, Farm, FarmAlias, FarmCategory, FarmContact,
-                       CommitteePosition, CommitteeTerm, Pledge
+                       PriorCertification, CommitteePosition, CommitteeTerm, Pledge
     _fees.py           MembershipFee, TurnoverBand, AssessmentFee
     _certification.py  Seal, Category (Certificate and Assessment* arrive in MVP 1/2)
     _public.py         PublicDocument (the files the group publishes, D22)
@@ -49,6 +49,7 @@ from core.models._membership import (
     FarmContact,
     Member,
     Pledge,
+    PriorCertification,
 )
 from core.models._public import PublicDocument
 from core.models._selfcheck import SelfCheckDemographic, SelfCheckReport
@@ -75,6 +76,7 @@ __all__ = [
     "Member",
     "MembershipFee",
     "Pledge",
+    "PriorCertification",
     "PublicDocument",
     "PublicQuestion",
     "REFUSAL_NOTES",

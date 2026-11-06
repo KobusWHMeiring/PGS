@@ -32,6 +32,7 @@ import re
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.utils import timezone
@@ -258,6 +259,112 @@ class FarmContact(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - admin convenience
         return f"{self.name} ({self.role})" if self.role else self.name
+
+
+class PriorCertification(models.Model):
+    """A farm's prior certification history — FORM Sheet A, and D30.
+
+    Sheet A asks for prior PGS certification, prior third-party certification, and
+    prior **denial** of certification *with reasons*. A denial is stored rather than
+    summarised because D30 makes it materially relevant to a certification decision,
+    and a denial with no reason is not an answer: the form prints a reason line, and
+    the next assessment has to be able to read why.
+
+    **The denial rule lives in three places, and needs all three.** `objects.create()`
+    calls `save()` but never `full_clean()`, so a rule in `clean()` alone is green in a
+    form and absent from every test — hence the guard in `save()` that a caller sees,
+    and the `CheckConstraint` that a writer bypassing `save()` (a `bulk_create`, a data
+    migration) cannot avoid. `denial_reason` is `NOT NULL, default=""` and the check
+    reads `~Q(denial_reason="")`: a nullable column would make `NULL` comparisons
+    satisfy the constraint (§1.37) at exactly the row it exists to refuse.
+
+    **A `DENIED` row carries no `expires_on`.** A denied application issued no
+    certificate, so an expiry on it describes an instrument that never existed — the
+    same trap D38 names, a field that can be entered and means nothing. On a `GRANTED`
+    row the date is optional: "we do not know when it lapsed" is a real answer, and a
+    required date would be invented from nothing.
+
+    **Nothing in this slice writes the table.** C2's questionnaire renders Sheet A, and
+    the visit and its report read these rows; until then the table is the form's memory
+    of the paper answer, not a surface.
+    """
+
+    class Kind(models.TextChoices):
+        PGS = "PGS", "PGS group"
+        THIRD_PARTY = "THIRD_PARTY", "Third-party certifier"
+
+    class Outcome(models.TextChoices):
+        GRANTED = "GRANTED", "Granted"
+        DENIED = "DENIED", "Denied"
+
+    farm = models.ForeignKey(
+        Farm, on_delete=models.CASCADE, related_name="prior_certifications"
+    )
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    body_name = models.CharField(
+        max_length=200,
+        help_text="The PGS group or certifier, as the record names it (OPP §4.5: the logo is not ours).",
+    )
+    certificate_ref = models.CharField(
+        max_length=120, blank=True, help_text="The previous certificate or application reference."
+    )
+    outcome = models.CharField(max_length=16, choices=Outcome.choices)
+    expires_on = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When the previous certificate lapses; refused on a DENIED row, optional on a granted one.",
+    )
+    denial_reason = models.TextField(
+        default="",
+        blank=True,
+        help_text="Required when outcome is DENIED, empty otherwise (D30: the reasons the form asks for).",
+    )
+
+    class Meta:
+        ordering = ["farm_id", "id"]
+        constraints = [
+            # D30. `denial_reason` is NOT NULL for this reason: `NULL` in a check is
+            # satisfied, so a nullable column would let the bad row in (§1.37).
+            models.CheckConstraint(
+                condition=~models.Q(outcome="DENIED") | ~models.Q(denial_reason=""),
+                name="prior_certification_denial_names_its_reason",
+            ),
+            # Sheet A names the body, and the form never offered a blank one.
+            models.CheckConstraint(
+                condition=~models.Q(body_name=""),
+                name="prior_certification_names_its_body",
+            ),
+            # A denial issued no certificate, so nothing on it can expire.
+            models.CheckConstraint(
+                condition=~models.Q(outcome="DENIED") | models.Q(expires_on__isnull=True),
+                name="prior_certification_denial_has_no_expiry",
+            ),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - admin convenience
+        return f"{self.body_name} ({self.get_outcome_display()})"
+
+    def save(self, *args, **kwargs):
+        """Refuse the two rows the form cannot have produced, then save.
+
+        Deliberately not `clean()`: `objects.create()` does not call `full_clean()`,
+        so a rule written there would be absent from every test and every service.
+        The guard is slightly **stricter** than the constraint — whitespace-only is
+        blank to a person, and a `CheckConstraint` cannot express `strip()` portably —
+        so the two are not copies of one another, and neither is redundant.
+        """
+        if not (self.body_name or "").strip():
+            raise ValidationError({"body_name": "Sheet A names the PGS group or certifier."})
+        if self.outcome == self.Outcome.DENIED:
+            if not (self.denial_reason or "").strip():
+                raise ValidationError(
+                    {"denial_reason": "D30: a denial is recorded with its reasons."}
+                )
+            if self.expires_on is not None:
+                raise ValidationError(
+                    {"expires_on": "A denied application issued no certificate to expire."}
+                )
+        super().save(*args, **kwargs)
 
 
 class CommitteePosition(models.TextChoices):
