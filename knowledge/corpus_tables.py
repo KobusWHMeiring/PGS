@@ -61,7 +61,7 @@ TABLE_CLOSE = re.compile(r"^<!--\s*/table\s*-->\s*$")
 #: shape), `branch` (where the rows fork), `title` (one per row) and `fee_label` (one per fee box);
 #: `extraction` is S3's datum (below). Every one is reviewed data: the renderer infers none of them.
 TABLE_FIELD = re.compile(
-    r"^\s*(cols|legend|layout|branch|title|fee_label|extraction):\s*(.*?)\s*$"
+    r"^\s*(cols|legend|layout|branch|title|fee_label|extraction|silence):\s*(.*?)\s*$"
 )
 
 #: The shapes the reader can draw (D77). `grid` is the default so every table written before D77
@@ -185,8 +185,8 @@ class TableBlock:
         if not field:
             raise CorpusFormatError(
                 f"line {where}: a table header line that is not one of `cols:`, `legend:`, "
-                f"`layout:`, `branch:`, `title:`, `fee_label:`, `extraction:` or `-->`: "
-                f"{line!r}"
+                f"`layout:`, `branch:`, `title:`, `fee_label:`, `extraction:`, `silence:` or "
+                f"`-->`: {line!r}"
             )
         key = field.group(1)
         if key in self.fields:
@@ -352,11 +352,12 @@ class TableBlock:
                 "its text would become a chunk no column label points at."
             )
         self.close_cell(where, body)
-        self.cell = {"lines": [], "first": None, "last": None, "cursor": len(body)}
+        self.cell = {"lines": [], "pages": {}, "first": None, "last": None, "cursor": len(body)}
 
-    def add_cell_line(self, index: int) -> None:
-        """Record the body-line index of a line the caller just appended."""
+    def add_cell_line(self, index: int, printed: int | None = None) -> None:
+        """Record the body-line index of a line the caller just appended, and its printed page."""
         self.cell["lines"].append(index)
+        self.cell["pages"][index] = printed
 
 
 def parsed_tables(
@@ -381,12 +382,16 @@ def parsed_tables(
         end = min(
             char_offset(raw["last"]) + len(lines_in_text[raw["last"] + 1]), len(text)
         )
-        return TableCell(text[start:end], start, end)
+        body = text[start:end]
+        first = raw["lines"].index(raw["first"])
+        pages = tuple(raw.get("pages", {}).get(index) for index in raw["lines"])
+        return TableCell(body, start, end, pages[first : first + body.count("\n") + 1])
 
     return tuple(
         ParsedTable(
             columns=raw["columns"],
             legend=raw["fields"].get("legend", ""),
+            silence=raw["fields"].get("silence", ""),
             extraction=raw["fields"].get("extraction", ""),
             layout=raw["fields"].get("layout", "grid"),
             branch=raw.get("branch"),

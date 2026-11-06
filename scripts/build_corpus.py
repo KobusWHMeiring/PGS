@@ -82,7 +82,7 @@ from knowledge.ingest import CORPUS_DOCUMENTS  # noqa: E402
 from knowledge.reflow import reflow_pages  # noqa: E402
 from knowledge.sections import is_furniture, registry  # noqa: E402
 from knowledge.table_proposals import proposals_for  # noqa: E402
-from scripts import table_blocks  # noqa: E402
+from scripts import corpus_pages, table_blocks  # noqa: E402
 from scripts.corpus_pages import flatten, offsets, pages_of, substitute_pass  # noqa: E402
 from scripts.corpus_review import apply_review, table_loss_refusal  # noqa: E402
 

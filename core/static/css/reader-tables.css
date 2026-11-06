@@ -156,6 +156,23 @@
   margin: 0.35rem 0 0.35rem 1.1rem;
 }
 
+/* A heading the paper prints inside the grid (S5-b): `I. PLANT AND ANIMAL ORIGIN` between two
+   groups of rows, or a centred `South African specific` above the row it qualifies. It is a row of
+   the table, not a card, so it spans every column and carries no cell padding of its own. */
+.reader__grid .reader__grid-divider td {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.reader__grid .reader__grid-divider .passage__divider {
+  margin: 1.1rem 0 0.4rem;
+  padding-top: 0.6rem;
+}
+
+.reader__grid .reader__grid-divider .passage__divider--qualifier {
+  padding-top: 0;
+}
+
 .reader__grid td.is-empty {
   color: var(--brand-muted);
 }
@@ -247,6 +264,13 @@
      labelled field of its own. */
   .reader__grid td.is-empty {
     display: none;
+  }
+
+  /* A divider is not a card: it belongs between them, and it spans the stacked layout too. */
+  .reader__grid .reader__grid-divider {
+    margin-bottom: 0;
+    border: 0;
+    background-color: transparent;
   }
 }
 

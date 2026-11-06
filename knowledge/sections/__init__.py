@@ -118,6 +118,11 @@ class TableCell:
     text: str
     start: int
     end: int
+    #: The **printed** page each of `text`'s lines was printed on, one entry per line, or `()` for
+    #: a cell that does not say. A cell that crosses a page break (`<!-- page: … -->` inside it)
+    #: has more than one value here, and R3 checks each line against its own page — which is what
+    #: makes a declared cross-page continuation judgeable instead of a hole in the rule.
+    pages: tuple[int | None, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -173,6 +178,10 @@ class ParsedTable:
     columns: tuple[str, ...]
     rows: tuple[ParsedTableRow, ...]
     legend: str = ""
+    #: What the reader prints where a cell is empty, or empty. Reviewed data: a table whose cells
+    #: are numbers prints nothing for a missing value, and a table whose silence is a reviewed fact
+    #: (Appendix 2) says so once, here, instead of in nineteen sentences (D70.4).
+    silence: str = ""
     #: `process` (cards) or `grid` (a spreadsheet). See `TABLE_LAYOUTS`.
     layout: str = "grid"
     #: The row index at which the remaining rows become an **alternative path**, or None for a

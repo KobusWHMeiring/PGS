@@ -8,6 +8,65 @@
       ],
       "layout": "grid",
       "legend": "The standard prints this appendix as a table: each row is a class of animal and the maximum number of animals per hectare whose manure it may contribute, at the limit of 170 kg of nitrogen per hectare per year. The two column labels are the owner's arbitration of 2026-11-05: the paper prints the header once, as two levels of type across four lines, and all four readers merged the two labels into one. The labels are therefore reviewed wording, not a slice of the page; every cell beneath them is still the page's own characters."
+    },
+    {
+      "columns": [
+        "Substances — description, compositional requirements",
+        "Conditions for use"
+      ],
+      "layout": "grid",
+      "legend": "The standard prints this appendix as a table: each entry is a substance and the condition printed beside it. Where it prints no condition, nothing is permitted by its silence.",
+      "silence": "no condition printed",
+      "band": {
+        "76": 60,
+        "77": 64,
+        "78": 64
+      },
+      "dividers": [
+        {
+          "before": 0,
+          "text": "I. PLANT AND ANIMAL ORIGIN",
+          "kind": "part"
+        },
+        {
+          "before": 1,
+          "text": "South African specific",
+          "kind": "qualifier"
+        },
+        {
+          "before": 3,
+          "text": "South African specific",
+          "kind": "qualifier"
+        },
+        {
+          "before": 14,
+          "text": "South African specific",
+          "kind": "qualifier"
+        },
+        {
+          "before": 15,
+          "text": "II. MINERAL ORIGIN",
+          "kind": "part"
+        },
+        {
+          "before": 26,
+          "text": "III. MICROBIOLOGICAL",
+          "kind": "part"
+        },
+        {
+          "before": 28,
+          "text": "IV. OTHERS",
+          "kind": "part"
+        }
+      ],
+      "tails": [
+        {
+          "row": 10,
+          "column": 2,
+          "page": 77,
+          "text": "(iii) fermentation."
+        }
+      ]
     }
   ]
 }

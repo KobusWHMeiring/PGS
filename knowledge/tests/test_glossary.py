@@ -39,7 +39,6 @@ from knowledge.passages import (
     Paragraph,
     Term as TermBlock,
     passage_blocks,
-    row_blocks,
 )
 from knowledge.references import ReferenceIndex, Target, annotate, segments_for
 from knowledge.tests.page_fixtures import stub_ingest_extraction
@@ -212,7 +211,9 @@ def test_no_glossary_links_while_the_glossary_branch_is_open():
 
 def test_a_term_inside_a_heading_is_not_a_link():
     entries = _terms(_entries())
-    blocks = (Heading("SOIL MANAGEMENT"), TermBlock("Soil"), row_blocks("Soil\n\nOnly if composted.")[0])
+    # A row heading used to be the third structure block here; the grid's `<th scope="row">` is
+    # that structure now (S5-b), so what is left is the claim itself: structure is never segmented.
+    blocks = (Heading("SOIL MANAGEMENT"), TermBlock("Soil"))
 
     annotated = annotate(blocks, _index(), terms=entries, open_branch="S6")
 

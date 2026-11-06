@@ -22,6 +22,12 @@ Three rules, and the third is the one that costs a review if it is missing:
    would then delete text while every character-level guard stayed green (`testing_hazards.md` §3.25).
    Blank lines and page markers are the only things allowed to go unclaimed.
 
+**The cell primitives live in `scripts/table_cells.py`** since S5-b: `_resolve` and the functions it
+needs (the run-in-a-line rule, the band, the despace fallback, the slice) were the bulk of this file,
+and this module kept the block writer, the region rule and the refusals. What the split may not do is
+separate two answers to "what counts as the page's words", so the band and the slice read the declared
+`band:` through one function, in one file.
+
 **What this module deliberately cannot do.** No PDF, no fixture, no credential, no extractor: the body
 lines are the input, exactly as `build_corpus.py` holds them. It does not write reviewed fields — the
 legend, the shape, the titles, the fee labels and the fork come from
@@ -34,14 +40,25 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Mapping, Sequence
 
-from knowledge.corpus_tables import has_letter_spacing
 from knowledge.table_proposals import ProposedTable
+from scripts.table_cells import (
+    PAGE,
+    _Cell,
+    _band_at,
+    _cell_lines,
+    _flat_map,
+    _page_of,
+    _resolve,
+    _run_in_line,
+    _slice,
+    flat,
+    has_letter_spacing,
+)
 
 #: `<!-- page: 12 printed: 11 -->` — the same marker `knowledge.corpus` parses, so a row's page is
 #: read from the draft exactly as the parser will read it from the artefact.
-PAGE = re.compile(r"^<!--\s*page:\s*(\d+)\s+printed:\s*(\d+|none)\s*-->\s*$")
 
 __all__ = ["Emitted", "Refusal", "block_lines", "emit", "emit_one", "flat", "has_letter_spacing"]
 
@@ -68,16 +85,6 @@ class Refusal:
 
 
 @dataclass(frozen=True)
-class _Cell:
-    """Where a resolved cell sits: `(first_line, last_line, start, end)` in the body."""
-
-    first: int
-    last: int
-    start: int
-    end: int
-
-
-@dataclass(frozen=True)
 class _Resolved:
     lines: list[str]
     emitted: Emitted | None
@@ -86,143 +93,6 @@ class _Resolved:
     #: a different fact from "refused" and must not be reported (or the operator sees twenty messages
     #: about the same table, one per section of the document).
     absent: bool = False
-
-
-def flat(text: str) -> str:
-    """Whitespace-normalised — the comparison every quote check in this repo makes."""
-    return " ".join(text.split())
-
-
-def _flat_map(text: str) -> tuple[str, list[int]]:
-    """`(flat_text, offsets)` where `offsets[i]` is the index in `text` of flat character `i`."""
-    out: list[str] = []
-    offsets: list[int] = []
-    for position, character in enumerate(text):
-        if character.isspace():
-            if out and out[-1] != " ":
-                out.append(" ")
-                offsets.append(position)
-            continue
-        out.append(character)
-        offsets.append(position)
-    while out and out[-1] == " ":
-        out.pop()
-        offsets.pop()
-    return "".join(out), offsets
-
-
-def _run_in_line(line: str, wanted: str, offset: int) -> tuple[int, int] | None:
-    """`(start, end)` of `wanted` as a whole-word run of `line` at or after `offset`, or None.
-
-    The word-boundary check is the difference between a cell and a coincidence: `1,500` occurs inside
-    `11,5000` as a run, and writing that slice would put a number the paper does not print into a
-    row — with R3 still green, because the slice *is* a run of the line.
-    """
-    text, offsets = _flat_map(line[offset:])
-    start = text.find(wanted)
-    while start >= 0:
-        end = start + len(wanted)
-        before = start == 0 or text[start - 1] == " "
-        after = end == len(text) or text[end] == " "
-        if before and after:
-            return offset + offsets[start], offset + offsets[end - 1] + 1
-        start = text.find(wanted, start + 1)
-    return None
-
-
-def _resolve(
-    target: str,
-    lines: Sequence[str],
-    cursor: tuple[int, int],
-    allowed: set[int] | None = None,
-    pages: Sequence[tuple[int, int | None]] | None = None,
-) -> tuple[_Cell, tuple[int, int]] | None:
-    """The cell's place in the body, and the cursor after it. One pass, forwards only.
-
-    Exact first. Where the page letter-spaces a word, the comparison drops spaces instead — and the
-    fallback is only admissible because the page's own characters prove the same sequence is there
-    (`scripts/table_reads.py` records the same normalisation for the evaluation arms).
-
-    `allowed` is the set of PDF pages the proposal says the table is on. **It is not a nicety:** the
-    landscape prints the same five column labels at the top of every table page, so a page-blind
-    search resolves a header to whichever page printed it first and then reports the row as "out of
-    printed order" — a true sentence about the wrong page (measured 2026-11-05).
-    """
-    wanted = flat(target)
-    if not wanted:
-        return None
-    spaced = has_letter_spacing(wanted)
-    i, offset = cursor
-    while i < len(lines):
-        if allowed is not None and pages is not None and pages[i][0] not in allowed:
-            i, offset = i + 1, 0
-            continue
-        line = lines[i]
-        while offset < len(line) and line[offset] == " ":
-            offset += 1
-        found = _run_in_line(line, wanted, offset)
-        if found is not None:
-            return _Cell(i, i, found[0], found[1]), (i, found[1])
-        if spaced or has_letter_spacing(line):
-            found = _despaced_run(line, wanted, offset)
-            if found is not None:
-                return _Cell(i, i, found[0], found[1]), (i, found[1])
-        # A cell may begin mid-line and continue; the rest of this line must begin it.
-        head, head_offsets = _flat_map(line[offset:])
-        head_start = offset + head_offsets[0] if head_offsets else offset
-        if head and (wanted == head or wanted.startswith(head + " ")):
-            remainder = wanted[len(head):].lstrip()
-            for j in range(i + 1, len(lines)):
-                if allowed is not None and pages is not None and pages[j][0] not in allowed:
-                    break
-                piece = flat(lines[j])
-                if not piece:
-                    continue
-                if remainder == piece:
-                    end = len(lines[j].rstrip())
-                    return _Cell(i, j, head_start, end), (j, end)
-                if remainder.startswith(piece + " "):
-                    remainder = remainder[len(piece):].lstrip()
-                    continue
-                if piece.startswith(remainder) and (
-                    len(piece) == len(remainder) or piece[len(remainder)] == " "
-                ):
-                    _text, offsets = _flat_map(lines[j])
-                    end = offsets[len(remainder) - 1] + 1
-                    return _Cell(i, j, head_start, end), (j, end)
-                break
-        i, offset = i + 1, 0
-    return None
-
-
-def _despaced_run(line: str, wanted: str, offset: int) -> tuple[int, int] | None:
-    """`wanted` found in `line` with every space dropped from both — the letter-spacing fallback.
-
-    The map is built from the **raw** line, one entry per non-space character: the page's own
-    spacing is what the slice has to keep, so a flat index cannot stand in for a raw one
-    (measured 2026-11-05 — the flat map returned the position of a space and the cell came back as
-    `b o v i n e Cattle`, i.e. the arm's boundary with the page's text bolted onto it).
-    """
-    bare_wanted = wanted.replace(" ", "")
-    if not bare_wanted:
-        return None
-    offsets: list[int] = []
-    for position in range(offset, len(line)):
-        if not line[position].isspace():
-            offsets.append(position)
-    bare_text = "".join(line[position] for position in offsets)
-    at = bare_text.find(bare_wanted)
-    if at < 0:
-        return None
-    return offsets[at], offsets[at + len(bare_wanted) - 1] + 1
-
-
-def _slice(lines: Sequence[str], cell: _Cell) -> str:
-    """The cell's characters: the body's own lines, from `first` to `last`, trimmed at the edges."""
-    if cell.first == cell.last:
-        return lines[cell.first][cell.start : cell.end]
-    middle = list(lines[cell.first + 1 : cell.last])
-    return "\n".join([lines[cell.first][cell.start :]] + middle + [lines[cell.last][: cell.end]])
 
 
 def _label(text: str) -> str:
@@ -235,15 +105,6 @@ def _label(text: str) -> str:
         if line.strip():
             return flat(line)
     return ""
-
-
-def _page_of(line: str) -> tuple[int, int | None] | None:
-    """`(pdf page, printed page)` a marker line declares, or None."""
-    marker = PAGE.match(line)
-    if not marker:
-        return None
-    printed = None if marker.group(2) == "none" else int(marker.group(2))
-    return int(marker.group(1)), printed
 
 
 def _page_in_force(
@@ -268,7 +129,7 @@ def _page_in_force(
 def block_lines(
     table: ProposedTable,
     columns: tuple[str, ...],
-    rows: Sequence[tuple[Sequence[str], tuple[int, int | None]]],
+    rows: Sequence[tuple[Sequence[tuple[tuple[str, tuple[int, int | None]], ...]], tuple[int, int | None]]],
     start_page: tuple[int, int | None],
 ) -> list[str]:
     """The block, in the order the reviewed artefacts already use (so a regeneration is one added
@@ -276,13 +137,21 @@ def block_lines(
 
     In:  `table` — the proposal; `columns` — the resolved column labels (the page's characters, not
          the arm's); `rows` — `(cells, (pdf page, printed page))` per row, in printed order, each
-         cell already the page's slice.
+         cell a list of `(line, the page it was printed on)`.
     Out: the block's lines, ready to splice into the artefact body.
+
+    **The page marker follows the characters, not the row.** A row that starts a new page carries a
+    marker before its label; a cell whose last line was printed on the next page carries a marker
+    inside itself, at the line the page turns. That is the one place a block records a
+    cross-page continuation, and the parser reads it: each cell line then knows the page it came
+    from, which is what R3 checks it against.
     """
     profile = table.profile
     out = ["<!-- table", "cols: " + " | ".join(columns), f"layout: {profile.layout}"]
     if profile.legend:
         out.append(f"legend: {flat(profile.legend)}")
+    if profile.silence:
+        out.append(f"silence: {profile.silence}")
     if profile.titles:
         out.append("title: " + " | ".join(flat(title) for title in profile.titles))
     if profile.fee_labels:
@@ -292,19 +161,29 @@ def block_lines(
     out.append(f"extraction: {table.extraction}")
     out.append("-->")
     # The page in force when the block starts is already in the body (the marker `assemble_body`
-    # wrote), so a marker is only written *inside* the block where a row begins a new page.
+    # wrote), so a marker is only written *inside* the block where the printed page changes.
     current = start_page
-    for cells, page in rows:
+
+    def mark(page: tuple[int, int | None]) -> str:
+        pdf_page, printed = page
+        return f"<!-- page: {pdf_page} printed: {'none' if printed is None else printed} -->"
+
+    dividers = table.divider_cells()
+    for index, (cells, page) in enumerate(rows):
         if page != current:
-            pdf_page, printed = page
-            out.append(f"<!-- page: {pdf_page} printed: {'none' if printed is None else printed} -->")
+            out.append(mark(page))
             current = page
-        label = _label("\n".join(cells))
+        for divider in dividers.get(index, ()):
+            out.append(f"<!-- row-divider: {divider.text} {divider.kind} -->")
+        label = _label("\n".join(text for cell in cells for text, _page in cell))
         out.append(f"<!-- row: {label} -->" if label else "<!-- row -->")
         for cell in cells:
             out.append("<!-- cell -->")
-            for line in cell.split("\n"):
-                out.append(line)
+            for text, line_page in cell:
+                if line_page != current:
+                    out.append(mark(line_page))
+                    current = line_page
+                out.append(text)
     out.append("<!-- /table -->")
     return out
 
@@ -319,6 +198,36 @@ def _appears(target: str, body: Sequence[str]) -> bool:
     return bool(wanted) and any(_run_in_line(line, wanted, 0) is not None for line in body)
 
 
+def _tail_line(
+    body: Sequence[str],
+    pages: Sequence[tuple[int, int | None]],
+    tail,
+    cursor: tuple[int, int],
+) -> tuple[int, int] | None:
+    """`(line index, end offset)` of a declared tail, or None. **It must be the page's first line.**
+
+    The declaration says the cell's last words are printed at the top of the next page
+    (`INGESTION_ENGINE_S5_PLAN.md` §4). So the words must be a run at the start of the first
+    non-blank line printed on the declared page — not merely somewhere on it. That is the rule the
+    owner's read of printed 77 established: `(iii) fermentation.` is that page's first line, and the
+    review's spelling had come from printed 79, where the phrase is printed without the bracket.
+    """
+    wanted = flat(tail.text)
+    if not wanted:
+        return None
+    for index in range(cursor[0] + 1, len(body)):
+        if pages[index][1] != tail.page:
+            continue
+        if _page_of(body[index]) is not None or not body[index].strip():
+            continue
+        text = flat(body[index])
+        if not text.startswith(wanted):
+            return None
+        _flat, offsets = _flat_map(body[index])
+        return index, offsets[len(wanted) - 1] + 1
+    return None
+
+
 def emit_one(
     table: ProposedTable, body: Sequence[str], start_page: tuple[int, int | None] = (0, None)
 ) -> _Resolved:
@@ -331,8 +240,27 @@ def emit_one(
         return _Resolved(list(body), None, None, absent=True)
     pages = _page_in_force(body, start_page)
     allowed = set(table.pdf_pages)
+    bands = table.profile.band
+    # **A table is attempted in the section that opens on one of its pages.** The emitter is called
+    # once per section, and a table's row-openers are ordinary phrases: Appendix 2's
+    # `Farmyard manure, slurry and urine` is also printed in S8.1, so the "is this table here at
+    # all?" question answered yes in a section twenty pages early, the divider it could not find
+    # was refused, and the proposal was marked attempted before the appendix was reached — measured
+    # 2026-11-05 (S5-b). A section whose heading page the table does not print cannot hold it.
+    if start_page[0] and start_page[0] not in allowed:
+        return _Resolved(list(body), None, None, absent=True)
     cursor: tuple[int, int] = (0, 0)
     claimed: dict[int, bool] = {}
+
+    def claim(cell: _Cell) -> None:
+        for line_index in range(cell.first, cell.last + 1):
+            claimed[line_index] = True
+
+    def side_of(column_index: int) -> int | None:
+        """Which side of the declared band this column is read from; None when there is no band."""
+        if not bands:
+            return None
+        return 0 if column_index == 0 else 1
 
     # **A reviewed label is not resolved against the page, and that is the whole point of the
     # declaration.** The paper prints a table's header once, as two levels of type across several
@@ -355,50 +283,151 @@ def emit_one(
                             "not a contiguous run of one of the page's printed lines"),
                 )
             cell, cursor = found
-            columns.append(_slice(body, cell))
-            for line_index in range(cell.first, cell.last + 1):
-                claimed[line_index] = True
+            columns.append(_slice(body, cell, pages, bands))
+            claim(cell)
 
-    rows: list[tuple[tuple[str, ...], tuple[int, int | None]]] = []
-    for row_index, row in enumerate(table.rows, 1):
-        cells: list[str] = []
-        page: tuple[int, int | None] | None = None
-        for column_index, proposed in enumerate(row.cells, 1):
-            if not flat(proposed):
-                cells.append("")
-                continue
-            found = _resolve(proposed, body, cursor, allowed, pages)
+    dividers = table.divider_cells()
+    # **One forward cursor per column, and that is what a declared band means.** A row whose two
+    # cells both wrap occupies the *same* printed lines (measured on Appendix 2, row 4 of printed
+    # 76: the substance runs down lines 64–68 in the left column while its condition runs down the
+    # same lines on the right). A single cursor across the row can only resolve the second cell
+    # after the first one's last line, which is below the condition's first word — so it refuses a
+    # row the paper prints correctly. The band already split one line into two streams; the cursor
+    # follows the stream, and no column may resume above the earliest point the row may start.
+    cursors: list[tuple[int, int]] = [(0, 0) for _ in (table.rows[0].cells if table.rows else ())]
+    rows: list[tuple[tuple[tuple[tuple[str, tuple[int, int | None]], ...], ...], tuple[int, int | None]]] = []
+    for row_index, row in enumerate(table.rows):
+        floor = min(cursors) if cursors else (0, 0)
+        # **A declared band is a measurement of every page the table prints on.** A row that lands
+        # on a page the declaration does not name cannot be cut, so it is refused as *under-
+        # declared* — before any cell is resolved, which is what makes the message name the page
+        # instead of blaming a cell for the missing boundary.
+        if bands and pages[floor[0]][1] not in bands:
+            declared = ", ".join(str(page) for page in sorted(bands))
+            return _Resolved(
+                list(body),
+                None,
+                Refusal(
+                    table.index,
+                    f"row {row_index + 1}",
+                    f"this row is printed on page {pages[floor[0]][1]} and the proposal declares a "
+                    f"column boundary for {declared} only. Without one, the row's cells would be "
+                    "resolved against both columns and claim the neighbour's words",
+                ),
+            )
+        # A divider is printed *above* the row it qualifies, on a line of its own — the whole line,
+        # never one side of the band: `South African specific` is centred across the boundary.
+        for divider in dividers.get(row_index, ()):
+            found = _resolve(divider.text, body, floor, allowed, pages, bands=None, side=None)
             if found is None:
                 return _Resolved(
                     list(body),
                     None,
                     Refusal(
                         table.index,
-                        f"row {row_index}, column {column_index}",
-                        f"{flat(proposed)[:80]!r} is not a contiguous run of any printed line after "
+                        f"divider before row {row_index + 1}",
+                        f"{flat(divider.text)[:80]!r} is not a contiguous run of any printed "
+                        "line before the row it qualifies",
+                    ),
+                )
+            cell, floor = found
+            claim(cell)
+            cursors = [max(cursor, floor) for cursor in cursors]
+        cells: list[tuple[tuple[str, tuple[int, int | None]], ...]] = []
+        page: tuple[int, int | None] | None = None
+        for column_index, proposed in enumerate(row.cells):
+            if not flat(proposed):
+                cells.append(())
+                continue
+            wanted = flat(proposed)
+            tail = table.tail_for(row_index, column_index + 1)
+            if tail is not None:
+                wanted_tail = flat(tail.text)
+                if not wanted.endswith(wanted_tail):
+                    return _Resolved(
+                        list(body),
+                        None,
+                        Refusal(
+                            table.index,
+                            f"row {row_index + 1}, column {column_index + 1}",
+                            f"the declared tail {wanted_tail!r} is not the end of this cell, so "
+                            "the declaration and the row disagree about what crosses the page",
+                        ),
+                    )
+                wanted = wanted[: len(wanted) - len(wanted_tail)].rstrip()
+            start = cursors[column_index] if column_index < len(cursors) else floor
+            found = _resolve(
+                wanted,
+                body,
+                max(start, floor),
+                allowed,
+                pages,
+                bands,
+                side_of(column_index),
+            )
+            if found is None:
+                return _Resolved(
+                    list(body),
+                    None,
+                    Refusal(
+                        table.index,
+                        f"row {row_index + 1}, column {column_index + 1}",
+                        f"{wanted[:80]!r} is not a contiguous run of any printed line after "
                         "the cell before it (out of printed order, or not on the page)",
                     ),
                 )
             cell, cursor = found
-            cells.append(_slice(body, cell))
+            claim(cell)
+            lines = list(_cell_lines(body, cell, pages, bands))
             if page is None:
                 page = pages[cell.first]
-            for line_index in range(cell.first, cell.last + 1):
-                claimed[line_index] = True
-        joined = "\n".join(cells)
+            if tail is not None:
+                found_tail = _tail_line(body, pages, tail, cursor)
+                if found_tail is None:
+                    return _Resolved(
+                        list(body),
+                        None,
+                        Refusal(
+                            table.index,
+                            f"row {row_index + 1}, column {column_index + 1}",
+                            f"the declared tail {flat(tail.text)[:80]!r} is not the first printed "
+                            f"line of page {tail.page}, so it is not where the declaration says "
+                            "it is",
+                        ),
+                    )
+                index, end = found_tail
+                lines.append((body[index].rstrip(), pages[index]))
+                claimed[index] = True
+                cursor = (index, end)
+            cursors[column_index] = cursor
+            cells.append(tuple(lines))
+        joined = "\n".join(text for cell in cells for text, _page in cell)
         if not joined.strip():
             return _Resolved(
                 list(body),
                 None,
-                Refusal(table.index, f"row {row_index}", "every cell is empty, which the format "
+                Refusal(table.index, f"row {row_index + 1}", "every cell is empty, which the format "
                         "refuses: a row with no text is a citation with nothing in it"),
             )
         if page is None or page[0] == 0:
             return _Resolved(
                 list(body),
                 None,
-                Refusal(table.index, f"row {row_index}", "no page marker is in force, so the row "
+                Refusal(table.index, f"row {row_index + 1}", "no page marker is in force, so the row "
                         "cannot say which page it starts on (D72.5)"),
+            )
+        if bands and page[1] not in bands:
+            declared = ", ".join(str(page_number) for page_number in sorted(bands))
+            return _Resolved(
+                list(body),
+                None,
+                Refusal(
+                    table.index,
+                    f"row {row_index + 1}",
+                    f"this row is printed on page {page[1]} and the proposal declares a column "
+                    f"boundary for {declared} only. Without one, the row's cells would be resolved "
+                    "against both columns and claim the neighbour's words",
+                ),
             )
         rows.append((tuple(cells), page))
 

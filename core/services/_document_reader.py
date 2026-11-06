@@ -20,7 +20,7 @@ from core.models import PublicDocument
 from knowledge.concordance import ConcordanceSection, build_concordance
 from knowledge.glossary import GLOSSARY_BRANCH, glossary_entries, with_term_anchors
 from knowledge.models import StandardDocument
-from knowledge.passages import passage_blocks, row_blocks
+from knowledge.passages import passage_blocks
 from knowledge.reading import (
     SearchHit,
     branch_texts,
@@ -34,10 +34,8 @@ from knowledge.reading import (
 from knowledge.references import annotate, build_reference_index
 from knowledge.tables import (
     TableDivider,
-    TableStructure,
     align_artefact_grid,
     artefact_grid_for,
-    structure_for,
 )
 
 from core.services._document_shapes import (
@@ -69,11 +67,9 @@ class Reader:
     hits: tuple[SearchHit, ...]
     query: str
     section: str
-    #: The branch's reviewed structure, when its rows were curated: the printed caption, the
-    #: legend sentence and the dividers (D70.1). None for every other branch.
-    table: TableStructure | None = None
-    #: The printed grid for a reviewed artefact table (D72.3) — the landscape's five columns.
-    #: Distinct from `table`: that is the two-column appendix shape, this is a real grid.
+    #: The printed grid for a reviewed artefact table (D72.3) — a two-column appendix as much as
+    #: the landscape's five columns. Every reviewed table is the artefact's own block, so the
+    #: reader draws it from the same parse the ingest chunks (S5).
     grid: ReaderGrid | None = None
     #: D79 option E: the row and cell a citation landed on, when the URL carried its quote.
     cited: ReaderCitation | None = None
@@ -189,11 +185,6 @@ def reader_for(
         ),
     )
 
-    # The reviewed structure is looked up against the text that is about to be rendered, so a
-    # corpus that no longer matches the reviewed rows falls back to today's page instead of
-    # labelling rows it cannot vouch for (`knowledge.tables.structure_for`).
-    section_ref = branch_pairs[0][0].section_ref if branch_pairs else None
-    structure = structure_for(section_ref, tuple(texts))
     # `D79` option E, reader side: a citation that carried its quote marks the row it landed on
     # and the cell it quoted. The mark is built from the grid the page is about to draw, so the
     # note above the table and the highlighted cells cannot disagree about which row it is.
@@ -215,6 +206,34 @@ def reader_for(
     # One index per request, built from the tree the page already rendered: a reference can only
     # point at a branch that is in it.
     index = build_reference_index(document_row, sections)
+    # **A grid's cells carry the document's references too.** The rows used to be passages, so
+    # `annotate` reached their words on the way to the template; the grid is drawn from
+    # `_artefact_grid` before the index exists, so the annotation is applied here, once, after it.
+    # Measured 2026-11-05 (the first S5-b run): `See Section B – Appendix 6 …` in a condition cell
+    # rendered as text, which is the regression this fixes. Terms are not linked inside a cell: a
+    # table cell is not a glossary definition, and `_passage_blocks.html` would print an id per
+    # occurrence of a word the paper uses as a substance.
+    if grid is not None:
+        grid = replace(
+            grid,
+            rows=tuple(
+                replace(
+                    row,
+                    cells=tuple(
+                        (
+                            column,
+                            annotate(
+                                blocks,
+                                index,
+                                open_branch=selected.key if selected is not None else "",
+                            ),
+                        )
+                        for column, blocks in row.cells
+                    ),
+                )
+                for row in grid.rows
+            ),
+        )
     # One locator per run: 30 Appendix 2 rows share three locator lines, and 52 of `S5`'s clauses
     # share one. Every passage keeps its id, so a citation still lands on the row it quotes.
     show_locator = printed_locators(
@@ -241,9 +260,11 @@ def reader_for(
         }
     term_seen: set[str] = set()
 
+    # The reviewed table is the artefact's own block now, and it reached the page through `grid`
+    # above: `structure_for` and the Python rows it compared are gone (S5-b).
     rows: list[ReaderPassage] = []
     for position, ((chunk, _anchor), text) in enumerate(zip(branch_pairs, texts)):
-        blocks = row_blocks(text) if structure is not None else passage_blocks(text)
+        blocks = passage_blocks(text)
         rows.append(
             ReaderPassage(
                 anchor=pairs[chunk.pk],
@@ -259,8 +280,6 @@ def reader_for(
                     open_branch=selected.key if selected is not None else "",
                     terms=terms,
                 ),
-                dividers=structure.dividers[position] if structure is not None else (),
-                note=structure.labels[position] if structure is not None else "",
                 show_locator=show_locator[position],
                 in_grid=position in grid_positions,
             )
@@ -276,7 +295,6 @@ def reader_for(
         hits=tuple(search_in_document(document_row, query, anchors=pairs)) if query.strip() else (),
         query=query.strip(),
         section=section.strip(),
-        table=structure,
         grid=grid,
         cited=cited,
     )

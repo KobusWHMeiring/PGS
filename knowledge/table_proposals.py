@@ -44,6 +44,36 @@ class ProposedRow:
 
 
 @dataclass(frozen=True)
+class ProposedDivider:
+    """A heading printed *inside* the table, attached to the row beneath it.
+
+    `before_row` is a 0-based row index, because that is where the paper prints it. The emitter
+    resolves each one against the page (a divider is printed on a line of its own) and writes it as
+    `<!-- row-divider: … -->`, so the block carries the label and R6 can claim it exactly once.
+    """
+
+    before_row: int
+    text: str
+    kind: str = "qualifier"
+
+
+@dataclass(frozen=True)
+class ProposedTail:
+    """A cell's last words, printed at the top of the next page (requirement 4's own case).
+
+    `row` is 0-based and `column` 1-based, matching the refusal messages an operator reads. `page`
+    is the **printed** page the words are on, and `text` is the locator: the emitter verifies it is
+    the first line printed on that page and refuses otherwise. A continuation that is inferred
+    instead of declared is how `(iii) fermentation.` was once transcribed from printed 79.
+    """
+
+    row: int
+    column: int
+    page: int
+    text: str
+
+
+@dataclass(frozen=True)
 class ProposedProfile:
     """The block fields no extractor produces — `reviewed.json`'s half of the composite.
 
@@ -60,6 +90,18 @@ class ProposedProfile:
     #: The labels the reader prints, when the paper's header is not one line the emitter can slice
     #: (Appendix 6a prints two levels of type across four lines). Reviewed wording, flat.
     columns: tuple[str, ...] = ()
+    #: Printed page -> the column the second cell starts at, for a two-column table printed on one
+    #: line grid. `TABLE_BANDS` measured these numbers; declaring them here is what turns "used to
+    #: verify" into "used to slice", and the emitter refuses a cell whose words cross the boundary.
+    band: dict[int, int] = field(default_factory=dict)
+    #: The headings printed inside the table, in printed order.
+    dividers: tuple[ProposedDivider, ...] = ()
+    #: A cell that continues onto the next page, declared rather than inferred.
+    tails: tuple[ProposedTail, ...] = ()
+    #: What the reader prints where a cell is empty, for a table whose silence is a reviewed fact
+    #: (Appendix 2: `no condition printed`). Empty means an empty cell renders as nothing, which is
+    #: what every other table wants.
+    silence: str = ""
 
 
 @dataclass(frozen=True)
@@ -75,10 +117,34 @@ class ProposedTable:
     processor: str
     profile: ProposedProfile = field(default_factory=ProposedProfile)
 
+    #: Where this table's structure came from, when it is not the file's arm read: a table whose
+    #: rows were promoted from a review (`--continue`) names that review, because the banner's
+    #: `structure` describes the arm that read the *other* pages and claiming otherwise is a false
+    #: banner (`INGESTION_ENGINE_S5_PLAN.md` §4).
+    continued_from: str = ""
+
     @property
     def where(self) -> str:
-        """How a refusal names it: the arm, and which of its tables."""
-        return f"{self.structure} table {self.index + 1}"
+        """How a refusal names it: the arm (or the review), and which of its tables."""
+        return f"{self.continued_from or self.structure} table {self.index + 1}"
+
+    def band_for(self, printed: int | None) -> int | None:
+        """The declared column boundary on one printed page, or None."""
+        return None if printed is None else self.profile.band.get(printed)
+
+    def divider_cells(self) -> dict[int, tuple[ProposedDivider, ...]]:
+        """Row index -> the dividers printed immediately above it, in printed order."""
+        out: dict[int, list[ProposedDivider]] = {}
+        for divider in self.profile.dividers:
+            out.setdefault(divider.before_row, []).append(divider)
+        return {row: tuple(entries) for row, entries in out.items()}
+
+    def tail_for(self, row: int, column: int) -> ProposedTail | None:
+        """The declared continuation of one cell, or None."""
+        for tail in self.profile.tails:
+            if tail.row == row and tail.column == column:
+                return tail
+        return None
 
 
 def _load(path: Path) -> dict:
@@ -86,6 +152,119 @@ def _load(path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
         raise ProposalError(f"{path.name}: not JSON ({error})") from None
+
+
+def _band(raw: object, path: Path, index: int, width: int) -> dict[int, int]:
+    """`{"76": 60}` -> `{76: 60}`, refused unless it can describe this table's columns.
+
+    A band says where the *second* column starts on a printed page, so it needs exactly two
+    columns and a positive column number. A band declared for a page the table does not print is
+    refused by the emitter, which is the only place that knows the pages the rows land on.
+    """
+    if not raw:
+        return {}
+    if width != 2:
+        raise ProposalError(
+            f"{path.name} table {index + 1}: a `band` is the boundary between a table's two "
+            f"columns, and this table has {width}. A band on a wider table would silently cut "
+            "the third column into the second."
+        )
+    out: dict[int, int] = {}
+    for page, cut in dict(raw).items():
+        try:
+            printed, at = int(page), int(cut)
+        except (TypeError, ValueError):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: `band` wants printed page -> column, and "
+                f"{page!r}: {cut!r} is not two whole numbers."
+            ) from None
+        if at <= 0:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: the band on printed page {printed} starts at "
+                f"column {at}. A boundary at or before column 0 would leave the first cell no "
+                "characters at all."
+            )
+        out[printed] = at
+    return out
+
+
+def _dividers(raw: object, path: Path, index: int, rows: int) -> tuple[ProposedDivider, ...]:
+    """The printed headings inside the table, refused unless each names a row beneath it."""
+    out: list[ProposedDivider] = []
+    previous = -1
+    for entry in raw or ():
+        entry = dict(entry)
+        before = entry.get("before")
+        text = " ".join(str(entry.get("text", "")).split())
+        kind = str(entry.get("kind", "qualifier"))
+        try:
+            before = int(before)
+        except (TypeError, ValueError):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a divider names `before: {entry.get('before')!r}`, "
+                "which is not a row index."
+            ) from None
+        if not 0 <= before < rows:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a divider is attached to row {before} of {rows}. "
+                "A divider qualifies the row beneath it; one that names no row is a label the "
+                "reader would lose."
+            )
+        if before < previous:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: the dividers are not in printed order (row "
+                f"{before} follows row {previous}). The block writes them where they are read."
+            )
+        if not text:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a divider before row {before} is blank."
+            )
+        if kind not in ("part", "qualifier"):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: divider kind {kind!r} is not `part` or "
+                "`qualifier`. The reader draws the two differently, so a third word would be "
+                "silently one of them."
+            )
+        out.append(ProposedDivider(before_row=before, text=text, kind=kind))
+        previous = before
+    return tuple(out)
+
+
+def _tails(raw: object, path: Path, index: int, rows: int, width: int) -> tuple[ProposedTail, ...]:
+    """The declared cross-page continuations, refused unless each names a cell that exists."""
+    out: list[ProposedTail] = []
+    seen: set[tuple[int, int]] = set()
+    for entry in raw or ():
+        entry = dict(entry)
+        text = " ".join(str(entry.get("text", "")).split())
+        try:
+            row, column, page = int(entry["row"]), int(entry["column"]), int(entry["page"])
+        except (KeyError, TypeError, ValueError):
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a `tail` needs `row`, `column`, `page` and "
+                "`text` as whole numbers and words."
+            ) from None
+        if not 0 <= row < rows:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a tail names row {row} of {rows}."
+            )
+        if not 1 <= column <= width:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: a tail names column {column} of {width}."
+            )
+        if not text:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: the tail on row {row} has no words. A "
+                "continuation that names nothing cannot be found on the page."
+            )
+        if (row, column) in seen:
+            raise ProposalError(
+                f"{path.name} table {index + 1}: two tails for row {row}, column {column}. "
+                "One cell continues onto one page."
+            )
+        seen.add((row, column))
+        out.append(ProposedTail(row=row, column=column, page=page, text=text))
+    return tuple(out)
 
 
 def _profile(raw: dict, path: Path, index: int, rows: int, width: int) -> ProposedProfile:
@@ -133,6 +312,10 @@ def _profile(raw: dict, path: Path, index: int, rows: int, width: int) -> Propos
         fee_labels=fee_labels,
         branch=None if branch is None else int(branch),
         columns=tuple(str(label) for label in columns),
+        band=_band(raw.get("band"), path, index, width),
+        dividers=_dividers(raw.get("dividers"), path, index, rows),
+        tails=_tails(raw.get("tails"), path, index, rows, width),
+        silence=" ".join(str(raw.get("silence", "")).split()),
     )
 
 
@@ -157,21 +340,29 @@ def _tables(payload: dict, path: Path, reviewed: dict | None) -> tuple[ProposedT
     out: list[ProposedTable] = []
     for index, raw in enumerate(raw_tables):
         columns = tuple(raw.get("columns") or ())
+        profile_raw = reviews[index] if reviews else {}
+        # **A continued table has no arm columns.** Its rows were read by a person from the paper,
+        # so the labels are in the review (`reviewed.json`) and the structure file does not pretend
+        # an extractor produced them (`scripts/propose_tables.py --continue`).
+        reviewed_columns = tuple(str(label) for label in profile_raw.get("columns") or ())
+        width = len(columns) or len(reviewed_columns)
         rows = tuple(ProposedRow(tuple(row.get("cells") or ())) for row in raw.get("rows") or ())
-        if not columns:
+        if not columns and not reviewed_columns:
             raise ProposalError(
-                f"{path.name} table {index + 1}: no columns. R2 needs the printed labels, and a "
-                "table without them is Appendix 6a's shape — the one the format cannot express."
+                f"{path.name} table {index + 1}: no columns and no reviewed labels. R2 needs the "
+                "printed labels, and a table without them is Appendix 6a's shape — the one the "
+                "format cannot express."
             )
         if not rows:
             raise ProposalError(f"{path.name} table {index + 1}: no rows")
         for number, row in enumerate(rows, 1):
-            if len(row.cells) != len(columns):
+            if len(row.cells) != width:
                 raise ProposalError(
                     f"{path.name} table {index + 1} row {number}: {len(row.cells)} cells for "
-                    f"{len(columns)} columns. The emitter needs a rectangle: a short row is a cell "
+                    f"{width} columns. The emitter needs a rectangle: a short row is a cell "
                     "the arm dropped, and padding it would put a cell nobody read into the corpus."
                 )
+        continued_from = str(raw.get("continued_from", ""))
         pages = tuple(int(page) for page in raw.get("pdf_pages") or ())
         if not pages:
             raise ProposalError(
@@ -189,12 +380,13 @@ def _tables(payload: dict, path: Path, reviewed: dict | None) -> tuple[ProposedT
             ProposedTable(
                 index=index,
                 pdf_pages=pages,
-                columns=columns,
+                columns=columns or reviewed_columns,
                 rows=rows,
                 extraction=extraction,
                 structure=structure,
                 processor=processor,
-                profile=_profile(profile_raw, path, index, len(rows), len(columns)),
+                continued_from=continued_from,
+                profile=_profile(profile_raw, path, index, len(rows), width),
             )
         )
     return tuple(out)

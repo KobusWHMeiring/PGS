@@ -526,7 +526,7 @@ def parse_blocks(text: str) -> CorpusDocument:
                     )
                 continue  # a blank line between rows, for the reviewer's eye only
             add_text(line, index)
-            table.add_cell_line(len(current["body"]) - 1)
+            table.add_cell_line(len(current["body"]) - 1, printed)
             continue
 
         ref = REF.match(line)

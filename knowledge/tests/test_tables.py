@@ -1,9 +1,9 @@
-"""The reviewed Appendix 2 rows, checked against the printed page.
+"""Appendix 2's rows, checked against the printed page — read from the artefact's block.
 
-`knowledge/tables.py` is a hand-curated reconstruction, so this suite is the guard that
-stops it drifting from the paper. It is deliberately built on `pdftotext -table`, which
-aligns the table's rows; `-layout` is what interleaves them, and testing against it
-would re-assert the defect.
+The rows used to be Python literals in `knowledge/tables.py`. S5-b emitted the `<!-- table … -->`
+block from the page and deleted them, so this suite now reads what the corpus actually holds: the
+pairing is data the artefact carries, and the assertions below did not change when their source did
+— that is the point of the slice.
 
 The pairing assertions are not redundant with the presence checks. "Both cells are on
 the page" is true for a wrong pairing too — that is exactly how the straw answer acquired
@@ -12,21 +12,17 @@ the wood condition. Pinning which condition belongs to which substance is the po
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
 from knowledge.tests.page_fixtures import pages
 
-from knowledge.extraction import extract_pages
 from knowledge.corpus import CORPUS_EDITS
 from knowledge.corpus import load_document
-from knowledge.table_chunks import chunks_for_parsed_section, chunks_for_rows
-from knowledge.tables import (
-    APPENDIX_2_ROWS,
-    TABLE_BANDS,
-    rows_for,
-)
+from knowledge.table_chunks import chunks_for_parsed_section
+from knowledge.tables import TABLE_BANDS
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SAOSO_PDF = REPO_ROOT / "pgs_docs" / "saoso-version-2.1-2026.pdf"
@@ -108,8 +104,7 @@ def _streams(pages: list[str], printed: int) -> tuple[str, str]:
 
     `pdftotext -table` aligns a row but still prints both cells on one line, so a cell
     that wraps is interrupted by its neighbour. Splitting at the measured band (data,
-    not a guess) restores each cell's own reading order — and this is only a *test*
-    oracle: the corpus rows are already curated, and nothing splits at runtime.
+    not a guess) restores each cell's own reading order.
     """
     band = TABLE_BANDS[printed]
     left: list[str] = []
@@ -122,6 +117,46 @@ def _streams(pages: list[str], printed: int) -> tuple[str, str]:
         if rest:
             right.append(rest)
     return _join_lines(left), _join_lines(right)
+
+
+@dataclass(frozen=True)
+class Row:
+    """One row of the artefact's Appendix 2 block, in the shape the old literals had.
+
+    `raw` is the cells as the block stores them — the page's own lines, blank lines and all —
+    because `text` has to be the chunk text the ingest writes. `substance` and `condition` are the
+    same words with the printed line breaks joined, which is what a comparison with a page stream
+    can use.
+    """
+
+    page: int
+    raw: tuple[str, ...]
+
+    @property
+    def substance(self) -> str:
+        return _join_lines(self.raw[0].splitlines()) if self.raw else ""
+
+    @property
+    def condition(self) -> str:
+        return _join_lines(self.raw[1].splitlines()) if len(self.raw) > 1 else ""
+
+    @property
+    def text(self) -> str:
+        return "\n".join(self.raw)
+
+
+def _appendix_2():
+    """The artefact's Appendix 2 section, its block, and its rows in printed order (S5-b)."""
+    document = load_document(REPO_ROOT / "knowledge" / "corpus" / "saoso.md")
+    section = next(s for s in document.sections if s.section_ref == "Appendix 2")
+    table = section.tables[0]
+    rows = tuple(
+        Row(page=row.page, raw=tuple(cell.text for cell in row.cells)) for row in table.rows
+    )
+    return section, table, rows
+
+
+APPENDIX_2_ROWS = _appendix_2()[2]
 
 
 @pytest.mark.parametrize("row", APPENDIX_2_ROWS, ids=lambda row: row.substance[:40])
@@ -259,18 +294,31 @@ def test_a_condition_never_appears_inside_a_substance_cell():
 
 
 def test_one_chunk_per_row_and_none_of_them_invented():
-    chunks = chunks_for_rows("Appendix 2")
-    assert len(chunks) == len(APPENDIX_2_ROWS)
+    section, _table, rows = _appendix_2()
+    chunks = [
+        chunk
+        for chunk in chunks_for_parsed_section(section)
+        if chunk.heading_path.startswith("Appendix 2 — ")
+    ]
+    assert len(chunks) == len(rows)
     assert all(chunk.section_ref == "Appendix 2" for chunk in chunks)
-    for chunk, row in zip(chunks, APPENDIX_2_ROWS):
+    for chunk, row in zip(chunks, rows):
         assert chunk.text == row.text
         assert chunk.page == row.page
         assert chunk.heading_path.startswith("Appendix 2 — ")
 
 
-def test_an_unreviewed_section_has_no_rows():
-    assert rows_for("Appendix 3") == ()
-    assert rows_for(None) == ()
+def test_a_section_with_no_table_keeps_the_ordinary_chunker():
+    """The one storage's counterpart: an unreviewed section is prose, chunked as prose.
+
+    It used to assert `rows_for("Appendix 3") == ()` — a lookup into the Python rows that S5-b
+    deleted. The claim it protected is that the table mechanism does not reach a section that
+    prints no block, and that is what this says now.
+    """
+    document = load_document(REPO_ROOT / "knowledge" / "corpus" / "saoso.md")
+    section = next(s for s in document.sections if s.section_ref == "Appendix 3")
+    assert section.tables == ()
+    assert chunks_for_parsed_section(section)
 
 
 # --- Appendix 6a: twenty classes, twenty stocking rates ---------------------

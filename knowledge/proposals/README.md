@@ -7,12 +7,26 @@ finds no proposal — which is the truthful outcome: nobody has read its tables 
 | File | Who writes it | What it holds |
 |---|---|---|
 | `<doc>.structure.json` | `scripts/propose_tables.py`, from a cached extractor response | the arm's grid: columns, rows, the pages, and the banner (`structure`, `processor`, `project`, `captured`, `reduced_from`) |
-| `<doc>.reviewed.json` | a person, once per table | the block fields **no extractor produces**: `legend`, `layout`, `titles`, `fee_labels`, `branch`, and **`columns`** — the labels the reader prints, when the paper's header is multi-line and two-level so a one-line `cols:` cannot be a slice of it (Appendix 6a, S5) |
+| `<doc>.reviewed.json` | a person, once per table | the block fields **no extractor produces**: `legend`, `layout`, `titles`, `fee_labels`, `branch`, `silence`, `band`, `dividers`, `tails`, and **`columns`** — the labels the reader prints, when the paper's header is multi-line and two-level so a one-line `cols:` cannot be a slice of it (Appendix 6a, S5) |
 
 **What must never be edited by hand** is `.structure.json`. It is a transcription of what the arm
 returned, and hand-editing it would make the one thing in this path that is *not* a guess into one.
 If the arm's read is wrong, the cell is wrong in the diff — the emitter verifies every cell against
-the page's own text layer and refuses the ones the arm got wrong, naming them.
+the page's own text layer and refuses the ones the arm got wrong, naming them. The one exception is
+`--continue` below, which writes an entry from a review rather than from an arm and says so in it.
+
+## The fields that name structure
+
+Each of these is reviewed data, is refused if it disagrees with the page, and **loosens no cell
+rule**: the cells stay slices of the page, verified one by one.
+
+| Field | What it says | Why it is not a widened matcher |
+|---|---|---|
+| `columns` | the labels the reader prints, flat | the paper's header is multi-line and two-level; a one-line `cols:` cannot be a page slice. The cells beneath it are still verified |
+| `band: {"76": 60}` | where the second column starts on each **printed** page, for a table whose cells share every printed line | a cell may then only claim its own side of the boundary, and a column's cells are resolved in their own forward cursor — the alternative is a left cell that reads `Biodegradable Free of contaminants` with its neighbour's words in the middle |
+| `dividers: [{before, text, kind}]` | a heading printed *between* rows (`I. PLANT AND ANIMAL ORIGIN`, `South African specific`) | each is located on a line of its own and written as `<!-- row-divider: … -->`, so the block carries the label and R6 can claim it |
+| `tails: [{row, column, page, text}]` | a cell whose last words are printed at the top of the next page | the words must be the **first** line printed on the declared page; an inferred continuation is how `(iii) fermentation.` was once transcribed from two pages later |
+| `silence` | what the reader prints where a cell is empty (`no condition printed`) | one reviewed sentence per table, not nineteen in a template |
 
 ## Assembling one document from several responses
 
@@ -36,6 +50,21 @@ type across several lines with merged cells; every arm flattens it. A one-line `
 a run of that, so those labels are reviewed data — the same status the reader's own column labels
 already had. What must not follow is a shorthand for a *cell*: the emitter still locates every cell on
 the page and refuses the ones that are not there, so a review cannot author a value.
+
+## Continuing a table no arm ever read
+
+Some pages were never sent to an extractor. If a person has reviewed their rows from the paper,
+`--continue` promotes those rows into the proposal **as locators** — the emitter still verifies every
+cell against the page and refuses the ones that are not there, so a promotion cannot author a value:
+
+```bash
+python scripts/propose_tables.py --continue --doc saoso --pdf-offset 1 \
+    --json knowledge/proposals/saoso.structure.json
+```
+
+The entry it writes carries `continued_from` naming the review, because the file's banner describes
+the arm that read the *other* pages and a banner claiming both would be false. It omits `columns`
+for the same reason: those labels are reviewed wording, and `reviewed.json` supplies them.
 
 ## Regenerating
 

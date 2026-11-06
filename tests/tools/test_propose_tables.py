@@ -163,3 +163,109 @@ def test_it_imports_without_a_credential_or_a_rasteriser():
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "ok" in result.stdout
+
+
+# --- S5-b: the continuation act, and the locators it may promote ----------------------
+#
+# Appendix 2's pages 77–79 were never sent to an arm. The owner reviewed its 30 rows from the paper
+# on 2026-10-21 and they lived in `knowledge/tables.py`; S5-b promoted them into the proposal as
+# **locators**. The act is only defensible if every locator is a run of the page, which is what
+# these two tests say — and if the entry cannot be mistaken for an arm reading, which is the third.
+
+from knowledge.tests import page_fixtures  # noqa: E402
+
+CONTINUED = REPO_ROOT / "knowledge" / "proposals" / "saoso.structure.json"
+REVIEWED = REPO_ROOT / "knowledge" / "proposals" / "saoso.reviewed.json"
+
+
+def _appendix_2():
+    """`(the continued entry, its reviewed profile)` from the committed proposal."""
+    structure = json.loads(CONTINUED.read_text(encoding="utf-8"))
+    reviewed = json.loads(REVIEWED.read_text(encoding="utf-8"))
+    entry = next(table for table in structure["tables"] if table.get("continued_from"))
+    index = structure["tables"].index(entry)
+    return entry, reviewed["tables"][index]
+
+
+def test_a_continued_locator_is_a_run_of_the_pages_table_line():
+    """Every cell the continuation promoted is the page's own words, in its own column.
+
+    This is the difference between verifying a review and typing a table: the emitter refuses a
+    cell it cannot find (`test_a_cell_the_page_does_not_print_is_refused...`), and this says the
+    same thing *before* a build — over all 41 non-empty cells, band-sliced, against the committed
+    `-table` pages. The one cell that is not a run of its page is the declared cross-page tail, and
+    it is checked on the page it is printed on.
+    """
+    entry, profile = _appendix_2()
+    pages = page_fixtures.pages("saoso", "table")
+    offset = 1  # SAOSO prints `pdf - 1`
+    bands = {int(page): int(cut) for page, cut in profile["band"].items()}
+    tails = {(tail["row"], tail["column"]): tail for tail in profile.get("tails", ())}
+
+    def squash(text):
+        return " ".join(text.split())
+
+    printed_pages = []
+    for row_index, row in enumerate(entry["rows"]):
+        printed = 0
+        for column, cell in enumerate(row["cells"], 1):
+            wanted = squash(cell)
+            if not wanted:
+                continue
+            tail = tails.get((row_index, column))
+            if tail is not None:
+                assert wanted.endswith(squash(tail["text"]))
+                wanted = wanted[: len(wanted) - len(squash(tail["text"]))].strip()
+            found = None
+            for number in entry["pdf_pages"]:
+                printed = number - offset
+                band = bands[printed]
+                # The page's own hyphenation: a word split at a line break (`cobalt-` /`
+                # sulphate`) is one printed word, which is the rule the harness has had since
+                # 2026-11-03 and the emitter adopted in S5-b.
+                stream = ""
+                for line in pages[number - 1].splitlines():
+                    view = squash(line[:band] if column == 1 else line[band:])
+                    if not view:
+                        continue
+                    if stream.endswith("-") and view[:1].islower():
+                        stream += view
+                        continue
+                    stream = f"{stream} {view}".strip()
+                if wanted in squash(stream):
+                    found = printed
+                    break
+            assert found is not None, (
+                f"row {row_index + 1} column {column}: {wanted[:60]!r} is not a run of the "
+                "band-sliced page it claims to come from — the review is a locator, not an "
+                "authoring act"
+            )
+            if tail is not None:
+                assert squash(tail["text"]) in squash(pages[tail["page"] + offset - 1])
+        printed_pages.append(printed)
+
+
+def test_a_continued_entry_never_claims_an_arm_read_it():
+    """The banner is per file, and the file describes Document AI's read of Appendix 6a. A
+    continued entry names the review it came from instead, so the structure file cannot say an
+    arm read pages nobody sent it."""
+    entry, profile = _appendix_2()
+    assert entry["continued_from"].startswith("knowledge/tables.py::APPENDIX_2_ROWS")
+    assert "owner" in entry["continued_from"]
+    # The labels are reviewed wording, so the structure file omits them and the review supplies
+    # them — `_tables` falls back to `reviewed.json` rather than inventing a string.
+    assert "columns" not in entry
+    assert len(profile["columns"]) == 2
+
+
+def test_a_continuation_completes_a_proposal_or_refuses(tmp_path, capsys):
+    """No proposal to complete is a refusal with a name: the banner it would need is not this
+    script's to invent."""
+    with pytest.raises(SystemExit) as raised:
+        reducer.main(
+            [
+                "--continue", "--doc", "saoso",
+                "--json", str(tmp_path / "nothing.structure.json"),
+            ]
+        )
+    assert "no proposal to continue" in str(raised.value)

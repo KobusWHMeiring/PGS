@@ -313,9 +313,11 @@ def test_the_real_corpus_survives_the_layout_and_produces_lists(standard_set):
     ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
     chunks = list(DocumentChunk.objects.order_by("id"))
     # 319 + Appendix 6a's 22 chunks: 20 row chunks plus the printed title/header above them
-    # and the part banner the section carries onto the next page (S5 emitted the block; before
+    # and the part banner the section carries onto the next page (S5-a emitted the block; before
     # that the 20 Python rows replaced the section's chunks and those two were never chunks).
-    assert len(chunks) == 340
+    # + Appendix 2's 31 since S5-b: 30 row chunks and the header prose printed above the grid
+    # (the block's own `chunks_for_parsed_section` output, not a second copy of the count).
+    assert len(chunks) == 341
 
     for chunk in chunks:
         source = normalise(HASH_HEADING.sub("", chunk.text))
@@ -414,7 +416,7 @@ def test_no_clause_is_split_off_its_own_sentence(standard_set):
     """
     ingest_standard(pdf_path=SAOSO_PDF, standard_set=standard_set, doc_key="saoso", embed=False)
     chunks = list(DocumentChunk.objects.order_by("id"))
-    assert len(chunks) == 340
+    assert len(chunks) == 341
 
     split = []
     for chunk in chunks:

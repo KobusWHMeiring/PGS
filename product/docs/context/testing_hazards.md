@@ -2093,6 +2093,65 @@ Rule: where the claim is *characters* — a quotable cell, a locator the emitter
 characters, and prefer `in`/`startswith` on the page's own string over a substring that a shorter
 form would also satisfy. A word-level helper is for words.
 
+### 3.40 A generator path no test calls is a typo away from dead, and the suite cannot see it
+
+`build_corpus.build()` called `corpus_pages.pass_texts(...)` for a year of commits, but the module was
+imported by name only (`from scripts.corpus_pages import flatten, offsets, pages_of, substitute_pass`),
+so `corpus_pages` was never bound. Every test that exercises the emitter builds its body from fixtures
+and calls `emit()`, not `build()`, so nothing covered the line.
+
+Evidence:
+    $ python scripts/build_corpus.py --doc saoso --force
+    NameError: name 'corpus_pages' is not defined    (at build(), before any section was written)
+    [the full suite was green: 1765 passed]
+
+Consequence: the artefact generator could not run at all on a document with a `-table` proposal, and
+the S5-a handover quotes a measurement of that exact command — so the number was either measured
+before the refactor or not measured. A green suite says nothing about a script whose path no test
+invokes.
+
+Rule: when a capability moves between modules, run the *command* the handover quotes before quoting
+it again, and keep at least one test that calls the real entry point (`build()`), not only the
+function under it.
+
+### 3.41 "Is this table here at all?" answered yes twenty pages early, and the table was never emitted
+
+The emitter is called once per section with the document's pending proposals. Its cheap pre-check
+asked whether *any* row's first cell appears in the section, and a table's row-openers are ordinary
+phrases: Appendix 2's `Farmyard manure, slurry and urine` is also printed in `S8.1`. So the proposal
+was attempted in `S8.1`, refused there (its first divider is not printed there), and `attempted`
+marked it done — the appendix section never saw it.
+
+Evidence:
+    saoso: proposal 2, divider before row 1: 'I. PLANT AND ANIMAL ORIGIN' is not a contiguous run …
+    saoso: 20 row(s) emitted from proposal 1          [Appendix 6a only; Appendix 2 silently absent]
+
+Consequence: a table that is *refused in the wrong section* is worse than one refused in its own,
+because the gate then reports a clean artefact whose table is missing — and `check_tables --rows`
+counts what is there, not what should be.
+
+Rule: a table is attempted only in a section whose heading page is one of the pages it declares
+(`emit_one`'s first refusal). A phrase search cannot tell one section from another; a page can.
+
+### 3.42 R6 said "the paper prints it once", and Appendix 2 prints its qualifier three times
+
+The divider guard asserted that a divider's *text* was unique across the table's rows, because
+"a divider qualifies the row beneath it, and the paper prints it once". Appendix 2's paper prints
+`South African specific` above three different rows (and twice on printed 76), so emitting the block
+turned a true rule into a false failure.
+
+Evidence:
+    R6 Appendix 2 table 1: the divider 'South African specific' is claimed by rows 2 and 4;
+    the paper prints it once
+    [the paper prints it on printed 76 twice and on printed 77 once — 3 rows, 7 dividers total]
+
+Consequence: reading "printed once" as "unique text" makes an honest table look wrong, and the
+tempting fix — renaming the second one — would put a word in the corpus the page does not print.
+
+Rule: a guard about a repeated label counts *claims against occurrences on the page*, not claims
+against uniqueness. R6 now compares per printed page and says "claimed N times, the page prints it
+M time(s)".
+
 ## 5. Template for a new entry
 
 ```markdown

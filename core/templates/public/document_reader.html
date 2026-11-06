@@ -155,23 +155,6 @@
                 {{ reader.document.title }} &rsaquo; {{ reader.selected.title }}
                 {% if reader.selected.page %} &middot; printed p. {{ reader.selected.page }}{% endif %}
               </p>
-              {% if reader.table %}
-                {% comment %}
-                  A curated appendix is the paper's table, and the paper's table has a caption and a
-                  claim. Both are reviewed data (`knowledge/tables.py`): the caption quotes the two
-                  printed column headers, and the legend is the sentence that answers "why is this a
-                  list of inputs" — including what an empty condition cell means. The label repeats
-                  that once per empty row; this sentence says it once for the table.
-                {% endcomment %}
-                <div class="reader__table-bar">
-                  <p class="reader__table-caption">
-                    <span>{{ reader.table.section.columns.0 }}</span>
-                    <span class="reader__table-join" aria-hidden="true">&middot;</span>
-                    <span>{{ reader.table.section.columns.1 }}</span>
-                  </p>
-                  <p class="reader__table-legend">{{ reader.table.section.legend }}</p>
-                </div>
-              {% endif %}
               {% for passage in reader.passages %}
                 {% if reader.grid and passage.anchor == reader.grid.first_anchor %}
                 {% comment %}
@@ -245,12 +228,20 @@
                     </thead>
                     <tbody>
                       {% for row in reader.grid.rows %}
+                        {% for divider in row.dividers %}
+                          {% comment %}
+                            A heading the paper prints *inside* the grid, attached to the row beneath
+                            it. It is quoted text with a shape, so it is a cell and not an <h*>:
+                            the same classes the passages use, so there is one divider.
+                          {% endcomment %}
+                          <tr class="reader__grid-divider"><td colspan="{{ reader.grid.columns|length }}"><p class="passage__divider passage__divider--{{ divider.kind }}">{{ divider.text }}</p></td></tr>
+                        {% endfor %}
                         <tr id="{{ row.anchor }}"{% if row.is_cited %} class="is-cited"{% endif %}>
                           {% for column, blocks in row.cells %}
                             {% if forloop.first %}
                               <th scope="row"{% if row.cited_cell == forloop.counter0 %} class="is-cited-cell"{% endif %}>{% include "public/_passage_blocks.html" with blocks=blocks %}{% if row.show_page and row.page %}<span class="reader__grid-page">printed p. {{ row.page }}</span>{% endif %}</th>
                             {% else %}
-                              <td data-label="{{ column }}" class="{% if not blocks %}is-empty{% endif %}{% if row.cited_cell == forloop.counter0 %} is-cited-cell{% endif %}">{% include "public/_passage_blocks.html" with blocks=blocks %}</td>
+                              <td data-label="{{ column }}" class="{% if not blocks and not row.note %}is-empty{% endif %}{% if row.cited_cell == forloop.counter0 %} is-cited-cell{% endif %}">{% include "public/_passage_blocks.html" with blocks=blocks %}{% if not blocks and row.note %}<p class="passage__note">{{ row.note }}</p>{% endif %}</td>
                             {% endif %}
                           {% endfor %}
                         </tr>
@@ -263,14 +254,6 @@
                 {% if not passage.in_grid %}
                 <article class="passage" id="{{ passage.anchor }}">
                   {% comment %}
-                    The divider the paper prints immediately above this row — a part heading, or a
-                    centred `South African specific` qualifier. It carries no id: it is not text the
-                    standard numbers, so it is not citable.
-                  {% endcomment %}
-                  {% for divider in passage.dividers %}
-                    <p class="passage__divider passage__divider--{{ divider.kind }}">{{ divider.text }}</p>
-                  {% endfor %}
-                  {% comment %}
                     One line per run: the printed reference is the same above 52 of `S5`'s clauses and
                     above 27 of Appendix 2's rows, so it prints where it changes. Every passage keeps
                     its `id`, so a citation still lands on the row it quotes.
@@ -281,9 +264,6 @@
                     </p>
                   {% endif %}
                   {% include "public/_passage_blocks.html" with blocks=passage.blocks %}
-                  {% if passage.note %}
-                    <p class="passage__note">{{ passage.note }}</p>
-                  {% endif %}
                 </article>
                 {% endif %}
               {% empty %}

@@ -4,7 +4,7 @@
   "structure": "documentai-layout-v1.6-pro",
   "processor": "68e47c3bc90cc6ab@pretrained-layout-parser-v1.6-pro-2025-12-01",
   "project": "803140233794",
-  "captured": "2026-11-05",
+  "captured": "2026-11-06",
   "shape": "headerless_values",
   "reduced_from": "_scratch/adc/responses/layout16pro__headerless_values.json",
   "tables": [
@@ -225,6 +225,197 @@
         ]
       ],
       "extraction": "table"
+    },
+    {
+      "pdf_pages": [
+        77,
+        78,
+        79
+      ],
+      "rows": [
+        {
+          "cells": [
+            "Farmyard manure, slurry and urine",
+            "Shall not constitute the main source of nitrogen in the absence of complimentary and additional nitrogen generating practices on farm and shall not be from conventional intensive livestock production systems without prior permission from the control body Coming from extensive livestock farming. If sourced from intensive livestock farming or not sourced from organic production systems, then the need for use thereof shall be motivated to the certification body, and it shall be composted. Forbidden if from factory farming origin."
+          ]
+        },
+        {
+          "cells": [
+            "Farmyard manure, slurry and urine",
+            "Manure applications should not be the primary source of nitrogen. See Section B – Appendix 6 Minimum Surface Areas Indoors and Outdoors and other Characteristics of Housing in the Different Species and Types of Production for the density of livestock for the equivalent of 170 Kg nitrogen per hectare per year."
+          ]
+        },
+        {
+          "cells": [
+            "Guano",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Source separated human excrement",
+            "Specifically prohibited."
+          ]
+        },
+        {
+          "cells": [
+            "Vermicastings",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Blood meal, meat meal, bone, bone meal",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Hoof and horn meal, feather meal, fish and shell products, wool, hide, fur, hair, dairy products",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Biodegradable processing by-products, plant or animal origin, e.g., by-products of food, feed, oilseed, brewery, distillery or textile processing",
+            "Free of significant contaminants; or composted before bringing onto organic land and confirmed free of significant contaminants"
+          ]
+        },
+        {
+          "cells": [
+            "Crop residues and plant materials, mulch, green manure, straw",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Wood, bark, sawdust, wood shavings, wood ash, wood charcoal",
+            "Only if not chemically treated"
+          ]
+        },
+        {
+          "cells": [
+            "Seaweed and seaweed products",
+            "As far as obtained by: i) physical processes including dehydration, freezing and grinding; ii) extraction with water or potassium hydroxide solutions, provided that the minimum amount of solvent necessary is used for extraction; (iii) fermentation."
+          ]
+        },
+        {
+          "cells": [
+            "Peat (prohibited for soil conditioning)",
+            "Excluding synthetic additives; permitted only in horticulture (floriculture, nursery plants, potting mixes)."
+          ]
+        },
+        {
+          "cells": [
+            "Plant preparations and extracts",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Compost made from ingredients listed in this appendix, Spent mushroom waste, humus from worms and insects,",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Urban composts and household wastes from separated sources which are monitored for contamination",
+            "Maximum concentrations in milligrams per kilogram (mg/kg) of dry matter: a) cadmium: 0,7; b) copper: 70; c) nickel: 25; d) lead: 45; e) zinc: 200; f) mercury: 0,4; g) chromium (total): 70; h) chromium (VI): 0"
+          ]
+        },
+        {
+          "cells": [
+            "Calcareous and magnesium amendments: Limestone, gypsum, marl, maerl, chalk, sugar beet lime",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Calcium chloride",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Magnesium rock, kieserite and Epsom salt (magnesium sulphate)",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Other non-synthetic calcareous and magnesium amendments",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Clay (e.g., bentonite, perlite, vermiculite, zeolite)",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Mineral potassium (e.g., sulphate of potash, muriate of potash, kainite, sylvanite, patentkali)",
+            "Shall be obtained by physical procedures but not enriched by chemical processes"
+          ]
+        },
+        {
+          "cells": [
+            "Phosphates in non-synthetic form (e.g., rock phosphate, colloidal phosphate, apatite)",
+            "Cadmium content less than or equal to 90 mg/kg of P2O5"
+          ]
+        },
+        {
+          "cells": [
+            "Pulverized rock, stone meal, crushed stone.",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Sodium chloride",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Sulphur",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Trace elements, e.g.: boric acid, sodium borate, calcium borate, borethanolamin, cobalt-acetate, cobalt-sulphate, copper oxide, copper sulphate, copper hydroxide, copper silicate, copper carbonate, copper citrate, ferric oxide, ferric sulphate, ferrous sulphate, iron citrate, iron sulphate, or iron tartrate manganous oxide, manganese sulphate and manganese carbonate selenic acid, selenic acid, sodium molybdate, molybdic oxide zinc carbonate, zinc oxide, zinc silicate, and zinc sulphate",
+            "Use restricted to cases where soil/plant nutrient deficiency is documented by soil or tissue testing or diagnosed by an independent expert. Micronutrients in either chloride or nitrate forms are prohibited. Micronutrients may not be used as a defoliant, herbicide, or desiccant."
+          ]
+        },
+        {
+          "cells": [
+            "Biodegradable processing by-products of microbial origin, e.g., by-products of brewery or distillery processing",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Microbiological preparations based on naturally occurring organisms",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Biodynamic preparations",
+            ""
+          ]
+        },
+        {
+          "cells": [
+            "Calcium lignosulfonate",
+            ""
+          ]
+        }
+      ],
+      "extraction": "table",
+      "continued_from": "knowledge/tables.py::APPENDIX_2_ROWS (the owner's review, 2026-10-21)"
     }
   ]
 }

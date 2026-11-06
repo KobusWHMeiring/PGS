@@ -21,7 +21,7 @@ from knowledge.concordance import ConcordanceSection, build_concordance
 from knowledge.corpus import load_document
 from knowledge.ingest import corpus_artifact, doc_key_for
 from knowledge.models import StandardDocument
-from knowledge.passages import passage_blocks, row_blocks
+from knowledge.passages import passage_blocks
 from knowledge.reading import (
     SearchHit,
     branch_texts,
@@ -34,10 +34,8 @@ from knowledge.reading import (
 )
 from knowledge.tables import (
     TableDivider,
-    TableStructure,
     align_artefact_grid,
     artefact_grid_for,
-    structure_for,
 )
 
 
@@ -58,11 +56,6 @@ class ReaderPassage:
     heading_path: str
     text: str
     blocks: tuple = ()
-    #: The printed divider(s) the paper puts immediately above this row (`I. PLANT AND ANIMAL
-    #: ORIGIN`, `South African specific`). Empty for a passage that is not a reviewed row.
-    dividers: tuple[TableDivider, ...] = ()
-    #: What the paper's condition cell says where it says nothing: a label, never a condition.
-    note: str = ""
     #: True when this passage is a row of `Reader.grid`, whose cells carry its text. The template
     #: draws the grid once, at `grid.first_anchor`, and skips the row passages.
     in_grid: bool = False
@@ -108,6 +101,13 @@ class ReaderGridRow:
     #: The printed text of each cell, in column order, before it is laid out into blocks. Kept for
     #: `_cited_row`, which has a citation's quote and needs the cell it came from.
     cell_texts: tuple[str, ...] = ()
+    #: The heading(s) the paper prints immediately above this row (`I. PLANT AND ANIMAL ORIGIN`,
+    #: `South African specific`). Empty for a table whose paper prints no heading inside it. The
+    #: block carries them as `row-divider` annotations, so the artefact — not a Python constant —
+    #: is what the reader draws.
+    dividers: tuple[TableDivider, ...] = ()
+    #: What the reader prints where a cell is empty (Appendix 2's *no condition printed*), or empty.
+    note: str = ""
 
 
 @dataclass(frozen=True)
@@ -460,6 +460,19 @@ def _artefact_grid(
                     for column, cell_text in zip(grid.columns, cells)
                 ),
                 cell_texts=tuple(cells),
+                dividers=tuple(
+                    TableDivider(index, text, kind)
+                    for text, kind in (
+                        grid.dividers[index] if index < len(grid.dividers) else ()
+                    )
+                ),
+                # The silence label belongs to the row that *is* silent: a label on every row would
+                # be a claim about rows the paper prints conditions for.
+                note=(
+                    grid.silence
+                    if grid.silence and any(not cell.strip() for cell in cells)
+                    else ""
+                ),
             )
         )
         previous_page = page

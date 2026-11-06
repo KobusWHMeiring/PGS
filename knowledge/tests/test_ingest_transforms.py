@@ -12,6 +12,8 @@ another shape the ingest stores rather than derives.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from knowledge.embedding import EmbeddingError
@@ -105,27 +107,37 @@ def test_two_sets_may_hold_the_same_document(db):
 def test_appendix_2_is_stored_as_reviewed_rows(saoso_pdf, standard_set):
     """The interleaved `-layout` chunk is replaced by one chunk per printed row.
 
-    `knowledge/tables.py` holds the reviewed pairing; this asserts the ingest actually
-    uses it. The `calcium Use restricted` assertion is the 2026-10-21 defect verbatim:
-    the model quoted the real page and the audit refused it because the stored text had
-    the condition column spliced into the substance column.
+    Appendix 2's rows are the artefact's `<!-- table -->` block (S5-b deleted the Python copy); this
+    asserts the ingest actually chunks them, and that each row is one chunk. The
+    `calcium Use restricted` assertion is the 2026-10-21 defect verbatim: the model quoted the real
+    page and the audit refused it because the stored text had the condition column spliced into the
+    substance column.
     """
-    from knowledge.tables import APPENDIX_2_ROWS
+    from knowledge.corpus import parse_blocks
+    from knowledge.ingest import corpus_artifact
 
     report = ingest_standard(
         pdf_path=saoso_pdf, standard_set=standard_set, doc_key="saoso", embed=False
     )
     document = StandardDocument.objects.get(pk=report.document_id)
     rows = list(document.chunks.filter(section_ref="Appendix 2").order_by("id"))
+    artefact = parse_blocks(Path(corpus_artifact("saoso")).read_text(encoding="utf-8"))
+    table = next(s for s in artefact.sections if s.section_ref == "Appendix 2").tables[0]
 
-    assert len(rows) == len(APPENDIX_2_ROWS)
+    assert len(table.rows) == 30
+    # 31 chunks: the header prose before the grid, then one per row (`chunks_for_parsed_section`).
+    assert len(rows) == 31
     assert not any("calcium Use restricted" in chunk.text for chunk in rows), (
-        "the interleaved -layout chunk survived the curated table"
+        "the interleaved -layout chunk survived the table block"
     )
     wood = next(chunk for chunk in rows if chunk.text.startswith("Wood, bark, sawdust"))
     assert wood.text.endswith("Only if not chemically treated")
     straw = next(chunk for chunk in rows if chunk.text.startswith("Crop residues"))
-    assert straw.text == "Crop residues and plant materials, mulch, green manure, straw"
+    # The page wraps this row across two lines, and the chunk is the page's characters.
+    assert (
+        " ".join(straw.text.split())
+        == "Crop residues and plant materials, mulch, green manure, straw"
+    )
 
 
 def test_force_replaces_a_document_with_unchanged_bytes(saoso_pdf, standard_set):

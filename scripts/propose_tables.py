@@ -26,6 +26,14 @@ Three rules, and the third is the one that keeps this honest:
 3. **It refuses what the block format cannot yet express.** A merged cell (`rowSpan`/`colSpan` > 1)
    and a response with no table are refusals with a name, not an empty file: the emitter's job is to
    verify characters, and it cannot verify a cell boundary the arm did not report.
+
+**`--continue` is the other way a table's structure enters this repository**, and it is a review
+rather than a reading (`INGESTION_ENGINE_S5_PLAN.md` §4). Some pages were never sent to an arm, and
+their rows were reviewed from the paper by the product owner instead. Those rows are promoted into a
+proposal **as locators**: the emitter still verifies every cell against the page and refuses the ones
+that are not there, so the promotion cannot author a value. The entry it writes names the review it
+came from (`continued_from`), because the file's banner describes the arm that read the *other* pages
+and a banner that claimed both would be false.
 """
 
 from __future__ import annotations
@@ -42,6 +50,10 @@ sys.path.insert(0, str(REPO_ROOT))
 
 #: The arm whose structure the composite adopted, named once so a typo is one line to fix.
 DEFAULT_STRUCTURE = "documentai-layout-v1.6-pro"
+
+#: The review a continued table's rows came from, written into its entry so the file cannot claim an
+#: arm read them. `knowledge/tables.py` is where the review was stored until S5-b promoted it.
+CONTINUED_FROM = "knowledge/tables.py::APPENDIX_2_ROWS (the owner's review, 2026-10-21)"
 
 
 class ProposalError(ValueError):
@@ -164,11 +176,67 @@ def pdf_path_for(doc_key: str, override: str | None) -> Path:
     return REPO_ROOT / descriptor["source"]
 
 
+def reviewed_tables(doc_key: str, offset: int = 0) -> list[dict]:
+    """The reviewed rows still held in Python, as proposal entries — the S5-b continuation act.
+
+    In:  `doc_key` — the corpus key whose tables are still `knowledge.tables.TABLE_ROWS`; `offset` —
+         the PDF's page offset (printed page + offset = PDF page; SAOSO prints `pdf - 1`, so 1).
+    Out: one `structure.json` entry per reviewed table, in document order. Each carries its cells as
+         **locators** — the reviewed spelling, whitespace-normalised — plus `continued_from`, the
+         review's name. No `columns`: those are reviewed wording, and the structure file does not
+         pretend an arm supplied them.
+    Fails: `SystemExit` when the document has no reviewed Python rows; a continuation of nothing
+         would read as a review of nothing.
+
+    **Why this still exists when nothing is left to continue.** It performed S5-b's act — Appendix
+    2's thirty rows, the owner's 2026-10-21 review, promoted to locators — and `knowledge/tables.py`
+    holds no rows any more because that act removed the second storage. It stays for the same reason
+    the act is recorded in the proposal: the capability (a person's reading becomes verification
+    rather than authorship) is what the next unreviewed table needs, and a tool that was deleted
+    with its first input is a capability nobody can find.
+    """
+    try:
+        from knowledge.tables import TABLE_ROWS
+    except ImportError:  # pragma: no cover - the import is the message
+        TABLE_ROWS = {}
+
+    out: list[dict] = []
+    for _ref, rows in TABLE_ROWS.items():
+        if not rows:
+            continue
+        pages = sorted({row.page for row in rows})
+        out.append(
+            {
+                "pdf_pages": [page + offset for page in pages],
+                "rows": [
+                    {
+                        "cells": [
+                            " ".join(row.substance.split()),
+                            " ".join(row.condition.split()),
+                        ]
+                    }
+                    for row in rows
+                ],
+                "extraction": "table",
+                "continued_from": CONTINUED_FROM,
+            }
+        )
+    if not out:
+        raise SystemExit(
+            f"{doc_key!r} has no reviewed rows held in Python, so there is nothing to continue. "
+            "A continued proposal promotes rows a person already read; write one with an arm "
+            "response (`--response`) instead."
+        )
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--response", required=True, help="A cached extractor response (JSON).")
+    parser.add_argument("--response", help="A cached extractor response (JSON).")
     parser.add_argument("--structure", default=DEFAULT_STRUCTURE, help="The arm, as a reviewer names it.")
-    parser.add_argument("--processor", required=True, help="`<processor-id>@<model-version>`.")
+    parser.add_argument(
+        "--processor", default="", help="`<processor-id>@<model-version>`."
+    )
     parser.add_argument("--project", default="", help="Document AI project, when the arm has one.")
     parser.add_argument("--doc", help="The corpus key this response belongs to.")
     parser.add_argument("--shape", help="An S0 shape key: supplies --doc, --pages and the mode.")
@@ -186,7 +254,38 @@ def main(argv: list[str] | None = None) -> int:
             "page, so a document's structure is assembled from several — one file, one banner."
         ),
     )
+    parser.add_argument(
+        "--continue",
+        dest="continue_rows",
+        action="store_true",
+        help=(
+            "Append the rows a person already reviewed (still held in `knowledge.tables`) to an "
+            "existing proposal, as locators the emitter must find on the page. S5-b."
+        ),
+    )
+    parser.add_argument(
+        "--pdf-offset",
+        type=int,
+        default=0,
+        help=(
+            "With `--continue`: printed page + this = PDF page (SAOSO prints `pdf - 1`, so pass 1). "
+            "A wrong offset is refused by the emitter, which cannot find a cell on the wrong page."
+        ),
+    )
     args = parser.parse_args(argv)
+
+    if args.continue_rows:
+        return _continue(args)
+    if not args.response:
+        raise SystemExit(
+            "--response is required: it is the cached arm reading this proposal records. "
+            "(`--continue` is the other way, for rows a person reviewed instead.)"
+        )
+    if not args.processor:
+        raise SystemExit(
+            "--processor is required: a proposal whose arm is unknown is a structure nobody can "
+            "re-derive."
+        )
 
     if args.shape:
         doc_key, shape_pages, shape_mode = pages_of_shape(args.shape)
@@ -261,6 +360,75 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _continue(args) -> int:
+    """Append reviewed rows to the proposal they complete, or refuse and say why."""
+    from knowledge.extraction import sha256_of
+
+    if not args.doc:
+        raise SystemExit("--continue needs --doc: the rows it promotes belong to one document's table")
+    out = Path(args.json)
+    if not out.exists():
+        raise SystemExit(
+            f"{out.as_posix()}: no proposal to continue. A continuation completes a proposal an arm "
+            "produced — the banner in that file describes it, and this act may not invent one."
+        )
+    pdf_path = pdf_path_for(args.doc, args.pdf)
+    if not pdf_path.exists():
+        raise SystemExit(f"no such PDF: {pdf_path}")
+    existing = json.loads(out.read_text(encoding="utf-8"))
+    if existing.get("doc_key") != args.doc:
+        raise SystemExit(
+            f"{out.name} describes {existing.get('doc_key')!r}, not {args.doc!r}. One file is one "
+            "document."
+        )
+    if existing.get("sha256") != sha256_of(pdf_path):
+        raise SystemExit(
+            f"{out.name} describes different bytes than {pdf_path.name}. A reprint is a new "
+            "document and its tables have not been reviewed."
+        )
+    try:
+        merged = _merge_tables(existing, reviewed_tables(args.doc, args.pdf_offset), out.name)
+    except ProposalError as error:
+        print(error, file=sys.stderr)
+        return 2
+    merged["captured"] = args.captured or datetime.date.today().isoformat()
+    out.write_text(
+        json.dumps(merged, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline=""
+    )
+    added = len(merged["tables"]) - len(existing.get("tables", []))
+    print(
+        f"{out.as_posix()}: {added} continued table(s) appended from {CONTINUED_FROM} — "
+        "every cell is a locator the emitter must find on the page"
+    )
+    return 0
+
+
+def _merge_tables(existing: dict, tables: list[dict], name: str) -> dict:
+    """The existing proposal with `tables` appended, or a refusal naming the pages that clash.
+
+    **Two structures for one page is two answers to where its rows are**, so a clash is refused here
+    rather than resolved by order: the emitter would write the first one twice and the second would
+    be a review nobody sees.
+    """
+    existing_pages = {
+        page for table in existing.get("tables", []) for page in table.get("pdf_pages", [])
+    }
+    clashes = sorted(
+        page
+        for table in tables
+        for page in table.get("pdf_pages", [])
+        if page in existing_pages
+    )
+    if clashes:
+        raise ProposalError(
+            f"{name}: pages {clashes} already have a table. Two structures for one page is two "
+            "answers to where its rows are, and the emitter would write the first one twice."
+        )
+    merged = dict(existing)
+    merged["tables"] = list(existing.get("tables", [])) + list(tables)
+    return merged
+
+
 def _merged(out: Path, payload: dict) -> dict:
     """In: an existing proposal and a new one. Out: the two merged, or a refusal by name.
 
@@ -277,25 +445,10 @@ def _merged(out: Path, payload: dict) -> dict:
                 f"{payload.get(field)!r}. A proposal is one document read by one arm; two banners "
                 "in one file would say the whole structure came from either."
             )
-    existing_pages = {
-        page for table in existing.get("tables", []) for page in table.get("pdf_pages", [])
-    }
-    clashes = sorted(
-        page
-        for table in payload["tables"]
-        for page in table.get("pdf_pages", [])
-        if page in existing_pages
-    )
-    if clashes:
-        raise ProposalError(
-            f"{out.name}: pages {clashes} already have a table. Two structures for one page is two "
-            "answers to where its rows are, and the emitter would write the first one twice."
-        )
+    merged = _merge_tables(existing, payload["tables"], out.name)
     reduced = [existing.get("reduced_from", "")]
     if payload.get("reduced_from"):
         reduced.append(payload["reduced_from"])
-    merged = dict(existing)
-    merged["tables"] = list(existing.get("tables", [])) + list(payload["tables"])
     merged["reduced_from"] = ", ".join(item for item in reduced if item)
     merged["captured"] = payload.get("captured") or existing.get("captured", "")
     return merged

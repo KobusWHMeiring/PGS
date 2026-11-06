@@ -105,8 +105,9 @@ def violations_of(report_or_list, requirement: str) -> list[str]:
 CORPUS = {
     "landscape": ("table", (3, 2, 3)),
     "opp": ("layout", (6,)),
-    # S5: Appendix 6a's twenty rows, emitted from the `-table` page and declared on the block.
-    "saoso": ("table", (20,)),
+    # S5: Appendix 2's thirty rows and Appendix 6a's twenty, both emitted from `-table` pages and
+    # declared on the block, in document order.
+    "saoso": ("table", (30, 20)),
 }
 
 
@@ -138,11 +139,12 @@ def test_the_corpus_really_was_checked(doc_key, corpus_report):
     assert corpus_report.rows == sum(rows)
 
 
-def test_the_reviewed_tables_are_thirty_four_rows():
+def test_the_reviewed_tables_are_sixty_four_rows():
     """A ratchet, not a budget: the register and the gate disagree by a row the moment a table is
     added, removed or re-read, and that is what this file is for."""
     total = sum(sum(rows) for _mode, rows in CORPUS.values())
-    assert total == 34, "the register and the PRD disagree; re-measure both"
+    # 64 since S5-b: Appendix 2's 30 rows joined the landscape's 8, the OPP's 6 and 6a's 20.
+    assert total == 64, "the register and the PRD disagree; re-measure both"
 
 
 def test_the_harness_checks_the_chunk_the_chunker_emits():
@@ -288,7 +290,12 @@ def test_a_divider_claimed_by_two_rows_is_named():
         printed_to_pdf={1: 1},
         expected_row_count=2,
     )
-    assert any("the paper prints it once" in line for line in violations_of(found, "R6")), (divider, found)
+    # The message counts instead of assuming: a label may be claimed as often as the page prints
+    # it, and this page prints it none of the times the two rows claim it (S5-b).
+    assert any(
+        "belongs to one row on each line it is printed" in line
+        for line in violations_of(found, "R6")
+    ), (divider, found)
 
 
 def test_a_lost_glyph_in_a_cell_is_named():

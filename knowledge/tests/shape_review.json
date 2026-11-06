@@ -3,7 +3,7 @@
   "version": 1,
   "artefact": "product/design/uat/shape_key_review.html",
   "key": "knowledge/tests/shape_fixtures.py",
-  "key_sha256": "d380767dc0f6a0d6c6316a29c6be9a9adabd745b75838b1ad339d687d5b28800",
+  "key_sha256": "dd37174eb45b720c3e97a0520113670cab839d6aa75493e97b4ae11a546c0e9e",
   "reviewed_at": "2026-11-05",
   "reviewer": {
     "name": "Kobus",
@@ -459,7 +459,8 @@
   ],
   "notes_resolved": {
     "long_cell": "The first column does have a bolded \"Step 3\" on the actual doc on the left that doesn't appear on the right - is this expected?",
-    "empty_cells": "Row 1, column \u201cFee\u201d: does the printed cell contain \u201cR500\u201d? It contains \u201cR500\u201d. Yes/No/Can\u2019t tell - for this one looking at the actual pdf it states Local PGS group determines the membership fee\" while the column on the lesft prints R500 - not sure where the R500 comes from?",
+    "empty_cells": "Row 1, column “Fee”: does the printed cell contain “R500”? It contains “R500”. Yes/No/Can’t tell - for this one looking at the actual pdf it states Local PGS group determines the membership fee\" while the column on the lesft prints R500 - not sure where the R500 comes from?",
     "page_break_row": "Confirming again we're missing loads of text 0- the cells in the pdf don't just say the step name"
-  }
+  },
+  "key_note": "Re-pinned 2026-11-05 (S5-b). The key changed twice and both are notes, not claims: `test_row_blocks.py` was deleted (its `empty_cells` citation went with the code it named), and one note's `TABLE_SECTIONS` reference became `cols:` when the block replaced the constant. `drift()` reported only the hash each time; no claim, cell, header or row count changed."
 }

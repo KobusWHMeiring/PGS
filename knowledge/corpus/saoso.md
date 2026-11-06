@@ -3150,163 +3150,168 @@ c  Evaluation of food additives shall also take into account known allergenicity
 <!-- ref: Appendix 2 -->
 ## Appendix 2
 
-                                   FERTILIZERS AND SOIL CONDITIONERS
+                                                  APPENDIX 2
 
-SUBSTANCES DESCRIPTION, COMPOSITIONAL
+                                    FERTILIZERS AND SOIL CONDITIONERS
+
+SUBSTANCES DESCRIPTION, COMPOSITIONAL                       CONDITIONS FOR USE
+
 REQUIREMENTS
-I. PLANT AND ANIMAL ORIGIN
+
+<!-- table
+cols: Substances — description, compositional requirements | Conditions for use
+layout: grid
+legend: The standard prints this appendix as a table: each entry is a substance and the condition printed beside it. Where it prints no condition, nothing is permitted by its silence.
+silence: no condition printed
+extraction: table
+-->
+<!-- row-divider: I. PLANT AND ANIMAL ORIGIN part -->
+<!-- row: Farmyard manure, slurry and urine -->
+<!-- cell -->
 Farmyard manure, slurry and urine
+<!-- cell -->
+Shall not constitute the main source of nitrogen in the
 
-                                   South African specific
+absence of complimentary and additional nitrogen
 
+generating practices on farm and shall not be from
+
+conventional intensive livestock production systems
+
+without prior permission from the control body
+
+Coming from extensive livestock farming.
+
+If sourced from intensive livestock farming or not
+
+sourced from organic production systems, then the
+
+need for use thereof shall be motivated to the
+
+certification body, and it shall be composted.
+
+Forbidden if from factory farming origin.
+<!-- row-divider: South African specific qualifier -->
+<!-- row: Farmyard manure, slurry and urine -->
+<!-- cell -->
 Farmyard manure, slurry and urine
+<!-- cell -->
+Manure applications should not be the primary
 
+source of nitrogen. See Section B – Appendix 6
+
+Minimum Surface Areas Indoors and Outdoors and
+
+other Characteristics of Housing in the Different
+
+Species and Types of Production for the density of
+
+livestock for the equivalent of 170 Kg nitrogen per
+
+hectare per year.
+<!-- row: Guano -->
+<!-- cell -->
 Guano
-
-Source separated human excrement   South African specific
-                                                   Specifically prohibited.
-
+<!-- cell -->
+<!-- row-divider: South African specific qualifier -->
+<!-- row: Source separated human excrement -->
+<!-- cell -->
+Source separated human excrement
+<!-- cell -->
+Specifically prohibited.
+<!-- row: Vermicastings -->
+<!-- cell -->
 Vermicastings
+<!-- cell -->
+<!-- row: Blood meal, meat meal, bone, bone meal -->
+<!-- cell -->
 Blood meal, meat meal, bone, bone meal
+<!-- cell -->
+<!-- row: Hoof and horn meal, feather meal, fish and shell -->
+<!-- cell -->
 Hoof and horn meal, feather meal, fish and shell
+
 products, wool, hide, fur, hair, dairy products
+<!-- cell -->
+<!-- row: Biodegradable processing by-products, plant or animal -->
+<!-- cell -->
 Biodegradable processing by-products, plant or animal
+
 origin, e.g., by-products of food, feed, oilseed, brewery,
+
 distillery or textile processing
+<!-- cell -->
+Free of significant contaminants; or composted before
+
+bringing onto organic land and confirmed free of
+
+significant contaminants
+<!-- row: Crop residues and plant materials, mulch, green -->
+<!-- cell -->
 Crop residues and plant materials, mulch, green
+
 manure, straw
+<!-- cell -->
+<!-- row: Wood, bark, sawdust, wood shavings, wood ash, wood -->
+<!-- cell -->
 Wood, bark, sawdust, wood shavings, wood ash, wood
+
 charcoal
-
+<!-- cell -->
+Only if not chemically treated
+<!-- row: Seaweed and seaweed products -->
+<!-- cell -->
 Seaweed and seaweed products
+<!-- cell -->
+As far as obtained by:
 
- CONDITIONS FOR USE
+i) physical processes including dehydration, freezing
 
- Shall not constitute the main source of nitrogen in the
- absence of complimentary and additional nitrogen
- generating practices on farm and shall not be from
- conventional intensive livestock production systems
- without prior permission from the control body
+and grinding;
 
- Coming from extensive livestock farming.
+ii) extraction with water or potassium hydroxide
 
- If sourced from intensive livestock farming or not
- sourced from organic production systems, then the
- need for use thereof shall be motivated to the
- certification body, and it shall be composted.
+solutions, provided that the minimum amount of
 
- Forbidden if from factory farming origin.
-
- Manure applications should not be the primary
- source of nitrogen. See Section B – Appendix 6
- Minimum Surface Areas Indoors and Outdoors and
- other Characteristics of Housing in the Different
- Species and Types of Production for the density of
- livestock for the equivalent of 170 Kg nitrogen per
- hectare per year.
-
- Free of significant contaminants; or composted before
- bringing onto organic land and confirmed free of
- significant contaminants
-
- Only if not chemically treated
-
- As far as obtained by:
- i) physical processes including dehydration, freezing
- and grinding;
- ii) extraction with water or potassium hydroxide
- solutions, provided that the minimum amount of
- solvent necessary is used for extraction;
-
-(010) 786 0398. Web: www.saoso.org
-
+solvent necessary is used for extraction;
 <!-- page: 78 printed: 77 -->
+                                                                (iii) fermentation.
+<!-- row: Peat (prohibited for soil conditioning) -->
+<!-- cell -->
 Peat (prohibited for soil conditioning)
+<!-- cell -->
+Excluding synthetic additives; permitted only in
 
+horticulture (floriculture, nursery plants, potting
+
+mixes).
+<!-- row: Plant preparations and extracts -->
+<!-- cell -->
 Plant preparations and extracts
-
+<!-- cell -->
+<!-- row: Compost made from ingredients listed in this appendix, -->
+<!-- cell -->
 Compost made from ingredients listed in this appendix,
 
 Spent mushroom waste, humus from worms and
 
 insects,
-
-                                             South African
-
-Urban composts and household wastes from separated Maximum
+<!-- cell -->
+<!-- row-divider: South African specific qualifier -->
+<!-- row: Urban composts and household wastes from separated -->
+<!-- cell -->
+Urban composts and household wastes from separated
 
 sources which are monitored for contamination
-
-II. MINERAL ORIGIN
-
-Calcareous and magnesium amendments: Limestone,
-
-gypsum, marl, maerl, chalk, sugar beet lime
-
-Calcium chloride
-
-Magnesium rock, kieserite and Epsom salt (magnesium
-sulphate)
-
-Other non-synthetic calcareous and magnesium
-
-amendments
-
-Clay (e.g., bentonite, perlite, vermiculite, zeolite)
-
-Mineral potassium (e.g., sulphate of potash, muriate of Shall be obtained by physical procedures but not
-
-potash, kainite, sylvanite, patentkali)
-
-Phosphates in non-synthetic form (e.g., rock phosphate, Cadmium content less than or equal to 90 mg/kg of
-
-colloidal phosphate, apatite)
-
-Pulverized rock, stone meal, crushed stone.
-
-Sodium chloride
-
-Sulphur
-
-Trace elements, e.g.: boric acid, sodium borate, calcium Use restricted to cases where soil/plant nutrient
-
-borate, borethanolamin, cobalt-acetate, cobalt-sulphate, copper oxide, copper sulphate, copper
-
-hydroxide, copper silicate, copper carbonate, copper
-citrate, ferric oxide, ferric sulphate, ferrous sulphate,
-
-iron citrate, iron sulphate, or iron tartrate manganous herbicide, or desiccant.
-
-oxide, manganese sulphate and manganese carbonate
-selenic acid, selenic acid, sodium molybdate, molybdic
-oxide zinc carbonate, zinc oxide, zinc silicate, and zinc
-
-sulphate
-
-III. MICROBIOLOGICAL
-
-Biodegradable processing by-products of microbial
-
-origin, e.g., by-products of brewery or distillery
-
-processing
-
-(iii) fermentation.
-
-Excluding synthetic additives; permitted only in
-horticulture (floriculture, nursery plants, potting
-
-mixes).
-
-specific
-
-concentrations in milligrams per kilogram
+<!-- cell -->
+Maximum concentrations in milligrams per kilogram
 
 (mg/kg) of dry matter:
 
 a) cadmium: 0,7;
 
 b) copper: 70;
+
 c) nickel: 25;
 
 d) lead: 45;
@@ -3318,27 +3323,122 @@ f) mercury: 0,4;
 g) chromium (total): 70;
 
 h) chromium (VI): 0
+<!-- row-divider: II. MINERAL ORIGIN part -->
+<!-- row: Calcareous and magnesium amendments: Limestone, -->
+<!-- cell -->
+Calcareous and magnesium amendments: Limestone,
+
+gypsum, marl, maerl, chalk, sugar beet lime
+<!-- cell -->
+<!-- row: Calcium chloride -->
+<!-- cell -->
+Calcium chloride
+<!-- cell -->
+<!-- row: Magnesium rock, kieserite and Epsom salt (magnesium -->
+<!-- cell -->
+Magnesium rock, kieserite and Epsom salt (magnesium
+
+sulphate)
+<!-- cell -->
+<!-- row: Other non-synthetic calcareous and magnesium -->
+<!-- cell -->
+Other non-synthetic calcareous and magnesium
+
+amendments
+<!-- cell -->
+<!-- row: Clay (e.g., bentonite, perlite, vermiculite, zeolite) -->
+<!-- cell -->
+Clay (e.g., bentonite, perlite, vermiculite, zeolite)
+<!-- cell -->
+<!-- row: Mineral potassium (e.g., sulphate of potash, muriate of -->
+<!-- cell -->
+Mineral potassium (e.g., sulphate of potash, muriate of
+
+potash, kainite, sylvanite, patentkali)
+<!-- cell -->
+Shall be obtained by physical procedures but not
 
 enriched by chemical processes
+<!-- row: Phosphates in non-synthetic form (e.g., rock phosphate, -->
+<!-- cell -->
+Phosphates in non-synthetic form (e.g., rock phosphate,
+
+colloidal phosphate, apatite)
+<!-- cell -->
+Cadmium content less than or equal to 90 mg/kg of
 
 P2O5
+<!-- row: Pulverized rock, stone meal, crushed stone. -->
+<!-- cell -->
+Pulverized rock, stone meal, crushed stone.
+<!-- cell -->
+<!-- row: Sodium chloride -->
+<!-- cell -->
+Sodium chloride
+<!-- cell -->
+<!-- row: Sulphur -->
+<!-- cell -->
+Sulphur
+<!-- cell -->
+<!-- row: Trace elements, e.g.: boric acid, sodium borate, calcium -->
+<!-- cell -->
+Trace elements, e.g.: boric acid, sodium borate, calcium
+
+borate, borethanolamin, cobalt-acetate, cobalt-
+
+sulphate, copper oxide, copper sulphate, copper
+
+hydroxide, copper silicate, copper carbonate, copper
+
+citrate, ferric oxide, ferric sulphate, ferrous sulphate,
+
+iron citrate, iron sulphate, or iron tartrate manganous
+
+oxide, manganese sulphate and manganese carbonate
+
+selenic acid, selenic acid, sodium molybdate, molybdic
+
+oxide zinc carbonate, zinc oxide, zinc silicate, and zinc
+
+sulphate
+<!-- cell -->
+Use restricted to cases where soil/plant nutrient
 
 deficiency is documented by soil or tissue testing or
 
 diagnosed by an independent expert. Micronutrients
 
 in either chloride or nitrate forms are prohibited.
+
 Micronutrients may not be used as a defoliant,
 
-Tel: (010) 786 0398. Web: www.saoso.org
-Bag X153 Houghton, 2021 Gauteng
+herbicide, or desiccant.
+<!-- row-divider: III. MICROBIOLOGICAL part -->
+<!-- row: Biodegradable processing by-products of microbial -->
+<!-- cell -->
+Biodegradable processing by-products of microbial
 
+origin, e.g., by-products of brewery or distillery
+
+processing
+<!-- cell -->
 <!-- page: 79 printed: 78 -->
+<!-- row: Microbiological preparations based on naturally -->
+<!-- cell -->
 Microbiological preparations based on naturally
+
 occurring organisms
-IV. OTHERS
+<!-- cell -->
+<!-- row-divider: IV. OTHERS part -->
+<!-- row: Biodynamic preparations -->
+<!-- cell -->
 Biodynamic preparations
+<!-- cell -->
+<!-- row: Calcium lignosulfonate -->
+<!-- cell -->
 Calcium lignosulfonate
+<!-- cell -->
+<!-- /table -->
 
 <!-- page: 80 printed: 79 -->
 

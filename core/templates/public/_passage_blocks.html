@@ -19,8 +19,6 @@
     <p class="passage__heading">{{ block.text }}</p>
   {% elif block.kind == "term" %}
     <p class="passage__term"{% if block.anchor %} id="{{ block.anchor }}"{% endif %}>{{ block.text }}</p>
-  {% elif block.kind == "row" %}
-    <p class="passage__row">{{ block.text }}</p>
   {% elif block.kind == "qualifier" %}
     {% comment %}
       A printer's marginal label, centred above the definition or clause it qualifies

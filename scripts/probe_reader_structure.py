@@ -42,7 +42,8 @@ from knowledge.models import StandardDocument  # noqa: E402
 from knowledge.passages import passage_blocks  # noqa: E402
 from knowledge.reading import branch_texts, passage_locator, printed_locators  # noqa: E402
 from knowledge.references import build_reference_index, matches  # noqa: E402
-from knowledge.tables import TABLE_SECTIONS, rows_for  # noqa: E402
+from knowledge.corpus import parse_blocks  # noqa: E402
+from knowledge.ingest import corpus_artifact  # noqa: E402
 from knowledge.tests.page_fixtures import MANIFEST, pages  # noqa: E402
 
 #: Which fixture pages hold which document, so the printed page can be located without a reader.
@@ -64,72 +65,73 @@ def head(title: str) -> None:
 
 
 def probe_table(document: StandardDocument) -> None:
-    """The rows, the empty cells, the dividers' adjacency and the header pages."""
-    concordance = build_concordance(document)
+    """The rows, the empty cells, the dividers' adjacency and the header pages.
+
+    Read from the **artefact's** `<!-- table … -->` blocks, which is where the reviewed rows live
+    (S5-b deleted the Python copy). The instrument still measures the shipped data: it re-parses the
+    committed corpus file the ingest was given, so a probe cannot be greener than a regeneration.
+    """
     doc_key = DOC_KEYS.get(Path(document.source_file).name)
     mode = "table" if doc_key and f"{doc_key}.table" in MANIFEST["pages"] else "layout"
     printed = pages(doc_key, mode) if doc_key else []
+    path = corpus_artifact(doc_key) if doc_key else None
+    if path is None:
+        print(f"  {Path(document.source_file).name}: no reviewed artefact — nothing to probe")
+        return
+    parsed = parse_blocks(Path(path).read_text(encoding="utf-8"))
 
-    for section in concordance.sections:
-        rows = rows_for(section.key)
-        if not rows:
-            continue
-        head(f"{Path(document.source_file).name} · {section.key} ({len(rows)} reviewed rows)")
+    for section in parsed.sections:
+        for table in section.tables:
+            rows = table.rows
+            head(f"{Path(document.source_file).name} · {section.section_ref} ({len(rows)} rows)")
 
-        empty = [row.substance for row in rows if not row.condition]
-        print(f"rows with no printed condition : {len(empty)} of {len(rows)}")
-        for substance in empty[:6]:
-            print(f"    - {substance[:60]}")
-        if len(empty) > 6:
-            print(f"    … and {len(empty) - 6} more")
-        print(f"printed pages                  : {sorted({row.page for row in rows})}")
+            empty = [row for row in rows if len(row.cells) > 1 and not row.cells[1].text.strip()]
+            print(f"rows with no printed condition : {len(empty)} of {len(rows)}")
+            for row in empty[:6]:
+                print(f"    - {squash(row.cells[0].text)[:60]}")
+            if len(empty) > 6:
+                print(f"    … and {len(empty) - 6} more")
+            print(f"printed pages                  : {sorted({row.page for row in rows})}")
+            print(f"silence label                  : {table.silence or '(none)'}")
+            print(f"\nlegend                         : {table.legend[:60]}…")
+            print(f"columns                        : {' · '.join(table.columns)}")
 
-        structure = TABLE_SECTIONS.get(section.key)
-        if structure is None:
-            print("no reviewed structure — the branch renders as plain passages")
-            continue
+            if not printed:
+                print("  no committed page fixtures for this document — adjacency not checked")
+                continue
 
-        print(f"\nlegend                         : {structure.legend[:60]}…")
-        print(f"columns                        : {structure.columns[0]} · {structure.columns[1]}")
-        print(f"dividers                       : {len(structure.dividers)}")
-
-        if not printed:
-            print("  no committed page fixtures for this document — adjacency not checked")
-            continue
-
-        # Line-based, because the claim is adjacency: the printed row starts on the next line after
-        # the divider. The first 25 characters of a substance tell one row from another here, except
-        # rows 0 and 1, which print the same substance twice on purpose.
-        for divider in structure.dividers:
-            row = rows[divider.before_row]
-            needle = squash(row.substance)[:25]
-            found_at = None
-            for number, page in enumerate(printed, 1):
-                lines = page.splitlines()
-                for index, line in enumerate(lines):
-                    if divider.text not in squash(line):
-                        continue
-                    following = next(
-                        (squash(other) for other in lines[index + 1 :] if other.strip()), ""
+            # Line-based, because the claim is adjacency: the printed row starts on the next line
+            # after the divider. The first 25 characters of the first cell tell one row from another
+            # here, except the two rows that print the same substance twice on purpose.
+            for index, row in enumerate(rows):
+                needle = squash(row.cells[0].text)[:25]
+                for divider in row.dividers:
+                    found_at = None
+                    for number, page in enumerate(printed, 1):
+                        lines = page.splitlines()
+                        for line_index, line in enumerate(lines):
+                            if divider.text not in squash(line):
+                                continue
+                            following = next(
+                                (squash(other) for other in lines[line_index + 1:] if other.strip()),
+                                "",
+                            )
+                            if following.startswith(needle):
+                                found_at = number
+                                break
+                        if found_at:
+                            break
+                    where = f"PDF p{found_at}" if found_at else "NOT FOUND"
+                    state = "immediately above" if found_at else "NOT above the row it names"
+                    print(
+                        f"  row {index:2} ({divider.kind:9}) {divider.text[:30]!r:34} "
+                        f"{where:9} {state}"
                     )
-                    if following.startswith(needle):
-                        found_at = number
-                        break
-                if found_at:
-                    break
-            where = f"PDF p{found_at}" if found_at else "NOT FOUND"
-            state = "immediately above" if found_at else "NOT above the row it names"
-            print(
-                f"  row {divider.before_row:2} ({divider.kind:9}) {divider.text[:30]!r:34} "
-                f"{where:9} {state}"
-            )
 
-        for column in structure.columns:
-            # The paper prints the header in capitals and wraps it across lines, so the case-
-            # sensitive first word is what locates it: prose prints the same words in lower case.
-            word = column.split()[0].upper()
-            found = [n + 1 for n, page in enumerate(printed) if word in page]
-            print(f"  column {column[:38]!r:42} {word} on PDF pages {found or 'NONE'}")
+            for column in table.columns:
+                word = column.split()[0].upper()
+                found = [n + 1 for n, page in enumerate(printed) if word in page]
+                print(f"  column {column[:38]!r:42} {word} on PDF pages {found or 'NONE'}")
 
 
 def probe_locators(documents: list[StandardDocument]) -> None:

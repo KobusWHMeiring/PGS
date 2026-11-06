@@ -377,10 +377,6 @@ SHAPES: tuple[ShapeCase, ...] = (
                 "knowledge/tests/test_corpus_tables.py",
                 "test_a_row_with_an_empty_cell_does_not_label_the_silence",
             ),
-            (
-                "knowledge/tests/test_row_blocks.py",
-                "test_a_row_with_no_condition_is_its_heading_and_nothing_else",
-            ),
         ),
         notes=(
             "Measured: 12 empty cells across the landscape's three tables.",
@@ -487,7 +483,7 @@ SHAPES: tuple[ShapeCase, ...] = (
         ),
         notes=(
             "The printed header is upper case and wraps ('SUBSTANCES DESCRIPTION, COMPOSITIONAL' / "
-            "'REQUIREMENTS'); `TABLE_SECTIONS`' reviewed label is the same words in sentence case, "
+            "'REQUIREMENTS'); the artefact's reviewed `cols:` label is the same words in sentence case, "
             "which is a spelling difference and not a second reading.",
             "Measured: 11 rows on printed page 76, dividers before rows 0, 1 and 3 (and 14, 15, 26, "
             "28 on the following pages).",

@@ -1,10 +1,8 @@
 """Building `DocumentChunk`s from a reviewed table: one row, one quotable slice.
 
-Split out of `knowledge/tables.py` (CONTEXT_CUTS_PRD step 8). `tables.py` holds the *curated
-data* -- the Appendix 2/6a rows, the dividers, the printed grid -- and this module turns those
-rows into chunks: the prose around a grid, the row chunks themselves, and the rendition a row
-is embedded from. The direction is one-way (`table_chunks` imports `tables`), because a chunk
-is built *from* the review, never the other way round.
+Split out of `knowledge/tables.py` (CONTEXT_CUTS_PRD step 8). The table itself is the artefact's
+`<!-- table … -->` block; this module turns its rows into chunks — the prose around a grid, the row
+chunks themselves, and the rendition a row is embedded from.
 
 **This is the one place a chunk is not `section.text[start:end]`.** A row chunk's text joins
 cells the paper prints in separate columns, which is why the citation audit's substring rule
@@ -17,8 +15,6 @@ from dataclasses import replace
 
 from knowledge.chunking import Chunk, chunk_section, estimate_tokens
 from knowledge.corpus import section_anchor
-from knowledge.tables import rows_for
-
 
 
 #: Printed page numbers, as the reader sees them (`DocumentChunk.page`).
@@ -41,7 +37,7 @@ def chunks_for_parsed_section(section) -> list[Chunk]:
     **Why the chunker cannot do this itself** (§3a rule 2, measured): a pipe table is one
     paragraph, and adding blank lines between rows changes nothing, because the chunker packs
     paragraphs to the token target. The row boundary is structure, so the row chunk is
-    produced here and substituted, exactly as `chunks_for_rows` substitutes Appendix 2's.
+    produced here and substituted.
     """
     rows = []
     for table in section.tables:
@@ -159,7 +155,3 @@ def _embedding_rendition(heading_path: str, row, columns: tuple[str, ...]) -> st
         parts.append(f"{column}: {value}" if column else value)
     return " · ".join(parts)
 
-
-def chunks_for_rows(section_ref: str) -> list[Chunk]:
-    """One chunk per reviewed row, in printed order."""
-    return [row.as_chunk() for row in rows_for(section_ref)]

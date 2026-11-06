@@ -1,6 +1,7 @@
 # Plan — S5 of the ingestion engine: the last four tables stop being Python
 
-**Status:** In Progress — **S5-a landed 2026-11-05** (§6, PRD §3.16); S5-b…S5-f open
+**Status:** In Progress — **S5-a landed 2026-11-05** (§6, PRD §3.16); **S5-b landed 2026-11-05**
+(§7, PRD §3.17); S5-c…S5-f open
 **Parent:** `INGESTION_ENGINE_PRD.md` §5's S5 row, §3.14 (the composite), §3.15 (what S3 landed)
 **Written:** 2026-11-05, session `1q`, at `1aa152c` (clean apart from another session's `copy_deck` work)
 **Scope:** the last slice of the PRD. When every §6 criterion holds, the PRD moves to `Done/`.
@@ -124,7 +125,7 @@ Neither can be finished inside this session's safe budget, and both reasons are 
 | # | Slice | Named test that must be red first | Gate |
 |---|---|---|---|
 | **S5-a** | The reviewed `columns` + `spacing` declarations, the body-pass rule, and **Appendix 6a emitted**; `APPENDIX_6A_ROWS` deleted | `test_a_reviewed_column_label_is_used_instead_of_the_arms` (red: the arm's merged label), `test_the_body_is_sliced_from_the_pass_the_block_declares` (red: `-raw` order), `test_appendix_6a_is_emitted_from_its_page` (red: no block) | `check_tables --doc saoso --rows 20` → ok; `build --doc saoso --force` diff is only the block; ingest/chunking/retrieval green |
-| **S5-b** | Appendix 2: `qualifier` dividers as `row-divider:`, the 30-row continuation act, `APPENDIX_2_ROWS`/`TABLE_ROWS`/`rows_for` deleted | `test_appendix_2_divider_is_a_block_annotation`, `test_a_continued_locator_is_a_run_of_the_pages_table_line` | `check_tables --doc saoso --rows 30,20` → ok; the reader's dividers still render |
+| **S5-b** | Appendix 2: `qualifier` dividers as `row-divider:`, the 30-row continuation act, `APPENDIX_2_ROWS`/`TABLE_ROWS`/`rows_for` deleted | `test_appendix_2_divider_is_a_block_annotation`, `test_a_continued_locator_is_a_run_of_the_pages_table_line` | **Landed 2026-11-05 (§7, PRD §3.17).** `check_tables --doc saoso --rows 30,20` → ok (2 tables, 50 rows); the reader's dividers render from the block; `test_the_dividers_are_written_where_the_paper_prints_them` and `test_a_continued_locator_is_a_run_of_the_pages_table_line` are the guards, and the divider test's name changed with the format it writes |
 | **S5-c** | Appendix 7: `gutter:` + the column-bounded continuation, Docling's grid in the banner | `test_a_cell_that_wraps_inside_a_column_is_bounded_by_the_next_column` (red: "out of printed order") | `check_tables --doc saoso --rows 30,20,7` → ok incl. `--pages-mode` absent |
 | **S5-d** | The landscape: bullets, the merged fee box, the seal artwork, the page-break row; blocks spliced, front matter untouched | one test per declaration, each proved red first | `check_tables --doc landscape --rows 3,2,3` → ok from *emitted* blocks; `landscape.md` diff is only the blocks |
 | **S5-e** | `read_table()` reads the artefact block for a shape's pages; markers come off as each shape passes; `UNCOVERED` empties | `test_the_shape_is_read_from_its_page[<key>]` stops `xfail` | 8 targets pass, audit reports zero uncovered shapes |
@@ -133,6 +134,55 @@ Neither can be finished inside this session's safe budget, and both reasons are 
 S5-e is a ratchet, not a switch: a marker comes off only for a shape whose target is green, and the
 audit's `UNCOVERED` shrinks by exactly that key. `XPASS(strict)` is the detector that keeps us honest
 in the other direction.
+
+## 7. S5-b, as landed (2026-11-05)
+
+**What the plan called "the expensive one" was three declarations and one bucket.** The order §5
+named — band, hyphen, tail, block — held, and each one was refused before it was declared. The
+surprises, in the order they cost time:
+
+1. **`build_corpus.build()` could not run at all.** `corpus_pages.pass_texts` was called on a module
+   that was never imported, and no test calls `build()` — only `emit()` (`testing_hazards.md` §3.40).
+   The handover's S5-a measurement of that command predates the refactor that broke it.
+2. **The pre-check answered yes in the wrong section.** `_appears` asks whether a row's first cell is
+   in the section, and `Farmyard manure, slurry and urine` is printed in `S8.1` too, so the proposal
+   was refused there and marked attempted twenty pages before its own table (§3.41). A table is now
+   attempted only in a section whose heading page it declares.
+3. **A single forward cursor cannot express a two-column grid.** Both cells of a row share every
+   printed line, so the condition's first line is *above* the substance's last one. With the band,
+   each column is a stream, the cursor follows the stream, and a row's floor stops a column resuming
+   above the row.
+4. **The hyphen was needed, but not where the exploration said.** The *flat* 41-cell probe called
+   `cobalt-`/`sulphate` an exception; the emitter resolved it as two lines already. What it could not
+   do was consume a *continuation* line that ends in a hyphen mid-word, which is what the real page
+   prints three lines into the cell (§4 step 2's rule, applied one line later than expected).
+5. **R6's "the paper prints it once" was false.** Appendix 2 prints `South African specific` three
+   times, once above each row it qualifies (§3.42). The guard counts claims against occurrences now.
+6. **A cell that crosses a page needed the parser, not just the emitter.** The block writes a page
+   marker inside the cell; the parser stores one page per cell line; R3 checks each line against its
+   own page. That is the smallest honest version of requirement 4's "a row whose later half is on the
+   next page".
+
+**Deviations from §5, and why.**
+
+* The plan's §5 named `test_appendix_2_divider_is_a_block_annotation`. It is
+  `test_the_dividers_are_written_where_the_paper_prints_them` and its refusal twin
+  `test_a_divider_the_page_does_not_print_is_refused` — the block format already had
+  `row-divider:`, so the test's subject is the emitter writing and claiming them, not a new field.
+* The plan's §4 said the continuation's test should check "every continued locator is a
+  whitespace-normalised substring of the page's `-table` line". It does, band-sliced per column and
+  with the page's own hyphenation joined (`cobalt-` + `sulphate`), and it names the declared tail as
+  the one cell checked on the page it is printed on.
+* The plan did not foresee the 31st chunk: the header prose above the grid is a chunk again, as it
+  never was while Python rows replaced the section's chunks. Corpus total 340 → 341.
+* `knowledge/tables.py` is **181 lines**, not deleted: `TABLE_BANDS` is the measurement the reviewed
+  `band:` must equal, and the grid/alignment the reader draws are that module's remaining job.
+
+**Measured.** `check_tables --doc saoso --rows 30,20` → ok (2 tables, 50 rows, 0 violations);
+`--doc opp --rows 6` and `--doc landscape --rows 3,2,3` unchanged; `build_corpus --doc opp --force`
+leaves `opp.md` byte for byte unchanged; `--doc saoso --force` is one section's diff
+(`204 insertions(+), 104 deletions(-)`); full suite 1776 passed / 1 skipped / 8 xfailed (100–223 s on four warm runs); four guards
+broken and watched red (band, tail, R3's per-line page, R6's counting).
 
 ## 6. What this session lands (landed 2026-11-05)
 

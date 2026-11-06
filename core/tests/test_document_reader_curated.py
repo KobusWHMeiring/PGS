@@ -1,9 +1,10 @@
 """The reader when the branch is a reviewed table — the grid, the links, the locators.
 
-A curated branch is not just long text: it has a caption and a legend printed once, dividers
+A reviewed table is not just long text: it has column labels and a legend printed once, dividers
 that name the rows under them, cells that are quoted by the chat, cross-references the paper
-prints, and a locator that repeats only when the printed page changes. Those are the
-properties here, and they all need `curated_rows` — a branch built from reviewed rows.
+prints, and a locator that repeats only when the printed page changes. Those are the properties
+here, and they all need `curated_rows` — a branch built from the artefact's `<!-- table -->` block,
+which is where the rows live since S5-b.
 
 The reader page itself, its tree and its passages are `test_document_reader.py`.
 """
@@ -22,6 +23,17 @@ from core.tests.reader_fixtures import (  # noqa: F401 - pytest discovers fixtur
 pytestmark = pytest.mark.django_db
 
 
+def _appendix_2_section():
+    """The artefact's Appendix 2 section, parsed from the committed corpus (the shipped block)."""
+    from pathlib import Path
+
+    from knowledge.corpus import load_document
+
+    root = Path(__file__).resolve().parents[2]
+    document = load_document(root / "knowledge" / "corpus" / "saoso.md")
+    return next(s for s in document.sections if s.section_ref == "Appendix 2")
+
+
 # --- The table branch: a curated appendix renders as the paper's table --------
 
 
@@ -29,11 +41,11 @@ pytestmark = pytest.mark.django_db
 def curated_rows(db):
     """A published document whose Appendix 2 is the **30 reviewed rows**, plus one plain branch.
 
-    The chunks are built by the same function ingest uses (`chunks_for_rows`), so the text under
-    test is the reviewed text — not a hand-written row that would let the renderer pass while the
-    corpus is different (`testing_hazards.md` §1.32).
+    The chunks are built by the same function ingest uses (`chunks_for_parsed_section`, over the
+    artefact's own block), so the text under test is the reviewed text — not a hand-written row
+    that would let the renderer pass while the corpus is different (`testing_hazards.md` §1.32).
     """
-    from knowledge.table_chunks import chunks_for_rows
+    from knowledge.table_chunks import chunks_for_parsed_section
 
     corpus = StandardSet.objects.create(code="outeniqua", label="Outeniqua", is_default=True)
     document = StandardDocument.objects.create(
@@ -53,7 +65,7 @@ def curated_rows(db):
             {"part": "B", "kind": "SECTION", "label": "22", "title": "Labelling", "printed_page": 65},
         ],
     )
-    for row_chunk in chunks_for_rows("Appendix 2"):
+    for row_chunk in chunks_for_parsed_section(_appendix_2_section()):
         DocumentChunk.objects.create(
             document=document,
             section_ref=row_chunk.section_ref,
@@ -129,65 +141,60 @@ def curated_rows(db):
 
 
 def test_the_curated_branch_reports_its_structure(curated_rows):
-    """The reader says what the branch is; the page's own sentence is the reviewed one."""
-    from knowledge.tables import TABLE_SECTIONS, TableDivider
-
+    """The reader says what the branch is, from the artefact's block: labels, legend, dividers, silence."""
     reader = reader_for(curated_rows, "", "appendix-2")
 
-    assert reader.table is not None
-    assert reader.table.section is TABLE_SECTIONS["Appendix 2"]
-    assert reader.table.labels.count("no condition printed") == 19
-    assert reader.passages[15].dividers == (TableDivider(15, "II. MINERAL ORIGIN", "part"),)
-    assert reader.passages[2].dividers == ()
-    assert reader.passages[2].note == "no condition printed"  # Guano
-    assert reader.passages[0].note == ""
+    assert reader.grid is not None
+    assert reader.grid.columns[0].startswith("Substances")
+    assert reader.grid.legend.startswith("The standard prints this appendix as a table")
+    assert [row.note for row in reader.grid.rows].count("no condition printed") == 19
+    assert [d.text for d in reader.grid.rows[15].dividers] == ["II. MINERAL ORIGIN"]
+    assert reader.grid.rows[2].dividers == ()
 
 
-def test_the_page_prints_the_caption_and_the_legend_once(client, curated_rows):
-    from knowledge.tables import TABLE_SECTIONS
+def test_the_page_prints_the_labels_and_the_legend_once(client, curated_rows):
+    from knowledge.corpus import load_document
 
     body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
-    section = TABLE_SECTIONS["Appendix 2"]
+    table = _appendix_2_section().tables[0]
 
-    assert body.count(section.legend) == 1
-    assert section.columns[0] in body and section.columns[1] in body
-    assert body.index("reader__table-bar") < body.index('<p class="passage__row">')
+    assert body.count(table.legend) == 1
+    assert f"<span class=\"reader__grid-head\">{table.columns[0]}</span>" in body
+    assert f"<span class=\"reader__grid-head\">{table.columns[1]}</span>" in body
     assert body.count("no condition printed") == 19
 
 
-def test_every_reviewed_row_renders_as_an_entry(client, curated_rows):
+def test_every_reviewed_row_renders_as_a_row_of_the_grid(client, curated_rows):
     """The defect this task exists for: `Guano` used to render at body weight, as prose."""
     reader = reader_for(curated_rows, "", "appendix-2")
     body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
 
-    assert all(passage.blocks[0].kind == "row" for passage in reader.passages)
-    assert '<p class="passage__row">Guano</p>' in body
-    assert body.count('<p class="passage__row">') == 30
+    assert len(reader.grid.rows) == 30
+    assert body.count('<th scope="row"') == 30
 
-    # The empty condition cell stays empty: the entry is its heading and the label, and no
+    # The empty condition cell stays empty: the row is its heading and the label, and no
     # paragraph was invented between them (silence is not permission).
-    guano = body[body.index('<p class="passage__row">Guano</p>') :]
-    guano = guano[: guano.index("</article>")]
-    assert "passage__text" not in guano
-    assert "no condition printed" in guano
+    guano = body[body.index(">Guano<\n") if ">Guano<\n" in body else body.index("Guano") :]
+    cell = guano[guano.index("<td") : guano.index("</td>")]
+    assert "passage__text" not in cell
+    assert "no condition printed" in cell
 
 
 def test_the_dividers_render_above_the_rows_they_name(client, curated_rows):
     body = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
 
-    pane = body[body.index("reader__table-bar") :]
     assert body.count("South African specific") == 3
-    assert pane.index("II. MINERAL ORIGIN") < pane.index("Calcareous and magnesium amendments")
-    assert pane.index("I. PLANT AND ANIMAL ORIGIN") < pane.index("Farmyard manure, slurry and urine")
+    assert body.count("reader__grid-divider") == 7
+    assert body.index("II. MINERAL ORIGIN") < body.index("Calcareous and magnesium amendments")
+    assert body.index("I. PLANT AND ANIMAL ORIGIN") < body.index("Farmyard manure, slurry and urine")
 
 
 def test_a_branch_without_reviewed_rows_renders_as_before(client, curated_rows):
-    """S5.1.3 is not curated: no caption, no label, and the blocks are `passage_blocks`."""
+    """S5.1.3 is not a table: no grid, no legend, and the blocks are `passage_blocks`."""
     reader = reader_for(curated_rows, "", "s5-1-3")
 
     assert reader.selected is not None and reader.selected.key == "S5"
-    assert reader.table is None
-    assert all(passage.dividers == () and passage.note == "" for passage in reader.passages)
+    assert reader.grid is None
     assert reader.passages[0].blocks[0].kind == "paragraph"
 
     body = client.get("/documents/saoso-curated/read/?section=s5-1-3").content.decode()
@@ -295,12 +302,18 @@ def test_the_locator_prints_once_for_a_branch_that_shares_one(client, curated_ro
     reader = reader_for(curated_rows, "", "appendix-2")
     body = reader.passages
 
-    assert len(body) == 30
+    # 31 chunks: the header prose before the grid, then the thirty rows (the artefact's own
+    # `chunks_for_parsed_section` output — the reader must not hold a second copy of the row count).
+    assert len(body) == 31
     assert sum(1 for passage in body if passage.show_locator) == 3
     assert [passage.show_locator for passage in body[:2]] == [True, False]
 
     rendered = client.get("/documents/saoso-curated/read/?section=appendix-2").content.decode()
-    assert rendered.count('class="passage__locator"') == 3
+    # The grid prints the printed page where it changes (once per page), and the lead-in prose
+    # keeps the ordinary locator line. The rows are in the grid, so their own locator lines are
+    # not rendered — `passage.show_locator` still answers for the passages that are not in it.
+    assert rendered.count('class="passage__locator"') == 1
+    assert rendered.count('class="reader__grid-page"') == 3
     assert all(f'id="{passage.anchor}"' in rendered for passage in body)
 
 

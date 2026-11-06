@@ -1,67 +1,58 @@
-# Handover — S5-a is landed and S5-b is decided by evidence: the owner read the page and found a bracket
+# Handover — Appendix 2 is a block, and the curated table path is gone
 
-> ## START HERE — Appendix 6a is a block; Appendix 2's next step is decided; read its two pages first
+> ## START HERE — S5-b landed; S5-c (Appendix 7) is the next slice, and it needs a gutter
 >
-> **`INGESTION_ENGINE_PRD.md` §3.16 is what landed, and `INGESTION_ENGINE_S5_PLAN.md` is the rest.**
-> S5's headline defect is gone: Appendix 6a's 20 rows are emitted from their page, carry their two
-> printed column labels, and `APPENDIX_6A_ROWS` is **deleted**. `scripts/check_tables.py --doc saoso
-> --rows 20` → `ok — 1 tables, 20 rows, 0 violations (table pages, recorded on the artefact)`.
+> **`INGESTION_ENGINE_PRD.md` §3.17 is what landed, and `INGESTION_ENGINE_S5_PLAN.md` §7 says how.**
+> Appendix 2's **30 rows** are emitted from its three printed pages, with its seven printed dividers,
+> and `APPENDIX_2_ROWS`, `TABLE_ROWS`, `TABLE_SECTIONS`, `rows_for`, `structure_for`, `chunks_for_rows`,
+> `NO_CONDITION_LABEL`, `TableRow`, `TableSection`, `row_blocks` and `RowHeading` are **deleted**.
+> `scripts/check_tables.py --doc saoso --rows 30,20` → `ok — 2 tables, 50 rows, 0 violations`.
 >
-> **The capability all four S5 tables needed, and it was not cosmetic.** A block records
-> `extraction: table|layout|raw` and the gate judges its cells against *that* pass — but the generator
-> sliced every section from the de-columned geometry stream, so a `-table` block was assembled from
-> `-layout` text and judged against `-table` text. `scripts/corpus_pages.substitute_pass` (with
-> `pass_texts`) takes the pages a proposal names from the pass it declares, sliced through the
-> document's own `body_lines` rule. That is exactly why S3 could not emit the landscape: its pages come
-> from `-raw`, the page-4 header is not a run of any line there, and the emitter refused at `column 1`.
-> **With the rule in place the landscape's refusal moved to `column 2`** — a multi-line column label.
+> **Four declarations, each refused before it was declared.** `band: {76: 60, 77: 64, 78: 64}` (where
+> the condition column starts, per printed page — the emitter slices each line into two streams, so a
+> wrapped left cell no longer swallows its neighbour's words); the **hyphen** rule the harness already
+> had (`cobalt-`/`sulphate`); `dividers:` (seven printed headings, written as `row-divider` and claimed
+> by the emitter); `tails:` (the seaweed row's `(iii) fermentation.` is printed at the top of printed
+> 77 — declared, verified as that page's *first* line, and recorded as a page marker **inside** the
+> cell, which is what lets R3 judge each line against its own page). The 30 rows entered as **locators
+> promoted from the owner's 2026-10-21 review** (`propose_tables.py --continue`), and the emitter
+> re-verified every one; `test_a_continued_locator_is_a_run_of_the_pages_table_line` is the guard.
 >
-> **The reviewed label is a declaration, not a widened matcher.** Appendix 6a prints its header once,
-> as two levels of type across four lines; all four arms flattened it, and the owner arbitrated the two
-> labels on 2026-11-05. A one-line `cols:` cannot be a slice of a multi-line header, so
-> `knowledge/proposals/saoso.reviewed.json` carries `columns` and the emitter writes it. Cells are
-> untouched: a cell the page does not print is still refused. R3 accepts the `CORPUS_EDITS` rejoin of a
-> letter-spaced run **only** on a line that itself carries one.
+> **The curated rendering path went with the data.** The reader draws Appendix 2 through
+> `_artefact_grid` now: `ReaderGridRow.dividers` render as `reader__grid-divider` rows, and the
+> `silence:` label (`no condition printed`) sits in the 19 empty cells. Three regressions this caught:
+> grid cells were not annotated with the reference index (a `See Section B – Appendix 6` link vanished),
+> the silence label was attached to all 30 rows, and `Reader.table`/`passage.dividers`/`passage.note`
+> became dead code and were removed.
 >
-> **Measured.** `build_corpus --doc saoso --force` → `101 insertions(+), 25 deletions(-)`, one section,
-> and the diff *corrects* the paper: the old artefact paired `Equines over six months old` with `5`
-> (its neighbour's value); the block pairs it with `2`. `build_corpus --doc opp --force` leaves
-> `opp.md` **byte for byte** unchanged. `check_tables` → `opp` 6 rows, `landscape` 3+2+3,
-> `saoso` 20: **5 tables, 34 rows, 0 violations**. Full suite **1831 passed / 1 skipped / 8 xfailed**
-> (`--reuse-db`: 79.19 s, 97.74 s, 113.45 s on three runs — quote a range, §3.17);
-> `fast.sh --critical` **182 passed / 4 deselected in 18–31 s**. Four guards broken and watched red.
+> **Measured.** `build_corpus --doc saoso --force` → one section, `204 insertions(+), 104 deletions(-)`;
+> `build_corpus --doc opp --force` leaves `opp.md` **byte for byte** unchanged. `check_tables` →
+> `opp` 6, `landscape` 3+2+3, `saoso` 30+20: **6 tables, 64 rows, 0 violations**. Chunk count
+> **340 → 341** (the header prose above the grid is a chunk again). Full suite **1776 passed / 1 skipped
+> / 8 xfailed** (100.44 s, 135.24 s, 177.16 s and 223.31 s on four warm runs — quote a range, §3.17);
+> `fast.sh --critical` **182 passed / 4 deselected in 18.29 s**. Four guards broken and watched red.
 >
-> **`scripts/verify.sh` still cannot be quoted green from this tree** — step 1 fails on **another
-> session's** `scripts/copy_deck.py` (32 KB). All my files are inside the cap (`build_corpus.py` grew
-> to 30.5 KB and is 29.1 KB again: `pass_texts` moved to `corpus_pages.py`).
+> **`scripts/verify.sh` still cannot be quoted from this tree** — step 1 fails on **another session's**
+> `scripts/copy_deck.py` (32 KB, untouched). Steps 2–4 pass by hand: `manage.py check` clean,
+> `makemigrations --check` "No changes detected", `lint-imports` `knowledge must never import core KEPT`.
 >
-> **The owner read the paper, and it mattered (2026-11-05).** `product/design/` now holds two pages
-> for S5-b: `s5b_appendix_2_rows_exploration.html` (the decision, with the measurements) and
-> `s5b_appendix_2_pages.html` (Appendix 2's three printed pages beside the review, the machine read
-> and the artefact's current text). From the second he found that the seaweed row's tail is printed
-> **`(iii) fermentation.`** — with a bracket the reviewed cell had dropped, transcribed from
-> **printed 79**, where Appendix 3 prints `iii) fermentation.` beside `Coffee grounds`. The guard for
-> that row could not see it (`"iii) fermentation." in "(iii) fermentation."` is true) and is now
-> character-level: **hazard §3.39**. One character corrected. **That is the argument for S5 in
-> miniature**, and it is why the remaining rows are re-read through a page rather than trusted.
+> **Three defects the first real build found, all now hazards.** `build_corpus.build()` called
+> `corpus_pages.pass_texts` on a module it never imported — no test calls `build()`, so the suite was
+> green over a script that could not run (**§3.40**). The "is this table here at all?" pre-check said
+> yes in `S8.1` (where `Farmyard manure, slurry and urine` is also printed), refused the table there
+> and marked it attempted, so the artefact came out with 6a only (**§3.41**). R6's "the paper prints
+> it once" was false for `South African specific` — printed three times (**§3.42**).
 >
-> **S5's remaining three, and each is a review rather than a chore.** *Appendix 2* is **30 rows**
-> (three printed pages), and no arm read exists for printed 77–78 — the cached `qualifier` response is
-> the shape page's 11; emitting 11 would leave 19 interleaved and `APPENDIX_2_ROWS` in place. The
-> evidence for the recommended route: **39 of 41 cells are already runs of the page** once the printed
-> line is cut at the column boundary `TABLE_BANDS` has held since 2026-10-21, so promoting the reviewed
-> rows to locators is verification, not authorship. The two exceptions are the cross-page tail (now
-> bracket-exact) and **row 25**, which fails only on `cobalt-`/`sulphate` — the hyphen rule the harness
-> already has and the emitter does not. Read the exploration page's Part 6 before starting.
-> *Appendix 7* needs a cell that wraps **inside** a column (Docling's grid is the evidence for the
-> boundary). *The landscape* needs §3.15's four declarations, and its artefact **cannot be regenerated
-> wholesale**: pages 2–3 and 9 are the *reviewer's* front matter (commit `8674d7a`), so S5-d emits
-> blocks and splices them where the table region is. Plan §5 has the slices and their gates.
+> **S5's remaining two, and each is a review.** *Appendix 7* (S5-c) needs `gutter: 1` (the arm's first
+> column is the printed row number) and a cell that wraps **inside** a column with `Air,` beside it on
+> the same printed line; Docling's grid is the evidence for the boundary, and the band is not that
+> shape. *The landscape* (S5-d) needs its four declarations and a splice that does not rewrite the
+> reviewer's front matter (pages 2–3 and 9, commit `8674d7a`). Plan §5 has the slices and their gates.
 >
 > **Do not re-run the arms and do not re-open the key.** **Do not delete a test** to make a count
-> match; the four `test_tables.py` Appendix 6a tests were *converted* to read the block, and the chunk
-> count moved 338 → 340 because the printed header and the part banner are now chunks (they were
-> dropped with the interleaving).
+> match: the Appendix 2 guards were *converted* to read the block, and `test_row_blocks.py` went only
+> because `row_blocks` did (its losslessness claim is carried by
+> `test_the_real_corpus_survives_the_layout_and_produces_lists`).
 >
 > **Housekeeping.** This working tree still carries **another session's uncommitted work**
 > (`scripts/copy_deck.py`, `product/design/COPY_DECK.md`, `COPY_VOICE.md`, `REFERENCE_COPY_CORPUS.md`,
@@ -71,7 +62,6 @@
 > "already ingested" forever (`deploy/README.md` §4).
 
 ---
-
 
 The landscape is closed (session `0z`): UAT re-signed against `c4c362e`, 6 PASS;
 `LANDSCAPE_TABLES_PRD` in `Done/`; `TABLE_BANDS` and the corpus-level table-page guard carried into
@@ -84,21 +74,20 @@ corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, lands
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation, vlm-arm,
 re-score, and arbitration sessions
-**Repo state:** `main` — **four commits from session `1q`**, all pushed: `39f9764` S5-a, `e7c98a2`
-the S5-b exploration, `d39798d` the verification surface, `8563ba2` the owner's read and the bracket
-correction. Everything before `1p` is pushed. The stale "three unpushed runs" note this file carried
-twice is itself the example of why the next line is the only one that answers it.
+**Repo state:** `main` — **one commit from session `1r`** (S5-b), pushed. Everything before it is
+pushed; `origin/main` was at `8563ba2` when this session started. The stale "three unpushed runs" note
+this file carried twice is itself the example of why the next line is the only one that answers it.
 **Let the command answer:** `git rev-list --count origin/main..HEAD`.
 `main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate lines** with no code
 overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand on
 those two files.
 
-**On this tree** (2026-11-05, session `1q`, after its last commit): `python -m pytest -q --reuse-db` —
-**1831 passed / 1 skipped / 8 xfailed in 79.19 s, 97.74 s and 113.45 s** on three runs, run as
+**On this tree** (2026-11-05, session `1r`, after its commit): `python -m pytest -q --reuse-db` —
+**1776 passed / 1 skipped / 8 xfailed in 100–223 s** on four warm runs (100.44, 135.24, 177.16, 223.31 s), run as
 `DATABASE_URL=postgres://pgs:pgs@localhost:5433/pgs_verify` (the gate defaults to 5432 and this box
 serves 5433, `testing_hazards.md` §3.1). Quote cold *and* warm (§3.17), and this box is not idle —
 session `1p` measured 240.27 s `--create-db` and 234.99 s warm on the same suite with 11 fewer tests.
-`scripts/fast.sh --critical` **182 passed / 4 deselected in 18.42 s**. **`scripts/verify.sh` cannot be quoted green from this
+`scripts/fast.sh --critical` **182 passed / 4 deselected in 18.29 s**. **`scripts/verify.sh` cannot be quoted green from this
 working tree**: its first step fails on **another session's** `scripts/copy_deck.py` (32 KB); my own
 files are all inside the cap, and steps 2–4 pass by hand — `manage.py check` clean,
 `makemigrations --check` "No changes detected", `lint-imports` `knowledge must never import core KEPT`,
@@ -127,6 +116,8 @@ History, verbatim, one file per session. **Read only the session a task sends yo
 A new session writes its narrative to `product/docs/handover/SESSION_<tag>_<date>_<slug>.md`
 and adds one line here; this file stays state.
 
+- `1r` 2026-11-05 (session 25) — S5-b: Appendix 2 becomes a block, and the curated table path is gone
+  — [`SESSION_1r_2026-11-05_appendix-2-becomes-a-block.md`](product/docs/handover/SESSION_1r_2026-11-05_appendix-2-becomes-a-block.md)
 - `1q` 2026-11-05 (session 24) — S5-a: Appendix 6a becomes a block, and a body is the pass its block declares — [`SESSION_1q_2026-11-05_appendix-6a-becomes-a-block.md`](product/docs/handover/SESSION_1q_2026-11-05_appendix-6a-becomes-a-block.md)
 - `1p` 2026-11-05 (session 23) — S3: the generator emits the table block, and the page supplies the characters — [`SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md`](product/docs/handover/SESSION_1p_2026-11-05_s3-the-generator-writes-the-block.md)
 - `1o` 2026-11-05 (session 22) — the re-score moves an arm a shape, and a surface that stacked its evidence — [`SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md`](product/docs/handover/SESSION_1o_2026-11-05_the-re-score-and-a-surface-that-stacked.md)

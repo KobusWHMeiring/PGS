@@ -26,7 +26,14 @@ import pytest
 from knowledge.corpus import parse_blocks
 from knowledge.table_harness import check_document
 from knowledge.extraction import sha256_of
-from knowledge.table_proposals import ProposedProfile, ProposedRow, ProposedTable, proposals_for
+from knowledge.table_proposals import (
+    ProposedDivider,
+    ProposedProfile,
+    ProposedRow,
+    ProposedTable,
+    ProposedTail,
+    proposals_for,
+)
 from tests.tools.draft_fixtures import fixture_body
 from scripts.table_blocks import emit
 
@@ -457,3 +464,256 @@ def test_a_reviewed_label_never_makes_a_cell_the_reviewers():
     assert emitted == ()
     assert refused[0].where == "row 1, column 2"
     assert "2,5" in refused[0].detail
+
+
+# --- S5-b: the band, the hyphen, the divider and the declared tail --------------------
+#
+# Appendix 2 is printed on one line grid: two cells share every printed line, and each cell wraps
+# down its own column. Four capabilities were needed to emit it, and each one is a declaration the
+# emitter refuses to make up — a `band:` per printed page, a divider written as a `row-divider`,
+# and a `tail:` for the one cell whose last words are printed at the top of the next page.
+
+CUT = 16
+
+
+def column(left: str, right: str = "") -> str:
+    """One printed line of a two-column table at `CUT`."""
+    return f"{left:<{CUT}}{right}"
+
+
+TWO_COLUMN = [
+    "<!-- page: 77 printed: 76 -->",
+    column("Substances", "Conditions for use"),
+    "I. PLANT AND ANIMAL ORIGIN",
+    column("Biodegradable", "Free of contaminants"),
+    column("by-products", "and composted"),
+    "South African specific",
+    column("Guano"),
+]
+
+
+def two_column(rows, pdf_pages=(77,), **profile) -> ProposedTable:
+    return ProposedTable(
+        index=0,
+        pdf_pages=pdf_pages,
+        columns=("Substances", "Conditions for use"),
+        rows=tuple(ProposedRow(tuple(row)) for row in rows),
+        extraction="table",
+        structure="reviewed-locators",
+        processor="knowledge/tables.py::APPENDIX_2_ROWS",
+        profile=ProposedProfile(
+            columns=("Substances", "Conditions for use"),
+            dividers=(
+                ProposedDivider(0, "I. PLANT AND ANIMAL ORIGIN", "part"),
+                ProposedDivider(1, "South African specific", "qualifier"),
+            ),
+            **profile,
+        ),
+    )
+
+
+TWO_COLUMN_ROWS = (
+    ("Biodegradable by-products", "Free of contaminants and composted"),
+    ("Guano", ""),
+)
+
+
+def test_a_cell_that_wraps_inside_its_column_is_bounded_by_the_declared_band():
+    """The capability Appendix 2 needs, and the refusal it replaces.
+
+    Without a `band:` the line is one run, so the left cell's first line reads
+    `Biodegradable Free of contaminants` — the neighbour's words in the middle of it — and the
+    cell is refused. With the measured boundary declared per printed page, each column is its own
+    stream: both cells resolve, and each slice holds only its own column's characters.
+    """
+    without = two_column(TWO_COLUMN_ROWS)
+    _lines, emitted, refused = emit([without], TWO_COLUMN)
+    assert emitted == ()
+    assert refused[0].where == "row 1, column 1"
+
+    lines, emitted, refused = emit([two_column(TWO_COLUMN_ROWS, band={76: CUT})], TWO_COLUMN)
+    assert refused == (), [str(refusal) for refusal in refused]
+    table = first_table(lines)
+    assert [cell.text for cell in table.rows[0].cells] == [
+        "Biodegradable\nby-products",
+        "Free of contaminants\nand composted",
+    ]
+    assert [cell.text for cell in table.rows[1].cells] == ["Guano", ""]
+
+
+def test_a_band_declared_for_another_page_does_not_cover_this_one():
+    """A boundary is a measurement of one printed page. A row on a page the declaration does not
+    name is refused rather than resolved against a line nobody cut."""
+    _lines, emitted, refused = emit([two_column(TWO_COLUMN_ROWS, band={77: CUT})], TWO_COLUMN)
+    assert emitted == ()
+    assert refused[0].where == "row 1"
+    assert "page 76" in refused[0].detail and "77" in refused[0].detail
+
+
+def test_the_dividers_are_written_where_the_paper_prints_them():
+    """A divider is a whole printed line, not one column of it — `South African specific` is
+    centred across the boundary — so it is resolved and claimed on its own, and written as the
+    `row-divider` the reader already draws."""
+    lines, emitted, refused = emit([two_column(TWO_COLUMN_ROWS, band={76: CUT})], TWO_COLUMN)
+    assert refused == ()
+    block = block_of(lines)
+
+    def at(annotation):
+        return next(i for i, line in enumerate(block) if line.startswith(annotation))
+
+    assert at("<!-- row-divider: I. PLANT AND ANIMAL ORIGIN part -->") < at(
+        "<!-- row: Biodegradable"
+    )
+    assert at("<!-- row-divider: South African specific qualifier -->") < at("<!-- row: Guano -->")
+    table = first_table(lines)
+    assert [d.text for d in table.rows[1].dividers] == ["South African specific"]
+
+
+def test_a_divider_the_page_does_not_print_is_refused():
+    """It is a claim about the paper, like every other locator: a divider the page does not print
+    is refused, not written into the block."""
+    body = [line for line in TWO_COLUMN if "South African specific" not in line]
+    _lines, emitted, refused = emit([two_column(TWO_COLUMN_ROWS, band={76: CUT})], body)
+    assert emitted == ()
+    assert refused[0].where == "divider before row 2"
+    assert "South African specific" in refused[0].detail
+
+
+def test_a_word_hyphenated_across_the_line_break_is_resolved_by_both_halves():
+    """`cobalt-` at the end of one printed line and `sulphate` at the start of the next is one
+    printed word. The harness has had this rule since 2026-11-03; the emitter had it not, which is
+    why Appendix 2's trace-elements row could not be emitted (S5 plan §2.9)."""
+    body = [
+        "<!-- page: 78 printed: 77 -->",
+        "Substances Conditions for use",
+        "Trace elements, e.g.: boric acid, sodium borate, calcium",
+        "borate, borethanolamin, cobalt-acetate, cobalt-",
+        "sulphate, copper oxide",
+    ]
+    lines, emitted, refused = emit(
+        [
+            proposal(
+                [
+                    (
+                        "Trace elements, e.g.: boric acid, sodium borate, calcium borate, "
+                        "borethanolamin, cobalt-acetate, cobalt-sulphate, copper oxide",
+                    )
+                ],
+                columns=("Substances", "Conditions for use"),
+                extraction="table",
+                pdf_pages=(78,),
+            )
+        ],
+        body,
+    )
+    assert refused == (), [str(refusal) for refusal in refused]
+    # The page's lines, not the review's one-line spelling: the cell is a slice of what was printed.
+    assert first_table(lines).rows[0].cells[0].text == (
+        "Trace elements, e.g.: boric acid, sodium borate, calcium\n"
+        "borate, borethanolamin, cobalt-acetate, cobalt-\n"
+        "sulphate, copper oxide"
+    )
+
+
+TAIL_BODY = [
+    "<!-- page: 77 printed: 76 -->",
+    "Substances Conditions for use",
+    "I. PLANT AND ANIMAL ORIGIN",
+    column("Seaweed", "As far as obtained by physical processes;"),
+    "<!-- page: 78 printed: 77 -->",
+    "(iii) fermentation.",
+    "<!-- page: 79 printed: 78 -->",
+    "South African specific",
+    column("Peat", "Excluded."),
+]
+
+TAIL_ROWS = (
+    ("Seaweed", "As far as obtained by physical processes; (iii) fermentation."),
+    ("Peat", "Excluded."),
+)
+
+
+def test_a_cell_whose_last_words_are_on_the_next_page_is_declared_not_inferred():
+    """The seaweed row: its condition ends at the top of printed 77. Undeclared, the continuation
+    is refused — the emitter may not decide that a cell crosses a page. Declared, the block carries
+    a page marker **inside** the cell, so each line records the page it was printed on."""
+    undeclared = two_column(
+        TAIL_ROWS, pdf_pages=(77, 78, 79), band={76: CUT, 77: CUT, 78: CUT}
+    )
+    _lines, emitted, refused = emit([undeclared], TAIL_BODY)
+    assert emitted == ()
+    assert refused[0].where == "row 1, column 2"
+
+    declared = two_column(
+        TAIL_ROWS,
+        pdf_pages=(77, 78, 79),
+        band={76: CUT, 77: CUT, 78: CUT},
+        tails=(ProposedTail(0, 2, 77, "(iii) fermentation."),),
+    )
+    lines, emitted, refused = emit([declared], TAIL_BODY)
+    assert refused == (), [str(refusal) for refusal in refused]
+    block = block_of(lines)
+    cut = block.index("<!-- cell -->", block.index("<!-- cell -->") + 1)
+    assert "<!-- page: 78 printed: 77 -->" in block[cut:], "the page break inside the cell is not recorded"
+    table = first_table(lines)
+    cell = table.rows[0].cells[1]
+    assert cell.text == "As far as obtained by physical processes;\n(iii) fermentation."
+    # One page per line, which is what lets R3 judge the tail against the page it is printed on.
+    assert cell.pages == (76, 77)
+
+
+def test_a_declared_tail_the_page_does_not_print_there_is_refused():
+    """The declaration must be true where it says: `(iii) fermentation.` is the **first** line of
+    printed 77, and a page whose first line is something else refuses the claim."""
+    body = list(TAIL_BODY)
+    body[5] = "something else entirely"
+    _lines, emitted, refused = emit(
+        [
+            two_column(
+                TAIL_ROWS,
+                pdf_pages=(77, 78, 79),
+                band={76: CUT, 77: CUT, 78: CUT},
+                tails=(ProposedTail(0, 2, 77, "(iii) fermentation."),),
+            )
+        ],
+        body,
+    )
+    assert emitted == ()
+    assert "is not the first printed line of page 77" in refused[0].detail
+
+
+def test_the_declared_tail_passes_the_harness_on_its_own_page():
+    """R3 read backwards: the tail is checked against printed page 77, not against the row's page.
+
+    This is the loop that made the tail a declaration instead of a hole in the rule — a cell line
+    is judged against the page the block says printed it.
+    """
+    declared = two_column(
+        TAIL_ROWS,
+        pdf_pages=(77, 78, 79),
+        band={76: CUT, 77: CUT, 78: CUT},
+        tails=(ProposedTail(0, 2, 77, "(iii) fermentation."),),
+    )
+    lines, _emitted, refused = emit([declared], TAIL_BODY)
+    assert refused == ()
+    page_76 = "\n".join(
+        [
+            column("Substances", "Conditions for use"),
+            "I. PLANT AND ANIMAL ORIGIN",
+            column("Seaweed", "As far as obtained by physical processes;"),
+        ]
+    )
+    # One string per PDF page, index 0 = page 1: the block's markers say pdf 77/78/79.
+    pages = [""] * 79
+    pages[76] = page_76
+    pages[77] = "(iii) fermentation."
+    pages[78] = "\n".join(["South African specific", column("Peat", "Excluded.")])
+    report = check_document(
+        parse_blocks(artefact_of(lines)),
+        pages=pages,
+        expected_rows=(2,),
+        expected_tables=1,
+    )
+    assert report.ok, report.lines()
+
+

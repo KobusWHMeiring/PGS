@@ -37,7 +37,9 @@ def test_the_probe_imports_the_rules_it_reports_on():
     """Mutation: writing the locator comparison out again makes this red."""
     source = _source()
 
-    assert "from knowledge.tables import TABLE_SECTIONS" in source
+    # The table's rows live in the artefact's block now (S5-b), so the probe reads them from the
+    # shipped corpus parse rather than from a `TABLE_SECTIONS` constant that no longer exists.
+    assert "from knowledge.corpus import parse_blocks" in source
     assert "from knowledge.references import build_reference_index, matches" in source
     assert "from knowledge.reading import branch_texts, passage_locator, printed_locators" in source
     assert "from knowledge.glossary import" in source

@@ -71,7 +71,6 @@ def pdf_pages():
 def pdf_sections(pdf_pages):
     return SaosoParser().parse("\f".join(pdf_pages))
 
-
 def chars(text: str) -> collections.Counter:
     return collections.Counter("".join(text.split()))
 
@@ -157,10 +156,10 @@ def test_every_section_says_what_the_pdf_path_says(document, pdf_sections):
     pass, so a section cannot quietly stop being compared.
     """
     other_pass = emitted_from_another_pass(document)
-    assert set(other_pass) == {"Appendix 6a"}, (
+    assert set(other_pass) == {"Appendix 2", "Appendix 6a"}, (
         "the set of sections checked against another pass moved: "
-        f"{sorted(other_pass)}. S5-b and S5-c add Appendix 2 and Appendix 7 here in the same "
-        "commit that emits their blocks."
+        f"{sorted(other_pass)}. S5-c adds Appendix 7 here in the same commit that emits its "
+        "block."
     )
     differing = []
     for theirs, ours in zip(pdf_sections, document.sections):
@@ -233,14 +232,34 @@ def test_the_artefact_yields_the_parsers_chunks(document, pdf_sections):
 
 
 def test_every_block_is_on_the_page_it_names(document, pdf_pages):
+    """Every text block is a run of the page it names — **in a pass the section declares**.
+
+    The traceability claim, not the fidelity claim: R3 (the harness) is what says which printed
+    *line* a cell came from, and it is the only instrument that can. This guard says a block's words
+    are on the page the block names at all, and since S5-b it has to accept the `-table` pass too:
+    Appendix 2's cells are that rendering's lines (the paper is printed double-spaced, so a `-layout`
+    comparison would be a comparison with the interleaving the block exists to remove). Accepting
+    both passes cannot hide a lost word — a block that is on neither page is still named below.
+    """
     replacements = collections.defaultdict(list)
     for edit in CORPUS_EDITS["saoso"]:
         if edit.replacement:
             replacements[edit.page].append(squash(edit.replacement))
+    table_pages = pages("saoso", "table")
 
     untraceable = []
     for block in document.blocks:
         if on_page(block.text, pdf_pages, block.page):
+            continue
+        # A `-table`-pass block is a run of that page's lines, checked line by line: a block may
+        # join two cells' last and first lines (the markers between them are annotations, not
+        # text), and a joined block is not a run of one `-layout` page.
+        table_page = [squash(line) for line in table_pages[block.page - 1].splitlines()]
+        if all(
+            any(squash(line) in other for other in table_page)
+            for line in block.text.splitlines()
+            if line.strip()
+        ):
             continue
         if any(replacement in squash(block.text) for replacement in replacements[block.page]):
             continue

@@ -173,7 +173,11 @@ def check_table(
             )
         )
 
-    found.extend(_check_spans(table, where))
+    found.extend(
+        _check_spans(
+            table, where, pages=pages, printed_to_pdf=printed_to_pdf
+        )
+    )
     found.extend(_check_non_text(table, where))
 
     if expected_row_count is None:
@@ -305,8 +309,34 @@ def _check_cells_on_the_page(
                 f"document has {len(pages)} pages",
             )
         ]
-    printed = [flat(line) for line in pages[pdf_page - 1].splitlines()]
-    printed = [line for line in printed if line]
+
+    def printed_lines_of(printed_page: int | None) -> list[str] | Violation:
+        """The printed lines of one page, or the violation that says why it cannot be checked."""
+        if printed_page is None:
+            return Violation("R3", where, "a cell line declares no page, so nothing can check it")
+        number = printed_to_pdf.get(printed_page)
+        if number is None:
+            return Violation(
+                "R3",
+                where,
+                f"printed page {printed_page} has no page marker in the artefact, so the page it "
+                "should be checked against is unknown",
+            )
+        if not 1 <= number <= len(pages):
+            return Violation(
+                "R3",
+                where,
+                f"the artefact says printed page {printed_page} is PDF page {number}, and the "
+                f"document has {len(pages)} pages",
+            )
+        return [line for line in (flat(raw) for raw in pages[number - 1].splitlines()) if line]
+
+    cache: dict[int | None, list[str] | Violation] = {}
+
+    def lines_for(printed_page: int | None) -> list[str] | Violation:
+        if printed_page not in cache:
+            cache[printed_page] = printed_lines_of(printed_page)
+        return cache[printed_page]
 
     found: list[Violation] = []
     for index, cell in enumerate(row.cells):
@@ -316,9 +346,25 @@ def _check_cells_on_the_page(
         # measured 2026-11-03: a shared cursor reported 171 violations on three tables and every
         # one of them was the spanning cell's position rather than a lost word.
         cursor = 0
-        for line in cell.text.splitlines():
+        current_page: int | None = row.page
+        for number, line in enumerate(cell.text.splitlines()):
             value = flat(line)
             if not value:
+                continue
+            # **A cell that crosses a page records it** (S5-b): the block puts a page marker inside
+            # the cell, the parser stores one page per line, and this is the only place the two
+            # facts meet. Undeclared, the line is checked against the row's page — which is what
+            # refused `(iii) fermentation.` until the tail became data.
+            declared = cell.pages[number] if number < len(cell.pages) else None
+            page = declared if declared is not None else row.page
+            if page != current_page:
+                # A new page is a new stream: its first line is line 0, not wherever the previous
+                # page's cursor had got to.
+                cursor = 0
+                current_page = page
+            printed = lines_for(page)
+            if isinstance(printed, Violation):
+                found.append(printed)
                 continue
             position = _locate(value, printed, cursor)
             if position is None:
@@ -327,7 +373,8 @@ def _check_cells_on_the_page(
                         "R3",
                         where,
                         f"cell {index + 1} carries {value[:60]!r}, which is not a contiguous run "
-                        f"of a printed line on page {row.page}, in the order the cell prints them",
+                        f"of a printed line on page {declared or row.page}, in the order the cell "
+                        "prints them",
                     )
                 )
             else:
@@ -402,22 +449,50 @@ def _locate_rejoined(value: str, printed: Sequence[str], cursor: int) -> int | N
         if bare in line.replace(" ", ""):
             return offset
     return None
-def _check_spans(table: ParsedTable, where: str) -> list[Violation]:
-    """R6 — a divider qualifies one row, and the shape fields agree with the rows."""
+def _check_spans(
+    table: ParsedTable,
+    where: str,
+    *,
+    pages: Sequence[str] | None = None,
+    printed_to_pdf: Mapping[int, int] | None = None,
+) -> list[Violation]:
+    """R6 — a divider qualifies one row, and the shape fields agree with the rows.
+
+    A divider is claimed **as many times as the paper prints it**, and that needed saying: the
+    first version required every label to be unique, which passed until Appendix 2 became a block —
+    its paper prints `South African specific` three times, once above each row it qualifies
+    (measured 2026-11-05). So the guard counts instead of assuming: claims are compared with the
+    occurrences of that label on the page the claiming rows are printed on. A label claimed twice
+    where the page prints it once is still a violation, and now it is one for the right reason.
+    """
     found: list[Violation] = []
-    claimed: dict[str, int] = {}
+    printed_to_pdf = printed_to_pdf or {}
+    claimed: dict[tuple[str, int | None], int] = {}
+
+    def occurrences(text: str, page: int | None) -> int | None:
+        """How many printed lines on `page` carry `text`, or None when the page cannot be read."""
+        number = printed_to_pdf.get(page) if page is not None else None
+        if pages is None or number is None or not 1 <= number <= len(pages):
+            return None
+        wanted = flat(text)
+        return sum(1 for line in pages[number - 1].splitlines() if wanted in flat(line))
+
     for index, row in enumerate(table.rows):
         for divider in row.dividers:
-            claimed.setdefault(divider.text, index + 1)
+            key = (divider.text, row.page)
+            claimed[key] = claimed.get(key, 0) + 1
             if not flat(divider.text):
                 found.append(Violation("R6", where, f"row {index + 1} claims a blank divider"))
-            elif claimed[divider.text] != index + 1:
+                continue
+            printed = occurrences(divider.text, row.page)
+            if printed is not None and claimed[key] > printed:
                 found.append(
                     Violation(
                         "R6",
                         where,
-                        f"the divider {divider.text[:40]!r} is claimed by rows "
-                        f"{claimed[divider.text]} and {index + 1}; the paper prints it once",
+                        f"the divider {divider.text[:40]!r} is claimed {claimed[key]} times by "
+                        f"rows on printed page {row.page}, which prints it {printed} time(s); a "
+                        "label belongs to one row on each line it is printed",
                     )
                 )
     if table.titles and len(table.titles) != len(table.rows):

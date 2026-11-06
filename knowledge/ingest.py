@@ -51,9 +51,7 @@ from knowledge.extraction import extract_pages, sha256_of
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
 from knowledge.sections import registry
 from knowledge.sections.toc import toc_from_pages
-from knowledge.table_chunks import chunks_for_parsed_section, chunks_for_rows
-from knowledge.tables import rows_for
-
+from knowledge.table_chunks import chunks_for_parsed_section
 logger = logging.getLogger(__name__)
 
 
@@ -499,30 +497,19 @@ def chunks_for_sections(sections) -> list:
     *would* produce without writing it (P2.2). A second copy of this rule would be a
     second answer to "is this box current?", and the two would drift apart silently.
 
-    Two mechanisms replace a printed table's auto-chunks with one chunk per reviewed row,
-    and both are data rather than branches in this function:
-
-    * `knowledge/tables.py::TABLE_ROWS` — reviewed rows held as Python literals (Appendix 2
-      and 6a). A section whose ref is in that table is looked up by ref.
-    * `knowledge/corpus.py`'s `<!-- table … -->` block — reviewed rows held in the artefact
-      itself (`ParsedSection.tables`, D73). A section carrying tables is chunked by
-      `chunks_for_parsed_section`, which keeps the prose around the grid.
+    A printed table is one mechanism now: `knowledge/corpus.py`'s `<!-- table … -->` block —
+    reviewed rows held in the artefact itself (`ParsedSection.tables`, D73). A section carrying
+    tables is chunked by `chunks_for_parsed_section`, which keeps the prose around the grid. The
+    second mechanism — reviewed rows held as Python literals in `knowledge/tables.py` — is gone:
+    Appendix 2 was its last table, and S5-b emitted its block (2026-11-05).
 
     The rows are a reconstruction — the single documented exception to "a chunk is a slice
     of the section" — because the `-layout` text interleaves one column into another.
     """
-    reviewed: set[str] = set()
     chunks: list = []
     for section in sections:
         if section.tables:
             chunks.extend(chunks_for_parsed_section(section))
-            continue
-        ref = section.section_ref
-        if rows_for(ref):
-            if ref in reviewed:
-                continue  # the section's auto-chunks are replaced once, in order
-            reviewed.add(ref)
-            chunks.extend(chunks_for_rows(ref))
             continue
         chunks.extend(chunk_section(section))
     return chunks

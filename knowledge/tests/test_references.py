@@ -27,7 +27,7 @@ import pytest
 from knowledge.concordance import build_concordance
 from knowledge.ingest import ingest_standard
 from knowledge.models import DocumentChunk, StandardDocument, StandardSet
-from knowledge.passages import Heading, RowHeading, Term, passage_blocks
+from knowledge.passages import Heading, Qualifier, Term, passage_blocks
 from knowledge.reading import reading_chunks
 from knowledge.references import (
     ReferenceIndex,
@@ -256,7 +256,7 @@ def test_structure_blocks_are_never_segmented(corpus):
     blocks = (
         Heading("APPENDICES"),
         Term("ACB"),
-        RowHeading("Guano"),
+        Qualifier("South African specific"),
         *passage_blocks("See Appendix 2."),
     )
 
