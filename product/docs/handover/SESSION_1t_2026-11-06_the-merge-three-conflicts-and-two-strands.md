@@ -70,7 +70,7 @@ The graph stays linear.
   and §3.17 says quote it as warm.
 - `scripts/fast.sh --critical` — **187 passed / 4 deselected in 11.34 s**. `main` alone was 182, so
   the strand brought five critical-lane tests with it: the count moving is the merge working.
-- `scripts/verify.sh` — step 1 red on `scripts/copy_deck.py` (**36 KB** over a 30 KB cap, and it was
+- `scripts/verify.sh` — step 1 red on `scripts/copy_deck.py` (**32 KB** over a 30 KB cap, and it was
   restored from the stash after the merge, so the breach is the other session's, unchanged by this
   one); steps 2–4 green: `manage.py check` clean, `makemigrations --check` no changes, `lint-imports`
   `knowledge must never import core KEPT`.

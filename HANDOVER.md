@@ -49,7 +49,7 @@
 > **187 passed / 4 deselected in 11.34 s** — **five more than `main`'s 182**, because the strand
 > brought its own critical-lane tests with it, so that count *changing* is the merge working.
 > `scripts/verify.sh`: step 1 **red on another session's `scripts/copy_deck.py`**
-> (36 KB, untracked, cap 30 KB), steps 2–4 green —
+> (32 KB, untracked, cap 30 KB), steps 2–4 green —
 > `manage.py check` clean, `makemigrations --check` "No changes detected", `lint-imports`
 > `knowledge must never import core KEPT`.
 >
