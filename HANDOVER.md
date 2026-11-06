@@ -60,7 +60,9 @@
 > was **stashed** (`git stash list` — *OTHER SESSION (copy deck)*) so the merge could not clobber
 > `_public.py`, which the strand also changes, and **restored afterwards**; a byte-for-byte backup
 > sits outside the repo at `../pgs-dirty-backup-2026-11-06/` (`tracked.patch` + the six untracked
-> files + the base commit). Stage explicit paths, never `git add -A`. Splitting `copy_deck.py` under
+> files + the base commit), and it earned its keep: **`git stash pop` returns untracked files
+> normalized to LF**, so the six came back from that copy rather than the stash (§3.47). Stage
+> explicit paths, never `git add -A`. Splitting `copy_deck.py` under
 > the cap is that session's act; until then `scripts/context.py --check` is red on it and
 > `verify.sh` cannot be quoted green from this tree.
 >

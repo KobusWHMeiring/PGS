@@ -2457,6 +2457,37 @@ Rule: after a mechanical file move, run the tests that exercise the moved code's
 helpers it now owns but never calls. Better still, cut the boundary by hand and read the
 diff — the script saved a minute and cost a debug cycle.
 
+### 3.47 `git stash push -u` rewrites an untracked file's line endings on the way back
+
+Parking another agent's uncommitted work before a merge is the right move, and `git stash push -u`
+looks lossless. The **content** survives; the **bytes** do not. Untracked files come back through the
+index and are normalized to LF, so a file that was CRLF in the working tree is a different size after
+`git stash pop` and every "did I lose their work?" check that compares sizes or hashes says yes.
+
+Evidence:
+    $ du -sh scripts/copy_deck.py            # before the stash
+    36K   scripts/copy_deck.py
+    $ git stash push -u && git merge ... && git stash pop
+    $ python -c "import pathlib;b=pathlib.Path('scripts/copy_deck.py').read_bytes();                 print(len(b), b.count(b'
+'))"
+    32312 0                                  # was 33106 bytes and 794 CRLF
+    # text equal ignoring endings: True      # the content was never at risk
+    $ diff backup-tracked.patch <(git diff)  # identical once the `index` lines are excluded —
+                                             # that line now shows the merge's new base blob
+
+Consequence: the instinct on seeing a size or hash mismatch is "the merge ate their edits", and the
+next act is a restore from the wrong side. The real change is invisible in an editor and in
+`git status` (both say nothing happened), and only a binary read of `` shows it — which is
+§1.41's lesson arriving from a new direction: `Path.read_text()` cannot see the difference either.
+
+Rule: **back the bytes up before the stash, not just the diff** — a `git diff --binary` for the
+tracked files *and* a plain copy of each untracked file, outside the repo
+(`../pgs-dirty-backup-<date>/`). After `git stash pop`, compare the untracked files with `cmp -s`,
+not with `git status`; if only the endings differ, copy the originals back rather than re-applying a
+patch. And when reporting the restoration, say what was compared and what the comparison excluded —
+"identical" after dropping a line from the diff is a claim with a qualifier, and the qualifier is the
+evidence.
+
 ## 5. Template for a new entry
 
 ```markdown

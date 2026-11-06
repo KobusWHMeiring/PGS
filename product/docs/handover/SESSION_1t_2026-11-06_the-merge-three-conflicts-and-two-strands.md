@@ -35,9 +35,17 @@ Three copies existed before anything moved:
 2. the six untracked files, copied verbatim;
 3. the base commit, written down.
 
-…all in `../pgs-dirty-backup-2026-11-06/`, outside the repo, so nothing in the merge path could
+...all in `../pgs-dirty-backup-2026-11-06/`, outside the repo, so nothing in the merge path could
 touch them. Then `git stash push -u` — and the tree was clean for the first time in two sessions.
-The stash was restored after the merge committed and is listed in `git stash list` by name.
+The stash was restored after the merge committed and is no longer listed in `git stash list`.
+
+**The backup earned its keep, and not for the reason expected.** `git stash pop` returned the six
+untracked files **normalized to LF** — `scripts/copy_deck.py` came back 32,312 bytes where it left
+33,106, with 794 CRLF gone and the text identical. The instinct on a size mismatch is "the merge ate
+their edits"; the real cause is the stash round-trip through the index. The six were copied back from
+the backup verbatim (`cmp -s` clean), the four tracked files were already byte-identical (the only
+patch difference was the merge's new base blob in the `index` line), and the public and
+claim-discipline guards are green on the result: **153 passed in 7.92 s**. Recorded as **§3.47**.
 
 ## 4. The three conflicts, and why each rule is a rule
 
