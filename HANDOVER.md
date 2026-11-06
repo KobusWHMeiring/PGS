@@ -73,7 +73,7 @@ answer-coverage, budget-and-instrument, deployment, reader-structure, corpus-art
 corpus-drift, retrieval-baseline, deploy-and-close, generator-and-fixture, landscape-artefact,
 display-model, shapes-build, cost-rule-and-P4, context-budget, context-frame,
 landscape-sign-off, chat-split, handover-truth-up, shapes-harness, docling-evaluation, vlm-arm,
-re-score, and arbitration sessions
+re-score, arbitration, S5-a (Appendix 6a) and S5-b (Appendix 2) sessions
 **Repo state:** `main` — **one commit from session `1r`** (S5-b), pushed. Everything before it is
 pushed; `origin/main` was at `8563ba2` when this session started. The stale "three unpushed runs" note
 this file carried twice is itself the example of why the next line is the only one that answers it.
@@ -97,7 +97,9 @@ then the suite above.
 (last read back from the box in session `1b`; `/health/` answered `{"status": "ok", ...}` on 2026-11-04,
 but that body carries no commit, so **this file cannot see which commit is serving** — verify on the box
 with `git rev-parse --short HEAD`). It serves a **current** corpus (401 chunks). **A deploy is owed** for
-everything after `06bb11a` — sessions `1f`, `1g` and `1h`: the dev box has no SSH key, so the operator runs
+everything after `06bb11a` — sessions `1f`–`1r`, i.e. both S5 tables and the reader's grid. It moves
+the corpus by **one chunk** (Appendix 2's header prose: SAOSO 340 → 341, so the live total 401 → 402).
+The dev box has no SSH key, so the operator runs
 `sudo bash /home/carbonplanner/apps/pgs/deploy/deploy.sh` and reads the `/health/` body back — the
 script verifies origin's tip on the box before it pulls. Its `deploy.sh` on disk is the pre-`3c2c39d`
 one, and **the §3.27 window is self-closing, not debt**: that script still `pull`s origin's tip,
