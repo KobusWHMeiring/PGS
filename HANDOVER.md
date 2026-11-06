@@ -75,9 +75,17 @@ re-score, arbitration, S5-a (Appendix 6a), S5-b (Appendix 2) and S5-c (Appendix 
 Everything before it is pushed; `origin/main` was at `8d5ccb3` when this session started. The stale
 "three unpushed runs" note this file carried twice is itself the example of why the next line is the
 only one that answers it. **Let the command answer:** `git rev-list --count origin/main..HEAD`.
-`main` and `feat/mvp1a-visit` (`../pgs-visit`, MVP 1a sub-plan A) are **separate lines** with no code
-overlap; `HANDOVER.md` and `testing_hazards.md` are edited on both sides, so a merge needs one hand on
-those two files.
+**The merge, measured 2026-11-06** in a throwaway worktree (`git merge --no-commit --no-ff` from
+`bacaeeb`): `feat/mvp1a-visit` (`../pgs-visit`, 98 files, MVP 1a sub-plan A) merges with **three
+conflicts** — `HANDOVER.md`, `product/docs/context/testing_hazards.md` and
+`product/backlog/backlog.md`. The third is a **generated** index: resolve it by re-running
+`python product/backlog.py --write` after the merge, never by hand. `todo.md` auto-merges. The branch
+is **not pushed** (`22b2aab` has no upstream), so push it or merge it locally. **Clean this tree
+first:** it still holds another session's uncommitted edits, and one of them —
+`core/services/_public.py` — is a file the visit branch also changes, so the merge is refused or those
+edits are at risk until that session commits. After the merge: regenerate the index, run the full
+suite (both sides add tests), then `verify.sh` — which will still fail step 1 until
+`scripts/copy_deck.py` is under 30 KB.
 
 **On this tree** (2026-11-06, session `1s`, after its commit): `python -m pytest -q --reuse-db` —
 **1790 passed / 1 skipped / 8 xfailed in 121.87 s**, run as
